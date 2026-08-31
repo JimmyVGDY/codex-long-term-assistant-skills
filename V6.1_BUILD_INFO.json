@@ -1,0 +1,12 @@
+{
+  "version": "6.1.0",
+  "base": "6.0.0",
+  "target_codex": "0.150.1",
+  "fixes": [
+    "Marketplace manifest moved to supported .agents/plugins/marketplace.json layout",
+    "installer invokes codex plugin marketplace add <root> and codex plugin add",
+    "verify requires installed+enabled from codex plugin list --json",
+    "Plugin hooks use commandWindows and Unix command independently",
+    "SessionEnd timeout aligned to Codex clamp"
+  ]
+}
