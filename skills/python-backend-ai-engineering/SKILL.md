@@ -20,6 +20,7 @@ description: >-
 6. 长任务、可靠重试和进程重启后恢复不得仅依赖 FastAPI `BackgroundTasks` 或进程内 Task。
 7. 修改、测试、复审、提交或交付时，同时使用 `$engineering-quality-delivery`。
 8. 涉及数据库、Redis、MQ、搜索、文件、RAG、GPU 或部署时，同时使用 `$data-middleware-ai-infrastructure`。
+9. 任务以日志文件、Traceback、Worker、Celery、容器或跨服务时间线为主要证据时，同时使用 `$log-observability-analysis`。
 
 ## 边界
 
