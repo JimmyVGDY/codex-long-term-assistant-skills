@@ -354,7 +354,8 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
                 payload.update(tool_name="Agent", tool_input={"model": "gpt-5.6-luna",
                                                                "reasoning_effort": "low"})
             result = subprocess.run(command, input=json.dumps(payload), text=True,
-                                    capture_output=True, env=env, shell=True, timeout=10)
+                                    encoding="utf-8", errors="replace", capture_output=True,
+                                    env=env, shell=True, timeout=10)
             self.assertEqual(0, result.returncode, (hook_name, result.stderr))
         failure_env = dict(env, CP_ASSISTANT_SEAL_QUEUE_MAX_JOBS="0")
         command = hooks["SessionEnd"][0]["hooks"][0]["commandWindows"]
@@ -362,7 +363,8 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
                    "turn_id": "T-FAIL", "cwd": str(self.root)}
         started = time.perf_counter()
         failed = subprocess.run(command, input=json.dumps(payload), text=True,
-                                capture_output=True, env=failure_env, shell=True, timeout=3)
+                                encoding="utf-8", errors="replace", capture_output=True,
+                                env=failure_env, shell=True, timeout=3)
         self.assertLess(time.perf_counter() - started, 3.0)
         self.assertEqual(0, failed.returncode)
         diagnostic = json.loads(failed.stderr.strip().splitlines()[-1])

@@ -14,6 +14,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 - Windows 原子文件发布遇到短暂共享冲突时实施有界重试。
 - 延迟封印生命周期测试显式等待验证进程退出，消除临时目录回收竞态；生产 SessionEnd 仍保持预算外异步封印。
+- Windows 批处理启动器固定使用 UTF-8 代码页与 CRLF 行尾；中性语言门禁区分不随包发布的运行时源字符串目录和实际对外文案。
 
 ### Security
 

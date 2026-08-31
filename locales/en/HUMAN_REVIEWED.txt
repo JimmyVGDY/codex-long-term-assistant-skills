@@ -197,3 +197,7 @@ skills/technical-document-writing/references/document-structure-language.md
 skills/technical-document-writing/references/document-type-playbooks.md
 skills/technical-document-writing/references/document-types-comparison.md
 skills/technical-document-writing/SKILL.md
+scripts/evolution.cmd
+scripts/evolution.ps1
+scripts/restore-latest-backup.ps1
+scripts/restore-latest-backup.sh

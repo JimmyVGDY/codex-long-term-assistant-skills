@@ -113,6 +113,22 @@ class V661BilingualReleaseTests(unittest.TestCase):
             self.assertEqual([], findings, relative.as_posix())
             compile(path.read_text(encoding="utf-8-sig"), relative.as_posix(), "exec")
 
+    def test_english_shell_runtime_lines_are_english(self) -> None:
+        comment_prefixes = {
+            ".cmd": ("rem ", "::"),
+            ".ps1": ("#",),
+            ".sh": ("#",),
+        }
+        for suffix, prefixes in comment_prefixes.items():
+            for path in self.english_root.rglob("*" + suffix):
+                runtime_lines = [
+                    line for line in path.read_text(encoding="utf-8-sig").splitlines()
+                    if not line.lstrip().lower().startswith(prefixes)
+                ]
+                self.assertIsNone(
+                    re.search(r"[\u4e00-\u9fff]", "\n".join(runtime_lines)),
+                    path.relative_to(self.english_root).as_posix())
+
     def test_archives_exclude_unrelated_brand_and_personal_paths(self) -> None:
         text_suffixes = {".md", ".json", ".toml", ".yaml", ".yml", ".py", ".ps1", ".sh", ".cmd", ".txt"}
         for locale in ("zh-CN", "en"):
@@ -124,6 +140,13 @@ class V661BilingualReleaseTests(unittest.TestCase):
                     text = body.decode("utf-8-sig", errors="replace").lower()
                     self.assertNotIn(excluded_brand, text, path)
                     self.assertNotIn("c:\\users\\hp", text, path)
+
+    def test_semantic_lint_accepts_runtime_source_key_catalog(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "semantic-lint.py")],
+            capture_output=True, timeout=30)
+        output = (result.stdout + result.stderr).decode("utf-8", errors="replace")
+        self.assertEqual(0, result.returncode, output)
 
     def test_english_hook_returns_english_model_gate_reason(self) -> None:
         payload = {"hook_event_name": "PreToolUse", "tool_name": "Agent",

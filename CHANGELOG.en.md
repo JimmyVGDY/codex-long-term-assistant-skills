@@ -14,6 +14,7 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 - Bounded retry for transient Windows sharing failures during atomic file publication.
 - Explicit validation-process waiting removes temporary-directory cleanup races while production SessionEnd remains asynchronously sealed outside the Hook budget.
+- Windows batch launchers now use the UTF-8 code page and CRLF line endings. The neutral-language gate distinguishes the unshipped runtime source-string catalog from delivered prose.
 
 ### Security
 
