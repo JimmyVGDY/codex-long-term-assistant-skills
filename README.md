@@ -1,45 +1,58 @@
-# Codex 跨项目长期技术助手 V6.6.1
+# Codex 跨项目长期技术助手
 
-English: [README.en.md](README.en.md)
+<p align="center">
+  面向 Codex 的跨项目工程协作框架：Skill 路由、多 Agent 独立复审、可恢复任务记忆、生命周期事件与受控演进。
+</p>
 
-目标宿主：Windows 原生 Codex CLI 0.150.1。Plugin 成功状态仅以 `codex plugin list --json` 读回 `installed=true`、`enabled=true`、`version=6.6.1` 为准。
+<p align="center">
+  <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/JimmyVGDY/codex-long-term-assistant-skills"></a>
+  <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/github/license/JimmyVGDY/codex-long-term-assistant-skills"></a>
+  <img alt="Python 3.8+" src="https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white">
+  <img alt="Codex CLI 0.150.1" src="https://img.shields.io/badge/Codex%20CLI-0.150.1-111827">
+</p>
 
-V6.6.1 提供两个完整、可独立安装、可复现构建的发行包：
+<p align="center">
+  <strong>简体中文</strong> · <a href="README.en.md">English</a>
+</p>
 
-- `Codex-Skills-V6.6.1-zh-CN.zip`
-- `Codex-Skills-V6.6.1-en.zip`
+V6.6.1 面向 Windows 原生 Codex CLI 0.150.1，提供中文、英文两个可独立安装且可复现构建的 Plugin 发行包。主 Agent 的模型配置保持不变，自动子 Agent 的最高策略边界为 Terra High。
 
-两个发行包共享 Runtime、Hooks、安装器、Schema、测试和安全策略。英文发行已覆盖全部自然语言文档、10 个 Skill 及其 Reference/模板、7 个 Reviewer、示例、结构化说明和 Python 运行时提示；源码注释与 Docstring 采用整齐的中英成对格式。仅作为不可改写证据的历史归档文件名、规范路径标识和底层测试夹具保留原值。
+## 下载
 
-## 能力范围
+| 发行包 | 适用界面 | 下载 |
+| --- | --- | --- |
+| `Codex-Skills-V6.6.1-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v6.6.1/Codex-Skills-V6.6.1-zh-CN.zip) |
+| `Codex-Skills-V6.6.1-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v6.6.1/Codex-Skills-V6.6.1-en.zip) |
 
-- 10 个工程 Skill，按任务上下文渐进加载。
-- 7 个逻辑只读 Reviewer，TOML 不写死模型与推理强度。
+[查看最新 Release、校验和与构建见证](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
+
+## 核心能力
+
+- 10 个工程 Skill，按当前任务最小充分路由并渐进加载。
+- 7 个逻辑只读 Reviewer，定义文件不写死模型或推理强度。
 - 6 个生命周期 Hook：`UserPromptSubmit`、`PreToolUse`、`SubagentStart`、`SubagentStop`、`Stop`、`SessionEnd`。
-- TaskOutcomeEvent 2.0、`project_id + repo_fingerprint` 双重隔离和连续哈希链。
-- SessionEnd 三秒预算外的延迟封印。
-- 非破坏事件归档、容量报告和隐私有界的跨项目健康概览。
-- `execution_authorization=NONE` 的受控优化提案。
+- TaskOutcomeEvent 2.0、`project_id + repo_fingerprint` 双重隔离与连续哈希链。
+- 可恢复检查点、延迟 SessionEnd 封印、事件归档与跨项目健康概览。
+- `execution_authorization=NONE` 的受控优化提案，不授予实施权限。
 
-## 模型证据口径
-
-```ini
-requested_model_policy = PASS
-runtime_model_evidence = UNAVAILABLE
-diagnostic_model_observation = 仅诊断旁证
+```mermaid
+flowchart LR
+    A[任务输入] --> B[Skill 最小路由]
+    B --> C[主 Agent 执行]
+    C --> D[独立 Reviewer]
+    C --> E[生命周期 Hooks]
+    D --> E
+    E --> F[TaskOutcomeEvent 2.0]
+    F --> G[项目隔离与哈希链]
+    G --> H[Snapshot / Assessment / Proposal]
+    H --> I[人工决策]
 ```
 
-Codex 0.150.1 尚未向 Hook 提供可信且可关联的实际模型证明。请求 Luna 或 Terra 配置，不等于实际运行模型已验证。自动派发只允许：
+## 五分钟升级
 
-```text
-luna-low -> luna-medium -> terra-medium -> terra-high
-```
-
-自动上限为 `gpt-5.6-terra + high`；Sol、`xhigh`、`max`、`ultra` 均拒绝。
-
-## 升级安装
-
-在解压后的语言包根目录执行：
+1. 下载对应语言的 ZIP，并解压到临时目录。
+2. 在解压后的包根目录依次执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -49,16 +62,42 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-dry-run 需证明备份范围有界、路径未越界、链接与 Reparse Point 风险被拒绝、未知文件被保留、回滚链完整。仅复制文件不构成 Plugin 安装成功。
+3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=6.6.1` 时，升级状态才成立。
 
-详细入口：`docs/USER_GUIDE_V6.6.1.md`、`docs/INSTALLATION_RECOVERY.md`、`docs/CODEX_CONFIG_GUIDE.md`。源码仓库中的对应英文文档使用同名 `.en.md` 文件；英文 ZIP 内会覆盖到规范文件名，无需添加 `.en`。
+安装器会识别已有版本、创建有界备份、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/INSTALLATION_RECOVERY.md) 和 [使用指南](docs/USER_GUIDE_V6.6.1.md)。
 
-## 发行构建
+## 模型证据边界
+
+```ini
+requested_model_policy = PASS
+runtime_model_evidence = UNAVAILABLE
+diagnostic_model_observation = 仅诊断旁证
+```
+
+Codex 0.150.1 尚未向 Hook 提供可信且可关联的实际模型证明。请求 Luna 或 Terra 配置，不等于实际运行模型已验证。自动成本阶梯为：
+
+```text
+luna-low -> luna-medium -> terra-medium -> terra-high
+```
+
+自动流程拒绝 Sol、`xhigh`、`max`、`ultra` 及任何超过 `gpt-5.6-terra + high` 的配置。
+
+## 文档与协作
+
+- [文档中心](docs/README.md)：安装、配置、架构、模型策略、验证与历史资料。
+- [贡献指南](CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
+- [安全策略](SECURITY.md)：漏洞报告边界与敏感信息处理。
+- [行为准则](CODE_OF_CONDUCT.md)：公共协作的基本边界。
+- [版本记录](CHANGELOG.md) · [V6.6.1 发行说明](RELEASE_NOTES_V6.6.1.md)
+
+## 本地验证
 
 ```powershell
-python scripts\build-release.py reproducible --locale zh-CN --output Codex-Skills-V6.6.1-zh-CN.zip --witness deterministic-build-v6.6.1-zh-CN.json
-python scripts\build-release.py reproducible --locale en --output Codex-Skills-V6.6.1-en.zip --witness deterministic-build-v6.6.1-en.json
+python scripts\localization-audit.py --strict
+python scripts\validate-package.py
 ```
+
+发行构建采用固定时间戳、稳定排序和 SHA-256 见证。源码仓库与发行安装包是不同证据层：仓库 CI 证明当前提交，Release 附件及其见证证明可下载产物。
 
 ## 安全边界
 
@@ -66,5 +105,6 @@ python scripts\build-release.py reproducible --locale en --output Codex-Skills-V
 - 不自动接受或执行优化提案。
 - 不自动提交、推送、部署、重启、操作生产环境或写入业务数据。
 - Evidence 只记录事实，不授予权限。
+- 默认不保存原始 Prompt、完整回答、代码正文、Diff、Token、Cookie、API Key 或凭据。
 
-许可证：Apache-2.0，见 `LICENSE`。
+Apache-2.0 许可，见 [LICENSE](LICENSE)。

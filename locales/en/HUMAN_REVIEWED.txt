@@ -30,6 +30,7 @@ custom-agents/cp-review-state-concurrency.toml
 custom-agents/cp-review-test-delivery.toml
 custom-agents/README.md
 docs/CODEX_CONFIG_GUIDE.md
+docs/README.md
 docs/APPROVAL_EVIDENCE_FINALIZATION.md
 docs/AUTHORITY_REGISTRY.md
 docs/DESIGN_REFERENCES.md
