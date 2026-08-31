@@ -1,4 +1,4 @@
-# 源规则到 Codex v3.0 资源的映射
+# 源规则到 Codex v3.1 资源的映射
 
 | 来源或新增模块 | Codex 目标 |
 |---|---|
@@ -7,6 +7,8 @@
 | Python 后端与 AI 服务规则 | `skills/python-backend-ai-engineering/references/python-backend-ai-rules.md` |
 | Vue 前端工程规则 | `skills/vue-frontend-engineering/references/vue-frontend-rules.md` |
 | 数据、中间件、AI 与基础设施规则 | `skills/data-middleware-ai-infrastructure/references/data-middleware-ai-infrastructure-rules.md` |
+| 日志与可观测性分析工作流 | `skills/log-observability-analysis/references/log-observability-analysis-workflow.md` |
+| 日志分析报告、时间线和证据台账模板 | `skills/log-observability-analysis/assets/templates/` |
 | 研发质量与交付工作流 | `skills/engineering-quality-delivery/references/engineering-quality-delivery-workflow.md` |
 | 正式技术文档规则 | `skills/technical-document-writing/references/technical-document-writing-rules.md` |
 | 文档类型 Playbook | `skills/technical-document-writing/references/document-type-playbooks.md` |
@@ -21,6 +23,7 @@
 
 ## 职责边界
 
+- `log-observability-analysis`：负责跨环境日志输入、时间线、异常聚类、证据台账、根因假设和只读边界；
 - `engineering-quality-delivery`：控制修改授权、最低验证、Git、CHANGELOG、部署和交付门禁；
 - `multi-agent-independent-review`：负责 Reviewer 分工、并行复审、结果归并、集中修复和定向复核；
 - `long-running-task-memory`：负责小节点检查点、任务恢复、单一记忆写入者和交付记录；

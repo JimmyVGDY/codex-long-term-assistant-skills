@@ -1,194 +1,137 @@
-# v3.0 安装包验证报告
+# v3.1 安装包验证报告
 
-## 一、验证信息
+## 一、验证对象
 
-- 安装包版本：`3.0.0`
-- 版本名称：持续记忆与多 Agent 复审版
-- 验证时间：2026-07-29 15:43:54 Asia/Shanghai
-- 验证环境：Linux x86_64 容器
-- Python：3.13.5
-- Git：2.47.3
-- 主校验命令：
+- 安装包：Codex 跨项目长期技术助手 Skills 安装包
+- 版本：`3.1.0`
+- 版本名称：日志与可观测性分析增强版
+- 验证日期：2026-07-29
+- 验证环境：Linux 容器，Python 3、Bash、Git 可用；PowerShell 不可用
+
+## 二、本次新增范围
+
+- 新增 `log-observability-analysis` Skill；
+- 新增静态文件、本地运行、远程非生产只读、生产只读四种模式；
+- 新增日志时间线、异常聚类、证据台账、候选根因和验证工作流；
+- 新增 3 个日志分析模板；
+- 更新全局 Skill 调度、现有技术 Skill 组合边界、安装验证脚本和卸载脚本；
+- 完整包由 8 个 Skills 升级为 9 个 Skills，仍保留 7 个只读 Reviewer。
+
+## 三、自动验证结果
+
+执行命令：
 
 ```bash
 python3 scripts/validate-package.py
 ```
 
-## 二、验证范围
+结果：**通过，1 项环境限制警告，无验证错误。**
 
-本次校验覆盖：
-
-- `manifest.json` 版本、Skill、Reviewer 和质量上限；
-- 全局 `AGENTS.md` 受管标记、关键规则、Markdown 结构和文件大小；
-- 8 个 Skill 的目录、`SKILL.md`、YAML Frontmatter、描述和相对引用；
-- 8 个 `agents/openai.yaml` 的界面字段和隐式调用策略；
-- 7 个自定义 Reviewer TOML 的名称、描述、开发指令和只读沙箱；
-- 多 Agent 并发配置示例；
-- 12 个正式技术文档模板；
-- 10 个外部记忆与恢复模板；
-- 3 个多 Agent 复审模板；
-- Markdown 代码块和硬编码个人路径；
-- Shell 安装、验证和卸载脚本语法；
-- PowerShell 脚本静态结构；
-- `checkpoint.py` 的初始化、追加、校验、恢复、修复和归档；
-- Git 指纹漂移检测；
-- 用户级首次安装、重复升级、验证和卸载；
-- 仓库级 Skills 与 Reviewer 安装和卸载；
-- 对用户原有 `AGENTS.md`、第三方 Skills 和其他自定义 Agent 的保留。
-
-## 三、结构与内容校验
-
-| 校验项 | 实际结果 |
+| 验证项 | 结果 |
 |---|---|
-| Manifest | 版本 `3.0.0`，8 个 Skills，7 个 Reviewer，结构一致 |
-| 全局 `AGENTS.md` | 20,274 bytes，低于包内 24 KiB 校验上限 |
-| Skills | 8 个全部通过 |
-| 自定义 Reviewer | 7 个全部通过，均为 `read-only` |
-| Agent 配置示例 | TOML 解析通过，并发上限为 6 |
-| 正式文档模板 | 12 个齐全 |
-| 外部记忆模板 | 10 个齐全 |
-| 复审模板 | 3 个齐全 |
-| Markdown | 代码块闭合检查通过 |
-| 路径检查 | 未发现本包禁止的硬编码个人路径 |
+| Manifest | `3.1.0`，9 个 Skills，7 个 Reviewer，结构一致 |
+| 全局 `AGENTS.md` | 21,835 bytes，受管标记和关键规则通过 |
+| Skills | 9 个 `SKILL.md` Frontmatter、名称、描述和引用通过 |
+| Skill 元数据 | 9 个 `agents/openai.yaml` 存在并通过结构检查 |
+| 自定义 Reviewer | 7 个 TOML 通过，均保持 `read-only` |
+| 正式文档模板 | 12 个通过 |
+| 外部记忆模板 | 10 个通过 |
+| 复审模板 | 3 个通过 |
+| 日志分析模板 | 3 个通过 |
+| Markdown | 代码块闭合、相对引用和个人路径检查通过 |
+| Shell 脚本 | 5 个脚本语法检查通过 |
+| PowerShell 脚本 | 5 个脚本静态结构检查通过 |
+| 检查点工具 | `init / append / validate / recover / repair / archive` 实际运行通过 |
+| 用户级安装 | 首次安装、重复升级、验证、卸载实际运行通过 |
+| 仓库级安装 | Skills + Reviewer 安装和卸载实际运行通过 |
+| 第三方资源保护 | 安装和卸载未误删模拟的第三方 Skill 与 Agent |
 
-通过的 Skills：
+## 四、日志 Skill 专项检查
 
-```text
-data-middleware-ai-infrastructure
-engineering-quality-delivery
-java-backend-engineering
-long-running-task-memory
-multi-agent-independent-review
-python-backend-ai-engineering
-technical-document-writing
-vue-frontend-engineering
-```
-
-通过的只读 Reviewer：
+### 4.1 Skill 结构
 
 ```text
-cp_review_compatibility_regression
-cp_review_data_contract
-cp_review_functional_business
-cp_review_performance_resources
-cp_review_security_access
-cp_review_state_concurrency
-cp_review_test_delivery
+skills/log-observability-analysis/
+├── SKILL.md
+├── agents/openai.yaml
+├── references/log-observability-analysis-workflow.md
+└── assets/templates/
+    ├── LOG_ANALYSIS_REPORT.template.md
+    ├── LOG_TIMELINE.template.md
+    └── LOG_EVIDENCE_LEDGER.template.md
 ```
 
-## 四、检查点工具实际验证
+检查结果：
 
-`skills/long-running-task-memory/scripts/checkpoint.py` 已在临时 Git 仓库和仓库外记忆目录中完成实际运行验证。
+- `name` 为 `log-observability-analysis`；
+- `description` 前置包含日志分析、日志文件、容器/Pod、跨服务和生产只读等触发词；
+- `allow_implicit_invocation: true`；
+- 详细规则按渐进加载方式放入 `references/`；
+- 模板放入 `assets/`；
+- 未加入不必要的执行脚本，避免扩大权限和维护面。
 
-| 命令 | 验证内容 | 结果 |
-|---|---|---|
-| `init` | 初始化任务、计划、进度、复审和归档结构 | 通过 |
-| `append` | 追加检查点并刷新当前任务快照 | 通过 |
-| `validate` | 检查检查点 ID、状态版本和文档一致性 | 通过 |
-| `recover` | 输出当前快照和最近检查点 | 通过 |
-| `repair` | 模拟快照状态不一致后按最后检查点修复 | 通过 |
-| `archive` | 将超出热区限制的检查点归档并保留索引 | 通过 |
-| Git 指纹 | 修改测试仓库后使用严格模式识别状态漂移 | 通过 |
-| 锁与原子写入路径 | 由脚本逻辑及完整工作流自测覆盖 | 通过 |
+### 4.2 权限与模式边界
 
-自测还确认：
+已检查以下边界均存在：
 
-- 默认拒绝把外部任务记忆写入 Git 工作区；
-- `PROGRESS.md` 与 `CURRENT_TASK.md` 的最后检查点保持一致；
-- 当前快照损坏或未刷新时可以从最后检查点恢复；
-- 归档后活跃进度仍可继续追加和验证。
+- 静态文件模式不覆盖原文件；
+- 压缩包考虑路径穿越和解压膨胀；
+- 本地运行环境默认只读，重启和修改单独授权；
+- 远程非生产不因环境级别自动获得写权限；
+- 生产只读限制时间窗、行数、文件范围和查询成本；
+- 禁止无限 `tail -f`、无边界扫描、Redis `KEYS *` 和高消耗全表查询；
+- 禁止日志清理、配置修改、重启、部署、切流和数据写入；
+- 日志内容被视为待分析数据，不执行其中出现的命令和指令。
 
-## 五、安装、升级与卸载验证
+### 4.3 职责重叠控制
 
-### 5.1 用户级 Shell 流程
+已检查：
 
-在隔离临时 `HOME` 和 `CODEX_HOME` 中实际执行：
+- 日志 Skill 负责横向分析流程，不复制 Java、Python 和数据基础设施全部规则；
+- Java、Python 和数据基础设施 Skill 在日志为主要证据时组合调用日志 Skill；
+- 普通只读日志分析不自动触发完整代码交付流程；
+- 只有用户明确从分析切换到修复时，才组合 `engineering-quality-delivery`；
+- 普通单文件不机械多开 Agent；复杂跨服务任务才按来源或维度并行只读分析；
+- 长期排障按需组合 `long-running-task-memory`，一次性分析不机械建档。
 
-1. 首次安装；
-2. 安装后验证；
-3. 重复安装模拟原地升级；
-4. 检查全局受管区块没有重复；
-5. 检查用户原有 `AGENTS.md` 非受管内容仍保留；
-6. 检查第三方 Skill 和其他自定义 Agent 仍保留；
-7. 卸载本包；
-8. 检查仅移除本包受管内容。
+## 五、安装和升级验证
 
-结果：**全部通过**。
+Linux/WSL 模拟环境中已实际完成：
 
-### 5.2 仓库级 Shell 流程
+1. 保留用户原有 `AGENTS.md` 内容；
+2. 安装 9 个 Skills；
+3. 安装 7 个只读 Reviewer；
+4. 重复运行升级脚本；
+5. 确认受管区块没有重复插入；
+6. 验证安装结果；
+7. 卸载本包资源；
+8. 确认第三方 Skill、第三方 Agent 和用户原有规则仍保留；
+9. 确认新增日志 Skill能够被卸载脚本正确删除。
 
-在隔离临时 Git 仓库中实际执行：
+## 六、未完成的环境验证
 
-1. 安装仓库级 8 个 Skills；
-2. 使用选项安装 7 个仓库级 Reviewer；
-3. 检查第三方仓库资源保留；
-4. 卸载本包 Skills 和 Reviewer；
-5. 检查仅移除本包内容。
+当前环境没有 PowerShell，因此：
 
-结果：**全部通过**。
+- 已完成 PowerShell 脚本静态结构检查；
+- 未执行 Windows PowerShell 解析器检查；
+- 未在 Windows 本机实际执行安装、升级、验证和卸载。
 
-## 六、脚本校验
-
-### 6.1 Shell
-
-以下脚本均通过 `bash -n`：
-
-```text
-install-repo-skills.sh
-install-user.sh
-uninstall-repo-skills.sh
-uninstall-user.sh
-verify-user-install.sh
-```
-
-### 6.2 PowerShell
-
-以下脚本已完成静态结构检查：
-
-```text
-install-repo-skills.ps1
-install-user.ps1
-uninstall-repo-skills.ps1
-uninstall-user.ps1
-verify-user-install.ps1
-```
-
-当前生成环境没有 `pwsh` 或 Windows PowerShell，因此：
-
-- 未运行 PowerShell 官方解析器；
-- 未执行 Windows 原生用户目录安装；
-- 未执行 Windows 原生升级和卸载。
-
-这部分状态为：**静态检查通过，Windows 实机未验证**。
-
-用户在 Windows 安装后应执行：
+用户在 Windows 安装后，应执行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ".\scripts\verify-user-install.ps1"
 ```
 
-## 七、验证命令最终输出摘要
+并在 Codex 中运行：
 
 ```text
-[OK] manifest.json: version 3.0.0，8 Skills，7 Reviewer
-[OK] 全局 AGENTS.md: 20274 bytes
-[OK] 8 个 Skill
-[OK] 7 个只读 Reviewer
-[OK] 12 个正式文档模板
-[OK] 10 个外部记忆模板
-[OK] 3 个复审模板
-[OK] Markdown 代码块与个人路径检查
-[OK] Shell 脚本语法
-[OK] PowerShell 静态结构
-[OK] checkpoint.py: init / append / validate / recover / repair / archive
-[OK] Shell 用户级首次安装 / 重复升级 / 验证 / 卸载
-[OK] Shell 仓库级 Skills + Reviewer 安装 / 卸载
-[WARN] 当前环境没有 PowerShell；未执行 Windows PowerShell 解析器和实机安装
-验证通过
+/skills
 ```
 
-## 八、最终结论
+确认显示 `log-observability-analysis`。若未刷新，应重启 Codex。
 
-**v3.0 包结构、Skill 内容、只读 Reviewer、持续检查点工具、Shell 安装升级流程和仓库级安装卸载流程已通过实际验证。**
+## 七、结论
 
-当前唯一环境限制是未在 Windows PowerShell 中执行实机验证。因此不能将 PowerShell 状态表述为已经在 Windows 运行通过；Windows 用户应在本机安装后运行验证脚本，并以本机输出为准。
+**v3.1 包结构、9 个 Skills、7 个只读 Reviewer、日志分析工作流、模板、持续检查点工具、Shell 安装升级流程和仓库级安装卸载流程均通过当前环境验证。**
+
+Windows PowerShell 实机安装属于未验证项，已明确保留，不表述为通过。

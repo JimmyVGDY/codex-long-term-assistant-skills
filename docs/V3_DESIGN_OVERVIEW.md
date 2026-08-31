@@ -1,4 +1,4 @@
-# v3.0 设计说明：持续外部记忆与多 Agent 独立复审
+# v3.0 基础设计说明：持续外部记忆与多 Agent 独立复审
 
 ## 一、升级目标
 
@@ -313,3 +313,8 @@ HOT_PROGRESS_CHECKPOINT_LIMIT = 30
 - 不能为了达到 Reviewer 数量而重复审查；
 - 达到上限后必须停止自动循环并如实报告；
 - 外部任务文档不得进入项目仓库、Git 或项目 `CHANGELOG`。
+
+
+---
+
+> v3.1 新增日志与可观测性分析设计，参见 `V3_1_LOG_ANALYSIS_DESIGN.md`。

@@ -1,17 +1,37 @@
-# Codex 跨项目长期技术助手 Skills 安装包 v3.0
+# Codex 跨项目长期技术助手 Skills 安装包 v3.1
 
-本包把跨项目工程规则安装为 Codex 原生 Skills、全局 `AGENTS.md` 受管规则和只读自定义 Reviewer。v3.0 重点解决两类长期任务问题：
+本包把跨项目工程规则安装为 Codex 原生 Skills、全局 `AGENTS.md` 受管规则和只读自定义 Reviewer。v3.1 在 v3.0 的持续记忆和多 Agent 复审基础上，新增独立的日志与可观测性分析能力。
 
-1. **多 Agent 独立复审**：在条件允许时并行启用不同专业 Reviewer，先集中发现问题，再统一归因和集中修复，尽量减少反复回炉；
-2. **持续外部记忆**：把对话上下文视为短期缓存，每完成一个可恢复小节点就持久化任务快照和进度，降低上下文压缩、会话中断和 Agent 切换造成的状态丢失。
+1. **日志与可观测性分析**：覆盖本地日志文件、运行环境、容器/Pod、远程非生产和生产只读日志，统一时间线、证据链和根因验证；
+2. **多 Agent 独立复审**：在条件允许时并行启用不同专业 Reviewer，先集中发现问题，再统一归因和集中修复，尽量减少反复回炉；
+3. **持续外部记忆**：把对话上下文视为短期缓存，每完成一个可恢复小节点就持久化任务快照和进度，降低上下文压缩、会话中断和 Agent 切换造成的状态丢失。
 
 安装脚本默认保留用户已有规则、第三方 Skills 和其他自定义 Agent，不修改 `config.toml`，不执行 Git、部署、重启或生产写操作。
 
 ---
 
-## 一、v3.0 核心变化
+## 一、v3.1 核心变化
 
-### 1.1 新增多 Agent 独立复审 Skill
+### 1.1 新增日志与可观测性分析 Skill
+
+新增：
+
+```text
+$log-observability-analysis
+```
+
+覆盖四种模式：
+
+1. 静态本地/上传日志文件；
+2. 本地运行环境；
+3. 远程非生产只读；
+4. 生产只读。
+
+主要能力包括日志清单、时区统一、异常聚类、跨服务时间线、trace/request/task ID 关联、证据分级、候选根因、验证步骤、敏感信息脱敏和大文件资源控制。日志分析不自动获得代码修改、清理、重启、部署或生产写权限。
+
+提供 3 个模板：日志分析报告、事件时间线和证据台账。
+
+### 1.2 多 Agent 独立复审 Skill
 
 新增：
 
@@ -49,7 +69,7 @@ MAX_REPAIR_ROUNDS = 3
 
 达到任一上限后停止自动循环，保留阻塞项和未验证项，不得为了结束流程伪称通过。
 
-### 1.2 新增 7 个只读专业 Reviewer
+### 1.3 7 个只读专业 Reviewer
 
 | Reviewer | 主要职责 |
 |---|---|
@@ -63,7 +83,7 @@ MAX_REPAIR_ROUNDS = 3
 
 这些 Reviewer 均配置为 `read-only`，不修改文件、不提交、不推送、不部署、不重启、不写数据，也不继续派生其他 Agent。
 
-### 1.3 长期任务记忆改为持续检查点
+### 1.4 长期任务记忆持续检查点
 
 启用 `$long-running-task-memory` 后：
 
@@ -76,7 +96,7 @@ MAX_REPAIR_ROUNDS = 3
 - 活跃进度建议控制在 30 个检查点以内，旧记录归档到 `archive/`；
 - Codex Memories / Chronicle 仅作为辅助召回，不替代确定性任务文档。
 
-### 1.4 新增检查点辅助脚本
+### 1.5 检查点辅助脚本
 
 ```text
 skills/long-running-task-memory/scripts/checkpoint.py
@@ -98,7 +118,7 @@ skills/long-running-task-memory/scripts/checkpoint.py
 ## 二、安装包结构
 
 ```text
-Codex跨项目长期技术助手Skills安装包_v3.0_持续记忆与多Agent复审版/
+Codex跨项目长期技术助手Skills安装包_v3.1_日志与可观测性分析增强版/
 ├── global/
 │   └── AGENTS.md
 ├── skills/
@@ -106,6 +126,7 @@ Codex跨项目长期技术助手Skills安装包_v3.0_持续记忆与多Agent复�
 │   ├── python-backend-ai-engineering/
 │   ├── vue-frontend-engineering/
 │   ├── data-middleware-ai-infrastructure/
+│   ├── log-observability-analysis/
 │   ├── engineering-quality-delivery/
 │   ├── multi-agent-independent-review/
 │   ├── technical-document-writing/
@@ -152,6 +173,7 @@ Skills         $HOME/.agents/skills/<skill-name>/
 | `$python-backend-ai-engineering` | Python Web、异步、多进程、Celery、AI、RAG、GPU Worker |
 | `$vue-frontend-engineering` | Vue、路由、状态、请求竞态、SSE、WebSocket、构建 |
 | `$data-middleware-ai-infrastructure` | SQL、Redis、MQ、ES、文件、对象存储、RAG、Docker、K8s |
+| `$log-observability-analysis` | 本地/上传日志、异常堆栈、容器/Pod、跨服务时间线、生产只读日志 |
 | `$engineering-quality-delivery` | 修改、测试、最低定向验证、Git、部署、生产安全 |
 | `$multi-agent-independent-review` | 多 Reviewer 独立复审、六维审查、集中归因和最少有效修复轮次 |
 | `$technical-document-writing` | 技术方案、架构、接口、数据库、部署、报告和 Markdown 重构 |
@@ -161,9 +183,35 @@ Skills 会按描述自动匹配；高风险任务建议用 `$skill-name` 显式�
 
 ---
 
-## 四、Windows 用户级安装
+## 四、日志分析使用示例
 
-### 4.1 完整解压
+### 本地日志文件
+
+```text
+使用 $log-observability-analysis。
+分析当前目录中的应用日志和压缩日志包，先确认时区、文件范围和完整性，
+建立异常聚类和时间线；不要覆盖原文件，输出时脱敏。
+```
+
+### 生产只读日志
+
+```text
+使用 $log-observability-analysis 和对应技术栈 Skill。
+仅在生产执行只读日志、监控和低风险状态分析，限制时间窗口和行数。
+禁止修改、清理、重启、部署、切流和任何数据写操作。
+```
+
+### 跨服务长期排障
+
+```text
+使用 $log-observability-analysis 和 $long-running-task-memory。
+按服务和组件并行只读分析，由主 Agent 统一时区、归并时间线和证据台账；
+每完成一个可恢复节点更新 CURRENT_TASK.md 和 PROGRESS.md。
+```
+
+## 五、Windows 用户级安装
+
+### 5.1 完整解压
 
 不要直接在压缩包预览窗口中运行脚本。进入解压后的安装包根目录，确认能看到：
 
@@ -176,7 +224,7 @@ skills
 scripts
 ```
 
-### 4.2 安装全部组件
+### 5.2 安装全部组件
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ".\scripts\install-user.ps1"
@@ -185,12 +233,12 @@ powershell -ExecutionPolicy Bypass -File ".\scripts\install-user.ps1"
 默认安装：
 
 - 全局 `AGENTS.md` 受管区块；
-- 8 个用户级 Skills；
+- 9 个用户级 Skills；
 - 7 个用户级只读 Reviewer。
 
 升级 v1 / v2 不需要先卸载。脚本会备份同名旧文件并更新本包管理的内容。
 
-### 4.3 分组件安装
+### 5.3 分组件安装
 
 仅安装 Skills：
 
@@ -220,13 +268,13 @@ powershell -ExecutionPolicy Bypass -File ".\scripts\install-user.ps1" `
 
 正常升级不要使用 `-ForceReplaceGlobal`。
 
-### 4.4 验证
+### 5.4 验证
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ".\scripts\verify-user-install.ps1"
 ```
 
-### 4.5 卸载本包
+### 5.5 卸载本包
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ".\scripts\uninstall-user.ps1"
@@ -236,7 +284,7 @@ powershell -ExecutionPolicy Bypass -File ".\scripts\uninstall-user.ps1"
 
 ---
 
-## 五、WSL / Linux 用户级安装
+## 六、WSL / Linux 用户级安装
 
 ```bash
 chmod +x scripts/*.sh scripts/validate-package.py
@@ -262,7 +310,7 @@ Windows 原生 Codex 与 WSL 中的 Codex 通常使用不同的 `$HOME`。在哪
 
 ---
 
-## 六、安装到单个仓库
+## 七、安装到单个仓库
 
 仅安装仓库级 Skills：
 
@@ -290,7 +338,7 @@ WSL / Linux：
 
 ---
 
-## 七、可选多 Agent 配置
+## 八、可选多 Agent 配置
 
 安装脚本不会修改 `config.toml`。需要显式限制并发时，可参考：
 
@@ -310,9 +358,9 @@ max_concurrent_threads_per_session = 6
 
 ---
 
-## 八、典型使用方式
+## 九、典型使用方式
 
-### 8.1 Java 修复、持续检查点和多 Agent 复审
+### 9.1 Java 修复、持续检查点和多 Agent 复审
 
 ```text
 使用 $java-backend-engineering、$engineering-quality-delivery、
@@ -324,7 +372,7 @@ CURRENT_TASK.md 和 PROGRESS.md。相关定向测试完成后，根据风险并�
 统一归因后集中修复，最多 3 轮。更新 CHANGELOG，创建本地提交但不要推送。
 ```
 
-### 8.2 只读多 Agent 复审
+### 9.2 只读多 Agent 复审
 
 ```text
 使用 $multi-agent-independent-review。
@@ -334,7 +382,7 @@ CURRENT_TASK.md 和 PROGRESS.md。相关定向测试完成后，根据风险并�
 根因聚类和分级。不要修改文件、提交、推送、部署或重启。
 ```
 
-### 8.3 跨会话大型改造
+### 9.3 跨会话大型改造
 
 ```text
 使用 $long-running-task-memory、$engineering-quality-delivery
@@ -349,7 +397,7 @@ CURRENT_TASK.md 和 PROGRESS.md。相关定向测试完成后，根据风险并�
 
 ---
 
-## 九、检查点辅助脚本示例
+## 十、检查点辅助脚本示例
 
 初始化外部记忆目录：
 
@@ -393,7 +441,7 @@ python3 skills/long-running-task-memory/scripts/checkpoint.py recover \
 
 ---
 
-## 十、包结构校验
+## 十一、包结构校验
 
 安装前可执行：
 
@@ -407,21 +455,21 @@ python3 ./scripts/validate-package.py
 
 校验覆盖：
 
-- `manifest.json` 与 8 个 Skills；
+- `manifest.json` 与 9 个 Skills；
 - Skill Frontmatter、`agents/openai.yaml` 和相对引用；
 - 7 个自定义 Agent 的 TOML、只读沙箱和必需字段；
 - 全局 `AGENTS.md` 受管标记、关键规则和大小；
-- 12 个正式文档模板、10 个外部记忆模板和 3 个复审模板；
+- 12 个正式文档模板、10 个外部记忆模板、3 个复审模板和 3 个日志分析模板；
 - 检查点脚本的初始化、追加、校验、恢复、修复、归档和 Git 指纹保护；
 - Shell 脚本语法；
 - PowerShell 可用时执行解析器检查，不可用时执行静态结构检查；
 - Markdown 代码块、硬编码个人路径和包结构。
 
-实际验证结果见 `docs/VALIDATION_REPORT.md`；设计原理和执行边界见 `docs/V3_DESIGN_OVERVIEW.md`。
+实际验证结果见 `docs/VALIDATION_REPORT.md`；v3.0 基础设计见 `docs/V3_DESIGN_OVERVIEW.md`，日志分析设计见 `docs/V3_1_LOG_ANALYSIS_DESIGN.md`。
 
 ---
 
-## 十一、安全与边界
+## 十二、安全与边界
 
 - 默认合并全局受管区块，不覆盖其他个人或公司规则；
 - 安装、升级和卸载前默认备份；
