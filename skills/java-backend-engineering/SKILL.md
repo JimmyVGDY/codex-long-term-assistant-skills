@@ -6,24 +6,17 @@ description: >-
 
 # Java 后端工程技能
 
-## 使用范围
+## 执行原则
 
-用于 Java 业务后端、传统 Java 老系统、Spring Boot / Spring Cloud、MyBatis / JPA、并发、事务、JVM、SSE、文件和 Java 与 Python 混合服务边界。
-
-## 执行步骤
-
-1. 开始实质分析或修改前，读取 `references/java-backend-rules.md`。
-2. 从 `pom.xml`、Gradle、Dockerfile、CI、启动日志和运行环境确认 Java、Spring、Servlet、依赖和构建版本。
-3. 阅读目标代码完整上下文、上游调用、下游依赖、配置、数据库和相关测试；不得仅凭局部代码猜测业务。
-4. 只使用当前版本支持的语言和 API；Java 8 项目禁止引入 Java 9+ 语法或字节码。
-5. 金额使用 `BigDecimal`，明确精度和舍入；普通循环优先传统 `for`，避免难调试的复杂 Stream。
-6. 主动检查事务失效、连接池、线程池、幂等、资源释放、序列化兼容、权限、安全和性能高频路径。
-7. 修改、测试、复审、提交或交付时，同时使用 `$engineering-quality-delivery`。
-8. 涉及数据库、Redis、MQ、搜索、文件、RAG、GPU 或基础设施时，同时使用 `$data-middleware-ai-infrastructure`。
-9. 任务以日志文件、异常堆栈、GC、线程、容器或跨服务时间线为主要证据时，同时使用 `$log-observability-analysis`。
+1. 先读取 `references/java-backend-rules.md` 索引，只加载当前问题需要的分片。
+2. 从构建文件、容器、CI、启动日志和运行环境确认 Java、Spring、Servlet/Jakarta、依赖和构建版本。
+3. 阅读目标代码完整上下文、调用链、配置、数据和相关测试；不得基于局部代码猜测业务。
+4. Java 8 项目禁止 Java 9+ 语法/API；金额使用 `BigDecimal`，普通循环优先清晰的传统 `for`。
+5. 主动检查事务失效、连接池、线程池、幂等、资源释放、序列化、权限、安全和高频路径性能。
+6. 修改运行行为时组合 `$engineering-quality-delivery`；涉及数据/缓存/MQ/存储/容器时组合 `$data-middleware-ai-infrastructure`；以日志和指标为主要证据时组合 `$log-observability-analysis`。
 
 ## 边界
 
-- 不把现代 Spring Boot 3.x / Jakarta 写法套入 Java 8、`javax.*` 或 Struts2 老项目。
-- 不默认 Java 必须是业务中心，也不默认 Java 项目必须拆微服务。
-- 不因技能激活而扩大修改、Git 或环境操作授权。
+- 不把 Boot 3/Jakarta 写法套入 Java 8、`javax.*` 或 Struts2 老项目。
+- 不默认 Java 必须是业务中心，也不因激活本技能自动拆微服务。
+- Skill 不扩大修改、Git、部署和生产授权。
