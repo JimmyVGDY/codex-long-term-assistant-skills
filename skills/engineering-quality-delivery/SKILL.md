@@ -1,38 +1,34 @@
 ---
 name: engineering-quality-delivery
 description: >-
-  代码或配置修改、Bug 修复、优化、测试、最低定向验证、对抗性验证、Git 提交、CHANGELOG、部署、重启、灰度、回滚或生产操作任务时使用。涉及独立复审或多 Agent 审查时组合 multi-agent-independent-review；只读简单解释通常不需要。
+  代码、脚本、迁移或逻辑配置发生行为变化，或任务涉及测试、Git、CHANGELOG、部署、重启、灰度、回滚和生产操作时使用。只读解释、无行为变化文字修改和普通文档排版通常不触发；多 Agent 复审仅按风险组合。
 ---
 
 # 研发质量与安全交付技能
 
-## 使用范围
+## 必读与执行档位
 
-用于会改变运行行为的代码、脚本、Worker、调度、导出、迁移和逻辑配置，以及测试、Git、部署、重启、灰度、回滚和生产操作。
+1. 先读取 `references/engineering-quality-delivery-workflow.md` 索引。
+2. 从 `references/execution-profiles-and-phases.md` 选择 `LIGHT / STANDARD / STRICT`，不得因为本技能被激活就机械执行最重流程。
+3. 非简单任务使用 `references/task-execution-envelope.md` 记录目标、授权、Skill、门禁、停止条件和阶段。
+4. 修改后按 `references/evidence-fingerprint-protocol.md` 记录验证和复审证据；代码或差异变化后旧证据必须标记为 `stale`。
 
 ## 强制流程
 
-1. 开始实施前读取 `references/engineering-quality-delivery-workflow.md`。
-2. 确认项目、分支、基线、目标、非目标、允许范围、禁止范围、验收标准和独立授权。
-3. 修改前阅读完整调用链和契约；高风险公共 API、迁移、权限、核心状态机、跨服务和生产方案先组合 `$multi-agent-independent-review` 完成实施前设计与影响门禁；再做当前功能边界的最小充分改动。
-4. 修改后完成与改动直接相关的最低定向验证，不得只静态阅读后提交。
-5. 真实代码或可执行行为发生变化并完成最低验证后，根据风险组合 `$multi-agent-independent-review` 执行实施后独立复审；实施前与实施后是不同门禁，不得用前者替代后者。
-6. 复审后如再修改，重新执行受影响验证和受影响范围复核。
-7. 按项目规范更新正式文档或 CHANGELOG；需要技术方案、设计、报告或文档重构时组合 `$technical-document-writing`。
-8. 随后检查 `git status`、`git diff`、敏感信息、无关改动和提交边界。
-9. 提交、推送、部署、重启、数据写入和功能生效分别报告，任何前一步授权都不自动包含后一步。
-10. 失败、受阻、未验证和遗留风险必须明确保留。
+1. 确认项目、分支、基线、目标、非目标、授权、验收和停止条件。
+2. 高风险公共契约、迁移、权限、核心状态机、跨服务和生产方案，在编码前按需组合 `$multi-agent-independent-review` 完成一次实施前门禁。
+3. 做当前功能边界的最小充分修改，并执行与改动直接相关的最低定向验证。
+4. 实施后独立复审只在真实行为改动且风险需要时触发；低风险、无行为变化或只读任务不得机械多开 Reviewer。
+5. 复审后再修改时，受影响验证和复核自动失效并重新执行。
+6. Git 提交、推送、部署、重启、数据写入和功能生效分别授权、分别报告。
 
-## 生产边界
+## 工具
 
-- 生产环境默认只读；写操作必须具有当前任务明确、具体的授权。
-- 高风险命令、数据库更新、缓存清理、队列重放、全实例重启和切流必须具备备份、停止和回滚条件。
-- 命令成功、制品上传、服务重启、新版本加载、健康检查和业务生效是不同状态，不得混为一谈。
+- 执行信封与证据指纹：`scripts/execution_guard.py`
+- 模板：`assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml`
 
-## 与其他技能组合
+## 组合边界
 
-- 根据技术栈组合 Java、Python、Vue 或数据基础设施技能，不无条件加载全部技能。
-- 纯只读日志分析优先使用 `$log-observability-analysis`，不因读取生产日志自动进入修改、Git 或部署流程；只有明确转入修复或环境写操作时才执行本技能的完整交付门禁。
-- 独立复审、多 Agent 六维审查和最少有效修复轮次使用 `$multi-agent-independent-review`。
-- 正式技术文档使用 `$technical-document-writing`；CHANGELOG、验证记录和提交边界仍由本技能负责。
-- 跨会话、长任务、复审轮次和持续检查点使用 `$long-running-task-memory`，不得混入项目正式文档。
+- 应用机制组合 Java、Python、`frontend-engineering` 或数据基础设施 Skill，不无条件加载全部。
+- 只读可观测性分析优先 `$log-observability-analysis`；明确转入修复后才执行本技能交付门禁。
+- 正式文档组合 `$technical-document-writing`；跨会话或多节点任务组合 `$long-running-task-memory`。

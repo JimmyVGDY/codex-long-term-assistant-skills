@@ -1,0 +1,42 @@
+schema_version: 1
+task_id: TASK-YYYYMMDD-001
+title: ""
+project:
+  name: ""
+  repo_path: ""
+  branch: ""
+  baseline_commit: ""
+execution:
+  mode: analysis  # analysis | local-modification | nonproduction | production
+  profile: STANDARD  # LIGHT | STANDARD | STRICT
+  phase: IDENTIFY
+  risk_level: medium
+skills:
+  primary: ""
+  supporting: []
+  deferred: []
+authorization:
+  modify_files: false
+  create_commit: false
+  push: false
+  deploy: false
+  restart: false
+  database_write: false
+  cache_or_mq_write: false
+scope:
+  goals: []
+  non_goals: []
+  allowed_paths: []
+  forbidden_paths: []
+gates:
+  required: []
+  completed: []
+stop_conditions: []
+rollback_conditions: []
+acceptance_criteria: []
+evidence:
+  repo_fingerprint: ""
+  validations: []
+  reviews: []
+  stale_items: []
+next_action: ""
