@@ -188,7 +188,13 @@ class OwnerTokenLock:
                     if time.time() - self.path.stat().st_mtime > self.stale:
                         current = json.loads(self.path.read_text(encoding="utf-8"))
                         stale_token = current.get("token")
-                        if stale_token:
+                        owner_pid = int(current.get("pid") or 0)
+                        # A slow but live writer must never lose its lock merely
+                        # because the wall-clock stale threshold elapsed.
+                        if stale_token and owner_pid > 0 and not _pid_is_alive(owner_pid):
+                            confirmed = json.loads(self.path.read_text(encoding="utf-8"))
+                            if confirmed.get("token") != stale_token:
+                                continue
                             self.path.unlink(missing_ok=True)
                             continue
                 except (OSError, ValueError, json.JSONDecodeError):
@@ -244,9 +250,34 @@ def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] =
         return envelope
 
 
-def verify_event_chain(path: Path, hmac_key: Optional[str] = None) -> Dict[str, Any]:
+def _pid_is_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    if pid == os.getpid():
+        return True
+    if os.name == "nt":
+        try:
+            import ctypes
+            handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
+            if handle:
+                ctypes.windll.kernel32.CloseHandle(handle)
+                return True
+            return False
+        except Exception:
+            return True  # inability to prove death is fail-closed
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def verify_event_chain(path: Path, hmac_key: Optional[str] = None, allow_duplicate_ids: bool = False) -> Dict[str, Any]:
     previous = ZERO_HASH
     count = 0
+    duplicate_count = 0
     seen = set()
     for number, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
@@ -261,7 +292,9 @@ def verify_event_chain(path: Path, hmac_key: Optional[str] = None) -> Dict[str, 
             raise EventContractError("第 %d 行 record_hash 不一致" % number)
         event_id = obj.get("event_id")
         if event_id in seen:
-            raise EventContractError("event_id 重复: %s" % event_id)
+            duplicate_count += 1
+            if not allow_duplicate_ids:
+                raise EventContractError("event_id 重复: %s" % event_id)
         seen.add(event_id)
         if hmac_key:
             signature = obj.get("record_hmac_sha256")
@@ -271,7 +304,7 @@ def verify_event_chain(path: Path, hmac_key: Optional[str] = None) -> Dict[str, 
                 raise EventContractError("第 %d 行 HMAC 不一致" % number)
         previous = record_hash
         count += 1
-    return {"ok": True, "record_count": count, "head_hash": previous}
+    return {"ok": True, "record_count": count, "head_hash": previous, "duplicate_event_id_count": duplicate_count}
 
 
 def aggregate_by_task(events: Iterable[Mapping[str, Any]], project_id: str, repo_fingerprint: str) -> Dict[str, Dict[str, Any]]:

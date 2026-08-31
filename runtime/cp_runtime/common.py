@@ -154,6 +154,12 @@ def require_external_state(path: Path, repo: Path, allow_inside_repo: bool = Fal
 
 def resolve_codex_home() -> Path:
     configured = os.environ.get("CODEX_HOME")
+    if configured and os.name == "nt":
+        match = re.match(r"^/mnt/([A-Za-z])(?:/(.*))?$", configured.strip().replace("\\", "/"))
+        if match:
+            drive = match.group(1).upper()
+            rest = (match.group(2) or "").replace("/", "\\")
+            configured = drive + ":\\" + rest if rest else drive + ":\\"
     return Path(configured).expanduser().resolve() if configured else (Path.home() / ".codex").resolve()
 
 

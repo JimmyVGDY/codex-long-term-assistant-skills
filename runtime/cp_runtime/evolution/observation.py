@@ -1,6 +1,7 @@
 """从项目上下文中的结构化执行记录生成自观察快照。"""
 from __future__ import annotations
 
+import json
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -291,7 +292,29 @@ def _expected_repo_fingerprint(project_dir: Path) -> Optional[str]:
         return None
 
 
-def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, project_dir: Path) -> Tuple[List[JsonLineRecord], int, int]:
+def _with_hashed_v2_session_ids(source: Path, rows: Sequence[JsonLineRecord]) -> List[JsonLineRecord]:
+    """恢复仅用于分组的 session 稳定代号，绝不把原 session_id 写入快照或日志。"""
+    raw_by_line: Dict[int, Mapping[str, Any]] = {}
+    for number, line in enumerate(source.read_text(encoding="utf-8").splitlines(), 1):
+        if line.strip():
+            try:
+                raw_by_line[number] = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+    restored: List[JsonLineRecord] = []
+    for row in rows:
+        raw = raw_by_line.get(row.line_number, {})
+        session_id = str(raw.get("session_id", "")).strip() if isinstance(raw, Mapping) else ""
+        if str(row.payload.get("schema_version", "")) == "2.0" and session_id:
+            payload = dict(row.payload)
+            payload["session_id"] = "session-" + sha256_hex(session_id)[:16]
+            restored.append(JsonLineRecord(row.relative_path, row.line_number, payload, row.raw_hash))
+        else:
+            restored.append(row)
+    return restored
+
+
+def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, project_dir: Path) -> Tuple[List[JsonLineRecord], int, int, Mapping[str, Any]]:
     """V6：严格项目隔离、event_id 去重，并将生命周期事件按 task_id 折叠。"""
     expected_fp = _expected_repo_fingerprint(project_dir)
     observed_fp: Optional[str] = expected_fp
@@ -300,6 +323,7 @@ def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, 
     seen_event_ids: Set[str] = set()
     raw_v2 = 0
     duplicate_v2 = 0
+    binding_count = 0
     for row in rows:
         payload = row.payload
         row_project = _first_text(payload, ("project_id",))
@@ -317,6 +341,7 @@ def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, 
             observed_fp = repo_fp
         if repo_fp != observed_fp:
             raise ObservationError("检测到跨仓库事件：%s != %s" % (repo_fp, observed_fp))
+        binding_count += 1
         event_id = str(payload.get("event_id"))
         if event_id in seen_event_ids:
             duplicate_v2 += 1
@@ -324,14 +349,55 @@ def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, 
         seen_event_ids.add(event_id)
         events.append(row)
 
-    grouped: DefaultDict[str, List[JsonLineRecord]] = defaultdict(list)
+    grouped: DefaultDict[Tuple[str, str], List[JsonLineRecord]] = defaultdict(list)
     for row in events:
         payload = row.payload
         task_id = _extract_task_id(payload) or _first_text(payload, ("turn_id", "session_id")) or str(payload.get("event_id"))
-        grouped[task_id].append(row)
+        session_id = str(payload.get("session_id", "")).strip()
+        grouped[(session_id, task_id)].append(row)
 
     collapsed: List[JsonLineRecord] = []
-    for task_id, group in sorted(grouped.items()):
+    missing_events: Counter[str] = Counter()
+    out_of_order = 0
+    session_events: DefaultDict[str, List[str]] = defaultdict(list)
+    session_tasks: DefaultDict[str, Set[str]] = defaultdict(set)
+    task_sessions: DefaultDict[str, Set[str]] = defaultdict(set)
+    complete_tasks = 0
+    substantive_task_count = 0
+    duplicate_event_count = 0
+    for row in events:
+        payload = row.payload
+        event_type = str(payload.get("event_type", "")).upper()
+        session_id = str(payload.get("session_id", "")).strip()
+        task_id = _extract_task_id(payload) or _first_text(payload, ("turn_id",))
+        if session_id:
+            session_events[session_id].append(event_type)
+            if task_id and event_type != "SESSION_ENDED":
+                session_tasks[session_id].add(task_id)
+                task_sessions[task_id].add(session_id)
+    for (_group_session_id, task_id), group in sorted(grouped.items()):
+        event_types = [str(row.payload.get("event_type", "")).upper() for row in group]
+        event_type_set = set(event_types)
+        if event_type_set <= {"SESSION_ENDED"}:
+            continue
+        substantive_task_count += 1
+        if event_type_set & {"TURN_OPENED", "TASK_COMPLETED"}:
+            required = {"TURN_OPENED", "TASK_COMPLETED"}
+            if event_type_set & {"SUBAGENT_STARTED", "SUBAGENT_STOPPED"}:
+                required.update(("SUBAGENT_STARTED", "SUBAGENT_STOPPED"))
+        elif event_type_set & {"SUBAGENT_STARTED", "SUBAGENT_STOPPED"}:
+            required = {"SUBAGENT_STARTED", "SUBAGENT_STOPPED"}
+        else:
+            required = set()
+        complete_tasks += int(required.issubset(event_types))
+        for missing in sorted(required - set(event_types)):
+            missing_events[missing] += 1
+        counts = Counter(event_types)
+        duplicate_event_count += sum(max(0, count - 1) for count in counts.values())
+        positions = {event_type: index for index, event_type in enumerate(event_types)}
+        ordered = [positions[name] for name in ("TURN_OPENED", "SUBAGENT_STARTED", "SUBAGENT_STOPPED", "TASK_COMPLETED") if name in positions]
+        if ordered != sorted(ordered):
+            out_of_order += 1
         terminal = None
         for row in group:
             if str(row.payload.get("event_type", "")).upper() == "TASK_COMPLETED":
@@ -349,7 +415,29 @@ def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, 
                     merged[key] = terminal.payload[key]
         raw_hash = sha256_hex(canonical_json(merged))
         collapsed.append(JsonLineRecord(relative_path=base.relative_path, line_number=base.line_number, payload=merged, raw_hash=raw_hash))
-    return legacy + collapsed, raw_v2, duplicate_v2
+    sessions_with_end = sum(1 for types in session_events.values() if "SESSION_ENDED" in types)
+    task_session_conflicts = sum(1 for sessions in task_sessions.values() if len(sessions) > 1)
+    missing_session_bindings = sum(
+        1
+        for row in events
+        if not str(row.payload.get("session_id", "")).strip()
+        and str(row.payload.get("event_type", "")).upper() != "SESSION_ENDED"
+    )
+    diagnostics = {
+        "v2_task_count": substantive_task_count, "lifecycle_complete_task_count": complete_tasks,
+        "lifecycle_completeness_rate": (float(complete_tasks) / substantive_task_count) if substantive_task_count else 0.0,
+        "missing_event_categories": dict(sorted(missing_events.items())), "out_of_order_task_count": out_of_order,
+        "duplicate_event_count": duplicate_event_count,
+        "session_count": len(session_events), "sessions_with_end_count": sessions_with_end,
+        "session_end_coverage": (float(sessions_with_end) / len(session_events)) if session_events else 0.0,
+        "cross_task_session_leakage_count": task_session_conflicts,
+        "cross_session_task_leakage_count": missing_session_bindings,
+        "task_session_conflict_count": task_session_conflicts,
+        "missing_session_binding_count": missing_session_bindings,
+        "multi_task_session_count": sum(1 for tasks in session_tasks.values() if len(tasks) > 1),
+        "project_repo_binding_coverage": (float(binding_count) / raw_v2) if raw_v2 else 0.0,
+    }
+    return legacy + collapsed, raw_v2, duplicate_v2, diagnostics
 
 
 def observe_project(
@@ -374,11 +462,14 @@ def observe_project(
             max_bytes=policy.max_source_file_bytes,
             max_records=policy.max_record_count,
         )
+        rows = _with_hashed_v2_session_ids(source, rows)
         # V6 Hook 事件采用独立 hash-chain/HMAC 合同；任何链路损坏都失败关闭。
         if rows and all(str(row.payload.get("schema_version", "")) == "2.0" and row.payload.get("event_id") for row in rows):
             try:
                 import os
-                verify_event_chain(source, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
+                chain_result = verify_event_chain(source, os.environ.get("CP_ASSISTANT_HMAC_KEY"), allow_duplicate_ids=True)
+                if chain_result.get("duplicate_event_id_count"):
+                    warnings.append("TaskOutcomeEvent V2 检测到重复 event_id，完整链验证后按 event_id 去重")
             except EventContractError as exc:
                 raise ObservationError("TaskOutcomeEvent V2 完整性校验失败: %s" % exc) from exc
         all_rows.extend(rows)
@@ -386,9 +477,17 @@ def observe_project(
             raise ObservationError("全部数据源记录总数超过策略上限")
 
     raw_record_count = len(all_rows)
-    all_rows, raw_v2_event_count, duplicate_v2_event_count = _validate_and_aggregate_v2(all_rows, project_id, project_dir)
+    all_rows, raw_v2_event_count, duplicate_v2_event_count, v2_diagnostics = _validate_and_aggregate_v2(all_rows, project_id, project_dir)
     if duplicate_v2_event_count:
         warnings.append("%d 条重复 event_id 已在聚合前去重" % duplicate_v2_event_count)
+    if v2_diagnostics["missing_event_categories"]:
+        warnings.append("生命周期缺失事件：%s" % v2_diagnostics["missing_event_categories"])
+    if v2_diagnostics["out_of_order_task_count"]:
+        warnings.append("%d 个任务的生命周期事件乱序" % v2_diagnostics["out_of_order_task_count"])
+    if v2_diagnostics["duplicate_event_count"]:
+        warnings.append("%d 个同任务同类型生命周期事件重复" % v2_diagnostics["duplicate_event_count"])
+    if v2_diagnostics["cross_task_session_leakage_count"] or v2_diagnostics["cross_session_task_leakage_count"]:
+        warnings.append("检测到跨任务/跨 session 串线：task->session=%d，session->task=%d" % (v2_diagnostics["cross_task_session_leakage_count"], v2_diagnostics["cross_session_task_leakage_count"]))
 
     task_ids: Set[str] = set()
     timestamps: List[datetime] = []
@@ -399,6 +498,7 @@ def observe_project(
     routing_known_count = 0
     model_escalation_count = 0
     model_comparison_count = 0
+    actual_model_count = 0
     repair_rounds: List[int] = []
     high_repair_count = 0
     failure_counter: Counter[str] = Counter()
@@ -455,6 +555,8 @@ def observe_project(
                 model_escalation_count += 1
                 if len(model_evidence) < 50:
                     model_evidence.append(evidence)
+        if actual_model:
+            actual_model_count += 1
 
         repair = _to_int(payload.get("repair_rounds", payload.get("repairRounds", 0)), 0)
         if repair >= 0 and ("repair_rounds" in payload or "repairRounds" in payload):
@@ -482,8 +584,17 @@ def observe_project(
                 "nonblocking_findings": 0,
                 "tasks": set(),
                 "evidence": [],
+                "accepted": 0, "rejected": 0, "duplicate": 0, "repaired": 0,
+                "regressions_prevented": 0, "duration_ms": 0, "cost_units": 0.0,
+                "attribution_count": 0,
             })
             stats["invocations"] += 1
+            for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented"):
+                stats[name] += max(0, _to_int(result.get(name), 0))
+            stats["duration_ms"] += max(0, _to_int(result.get("duration_ms"), 0))
+            stats["cost_units"] += max(0.0, _to_float(result.get("cost_units"), 0.0))
+            if any(name in result for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented")):
+                stats["attribution_count"] += 1
             findings = result.get("findings")
             if isinstance(findings, list):
                 # V6：明细是权威来源，避免与汇总数字重复计数。
@@ -546,6 +657,14 @@ def observe_project(
             "nonblocking_findings": stats["nonblocking_findings"],
             "findings_per_invocation": (float(total_findings) / invocations) if invocations else 0.0,
             "independent_task_count": len(stats["tasks"]),
+            "accepted": stats["accepted"], "rejected": stats["rejected"], "duplicate": stats["duplicate"],
+            "repaired": stats["repaired"], "regressions_prevented": stats["regressions_prevented"],
+            "duration_ms": stats["duration_ms"], "cost_units": round(stats["cost_units"], 6),
+            "attribution_coverage": round(float(stats["attribution_count"]) / invocations, 6) if invocations else 0.0,
+            "adoption_rate": round(float(stats["accepted"]) / (stats["accepted"] + stats["rejected"]), 6) if stats["accepted"] + stats["rejected"] else None,
+            "repair_conversion_rate": round(float(stats["repaired"]) / stats["accepted"], 6) if stats["accepted"] else None,
+            "duplicate_rate": round(float(stats["duplicate"]) / total_findings, 6) if total_findings else None,
+            "benefit_proxy": round(float(stats["repaired"] + stats["regressions_prevented"]) / max(1.0, stats["cost_units"]), 6),
         }
 
     metrics: Dict[str, Any] = {
@@ -563,6 +682,9 @@ def observe_project(
         "negative_outcome_count": negative_count,
         "negative_outcome_rate": round(negative_rate, 6),
         "model_comparison_count": model_comparison_count,
+        "actual_model_count": actual_model_count,
+        "actual_model_coverage": round(float(actual_model_count) / len(task_ids), 6) if task_ids else 0.0,
+        "known_terminal_outcome_coverage": round(float(known_outcome_count) / len(task_ids), 6) if task_ids else 0.0,
         "model_escalation_count": model_escalation_count,
         "model_escalation_rate": round(model_rate, 6),
         "routing_known_count": routing_known_count,
@@ -575,8 +697,40 @@ def observe_project(
         "failure_patterns": dict(sorted(failure_counter.items())),
         "reviewer_stats": normalized_reviewer_metrics,
         "skill_usage": dict(sorted(skill_usage.items())),
+        "lifecycle": v2_diagnostics,
     }
 
+    evidence_gate_failures = []
+    if raw_v2_event_count:
+        for label, actual, threshold in (
+            ("lifecycle_completeness", v2_diagnostics["lifecycle_completeness_rate"], policy.min_lifecycle_completeness_rate),
+            ("session_end_coverage", v2_diagnostics["session_end_coverage"], policy.min_session_end_coverage),
+            ("project_repo_binding_coverage", v2_diagnostics["project_repo_binding_coverage"], policy.min_project_repo_binding_coverage),
+        ):
+            if actual < threshold:
+                evidence_gate_failures.append("%s=%.3f<%.3f" % (label, actual, threshold))
+        anomaly_count = (
+            duplicate_v2_event_count
+            + int(v2_diagnostics["duplicate_event_count"])
+            + int(v2_diagnostics["out_of_order_task_count"])
+            + int(v2_diagnostics["task_session_conflict_count"])
+            + int(v2_diagnostics["missing_session_binding_count"])
+        )
+        if anomaly_count:
+            evidence_gate_failures.append("lifecycle_integrity_anomalies=%d" % anomaly_count)
+    if raw_v2_event_count:
+        for label, actual, threshold in (
+            ("actual_model_coverage", metrics["actual_model_coverage"], policy.min_actual_model_coverage),
+            ("known_terminal_outcome_coverage", metrics["known_terminal_outcome_coverage"], policy.min_known_terminal_outcome_coverage),
+        ):
+            if actual < threshold:
+                evidence_gate_failures.append("%s=%.3f<%.3f" % (label, actual, threshold))
+    if len(all_rows) < policy.min_records or len(task_ids) < policy.min_independent_tasks or window_days < policy.min_observation_window_days:
+        evidence_gate_failures.append("minimum_window_or_sample_not_met")
+    metrics["evidence_sufficient"] = not evidence_gate_failures
+    metrics["insufficient_evidence"] = tuple(evidence_gate_failures)
+    if evidence_gate_failures:
+        warnings.append("insufficient-evidence：%s；快照保留但不生成优化信号" % ", ".join(evidence_gate_failures))
     signals: List[PatternSignal] = []
     for label, count in sorted(failure_counter.items(), key=lambda item: (-item[1], item[0])):
         independent = len(failure_tasks[label])
@@ -646,7 +800,10 @@ def observe_project(
         invocations = stats["invocations"]
         total_findings = stats["blocking_findings"] + stats["nonblocking_findings"]
         yield_rate = (float(total_findings) / invocations) if invocations else 0.0
-        if invocations < policy.reviewer_min_invocations or yield_rate > policy.reviewer_low_yield_rate:
+        attribution_coverage = (float(stats["attribution_count"]) / invocations) if invocations else 0.0
+        benefit_proxy = float(stats["repaired"] + stats["regressions_prevented"]) / max(1.0, stats["cost_units"])
+        # 缺少因果归因时，禁止仅根据 finding 数量将 Reviewer 判定为低收益。
+        if invocations < policy.reviewer_min_invocations or attribution_coverage < policy.reviewer_min_attribution_coverage or benefit_proxy > policy.reviewer_low_yield_rate:
             continue
         independent = len(stats["tasks"])
         signals.append(PatternSignal(
@@ -657,12 +814,14 @@ def observe_project(
             independent_task_count=independent,
             rate=min(1.0, yield_rate),
             confidence=_confidence(independent, invocations, source_count, window_days, policy),
-            summary="Reviewer %s 调用 %d 次，仅产生 %d 条发现" % (reviewer, invocations, total_findings),
+            summary="Reviewer %s 调用 %d 次，归因收益代理 %.4f 且归因覆盖率 %.2f%%" % (reviewer, invocations, benefit_proxy, attribution_coverage * 100),
             evidence=tuple(stats["evidence"]),
             metrics={
                 "invocations": invocations,
                 "findings": total_findings,
                 "findings_per_invocation": yield_rate,
+                "benefit_proxy": benefit_proxy,
+                "attribution_coverage": attribution_coverage,
                 "window_days": window_days,
             },
         ))
@@ -682,6 +841,8 @@ def observe_project(
             metrics={"known_outcome_count": known_outcome_count, "window_days": window_days},
         ))
 
+    if evidence_gate_failures:
+        signals = []
     if len(all_rows) < policy.min_records:
         warnings.append("有效记录少于 %d 条，只保留观察快照，不建议形成优化提案" % policy.min_records)
     if len(task_ids) < policy.min_independent_tasks:
