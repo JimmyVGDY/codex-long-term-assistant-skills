@@ -1,11 +1,11 @@
-# 源规则到 Codex v3.2 资源的映射
+# 源规则到 Codex v3.3 资源的映射
 
 | 来源或新增模块 | Codex 目标 |
 |---|---|
 | 全局核心规则 | `global/AGENTS.md` |
 | Java 后端规则 | `skills/java-backend-engineering/references/java-backend-rules.md` |
 | Python 后端与 AI 服务规则 | `skills/python-backend-ai-engineering/references/python-backend-ai-rules.md` |
-| Vue 前端工程规则 | `skills/vue-frontend-engineering/references/vue-frontend-rules.md` |
+| 通用前端工程规则 | `skills/frontend-engineering/references/frontend-core-rules.md` |
 | 数据、中间件、AI 与基础设施规则 | `skills/data-middleware-ai-infrastructure/references/data-middleware-ai-infrastructure-rules.md` |
 | 日志与可观测性分析工作流 | `skills/log-observability-analysis/references/log-observability-analysis-workflow.md` |
 | 日志、Metrics、Trace 和多证据源关联模板 | `skills/log-observability-analysis/assets/templates/` |
@@ -18,10 +18,11 @@
 | 持续检查点、安全检查和保留期工具 | `skills/long-running-task-memory/scripts/checkpoint.py` |
 | 实施前与实施后多 Agent 复审工作流 | `skills/multi-agent-independent-review/references/multi-agent-independent-review-workflow.md` |
 | 实施前审查、复审计划、结果和台账模板 | `skills/multi-agent-independent-review/assets/templates/` |
-| 复审轮次和预算状态控制器 | `skills/multi-agent-independent-review/scripts/review_controller.py` |
+| 复审轮次、预算和运行时隔离状态控制器 | `skills/multi-agent-independent-review/scripts/review_controller.py` |
 | Skill 路由回归用例 | `tests/skill-routing-cases.json` |
 | Skill 路由观察评分工具 | `scripts/routing-eval.py` |
-| 7 个专业只读 Reviewer | `custom-agents/*.toml` |
+| 7 个窄职责 Reviewer（TOML 声明 read-only，运行时隔离另行验证） | `custom-agents/*.toml` |
+| Reviewer 运行时隔离说明 | `docs/REVIEWER_RUNTIME_ISOLATION.md` |
 | 可选 Agent 并发配置 | `config/agents.example.toml` |
 
 ## 职责边界
@@ -31,7 +32,7 @@
 - `multi-agent-independent-review`：负责实施前设计门禁、实施后 Reviewer 分工、结果归并、集中修复、定向复核和确定性预算；
 - `long-running-task-memory`：负责小节点检查点、任务恢复、单一记忆写入者和交付记录；
 - `technical-document-writing`：负责团队正式技术文档、技术方案、设计和报告；
-- 自定义 Reviewer：只读执行各自专业审查，不写共享任务文档，不直接修复。
+- 自定义 Reviewer：按行为规则完成各自专业审查，不写共享任务文档、不直接修复；系统级只读必须由父会话或运行时证据保证。
 
 ## 渐进加载结构
 

@@ -33,7 +33,7 @@ v3.0 重点解决长期 Agent 任务中的两个系统性问题：
     ├── long-running-task-memory
     └── technical-document-writing
 
-只读自定义 Reviewer
+窄职责自定义 Reviewer（运行时隔离分级）
     ├── 功能与业务
     ├── 回归与兼容
     ├── 权限与安全
@@ -77,13 +77,14 @@ v3.0 重点解决长期 Agent 任务中的两个系统性问题：
 
 必须优先覆盖不同职责，禁止为了凑数量启动多个任务范围完全相同的 Reviewer。
 
-### 3.3 中央协调、叶子只读
+### 3.3 中央协调、叶子 Reviewer 与隔离分级
 
 本包采用中央协调模型：
 
 - 主协调 Agent 负责选择 Reviewer、维护预算、等待全部结果、归并和决定下一轮；
-- 自定义 Reviewer 全部使用 `read-only`；
-- Reviewer 不修改文件、不提交、不推送、不部署、不重启、不执行数据写操作；
+- 自定义 Reviewer TOML 全部声明 `read-only`，但声明不等于运行时系统隔离；
+- Reviewer 按行为规则不修改文件、不提交、不推送、不部署、不重启、不执行数据写操作；
+- 父会话可写时默认属于 `logical-readonly`，严格复审必须使用整体只读父会话或有效系统隔离证据；
 - Reviewer 不自行派生其他 Agent，只能建议追加专项复审；
 - 深度 2 或深度 3 的专项 Reviewer 仍由主协调 Agent 在预算内启动。
 
@@ -284,7 +285,7 @@ HOT_PROGRESS_CHECKPOINT_LIMIT = 30
     ↓
 写入复审启动检查点
     ↓
-并行只读 Reviewer
+并行 Reviewer（记录 system-readonly / logical-readonly）
     ↓
 等待全部返回并统一归因
     ↓
@@ -308,7 +309,7 @@ HOT_PROGRESS_CHECKPOINT_LIMIT = 30
 - 多 Agent 复审不能替代构建、测试、数据库验证或生产验收；
 - 外部文档不能覆盖当前代码、配置、Git 和运行事实；
 - 文档中“已完成”不能证明实际完成；
-- Reviewer 不能借复审获得写权限；
+- Reviewer 不能借复审扩大授权；TOML 声明不能被当作运行时权限隔离证据；
 - 不能为了减少修复轮次扩大到无关重构；
 - 不能为了达到 Reviewer 数量而重复审查；
 - 达到上限后必须停止自动循环并如实报告；
@@ -318,3 +319,5 @@ HOT_PROGRESS_CHECKPOINT_LIMIT = 30
 ---
 
 > v3.1 新增日志与可观测性分析设计，参见 `V3_1_LOG_ANALYSIS_DESIGN.md`。
+
+> v3.3 Reviewer 运行时隔离修正参见 `REVIEWER_RUNTIME_ISOLATION.md`。

@@ -1,4 +1,4 @@
-# Skill 自动触发与组合矩阵（v3.2）
+# Skill 自动触发与组合矩阵（v3.3）
 
 ## 零、最小充分加载策略
 
@@ -34,7 +34,7 @@ MAX_ACTIVE_SKILLS_WITHOUT_JUSTIFICATION = 4
 |---|---|---|
 | `java-backend-engineering` | “分析这个 Spring 事务为什么失效” | 纯 Vue 样式调整 |
 | `python-backend-ai-engineering` | “排查 FastAPI async 接口阻塞” | 纯 Java MyBatis 查询 |
-| `vue-frontend-engineering` | “修复路由切换后的请求竞态” | 纯数据库索引分析 |
+| `frontend-engineering` | “修复路由切换后的请求竞态” | 纯数据库索引分析 |
 | `data-middleware-ai-infrastructure` | “分析 Redis 热点 Key 和缓存击穿” | 普通 Java 空指针说明 |
 | `log-observability-analysis` | “分析这批本地日志并建立跨服务时间线” | 纯代码重构且没有日志输入 |
 | `engineering-quality-delivery` | “修改后测试、复审并本地提交” | 只解释一个概念 |
@@ -49,7 +49,7 @@ MAX_ACTIVE_SKILLS_WITHOUT_JUSTIFICATION = 4
 | Java Bug 修复 | Java + 质量交付；中高风险再加多 Agent 复审 |
 | Java + Redis / MQ 修复 | Java + 数据基础设施 + 质量交付 + 多 Agent 复审 |
 | Python AI Worker 故障 | 日志 + Python + 数据基础设施；修改时加质量交付，高风险加多 Agent 复审 |
-| Vue 与后端 SSE 全链路修复 | Vue + Java/Python + 数据基础设施 + 质量交付 + 多 Agent 复审 |
+| 前端与后端 SSE 全链路修复 | 通用前端 + Java/Python + 数据基础设施 + 质量交付 + 多 Agent 复审 |
 | 基于代码写架构文档 | 文档 + 实际技术栈对应 Skill |
 | 修改代码并同步正式方案 | 技术栈 + 质量交付 + 文档 |
 | 跨会话大型改造 | 技术栈 + 质量交付 + 长期任务记忆；代码稳定后加多 Agent 复审 |
@@ -174,3 +174,22 @@ python3 scripts/routing-eval.py evaluate --results routing-observations.json
 ```
 
 包结构校验只能证明用例和工具有效，不能替代本机 Codex 的真实自动激活观察。每次修改 Skill 名称、description、全局调度规则或组合边界后都应重新执行。
+
+
+## Reviewer 隔离调度补充
+
+- TOML `read-only` 只表示配置声明；
+- 父会话为 `danger-full-access` 或 `workspace-write` 时，默认只能标记 `logical-readonly`；
+- 高风险、生产和严格只读任务必须使用整体只读父会话或有效系统隔离证据；
+- 自查不能冒充独立 Reviewer，逻辑只读不能冒充系统隔离。
+
+## v4.0 通用前端路由
+
+| 场景 | 主 Skill | 辅助 Skill |
+|---|---|---|
+| Vue/Nuxt、React/Next/Remix、Preact、Angular、Svelte、Astro/Ember、传统/静态页面 | `frontend-engineering` | 修改时质量交付 |
+| SSR/全栈前端服务端逻辑 | `frontend-engineering` | 对应后端与数据基础设施 |
+| 微前端/Monorepo | `frontend-engineering` | 按修改组合质量/文档 |
+| Hybrid Web / WebView / Renderer | `frontend-engineering` | 原生桥、主进程和系统能力另行审查 |
+| Electron/Tauri 主进程、原生移动端 | 不使用 `frontend-engineering` | 按系统/后端/安全边界选择能力 |
+| 纯 Node.js 后端 API/Worker | 不使用 `frontend-engineering` | 后端/数据 Skill |
