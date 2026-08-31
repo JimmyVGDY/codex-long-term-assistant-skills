@@ -1,6 +1,6 @@
-# Codex 跨项目长期技术助手 Skills 安装包 V5.0
+# Codex 跨项目长期技术助手 Skills 安装包 V5.1
 
-V5.0 在 V4.2 的 9 个 Skill、7 个专业 Reviewer、Luna/Terra 模型分级、审查包、证据指纹和长期任务检查点基础上，增加轻量项目治理与证据闭环。重点不是把 AICTO 的完整治理体系搬入本包，而是补齐跨项目最容易出错的四个边界：项目身份、授权与证据、任务记忆晋升、最终交付读回。
+V5.1 在 V5.0 项目治理与证据闭环基础上，补充自观察、确定性价值/复杂度分析、优化提案和人工决策链。它保留原有 9 个 Skill、7 个专业 Reviewer、Luna/Terra 模型分级与成本控制，并坚持“只分析与提案、不自动改写、不自动执行”。
 
 ## 保持不变
 
@@ -10,7 +10,7 @@ V5.0 在 V4.2 的 9 个 Skill、7 个专业 Reviewer、Luna/Terra 模型分级�
 - 默认并行 Reviewer 3 个、累计 6 个、Terra High 1 个；
 - Skill 和 Reference 继续按需加载，不建立第二套重型项目生命周期。
 
-## V5.0 核心增强
+## V5.0 继承能力
 
 1. `PROJECT_PROFILE`：稳定保存项目身份、仓库、技术栈、入口、边界与未知项；
 2. `PROJECT_STATE`：保存项目阶段、当前基线、风险、阻塞和唯一下一步；
@@ -94,7 +94,12 @@ ${CODEX_HOME:-$HOME/.codex}/project-context/<project-id>/
 ├── memory-projections.jsonl
 ├── knowledge-candidates.jsonl
 ├── evidence-ledger.jsonl
-└── execution-feedback.jsonl
+├── execution-feedback.jsonl
+└── evolution/
+    ├── snapshots/
+    ├── assessments/
+    ├── proposals.jsonl
+    └── decisions.jsonl
 ```
 
 ## 绑定任务执行状态
@@ -131,15 +136,54 @@ python3 skills/engineering-quality-delivery/scripts/execution_guard.py init \
 ## 验证
 
 ```bash
-python3 scripts/validate-package.py
-python3 scripts/semantic-lint.py
+python3 -B scripts/validate-v51-evolution.py
+python3 -B scripts/validate-package.py
+python3 -B scripts/semantic-lint.py
 ```
 
 ## 重要边界
 
-- V5.0 的 Approval 是工作流级记录，不是 Codex 平台、操作系统或云平台权限隔离；
+- V5.1 的 Approval 和 Evolution Decision 都是工作流级记录，不是 Codex 平台、操作系统或云平台权限隔离；
 - Evidence 不能替代授权，检查器通过也不能替代真实测试、Review、Release Gate 或用户验收；
 - Onboarding 只做有界只读识别，推断入口必须保留 `inferred-unconfirmed`；
 - 本地 upstream 引用等于 HEAD 不能证明已联网读取远端平台；
 - Project Memory 只接收经过审核的 Projection，Knowledge Candidate 默认永远不是 Active；
 - 生产、真实数据、不可逆迁移和外部发送仍需单独明确授权、停止条件和回滚方案。
+
+<!-- V5.1-CONTROLLED-EVOLUTION:BEGIN -->
+## V5.1 核心增强：自观察与受控自进化
+
+V5.1 在 V5.0 项目治理与证据闭环上增加：
+
+```text
+Observation → Analysis → Optimization Proposal → Human Decision
+```
+
+权威实现：`runtime/cp_runtime/evolution/`。
+
+快速验证：
+
+```bash
+python3 -B scripts/validate-v51-evolution.py
+```
+
+只读试运行（安装包目录）：
+
+```bash
+python3 -B scripts/evolution.py run --project-id <project-id> --dry-run
+```
+
+安装后：
+
+```bash
+python3 "$CODEX_HOME/tools/evolution.py" run --project-id <project-id> --dry-run
+```
+
+所有提案的 `execution_authorization` 固定为 `NONE`。系统不会自动修改 Skill、Reviewer、模型路由、全局配置或业务仓库；接受提案后仍必须新建任务并重新经过 Task Envelope、Approval、Execution Guard 和回归验证。
+
+完整说明见：
+
+- `docs/V5.1_升级说明与迁移指南.md`
+- `docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md`
+- `docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md`
+<!-- V5.1-CONTROLLED-EVOLUTION:END -->
