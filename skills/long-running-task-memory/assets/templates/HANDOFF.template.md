@@ -68,7 +68,7 @@
 ## 恢复后必须先做
 
 1. 读取当前用户消息和授权；
-2. 读取 `CURRENT_TASK.md`、当前 `PLAN.md` 和最近 5 个检查点；
+2. 读取 `CURRENT_TASK.md`、当前 `PLAN.md` 和最近 3 个检查点；
 3. 核对分支、HEAD、`git status`、`git diff` 和未跟踪文件；
 4. 读取相关 ADR 和 Reviewer 报告；
 5. 重新阅读下一步涉及的代码、配置和测试；

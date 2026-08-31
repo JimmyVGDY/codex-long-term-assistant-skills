@@ -33,7 +33,7 @@ ARCHIVE_INDEX_BEGIN = "<!-- progress-archive-index:begin -->"
 ARCHIVE_INDEX_END = "<!-- progress-archive-index:end -->"
 CHECKPOINT_RE = re.compile(r"(?m)^### (CP-(\d{8})-(\d{3,}))\s*$")
 STATE_VERSION_RE = re.compile(r"(?m)^- 状态版本：(\d+)\s*$")
-DEFAULT_HOT_LIMIT = 30
+DEFAULT_HOT_LIMIT = 20
 SENSITIVE_PATTERNS = (
     ("OpenAI/API Key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
     ("AWS Access Key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
@@ -442,6 +442,31 @@ def command_init(args: argparse.Namespace) -> None:
         print("[OK] 核心文档已存在，未覆盖。使用 --force 可按模板重新初始化。")
 
 
+def checkpoint_payload_fingerprint(args: argparse.Namespace, snapshot: Dict[str, str]) -> str:
+    """Build a stable digest for idempotent checkpoint appends.
+
+    Time and checkpoint ID are intentionally excluded. Repeating the same append
+    command against the same Git workspace becomes a no-op unless --force-append
+    is supplied.
+    """
+    values: List[str] = [
+        one_line(args.task_id),
+        one_line(args.node_type),
+        one_line(args.node_status),
+        one_line(args.task_status),
+        one_line(args.summary),
+        one_line(args.next_action),
+        one_line(args.blocked),
+        one_line(args.stage),
+        one_line(args.agent),
+        one_line(snapshot.get("fingerprint", "")),
+    ]
+    for name in ("goal", "fact", "file", "command", "validation", "risk", "impact"):
+        items = getattr(args, name, None) or []
+        values.append(name + "=" + "\n".join(one_line(item) for item in items))
+    return hashlib.sha256("\0".join(values).encode("utf-8")).hexdigest()
+
+
 def build_checkpoint_entry(
     args: argparse.Namespace,
     checkpoint_id: str,
@@ -465,6 +490,7 @@ def build_checkpoint_entry(
 
 - 时间：{display_time} {timezone}
 - 状态版本：{state_version}
+- 内容指纹：{content_fingerprint}
 - 所属任务 / 阶段：{task_id} / {stage}
 - 节点类型：{node_type}
 - 执行 Agent：{agent}
@@ -514,6 +540,7 @@ def build_checkpoint_entry(
         display_time=display_time,
         timezone=args.timezone,
         state_version=state_version,
+        content_fingerprint=checkpoint_payload_fingerprint(args, snapshot),
         task_id=one_line(args.task_id),
         stage=one_line(args.stage or "未指定"),
         node_type=one_line(args.node_type),
@@ -543,10 +570,17 @@ def command_append(args: argparse.Namespace) -> None:
 
         timestamp = now_in_timezone(args.timezone)
         display_time = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-        checkpoint_id = next_checkpoint_id(progress, timestamp)
         current_state_match = STATE_VERSION_RE.search(current)
         state_version = int(current_state_match.group(1)) + 1 if current_state_match else 1
         snapshot = git_snapshot(args.repo_path)
+        content_fingerprint = checkpoint_payload_fingerprint(args, snapshot)
+        blocks = checkpoint_blocks(progress)
+        if blocks and not args.force_append:
+            last_fingerprint = entry_field(blocks[-1][1], "内容指纹")
+            if last_fingerprint and last_fingerprint == content_fingerprint:
+                print("[SKIP] 检查点内容和工作区均未变化，未重复写入。")
+                return
+        checkpoint_id = next_checkpoint_id(progress, timestamp)
         entry = build_checkpoint_entry(args, checkpoint_id, state_version, display_time, snapshot)
 
         progress = insert_checkpoint(progress, entry)
@@ -575,7 +609,7 @@ def command_append(args: argparse.Namespace) -> None:
         current = replace_field(current, "当前状态", one_line(args.task_status))
         current = replace_field(current, "当前节点", one_line(args.summary))
         current = replace_field(current, "未持久化已完成节点", "0")
-        current = replace_field(current, "距离上次检查点的实质性动作", "0 / 5")
+        current = replace_field(current, "距离上次检查点的实质性动作", "0 / 8")
         if args.stage:
             current = replace_field(current, "当前阶段", one_line(args.stage))
         current = apply_git_snapshot(current, snapshot)
@@ -678,7 +712,7 @@ def repair_current_from_last_checkpoint(
     current = replace_field(current, "当前节点", summary)
     current = replace_field(current, "当前阶段", stage)
     current = replace_field(current, "未持久化已完成节点", "0")
-    current = replace_field(current, "距离上次检查点的实质性动作", "0 / 5")
+    current = replace_field(current, "距离上次检查点的实质性动作", "0 / 8")
     current = apply_git_snapshot(current, git_snapshot(repo_path))
     current = update_live_block(current, checkpoint_id, summary, blocked, next_action)
     atomic_write(current_path, current)
@@ -872,6 +906,7 @@ def build_parser() -> argparse.ArgumentParser:
     append.add_argument("--timezone", default="Asia/Shanghai")
     append.add_argument("--repo-path")
     append.add_argument("--hot-limit", type=int, default=DEFAULT_HOT_LIMIT)
+    append.add_argument("--force-append", action="store_true", help="即使内容指纹未变化也写入新检查点")
     add_common_mutation_args(append)
     for name in ("goal", "fact", "file", "command", "validation", "risk", "impact"):
         append.add_argument("--" + name, action="append")
@@ -888,7 +923,7 @@ def build_parser() -> argparse.ArgumentParser:
     recover.add_argument("--project-dir", required=True)
     recover.add_argument("--repo-path")
     recover.add_argument("--strict-git", action="store_true")
-    recover.add_argument("--recent", type=int, default=5)
+    recover.add_argument("--recent", type=int, default=3)
     recover.set_defaults(func=command_recover)
 
     repair = sub.add_parser("repair", help="根据最后检查点修复 CURRENT_TASK 当前快照")

@@ -11,7 +11,7 @@
 3. 读取 `PROJECT_CONTEXT.md`；
 4. 读取 `CURRENT_TASK.md`；
 5. 读取 `PLAN.md` 当前阶段；
-6. 读取 `PROGRESS.md` 最近 5 个检查点；
+6. 读取 `PROGRESS.md` 最近 3 个检查点；
 7. 按引用读取相关 `DECISIONS.md` 和 Reviewer 报告；
 8. 必要时读取 `HANDOFF.md`；
 9. 执行 `git status`；
@@ -22,7 +22,7 @@
 14. 无冲突后才继续执行。
 
 ```text
-RECENT_CHECKPOINTS_TO_LOAD = 5
+RECENT_CHECKPOINTS_TO_LOAD = 3
 ```
 
 不得只根据 `HANDOFF.md`、自动摘要、Codex Memories 或历史聊天结论直接修改代码。

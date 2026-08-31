@@ -5,7 +5,7 @@
 - [ ] 已读取 `PROJECT_CONTEXT.md`
 - [ ] 已读取 `CURRENT_TASK.md`
 - [ ] 已读取 `PLAN.md` 当前阶段
-- [ ] 已读取 `PROGRESS.md` 最近 5 个检查点
+- [ ] 已读取 `PROGRESS.md` 最近 3 个检查点
 - [ ] 已按引用读取相关 ADR 和 Reviewer 报告
 - [ ] 已检查当前分支、HEAD 和基线
 - [ ] 已执行 `git status`

@@ -81,7 +81,7 @@ PLAN.md
 
 ### 5.4 防止长时间无检查点
 
-尚未完成一个完整小节点，但连续执行 5 个实质性动作时，必须写“进行中检查点”。
+尚未完成一个完整小节点，但连续执行 8 个实质性动作时，必须写“进行中检查点”。
 
 实质性动作包括：
 
@@ -94,7 +94,7 @@ PLAN.md
 - 改变计划、范围或授权判断。
 
 ```text
-MAX_SUBSTANTIVE_ACTIONS_WITHOUT_CHECKPOINT = 5
+MAX_SUBSTANTIVE_ACTIONS_WITHOUT_CHECKPOINT = 8
 ```
 
 ---
@@ -109,7 +109,8 @@ MAX_SUBSTANTIVE_ACTIONS_WITHOUT_CHECKPOINT = 5
 4. 先向 `PROGRESS.md` 追加检查点；
 5. 再刷新 `CURRENT_TASK.md` 最新快照；
 6. 验证两个文档的最后检查点 ID 一致；
-7. 文档写入成功后再继续下一节点。
+7. 计算本次内容指纹；若同一工作区指纹下与最后检查点内容相同，则记录为无变化并跳过重复追加；
+8. 文档写入成功后再继续下一节点。
 
 ### 6.1 检查点内容
 
@@ -152,7 +153,7 @@ MAX_SUBSTANTIVE_ACTIONS_WITHOUT_CHECKPOINT = 5
 - `PROGRESS.md` 追加后刷新并确认写入；
 - 写入失败不得假装检查点已完成。
 
-可使用 `scripts/checkpoint.py` 辅助维护。脚本提供 `init`、`append`、`validate`、`recover`、`repair` 和 `archive`；共享写入时使用锁文件防止多个写入者并发覆盖，崩溃后只有确认不存在其他写入者时才允许清理遗留锁。脚本不可用时手工维护同等信息。
+可使用 `scripts/checkpoint.py` 辅助维护。脚本提供 `init`、`append`、`validate`、`recover`、`repair` 和 `archive`；`append` 默认跳过相同工作区、相同内容的连续重复检查点，仅在审计确需重复快照时使用 `--force-append`；共享写入时使用锁文件防止多个写入者并发覆盖，崩溃后只有确认不存在其他写入者时才允许清理遗留锁。脚本不可用时手工维护同等信息。
 
 ---
 

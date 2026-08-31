@@ -112,7 +112,7 @@ MAX_UNPERSISTED_COMPLETED_NODES = 0
 
 - `CURRENT_TASK.md`；
 - `PLAN.md` 的当前阶段；
-- `PROGRESS.md` 最近 3～5 个检查点。
+- `PROGRESS.md` 最近 3 个检查点。
 
 ### 3.2 温文档
 
@@ -124,10 +124,10 @@ MAX_UNPERSISTED_COMPLETED_NODES = 0
 
 ### 3.3 冷归档
 
-当 `PROGRESS.md` 活跃检查点超过 30 条时，按任务和区间归档旧记录：
+当 `PROGRESS.md` 活跃检查点超过 20 条时，按任务和区间归档旧记录：
 
 ```text
-archive/<任务标识>/PROGRESS-CP001-CP030.md
+archive/<任务标识>/PROGRESS-CP001-CP020.md
 ```
 
 活跃 `PROGRESS.md` 只保留索引和最近检查点。不得每次恢复都重新加载完整历史。
