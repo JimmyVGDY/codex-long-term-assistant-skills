@@ -1,15 +1,22 @@
-# 可选配置示例。安装脚本不会自动修改 ${CODEX_HOME:-$HOME/.codex}/config.toml。
-# 当前 Codex 版本默认启用 subagents；仅在你的配置显式关闭或需要限制并发时合并本段。
+# 可选成本优化配置。安装脚本不会自动修改 ${CODEX_HOME:-$HOME/.codex}/config.toml。
+# 请把本段“合并”到现有配置；同一文件只能有一个 [agents] 表。
 
 [agents]
 enabled = true
-# 主 Agent 不计入该数值。本包自身仍按最多 6 个并行 Reviewer 执行。
-max_concurrent_threads_per_session = 6
 
-# 模型与推理强度不在本包中写死，默认由当前 Codex 版本、父会话和用户配置决定。
-# 如需设置 agents.default_subagent_model 或 agents.default_subagent_reasoning_effort，
-# 请先按当前 Codex 官方配置文档确认可用模型和参数值。
+# 主 Agent 不计入该值。V4.2 默认 Reviewer 并行预算同样为 3。
+max_concurrent_threads_per_session = 3
 
-# 重要：Reviewer TOML 中 sandbox_mode="read-only" 不能单独证明运行时独立降权。
-# 当前父会话可写时，子 Agent 可能继承可写能力。严格只读复审请从整体 read-only
-# 父会话启动；不要仅依赖自定义 Agent TOML 作为系统隔离证据。
+# 未显式指定的子 Agent 使用低成本兜底。主 Agent 模型不受这两项影响。
+default_subagent_model = "gpt-5.6-luna"
+default_subagent_reasoning_effort = "medium"
+
+# 不覆盖 interrupt_message，保留 Codex 默认 true。中断信息占用很小，
+# 但有助于 Agent 识别上下文中断，不建议为极少量 Token 关闭。
+
+# 重要：
+# 1. 专业 Reviewer TOML 故意不写死 model/model_reasoning_effort，以支持
+#    luna-low -> luna-medium -> terra-medium -> terra-high 动态路由。
+# 2. [agents] 只是默认值；显式 spawn 可覆盖。V4.2 的 Terra High 上限由
+#    Skill 规则和 review_controller.py 审计，不是 Codex 平台级 allowlist。
+# 3. Reviewer TOML 中 sandbox_mode="read-only" 不能单独证明运行时系统隔离。
