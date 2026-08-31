@@ -1,0 +1,6 @@
+interface:
+  display_name: "Technical Documentation and Formal Reports"
+  short_description: "Technical plans, architecture, implementation reports, design records, and Markdown"
+  default_prompt: "Use the technical documentation Skill to produce a reviewable, actionable formal document from the available evidence. Separate facts, inferences, and unverified items while preserving the original business semantics."
+policy:
+  allow_implicit_invocation: true

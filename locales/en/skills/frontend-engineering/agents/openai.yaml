@@ -1,0 +1,6 @@
+interface:
+  display_name: "Frontend Engineering"
+  short_description: "Cross-framework Web, SSR, hybrid Web, micro-frontends, build, security, and validation"
+  default_prompt: "Use the frontend engineering Skill for the current task. First identify the framework, version, package manager, rendering mode, runtime surface, and client/server boundary. Load only the matching framework and risk references, then check state, async behavior, authorization, resource cleanup, build, and runtime validation."
+policy:
+  allow_implicit_invocation: true

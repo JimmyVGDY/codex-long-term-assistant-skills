@@ -1,0 +1,6 @@
+interface:
+  display_name: "Engineering Quality and Safe Delivery"
+  short_description: "Change, validation, review, production safety, and Git delivery gates"
+  default_prompt: "Select LIGHT, STANDARD, or STRICT from the actual behavior change and risk, then complete the applicable minimum targeted validation. Start independent review only when the risk warrants it; do not mechanically dispatch multiple Agents for low-risk or non-behavioral work."
+policy:
+  allow_implicit_invocation: true

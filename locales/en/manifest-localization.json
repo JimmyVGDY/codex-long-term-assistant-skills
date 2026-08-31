@@ -21,5 +21,14 @@
     "cp_review_data_contract": "Data and contract consistency",
     "cp_review_state_concurrency": "State, concurrency, and interaction boundaries",
     "cp_review_test_delivery": "Validation evidence and delivery boundaries"
-  }
+  },
+  "review_isolation_levels": {
+    "system-readonly": "The parent session is actually read-only, or a valid controlled probe is explicitly denied by the sandbox; suitable for strict read-only review.",
+    "logical-readonly": "The parent session can write and the Reviewer relies on behavioral instructions not to write; system isolation must not be claimed.",
+    "self-review": "An implementation Agent reviews its own work; this does not replace an independent Reviewer.",
+    "unknown": "Runtime evidence is insufficient."
+  },
+  "breaking_changes": [
+    "vue-frontend-engineering was renamed to frontend-engineering; no compatibility alias is installed."
+  ]
 }

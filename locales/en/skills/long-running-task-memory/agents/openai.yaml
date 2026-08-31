@@ -1,0 +1,6 @@
+interface:
+  display_name: "Long-Running Task Memory"
+  short_description: "Recoverable checkpoints, context restoration, single-writer coordination, and delivery records"
+  default_prompt: "Use the long-running task memory Skill and treat conversation context as a short-term cache. Update CURRENT_TASK and PROGRESS after each independently recoverable step, and reconcile checkpoints with the actual Git state before continuing."
+policy:
+  allow_implicit_invocation: true

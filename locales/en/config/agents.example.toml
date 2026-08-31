@@ -1,0 +1,27 @@
+# Optional cost-optimization settings. The installer never modifies
+# ${CODEX_HOME:-$HOME/.codex}/config.toml automatically.
+# Merge this block into the existing configuration; a file may contain only one [agents] table.
+
+[agents]
+enabled = true
+
+# The main Agent is not counted. The default V5.0 parallel Reviewer budget is also 3.
+max_concurrent_threads_per_session = 3
+
+# Subagents without an explicit model use the low-cost fallback.
+# These settings do not affect the main Agent model.
+default_subagent_model = "gpt-5.6-luna"
+default_subagent_reasoning_effort = "medium"
+
+# Do not override interrupt_message; retain the Codex default of true.
+# Interruption messages use little context and help an Agent recognize a context interruption.
+
+# Important:
+# 1. Specialist Reviewer TOML files intentionally omit model and
+#    model_reasoning_effort so routing can follow:
+#    luna-low -> luna-medium -> terra-medium -> terra-high.
+# 2. [agents] provides defaults only; an explicit spawn can override them.
+#    The Terra High ceiling is enforced by Skill rules and review_controller.py,
+#    not by a platform-level Codex allowlist.
+# 3. sandbox_mode="read-only" in a Reviewer TOML file does not independently
+#    prove runtime system isolation.

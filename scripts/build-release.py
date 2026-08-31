@@ -97,7 +97,7 @@ def _apply_overlay(staging: Path, locale: str) -> None:
     for source in sorted(overlay.rglob("*")):
         if _is_link(source):
             raise BuildError("locale overlay contains a link: %s" % source.relative_to(overlay).as_posix())
-        if not source.is_file() or source.name == "manifest-localization.json":
+        if not source.is_file() or source.name in {"manifest-localization.json", "HUMAN_REVIEWED.txt"}:
             continue
         relative = source.relative_to(overlay)
         destination = staging / relative
@@ -120,6 +120,8 @@ def _apply_overlay(staging: Path, locale: str) -> None:
         if not isinstance(scope, str) or not scope:
             raise BuildError("missing manifest localization for reviewer: %s" % agent.get("name"))
         agent["scope"] = scope
+    manifest["review_isolation_levels"] = localization["review_isolation_levels"]
+    manifest["breaking_changes"] = localization["breaking_changes"]
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Controlled Evolution and Project Governance"
+  short_description: "Deterministic observation, cost routing, and human-controlled optimization"
+  default_prompt: "Analyze only structured observation facts and governance concerns. Isolate data by project and repository, aggregate Tasks before deriving signals, and never treat an optimization Proposal as execution authorization."
+policy:
+  allow_implicit_invocation: true

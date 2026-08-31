@@ -1,0 +1,6 @@
+interface:
+  display_name: "Log and Observability Analysis"
+  short_description: "Evidence correlation across logs, metrics, traces, profiles, alerts, and changes"
+  default_prompt: "Use the log and observability analysis Skill. Confirm the environment, time window, evidence sources, and authorization first; then correlate logs, Metrics, Traces, Profiles, alerts, and change events. Preserve read-only boundaries and do not present correlation as root cause."
+policy:
+  allow_implicit_invocation: true

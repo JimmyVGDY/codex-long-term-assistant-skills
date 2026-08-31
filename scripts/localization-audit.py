@@ -64,6 +64,16 @@ def document_pair_exists(path: Path) -> bool:
     return sibling_english(path).is_file() or (ROOT / "locales" / "en" / relative).is_file()
 
 
+def structured_pair_exists(relative: Path) -> bool:
+    """中文：确认结构化文件存在完整英文副本或专用本地化映射。
+
+    English: Confirm a full English copy or a dedicated localization mapping.
+    """
+    if relative.as_posix() == "manifest.json":
+        return (ROOT / "locales" / "en" / "manifest-localization.json").is_file()
+    return (ROOT / "locales" / "en" / relative).is_file()
+
+
 def natural_language_without_code(text: str) -> str:
     """中文：移除作为标识符或示例代码保存的字面内容。
 
@@ -155,7 +165,7 @@ def audit(files: Iterable[Path]) -> dict[str, Any]:
         elif path.suffix.lower() in STRUCTURED_SUFFIXES:
             counts["structured"] += 1
             if CJK.search(text) and "locales/en" not in relative.as_posix():
-                if not (ROOT / "locales" / "en" / relative).is_file():
+                if not structured_pair_exists(relative):
                     findings.append(issue("STRUCTURED_ENGLISH_PAIR_MISSING", path))
                 elif relative.as_posix() not in reviewed:
                     findings.append(issue("ENGLISH_PAIR_NOT_HUMAN_REVIEWED", path))

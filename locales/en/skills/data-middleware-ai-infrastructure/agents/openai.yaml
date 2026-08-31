@@ -1,0 +1,6 @@
+interface:
+  display_name: "Data, Middleware, AI, and Infrastructure"
+  short_description: "Databases, middleware, storage, GPU resources, and DevOps"
+  default_prompt: "Use the data, middleware, AI, and infrastructure Skill for the current task. Make data contracts, resource limits, compatibility, staged rollout, and rollback explicit. Pure Python application and model-call code remains led by the Python Skill."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,12 @@
+{
+  "version": "6.0.0",
+  "release_name": "Plugin-Based Deterministic Observation",
+  "skills": 10,
+  "reviewers": 7,
+  "task_outcome_event": "2.0",
+  "lifecycle_hooks": 6,
+  "automatic_reviewer_ceiling": "gpt-5.6-terra + high",
+  "execution_authorization": "NONE",
+  "automatic_self_modification": false,
+  "build_validation": "see VALIDATION_REPORT_V6.0.md"
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Independent Multi-Agent Review"
+  short_description: "Luna/Terra tiers, shared review packets, and cost-constrained review"
+  default_prompt: "Use this Skill only when independent review can add material information. Generate one shared review packet, route through luna-low, luna-medium, terra-medium, and terra-high as needed with Terra High as the ceiling, then wait for the round and perform centralized attribution and targeted re-review."
+policy:
+  allow_implicit_invocation: true

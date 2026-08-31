@@ -1,0 +1,6 @@
+interface:
+  display_name: "Java Backend Engineering"
+  short_description: "Java, Spring, transactions, concurrency, JVM, and server-side engineering"
+  default_prompt: "Use the Java backend engineering Skill for the current task. Identify project versions and the relevant call chain first, then analyze, implement, or review using the minimum sufficient change."
+policy:
+  allow_implicit_invocation: true

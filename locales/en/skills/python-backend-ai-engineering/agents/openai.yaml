@@ -1,0 +1,6 @@
+interface:
+  display_name: "Python Backend and AI Engineering"
+  short_description: "Python Web, async workers, Celery, AI, and GPU services"
+  default_prompt: "Use the Python backend and AI engineering Skill for the current task. Distinguish synchronous, asynchronous, CPU, I/O, and GPU workloads while keeping business and resource boundaries explicit."
+policy:
+  allow_implicit_invocation: true
