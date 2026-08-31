@@ -20,3 +20,4 @@ Original archives remain local and are not committed. Public tree digests cover 
 | 6.1.0 | `Codex-Skills-V6.1.zip` | `dbb6075d4df6f9af62266ab379d255e0bdc04096b41bda5ecf7f1a32d9e55c9c` | 440320 | 0 | `02d606e1ca2a425179487ad65f0cc5abca030a32fee8121104243dd33ecc2bee` |
 | 6.2.0 | `Codex-Skills-V6.2.zip` | `0c4af1dfe7e3c8af33e365b52639694ebd775adeeb5cf75fa927860e21a39a36` | 468718 | 0 | `45568576146ce1b1920736756666f6d0e51fe2a139921268cd79556313c776f5` |
 | 6.3.0 | `Codex-Skills-V6.3.zip` | `961c1233c911cfd33273cc6b78052bcded3bce3452ab653d8abdfe13e41ea4cd` | 491775 | 0 | `4efaa8d07c393530b56dee501640301946da0d499bab113fef51fe7e4660d8bc` |
+| 6.4.0 | `Codex-Skills-V6.4.zip` | `62bc731a4ae415911147293c2fabac91606b974abc1ec641b2dd4d568f4e46bb` | 534283 | 0 | `b120867748cd385673895aa0ef1ab3f18211ce1de74826e575d3d576169f71f1` |

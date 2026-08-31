@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "6.3.0",
-  "release_name": "可恢复事务与可证明发行版",
+  "version": "6.4.0",
+  "release_name": "端到端证据闭环与长期事件韧性",
   "generated_for": "Codex Plugin-first cross-project engineering assistant with durable install transactions, reproducible release artifacts, real lifecycle attestation, TaskOutcomeEvent V2 data-quality gates, controlled proposal lifecycle, and a Luna/Terra model ceiling",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
@@ -423,6 +423,7 @@
     ]
   },
   "upgrade_from": [
+    "6.3.0",
     "6.2.0",
     "6.1.0",
     "6.0.0",

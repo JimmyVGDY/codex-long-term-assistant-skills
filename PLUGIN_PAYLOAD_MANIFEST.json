@@ -1,0 +1,835 @@
+{
+  "schema_version": 1,
+  "package": "codex-cross-project-engineering-assistant",
+  "version": "6.4.0",
+  "payload_roots": [
+    ".codex-plugin",
+    "skills",
+    "hooks",
+    "runtime"
+  ],
+  "file_count": 164,
+  "payload_digest": "ce3f46f8c55582c4a326bb13f0b950bdb1b725341216d82519c4fc3aeefd45d5",
+  "files": [
+    {
+      "path": ".codex-plugin/plugin.json",
+      "sha256": "ddb6dec710e684d0920d27dfabf550e4c6fa4c1efe7de798e6fb99bd594a442d",
+      "size": 309
+    },
+    {
+      "path": "skills/controlled-evolution-governance/SKILL.md",
+      "sha256": "cac1377a0c802536fe74cfc8dbe34df52830cd8ed577fbc5983b9a5cf6d442da",
+      "size": 2207
+    },
+    {
+      "path": "skills/controlled-evolution-governance/agents/openai.yaml",
+      "sha256": "1fe0e7ca78d6b3384d4dfb220b65bb439846d8eba4fd8c6877b6e889ea536f86",
+      "size": 352
+    },
+    {
+      "path": "skills/controlled-evolution-governance/references/proposal-lifecycle-v6.md",
+      "sha256": "4b225383c00cbab1d68752cf65c789c85eb113e7256c31827312ae5260738451",
+      "size": 566
+    },
+    {
+      "path": "skills/controlled-evolution-governance/references/task-outcome-event-v2.md",
+      "sha256": "4eab590527f0885276ab05108d4c6614158d9a5158d498a98b4e801a7dd0a10a",
+      "size": 1141
+    },
+    {
+      "path": "skills/data-middleware-ai-infrastructure/SKILL.md",
+      "sha256": "0e931376cfee3783dbcb81db6abdf79ea7c2e5cea6c64a1e430f8f9f12f768f5",
+      "size": 1953
+    },
+    {
+      "path": "skills/data-middleware-ai-infrastructure/agents/openai.yaml",
+      "sha256": "e17efc3f7479f16b56eb3f930d664190ee19a5d07ba46ee7c83da258cab13d81",
+      "size": 412
+    },
+    {
+      "path": "skills/data-middleware-ai-infrastructure/references/ai-rag-gpu-services.md",
+      "sha256": "6a6b0d81ff987b0f6525e5091fd14fdbfc40b18e9fc8c15eec5ec96418702f95",
+      "size": 2311
+    },
+    {
+      "path": "skills/data-middleware-ai-infrastructure/references/data-contract-database.md",
+      "sha256": "3f60660773b6fd826d9f74ced217f10a575d437f35d8159d2066bdf23ae1d745",
+      "size": 2483
+    },
+    {
+      "path": "skills/data-middleware-ai-infrastructure/references/data-middleware-ai-infrastructure-rules.md",
+      "sha256": "44604b68104ba2b9e20db7957ce2663ffa4c60ad81c237a8f1cc2745e54effb7",
+      "size": 1346
+    },
+    {
+      "path": "skills/data-middleware-ai-infrastructure/references/redis-messaging.md",
+      "sha256": "c873583c8fdfb6ea1dbac1ebbbb3163e16b6e873b92c2610b965e9b459037bac",
+      "size": 2471
+    },
+    {
+      "path": "skills/data-middleware-ai-infrastructure/references/search-storage-streaming.md",
+      "sha256": "ace28ef16eaf5d28d20253e2ea8015dae9dab4fc024925d4aa9c1e48247378e1",
+      "size": 2896
+    },
+    {
+      "path": "skills/data-middleware-ai-infrastructure/references/security-observability-runtime.md",
+      "sha256": "cb6334c7e5c7134093c9ff31cdd8315f874e5916ffbea9e4f476af8933dd1e40",
+      "size": 3896
+    },
+    {
+      "path": "skills/engineering-quality-delivery/SKILL.md",
+      "sha256": "f71347d11f5f8df74ec4d9e6832e4c20fc5b2e254f28bed96ac318d20fb0f52f",
+      "size": 3355
+    },
+    {
+      "path": "skills/engineering-quality-delivery/agents/openai.yaml",
+      "sha256": "c20a42ef14c7c40712d5f917914d9e7333f03335954751e82411313cb9092a61",
+      "size": 408
+    },
+    {
+      "path": "skills/engineering-quality-delivery/assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml",
+      "sha256": "9f8472e2887f2841d9728130b701c0ae5a3d59fc7f5277507e95a076da4c7c6d",
+      "size": 1631
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/engineering-quality-delivery-workflow.md",
+      "sha256": "8c63399569103b453ea079739be0ffdb9965482c8d8694f43be0a5afcf4accb1",
+      "size": 1922
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/evidence-fingerprint-protocol.md",
+      "sha256": "84c7ac1c32cc29e490e0e0e8f862fd65cd1adc724de756b08eed354da699d3d5",
+      "size": 1398
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/execution-profiles-and-phases.md",
+      "sha256": "12ff9e3c32d8c1ed270973ea17cad32139d069ee9b560d53bbed01e55ad2e9b1",
+      "size": 2603
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/project-binding-approval-finalization.md",
+      "sha256": "ade228e662cdd1404f4bcbd8e20d49851e2b7123b6f20e4c0bd8c2c2210a8d61",
+      "size": 1851
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/quality-git-delivery.md",
+      "sha256": "870c933a8c08beee93605ae36bc065c6bc2e520d3b7ff563a9420b2c9eb576c2",
+      "size": 3709
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/quality-production-operations.md",
+      "sha256": "48551bc6854a7cdf8700d8ed54febee676c09817cd4ac7e53afe6d9fd6fead49",
+      "size": 2083
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/quality-review-completion.md",
+      "sha256": "b37640ecefbea8f66c005297d8ed13519b6d6c062a273439d60bc6f0696f8a5f",
+      "size": 5113
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/quality-task-planning.md",
+      "sha256": "bad467f5e12e65e10237fb1489b55ff51dd0a5e3b2f3334290efc5029aeed1fe",
+      "size": 2901
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/quality-validation-gates.md",
+      "sha256": "f8b2133e7105401002a81634a26ea979343253d9f024952c15d1d5bfac88e06b",
+      "size": 5264
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/task-execution-envelope.md",
+      "sha256": "50985af7048d9298402e7404829e10b5f4763ecdbe87a406a8a2ba42cf22fe81",
+      "size": 1573
+    },
+    {
+      "path": "skills/engineering-quality-delivery/scripts/execution_guard.py",
+      "sha256": "9d248814d82f6fef57205e13b7f3d7180c05ff60b1042ec9b23a6e3832c2d781",
+      "size": 22387
+    },
+    {
+      "path": "skills/engineering-quality-delivery/tests/test_execution_guard.py",
+      "sha256": "72e7f2df6c2b17fb787cf079ed1b74d537f2c06372819d95fe2afa9faf1bfb1e",
+      "size": 2139
+    },
+    {
+      "path": "skills/engineering-quality-delivery/tests/test_execution_guard_v5.py",
+      "sha256": "a5017eec34d073f4173d28edf699d9ffbcb887955fa4bfbaf470912fa01fffa5",
+      "size": 6143
+    },
+    {
+      "path": "skills/frontend-engineering/SKILL.md",
+      "sha256": "8fa1ea2597d3407d62224b6b36ddaa060131687d7da541b3e58d19036bfb71b4",
+      "size": 5991
+    },
+    {
+      "path": "skills/frontend-engineering/agents/openai.yaml",
+      "sha256": "824be330ab1c20ef73004bbd9d57e96b4cc53b8f84bcc37ed7d54f10fd523d2d",
+      "size": 480
+    },
+    {
+      "path": "skills/frontend-engineering/assets/templates/FRONTEND_REVIEW_REPORT.template.md",
+      "sha256": "057860d0e6cf7dfe3826900cce30221c29a6d88d4c92042da014cb17677e3ea7",
+      "size": 547
+    },
+    {
+      "path": "skills/frontend-engineering/assets/templates/FRONTEND_STACK_PROFILE.template.md",
+      "sha256": "3ca68ae6e6ffc3883f219e996dd7631288b98a3909669bee604ebd14cfb4d533",
+      "size": 823
+    },
+    {
+      "path": "skills/frontend-engineering/assets/templates/FRONTEND_VALIDATION_MATRIX.template.md",
+      "sha256": "c96713ff57b4a28d2bd397fcee063161c42d759e5b726a2c5d509fe47b445fce",
+      "size": 942
+    },
+    {
+      "path": "skills/frontend-engineering/references/angular-rules.md",
+      "sha256": "f6b053976eb65c478b9763047ce1388136eca79988115d17ec31954c202c4566",
+      "size": 2519
+    },
+    {
+      "path": "skills/frontend-engineering/references/framework-detection-matrix.md",
+      "sha256": "e7b62e981b576caaa706e3b776e2a11d9652b79d479de6533f60e981bc9edcc1",
+      "size": 2299
+    },
+    {
+      "path": "skills/frontend-engineering/references/frontend-core-rules.md",
+      "sha256": "116cba4d8847c03722ab009f5a34f14ed28d78738f2bc0a6f4f64eb64fe3ae1a",
+      "size": 4446
+    },
+    {
+      "path": "skills/frontend-engineering/references/frontend-quality-performance-rules.md",
+      "sha256": "6178589406dc8e8520fe7102c1158f503587c06b39e024b19e0a6f09c38b68bf",
+      "size": 3473
+    },
+    {
+      "path": "skills/frontend-engineering/references/frontend-security-runtime-rules.md",
+      "sha256": "1ffbe9563579a7b938fd0782453ecd7a1a7ada6cfa752d5a70b36b36abed9a7d",
+      "size": 3334
+    },
+    {
+      "path": "skills/frontend-engineering/references/legacy-frontend-rules.md",
+      "sha256": "282e5cb7ff3125976f96128ab62a7605681b7905445673792811473d09b75e7e",
+      "size": 3040
+    },
+    {
+      "path": "skills/frontend-engineering/references/microfrontend-monorepo-rules.md",
+      "sha256": "cd404feb82424209ae2ddc999ebfe7510cf4dd4504bcb0fb4c4936e34387f25a",
+      "size": 1146
+    },
+    {
+      "path": "skills/frontend-engineering/references/other-modern-frameworks-rules.md",
+      "sha256": "ee9d17ff0739db2493102c61d511b2b2574f6ede77ea3171b8059639b1071ad8",
+      "size": 3151
+    },
+    {
+      "path": "skills/frontend-engineering/references/react-next-remix-rules.md",
+      "sha256": "66cc0f881d34ff19516ef5c92b26a8ab15eae051cf44c9a0ceb8ecff910939b0",
+      "size": 2723
+    },
+    {
+      "path": "skills/frontend-engineering/references/svelte-sveltekit-rules.md",
+      "sha256": "7fb0887e97c9cff561fc3b2323b5e860d3a273e9d831808766e1e7c6c56790b6",
+      "size": 1632
+    },
+    {
+      "path": "skills/frontend-engineering/references/vue-nuxt-rules.md",
+      "sha256": "ac30cc484218bb538c2f7f506adf45c51e9db2b8a2a10034b07ec0073461bd55",
+      "size": 2916
+    },
+    {
+      "path": "skills/frontend-engineering/scripts/detect_frontend_stack.py",
+      "sha256": "6c7b83e4fcf77a6f9b385628bd82df4b0cbf9ee7b1a9d760ea84e0a806586388",
+      "size": 18454
+    },
+    {
+      "path": "skills/frontend-engineering/tests/test_detect_frontend_stack.py",
+      "sha256": "95f53e0cfe13b175c69d863a5a386d77a33781b58efb569d5d42cefcae2d994f",
+      "size": 5119
+    },
+    {
+      "path": "skills/java-backend-engineering/SKILL.md",
+      "sha256": "a1236c9fe5935986abc790374804fe5c5cf81fd828a0e53b14b0e4483b1db647",
+      "size": 1888
+    },
+    {
+      "path": "skills/java-backend-engineering/agents/openai.yaml",
+      "sha256": "e545ed37f7a9f61eba2a1102e7b81898ae396ab14aac8a713548a2d044f8bf50",
+      "size": 340
+    },
+    {
+      "path": "skills/java-backend-engineering/references/java-architecture-framework.md",
+      "sha256": "eae8edd4f607456f0d2643114a052a5d942e8837c5ed738afa9d5efac2deb3f5",
+      "size": 3449
+    },
+    {
+      "path": "skills/java-backend-engineering/references/java-backend-rules.md",
+      "sha256": "44abc0a3abd36ef9c40a7d818229d6c08a079ac5bca7fb0ad6d6d9a4d01c2d5a",
+      "size": 1265
+    },
+    {
+      "path": "skills/java-backend-engineering/references/java-concurrency-integration.md",
+      "sha256": "58f6d22f6e71c8a3b0f7199caab6fbc1c9ae8b480905876b38d38e8bc99944c9",
+      "size": 5142
+    },
+    {
+      "path": "skills/java-backend-engineering/references/java-core-version.md",
+      "sha256": "b45ff721617ca2e9c81ed886a21a2b0665361a0f17a89758cc4b3d404d597a08",
+      "size": 3389
+    },
+    {
+      "path": "skills/java-backend-engineering/references/java-security-performance-testing.md",
+      "sha256": "b30c9e58b5da219933cd199d2a79b4ff3ea94061937c06ed3a5e383fc45720d6",
+      "size": 4495
+    },
+    {
+      "path": "skills/log-observability-analysis/SKILL.md",
+      "sha256": "348367c02d6ea386cb2200cefc23de1236372608c9427398b6b0f79827c10121",
+      "size": 2001
+    },
+    {
+      "path": "skills/log-observability-analysis/agents/openai.yaml",
+      "sha256": "faa3b84461aed6302b07aa03b2d4c5cc128f23a8c1ffd114c08b90a9dde41735",
+      "size": 439
+    },
+    {
+      "path": "skills/log-observability-analysis/assets/templates/LOG_ANALYSIS_REPORT.template.md",
+      "sha256": "757d5e0c904f7345eba9deae93cab6fd49bb2a28dda7556e8c558f085d4c8c17",
+      "size": 1034
+    },
+    {
+      "path": "skills/log-observability-analysis/assets/templates/LOG_EVIDENCE_LEDGER.template.md",
+      "sha256": "e52d21eee1bce6514ec678a2c01962535fb65f07049737c35718406bc86bccdc",
+      "size": 415
+    },
+    {
+      "path": "skills/log-observability-analysis/assets/templates/LOG_TIMELINE.template.md",
+      "sha256": "618fa74206306eb14d9c91eb6b667508f3d70a5007398f4c0bd9e083c509488a",
+      "size": 499
+    },
+    {
+      "path": "skills/log-observability-analysis/assets/templates/METRICS_ANALYSIS.template.md",
+      "sha256": "8b096af1cb75d003c2cee62c7ff7fbe38bb60501b47e205301ba447afd3448d7",
+      "size": 783
+    },
+    {
+      "path": "skills/log-observability-analysis/assets/templates/OBSERVABILITY_CORRELATION.template.md",
+      "sha256": "1763d78ae53fce23749a44cdc53932010757887e3c0c132b14b232840f7093fe",
+      "size": 877
+    },
+    {
+      "path": "skills/log-observability-analysis/assets/templates/TRACE_ANALYSIS.template.md",
+      "sha256": "e6d81c2b26edf8c9e4d2fb3f7348922e46a0b1b445530c363b57411381724420",
+      "size": 728
+    },
+    {
+      "path": "skills/log-observability-analysis/references/log-observability-analysis-workflow.md",
+      "sha256": "48b607352f71f0de130f3381641b08a2315663d723187e515e3bd62eac07e3f3",
+      "size": 1183
+    },
+    {
+      "path": "skills/log-observability-analysis/references/observability-analysis-process.md",
+      "sha256": "0c222557b2f19668ec71bfea6a1f2e73e26638b63f00e7ba80112b25ed02e1c4",
+      "size": 3681
+    },
+    {
+      "path": "skills/log-observability-analysis/references/observability-domain-safety-output.md",
+      "sha256": "dc568de4b233f3ac9a99b66a62f55382a2ef09c5f8f5c52b927d37356608d6a9",
+      "size": 3448
+    },
+    {
+      "path": "skills/log-observability-analysis/references/observability-scope-modes.md",
+      "sha256": "0f1556809944872ad859b3afddf04547181498a14310ef1243b8bb2fe2a093a7",
+      "size": 3833
+    },
+    {
+      "path": "skills/log-observability-analysis/references/observability-signals.md",
+      "sha256": "8ac7819c5e14fd47a14d6b330336adf828a0c08561143212fc1eee2982ccac1b",
+      "size": 2531
+    },
+    {
+      "path": "skills/long-running-task-memory/SKILL.md",
+      "sha256": "fb4c1f95b4d9df05878250222b87017da675bc53210945a8a8d4b8ad6e86c9c5",
+      "size": 3430
+    },
+    {
+      "path": "skills/long-running-task-memory/agents/openai.yaml",
+      "sha256": "d7efa3b701172da6438818cd8bd4730b02a3c48864282d1be400676ce7febb3e",
+      "size": 422
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/CHECKPOINT_ENTRY.template.md",
+      "sha256": "e1f7d638378d3ed49528d72bab37828a969a982387e5eb3819ee49d9a6d029a8",
+      "size": 714
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/CURRENT_TASK.template.md",
+      "sha256": "7928f99a8220bc039cb2f15ea2cdaa79301c1db4ab120b486d19ad635d5f7372",
+      "size": 2566
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/DECISIONS.template.md",
+      "sha256": "4c68aca23ce01d60f5f5b23256a98ee9c05b78366c3d52651e29bfd91d876d82",
+      "size": 733
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/DELIVERY_RECORD.template.md",
+      "sha256": "81639a6c00020d933c305bf268e0a88979ba00ba40607eb86e8db790d28285f2",
+      "size": 1868
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/HANDOFF.template.md",
+      "sha256": "73fb14879662cae4eafae7d15dead3ce1b78dbf896781accd8ca170f578aace9",
+      "size": 1615
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/KNOWN_ISSUES.template.md",
+      "sha256": "3f14193e02bb79049a89cff95b5c3e067d33d1f8b3af2fb00fa9d6aa2dfd6a90",
+      "size": 613
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/PLAN.template.md",
+      "sha256": "1112dc80b4e17a40491216f5c5487e1e29d8cb294285c38c93080230e2b2d4b4",
+      "size": 1912
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/PROGRESS.template.md",
+      "sha256": "a5b50bc58ef37827617a5c107762e67e4a7f8748f133c99414831e10b0cb3cd0",
+      "size": 1061
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/PROJECT_CONTEXT.template.md",
+      "sha256": "92ad705d6809a55ca55cbdf41418da80c2e27be3e45b8b5b7874b1399ba70812",
+      "size": 1726
+    },
+    {
+      "path": "skills/long-running-task-memory/assets/templates/RECOVERY_CHECKLIST.template.md",
+      "sha256": "78c8a5df4a289bc6bae4f1ecbb59edfccb60fce22f875642aba1ebac86ac53c1",
+      "size": 748
+    },
+    {
+      "path": "skills/long-running-task-memory/references/controlled-self-evolution.md",
+      "sha256": "df133822b427d0887e0241db8cb57bb7458cc32f0fbedcc58348991bf0717762",
+      "size": 621
+    },
+    {
+      "path": "skills/long-running-task-memory/references/long-running-task-memory-rules.md",
+      "sha256": "96b646c6960a4cc1497f68b28d7596c30f69b7ded122e9d4e4f20d7aaf42b51a",
+      "size": 1543
+    },
+    {
+      "path": "skills/long-running-task-memory/references/memory-checkpoints.md",
+      "sha256": "819abd1ee32445a7f42a9c26c03ae07e8e516f272430612e703f5a9ec718b6fb",
+      "size": 6490
+    },
+    {
+      "path": "skills/long-running-task-memory/references/memory-multiagent-events.md",
+      "sha256": "a0f3258c02e27fcd8f0516b54bb8160886a918f25eb7e293da34238abadeaa2a",
+      "size": 2547
+    },
+    {
+      "path": "skills/long-running-task-memory/references/memory-principles-layout.md",
+      "sha256": "3ef9eeba070b2bc1654aa66b9f9fcbc123a6d6da87a3db5e34e4f885e4cbaed8",
+      "size": 4095
+    },
+    {
+      "path": "skills/long-running-task-memory/references/memory-projection-governance.md",
+      "sha256": "e45190434fc6339a7620138868d8715e1637648b01c0ebb81b74a6c16e880cb1",
+      "size": 1542
+    },
+    {
+      "path": "skills/long-running-task-memory/references/memory-recovery-conflicts.md",
+      "sha256": "f2a64c44bb281cc489c33916e807825b48a83cb01f67d076a6cc9a75f961bdca",
+      "size": 1737
+    },
+    {
+      "path": "skills/long-running-task-memory/references/memory-security-lifecycle.md",
+      "sha256": "9d1cd376c345ba0dda3b98d74e6aec8c24899808b787204f8d135a1554f7ed19",
+      "size": 4774
+    },
+    {
+      "path": "skills/long-running-task-memory/scripts/checkpoint.py",
+      "sha256": "89687be40d5012c3908bd85e324e4d834671b0bad69ee53915644cd6203905b4",
+      "size": 39758
+    },
+    {
+      "path": "skills/long-running-task-memory/tests/test_checkpoint_dedupe.py",
+      "sha256": "dd316edba8e654f5ee9318c1e53e204825a665a5eccc8a9e2728a3616cd28cc0",
+      "size": 1855
+    },
+    {
+      "path": "skills/multi-agent-independent-review/SKILL.md",
+      "sha256": "28fd0413c0a758e9358fc5f62dd29f8167b5a09d51999ea4c0e09d83947b551f",
+      "size": 3368
+    },
+    {
+      "path": "skills/multi-agent-independent-review/agents/openai.yaml",
+      "sha256": "7958b5a17992750b3c21c5c97337798b3bf617ed6f5e1733be51f27ff05d34c3",
+      "size": 414
+    },
+    {
+      "path": "skills/multi-agent-independent-review/assets/schemas/review-result.schema.json",
+      "sha256": "dde088ba0c1b2247298f25047db4a47227cda7c98f962b706faf9b0dbe70d115",
+      "size": 3715
+    },
+    {
+      "path": "skills/multi-agent-independent-review/assets/templates/PRE_IMPLEMENTATION_REVIEW.template.md",
+      "sha256": "fb1bba2c8da9e408f9933803144b9a69d60126b7d93b889ab056c045b56327a4",
+      "size": 1329
+    },
+    {
+      "path": "skills/multi-agent-independent-review/assets/templates/REVIEW_ISOLATION_EVIDENCE.template.md",
+      "sha256": "8d828b408d2685afc436d464c45967fec72e17546b139829f0f40edbefff1cc4",
+      "size": 956
+    },
+    {
+      "path": "skills/multi-agent-independent-review/assets/templates/REVIEW_LEDGER.template.md",
+      "sha256": "fdcf4a45c66efdc0588440444651e53bc9572bb3f74875252f7756f47627160e",
+      "size": 1132
+    },
+    {
+      "path": "skills/multi-agent-independent-review/assets/templates/REVIEW_PACKET_MANIFEST.template.json",
+      "sha256": "0697137bf6d3097338328d320a049a7f8102e91d848c2a85eea0e5a3c6680cee",
+      "size": 691
+    },
+    {
+      "path": "skills/multi-agent-independent-review/assets/templates/REVIEW_PLAN.template.md",
+      "sha256": "586c966cb68bccb881862e9ab537055f75c5e275f0950d7546077b3be2be3cf2",
+      "size": 1582
+    },
+    {
+      "path": "skills/multi-agent-independent-review/assets/templates/REVIEW_RESULT.template.md",
+      "sha256": "8bfa2304e6e9edec2017a4e1468b3a6ae0b534c5edb596d991be07b33774609c",
+      "size": 1446
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/controlled-self-evolution.md",
+      "sha256": "df133822b427d0887e0241db8cb57bb7458cc32f0fbedcc58348991bf0717762",
+      "size": 621
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/multi-agent-independent-review-workflow.md",
+      "sha256": "80807f5715d3159d9b95b5c8d684f9adef37c38831267c58438f1254c206ff87",
+      "size": 1515
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/review-goals-limits-isolation.md",
+      "sha256": "48f4169889a5e626e9f80bf2d319f5efa187823bec8d3b3db59f202cb61f77fa",
+      "size": 2624
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/review-postimplementation.md",
+      "sha256": "78cd96943f5bb97a376f715bfa383affdd0c1004428dda15aa3d9711fd250989",
+      "size": 2736
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/review-preimplementation-controller.md",
+      "sha256": "da73ca897fc1e81a66ac1cfa531d20469bcb1ef4aded37abe01e096d3950ef57",
+      "size": 2048
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/review-stop-output-memory.md",
+      "sha256": "0e334269dca7951c1678a6c9d7f2950679b127821a1c0490cd9ae32146b00be7",
+      "size": 2449
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/review-triggers-reviewers.md",
+      "sha256": "426bfe44d91d5a44174f57d05f2ee14f5b38978fdbb933641f99dab1696a1c43",
+      "size": 2865
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/reviewer-effort-tiers.md",
+      "sha256": "b8eac1542efd8d177cae2cf6457c66b70d952b77a89b518d3c97369d6a909284",
+      "size": 1472
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/reviewer-model-routing.md",
+      "sha256": "3131634e33ada3f2a365bb29078d2a1983b9d09ce7d285b3464859482a5d51d7",
+      "size": 3862
+    },
+    {
+      "path": "skills/multi-agent-independent-review/scripts/review_controller.py",
+      "sha256": "9137ee0965b3b03cab2bda5ad42d40ce88e475416bc85c0da7d6554a35a528cf",
+      "size": 50460
+    },
+    {
+      "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
+      "sha256": "e7ed34148ae9f4421f59aae972181a4df94bb95d2c0ea74a67db7509acc41c4b",
+      "size": 22399
+    },
+    {
+      "path": "skills/multi-agent-independent-review/tests/test_review_tools.py",
+      "sha256": "60d946246960d1ee0b63f4f29ca3307acba59430e7890836c42ae68efa85f4df",
+      "size": 9047
+    },
+    {
+      "path": "skills/python-backend-ai-engineering/SKILL.md",
+      "sha256": "fe3138ad857b6b642f5790b8ff94194859a298b890e6ecb728231cb3e6e034e1",
+      "size": 1841
+    },
+    {
+      "path": "skills/python-backend-ai-engineering/agents/openai.yaml",
+      "sha256": "b1b089f56d54bb192b47933c2bb211596d12cbdfbc1e4f09966a21242aa2c360",
+      "size": 360
+    },
+    {
+      "path": "skills/python-backend-ai-engineering/references/python-backend-ai-rules.md",
+      "sha256": "738713b3cb0ce94ff52c40ac7d669fc7e360e63628040d8891796e58902af667",
+      "size": 1236
+    },
+    {
+      "path": "skills/python-backend-ai-engineering/references/python-concurrency-deployment.md",
+      "sha256": "37b4c3940d46b612610c2f9fdd3f620b4aac8815e723ccdc87c3601d8fcb51c8",
+      "size": 2404
+    },
+    {
+      "path": "skills/python-backend-ai-engineering/references/python-core-web-frameworks.md",
+      "sha256": "6eaba2b91ef79590acad8d47d592496fed872a2be1c3ccaed52db9e96a71f694",
+      "size": 2854
+    },
+    {
+      "path": "skills/python-backend-ai-engineering/references/python-data-contract-security.md",
+      "sha256": "ed56a5362abb3c7a1dffc53ffbb56f32b2cf37ab743e5780b8b31160b91f4db5",
+      "size": 2316
+    },
+    {
+      "path": "skills/python-backend-ai-engineering/references/python-tasks-quality-testing.md",
+      "sha256": "bedab83b2181b70a94546ae4ee81fb633bfef01394d4536d465e32e6a6359128",
+      "size": 3258
+    },
+    {
+      "path": "skills/technical-document-writing/SKILL.md",
+      "sha256": "4599f2d309be78f6851f66d2ce7c415b8636fdfc9080b3e800af2f946030fdd9",
+      "size": 2103
+    },
+    {
+      "path": "skills/technical-document-writing/agents/openai.yaml",
+      "sha256": "b8ab485980243f9bc0d2498a71e0079cc000b08294439a4b30ad637a5a82ecea",
+      "size": 394
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/API_DESIGN.template.md",
+      "sha256": "71c68911b9bf8291b29ccd09ecd71adfd2ae8ddaa8e53312cbcdc32cc27834dc",
+      "size": 884
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/ARCHITECTURE_DESIGN.template.md",
+      "sha256": "19ece0d05d39e0e42b0eaec18eefa1ddfed2414dbdbc5035df5cb524b0b01589",
+      "size": 1056
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/CODE_REVIEW_REPORT.template.md",
+      "sha256": "52a582c5162bafc9f7cd3e73979c30acf1828411bb720022224d938b31cfff82",
+      "size": 690
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/DATABASE_DESIGN.template.md",
+      "sha256": "89448348f924f72ee266695bcd2cf5036c4ac37fdcee7aa5cd910f44b4f7d3a8",
+      "size": 853
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/DEPLOYMENT_RUNBOOK.template.md",
+      "sha256": "eaf7b564473ed55457fec2e80a8e806fed57f2ffaafcc632405fccdc206c5da3",
+      "size": 993
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/IMPLEMENTATION_PLAN.template.md",
+      "sha256": "8b7398d998fd2a2e6dd8944fbba0cb9def91d95e6c15eff2a2f3202942890fe7",
+      "size": 899
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/INCIDENT_REPORT.template.md",
+      "sha256": "8a1fbdb2020ec7264899057d8682a9bbd1ad50571e344e8a7fdd3d11ff08c447",
+      "size": 848
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/MANAGEMENT_REPORT.template.md",
+      "sha256": "5b1498b20cee45378515b6dc625e99704c80f25fd1d5feb04a3c2ef7b6ab30e2",
+      "size": 525
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/PROJECT_PROGRESS_REPORT.template.md",
+      "sha256": "7ed2881335e4b364bb1e4764b4b1ff9b70019a0234040a70c7eb82f62a33c4b8",
+      "size": 768
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/README.template.md",
+      "sha256": "c39701a64e876d366f8e030b7fa030f453084d94b616a11911cb5fe0be40033a",
+      "size": 509
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/TECHNICAL_SELECTION.template.md",
+      "sha256": "25914d8ec4456cb73761f125bf3f5edf2c78e9a6e90b98948bd3e71ea9205ba9",
+      "size": 633
+    },
+    {
+      "path": "skills/technical-document-writing/assets/templates/TECHNICAL_SOLUTION.template.md",
+      "sha256": "caf12050eee1bf85ea378c7230e5946a3b92dfbe865eb3c94095d8b6a69a0536",
+      "size": 1542
+    },
+    {
+      "path": "skills/technical-document-writing/references/document-maintenance-quality.md",
+      "sha256": "dbb667e24719f86ac0e9a602863c09d559fd9e8bdee33b043791f7e6ff4d7572",
+      "size": 3272
+    },
+    {
+      "path": "skills/technical-document-writing/references/document-scope-evidence.md",
+      "sha256": "7add26565a25be9e586c01c701f7fad0d6f11789dd056ec79231926385da5f5d",
+      "size": 4994
+    },
+    {
+      "path": "skills/technical-document-writing/references/document-structure-language.md",
+      "sha256": "3ceb04c39665ce70848e9b2ab86bae43577d49c1bfa39a569a2b5598b9548a69",
+      "size": 4320
+    },
+    {
+      "path": "skills/technical-document-writing/references/document-type-playbooks.md",
+      "sha256": "830fdc9a38d45d9b11fea87176fc28dfd70c723d6a7e275f8e3d1b00bef918b7",
+      "size": 4405
+    },
+    {
+      "path": "skills/technical-document-writing/references/document-types-comparison.md",
+      "sha256": "a3daed78f491066b8beae99dd8a91b94dc498d5ce18de38dc4252b63d7500cd4",
+      "size": 4070
+    },
+    {
+      "path": "skills/technical-document-writing/references/technical-document-writing-rules.md",
+      "sha256": "8714df20dce4dd37a06de681736e330e44af6fda3011c9e36c24ed257e1a5ab7",
+      "size": 1182
+    },
+    {
+      "path": "hooks/cp_hook.cmd",
+      "sha256": "82e5b141b3277238ffd10b03eed02974e45139866ca7c17486e02ea1b252f692",
+      "size": 1222
+    },
+    {
+      "path": "hooks/cp_hook.py",
+      "sha256": "f9369ff585acfbfb07d04e8b800c491d0265b2a7594540c4e1a8b67c3068de3c",
+      "size": 10515
+    },
+    {
+      "path": "hooks/hooks.json",
+      "sha256": "d27a1d45b6ef4a83ac60f35748492f9a47256f4f72745dd48108a1fb4eae78ad",
+      "size": 1954
+    },
+    {
+      "path": "runtime/cp_runtime/__init__.py",
+      "sha256": "8f8c0e5cabc86b3fe5d14c831657f120d539a62ecfcd2f546e9f94bb7e742522",
+      "size": 408
+    },
+    {
+      "path": "runtime/cp_runtime/approval.py",
+      "sha256": "3589837edb8f424d6215a166ef58aed6193c31ffd26f3f1e8a4c1adab1f0c28f",
+      "size": 5774
+    },
+    {
+      "path": "runtime/cp_runtime/cli.py",
+      "sha256": "ed48a7d0aef0379535e800a7f06dc0f451c43cf102c16a69a683c01b5bdfcd7d",
+      "size": 12256
+    },
+    {
+      "path": "runtime/cp_runtime/common.py",
+      "sha256": "6801e667e4c1628df79d7e1fc7af7b2bbae6d0d168221a9184479fb401085093",
+      "size": 12761
+    },
+    {
+      "path": "runtime/cp_runtime/contracts.py",
+      "sha256": "bcb0cdcc224ee978449205ce47b851d32d1e57eb71428f1358ab916888716d13",
+      "size": 1911
+    },
+    {
+      "path": "runtime/cp_runtime/event_v2.py",
+      "sha256": "54b6a574731cc0213a817a0a3b9172a264c25c858c8469c7e421e7901b8978eb",
+      "size": 22487
+    },
+    {
+      "path": "runtime/cp_runtime/evidence.py",
+      "sha256": "1ae68bbc638092997993ce6b5e06d4c87cfc89f3d91fee80fc3d5204a93d81fa",
+      "size": 4538
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/__init__.py",
+      "sha256": "00d0cbb06bf1efa01a5bf5bc66186194864bab0312a3c5c22e85e82b55897e17",
+      "size": 1116
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/analysis.py",
+      "sha256": "0cbcb96287d179dcc864ae6862b486c57fdc0e5710e0bbbd39f8363a28d28e84",
+      "size": 8097
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/cli.py",
+      "sha256": "31083babd4db9b018704a71f2fbc96cbffcf4d309e898fcf9e609928d3e44610",
+      "size": 9476
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/contracts.py",
+      "sha256": "1fb6ed27e97ebb2ddd615e50a1eced5546901e39fd1e3c022f308873cdd510a0",
+      "size": 24910
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/lifecycle.py",
+      "sha256": "a5cd1e4623824ac919d8771d265c15ec5ab50e300952b1c92e4bc64758f7097a",
+      "size": 5948
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/manifest.json",
+      "sha256": "3ddfaa929a4dcb6b4b1e5345c6536cbb23323f08a55fc93c8747eaf8bc07a20d",
+      "size": 889
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/observation.py",
+      "sha256": "10aaf1ac4e3139c6243bb439838a17278a92ff8927c7ffd4f6d782693f3fcf47",
+      "size": 43236
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/proposal.py",
+      "sha256": "d61b8d12eef6ce3743933d7dd2f34366b5043235c31b819154b8b0b46ae8bedc",
+      "size": 8218
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/redaction.py",
+      "sha256": "9e1a298fe57e945b853deff6e38a6a5602d18e2b371a2960a9e1a5e2a5c97cce",
+      "size": 2421
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/registry.py",
+      "sha256": "6ecf3faf83d99db945c20aca5ca6b61ea830413ed865b88d4a0161c54bb71149",
+      "size": 14481
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/service.py",
+      "sha256": "9ef45349e6a98ce4e93d1d60654bb4aa0f5862fd07c53f0d943963369d9fc5dc",
+      "size": 6005
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/storage.py",
+      "sha256": "f5efe843ff97df89d388d61211035ae70b1ba855d6b03463a3806bc7ad9ad644",
+      "size": 12657
+    },
+    {
+      "path": "runtime/cp_runtime/feedback.py",
+      "sha256": "2d72b41abcf97ef1136d7f8bb26ba10b1fd54c1b2013c71ddaae5f9fd622a561",
+      "size": 1483
+    },
+    {
+      "path": "runtime/cp_runtime/finalization.py",
+      "sha256": "a1a689cbcbe1d9fc050bb98da6fa857c6380f0fcb266cd5fc0efaa86efb05cc0",
+      "size": 6812
+    },
+    {
+      "path": "runtime/cp_runtime/memory.py",
+      "sha256": "16a3a0841ba9f1c13efb6466a65754fe75ede9816e16f0d7c08789fa1cf8f540",
+      "size": 8000
+    },
+    {
+      "path": "runtime/cp_runtime/project.py",
+      "sha256": "63a2f49a3a8f210b73ed3e5557dc4fe26f6c45300f67fbb582f2e3f9cb0dd3fa",
+      "size": 14587
+    },
+    {
+      "path": "runtime/tests/test_cp_runtime.py",
+      "sha256": "13c6e6afd172d7670f28c002c5e2ee54e3b741542d66dc1318aa67cc90a3d090",
+      "size": 8264
+    }
+  ]
+}
