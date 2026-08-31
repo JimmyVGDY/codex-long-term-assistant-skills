@@ -1,6 +1,6 @@
 # V6.6.1 Package Validation Report
 
-中文：[VALIDATION_REPORT_V6.6.1.md](VALIDATION_REPORT_V6.6.1.md)
+Chinese: [VALIDATION_REPORT_V6.6.1.md](VALIDATION_REPORT_V6.6.1.md)
 
 Version: 6.6.1
 

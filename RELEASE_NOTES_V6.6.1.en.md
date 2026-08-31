@@ -1,6 +1,6 @@
 # V6.6.1 Release Notes
 
-中文：[`RELEASE_NOTES_V6.6.1.md`](RELEASE_NOTES_V6.6.1.md)
+Chinese: [`RELEASE_NOTES_V6.6.1.md`](RELEASE_NOTES_V6.6.1.md)
 
 ## Delivered
 

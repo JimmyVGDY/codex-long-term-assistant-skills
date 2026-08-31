@@ -1,6 +1,6 @@
 # V6.6.1 Installation, Validation, and Recovery
 
-中文：[`INSTALLATION_RECOVERY.md`](INSTALLATION_RECOVERY.md)
+Chinese: [`INSTALLATION_RECOVERY.md`](INSTALLATION_RECOVERY.md)
 
 ## Preconditions
 

@@ -1,6 +1,6 @@
 # Changelog — English current-release summary
 
-中文完整历史：[`CHANGELOG.md`](CHANGELOG.md)
+Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## 6.6.1 - 2026-08-31
 

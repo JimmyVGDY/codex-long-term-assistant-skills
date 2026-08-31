@@ -1,6 +1,6 @@
 # Codex Cross-Project Engineering Assistant V6.6.1
 
-中文：[README.md](README.md)
+Chinese: [README.md](README.md)
 
 Target host: native Windows Codex CLI 0.150.1. Plugin success is established only when `codex plugin list --json` reports `installed=true`, `enabled=true`, and `version=6.6.1`.
 

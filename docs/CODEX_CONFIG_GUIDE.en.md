@@ -1,6 +1,6 @@
 # Codex Configuration Guide
 
-中文：[`CODEX_CONFIG_GUIDE.md`](CODEX_CONFIG_GUIDE.md)
+Chinese: [`CODEX_CONFIG_GUIDE.md`](CODEX_CONFIG_GUIDE.md)
 
 ## Scope
 

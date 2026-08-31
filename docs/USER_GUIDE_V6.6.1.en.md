@@ -1,6 +1,6 @@
 # V6.6.1 Operating Guide
 
-中文：[`USER_GUIDE_V6.6.1.md`](USER_GUIDE_V6.6.1.md)
+Chinese: [`USER_GUIDE_V6.6.1.md`](USER_GUIDE_V6.6.1.md)
 
 ## Skill entry points
 
