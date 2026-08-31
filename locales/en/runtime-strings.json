@@ -73,6 +73,217 @@
       "plain": {
         "反馈仅用于人工评估，不自动修改模型、预算或路由规则": "Feedback is for human evaluation only and never changes models, budgets, or routing rules automatically"
       }
+    },
+    "runtime/cp_runtime/event_v2.py": {
+      "plain": {
+        "%s 必须是整数": "%s must be an integer",
+        "%s 不能为负数": "%s cannot be negative",
+        "未知 event_type: %s": "Unknown event_type: %s",
+        "repo_fingerprint 非法": "Invalid repo_fingerprint",
+        "project_id 非法": "Invalid project_id",
+        "terminal_outcome 非法": "Invalid terminal_outcome",
+        "actual_model 非法": "Invalid actual_model",
+        "actual_reasoning_effort 非法": "Invalid actual_reasoning_effort",
+        "宿主事实来源非法": "Invalid host fact source",
+        "actual_model 与来源不一致": "actual_model does not match its source",
+        "actual_reasoning_effort 与来源不一致": "actual_reasoning_effort does not match its source",
+        "terminal_outcome 与来源不一致": "terminal_outcome does not match its source",
+        "获取事件锁超时": "Timed out while acquiring the event lock",
+        "事件分段文件名非法: %s": "Invalid event segment filename: %s",
+        "事件分段编号不连续: %s": "Event segment numbers are not continuous: %s",
+        "事件文件存在未提交尾部: %s": "Event file has an uncommitted tail: %s",
+        "事件文件不是有效 UTF-8: %s": "Event file is not valid UTF-8: %s",
+        "%s 第 %d 行 JSON 无效": "%s line %d contains invalid JSON",
+        "%s 第 %d 行不是对象": "%s line %d is not an object",
+        "%s 第 %d 行 schema_version 非法": "%s line %d has an invalid schema_version",
+        "%s 第 %d 行 schema 字段不完整 missing=%s unknown=%s": "%s line %d has incomplete schema fields missing=%s unknown=%s",
+        "%s 第 %d 行字段非法或未规范化: %s": "%s line %d has an invalid or non-normalized field: %s",
+        "%s 第 %d 行 previous_hash 不一致": "%s line %d has a mismatched previous_hash",
+        "%s 第 %d 行 record_hash 不一致": "%s line %d has a mismatched record_hash",
+        "event_id 重复: %s": "Duplicate event_id: %s",
+        "%s 第 %d 行 HMAC 不一致": "%s line %d has a mismatched HMAC",
+        "事件分段阈值过小": "The event segment threshold is too small",
+        "事件分段目标已存在: %s": "The event segment target already exists: %s",
+        "检测到跨项目或跨仓库事件": "Detected a cross-project or cross-repository event"
+      }
+    },
+    "runtime/cp_runtime/project.py": {
+      "plain": {
+        "./mvnw clean package 或 mvn clean package": "./mvnw clean package or mvn clean package",
+        "./mvnw test 或 mvn test": "./mvnw test or mvn test",
+        "./mvnw spring-boot:run 或按项目脚本启动": "./mvnw spring-boot:run or the project's startup script",
+        "pytest（需先确认项目配置）": "pytest (confirm project configuration first)",
+        "项目上下文已存在；使用 --force 才能重建": "Project context already exists; use --force to rebuild it",
+        "目标环境与环境负责人尚未确认": "Target environment and environment owner are not yet confirmed",
+        "数据敏感等级和数据所有权尚未确认": "Data sensitivity level and data ownership are not yet confirmed",
+        "部署、回滚和生产操作入口尚未确认": "Deployment, rollback, and production-operation entry points are not yet confirmed",
+        "构建、测试和启动入口尚未确认": "Build, test, and startup entry points are not yet confirmed",
+        "确认 Profile 中的 unknowns，再开始有写入影响的任务": "Confirm unknowns in the Profile before beginning any task with write impact",
+        "现有 project-memory.md 不属于当前 project_id；拒绝在 --force 下覆盖长期记忆": "Existing project-memory.md does not belong to the current project_id; refusing to overwrite long-term memory even with --force",
+        "不支持的 Project Profile schema_version": "Unsupported Project Profile schema_version",
+        "Project Profile binding_sha256 校验失败": "Project Profile binding_sha256 validation failed",
+        "不支持的 Project State schema_version": "Unsupported Project State schema_version",
+        "仓库 remote.origin.url 已变化；必须刷新并重新绑定 Project Profile": "Repository remote.origin.url changed; refresh and rebind the Project Profile",
+        "Project State 与 Project Profile 的 project_id 不一致": "Project State and Project Profile have different project_id values",
+        "Project State 与 Project Profile 不一致": "Project State does not match the Project Profile",
+        "不允许更新的 Project State 字段: ": "Project State field cannot be updated: ",
+        "非法 Project Stage": "Invalid Project Stage"
+      },
+      "fstring": {
+        "f\"\"\"# Project Memory: {project_name}\\n\\n- Project ID：`{project_id}`\\n- 状态：尚无已审核项目记忆\\n- 说明：任务 Checkpoint 不能自动写入本文件；必须先生成 Projection Candidate，再经过明确审核后晋升。\\n\\n<!-- project-memory:begin -->\\n<!-- project-memory:end -->\\n\"\"\"": "f\"\"\"# Project Memory: {project_name}\\n\\n- Project ID: `{project_id}`\\n- Status: no reviewed project memory exists yet\\n- Note: task Checkpoints cannot write to this file automatically. First create a Projection Candidate, then promote it only after explicit review.\\n\\n<!-- project-memory:begin -->\\n<!-- project-memory:end -->\\n\"\"\"",
+        "f\"Project Profile 绑定仓库不一致: {expected_repo} != {repo}\"": "f\"Project Profile repository binding mismatch: {expected_repo} != {repo}\"",
+        "f\"project_id 不一致: {project_id} != {pid}\"": "f\"project_id mismatch: {project_id} != {pid}\""
+      }
+    },
+    "runtime/cp_runtime/memory.py": {
+      "plain": {
+        "Projection Candidate 疑似包含敏感信息: ": "Projection Candidate may contain sensitive information: ",
+        "Projection source 不存在: ": "Projection source does not exist: ",
+        "本记录尚未成为 Project Memory": "This record has not become Project Memory",
+        "未确认推断、未知项和单项目经验不得自动升级为跨项目知识": "Unconfirmed inferences, unknowns, and single-project experience cannot be promoted automatically to cross-project knowledge",
+        "不支持的 Memory Projection schema_version": "Unsupported Memory Projection schema_version",
+        "Projection 与 Project Profile 不一致": "Projection does not match the Project Profile",
+        "只有 CANDIDATE 或可恢复的 PROMOTED 记录可晋升": "Only CANDIDATE or recoverable PROMOTED records can be promoted",
+        "晋升必须记录 reviewed_by": "Promotion must record reviewed_by",
+        "缺少 project-memory.md": "Missing project-memory.md",
+        "project-memory.md 缺少受管结束标记": "project-memory.md is missing its managed end marker",
+        "未填写": "not provided",
+        "已确认事实": "Confirmed Facts",
+        "决策": "Decisions",
+        "风险": "Risks",
+        "仍未知": "Still Unknown",
+        "无": "None",
+        "- 无": "- None",
+        "只有已晋升的 Project Memory Projection 才能形成 Knowledge Candidate": "Only a promoted Project Memory Projection can produce a Knowledge Candidate"
+      },
+      "fstring": {
+        "f\"- Summary：{promoted['summary'] or '未填写'}\"": "f\"- Summary: {promoted['summary'] or 'not provided'}\""
+      }
+    },
+    "runtime/cp_runtime/evolution/lifecycle.py": {
+      "plain": {
+        "%s 长度非法": "%s has an invalid length",
+        "绑定实施必须同时提供 implementation_task_id 与 git_baseline": "Binding an implementation requires both implementation_task_id and git_baseline",
+        "记录验证必须提供 implementation_commit 与至少一条 evidence_ref": "Recording validation requires implementation_commit and at least one evidence_ref",
+        "关闭提案必须提供合法 final_outcome": "Closing a proposal requires a valid final_outcome",
+        "SUPERSEDED 必须提供 superseded_by": "SUPERSEDED requires superseded_by",
+        "Proposal Lifecycle content_hash 不一致": "Proposal Lifecycle content_hash mismatch"
+      }
+    },
+    "runtime/cp_runtime/evolution/service.py": {
+      "plain": {
+        "策略文件必须是 JSON 对象": "The policy file must contain a JSON object",
+        "项目上下文目录不存在，请先执行项目 Onboarding: %s": "Project context directory does not exist; run project Onboarding first: %s"
+      }
+    },
+    "scripts/validate-v65.py": {
+      "plain": {
+        "命令失败: %s\n%s\n%s": "Command failed: %s\n%s\n%s",
+        "无法从 unittest 输出读取执行数量": "Could not read the executed-test count from unittest output"
+      }
+    },
+    "scripts/validate-v66.py": {
+      "plain": {
+        "命令失败: %s\n%s\n%s": "Command failed: %s\n%s\n%s",
+        "无法从 unittest 输出读取执行数量": "Could not read the executed-test count from unittest output"
+      }
+    },
+    "scripts/localization-audit.py": {
+      "plain": {
+        "全项目双语覆盖审计 / Full-project bilingual coverage audit": "Full-project bilingual coverage audit"
+      },
+      "preserve": [
+        "中文："
+      ]
+    },
+    "runtime/cp_runtime/evolution/contracts.py": {
+      "plain": {
+        "%s 不能为空": "%s cannot be empty",
+        "%s 不是合法 ISO-8601 时间: %s": "%s is not a valid ISO-8601 timestamp: %s",
+        "%s 必须包含时区": "%s must include a time zone",
+        "project_id 仅允许字母、数字、点、下划线和连字符，长度 1-128": "project_id allows only letters, digits, dots, underscores, and hyphens and must be 1-128 characters long",
+        "%s 格式非法": "%s has an invalid format",
+        "%s 必须是字符串": "%s must be a string",
+        "%s 长度必须在 %d-%d 之间": "%s length must be between %d and %d",
+        "%s 不允许包含 NUL 字符": "%s cannot contain a NUL character",
+        "source_path 必须是安全的相对路径": "source_path must be a safe relative path",
+        "line_number 必须大于等于 1": "line_number must be at least 1",
+        "record_hash 必须是 64 位小写 SHA-256": "record_hash must be a 64-character lowercase SHA-256",
+        "信号计数不能为负数": "Signal counts cannot be negative",
+        "rate 必须在 0-1 之间": "rate must be between 0 and 1",
+        "不支持的观察快照 schema_version": "Unsupported observation snapshot schema_version",
+        "观察计数不能为负数": "Observation counts cannot be negative",
+        "source_files 只能包含安全相对路径": "source_files may contain only safe relative paths",
+        "source_digest 必须是 SHA-256": "source_digest must be SHA-256",
+        "content_hash 必须是 SHA-256": "content_hash must be SHA-256",
+        "观察快照完整性校验失败": "Observation snapshot integrity validation failed",
+        "不支持的评估 schema_version": "Unsupported assessment schema_version",
+        "value_score 和 complexity_score 必须在 0-100 之间": "value_score and complexity_score must be between 0 and 100",
+        "价值复杂度评估完整性校验失败": "Value and complexity assessment integrity validation failed",
+        "不支持的优化提案 schema_version": "Unsupported optimization proposal schema_version",
+        "fingerprint 必须是 SHA-256": "fingerprint must be SHA-256",
+        "complexity_score 必须在 0-100 之间": "complexity_score must be between 0 and 100",
+        "优化提案必须引用至少一条证据": "An optimization proposal must reference at least one item of evidence",
+        "V6 优化提案的 execution_authorization 只能是 NONE": "A V6 optimization proposal must have execution_authorization set to NONE",
+        "新建提案状态必须是 PENDING_REVIEW，后续状态由独立决策事件表达": "A new proposal must be PENDING_REVIEW; later state is expressed by separate decision events",
+        "优化提案完整性校验失败": "Optimization proposal integrity validation failed",
+        "不支持的决策 schema_version": "Unsupported decision schema_version",
+        "提案决策完整性校验失败": "Proposal decision integrity validation failed",
+        "%s 必须大于 0": "%s must be greater than 0",
+        "%s 必须在 0-1 之间": "%s must be between 0 and 1",
+        "excessive_repair_average 不能为负数": "excessive_repair_average cannot be negative",
+        "EvolutionPolicy 包含未知字段: %s": "EvolutionPolicy contains unknown fields: %s",
+        "对象不支持完整性校验": "The object does not support integrity validation"
+      }
+    },
+    "runtime/cp_runtime/evolution/storage.py": {
+      "plain": {
+        "获取锁超时: %s": "Timed out while acquiring the lock: %s",
+        "安全路径中不允许符号链接: %s": "Symbolic links are not allowed in a safe path: %s",
+        "context_root 不是目录: %s": "context_root is not a directory: %s",
+        "项目目录越过 context_root": "Project directory escapes context_root",
+        "不安全的路径片段: %s": "Unsafe path component: %s",
+        "路径越过安全根目录: %s": "Path escapes the safe root: %s",
+        "拒绝覆盖符号链接: %s": "Refusing to overwrite a symbolic link: %s",
+        "写入内容仍包含疑似敏感信息": "Content still appears to contain sensitive information",
+        "不可变文件已存在，拒绝覆盖: %s": "Immutable file already exists; refusing to overwrite it: %s",
+        "拒绝读取符号链接: %s": "Refusing to read a symbolic link: %s",
+        "JSON 文件超过大小限制: %s": "JSON file exceeds the size limit: %s",
+        "JSON 文件格式损坏: %s": "JSON file is malformed: %s",
+        "拒绝读取符号链接 JSONL: %s": "Refusing to read a symbolic-link JSONL file: %s",
+        "JSONL 文件不存在: %s": "JSONL file does not exist: %s",
+        "JSONL 文件超过大小限制: %s": "JSONL file exceeds the size limit: %s",
+        "数据源不在项目上下文目录内: %s": "Data source is outside the project context directory: %s",
+        "JSONL 记录数超过限制: %s": "JSONL record count exceeds the limit: %s",
+        "JSONL 第 %d 行损坏: %s": "JSONL line %d is malformed: %s",
+        "JSONL 第 %d 行必须是对象: %s": "JSONL line %d must be an object: %s",
+        "哈希链第 %d 条不是对象": "Hash-chain record %d is not an object",
+        "哈希链 sequence 不连续，位置 %d": "Hash-chain sequence is discontinuous at position %d",
+        "哈希链 previous_hash 不一致，位置 %d": "Hash-chain previous_hash mismatch at position %d",
+        "哈希链 record_hash 非法，位置 %d": "Hash-chain record_hash is invalid at position %d",
+        "哈希链完整性失败，位置 %d": "Hash-chain integrity failed at position %d",
+        "拒绝写入符号链接哈希链: %s": "Refusing to write a symbolic-link hash chain: %s"
+      }
+    },
+    "runtime/cp_runtime/evolution/registry.py": {
+      "plain": {
+        "提案哈希链 payload 非法": "Proposal hash-chain payload is invalid",
+        "提案 project_id 与注册表不一致": "Proposal project_id does not match the registry",
+        "决策哈希链 payload 非法": "Decision hash-chain payload is invalid",
+        "Lifecycle 哈希链 payload 非法": "Lifecycle hash-chain payload is invalid",
+        "存在引用未知提案的决策: %s": "A decision references an unknown proposal: %s",
+        "存在引用未知提案的生命周期事件: %s": "A lifecycle event references an unknown proposal: %s",
+        "只有 ACCEPTED 提案才能进入实施生命周期": "Only an ACCEPTED proposal can enter the implementation lifecycle",
+        "提案不存在: %s": "Proposal does not exist: %s",
+        "不能向其他项目注册表写入提案": "Cannot write a proposal to another project's registry",
+        "提案包含非法执行授权": "Proposal contains invalid execution authorization",
+        "提案已经进入不可覆盖状态，不能覆盖历史决定": "Proposal is in a non-overwritable state; historical decisions cannot be replaced",
+        "只有 ACCEPTED 提案才能绑定实施任务": "Only an ACCEPTED proposal can bind an implementation task",
+        "必须先绑定实施 Task/Git Baseline，才能记录验证": "Bind the implementation Task and Git baseline before recording validation",
+        "只有已记录验证证据的提案才能关闭": "Only a proposal with recorded validation evidence can be closed",
+        "仅允许在尚未实施的 ACCEPTED 状态标记 SUPERSEDED": "SUPERSEDED is allowed only for an ACCEPTED proposal that has not been implemented",
+        "存在重复活跃提案 fingerprint: %s": "Duplicate active proposal fingerprint: %s"
+      }
     }
   }
 }
