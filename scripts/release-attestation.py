@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create and verify a privacy-bounded V6.3 release attestation."""
+"""Create and verify a privacy-bounded V6.4 release attestation."""
 from __future__ import annotations
 
 import argparse
@@ -18,7 +18,7 @@ from typing import Any, Dict, Mapping
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "6.3.0"
+VERSION = "6.4.0"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 
 
@@ -59,9 +59,19 @@ def _plugin_item(plugin_list: Mapping[str, Any]) -> Dict[str, Any]:
             continue
         if item.get("pluginId") == PLUGIN_ID:
             if not bool(item.get("installed")) or not bool(item.get("enabled")) or item.get("version") != VERSION:
-                raise AttestationError("Plugin readback does not prove installed/enabled/version=6.3.0")
+                raise AttestationError("Plugin readback does not prove installed/enabled/version=6.4.0")
             return item
     raise AttestationError("target Plugin was not found in Codex readback")
+
+
+def _luna_model_proven(lifecycle: Mapping[str, Any]) -> bool:
+    if "gpt-5.6-luna" in lifecycle.get("actual_subagent_models", []):
+        return True
+    evidence = lifecycle.get("subagent_model_evidence") or {}
+    return isinstance(evidence, dict) and evidence.get("status") == "PASS" \
+        and evidence.get("expected_model") == "gpt-5.6-luna" \
+        and evidence.get("actual_model_fact_preserved") is True \
+        and (evidence.get("hook_payload_match") is True or evidence.get("host_session_match") is True)
 
 
 def _codex_version(version_evidence: Path | None = None) -> str:
@@ -85,12 +95,14 @@ def create_attestation(
     lifecycle_report_path: Path,
     package_validation_path: Path,
     deterministic_witness_path: Path,
+    unified_verification_path: Path,
     codex_version_evidence_path: Path | None = None,
 ) -> Dict[str, Any]:
     plugin_item = _plugin_item(_load_object(plugin_list_path))
     lifecycle = _load_object(lifecycle_report_path)
     validation = _load_object(package_validation_path)
     reproducibility = _load_object(deterministic_witness_path)
+    unified = _load_object(unified_verification_path)
     if lifecycle.get("ok") is not True or lifecycle.get("event_chain", {}).get("valid") is not True:
         raise AttestationError("lifecycle evidence is not valid")
     if validation.get("ok") is not True:
@@ -100,19 +112,24 @@ def create_attestation(
     artifact_sha256 = sha256_file(artifact)
     if reproducibility.get("artifact_sha256") != artifact_sha256:
         raise AttestationError("deterministic build evidence is not bound to the target artifact")
+    if unified.get("ok") is not True or unified.get("version") != VERSION \
+            or unified.get("artifact_sha256") != artifact_sha256 \
+            or set((unified.get("status") or {}).values()) != {"PASS"}:
+        raise AttestationError("unified release verification is not valid or not artifact-bound")
     if lifecycle.get("required_sequence") != [
         "TURN_OPENED", "SUBAGENT_STARTED", "SUBAGENT_STOPPED", "TASK_COMPLETED", "SESSION_ENDED"
     ]:
         raise AttestationError("lifecycle evidence does not contain the complete required sequence")
     if not lifecycle.get("project_id") or not lifecycle.get("repo_fingerprint"):
         raise AttestationError("lifecycle evidence lacks project/repository binding")
-    if "gpt-5.6-luna" not in lifecycle.get("actual_subagent_models", []):
-        raise AttestationError("lifecycle evidence lacks an actual Luna subagent")
+    if not _luna_model_proven(lifecycle):
+        raise AttestationError("lifecycle evidence lacks proven Luna subagent model evidence")
     evidence_paths = {
         "plugin_list": plugin_list_path,
         "lifecycle": lifecycle_report_path,
         "package_validation": package_validation_path,
         "deterministic_build": deterministic_witness_path,
+        "unified_verification": unified_verification_path,
     }
     if codex_version_evidence_path is not None:
         evidence_paths["codex_version"] = codex_version_evidence_path
@@ -144,6 +161,7 @@ def create_attestation(
             "required_sequence": lifecycle.get("required_sequence"),
             "event_chain_valid": True,
             "actual_subagent_models": lifecycle.get("actual_subagent_models", []),
+            "subagent_model_evidence": lifecycle.get("subagent_model_evidence", {}),
             "raw_identifiers_exported": False,
         },
         "validation": {
@@ -151,6 +169,8 @@ def create_attestation(
             "deterministic_build": "PASS",
             "plugin_host_end_to_end": "PASS",
             "real_lifecycle": "PASS",
+            "unified_release_verification": "PASS",
+            "payload_identity": "PASS",
         },
         "security": {
             "execution_authorization": "NONE",
@@ -222,7 +242,7 @@ def verify_attestation(attestation_path: Path, artifact: Path) -> Dict[str, Any]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.3 release attestation")
+    parser = argparse.ArgumentParser(description="V6.4 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)
@@ -230,6 +250,7 @@ def main() -> None:
     create_parser.add_argument("--lifecycle-report", required=True)
     create_parser.add_argument("--package-validation", required=True)
     create_parser.add_argument("--deterministic-witness", required=True)
+    create_parser.add_argument("--unified-verification", required=True)
     create_parser.add_argument("--codex-version-evidence")
     create_parser.add_argument("--output", required=True)
     verify_parser = subparsers.add_parser("verify")
@@ -243,6 +264,7 @@ def main() -> None:
             Path(arguments.lifecycle_report),
             Path(arguments.package_validation),
             Path(arguments.deterministic_witness),
+            Path(arguments.unified_verification),
             Path(arguments.codex_version_evidence) if arguments.codex_version_evidence else None,
         )
         output = Path(arguments.output)

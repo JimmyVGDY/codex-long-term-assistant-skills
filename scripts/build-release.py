@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and verify a byte-reproducible V6.3 release archive."""
+"""Build and verify a byte-reproducible V6.4 release archive."""
 from __future__ import annotations
 
 import argparse
@@ -10,6 +10,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
+
+from payload_integrity import write_manifest as write_payload_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)
@@ -66,17 +68,18 @@ def build_release(root: Path, output: Path) -> Dict[str, Any]:
     root = root.resolve()
     output = output.resolve()
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8-sig"))
-    if manifest.get("version") != "6.3.0":
-        raise BuildError("manifest version must be 6.3.0")
+    if manifest.get("version") != "6.4.0":
+        raise BuildError("manifest version must be 6.4.0")
     if output == root or root in output.parents:
         raise BuildError("release output must stay outside the package source")
+    write_payload_manifest(root, "codex-cross-project-engineering-assistant", "6.4.0")
     write_checksums(root)
     files = release_files(root)
     output.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary_name = tempfile.mkstemp(prefix=output.name + ".tmp-", dir=str(output.parent))
     os.close(fd)
     temporary = Path(temporary_name)
-    package_root = "Codex-Skills-V6.3"
+    package_root = "Codex-Skills-V6.4"
     try:
         with zipfile.ZipFile(
             temporary,
@@ -102,7 +105,7 @@ def build_release(root: Path, output: Path) -> Dict[str, Any]:
         temporary.unlink(missing_ok=True)
     return {
         "ok": True,
-        "version": "6.3.0",
+        "version": "6.4.0",
         "artifact": output.name,
         "artifact_sha256": sha256_file(output),
         "artifact_size": output.stat().st_size,
@@ -124,7 +127,7 @@ def verify_release(archive_path: Path) -> Dict[str, Any]:
             raise BuildError("ZIP contains an unsafe path")
         if any(entry.date_time != FIXED_ZIP_TIME for entry in entries):
             raise BuildError("ZIP timestamps are not normalized")
-        if any(not name.startswith("Codex-Skills-V6.3/") for name in names):
+        if any(not name.startswith("Codex-Skills-V6.4/") for name in names):
             raise BuildError("ZIP root directory is inconsistent")
         failed = archive.testzip()
         if failed:
@@ -139,7 +142,7 @@ def verify_release(archive_path: Path) -> Dict[str, Any]:
 
 
 def reproducible_build(root: Path, output: Path, witness: Path) -> Dict[str, Any]:
-    with tempfile.TemporaryDirectory(prefix="cp-v63-repro-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="cp-v64-repro-") as temporary:
         first = Path(temporary) / "first.zip"
         second = Path(temporary) / "second.zip"
         a = build_release(root, first)
@@ -152,7 +155,7 @@ def reproducible_build(root: Path, output: Path, witness: Path) -> Dict[str, Any
     report = {
         "ok": True,
         "reproducible": True,
-        "version": "6.3.0",
+        "version": "6.4.0",
         "first_sha256": a["artifact_sha256"],
         "second_sha256": b["artifact_sha256"],
         "artifact_sha256": verified["artifact_sha256"],
@@ -166,7 +169,7 @@ def reproducible_build(root: Path, output: Path, witness: Path) -> Dict[str, Any
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.3 deterministic release builder")
+    parser = argparse.ArgumentParser(description="V6.4 deterministic release builder")
     subparsers = parser.add_subparsers(dest="command", required=True)
     build_parser = subparsers.add_parser("build")
     build_parser.add_argument("--output", required=True)

@@ -22,10 +22,14 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
+from payload_integrity import (MANIFEST_NAME as PAYLOAD_MANIFEST_NAME,
+                               PayloadIntegrityError, load_manifest as load_payload_manifest,
+                               verify_payload)
+
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "6.3.0"
+VERSION = "6.4.0"
 MARKETPLACE = "cp-assistant-local"
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
 END = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:END -->"
@@ -37,6 +41,12 @@ class InstallError(RuntimeError):
 JOURNAL_SCHEMA = 1
 JOURNAL_STAGES = {"PREPARED", "BACKED_UP", "APPLYING", "ACTIVATING", "COMMITTED",
                   "ROLLBACK_STARTED", "ROLLED_BACK", "RECOVERY_REQUIRED"}
+
+
+def _hard_crash(point: str) -> None:
+    """Test-only true process termination; never enabled without an explicit env point."""
+    if os.environ.get("CP_ASSISTANT_TEST_HARD_CRASH_POINT") == point:
+        os._exit(91)
 
 
 def transaction_path(scope: str, repo: Optional[Path] = None) -> Path:
@@ -54,9 +64,10 @@ def scope_lock(scope: str, repo: Optional[Path] = None) -> Iterable[None]:
     try:
         if os.name == "nt":
             import msvcrt
-            handle.seek(0)
+            handle.seek(0, os.SEEK_END)
             if handle.tell() == 0:
                 handle.write(b"0"); handle.flush()
+            handle.seek(0)
             try:
                 msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
             except OSError as exc:
@@ -100,6 +111,7 @@ def _journal_write(journal: Dict[str, Any], stage: str) -> None:
         journal["crash_injected"] = True
         write_json_atomic(Path(journal["journal_path"]), journal)
         raise InstallError("测试崩溃注入: %s；请执行 doctor --recover" % stage)
+    _hard_crash("STAGE:" + stage)
 
 
 def _recheck_target(path: Path, scope: str, repo: Optional[Path] = None) -> None:
@@ -169,6 +181,7 @@ def _record_applied(journal: Dict[str, Any], label: str, target: Path) -> None:
         journal["crash_injected"] = True
         write_json_atomic(Path(journal["journal_path"]), journal)
         raise InstallError("测试目标动作崩溃注入: %s；请执行 doctor --recover" % label)
+    _hard_crash("TARGET:" + label)
 
 
 def _record_mutation_intent(journal: Dict[str, Any], label: str, target: Path, expected_hash: str) -> None:
@@ -255,6 +268,7 @@ def sha256_file(path: Path) -> str:
 
 def tree_sha256(path: Path) -> str:
     io_root = _io_path(path)
+    reject_tree_links(path)
     if io_root.is_file():
         return sha256_file(io_root)
     if not io_root.exists():
@@ -319,6 +333,22 @@ def reject_link_ancestors(path: Path, stop: Optional[Path] = None) -> None:
             raise InstallError("安全路径中不允许符号链接/Junction/Reparse Point: %s" % item)
 
 
+def reject_tree_links(path: Path) -> None:
+    """Reject any link/reparse descendant without following it."""
+    io_root = _io_path(path)
+    if not io_root.exists() and not io_root.is_symlink():
+        return
+    if _is_reparse(io_root):
+        raise InstallError("受管树不允许符号链接/Junction/Reparse Point: %s" % path)
+    if not io_root.is_dir():
+        return
+    for base, directories, files in os.walk(str(io_root), topdown=True, followlinks=False):
+        for name in list(directories) + list(files):
+            candidate = Path(base) / name
+            if _is_reparse(candidate):
+                raise InstallError("受管树内部不允许符号链接/Junction/Reparse Point: %s" % candidate)
+
+
 def ensure_inside(path: Path, root: Path) -> None:
     p = path.absolute()
     r = root.absolute()
@@ -346,6 +376,7 @@ def remove_path(path: Path) -> None:
     if io_path.is_symlink():
         io_path.unlink()
     elif io_path.is_dir():
+        reject_tree_links(path)
         shutil.rmtree(io_path)
     elif io_path.exists():
         io_path.unlink()
@@ -361,6 +392,7 @@ def copy_atomic(src: Path, dst: Path) -> None:
     tmp = Path(tempfile.mkdtemp(prefix=".cp-", dir=str(_io_path(dst.parent))))
     try:
         io_src = _io_path(src)
+        reject_tree_links(src)
         io_tmp = _io_path(tmp)
         if io_src.is_dir():
             shutil.copytree(io_src, io_tmp, symlinks=False, dirs_exist_ok=True)
@@ -371,6 +403,7 @@ def copy_atomic(src: Path, dst: Path) -> None:
             shutil.copy2(io_src, _io_path(staged))
         io_dst = _io_path(dst)
         if io_dst.exists() or io_dst.is_symlink():
+            reject_tree_links(dst)
             remove_path(dst)
         os.replace(str(_io_path(staged)), str(io_dst))
     finally:
@@ -384,6 +417,7 @@ def backup_target(path: Path, backup_root: Path, label: str) -> Dict[str, Any]:
         return record
     if _is_reparse(path):
         raise InstallError("拒绝备份并覆盖链接型目标: %s" % path)
+    reject_tree_links(path)
     items_root = _io_path(backup_root / "items")
     rel = "items/%03d-%s" % (len(list(items_root.glob("*"))) if items_root.exists() else 0, re.sub(r"[^A-Za-z0-9._-]+", "-", label)[:60])
     out = backup_root / rel
@@ -570,12 +604,87 @@ def plugin_marketplace_root() -> Path:
     return (Path.home() / ".agents" / "plugins" / "cp-assistant-marketplace").absolute()
 
 
+def plugin_marketplace_payload() -> Path:
+    return plugin_marketplace_root() / "plugins" / PACKAGE
+
+
+def plugin_marketplace_manifest() -> Path:
+    return plugin_marketplace_root() / ".agents" / "plugins" / "marketplace.json"
+
+
+def plugin_cache_root(version: str = VERSION) -> Path:
+    return codex_home() / "plugins" / "cache" / MARKETPLACE / PACKAGE / version
+
+
+def payload_manifest() -> Dict[str, Any]:
+    try:
+        return load_payload_manifest(ROOT / PAYLOAD_MANIFEST_NAME)
+    except PayloadIntegrityError as exc:
+        raise InstallError(str(exc)) from exc
+
+
+def payload_report(root: Path) -> Dict[str, Any]:
+    try:
+        return verify_payload(root, payload_manifest(), package=PACKAGE, version=VERSION)
+    except PayloadIntegrityError as exc:
+        raise InstallError("Plugin payload 校验失败 (%s): %s" % (root, exc)) from exc
+
+
+def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
+    """Preserve all prior/unknown fields while making the V6.4 identity fields explicit."""
+    if not value:
+        return {}
+    schema = value.get("schema_version")
+    if schema not in {1, 2}:
+        raise InstallError("安装状态 schema 未知，拒绝覆盖: %s" % schema)
+    migrated = dict(value)
+    if value.get("scope") not in {None, scope}:
+        raise InstallError("安装状态 scope 不匹配，拒绝迁移")
+    old_mode = str(value.get("mode") or mode)
+    if old_mode not in {"plugin", "standalone"}:
+        raise InstallError("安装状态 mode 无效，拒绝迁移")
+    if scope == "user" and not isinstance(value.get("managed_hashes", {}), dict):
+        raise InstallError("账户安装状态 managed_hashes 无效")
+    if value.get("backup") is not None and not isinstance(value.get("backup"), str):
+        raise InstallError("安装状态 backup 无效")
+    migrated["schema_version"] = 2
+    migrated["scope"] = scope
+    migrated["mode"] = old_mode
+    if schema == 1:
+        migrated["migrated_from_schema"] = 1
+    return migrated
+
+
+def _merged_marketplace_manifest(existing: Any) -> Dict[str, Any]:
+    data = dict(existing) if isinstance(existing, dict) else {}
+    plugins = [dict(item) for item in data.get("plugins", []) if isinstance(item, dict)
+               and item.get("name") != PACKAGE]
+    plugins.append({"name": PACKAGE,
+                    "source": {"source": "local", "path": "./plugins/%s" % PACKAGE},
+                    "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+                    "category": "Productivity"})
+    data["name"] = MARKETPLACE
+    interface = data.get("interface")
+    if not isinstance(interface, dict):
+        interface = {}
+    interface.setdefault("displayName", "Codex Cross Project Assistant Local")
+    data["interface"] = interface
+    # V6.1-V6.3 wrote a legacy `owner` block that Codex 0.150.1 no longer
+    # accepts in a local marketplace manifest. This is a known managed field,
+    # not an unknown external entry.
+    data.pop("owner", None)
+    data["plugins"] = plugins
+    return data
+
+
 def plugin_payload_source(tmp: Path) -> Path:
     name = PACKAGE
     out = tmp / name
     out.mkdir(parents=True)
     for rel in (".codex-plugin", "skills", "hooks", "runtime"):
         shutil.copytree(_io_path(ROOT / rel), _io_path(out / rel))
+    shutil.copy2(_io_path(ROOT / PAYLOAD_MANIFEST_NAME), _io_path(out / PAYLOAD_MANIFEST_NAME))
+    payload_report(out)
     return out
 
 
@@ -622,6 +731,16 @@ def _remove_marketplace(check: bool = True) -> None:
             raise InstallError("Codex Marketplace 注销失败: %s" % detail[-2000:])
 
 
+def _remove_empty_marketplace_dirs() -> None:
+    """Remove only empty directories created for this marketplace; never recurse."""
+    market = plugin_marketplace_root()
+    for candidate in (market / "plugins", market / ".agents" / "plugins", market / ".agents", market):
+        try:
+            _io_path(candidate).rmdir()
+        except (FileNotFoundError, OSError):
+            pass
+
+
 def _codex_version_text() -> str:
     result = _run_codex(["--version"], check=False)
     return (result.stdout or result.stderr or "").strip()
@@ -647,18 +766,79 @@ def _plugin_activation_status(expected_version: Optional[str] = None) -> Tuple[b
     return False, "未在 Codex installed 列表中发现 %s@%s" % (PACKAGE, MARKETPLACE)
 
 
-def _require_plugin_host() -> None:
-    """Fail closed before changing files when the host cannot prove capability."""
+def _verify_restored_plugin(previous: Mapping[str, Any]) -> None:
+    if not previous.get("active"):
+        return
+    version = str(previous.get("version") or "")
+    active, detail = _plugin_activation_status(version or None)
+    if not active:
+        raise InstallError("旧 Plugin 重新激活读回失败: %s" % detail)
+    cache_value = str(previous.get("cache_path") or "")
+    expected = str(previous.get("cache_tree_sha256") or "")
+    if cache_value and expected:
+        cache = Path(cache_value)
+        if not cache.is_dir() or tree_sha256(cache) != expected:
+            raise InstallError("旧 Plugin cache 恢复后 digest 不匹配: %s" % cache)
+
+
+def _probe_plugin_host() -> Dict[str, Any]:
+    """Read-only capability profile for the supported 0.150.1 Plugin host."""
     version = _codex_version_text()
-    if not re.search(r"(?:^|\s)0\.150\.1(?:\s|$)", version):
-        raise InstallError("Plugin 模式仅支持 Codex CLI 0.150.1；当前: %s" % (version or "未知"))
+    version_ok = bool(re.search(r"(?:^|\s)0\.150\.1(?:\s|$)", version))
     result = _run_codex(["plugin", "list", "--json"], check=False)
     try:
         data = json.loads(result.stdout or "")
-    except json.JSONDecodeError as exc:
-        raise InstallError("codex plugin list --json 不可解析，拒绝 Plugin 安装") from exc
-    if result.returncode != 0 or not isinstance(data, dict) or not isinstance(data.get("installed", []), list):
-        raise InstallError("codex plugin list --json schema 未知，拒绝 Plugin 安装")
+    except json.JSONDecodeError:
+        data = None
+    list_ok = result.returncode == 0 and isinstance(data, dict) and isinstance(data.get("installed", []), list)
+    commands: Dict[str, bool] = {}
+    for name, args in {
+        "marketplace_add": ["plugin", "marketplace", "add", "--help"],
+        "marketplace_remove": ["plugin", "marketplace", "remove", "--help"],
+        "plugin_add": ["plugin", "add", "--help"],
+        "plugin_remove": ["plugin", "remove", "--help"],
+    }.items():
+        probe = _run_codex(args, check=False)
+        commands[name] = probe.returncode == 0
+    list_error = "" if list_ok else (result.stderr or result.stdout or "codex plugin list failed").strip()
+    return {"codex_version": version, "version_ok": version_ok,
+            "plugin_list_json": list_ok, "plugin_list_error": list_error[-2000:], "commands": commands,
+            "ok": version_ok and list_ok and all(commands.values())}
+
+
+def _legacy_marketplace_repairable() -> bool:
+    """Recognize the exact V6.1-V6.3 managed manifest drift before mutation."""
+    try:
+        state = load_json(state_path("user"), {})
+        manifest = load_json(plugin_marketplace_manifest(), {})
+    except Exception:
+        return False
+    if not isinstance(state, dict) or not isinstance(manifest, dict):
+        return False
+    if state.get("package") != PACKAGE or state.get("mode") != "plugin":
+        return False
+    if str(state.get("version") or "") not in {"6.1.0", "6.2.0", "6.3.0"}:
+        return False
+    if state.get("schema_version") not in {1, 2} or manifest.get("name") != MARKETPLACE:
+        return False
+    return any(isinstance(item, dict) and item.get("name") == PACKAGE
+               for item in manifest.get("plugins", []))
+
+
+def _require_plugin_host() -> Dict[str, Any]:
+    """Fail closed before changing files when the host cannot prove capability."""
+    profile = _probe_plugin_host()
+    if not profile["version_ok"]:
+        raise InstallError("Plugin 模式仅支持 Codex CLI 0.150.1；当前: %s" %
+                           (profile["codex_version"] or "未知"))
+    if not profile["plugin_list_json"]:
+        if not _legacy_marketplace_repairable():
+            raise InstallError("codex plugin list --json schema 未知，拒绝 Plugin 安装")
+        profile["legacy_marketplace_repair"] = True
+        profile["ok"] = profile["version_ok"] and all(profile["commands"].values())
+    if not all(profile["commands"].values()):
+        raise InstallError("Codex Plugin 子命令能力不完整，拒绝安装: %s" % profile["commands"])
+    return profile
 
 
 def install_user(mode: str, dry_run: bool, force: bool) -> None:
@@ -677,27 +857,39 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         targets.extend(("skill:" + n, sh / n) for n in skill_names())
         targets.extend([("runtime", ch / "runtime" / "cp_runtime"), ("hook-script", ch / "cp-assistant-hooks" / "cp_hook.py"), ("hooks-json", ch / "hooks.json")])
     else:
-        targets.append(("plugin-marketplace", plugin_marketplace_root()))
+        targets.extend([
+            ("plugin-payload", plugin_marketplace_payload()),
+            ("marketplace-manifest", plugin_marketplace_manifest()),
+            ("plugin-cache", plugin_cache_root()),
+        ])
     for _label, target in targets:
         reject_link_ancestors(target.parent)
-    if dry_run:
-        print(json.dumps({"scope":"user","mode":mode,"targets":[str(x[1]) for x in targets]}, ensure_ascii=False, indent=2)); return
-    _require_no_live_transaction("user")
-    if mode == "plugin":
-        _require_plugin_host()
     old_state = load_json(state_path("user"), {}) or {}
+    migrated_old_state = migrate_state_v1_to_v2(old_state, "user", mode)
+    if dry_run:
+        print(json.dumps({"scope":"user","mode":mode,"from_version":old_state.get("version"),
+                          "to_version":VERSION,"state_schema":old_state.get("schema_version"),
+                          "state_migration":"v1-to-v2" if old_state.get("schema_version") == 1 else "none",
+                          "backup_required":True,"targets":[str(x[1]) for x in targets],
+                          "unknown_marketplace_entries_preserved":mode == "plugin"}, ensure_ascii=False, indent=2)); return
+    _require_no_live_transaction("user")
     if old_state and str(old_state.get("mode") or mode) != mode and not force:
         raise InstallError("当前已安装 mode=%s；Plugin/standalone 模式切换默认拒绝，请先卸载或使用 --force" % old_state.get("mode"))
+    capability_profile: Dict[str, Any] = {}
+    if mode == "plugin":
+        capability_profile = _require_plugin_host()
+        payload_report(ROOT)
     journal = _new_journal("user", mode, None, targets)
     _journal_write(journal, "PREPARED")
     backup = backup_root("user"); _io_path(backup).mkdir(parents=True, exist_ok=False)
     journal["backup"] = str(backup)
     records: List[Dict[str, Any]] = []
     previous_plugin_active = False
+    previous_plugin_detail = ""
     previous_market_exists = _io_path(plugin_marketplace_root()).exists() if mode == "plugin" else False
     if mode == "plugin" and shutil.which("codex"):
         try:
-            previous_plugin_active, _ = _plugin_activation_status()
+            previous_plugin_active, previous_plugin_detail = _plugin_activation_status()
         except Exception:
             previous_plugin_active = False
     try:
@@ -705,7 +897,20 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             _recheck_target(target, "user")
             records.append(backup_target(target, backup, label))
         journal["records"] = records
-        journal["previous_plugin_state"] = {"active": previous_plugin_active, "marketplace_exists": previous_market_exists}
+        previous_version = ""
+        if previous_plugin_detail.startswith("{"):
+            try:
+                previous_version = str(json.loads(previous_plugin_detail).get("version") or "")
+            except json.JSONDecodeError:
+                previous_version = ""
+        previous_cache = plugin_cache_root(previous_version) if previous_version else None
+        journal["previous_plugin_state"] = {
+            "active": previous_plugin_active,
+            "marketplace_exists": previous_market_exists,
+            "version": previous_version,
+            "cache_path": str(previous_cache) if previous_cache else "",
+            "cache_tree_sha256": tree_sha256(previous_cache) if previous_cache and previous_cache.is_dir() else "",
+        }
         _journal_write(journal, "BACKED_UP")
         _journal_write(journal, "APPLYING")
         # global managed block
@@ -728,41 +933,64 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             market = plugin_marketplace_root()
             with tempfile.TemporaryDirectory(prefix="cp-v6-market-") as td:
                 temporary_root = Path(td)
-                prepared_market = temporary_root / "marketplace"
-                _io_path(prepared_market / ".agents" / "plugins").mkdir(parents=True, exist_ok=True)
-                _io_path(prepared_market / "plugins").mkdir(parents=True, exist_ok=True)
                 src = plugin_payload_source(temporary_root / "payload")
-                copy_atomic(src, prepared_market / "plugins" / PACKAGE)
-                marketplace = {
-                    "name": MARKETPLACE,
-                    "owner": {"name": "local-user"},
-                    "plugins": [{"name": PACKAGE, "source": {"source": "local", "path": "./plugins/%s" % PACKAGE}, "description": "Codex 跨项目长期技术助手 V6.3"}]
-                }
-                write_json_atomic(prepared_market / ".agents" / "plugins" / "marketplace.json", marketplace)
-                _record_mutation_intent(journal, "plugin-marketplace", market, tree_sha256(prepared_market))
+                payload_report(src)
+                payload_target = plugin_marketplace_payload()
+                _record_mutation_intent(journal, "plugin-payload", payload_target, tree_sha256(src))
                 if os.environ.get("CP_ASSISTANT_TEST_CRASH_PLUGIN_MARKETPLACE_STAGE") == "BEFORE_REPLACE":
                     journal["crash_injected"] = True
                     write_json_atomic(Path(journal["journal_path"]), journal)
                     raise InstallError("测试 Marketplace 替换前崩溃注入；请执行 doctor --recover")
-                copy_atomic(prepared_market, market)
+                copy_atomic(src, payload_target)
+                payload_report(payload_target)
+                _record_applied(journal, "plugin-payload", payload_target)
+                marketplace_path = plugin_marketplace_manifest()
+                marketplace = _merged_marketplace_manifest(load_json(marketplace_path, {}))
+                with tempfile.TemporaryDirectory(prefix="cp-v6-manifest-") as md:
+                    prepared_manifest = Path(md) / "marketplace.json"
+                    write_json_atomic(prepared_manifest, marketplace)
+                    _record_mutation_intent(journal, "marketplace-manifest", marketplace_path,
+                                            tree_sha256(prepared_manifest))
+                    copy_atomic(prepared_manifest, marketplace_path)
+                _record_applied(journal, "marketplace-manifest", marketplace_path)
                 if os.environ.get("CP_ASSISTANT_TEST_CRASH_PLUGIN_MARKETPLACE_STAGE") == "AFTER_REPLACE":
                     journal["crash_injected"] = True
                     write_json_atomic(Path(journal["journal_path"]), journal)
                     raise InstallError("测试 Marketplace 替换后崩溃注入；请执行 doctor --recover")
-            _record_applied(journal, "plugin-marketplace", market)
-        managed = {str(path): tree_sha256(path) for _label, path in targets if _io_path(path).exists() and _label not in {"global", "hooks-json", "install-state"}}
-        managed[str(gp)] = hashlib.sha256((ROOT / "global" / "AGENTS.md").read_bytes()).hexdigest()
-        state = {"schema_version":1,"package":PACKAGE,"version":VERSION,"scope":"user","mode":mode,"installed_at":time.time(),"backup":str(backup),"managed_hashes":managed}
-        write_json_atomic(state_path("user"), state)
-        _record_applied(journal, "install-state", state_path("user"))
-        write_json_atomic(backup / "backup-manifest.json", {"records":records,"scope":"user","mode":mode})
-        journal["applied_hashes"].update(managed)
+                _hard_crash("MARKETPLACE:AFTER_REPLACE")
         if mode == "plugin":
             _journal_write(journal, "ACTIVATING")
+            _record_mutation_intent(journal, "plugin-cache", plugin_cache_root(),
+                                    tree_sha256(plugin_marketplace_payload()))
             _activate_plugin(plugin_marketplace_root())
+            _hard_crash("PLUGIN:AFTER_ADD")
             active, detail = _plugin_activation_status(VERSION)
             if not active:
                 raise InstallError("Plugin 注册读回未达到 installed=true、enabled=true、version=%s: %s" % (VERSION, detail))
+            cache_report = payload_report(plugin_cache_root())
+            journal["cache_payload"] = cache_report
+            _record_applied(journal, "plugin-cache", plugin_cache_root())
+            _hard_crash("PLUGIN:AFTER_CACHE_VERIFY")
+        else:
+            cache_report = None
+        managed = {str(path): tree_sha256(path) for _label, path in targets if _io_path(path).exists() and _label not in {"global", "hooks-json", "install-state"}}
+        managed[str(gp)] = hashlib.sha256((ROOT / "global" / "AGENTS.md").read_bytes()).hexdigest()
+        state = dict(migrated_old_state)
+        state.update({"schema_version":2,"package":PACKAGE,"version":VERSION,"scope":"user","mode":mode,
+                      "installed_at":time.time(),"backup":str(backup),"managed_hashes":managed,
+                      "previous_backup":old_state.get("backup"),"capability_profile":capability_profile})
+        if mode == "plugin":
+            source_report = payload_report(ROOT)
+            marketplace_report = payload_report(plugin_marketplace_payload())
+            state["payload_identity"] = {"manifest_digest":source_report["payload_digest"],
+                                         "marketplace_digest":marketplace_report["payload_digest"],
+                                         "cache_digest":cache_report["payload_digest"] if cache_report else None,
+                                         "file_count":source_report["file_count"]}
+        write_json_atomic(state_path("user"), state)
+        _record_applied(journal, "install-state", state_path("user"))
+        _hard_crash("PLUGIN:AFTER_STATE_WRITE")
+        write_json_atomic(backup / "backup-manifest.json", {"records":records,"scope":"user","mode":mode})
+        journal["applied_hashes"].update(managed)
         _journal_write(journal, "COMMITTED")
         _finish_journal(journal)
     except Exception as exc:
@@ -799,11 +1027,13 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             if not previous_market_exists:
                 try:
                     _remove_marketplace(check=False)
+                    _remove_empty_marketplace_dirs()
                 except Exception as rollback_exc:
                     journal["rollback_errors"].append("marketplace deactivate: %s" % rollback_exc)
             if previous_plugin_active and _io_path(plugin_marketplace_root()).exists():
                 try:
                     _activate_plugin(plugin_marketplace_root())
+                    _verify_restored_plugin(journal.get("previous_plugin_state") or {})
                 except Exception as rollback_exc:
                     journal["rollback_errors"].append("plugin reactivate: %s" % rollback_exc)
         _journal_write(journal, "RECOVERY_REQUIRED" if journal["rollback_errors"] else "ROLLED_BACK")
@@ -814,7 +1044,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("安装失败且回滚不完整；请执行 doctor --recover：%s" % "; ".join(journal["rollback_errors"])) from exc
         raise
-    print("[OK] V6.3 账户级安装完成，mode=%s" % mode)
+    print("[OK] V6.4 账户级安装完成，mode=%s" % mode)
     if mode == "plugin":
         print("[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add")
 
@@ -826,8 +1056,12 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
     targets = [("skill:" + n, root / n) for n in skill_names()] + [("install-state", state_path("repo", repo))]
     for _label, target in targets:
         ensure_inside(target, repo); reject_link_ancestors(target.parent, repo)
+    old_state = load_json(state_path("repo", repo), {}) or {}
+    migrated_old_state = migrate_state_v1_to_v2(old_state, "repo", "standalone")
     if dry_run:
-        print(json.dumps({"scope":"repo","repo":str(repo),"targets":[str(t) for _,t in targets]}, ensure_ascii=False, indent=2)); return
+        print(json.dumps({"scope":"repo","repo":str(repo),"from_version":old_state.get("version"),
+                          "to_version":VERSION,"state_migration":"v1-to-v2" if old_state.get("schema_version") == 1 else "none",
+                          "targets":[str(t) for _,t in targets]}, ensure_ascii=False, indent=2)); return
     _require_no_live_transaction("repo", repo)
     journal = _new_journal("repo", "standalone", repo, targets)
     _journal_write(journal, "PREPARED")
@@ -845,7 +1079,11 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
             dst = root / name; copy_atomic(ROOT / "skills" / name, dst); _record_applied(journal, "skill:" + name, dst)
         write_json_atomic(backup / "backup-manifest.json", {"records":records,"scope":"repo"})
         managed = {str(t):tree_sha256(t) for label,t in targets if label != "install-state"}
-        write_json_atomic(state_path("repo", repo), {"schema_version":1,"package":PACKAGE,"version":VERSION,"scope":"repo","repo":str(repo),"backup":str(backup),"managed_hashes":managed})
+        state = dict(migrated_old_state)
+        state.update({"schema_version":2,"package":PACKAGE,"version":VERSION,"scope":"repo","mode":"standalone",
+                      "repo":str(repo),"backup":str(backup),"previous_backup":old_state.get("backup"),
+                      "managed_hashes":managed})
+        write_json_atomic(state_path("repo", repo), state)
         _record_applied(journal, "install-state", state_path("repo", repo))
         journal["applied_hashes"].update(managed)
         _journal_write(journal, "COMMITTED"); _finish_journal(journal)
@@ -871,7 +1109,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("仓库安装回滚不完整；请执行 doctor --recover") from exc
         raise
-    print("[OK] V6.3 仓库级 Skills 安装完成: %s" % repo)
+    print("[OK] V6.4 仓库级 Skills 安装完成: %s" % repo)
 
 
 def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
@@ -914,6 +1152,22 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                         errors.append("Windows Hook 启动命令与 Codex 0.150.1 不兼容 %s" % hook_name)
             active, detail = _plugin_activation_status(VERSION)
             if not active: errors.append("Plugin 未被 Codex 实际安装并启用: %s" % detail)
+            try:
+                source_report = payload_report(ROOT)
+                market_report = payload_report(plugin)
+                cache_report = payload_report(plugin_cache_root())
+                digests = {source_report["payload_digest"], market_report["payload_digest"], cache_report["payload_digest"]}
+                if len(digests) != 1:
+                    errors.append("ZIP 源/Marketplace/cache payload digest 不一致")
+                state = migrate_state_v1_to_v2(load_json(state_path("user"), {}) or {}, "user", mode)
+                identity = state.get("payload_identity") or {}
+                if state.get("version") != VERSION or state.get("schema_version") != 2:
+                    errors.append("安装状态不是 V6.4 schema 2")
+                if any(identity.get(key) != source_report["payload_digest"]
+                       for key in ("manifest_digest", "marketplace_digest", "cache_digest")):
+                    errors.append("安装状态 payload 身份读回不一致")
+            except InstallError as exc:
+                errors.append(str(exc))
         for src in agent_files():
             if not _io_path(ch/"agents"/src.name).is_file(): errors.append("缺少 Reviewer %s" % src.name)
         io_agents = _io_path(ch/"AGENTS.md")
@@ -922,7 +1176,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     if errors:
         for item in errors: print("[FAIL]",item)
         raise SystemExit(1)
-    print("[OK] V6.3 安装验证通过 scope=%s mode=%s" % (scope, mode))
+    print("[OK] V6.4 安装验证通过 scope=%s mode=%s" % (scope, mode))
 
 
 def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_run: bool) -> None:
@@ -944,7 +1198,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
     backup = Path(state.get("backup") or "")
     manifest_data = load_json(backup / "backup-manifest.json", {}) or {}
     records = manifest_data.get("records") or []
-    previous_market_record = next((r for r in records if r.get("label") == "plugin-marketplace"), None)
+    previous_market_records = [r for r in records if r.get("label") in {"plugin-payload", "marketplace-manifest", "plugin-marketplace"}]
     previous_state_record = next((r for r in records if r.get("label") == "install-state"), None)
     previous_state = {}
     if previous_state_record and previous_state_record.get("existed") and previous_state_record.get("backup_relative"):
@@ -967,17 +1221,28 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
                                  for r in undo_records if _io_path(Path(r["target"])).exists()}
     if installed_mode == "plugin":
         active = False
+        active_detail = ""
         if shutil.which("codex"):
-            active, _detail = _plugin_activation_status(VERSION)
-        journal["previous_plugin_state"] = {"active": active,
-                                            "marketplace_exists": _io_path(plugin_marketplace_root()).exists()}
+            active, active_detail = _plugin_activation_status(VERSION)
+        active_version = ""
+        if active_detail.startswith("{"):
+            try:
+                active_version = str(json.loads(active_detail).get("version") or "")
+            except json.JSONDecodeError:
+                active_version = ""
+        active_cache = plugin_cache_root(active_version) if active_version else None
+        journal["previous_plugin_state"] = {
+            "active": active, "marketplace_exists": _io_path(plugin_marketplace_root()).exists(),
+            "version": active_version, "cache_path": str(active_cache) if active_cache else "",
+            "cache_tree_sha256": tree_sha256(active_cache) if active_cache and active_cache.is_dir() else "",
+        }
     _journal_write(journal, "BACKED_UP")
     _journal_write(journal, "APPLYING")
     if installed_mode == "plugin":
         if shutil.which("codex"):
             try:
                 _deactivate_plugin(check=not force)
-                if not (previous_market_record and previous_market_record.get("existed")):
+                if not any(record.get("existed") for record in previous_market_records):
                     _remove_marketplace(check=not force)
                 if os.environ.get("CP_ASSISTANT_TEST_CRASH_AFTER_PLUGIN_DEACTIVATE"):
                     journal["crash_injected"] = True
@@ -1010,20 +1275,25 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             if tree_sha256(src)!=record.get("sha256"): raise InstallError("备份完整性失败: %s" % src)
             copy_atomic(src,target)
         _record_applied(journal, str(record.get("label") or "managed"), target)
-    # V6.3 records its own state file as a transactional target. If an older V6 state existed,
+    if installed_mode == "plugin" and not any(record.get("existed") for record in previous_market_records):
+        _remove_empty_marketplace_dirs()
+    # V6.4 records its own state file as a transactional target. If an older V6 state existed,
     # the restore loop has put it back; otherwise ensure no current state remains.
     if not previous_state_record:
         _io_path(sp).unlink(missing_ok=True)
     if installed_mode == "plugin" and previous_state.get("mode") == "plugin" and shutil.which("codex") and _io_path(plugin_marketplace_root()).exists():
         try:
             _activate_plugin(plugin_marketplace_root())
+            restored, detail = _plugin_activation_status(str(previous_state.get("version") or "") or None)
+            if not restored:
+                raise InstallError("旧 Plugin 版本读回失败: %s" % detail)
         except Exception as exc:
             if not force:
                 raise InstallError("已恢复旧版文件，但旧 Plugin 重新激活失败: %s" % exc)
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
-    print("[OK] V6.3 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
+    print("[OK] V6.4 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
 
 
 def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict[str, Any]]:
@@ -1092,6 +1362,9 @@ def recover_transaction(scope: str, repo_path: Optional[str] = None) -> None:
                 _remove_marketplace(check=False)
             if previous_plugin.get("active") and _io_path(plugin_marketplace_root()).exists():
                 _activate_plugin(plugin_marketplace_root())
+                _verify_restored_plugin(previous_plugin)
+            if not previous_plugin.get("marketplace_exists"):
+                _remove_empty_marketplace_dirs()
         except Exception as exc:
             journal["rollback_errors"].append("Plugin 恢复: %s" % exc)
     stage = "RECOVERY_REQUIRED" if journal["rollback_errors"] else "ROLLED_BACK"
@@ -1108,8 +1381,16 @@ def status(scope: str, mode: str, repo_path: Optional[str]) -> None:
     live = _load_live_journal(scope, repo)
     active, detail = _plugin_activation_status() if scope == "user" and shutil.which("codex") else (False, "not checked")
     ch = codex_home()
+    payload = None
+    if scope == "user" and mode == "plugin" and plugin_cache_root().is_dir():
+        try:
+            payload = {"source": payload_report(ROOT), "marketplace": payload_report(plugin_marketplace_payload()),
+                       "cache": payload_report(plugin_cache_root())}
+        except InstallError as exc:
+            payload = {"ok": False, "error": str(exc)}
     data = {"package": PACKAGE, "version": VERSION, "scope": scope, "state": state,
             "live_transaction": live, "plugin_activation": {"active": active, "detail": detail},
+            "payload_identity": payload,
             "skills": skill_names(), "reviewers": [p.name for p in agent_files()],
             "hooks": str(ch / "hooks.json") if scope == "user" else None}
     print(json.dumps(data, ensure_ascii=False, indent=2))
@@ -1126,6 +1407,12 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
             codex_version = _codex_version_text()
         except Exception:
             codex_version = None
+    capability = None
+    if codex_exe:
+        try:
+            capability = _probe_plugin_host()
+        except Exception as exc:
+            capability = {"ok": False, "error": str(exc)}
     print(json.dumps({
         "package":PACKAGE,"version":VERSION,"target_codex":"0.150.1","python":sys.executable,
         "home":str(Path.home()),"codex_home":str(codex_home()),
@@ -1134,12 +1421,15 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
         "skill_count":len(skill_names()),"reviewer_count":len(agent_files()),
         "plugin_manifest":str(ROOT/".codex-plugin"/"plugin.json"),
         "hooks_manifest":str(ROOT/"hooks"/"hooks.json"), "transaction": str(transaction_path("user")),
-        "git":shutil.which("git"),"codex":codex_exe,"codex_version":codex_version
+        "payload_manifest":str(ROOT/PAYLOAD_MANIFEST_NAME),
+        "plugin_cache_root":str(plugin_cache_root()),
+        "git":shutil.which("git"),"codex":codex_exe,"codex_version":codex_version,
+        "capability_profile":capability
     },ensure_ascii=False,indent=2))
 
 
 def main() -> None:
-    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V6.3 安装器")
+    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V6.4 安装器")
     sub=p.add_subparsers(dest="command",required=True)
     for name in ("install","verify","uninstall"):
         q=sub.add_parser(name)
