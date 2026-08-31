@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Semantic consistency checks for the Codex V4.2 package."""
+"""Semantic consistency checks for the Codex V5.0 package."""
 from __future__ import annotations
 
 import json
 import re
 from pathlib import Path
+from typing import List
 
 ROOT = Path(__file__).resolve().parent.parent
-PLATFORM = "codex"
-VERSION = "4.2.0"
-ERRORS: list[str] = []
+VERSION = "5.0.0"
+ERRORS: List[str] = []
 
 
 def fail(message: str) -> None:
@@ -24,9 +24,12 @@ def read(path: Path) -> str:
 manifest = json.loads(read(ROOT / "manifest.json"))
 if manifest.get("version") != VERSION:
     fail("manifest 版本不一致")
-skills = {item["name"] for item in manifest["skills"]}
+skills = {item["name"] for item in manifest.get("skills", [])}
 
-for skill_file in ROOT.glob("skills/*/SKILL.md"):
+skill_files = list(ROOT.glob("skills/*/SKILL.md"))
+if len(skill_files) != len(skills):
+    fail("SKILL.md 数量与 manifest 不一致")
+for skill_file in skill_files:
     text = read(skill_file)
     match = re.search(r"(?m)^name:\s*([^\n]+)", text)
     if not match or match.group(1).strip() not in skills:
@@ -40,17 +43,12 @@ for skill_file in ROOT.glob("skills/*/SKILL.md"):
         fail("复审 Skill 缺少四级模型上限")
 
 allowed_old_name_files = {
-    "FRONTEND_SKILL_MIGRATION.md",
-    "CHANGELOG.md",
-    "VALIDATION_REPORT.md",
-    "README.md",
-    "FRONTEND_SKILL_V4_DESIGN.md",
+    "FRONTEND_SKILL_MIGRATION.md", "CHANGELOG.md", "VALIDATION_REPORT.md",
+    "README.md", "FRONTEND_SKILL_V4_DESIGN.md",
 }
 historical_v32_files = {
-    "P0_OPTIMIZATION_DESIGN.md",
-    "V3_DESIGN_OVERVIEW.md",
-    "V3_1_LOG_ANALYSIS_DESIGN.md",
-    "CHANGELOG.md",
+    "P0_OPTIMIZATION_DESIGN.md", "V3_DESIGN_OVERVIEW.md",
+    "V3_1_LOG_ANALYSIS_DESIGN.md", "CHANGELOG.md",
 }
 for markdown in ROOT.rglob("*.md"):
     text = read(markdown)
@@ -67,6 +65,15 @@ for markdown in ROOT.rglob("*.md"):
 
 if manifest.get("user_skills_target") != "${CODEX_HOME:-$HOME/.codex}/skills":
     fail("Codex Skill 目标路径不正确")
+project_governance = manifest.get("project_governance") or {}
+if project_governance.get("runtime") != "runtime/cp_runtime":
+    fail("manifest 未声明唯一 cp_runtime")
+if project_governance.get("project_binding_fail_closed") is not True:
+    fail("项目绑定未声明失败关闭")
+
+runtime_dirs = [path for path in ROOT.rglob("cp_runtime") if path.is_dir()]
+if len(runtime_dirs) != 1 or runtime_dirs[0] != ROOT / "runtime" / "cp_runtime":
+    fail("cp_runtime 权威实现不是唯一一份")
 
 for index_file in ROOT.glob("skills/*/references/*rules.md"):
     if len(read(index_file).splitlines()) > 120:
@@ -97,42 +104,55 @@ for agent_file in ROOT.glob("custom-agents/*.toml"):
         fail("Reviewer 缺少渐进读取或输出收敛规则: " + agent_file.name)
 
 global_text = read(ROOT / "global/AGENTS.md")
-if len(global_text.splitlines()) > 220:
-    fail("全局 AGENTS.md 超过 220 行，可能重新膨胀")
-for expected in ["luna-low", "luna-medium", "terra-medium", "terra-high", "累计最多 6"]:
+if len(global_text.splitlines()) > 240:
+    fail("全局 AGENTS.md 超过 240 行，可能重新膨胀")
+for expected in [
+    "luna-low", "luna-medium", "terra-medium", "terra-high", "累计最多 6",
+    "Project Profile", "Approval", "Evidence", "Finalization",
+]:
     if expected not in global_text:
-        fail("全局规则缺少 V4.2 策略: " + expected)
+        fail("全局规则缺少 V5.0 策略: " + expected)
 
 execution_guard = read(ROOT / "skills/engineering-quality-delivery/scripts/execution_guard.py")
 review_packet = read(ROOT / "skills/multi-agent-independent-review/scripts/review_packet.py")
 review_controller = read(ROOT / "skills/multi-agent-independent-review/scripts/review_controller.py")
 checkpoint = read(ROOT / "skills/long-running-task-memory/scripts/checkpoint.py")
+for expected in ["Task Envelope V2", "authorize-action", "record-action", "finalize", "project_profile"]:
+    if expected not in execution_guard:
+        fail("执行守卫缺少 V5.0 能力: " + expected)
 if "untracked_sha256" not in execution_guard:
     fail("执行证据指纹未覆盖 untracked 内容")
 for expected in ["packet-summary.md", "diff-stat.txt", "name-status.txt", "command_freshness"]:
     if expected not in review_packet:
-        fail("审查包缺少 V4.2 能力: " + expected)
+        fail("审查包缺少继承能力: " + expected)
 for expected in [
-    '"luna-low"',
-    '"luna-medium"',
-    '"terra-medium"',
-    '"terra-high"',
-    '"max_parallel_reviewers": 3',
-    '"max_total_reviewers": 6',
-    '"max_terra_high_reviewers": 1',
-    "find_previous_same_dispatch",
+    '"luna-low"', '"luna-medium"', '"terra-medium"', '"terra-high"',
+    '"max_parallel_reviewers": 3', '"max_total_reviewers": 6',
+    '"max_terra_high_reviewers": 1', "find_previous_same_dispatch",
 ]:
     if expected not in review_controller:
-        fail("复审控制器缺少 V4.2 策略: " + expected)
+        fail("复审控制器缺少继承策略: " + expected)
 write_success = review_controller.find('probe_result == "write-succeeded"')
 parent_readonly = review_controller.find('parent_sandbox == "read-only"')
 if write_success < 0 or parent_readonly < 0 or write_success > parent_readonly:
     fail("隔离判定没有优先处理写入成功反证")
 for expected in ["DEFAULT_HOT_LIMIT = 20", 'default=3', "--force-append", "checkpoint_payload_fingerprint"]:
     if expected not in checkpoint:
-        fail("检查点工具缺少 V4.2 能力: " + expected)
+        fail("检查点工具缺少继承能力: " + expected)
+
+for relative in [
+    "docs/V5_0_PROJECT_GOVERNANCE_AND_EVIDENCE_CLOSURE.md",
+    "docs/V5.0_升级说明与迁移指南.md",
+    "docs/PROJECT_CONTEXT_AND_ONBOARDING.md",
+    "docs/APPROVAL_EVIDENCE_FINALIZATION.md",
+    "docs/AUTHORITY_REGISTRY.md",
+]:
+    if not (ROOT / relative).is_file():
+        fail("缺少 V5.0 文档 " + relative)
+if "## 5.0.0 - 2026-08-26" not in read(ROOT / "CHANGELOG.md"):
+    fail("CHANGELOG 缺少 V5.0 发布记录")
 
 if ERRORS:
     print("语义校验失败", len(ERRORS))
     raise SystemExit(1)
-print("V4.2 语义校验通过。")
+print("V5.0 语义校验通过。")
