@@ -19,7 +19,7 @@ Reviewer 读取顺序：摘要和统计 -> 分配范围的 hunk -> 改动文件�
 
 ## 三、第一轮并行审查
 
-每个 Reviewer 必须获得唯一职责、文件/调用链范围、排除范围、packet hash、轮次/深度、证据要求、模型档位、输出 Schema 和隔离等级。
+每个 Reviewer 必须获得唯一职责、文件/调用链范围、排除范围、packet hash、轮次/深度、证据标准、模型档位、输出 Schema 和隔离等级。
 
 主协调 Agent 等待当前轮计划中的 Reviewer 返回后统一归并；不因一个 Reviewer 先返回问题就边审边改。Reviewer 失败时最多重试一次；相同 Reviewer 对相同 packet 的重复派发必须提供第二意见理由。
 

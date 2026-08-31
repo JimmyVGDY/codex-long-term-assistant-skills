@@ -18,7 +18,7 @@
 - 是否确认使用指定 Agent：
 - 探针结果：未执行 / sandbox-denied / permission-denied / write-succeeded / invalid
 - 隔离等级：system-readonly / logical-readonly / self-review / unknown
-- 是否要求严格只读：
+- 是否采用严格只读：
 - 是否满足严格只读资格：
 - 隔离证据文件：
 

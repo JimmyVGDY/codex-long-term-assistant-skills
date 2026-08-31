@@ -37,7 +37,7 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 | `balanced` | `luna-medium` | 1～2 |
 | `deep` | `terra-medium` | 2～3 |
 
-主协调 Agent 可按职责覆盖默认值，但必须记录原因。高风险边界默认最多 1 个 `terra-high` Reviewer；只有用户或项目规则显式放宽且不超过控制器硬上限时才允许 2 个。
+主协调 Agent 可按职责覆盖默认值，但必须记录原因。高风险边界默认最多 1 个 `terra-high` Reviewer；只有明确授权或项目规则显式放宽且不超过控制器硬上限时才允许 2 个。
 
 ## 四、按 Reviewer 职责选择
 

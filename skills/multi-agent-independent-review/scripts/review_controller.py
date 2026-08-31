@@ -541,7 +541,7 @@ def command_isolation(args: argparse.Namespace) -> None:
 
 def ensure_strict_if_required(state: Dict[str, Any]) -> None:
     if state.get("strict_readonly_required") and not state["isolation"].get("strict_readonly_eligible"):
-        die("当前功能边界要求严格只读复审，但父会话/运行时隔离未满足；请切换到只读父会话或记录有效 sandbox-denied 证据")
+        die("当前功能边界采用严格只读复审，但父会话/运行时隔离未满足；请切换到只读父会话或记录有效 sandbox-denied 证据")
 
 
 def latest_round_data(state: Dict[str, Any], phase_name: str) -> Optional[Dict[str, Any]]:
@@ -903,7 +903,7 @@ def command_status(args: argparse.Namespace) -> None:
     print("- 功能边界: " + str(state.get("boundary_id", "")))
     print("- 风险级别: " + str(state.get("risk_level", "")))
     print("- 状态: " + str(state.get("status", "")))
-    print("- 严格只读要求: " + ("是" if state.get("strict_readonly_required") else "否"))
+    print("- 严格只读约束: " + ("是" if state.get("strict_readonly_required") else "否"))
     print("- Reviewer 配置声明: " + str(isolation.get("declared_sandbox", "unknown")))
     print("- 父会话运行时沙箱: " + str(isolation.get("parent_sandbox", "unknown")))
     print("- 写入探针: " + str(isolation.get("probe_result", "not-run")))
@@ -959,7 +959,7 @@ def command_close(args: argparse.Namespace) -> None:
                 "工具或环境受限，未完成严格独立复审",
             }
             if args.conclusion not in allowed:
-                die("当前要求严格只读，但运行时隔离不满足；只能记录未完成、阻塞或逻辑只读降级结论")
+                die("当前采用严格只读，但运行时隔离不满足；只能记录未完成、阻塞或逻辑只读降级结论")
         state["status"] = "closed"
         state["conclusion"] = args.conclusion
         if args.note:
