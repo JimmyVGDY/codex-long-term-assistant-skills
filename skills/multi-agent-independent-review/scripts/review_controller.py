@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Persist and enforce multi-agent review budgets for one functional boundary.
+"""Persist and enforce multi-agent review budgets and isolation evidence.
 
 This helper never launches agents and never modifies source repositories. It only
-writes a deterministic JSON ledger under --review-dir.
+writes a deterministic JSON ledger under --review-dir. A Reviewer TOML declaration
+is recorded separately from the runtime isolation actually observed.
 """
 from __future__ import annotations
 
@@ -18,7 +19,7 @@ from typing import Any, Dict, Iterator, List
 
 STATE_FILE = "review-state.json"
 LOCK_FILE = ".review-controller.lock"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 DEFAULT_LIMITS = {
     "max_agent_depth": 3,
     "max_post_review_rounds": 3,
@@ -30,19 +31,41 @@ DEFAULT_LIMITS = {
 }
 VALID_PHASES = {"pre", "post"}
 VALID_RESULT_STATUSES = {"pass", "nonblocking", "blocking", "incomplete"}
+VALID_PARENT_SANDBOXES = {"read-only", "workspace-write", "danger-full-access", "unknown"}
+VALID_DECLARED_SANDBOXES = {"read-only", "workspace-write", "danger-full-access", "unknown"}
+VALID_PROBE_RESULTS = {
+    "not-run",
+    "sandbox-denied",
+    "permission-denied",
+    "write-succeeded",
+    "invalid",
+}
+VALID_REVIEW_MODES = {"independent-agent", "self-review", "unknown"}
+VALID_ISOLATION_LEVELS = {"system-readonly", "logical-readonly", "self-review", "unknown"}
 VALID_CONCLUSIONS = {
-    "通过，无阻塞项",
-    "有非阻塞问题",
+    "系统隔离复审通过，无阻塞项",
+    "系统隔离复审有非阻塞问题",
+    "逻辑只读复审完成，无阻塞项",
+    "逻辑只读复审完成，有非阻塞问题",
+    "系统隔离未验证或失败，仅完成逻辑只读复审",
     "有阻塞问题",
     "达到复审上限，仍有阻塞或未验证项",
-    "工具或环境受限，未完成严格独立复审",
+    "工具或环境受限，未完成独立复审",
     "不适用",
+    # Backward-compatible values from schema v1. New records should use explicit isolation wording.
+    "通过，无阻塞项",
+    "有非阻塞问题",
+    "工具或环境受限，未完成严格独立复审",
 }
 
 
 def die(message: str) -> None:
     print("[FAIL] " + message, file=sys.stderr)
     raise SystemExit(1)
+
+
+def warn(message: str) -> None:
+    print("[WARN] " + message, file=sys.stderr)
 
 
 def now_iso() -> str:
@@ -93,6 +116,56 @@ def state_path(review_dir: Path) -> Path:
     return review_dir / STATE_FILE
 
 
+def default_isolation() -> Dict[str, Any]:
+    return {
+        "review_mode": "unknown",
+        "parent_sandbox": "unknown",
+        "declared_sandbox": "read-only",
+        "probe_result": "not-run",
+        "agent_config_confirmed": False,
+        "runtime_agent_confirmed": False,
+        "isolation_level": "unknown",
+        "strict_readonly_eligible": False,
+        "evidence": "",
+        "verified_at": "",
+    }
+
+
+def derive_isolation_level(data: Dict[str, Any]) -> tuple[str, bool]:
+    review_mode = str(data.get("review_mode", "unknown"))
+    parent_sandbox = str(data.get("parent_sandbox", "unknown"))
+    probe_result = str(data.get("probe_result", "not-run"))
+
+    if review_mode == "self-review":
+        return "self-review", False
+    if parent_sandbox == "read-only":
+        return "system-readonly", True
+    if probe_result == "sandbox-denied":
+        return "system-readonly", True
+    if parent_sandbox in {"workspace-write", "danger-full-access"}:
+        return "logical-readonly", False
+    if probe_result == "write-succeeded":
+        return "logical-readonly", False
+    return "unknown", False
+
+
+def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
+    version = state.get("schema_version")
+    if version == 1:
+        state["schema_version"] = SCHEMA_VERSION
+        state.setdefault("risk_level", "unknown")
+        state.setdefault("strict_readonly_required", False)
+        state.setdefault("isolation", default_isolation())
+        state.setdefault("notes", []).append(
+            "从 schema v1 升级：原状态没有运行时隔离证据，默认标记为 unknown。"
+        )
+    elif version == SCHEMA_VERSION:
+        state.setdefault("risk_level", "unknown")
+        state.setdefault("strict_readonly_required", False)
+        state.setdefault("isolation", default_isolation())
+    return state
+
+
 def load_state(review_dir: Path) -> Dict[str, Any]:
     path = state_path(review_dir)
     if not path.is_file():
@@ -103,10 +176,11 @@ def load_state(review_dir: Path) -> Dict[str, Any]:
         die("复审状态文件不是有效 JSON: {}".format(exc))
     if not isinstance(data, dict):
         die("复审状态根节点必须是对象")
-    return data
+    return normalize_state_data(data)
 
 
 def save_state(review_dir: Path, state: Dict[str, Any]) -> None:
+    state["schema_version"] = SCHEMA_VERSION
     state["updated_at"] = now_iso()
     atomic_write(state_path(review_dir), state)
 
@@ -136,6 +210,25 @@ def active_count(state: Dict[str, Any]) -> int:
     )
 
 
+def validate_isolation_data(state: Dict[str, Any]) -> None:
+    isolation = state.get("isolation", {})
+    if isolation.get("review_mode") not in VALID_REVIEW_MODES:
+        die("未知 review_mode")
+    if isolation.get("parent_sandbox") not in VALID_PARENT_SANDBOXES:
+        die("未知 parent_sandbox")
+    if isolation.get("declared_sandbox") not in VALID_DECLARED_SANDBOXES:
+        die("未知 declared_sandbox")
+    if isolation.get("probe_result") not in VALID_PROBE_RESULTS:
+        die("未知 probe_result")
+    if isolation.get("isolation_level") not in VALID_ISOLATION_LEVELS:
+        die("未知 isolation_level")
+    derived_level, derived_eligible = derive_isolation_level(isolation)
+    if isolation.get("isolation_level") != derived_level:
+        die("isolation_level 与运行时证据不一致")
+    if bool(isolation.get("strict_readonly_eligible")) != derived_eligible:
+        die("strict_readonly_eligible 与运行时证据不一致")
+
+
 def validate_state_data(state: Dict[str, Any]) -> None:
     if state.get("schema_version") != SCHEMA_VERSION:
         die("不支持的 review-state schema_version")
@@ -153,6 +246,8 @@ def validate_state_data(state: Dict[str, Any]) -> None:
         die("集中修复轮次超过上限")
     if active_count(state) > limits["max_parallel_reviewers"]:
         die("活跃 Reviewer 超过并行上限")
+
+    validate_isolation_data(state)
 
     for phase_name, phase in state.get("phases", {}).items():
         if phase_name not in VALID_PHASES:
@@ -199,6 +294,8 @@ def command_init(args: argparse.Namespace) -> None:
         "schema_version": SCHEMA_VERSION,
         "boundary_id": args.boundary_id,
         "title": args.title,
+        "risk_level": args.risk_level,
+        "strict_readonly_required": bool(args.strict_readonly_required),
         "status": "open",
         "created_at": now_iso(),
         "updated_at": now_iso(),
@@ -208,6 +305,7 @@ def command_init(args: argparse.Namespace) -> None:
             "pre": {"current_round": 0, "rounds": {}},
             "post": {"current_round": 0, "rounds": {}},
         },
+        "isolation": default_isolation(),
         "conclusion": "",
         "notes": [],
     }
@@ -215,6 +313,39 @@ def command_init(args: argparse.Namespace) -> None:
     with review_lock(review_dir, args.force_unlock):
         save_state(review_dir, state)
     print("[OK] 已初始化复审台账: " + str(state_path(review_dir)))
+    print("[WARN] 运行时隔离尚未记录；TOML read-only 声明不能单独证明系统级只读。")
+
+
+def command_isolation(args: argparse.Namespace) -> None:
+    review_dir = Path(args.review_dir).expanduser().resolve()
+    with review_lock(review_dir, args.force_unlock):
+        state = load_state(review_dir)
+        isolation = {
+            "review_mode": args.review_mode,
+            "parent_sandbox": args.parent_sandbox,
+            "declared_sandbox": args.declared_sandbox,
+            "probe_result": args.probe_result,
+            "agent_config_confirmed": bool(args.agent_config_confirmed),
+            "runtime_agent_confirmed": bool(args.runtime_agent_confirmed),
+            "evidence": args.evidence,
+            "verified_at": now_iso(),
+        }
+        level, eligible = derive_isolation_level(isolation)
+        isolation["isolation_level"] = level
+        isolation["strict_readonly_eligible"] = eligible
+        state["isolation"] = isolation
+        validate_state_data(state)
+        save_state(review_dir, state)
+    print("[OK] 已记录复审隔离: level={} strict={}".format(level, eligible))
+    if level == "logical-readonly":
+        warn("当前仅为逻辑只读；Reviewer TOML 声明没有形成系统级写入隔离。")
+    elif level == "unknown":
+        warn("运行时隔离仍未验证；不得声称系统强制只读。")
+
+
+def ensure_strict_if_required(state: Dict[str, Any]) -> None:
+    if state.get("strict_readonly_required") and not state["isolation"].get("strict_readonly_eligible"):
+        die("当前功能边界要求严格只读复审，但父会话/运行时隔离未满足；请切换到只读父会话或记录有效 sandbox-denied 证据")
 
 
 def command_plan(args: argparse.Namespace) -> None:
@@ -225,6 +356,7 @@ def command_plan(args: argparse.Namespace) -> None:
         validate_state_data(state)
         if state.get("status") != "open":
             die("复审台账已关闭")
+        ensure_strict_if_required(state)
         phase = phase_state(state, args.phase)
         next_round = int(phase.get("current_round", 0)) + 1
         max_rounds = (
@@ -253,6 +385,11 @@ def command_plan(args: argparse.Namespace) -> None:
             "active": [],
             "results": {},
             "merge": None,
+            "isolation_snapshot": {
+                "isolation_level": state["isolation"]["isolation_level"],
+                "strict_readonly_eligible": state["isolation"]["strict_readonly_eligible"],
+                "parent_sandbox": state["isolation"]["parent_sandbox"],
+            },
             "created_at": now_iso(),
         }
         validate_state_data(state)
@@ -272,6 +409,7 @@ def command_dispatch(args: argparse.Namespace) -> None:
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
         validate_state_data(state)
+        ensure_strict_if_required(state)
         round_data = get_round(state, args.phase, args.round)
         if args.reviewer not in round_data["planned_reviewers"]:
             die("Reviewer 未包含在当前轮计划中")
@@ -284,12 +422,15 @@ def command_dispatch(args: argparse.Namespace) -> None:
         round_data["active"].append(args.reviewer)
         round_data.setdefault("dispatch", {})[args.reviewer] = {
             "scope": args.scope,
+            "isolation_level": state["isolation"]["isolation_level"],
             "dispatched_at": now_iso(),
         }
         state["counters"]["total_reviewers"] += 1
         validate_state_data(state)
         save_state(review_dir, state)
-    print("[OK] 已记录派发: {} / {} / round {}".format(args.reviewer, args.phase, args.round))
+    print("[OK] 已记录派发: {} / {} / round {} / {}".format(
+        args.reviewer, args.phase, args.round, state["isolation"]["isolation_level"]
+    ))
 
 
 def command_result(args: argparse.Namespace) -> None:
@@ -307,6 +448,7 @@ def command_result(args: argparse.Namespace) -> None:
             "nonblocking_count": args.nonblocking_count,
             "summary": args.summary,
             "result_file": args.result_file,
+            "isolation_level": state["isolation"]["isolation_level"],
             "completed_at": now_iso(),
         }
         validate_state_data(state)
@@ -331,6 +473,7 @@ def command_merge(args: argparse.Namespace) -> None:
             "root_cause_groups": args.root_cause_groups,
             "summary": args.summary,
             "repair_required": args.repair_required,
+            "isolation_level": state["isolation"]["isolation_level"],
             "merged_at": now_iso(),
         }
         validate_state_data(state)
@@ -366,12 +509,16 @@ def command_repair(args: argparse.Namespace) -> None:
 def command_validate(args: argparse.Namespace) -> None:
     state = load_state(Path(args.review_dir).expanduser().resolve())
     validate_state_data(state)
+    if args.require_strict_readonly:
+        ensure_strict_if_required({**state, "strict_readonly_required": True})
     print(
-        "[OK] 复审台账有效: boundary={} total={} repairs={} active={}".format(
+        "[OK] 复审台账有效: boundary={} total={} repairs={} active={} isolation={} strict={}".format(
             state.get("boundary_id", ""),
             state["counters"]["total_reviewers"],
             state["counters"]["repair_rounds"],
             active_count(state),
+            state["isolation"]["isolation_level"],
+            state["isolation"]["strict_readonly_eligible"],
         )
     )
 
@@ -380,9 +527,17 @@ def command_status(args: argparse.Namespace) -> None:
     state = load_state(Path(args.review_dir).expanduser().resolve())
     validate_state_data(state)
     limits = state["limits"]
+    isolation = state["isolation"]
     print("# 复审状态")
     print("- 功能边界: " + str(state.get("boundary_id", "")))
+    print("- 风险级别: " + str(state.get("risk_level", "")))
     print("- 状态: " + str(state.get("status", "")))
+    print("- 严格只读要求: " + ("是" if state.get("strict_readonly_required") else "否"))
+    print("- Reviewer 配置声明: " + str(isolation.get("declared_sandbox", "unknown")))
+    print("- 父会话运行时沙箱: " + str(isolation.get("parent_sandbox", "unknown")))
+    print("- 写入探针: " + str(isolation.get("probe_result", "not-run")))
+    print("- 复审隔离等级: " + str(isolation.get("isolation_level", "unknown")))
+    print("- 系统级严格只读资格: " + ("是" if isolation.get("strict_readonly_eligible") else "否"))
     print("- 累计 Reviewer: {} / {}".format(state["counters"]["total_reviewers"], limits["max_total_reviewers"]))
     print("- 集中修复轮次: {} / {}".format(state["counters"]["repair_rounds"], limits["max_repair_rounds"]))
     print("- 当前活跃 Reviewer: {} / {}".format(active_count(state), limits["max_parallel_reviewers"]))
@@ -410,6 +565,19 @@ def command_close(args: argparse.Namespace) -> None:
         validate_state_data(state)
         if active_count(state):
             die("仍有活跃 Reviewer，不能关闭")
+        isolation = state["isolation"]
+        if args.conclusion.startswith("系统隔离复审") and not isolation.get("strict_readonly_eligible"):
+            die("没有系统级只读运行时证据，不能使用系统隔离复审结论")
+        if state.get("strict_readonly_required") and not isolation.get("strict_readonly_eligible"):
+            allowed = {
+                "系统隔离未验证或失败，仅完成逻辑只读复审",
+                "有阻塞问题",
+                "达到复审上限，仍有阻塞或未验证项",
+                "工具或环境受限，未完成独立复审",
+                "工具或环境受限，未完成严格独立复审",
+            }
+            if args.conclusion not in allowed:
+                die("当前要求严格只读，但运行时隔离不满足；只能记录未完成、阻塞或逻辑只读降级结论")
         state["status"] = "closed"
         state["conclusion"] = args.conclusion
         if args.note:
@@ -424,18 +592,31 @@ def add_common(parser: argparse.ArgumentParser) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="维护并强制校验多 Agent 复审预算")
+    parser = argparse.ArgumentParser(description="维护多 Agent 复审预算与运行时隔离证据")
     sub = parser.add_subparsers(dest="command", required=True)
 
     init = sub.add_parser("init")
     init.add_argument("--review-dir", required=True)
     init.add_argument("--boundary-id", required=True)
     init.add_argument("--title", default="")
+    init.add_argument("--risk-level", choices=["low", "medium", "high", "critical", "unknown"], default="unknown")
+    init.add_argument("--strict-readonly-required", action="store_true")
     init.add_argument("--force", action="store_true")
     init.add_argument("--force-unlock", action="store_true")
     for key, ceiling in DEFAULT_LIMITS.items():
         init.add_argument("--" + key.replace("_", "-"), type=int, default=None, help="安全上限 {}".format(ceiling))
     init.set_defaults(func=command_init)
+
+    isolation = sub.add_parser("isolation")
+    add_common(isolation)
+    isolation.add_argument("--review-mode", choices=sorted(VALID_REVIEW_MODES), required=True)
+    isolation.add_argument("--parent-sandbox", choices=sorted(VALID_PARENT_SANDBOXES), required=True)
+    isolation.add_argument("--declared-sandbox", choices=sorted(VALID_DECLARED_SANDBOXES), default="read-only")
+    isolation.add_argument("--probe-result", choices=sorted(VALID_PROBE_RESULTS), default="not-run")
+    isolation.add_argument("--agent-config-confirmed", action="store_true")
+    isolation.add_argument("--runtime-agent-confirmed", action="store_true")
+    isolation.add_argument("--evidence", default="")
+    isolation.set_defaults(func=command_isolation)
 
     plan = sub.add_parser("plan")
     add_common(plan)
@@ -485,6 +666,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate = sub.add_parser("validate")
     validate.add_argument("--review-dir", required=True)
+    validate.add_argument("--require-strict-readonly", action="store_true")
     validate.set_defaults(func=command_validate)
 
     status = sub.add_parser("status")

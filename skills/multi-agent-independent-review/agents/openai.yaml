@@ -1,6 +1,6 @@
 interface:
   display_name: "多 Agent 独立复审"
   short_description: "实施前设计门禁、实施后并行复审与确定性预算"
-  default_prompt: "使用多 Agent 独立复审技能，先判断实施前或实施后阶段，按风险选择只读 Reviewer，等待结果收齐后统一归因，并使用状态控制器遵守深度、轮次和 Reviewer 总量上限。"
+  default_prompt: "使用多 Agent 独立复审技能，先判断实施前或实施后阶段，按风险选择 Reviewer，先记录父会话权限和运行时隔离等级，等待结果收齐后统一归因，并使用状态控制器遵守深度、轮次、隔离门禁和 Reviewer 总量上限。"
 policy:
   allow_implicit_invocation: true
