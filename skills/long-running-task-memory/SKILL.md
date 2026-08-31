@@ -32,8 +32,8 @@ description: >-
 - 外部记忆不得进入项目仓库、Git、项目变更记录或正式工程文档。
 - 不记录冗长内部推理，只记录可验证事实、证据等级、授权、状态、阻塞、风险和下一步。
 
-<!-- V5.1-CONTROLLED-EVOLUTION:BEGIN -->
-## V5.1 自观察与受控自进化
+<!-- V6.0-CONTROLLED-EVOLUTION:BEGIN -->
+## V6.0 自观察与受控自进化
 
 当任务目标是复盘长期失败、模型升级、Reviewer 收益、修复轮次、Skill 路由偏差或跨任务成本时：
 
@@ -46,4 +46,4 @@ description: >-
 7. 真正修改必须另建任务并经过现有 Execution Guard、Review Packet 和 Finalization。
 
 详细规则按需读取 `references/controlled-self-evolution.md`，不要在普通任务中加载全部 Evolution 文档。
-<!-- V5.1-CONTROLLED-EVOLUTION:END -->
+<!-- V6.0-CONTROLLED-EVOLUTION:END -->
