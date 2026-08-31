@@ -1,0 +1,21 @@
+{
+  "version": "6.4.0",
+  "build_date": "2026-08-28",
+  "target_host": "Windows native Codex CLI 0.150.1",
+  "upgrade_from": [
+    "6.1.0",
+    "6.2.0",
+    "6.3.0"
+  ],
+  "plugin_id": "codex-cross-project-engineering-assistant",
+  "marketplace": "cp-assistant-local",
+  "task_outcome_schema": "2.0",
+  "skills": 10,
+  "reviewers": 7,
+  "hooks": 6,
+  "payload_digest": "ce3f46f8c55582c4a326bb13f0b950bdb1b725341216d82519c4fc3aeefd45d5",
+  "automatic_agent_ceiling": "gpt-5.6-terra + high",
+  "execution_authorization": "NONE",
+  "formal_artifact_sha256": "NOT_EXECUTED",
+  "host_validation": "NOT_EXECUTED"
+}

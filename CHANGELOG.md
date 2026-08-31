@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## 6.4.0 - 2026-08-28
+
+### Added
+
+- 规范化 Plugin payload manifest，以及 ZIP、Marketplace、cache 三段同源 digest 验证。
+- 事件安全分段、跨段连续读取、半记录审计隔离和真实进程崩溃恢复。
+- Codex 0.150.1 Plugin/Marketplace 命令能力探测与统一发行验证器。
+- state schema 1 到 2 的显式迁移、未知字段保留和未知 schema 失败关闭。
+
+### Changed
+
+- Marketplace 从整树目标改为本包 payload 子树与 manifest 条目级合并。
+- Plugin cache 纳入事务 journal、备份、恢复、digest 和激活后读回。
+- 宿主实际模型、推理强度和终态只接受明确字段，不再从通用别名推断。
+- 事件链读取增加严格 schema 校验；显式非法终态和未知实际模型失败关闭。
+
+### Security
+
+- 摘要、备份、复制和删除前递归拒绝受管树内部符号链接、Junction 与 Reparse Point。
+- 保持 `execution_authorization=NONE`、人工 Proposal 决策、项目双重隔离和自动 Terra High 上限。
+- 保留未知账户资产、历史项目上下文、自观察数据和升级备份。
+
 ## 6.3.0 - 2026-08-28
 
 ### Added
