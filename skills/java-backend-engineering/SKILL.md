@@ -15,6 +15,12 @@ description: >-
 5. 主动检查事务失效、连接池、线程池、幂等、资源释放、序列化、权限、安全和高频路径性能。
 6. 修改运行行为时组合 `$engineering-quality-delivery`；涉及数据/缓存/MQ/存储/容器时组合 `$data-middleware-ai-infrastructure`；以日志和指标为主要证据时组合 `$log-observability-analysis`。
 
+## 模型与委派成本
+
+- 类、方法、调用位置、配置和受影响文件搜索优先 `luna-low`；范围明确的空值、异常、资源释放和兼容扫描使用 `luna-medium`。
+- 业务规则、多文件调用链和普通实现判断使用 `terra-medium`；事务、并发、权限、核心状态机、资金或库存一致性才使用 `terra-high`。
+- 主 Agent 已掌握完整上下文时不为简单修改派生子 Agent；探索结果只返回文件、符号、证据和未验证项。
+
 ## 边界
 
 - 不把 Boot 3/Jakarta 写法套入 Java 8、`javax.*` 或 Struts2 老项目。
