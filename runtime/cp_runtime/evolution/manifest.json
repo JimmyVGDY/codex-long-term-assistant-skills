@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "component": "controlled-self-evolution",
+  "version": "5.1.0",
+  "status": "active",
+  "authority": "runtime/cp_runtime/evolution",
+  "execution_authorization": "NONE",
+  "automatic_execution": false,
+  "capabilities": [
+    "self-observation",
+    "deterministic-value-complexity-analysis",
+    "optimization-proposal-generation",
+    "append-only-proposal-registry",
+    "human-decision-recording",
+    "hash-chain-integrity",
+    "sensitive-data-redaction"
+  ],
+  "prohibited_capabilities": [
+    "automatic-skill-modification",
+    "automatic-reviewer-modification",
+    "automatic-model-routing-modification",
+    "automatic-global-config-modification",
+    "automatic-business-repository-write",
+    "automatic-proposal-acceptance",
+    "automatic-proposal-execution"
+  ],
+  "automatic_acceptance": false,
+  "implementation_requires_new_task": true
+}
