@@ -10,7 +10,7 @@ description: >-
 
 1. 先读取 `references/technical-document-writing-rules.md` 索引；根据文档类型按需读取 `references/document-type-playbooks.md`，不得一次加载全部模板。
 2. 明确读者、用途、决策问题、范围、事实来源、交付格式和修改权限。
-3. 用户材料、代码、配置、日志和验证结果是主要依据；区分已确认、外部资料、工程推断、假设和未验证。
+3. 输入材料、代码、配置、日志和验证结果是主要依据；区分已确认、外部资料、工程推断、假设和未验证。
 4. 从 `assets/templates/` 选择最接近模板并裁剪；简单文档不机械套完整结构。
 5. 技术细节组合 Java、Python、`frontend-engineering`、数据基础设施或可观测性 Skill。
 6. 文档与代码修改、测试、CHANGELOG、提交或发布绑定时组合 `$engineering-quality-delivery`；内部任务状态组合 `$long-running-task-memory`，不得混入正式文档。
