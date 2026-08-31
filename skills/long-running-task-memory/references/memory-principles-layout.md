@@ -32,7 +32,7 @@ MAX_UNPERSISTED_COMPLETED_NODES = 0
 
 #### 任务控制真相
 
-由当前用户指令和外部记忆维护：
+由当前任务指令和外部记忆维护：
 
 - 目标和非目标；
 - 允许和禁止范围；
@@ -86,7 +86,7 @@ MAX_UNPERSISTED_COMPLETED_NODES = 0
     └── <任务标识>/
 ```
 
-`<AGENT_CONTEXT_ROOT>` 由当前机器、Codex Home、项目配置或用户明确指定，不在全局规则中写死用户名、Windows/WSL/Linux 路径或具体项目。
+`<AGENT_CONTEXT_ROOT>` 由当前机器、Codex Home、项目配置或请求方明确指定，不在全局规则中写死使用方名、Windows/WSL/Linux 路径或具体项目。
 
 已有职责相同的本机文档应优先复用，不重复创建同义文件。
 

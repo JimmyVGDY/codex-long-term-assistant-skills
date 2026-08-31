@@ -36,7 +36,7 @@ reviews/TASK-XXX/round-01/security.md
 - Reviewer TOML 的配置声明；
 - 父会话实际沙箱；
 - 当前隔离等级：`system-readonly` / `logical-readonly` / `self-review` / `unknown`；
-- 是否要求严格只读；
+- 是否采用严格只读；
 - 是否满足严格只读资格；
 - 隔离证据文件或受控探针结果。
 
@@ -64,7 +64,7 @@ reviews/TASK-XXX/round-01/security.md
 - 阶段增加、删除、阻塞或回滚；
 - 依赖变化；
 - 验证、复审、灰度或回滚方式变化；
-- 用户调整目标或范围。
+- 使用方调整目标或范围。
 
 ### 10.2 关键决策
 

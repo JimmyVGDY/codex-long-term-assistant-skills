@@ -83,7 +83,7 @@
 - 父会话实际沙箱：read-only / workspace-write / danger-full-access / unknown
 - Reviewer TOML 声明：
 - 运行时隔离等级：system-readonly / logical-readonly / self-review / unknown
-- 是否要求严格只读：
+- 是否采用严格只读：
 - 是否满足严格只读资格：
 - 隔离证据路径：
 - 当前复审轮次 / 默认最大轮次：0 / 2
@@ -96,7 +96,7 @@
 
 ## 恢复前必须核对
 
-1. 当前用户消息和授权；
+1. 当前请求和授权；
 2. 分支、HEAD、工作区指纹和未跟踪文件；
 3. 最近 3 个检查点；
 4. 下一步涉及的核心代码、配置和测试；

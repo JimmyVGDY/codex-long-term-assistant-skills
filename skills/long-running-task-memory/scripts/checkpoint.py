@@ -842,7 +842,7 @@ def command_security_check(args: argparse.Namespace) -> None:
 def command_secure(args: argparse.Namespace) -> None:
     project_dir = Path(args.project_dir).expanduser().resolve()
     if os.name == "nt":
-        warn("Windows ACL 不能由本脚本可靠统一设置；请确保目录仅当前用户可访问。")
+        warn("Windows ACL 不能由本脚本可靠统一设置；请确保目录仅当前账户可访问。")
         return
     with project_lock(project_dir, args.force_unlock):
         for path in sorted(project_dir.rglob("*")):
