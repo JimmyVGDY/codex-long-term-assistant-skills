@@ -1,3 +1,5 @@
-#!/usr/bin/env bash
-set -euo pipefail
-repo="${1:?用法: uninstall-repo-skills.sh /path/to/repo [--include-review-agents]}";shift||true;inc=0;[[ "${1:-}" == '--include-review-agents' ]]&&inc=1;skills=(java-backend-engineering python-backend-ai-engineering frontend-engineering data-middleware-ai-infrastructure log-observability-analysis engineering-quality-delivery multi-agent-independent-review technical-document-writing long-running-task-memory);agents=(cp-review-functional-business.toml cp-review-compatibility-regression.toml cp-review-security-access.toml cp-review-performance-resources.toml cp-review-data-contract.toml cp-review-state-concurrency.toml cp-review-test-delivery.toml);for n in "${skills[@]}";do rm -rf "$repo/.agents/skills/$n";done;if [[ $inc -eq 1 ]];then for n in "${agents[@]}";do rm -f "$repo/.codex/agents/$n";done;fi;echo '卸载完成。'
+#!/usr/bin/env sh
+set -eu
+repo="${1:-.}"
+shift 2>/dev/null || true
+python3 "$(dirname "$0")/package_manager.py" uninstall --scope repo --repo-path "$repo" "$@"

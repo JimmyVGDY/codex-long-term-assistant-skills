@@ -1,2 +1,3 @@
-﻿[CmdletBinding()]param([Parameter(Mandatory=$true)][string]$RepoPath,[switch]$IncludeReviewAgents)
-$Repo=(Resolve-Path $RepoPath).Path;$Skills=@("java-backend-engineering", "python-backend-ai-engineering", "frontend-engineering", "data-middleware-ai-infrastructure", "log-observability-analysis", "engineering-quality-delivery", "multi-agent-independent-review", "technical-document-writing", "long-running-task-memory");$Agents=@("cp-review-functional-business.toml", "cp-review-compatibility-regression.toml", "cp-review-security-access.toml", "cp-review-performance-resources.toml", "cp-review-data-contract.toml", "cp-review-state-concurrency.toml", "cp-review-test-delivery.toml");foreach($N in $Skills){$P=Join-Path (Join-Path (Join-Path $Repo ".agents") "skills") $N;if(Test-Path $P){Remove-Item $P -Recurse -Force}};if($IncludeReviewAgents){foreach($N in $Agents){$P=Join-Path (Join-Path (Join-Path $Repo ".codex") "agents") $N;if(Test-Path $P){Remove-Item $P -Force}}};Write-Host '卸载完成。'
+param([string]$RepoPath = ".")
+$ErrorActionPreference = "Stop"
+python "$PSScriptRoot/package_manager.py" uninstall --scope repo --repo-path $RepoPath @args
