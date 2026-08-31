@@ -51,7 +51,7 @@ def _included(path: Path, root: Path) -> bool:
     relative = path.relative_to(root)
     if any(part in EXCLUDED_DIRS for part in relative.parts):
         return False
-    if path.suffix.lower() in EXCLUDED_SUFFIXES or path.name in EXCLUDED_NAMES:
+    if path.suffix.lower() in EXCLUDED_SUFFIXES or path.name in EXCLUDED_NAMES or path.name.endswith(".en.md"):
         return False
     if _is_link(path):
         raise BuildError("release source contains a link or reparse point: %s" % relative.as_posix())

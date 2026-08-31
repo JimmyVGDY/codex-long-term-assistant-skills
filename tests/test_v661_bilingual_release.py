@@ -80,7 +80,8 @@ class V661BilingualReleaseTests(unittest.TestCase):
 
     def test_english_primary_surfaces_are_english_and_overlay_sources_are_not_shipped(self) -> None:
         _, entries = self._entries("en")
-        primary = ["README.md", "global/AGENTS.md", "RELEASE_NOTES_V6.6.1.md",
+        primary = ["README.md", "CHANGELOG.md", "global/AGENTS.md", "RELEASE_NOTES_V6.6.1.md",
+                   "VALIDATION_REPORT_V6.6.1.md", "V6.6.1_AUDIT_REPORT.md",
                    "docs/USER_GUIDE_V6.6.1.md", "docs/INSTALLATION_RECOVERY.md",
                    "docs/CODEX_CONFIG_GUIDE.md", ".codex-plugin/plugin.json"]
         primary.extend("skills/%s/SKILL.md" % item["name"] for item in json.loads(entries["manifest.json"])["skills"])

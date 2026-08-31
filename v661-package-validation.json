@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "evidence_scope": "package-only",
+  "version": "6.6.1",
+  "skill_count": 10,
+  "reviewer_count": 7,
+  "hook_count": 6,
+  "task_outcome_event": "2.0",
+  "requested_model_policy": "PASS",
+  "runtime_model_evidence": "UNAVAILABLE",
+  "routing_case_count": 35,
+  "package_test_count": 98,
+  "runtime_test_count": 6,
+  "execution_authorization": "NONE"
+}

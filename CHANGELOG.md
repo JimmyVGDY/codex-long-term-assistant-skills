@@ -1,5 +1,26 @@
 # CHANGELOG
 
+English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
+
+## 6.6.1 - 2026-08-31
+
+### Added
+
+- 增加 `zh-CN` 与 `en` 两个完整、可独立安装的确定性发行包。
+- 增加英文 README、全局规则、10 个 Skill 入口、7 个 Reviewer、安装配置、使用说明与发行说明。
+- 增加双语发行结构、locale 绑定、可复现构建和主界面语言验证。
+
+### Fixed
+
+- Windows 原子文件发布遇到短暂共享冲突时实施有界重试。
+- 延迟封印生命周期测试显式等待验证进程退出，消除临时目录回收竞态；生产 SessionEnd 仍保持预算外异步封印。
+
+### Security
+
+- 保持 `execution_authorization=NONE`、项目双重隔离、最小元数据记录和 Terra High 自动上限。
+- Reviewer TOML 不写死模型；诊断模型观察不冒充实际运行模型证明。
+- 两个发行包均排除无关品牌、个人路径、嵌套 ZIP、Git 元数据、缓存和语言覆盖层源码。
+
 ## 6.4.0 - 2026-08-28
 
 ### Added

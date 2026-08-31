@@ -46,13 +46,14 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def test_release_build_is_byte_reproducible_and_normalized(self):
-        artifact = self.root / "Codex-Skills-V6.6.zip"
-        witness = self.root / "deterministic-build-v6.3.json"
-        result = run_script(BUILD, ["reproducible", "--output", str(artifact), "--witness", str(witness)])
+        artifact = self.root / "Codex-Skills-V6.6.1-zh-CN.zip"
+        witness = self.root / "deterministic-build-v6.6.1-zh-CN.json"
+        result = run_script(BUILD, ["reproducible", "--locale", "zh-CN",
+                                    "--output", str(artifact), "--witness", str(witness)])
         report = json.loads(result.stdout)
         self.assertTrue(report["reproducible"])
         self.assertEqual(report["first_sha256"], report["second_sha256"])
-        verify = run_script(BUILD, ["verify", "--archive", str(artifact)])
+        verify = run_script(BUILD, ["verify", "--locale", "zh-CN", "--archive", str(artifact)])
         self.assertTrue(json.loads(verify.stdout)["metadata_normalized"])
 
     def test_real_lifecycle_report_redacts_raw_identifiers(self):
