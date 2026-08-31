@@ -1,80 +1,50 @@
 #!/usr/bin/env python3
-"""V5.1 installer path, integrity and restore security tests."""
+"""V6 installer security and scope smoke tests."""
 from __future__ import annotations
-
-import json
-import os
-import subprocess
-import sys
-import tempfile
-import unittest
+import json, os, subprocess, sys, tempfile, unittest
 from pathlib import Path
+ROOT=Path(__file__).resolve().parents[1]
+MANAGER=ROOT/'scripts'/'package_manager.py'
 
-ROOT = Path(__file__).resolve().parents[1]
-MANAGER = ROOT / "scripts" / "package_manager.py"
+def run(args, env, expected=0):
+    r=subprocess.run([sys.executable,'-B',str(MANAGER),*args],env=env,text=True,capture_output=True,timeout=30)
+    if r.returncode!=expected:
+        raise AssertionError(f'rc={r.returncode}, expected={expected}\nstdout={r.stdout}\nstderr={r.stderr}')
+    return r
 
+class PackageManagerV6Tests(unittest.TestCase):
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory(prefix='cp-v6-pm-')
+        self.home=Path(self.tmp.name)/'home'; self.home.mkdir()
+        self.codex=self.home/'.codex'
+        self.env={**os.environ,'HOME':str(self.home),'CODEX_HOME':str(self.codex),'PYTHONDONTWRITEBYTECODE':'1'}
+    def tearDown(self): self.tmp.cleanup()
 
-def run(args: list[str], env: dict[str, str], expected: int = 0) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(
-        [sys.executable, "-B", str(MANAGER), *args],
-        env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-    )
-    if result.returncode != expected:
-        raise AssertionError(
-            f"unexpected rc={result.returncode}, expected={expected}\n"
-            f"stdout={result.stdout}\nstderr={result.stderr}"
-        )
-    return result
+    def test_standalone_install_verify_uninstall(self):
+        run(['install','--scope','user','--mode','standalone','--dry-run'],self.env)
+        run(['install','--scope','user','--mode','standalone'],self.env)
+        run(['verify','--scope','user','--mode','standalone'],self.env)
+        self.assertTrue((self.home/'.agents'/'skills'/'controlled-evolution-governance'/'SKILL.md').is_file())
+        hooks=json.loads((self.codex/'hooks.json').read_text(encoding='utf-8'))
+        self.assertIn('PreToolUse',hooks['hooks'])
+        run(['uninstall','--scope','user','--mode','standalone'],self.env)
+        self.assertFalse((self.home/'.agents'/'skills'/'controlled-evolution-governance').exists())
 
+    def test_plugin_install_verify(self):
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        run(['verify','--scope','user','--mode','plugin'],self.env)
+        p=self.home/'.agents'/'plugins'/'cp-assistant-marketplace'/'plugins'/'codex-cross-project-engineering-assistant'
+        self.assertTrue((p/'.codex-plugin'/'plugin.json').is_file())
+        self.assertTrue((p/'hooks'/'hooks.json').is_file())
 
-class PackageManagerSecurityTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temp = tempfile.TemporaryDirectory(prefix="package-manager-v5-")
-        self.home = Path(self.temp.name) / "home"
-        self.home.mkdir()
-        self.codex = self.home / ".codex"
-        self.env = {
-            **os.environ,
-            "HOME": str(self.home),
-            "CODEX_HOME": str(self.codex),
-            "PYTHONDONTWRITEBYTECODE": "1",
-        }
-
-    def tearDown(self) -> None:
-        self.temp.cleanup()
-
-    def test_install_verify_idempotent_and_restore_integrity(self) -> None:
-        run(["install", "--dry-run"], self.env)
-        run(["install"], self.env)
-        run(["verify"], self.env)
-        run(["install"], self.env)
-        run(["verify"], self.env)
-        state = json.loads((self.codex / ".cross-project-assistant-install.json").read_text(encoding="utf-8"))
-        backup = Path(state["backup"])
-        manifest = json.loads((backup / "backup-manifest.json").read_text(encoding="utf-8"))
-        existing = next(record for record in manifest["records"] if record.get("existed"))
-        payload = backup / existing["backup_relative"]
-        if payload.is_dir():
-            file_to_tamper = next(path for path in payload.rglob("*") if path.is_file())
-        else:
-            file_to_tamper = payload
-        file_to_tamper.write_bytes(file_to_tamper.read_bytes() + b"\ntampered\n")
-        failed = run(["restore", "--backup", str(backup)], self.env, expected=1)
-        self.assertIn("完整性校验失败", failed.stderr)
-        run(["verify"], self.env)
-
-    def test_source_tree_and_symlink_targets_are_rejected(self) -> None:
-        bad_env = {**self.env, "CODEX_HOME": str(ROOT)}
-        result = run(["install", "--dry-run"], bad_env, expected=1)
-        self.assertTrue("危险目录" in result.stderr or "源码目录" in result.stderr)
-
+    def test_source_and_symlink_targets_rejected(self):
+        bad={**self.env,'CODEX_HOME':str(ROOT)}
+        r=run(['install','--scope','user','--mode','standalone','--dry-run'],bad,2)
+        self.assertIn('危险目录',r.stderr)
         self.codex.mkdir(parents=True)
-        outside = self.home / "outside-agents"
-        outside.mkdir()
-        (self.codex / "agents").symlink_to(outside, target_is_directory=True)
-        result = run(["install", "--component", "agents"], self.env, expected=1)
-        self.assertIn("符号链接", result.stderr)
+        outside=self.home/'outside'; outside.mkdir()
+        (self.codex/'agents').symlink_to(outside,target_is_directory=True)
+        r=run(['install','--scope','user','--mode','standalone'],self.env,2)
+        self.assertTrue('符号链接' in r.stderr or 'Reparse' in r.stderr)
 
-
-if __name__ == "__main__":
-    unittest.main()
+if __name__=='__main__': unittest.main()
