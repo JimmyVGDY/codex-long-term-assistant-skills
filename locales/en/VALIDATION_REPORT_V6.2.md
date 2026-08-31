@@ -1,7 +1,9 @@
 # V6.2 Validation Report
 
-Validation date: 2026-08-28  
-Target host: native Windows Codex CLI 0.150.1  
+Validation date: 2026-08-28
+
+Target host: native Windows Codex CLI 0.150.1
+
 Python: 3.13.15
 
 ## Conclusion

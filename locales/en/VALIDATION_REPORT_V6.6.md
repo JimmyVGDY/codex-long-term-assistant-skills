@@ -1,6 +1,7 @@
 # V6.6 In-Package Validation Report
 
-Version: 6.6.0  
+Version: 6.6.0
+
 Status: package-level validation passed; real installation and lifecycle evidence are recorded in the external upgrade report
 
 ## Scope
