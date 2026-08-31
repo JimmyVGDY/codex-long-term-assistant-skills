@@ -322,4 +322,4 @@ Do not recursively delete the entire `.codex`, `.agents`, or plugins directory. 
 - [ ] Host-session model data remains `DIAGNOSTIC` and is not misrepresented as trusted Hook evidence
 - [ ] The unified validator and attestation bind all official evidence
 
-For installation and recovery details, see `docs/INSTALLATION_RECOVERY.md`. For version changes, see `RELEASE_NOTES_V6.5.md`.
+For installation and recovery details, see `docs/INSTALLATION_RECOVERY.md`. For version changes, see `docs/releases/v6.5.0/RELEASE_NOTES.md`.

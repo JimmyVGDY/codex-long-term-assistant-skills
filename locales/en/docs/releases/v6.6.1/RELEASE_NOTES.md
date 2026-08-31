@@ -1,6 +1,6 @@
 # V6.6.1 Release Notes
 
-Chinese: [`RELEASE_NOTES_V6.6.1.md`](RELEASE_NOTES_V6.6.1.md)
+Chinese source: [RELEASE_NOTES.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/releases/v6.6.1/RELEASE_NOTES.md)
 
 ## Delivered
 

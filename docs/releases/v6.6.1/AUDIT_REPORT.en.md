@@ -1,0 +1,32 @@
+# V6.6.1 Audit Report
+
+Chinese: [AUDIT_REPORT.md](AUDIT_REPORT.md)
+
+## Audit conclusion
+
+V6.6.1 adds independent Chinese and English distributions and fixes a Windows file-sharing race in delayed-seal validation without changing the V6.6 safety policy. Package validation passed. Host installation and real lifecycle acceptance remain separate boundaries.
+
+## Key boundaries
+
+- Both ZIP files are generated from shared logic and bounded locale overlays.
+- ZIP roots bind to `zh-CN` and `en`; two builds are byte-identical per locale.
+- The English distribution covers every natural-language document, all ten Skills and their References and templates, seven Reviewers, examples, structured descriptions, and Python runtime messages.
+- Comments and docstrings are paired Chinese/English. A missing, empty, or Chinese-bearing English runtime-literal mapping fails the build.
+- Only immutable historical archive filenames, canonical path identifiers, and low-level test fixtures retain their original values as evidence and are not presented as translated prose.
+- Bounded Windows retry applies only to transient WinError 5, 32, and 33; other errors fail immediately.
+- Production SessionEnd remains asynchronous. Explicit waiting is enabled only by a test environment variable and is capped at 2.5 seconds.
+
+## Security audit
+
+- `execution_authorization=NONE`: retained
+- automatic proposal acceptance or execution: disabled
+- automatic Skill, Reviewer, routing, AGENTS, configuration, or business-repository modification: disabled
+- automatic commit, push, deployment, restart, production operation, or data write: disabled
+- Reviewer model and reasoning effort: not hard-coded
+- automatic model ceiling: `gpt-5.6-terra + high`
+- actual runtime model evidence: `UNAVAILABLE`
+- raw prompts, full answers, source bodies, patches, tokens, cookies, and API keys: not recorded
+
+## Remaining acceptance
+
+Native host upgrade, exact `codex plugin list --json` readback, real lifecycle, SessionEnd, and installed payload digest need separate validation when V6.6.1 is installed.

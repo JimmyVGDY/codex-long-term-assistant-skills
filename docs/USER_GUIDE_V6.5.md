@@ -322,4 +322,4 @@ python scripts\package_manager.py doctor --recover
 - [ ] 宿主会话模型仅标记 DIAGNOSTIC，未冒充 Hook 可信字段
 - [ ] 统一验证器和 attestation 绑定全部正式证据
 
-安装与恢复细节见 `docs/INSTALLATION_RECOVERY.md`，版本变化见 `RELEASE_NOTES_V6.5.md`。
+安装与恢复细节见 `docs/INSTALLATION_RECOVERY.md`，版本变化见 `docs/releases/v6.5.0/RELEASE_NOTES.md`。

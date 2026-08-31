@@ -1,6 +1,6 @@
 # V6.6.1 包内验证报告
 
-English: [VALIDATION_REPORT_V6.6.1.en.md](VALIDATION_REPORT_V6.6.1.en.md)
+English: [VALIDATION_REPORT.en.md](VALIDATION_REPORT.en.md)
 
 版本：6.6.1
 

@@ -1,6 +1,6 @@
 # V6.6.1 Audit Report
 
-Chinese: [V6.6.1_AUDIT_REPORT.md](V6.6.1_AUDIT_REPORT.md)
+Chinese source: [AUDIT_REPORT.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/releases/v6.6.1/AUDIT_REPORT.md)
 
 ## Audit conclusion
 

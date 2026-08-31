@@ -85,10 +85,10 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 ## Documentation and collaboration
 
 - [Documentation hub](docs/README.en.md): installation, configuration, architecture, model policy, validation, and history.
-- [Contributing guide](CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
-- [Security policy](SECURITY.en.md): vulnerability reporting and sensitive-information handling.
-- [Code of conduct](CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V6.6.1 release notes](RELEASE_NOTES_V6.6.1.en.md)
+- [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
+- [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
+- [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
+- [Changelog](CHANGELOG.en.md) · [V6.6.1 release notes](docs/releases/v6.6.1/RELEASE_NOTES.en.md)
 
 ## Local validation
 

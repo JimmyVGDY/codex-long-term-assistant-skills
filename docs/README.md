@@ -2,7 +2,7 @@
 
 English: [README.en.md](README.en.md)
 
-本页按使用阶段组织 V6.6.1 的规范文档。根目录中的历版报告与构建信息属于公开重建和发行证据，为保持校验路径、历史引用与可复现性而保留原位。
+本页按使用阶段组织 V6.6.1 的规范文档。历版报告与构建信息按版本集中保存，历史校验路径、引用关系与可复现证据继续保留。
 
 ## 开始使用
 
@@ -27,14 +27,16 @@ English: [README.en.md](README.en.md)
 - [受控演进操作](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [自演进架构](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [当前验证报告索引](VALIDATION_REPORT.md)
-- [V6.6.1 包内验证报告](../VALIDATION_REPORT_V6.6.1.md)
-- [V6.6.1 审计报告](../V6.6.1_AUDIT_REPORT.md)
+- [V6.6.1 包内验证报告](releases/v6.6.1/VALIDATION_REPORT.md)
+- [V6.6.1 审计报告](releases/v6.6.1/AUDIT_REPORT.md)
 
 ## 发行与历史
 
-- [V6.6.1 发行说明](../RELEASE_NOTES_V6.6.1.md)
+- [历版发行资料索引](releases/README.md)
+- [V6.6.1 发行说明](releases/v6.6.1/RELEASE_NOTES.md)
 - [版本记录](../CHANGELOG.md)
-- [公开重建版本索引](../RELEASE_ARCHIVES.md)
-- [公开重建历史](../RECONSTRUCTED_HISTORY.zh-CN.md)
+- [公开重建资料索引](history/README.md)
+- [公开重建版本索引](history/RELEASE_ARCHIVES.md)
+- [公开重建历史](history/RECONSTRUCTED_HISTORY.zh-CN.md)
 
 历史资料记录当时版本的事实，不自动证明当前宿主或当前安装状态。

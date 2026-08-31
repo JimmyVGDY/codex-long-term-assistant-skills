@@ -52,8 +52,10 @@ for reviewer in manifest.get('custom_agents',[]):
     if 'model' in value or 'model_reasoning_effort' in value:
         errors.append('英文 Reviewer 写死模型: '+reviewer['name'])
 for primary in ('README.md','CHANGELOG.md','global/AGENTS.md','docs/USER_GUIDE_V6.6.1.md',
-                'docs/INSTALLATION_RECOVERY.md','docs/CODEX_CONFIG_GUIDE.md','RELEASE_NOTES_V6.6.1.md',
-                'VALIDATION_REPORT_V6.6.1.md','V6.6.1_AUDIT_REPORT.md'):
+                'docs/INSTALLATION_RECOVERY.md','docs/CODEX_CONFIG_GUIDE.md',
+                'docs/releases/v6.6.1/RELEASE_NOTES.md',
+                'docs/releases/v6.6.1/VALIDATION_REPORT.md',
+                'docs/releases/v6.6.1/AUDIT_REPORT.md'):
     if not (ROOT/'locales'/'en'/primary).is_file(): errors.append('英文主界面缺失: '+primary)
 text_extensions={'.md','.json','.toml','.yaml','.py','.ps1','.sh','.cmd'}
 banned_natural_language={

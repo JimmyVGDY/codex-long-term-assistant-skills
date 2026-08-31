@@ -85,10 +85,10 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 ## 文档与协作
 
 - [文档中心](docs/README.md)：安装、配置、架构、模型策略、验证与历史资料。
-- [贡献指南](CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
-- [安全策略](SECURITY.md)：漏洞报告边界与敏感信息处理。
-- [行为准则](CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · [V6.6.1 发行说明](RELEASE_NOTES_V6.6.1.md)
+- [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
+- [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
+- [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
+- [版本记录](CHANGELOG.md) · [V6.6.1 发行说明](docs/releases/v6.6.1/RELEASE_NOTES.md)
 
 ## 本地验证
 

@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">Chinese</a> · <strong>English</strong>
+  <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/README.md">Chinese</a> · <strong>English</strong>
 </p>
 
 V6.6.1 targets native Windows Codex CLI 0.150.1 and provides two independently installable, reproducibly built Plugin distributions. The main Agent model configuration remains untouched, while Terra High is the maximum automatic sub-agent policy tier.
@@ -64,7 +64,7 @@ codex plugin list --json
 
 3. The upgrade is established only when the Plugin readback reports `installed=true`, `enabled=true`, and `version=6.6.1`.
 
-The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, and preserves unknown files. See [Installation and recovery](docs/INSTALLATION_RECOVERY.en.md) and the [User guide](docs/USER_GUIDE_V6.6.1.en.md).
+The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, and preserves unknown files. See [Installation and recovery](docs/INSTALLATION_RECOVERY.md) and the [User guide](docs/USER_GUIDE_V6.6.1.md).
 
 ## Model evidence boundary
 
@@ -84,11 +84,11 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 
 ## Documentation and collaboration
 
-- [Documentation hub](docs/README.en.md): installation, configuration, architecture, model policy, validation, and history.
-- [Contributing guide](CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
-- [Security policy](SECURITY.en.md): vulnerability reporting and sensitive-information handling.
-- [Code of conduct](CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V6.6.1 release notes](RELEASE_NOTES_V6.6.1.en.md)
+- [Documentation hub](docs/README.md): installation, configuration, architecture, model policy, validation, and history.
+- [Contributing guide](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
+- [Security policy](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
+- [Code of conduct](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
+- [Changelog](CHANGELOG.md) · [V6.6.1 release notes](docs/releases/v6.6.1/RELEASE_NOTES.md)
 
 ## Local validation
 

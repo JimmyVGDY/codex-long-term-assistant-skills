@@ -2,7 +2,7 @@
 
 Chinese: [README.md](README.md)
 
-This page organizes the V6.6.1 documentation by adoption stage. Historical reports and build metadata remain at the repository root to preserve validation paths, historical references, and reproducibility.
+This page organizes the V6.6.1 documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
 
 ## Getting started
 
@@ -27,14 +27,16 @@ This page organizes the V6.6.1 documentation by adoption stage. Historical repor
 - [Controlled-evolution operations](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](VALIDATION_REPORT.md)
-- [V6.6.1 package validation report](../VALIDATION_REPORT_V6.6.1.en.md)
-- [V6.6.1 audit report](../V6.6.1_AUDIT_REPORT.en.md)
+- [V6.6.1 package validation report](releases/v6.6.1/VALIDATION_REPORT.en.md)
+- [V6.6.1 audit report](releases/v6.6.1/AUDIT_REPORT.en.md)
 
 ## Release and history
 
-- [V6.6.1 release notes](../RELEASE_NOTES_V6.6.1.en.md)
+- [Release evidence index](releases/README.en.md)
+- [V6.6.1 release notes](releases/v6.6.1/RELEASE_NOTES.en.md)
 - [Changelog](../CHANGELOG.en.md)
-- [Public reconstruction release index](../RELEASE_ARCHIVES.md)
-- [Public reconstruction history](../RECONSTRUCTED_HISTORY.en.md)
+- [Public reconstruction index](history/README.en.md)
+- [Public reconstruction release index](history/RELEASE_ARCHIVES.md)
+- [Public reconstruction history](history/RECONSTRUCTED_HISTORY.en.md)
 
 Historical material records the state of its original release. It does not establish the current host or installation state.

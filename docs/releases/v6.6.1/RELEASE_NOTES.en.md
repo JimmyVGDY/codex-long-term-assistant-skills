@@ -1,11 +1,12 @@
 # V6.6.1 Release Notes
 
-Version: 6.6.1
+Chinese: [RELEASE_NOTES.md](RELEASE_NOTES.md)
 
 ## Delivered
 
 - Two reproducible, independent archives: `zh-CN` and `en`.
-- English primary surfaces for README, global rules, ten Skill entry points, seven Reviewer definitions, installation, configuration, operating guidance, and release notes.
+- Full English coverage for every natural-language document, all ten Skills and their References and templates, seven Reviewer definitions, examples, structured descriptions, and Python runtime messages.
+- Paired Chinese/English source comments and docstrings, plus a fail-closed build-time catalog of human-reviewed English runtime literals.
 - Bounded retry for transient Windows atomic-publication sharing failures.
 - Explicit validation-only worker waiting, while production SessionEnd remains detached and bounded by the three-second host timeout.
 - Exact Plugin acceptance remains `installed=true`, `enabled=true`, and `version=6.6.1`.

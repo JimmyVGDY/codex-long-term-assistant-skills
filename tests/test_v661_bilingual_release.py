@@ -90,8 +90,10 @@ class V661BilingualReleaseTests(unittest.TestCase):
 
     def test_english_primary_surfaces_are_english_and_overlay_sources_are_not_shipped(self) -> None:
         _, entries = self._entries("en")
-        primary = ["README.md", "CHANGELOG.md", "global/AGENTS.md", "RELEASE_NOTES_V6.6.1.md",
-                   "VALIDATION_REPORT_V6.6.1.md", "V6.6.1_AUDIT_REPORT.md",
+        primary = ["README.md", "CHANGELOG.md", "global/AGENTS.md",
+                   "docs/releases/v6.6.1/RELEASE_NOTES.md",
+                   "docs/releases/v6.6.1/VALIDATION_REPORT.md",
+                   "docs/releases/v6.6.1/AUDIT_REPORT.md",
                    "docs/USER_GUIDE_V6.6.1.md", "docs/INSTALLATION_RECOVERY.md",
                    "docs/CODEX_CONFIG_GUIDE.md", ".codex-plugin/plugin.json"]
         primary.extend("skills/%s/SKILL.md" % item["name"] for item in json.loads(entries["manifest.json"])["skills"])
@@ -101,6 +103,9 @@ class V661BilingualReleaseTests(unittest.TestCase):
             self.assertIsNone(re.search(r"[\u4e00-\u9fff]", text), path)
         self.assertFalse(any(path.startswith("locales/") for path in entries))
         self.assertNotIn("runtime-strings.json", entries)
+        self.assertIn("docs/history/RECONSTRUCTED_HISTORY.md", entries)
+        self.assertNotIn("docs/history/RECONSTRUCTED_HISTORY.en.md", entries)
+        self.assertNotIn("docs/history/RECONSTRUCTED_HISTORY.zh-CN.md", entries)
 
     def test_english_runtime_python_literals_are_localized_and_compile(self) -> None:
         auditor = _load_localization_auditor()
@@ -146,6 +151,19 @@ class V661BilingualReleaseTests(unittest.TestCase):
         for locale in ("zh-CN", "en"):
             _, entries = self._entries(locale)
             self.assertFalse(any(path.startswith(".github/") for path in entries))
+
+    def test_repository_root_is_compact_and_release_evidence_is_versioned(self) -> None:
+        root_files = {path.name for path in ROOT.iterdir() if path.is_file()}
+        self.assertFalse(any(name.startswith(("RELEASE_NOTES_", "VALIDATION_REPORT_"))
+                             for name in root_files))
+        self.assertFalse(any("AUDIT_REPORT" in name or "BUILD_INFO" in name
+                             for name in root_files))
+        for name in ("CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md"):
+            self.assertTrue((ROOT / ".github" / name).is_file(), name)
+        current = ROOT / "docs" / "releases" / "v6.6.1"
+        for name in ("RELEASE_NOTES.md", "AUDIT_REPORT.md", "VALIDATION_REPORT.md",
+                     "BUILD_INFO.json", "PACKAGE_VALIDATION.json"):
+            self.assertTrue((current / name).is_file(), name)
 
     def test_semantic_lint_accepts_runtime_source_key_catalog(self) -> None:
         result = subprocess.run(

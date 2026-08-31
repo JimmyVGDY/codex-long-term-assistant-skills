@@ -1,14 +1,14 @@
 # Documentation hub
 
-Chinese: [README.md](README.md)
+Chinese source: [README.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/README.md)
 
-This page organizes the V6.6.1 documentation by adoption stage. Historical reports and build metadata remain at the repository root to preserve validation paths, historical references, and reproducibility.
+This page organizes the V6.6.1 documentation by adoption stage. Historical reports and build metadata are grouped by version to preserve validation paths, historical references, and reproducibility.
 
 ## Getting started
 
-- [V6.6.1 user guide](USER_GUIDE_V6.6.1.en.md)
-- [Installation, upgrade, rollback, and recovery](INSTALLATION_RECOVERY.en.md)
-- [Codex configuration guide](CODEX_CONFIG_GUIDE.en.md)
+- [V6.6.1 user guide](USER_GUIDE_V6.6.1.md)
+- [Installation, upgrade, rollback, and recovery](INSTALLATION_RECOVERY.md)
+- [Codex configuration guide](CODEX_CONFIG_GUIDE.md)
 - [Project context and onboarding](PROJECT_CONTEXT_AND_ONBOARDING.md)
 
 ## Architecture and policy
@@ -27,14 +27,16 @@ This page organizes the V6.6.1 documentation by adoption stage. Historical repor
 - [Controlled-evolution operations](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](VALIDATION_REPORT.md)
-- [V6.6.1 package validation report](../VALIDATION_REPORT_V6.6.1.en.md)
-- [V6.6.1 audit report](../V6.6.1_AUDIT_REPORT.en.md)
+- [V6.6.1 package validation report](releases/v6.6.1/VALIDATION_REPORT.md)
+- [V6.6.1 audit report](releases/v6.6.1/AUDIT_REPORT.md)
 
 ## Release and history
 
-- [V6.6.1 release notes](../RELEASE_NOTES_V6.6.1.en.md)
-- [Changelog](../CHANGELOG.en.md)
-- [Public reconstruction release index](../RELEASE_ARCHIVES.md)
-- [Public reconstruction history](../RECONSTRUCTED_HISTORY.en.md)
+- [Release evidence index](releases/README.md)
+- [V6.6.1 release notes](releases/v6.6.1/RELEASE_NOTES.md)
+- [Changelog](../CHANGELOG.md)
+- [Public reconstruction index](history/README.md)
+- [Public reconstruction release index](history/RELEASE_ARCHIVES.md)
+- [Public reconstruction history](history/RECONSTRUCTED_HISTORY.md)
 
 Historical material records the state of its original release. It does not establish the current host or installation state.

@@ -1,5 +1,7 @@
 # V6.6.1 发行说明
 
+English: [RELEASE_NOTES.en.md](RELEASE_NOTES.en.md)
+
 版本：6.6.1
 
 ## 已实现

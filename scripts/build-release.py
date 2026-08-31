@@ -94,10 +94,11 @@ def _apply_overlay(staging: Path, locale: str) -> None:
     locale_path.write_text(json.dumps({"schema_version": 1, "locale": locale}, indent=2) + "\n", encoding="utf-8")
     if locale == "zh-CN":
         return
-    localized_history = ROOT / "RECONSTRUCTED_HISTORY.en.md"
+    localized_history = ROOT / "docs" / "history" / "RECONSTRUCTED_HISTORY.en.md"
     if localized_history.is_file():
-        (staging / "RECONSTRUCTED_HISTORY.zh-CN.md").unlink(missing_ok=True)
-        shutil.copyfile(localized_history, staging / "RECONSTRUCTED_HISTORY.en.md")
+        history_root = staging / "docs" / "history"
+        (history_root / "RECONSTRUCTED_HISTORY.zh-CN.md").unlink(missing_ok=True)
+        shutil.copyfile(localized_history, history_root / "RECONSTRUCTED_HISTORY.md")
     overlay = ROOT / "locales" / locale
     if not overlay.is_dir() or _is_link(overlay):
         raise BuildError("locale overlay is missing or unsafe: %s" % locale)
