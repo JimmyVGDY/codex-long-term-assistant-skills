@@ -5,10 +5,10 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
-if manifest.get('version')!='6.0.0': errors.append('manifest 版本不是 6.0.0')
+if manifest.get('version')!='6.1.0': errors.append('manifest 版本不是 6.1.0')
 if manifest.get('user_skills_target')!='$HOME/.agents/skills': errors.append('用户 Skill 目标不是 $HOME/.agents/skills')
 plugin=json.loads((ROOT/'.codex-plugin'/'plugin.json').read_text(encoding='utf-8'))
-if plugin.get('version')!='6.0.0': errors.append('Plugin 版本不一致')
+if plugin.get('version')!='6.1.0': errors.append('Plugin 版本不一致')
 hooks=json.loads((ROOT/'hooks'/'hooks.json').read_text(encoding='utf-8')).get('hooks',{})
 required={'UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'}
 if not required.issubset(hooks): errors.append('生命周期 Hooks 不完整')

@@ -18,7 +18,7 @@ sem=run([sys.executable,str(ROOT/'scripts'/'semantic-lint.py')])
 routing=run([sys.executable,str(ROOT/'scripts'/'routing-eval.py'),'validate'])
 tests=run([sys.executable,'-m','unittest','discover','-s','tests','-p','test_*.py'])
 result={
- 'ok':True,'version':'6.0.0','skill_count':10,'reviewer_count':7,
+ 'ok':True,'version':'6.1.0','skill_count':10,'reviewer_count':7,
  'hooks':['UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'],
  'task_outcome_event':'2.0','execution_authorization':'NONE','automatic_self_modification':False,
  'semantic_lint':'PASS','routing_case_schema':'PASS (35 cases)','unit_regression_tests':'PASS',
