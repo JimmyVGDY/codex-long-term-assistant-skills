@@ -54,7 +54,7 @@ class ControlledEvolutionTest(unittest.TestCase):
             records.append({
                 "record_id": "feedback-%d" % index,
                 "task_id": "TASK-%03d" % index,
-                "timestamp": (start + timedelta(days=index)).isoformat(),
+                "timestamp": (start + timedelta(days=index * 2)).isoformat(),
                 "recommended_model": "luna-medium",
                 "actual_model": "terra-medium",
                 "recommended_reviewers": 1,
@@ -186,6 +186,7 @@ class ControlledEvolutionTest(unittest.TestCase):
                     "reviewer": "low-yield-reviewer",
                     "blocking_findings": 0,
                     "nonblocking_findings": 0,
+                    "rejected": 1,
                 }],
             }
             (records_a if index % 2 == 0 else records_b).append(record)

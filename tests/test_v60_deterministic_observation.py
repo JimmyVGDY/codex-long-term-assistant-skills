@@ -5,7 +5,8 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'runtime'))
-from cp_runtime.event_v2 import EventContractError, aggregate_by_task, append_event, make_event, verify_event_chain
+from cp_runtime.event_v2 import EventContractError, OwnerTokenLock, aggregate_by_task, append_event, make_event, verify_event_chain
+from cp_runtime.common import resolve_codex_home
 from cp_runtime.evolution.contracts import SelfObservationSnapshot, DecisionType, ProposalStatus
 from cp_runtime.evolution.observation import observe_project, ObservationError
 from cp_runtime.evolution.storage import exclusive_write_json, StorageError
@@ -64,6 +65,117 @@ class V60DeterministicObservationTests(unittest.TestCase):
         wrong=self.event(event_id='E9'); wrong['project_id']='project-beta'
         self.write_jsonl('feedback/task-outcome-v2.jsonl',[wrong])
         with self.assertRaises(ObservationError): observe_project(self.project_id,self.project_dir)
+
+    def test_v63_lifecycle_quality_missing_duplicate_order_and_session_leakage_gate(self):
+        rows=[
+            self.event(event_id='E1',event_type='TASK_COMPLETED',task_id='A'),
+            self.event(event_id='E1',event_type='TASK_COMPLETED',task_id='A'),
+            self.event(event_id='E2',event_type='SUBAGENT_STOPPED',task_id='A'),
+            self.event(event_id='E4',event_type='TURN_OPENED',task_id='A',session_id='S2'),
+        ]
+        event_path=self.project_dir/'feedback'/'task-outcome-v2.jsonl'; event_path.parent.mkdir(parents=True,exist_ok=True)
+        for row in rows:
+            append_event(event_path,row)
+        snap=observe_project(self.project_id,self.project_dir)
+        life=snap.metrics['lifecycle']
+        self.assertEqual(1,snap.metrics['deduplicated_v2_event_count'])
+        self.assertIn('SUBAGENT_STARTED', life['missing_event_categories'])
+        self.assertEqual(1,life['out_of_order_task_count'])
+        self.assertEqual(1,life['cross_task_session_leakage_count'])
+        self.assertFalse(snap.metrics['evidence_sufficient'])
+        self.assertFalse(snap.signals)
+
+    def test_v63_unknown_and_reviewer_attribution_metrics(self):
+        rows=[]
+        for index in range(5):
+            rows.append({'record_id':f'R{index}','task_id':f'T{index}','timestamp':datetime(2026,8,1+index,tzinfo=timezone.utc).isoformat(),
+                         'terminal_outcome':'UNKNOWN','actual_model':'gpt-5.6-luna',
+                         'reviewer_results':[{'reviewer':'r1','accepted':1,'rejected':1,'duplicate':1,'repaired':1,'regressions_prevented':1,'duration_ms':10,'cost_units':2}]})
+        self.write_jsonl('review/review-results.jsonl',rows)
+        snap=observe_project(self.project_id,self.project_dir)
+        self.assertEqual(0,snap.metrics['known_outcome_count'])
+        stats=snap.metrics['reviewer_stats']['r1']
+        self.assertEqual(5,stats['accepted']); self.assertEqual(50,stats['duration_ms'])
+        self.assertEqual(1.0,stats['attribution_coverage']); self.assertEqual(0.5,stats['adoption_rate'])
+        self.assertFalse(any(signal.signal_type.value=='LOW_REVIEWER_YIELD' for signal in snap.signals))
+
+    def test_v63_subagent_pair_is_complete_and_session_end_is_not_a_task(self):
+        rows=[
+            self.event(event_id='E1',event_type='SUBAGENT_STARTED',task_id='R1',session_id='S1'),
+            self.event(event_id='E2',event_type='SUBAGENT_STOPPED',task_id='R1',session_id='S1'),
+            self.event(event_id='E3',event_type='SESSION_ENDED',task_id='S1',session_id='S1'),
+        ]
+        event_path=self.project_dir/'feedback'/'task-outcome-v2.jsonl'; event_path.parent.mkdir(parents=True,exist_ok=True)
+        for row in rows:
+            append_event(event_path,row)
+        snap=observe_project(self.project_id,self.project_dir)
+        life=snap.metrics['lifecycle']
+        self.assertEqual(1,life['v2_task_count'])
+        self.assertEqual(1,life['lifecycle_complete_task_count'])
+        self.assertEqual(1.0,life['lifecycle_completeness_rate'])
+        self.assertEqual(1.0,life['session_end_coverage'])
+
+    def test_v63_multiple_tasks_in_one_session_are_not_leakage(self):
+        rows=[
+            self.event(event_id='E1',event_type='TURN_OPENED',task_id='T1',session_id='S1'),
+            self.event(event_id='E2',event_type='TASK_COMPLETED',task_id='T1',session_id='S1'),
+            self.event(event_id='E3',event_type='TURN_OPENED',task_id='T2',session_id='S1'),
+            self.event(event_id='E4',event_type='TASK_COMPLETED',task_id='T2',session_id='S1'),
+            self.event(event_id='E5',event_type='SESSION_ENDED',task_id='S1',session_id='S1'),
+        ]
+        event_path=self.project_dir/'feedback'/'task-outcome-v2.jsonl'; event_path.parent.mkdir(parents=True,exist_ok=True)
+        for row in rows:
+            append_event(event_path,row)
+        snap=observe_project(self.project_id,self.project_dir)
+        life=snap.metrics['lifecycle']
+        self.assertEqual(0,life['cross_task_session_leakage_count'])
+        self.assertEqual(0,life['cross_session_task_leakage_count'])
+        self.assertEqual(1,life['multi_task_session_count'])
+
+    def test_v63_out_of_order_events_in_same_session_are_detected(self):
+        rows=[
+            self.event(event_id='E1',event_type='TASK_COMPLETED',task_id='T1',session_id='S1'),
+            self.event(event_id='E2',event_type='TURN_OPENED',task_id='T1',session_id='S1'),
+        ]
+        event_path=self.project_dir/'feedback'/'task-outcome-v2.jsonl'; event_path.parent.mkdir(parents=True,exist_ok=True)
+        for row in rows:
+            append_event(event_path,row)
+        snap=observe_project(self.project_id,self.project_dir)
+        self.assertEqual(1,snap.metrics['lifecycle']['out_of_order_task_count'])
+        self.assertFalse(snap.metrics['evidence_sufficient'])
+
+    def test_v63_duplicate_id_does_not_hide_tail_chain_tamper(self):
+        event_path=self.project_dir/'feedback'/'task-outcome-v2.jsonl'; event_path.parent.mkdir(parents=True,exist_ok=True)
+        append_event(event_path,self.event(event_id='E1',event_type='TURN_OPENED'))
+        append_event(event_path,self.event(event_id='E1',event_type='TURN_OPENED'))
+        append_event(event_path,self.event(event_id='E2',event_type='TASK_COMPLETED'))
+        lines=event_path.read_text(encoding='utf-8').splitlines()
+        tail=json.loads(lines[-1]); tail['record_hash']='f' * 64
+        lines[-1]=json.dumps(tail,ensure_ascii=False,sort_keys=True,separators=(',',':'))
+        event_path.write_text('\n'.join(lines)+'\n',encoding='utf-8')
+        with self.assertRaises(ObservationError):
+            observe_project(self.project_id,self.project_dir)
+
+    def test_live_owner_lock_is_not_stolen_after_stale_threshold(self):
+        event_path=self.root/'live-owner-events.jsonl'
+        lock_path=Path(str(event_path)+'.lock')
+        lock_path.write_text(json.dumps({'pid':os.getpid(),'token':'live','created_at':'old'}),encoding='utf-8')
+        os.utime(lock_path,(1,1))
+        with self.assertRaises(TimeoutError):
+            with OwnerTokenLock(event_path,timeout=0.08,stale=0.0):
+                pass
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows native path normalization')
+    def test_windows_runtime_converts_wsl_style_codex_home(self):
+        previous=os.environ.get('CODEX_HOME')
+        os.environ['CODEX_HOME']='/mnt/c/Users/Neutral/.codex'
+        try:
+            self.assertEqual(Path(r'C:\Users\Neutral\.codex'),resolve_codex_home())
+        finally:
+            if previous is None:
+                os.environ.pop('CODEX_HOME',None)
+            else:
+                os.environ['CODEX_HOME']=previous
 
     def test_snapshot_unique_and_exclusive(self):
         kwargs=dict(project_id=self.project_id,source_files=['feedback/a.jsonl'],record_count=1,task_count=1,metrics={'policy_version':'v6.0-default-1'},signals=[],warnings=[],observed_at='2026-08-27T00:00:00+00:00')
@@ -141,7 +253,7 @@ class V60DeterministicObservationTests(unittest.TestCase):
         start=datetime(2026,7,1,tzinfo=timezone.utc)
         rows=[]
         for i in range(6):
-            rows.append({'record_id':f'F{i}','task_id':f'TASK-{i}','timestamp':(start+timedelta(days=i)).isoformat(),
+            rows.append({'record_id':f'F{i}','task_id':f'TASK-{i}','timestamp':(start+timedelta(days=i * 2)).isoformat(),
                          'failure_code':'E_TIMEOUT','quality_outcome':'failed','repair_rounds':2})
         self.write_jsonl('feedback/execution-feedback.jsonl',rows)
         service=ControlledEvolutionService(self.root,self.project_id)

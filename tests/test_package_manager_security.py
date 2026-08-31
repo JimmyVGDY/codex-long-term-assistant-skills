@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V6.2 installer security and scope smoke tests."""
+"""V6.3 installer security and scope smoke tests."""
 from __future__ import annotations
 import json, os, shutil, subprocess, sys, tempfile, unittest
 from pathlib import Path
@@ -22,9 +22,9 @@ def run(args, env, expected=0):
     return r
 
 
-class PackageManagerV62Tests(unittest.TestCase):
+class PackageManagerV63Tests(unittest.TestCase):
     def setUp(self):
-        self.tmp=tempfile.TemporaryDirectory(prefix='cp-v62-pm-')
+        self.tmp=tempfile.TemporaryDirectory(prefix='cp-v63-pm-')
         self.home=Path(self.tmp.name)/'home'; self.home.mkdir()
         self.codex=self.home/'.codex'
         self.bin=Path(self.tmp.name)/'bin'; self.bin.mkdir()
@@ -36,7 +36,7 @@ home=Path(os.environ.get('CODEX_HOME') or '.')
 state=home/'fake-codex-plugin-state.json'
 args=sys.argv[1:]
 if args == ['--version']:
-    print('codex-cli 0.150.1'); raise SystemExit(0)
+    print(os.environ.get('FAKE_CODEX_VERSION', 'codex-cli 0.150.1')); raise SystemExit(0)
 if args[:3] == ['plugin','marketplace','add']:
     print('marketplace added'); raise SystemExit(0)
 if args[:3] == ['plugin','marketplace','remove']:
@@ -51,7 +51,7 @@ if args[:2] == ['plugin','remove']:
 if args == ['plugin','list','--json']:
     installed=[]
     if state.exists():
-        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':'6.2.0','installed':True,'enabled':True}]
+        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','6.3.0'),'installed':True,'enabled':True}]
     print(json.dumps({'installed':installed,'available':[]})); raise SystemExit(0)
 print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemExit(2)
 """,encoding='utf-8')
@@ -82,6 +82,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_standalone_install_verify_uninstall(self):
         run(['install','--scope','user','--mode','standalone','--dry-run'],self.env)
         run(['install','--scope','user','--mode','standalone'],self.env)
+        self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         run(['verify','--scope','user','--mode','standalone'],self.env)
         self.assertTrue((self.home/'.agents'/'skills'/'controlled-evolution-governance'/'SKILL.md').is_file())
         hooks=json.loads((self.codex/'hooks.json').read_text(encoding='utf-8'))
@@ -98,6 +99,13 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertTrue((p/'hooks'/'hooks.json').is_file())
         self.assertTrue((self.codex/'fake-codex-plugin-state.json').is_file())
         run(['uninstall','--scope','user','--mode','plugin'],self.env)
+
+    def test_plugin_install_rejects_wrong_registered_version(self):
+        env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
+        result=run(['install','--scope','user','--mode','plugin'],env,2)
+        self.assertIn('version=6.3.0',result.stderr)
+        self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
+        self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
         self.assertFalse((self.home/'.agents'/'plugins'/'cp-assistant-marketplace').exists())
 
@@ -168,6 +176,94 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertEqual(data['target_codex'],'0.150.1')
         self.assertIn('0.150.1',data['codex_version'])
 
+    def test_crash_journal_recovers_and_status_is_json(self):
+        crashed={**self.env, 'CP_ASSISTANT_TEST_CRASH_STAGE':'APPLYING'}
+        run(['install','--scope','user','--mode','standalone'],crashed,2)
+        journal=self.codex/'cp-assistant-v6-transaction.json'
+        self.assertTrue(journal.is_file())
+        run(['doctor','--recover'],self.env)
+        self.assertFalse(journal.exists())
+        status=json.loads(run(['status','--json'],self.env).stdout)
+        self.assertEqual('6.3.0',status['version'])
+        self.assertIn('live_transaction',status)
+
+    def test_mode_switch_is_refused_without_force(self):
+        run(['install','--scope','user','--mode','standalone'],self.env)
+        result=run(['install','--scope','user','--mode','plugin'],self.env,2)
+        self.assertIn('模式切换默认拒绝',result.stderr)
+
+    def test_prepared_recovery_and_old_live_journal_rejection(self):
+        crashed={**self.env, 'CP_ASSISTANT_TEST_CRASH_STAGE':'PREPARED'}
+        run(['install','--scope','user','--mode','standalone'],crashed,2)
+        blocked=run(['install','--scope','user','--mode','standalone'],self.env,2)
+        self.assertIn('doctor --recover',blocked.stderr)
+        run(['doctor','--recover'],self.env)
+        self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
+
+    def test_uninstall_crash_recovers_installed_files(self):
+        run(['install','--scope','user','--mode','standalone'],self.env)
+        crashed={**self.env, 'CP_ASSISTANT_TEST_CRASH_STAGE':'APPLYING'}
+        run(['uninstall','--scope','user','--mode','standalone'],crashed,2)
+        run(['doctor','--recover'],self.env)
+        run(['verify','--scope','user','--mode','standalone'],self.env)
+
+    def test_uninstall_target_window_crash_rolls_back_partial_restore(self):
+        run(['install','--scope','user','--mode','standalone'],self.env)
+        crashed={**self.env,'CP_ASSISTANT_TEST_CRASH_AFTER_TARGET':'agent:cp-review-test-delivery.toml'}
+        run(['uninstall','--scope','user','--mode','standalone'],crashed,2)
+        self.assertTrue((self.codex/'cp-assistant-v6-transaction.json').is_file())
+        run(['recover','--scope','user'],self.env)
+        run(['verify','--scope','user','--mode','standalone'],self.env)
+        self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
+
+    def test_plugin_host_unknown_version_fails_closed(self):
+        bad={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.151.0'}
+        result=run(['install','--scope','user','--mode','plugin'],bad,2)
+        self.assertIn('仅支持 Codex CLI 0.150.1',result.stderr)
+
+    def test_plugin_crash_recovery_removes_new_activation(self):
+        crashed={**self.env, 'CP_ASSISTANT_TEST_CRASH_STAGE':'ACTIVATING'}
+        run(['install','--scope','user','--mode','plugin'],crashed,2)
+        run(['doctor','--recover'],self.env)
+        self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
+
+    def test_target_action_crash_has_durable_ownership_for_recovery(self):
+        crashed={**self.env, 'CP_ASSISTANT_TEST_CRASH_AFTER_TARGET':'agent:cp-review-security-access.toml'}
+        run(['install','--scope','user','--mode','standalone'],crashed,2)
+        journal=json.loads((self.codex/'cp-assistant-v6-transaction.json').read_text(encoding='utf-8'))
+        self.assertIn('agent:cp-review-security-access.toml',journal['applied_targets'])
+        run(['doctor','--recover'],self.env)
+        self.assertFalse((self.codex/'agents'/'cp-review-security-access.toml').exists())
+
+    def test_plugin_uninstall_crash_restores_prior_activation(self):
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        crashed={**self.env, 'CP_ASSISTANT_TEST_CRASH_AFTER_PLUGIN_DEACTIVATE':'1'}
+        run(['uninstall','--scope','user','--mode','plugin'],crashed,2)
+        run(['doctor','--recover'],self.env)
+        self.assertTrue((self.codex/'fake-codex-plugin-state.json').exists())
+
+    def test_plugin_marketplace_atomic_swap_crash_restores_previous_tree(self):
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        market=self.home/'.agents'/'plugins'/'cp-assistant-marketplace'
+        marker=market/'external-marker.txt'; marker.write_text('preserve-before-swap',encoding='utf-8')
+        for stage in ('BEFORE_REPLACE','AFTER_REPLACE'):
+            with self.subTest(stage=stage):
+                crashed={**self.env,'CP_ASSISTANT_TEST_CRASH_PLUGIN_MARKETPLACE_STAGE':stage}
+                run(['install','--scope','user','--mode','plugin'],crashed,2)
+                run(['recover','--scope','user'],self.env)
+                self.assertEqual('preserve-before-swap',marker.read_text(encoding='utf-8'))
+                run(['verify','--scope','user','--mode','plugin'],self.env)
+
+    def test_recovery_preserves_drift_and_requires_attention(self):
+        crashed={**self.env, 'CP_ASSISTANT_TEST_CRASH_STAGE':'APPLYING'}
+        run(['install','--scope','user','--mode','standalone'],crashed,2)
+        agent=self.codex/'agents'/'cp-review-security-access.toml'
+        agent.parent.mkdir(parents=True,exist_ok=True)
+        agent.write_text('external drift',encoding='utf-8')
+        result=run(['doctor','--recover'],self.env,2)
+        self.assertIn('未知漂移',result.stderr)
+        self.assertEqual('external drift',agent.read_text(encoding='utf-8'))
+
     def test_source_and_symlink_targets_rejected(self):
         bad={**self.env,'CODEX_HOME':str(ROOT)}
         r=run(['install','--scope','user','--mode','standalone','--dry-run'],bad,2)
@@ -202,7 +298,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         state=json.loads(io_path(long_codex/'cp-assistant-v6-state.json').read_text(encoding='utf-8'))
         backup=Path(state['backup'])
         self.assertTrue(io_path(backup/'backup-manifest.json').is_file())
-        # First uninstall restores the first V6.2 installation; the second
+        # First uninstall restores the first V6.3 installation; the second
         # returns the isolated HOME to its original empty state.
         run(['uninstall','--scope','user','--mode','plugin'],env)
         run(['uninstall','--scope','user','--mode','plugin'],env)
