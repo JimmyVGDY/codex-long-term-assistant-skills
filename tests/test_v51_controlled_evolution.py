@@ -111,7 +111,7 @@ class ControlledEvolutionTest(unittest.TestCase):
         accepted = registry.decide(
             view.proposal.proposal_id,
             DecisionType.ACCEPT,
-            "Jimmy",
+            "actor-1",
             "已确认问题与证据匹配，但实施仍需单独任务、审批和回归验证。",
         )
         self.assertEqual(ProposalStatus.ACCEPTED, accepted.current_status)
@@ -120,7 +120,7 @@ class ControlledEvolutionTest(unittest.TestCase):
             registry.decide(
                 view.proposal.proposal_id,
                 DecisionType.REJECT,
-                "Jimmy",
+                "actor-1",
                 "不得覆盖已经接受的终态决策，保留原始审计链路。",
             )
 

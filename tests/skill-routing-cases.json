@@ -243,7 +243,7 @@
     },
     {
       "id": "strict-readonly-review-gate",
-      "prompt": "当前任务涉及生产权限和真实数据，要求系统强制只读复审。先确认父会话实际为 read-only；若当前会话可写，不要派发 Reviewer。",
+      "prompt": "当前任务涉及生产权限和真实数据，采用系统强制只读复审。先确认父会话实际为 read-only；若当前会话可写，不要派发 Reviewer。",
       "required": [
         "multi-agent-independent-review"
       ],
