@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V4.1 install/verify/doctor/uninstall/restore manager (codex)."""
+"""V4.2 install/verify/doctor/uninstall/restore manager (codex)."""
 from __future__ import annotations
 
 import argparse
