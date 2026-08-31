@@ -43,6 +43,12 @@ description: >-
 - 本技能不覆盖纯 Node.js 后端、原生 iOS/Android、Flutter、React Native、Electron/Tauri 主进程或桌面后端；这些任务按实际运行边界加载其他规则。
 - 技能激活不能扩大文件修改、Git、部署、生产或数据写入授权。
 
+## 模型与委派成本
+
+- 组件、路由、API、样式和配置定位优先 `luna-low`；明确的空值、Promise、事件解绑、构建证据和兼容扫描使用 `luna-medium`。
+- 状态管理、接口联调、多文件交互和普通框架机制判断使用 `terra-medium`；SSR/Hydration、权限路由、状态竞态、微前端公共边界和高风险安全才使用 `terra-high`。
+- 技术栈检测结果只作为候选证据；子 Agent 按应用目录和唯一职责分片，不得对同一前端应用重复执行全量依赖与源码扫描。
+
 ## 组合关系
 
 - 修改、测试、复审、提交或交付：组合 `engineering-quality-delivery`。
