@@ -189,7 +189,7 @@ $technical-document-writing 和 $long-running-task-memory。
 ```text
 使用 $multi-agent-independent-review。
 
-本任务涉及生产权限和真实数据，要求 Level A system-readonly。
+本任务涉及生产权限和真实数据，采用 Level A system-readonly。
 先确认父会话实际运行在 read-only；若父会话可写，停止派发 Reviewer，
 不要仅凭 Reviewer TOML 的 sandbox_mode 声称系统隔离。
 记录实际 Agent 类型、配置路径、父会话沙箱、隔离等级和未验证项。

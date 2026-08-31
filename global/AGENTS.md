@@ -39,7 +39,7 @@ Skill 激活不扩大文件、Git、环境、生产或数据权限，也不自�
 
 ## 4. 模型与子 Agent 成本上限
 
-- 主 Agent 使用用户当前选择的模型和强度，本包不强制覆盖。
+- 主 Agent 采用当前选择的模型和强度，本包不强制覆盖。
 - 自动子 Agent 只使用 Luna / Terra 系列，推荐逐级：`luna-low -> luna-medium -> terra-medium -> terra-high`。
 - 自动硬上限：`gpt-5.6-terra + high`；禁止自动 Sol、`xhigh`、`max`、`ultra`。
 - PreToolUse Hook 对显式越界派发采用 fail-closed；SubagentStart 仍记录实际模型以发现宿主覆盖或配置漂移。
@@ -81,7 +81,7 @@ Snapshot -> Assessment -> Proposal -> 人工决策 -> 独立实施任务
 - Proposal 永久保持 `execution_authorization=NONE`；`ACCEPT` 只允许创建新的实施任务，不等于执行授权。
 - 不得自动修改 Skill、Reviewer、模型路由、AGENTS、配置、业务代码，不得自动接受/部署/删除能力。
 - 数据损坏、哈希链失败、项目串线、来源越界或引用关系不一致时失败关闭。
-- 完整 Evolution 只在用户明确要求、长期复盘或版本治理节点运行；普通任务只采集最小事件。
+- 完整 Evolution 只在请求方明确约束、长期复盘或版本治理节点运行；普通任务只采集最小事件。
 
 ## 8. 通用工程底线
 
