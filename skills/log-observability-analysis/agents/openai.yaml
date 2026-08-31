@@ -1,6 +1,6 @@
 interface:
   display_name: "日志与可观测性分析"
-  short_description: "本地、容器、远程与生产只读日志的时间线、证据链和故障归因"
-  default_prompt: "使用日志与可观测性分析技能，先确认环境、时间窗口、日志范围和权限，再建立时间线、异常聚类和证据等级；保持只读边界，不把相关性直接当作根因。"
+  short_description: "日志、指标、Trace、Profile、告警与变更事件的证据关联"
+  default_prompt: "使用日志与可观测性分析技能，先确认环境、时间窗口、证据源和权限，再关联日志、Metrics、Trace、Profile、告警和变更事件；保持只读边界，不把相关性直接当作根因。"
 policy:
   allow_implicit_invocation: true
