@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed V6.6 end-to-end release verifier."""
+"""Fail-closed V6.6.1 end-to-end release verifier."""
 from __future__ import annotations
 
 import argparse
@@ -14,7 +14,7 @@ from typing import Any, Dict, Mapping
 
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
 
-VERSION = "6.6.0"
+VERSION = "6.6.1"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
@@ -54,12 +54,15 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
         except (OSError, zipfile.BadZipFile) as exc:
             raise VerificationError("artifact 不是有效 ZIP") from exc
         children = [item for item in root.iterdir() if item.is_dir()]
-        if len(children) != 1 or children[0].name != "Codex-Skills-V6.6":
-            raise VerificationError("artifact 根目录不是 Codex-Skills-V6.6")
+        valid_roots = {"Codex-Skills-V6.6.1-zh-CN", "Codex-Skills-V6.6.1-en"}
+        if len(children) != 1 or children[0].name not in valid_roots:
+            raise VerificationError("artifact 根目录不是受支持的 V6.6.1 语言包")
         package_root = children[0]
         try:
             manifest = load_manifest(package_root / MANIFEST_NAME)
-            return verify_payload(package_root, manifest, package=PACKAGE, version=VERSION)
+            report = verify_payload(package_root, manifest, package=PACKAGE, version=VERSION)
+            report["locale"] = package_root.name.removeprefix("Codex-Skills-V6.6.1-")
+            return report
         except PayloadIntegrityError as exc:
             raise VerificationError("artifact payload 身份失败: %s" % exc) from exc
 
@@ -140,7 +143,7 @@ def verify_release(artifact: Path, package_validation: Mapping[str, Any], witnes
     plugin_ok = len(matches) == 1 and matches[0].get("installed") is True and matches[0].get("enabled") is True \
         and str(matches[0].get("version") or "") == VERSION
     if not plugin_ok:
-        raise VerificationError("Plugin 未精确证明 installed/enabled/version=6.6.0")
+        raise VerificationError("Plugin 未精确证明 installed/enabled/version=6.6.1")
     lifecycle_ok = lifecycle.get("ok") is True and (lifecycle.get("event_chain") or {}).get("valid") is True
     project_id = str(lifecycle.get("project_id") or "")
     repo_fingerprint = str(lifecycle.get("repo_fingerprint") or "")

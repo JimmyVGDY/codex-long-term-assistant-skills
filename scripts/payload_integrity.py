@@ -138,7 +138,7 @@ def verify_payload(root: Path, manifest: Mapping[str, Any], *, package: str | No
 def write_manifest(root: Path, package: str, version: str, output: Path | None = None) -> Dict[str, Any]:
     value = build_manifest(root, package, version)
     target = output or root / MANIFEST_NAME
-    target.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    target.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     return value
 
 

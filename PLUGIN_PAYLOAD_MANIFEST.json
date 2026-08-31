@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "6.6.0",
+  "version": "6.6.1",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 170,
-  "payload_digest": "2251421c9350e29022662a784cf1ef7bb98f4f36de4b0775a751c6f1b0e92885",
+  "file_count": 171,
+  "payload_digest": "4e3d3fff84547b5906f7a648472a14af39429afbf3f22674a4e60e3697e18efd",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "ec9c0fc42a444f74ffcd52482c75d78cde6abb305cef1cd633ce146c80a14bbc",
-      "size": 318
+      "sha256": "34d78b4728b44e6c5c1bfe89fb34295cce1fd1b12df9d6aae8df3b44f8115dae",
+      "size": 302
     },
     {
       "path": "skills/controlled-evolution-governance/SKILL.md",
@@ -703,8 +703,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "b0ad7b49d49c041896a02706a2883837edb1e57eaf5e2899eeda9a2ce394cca2",
-      "size": 13017
+      "sha256": "e0ee060a33074dd9b1b0917e2589843189b93d664f71bfb53c67e4826230f1c1",
+      "size": 14327
     },
     {
       "path": "hooks/hooks.json",
@@ -725,6 +725,11 @@
       "path": "runtime/cp_runtime/approval.py",
       "sha256": "3589837edb8f424d6215a166ef58aed6193c31ffd26f3f1e8a4c1adab1f0c28f",
       "size": 5774
+    },
+    {
+      "path": "runtime/cp_runtime/atomic_io.py",
+      "sha256": "4f97fa4c9505b7bf595887042c213c8705e1613fc2f47cbaf85111cce6647aea",
+      "size": 802
     },
     {
       "path": "runtime/cp_runtime/cli.py",
@@ -833,8 +838,8 @@
     },
     {
       "path": "runtime/cp_runtime/integrity.py",
-      "sha256": "6c2904f8f23129064781aa18fc194c5e7fd6b49f5bd77b4e456ba3759f412409",
-      "size": 16392
+      "sha256": "b1d8b3d5a835d7bd9689a83c6d5cd72546c91f5f98d14cf3dcad82130688f5dd",
+      "size": 16450
     },
     {
       "path": "runtime/cp_runtime/memory.py",
@@ -853,8 +858,8 @@
     },
     {
       "path": "runtime/cp_runtime/seal_queue.py",
-      "sha256": "da1163810dbdcc0f42fb69ace1b79ba41a34f2cb4544242cf7bb50454416a0e0",
-      "size": 15462
+      "sha256": "38cb04deb2666b0eebd8246531cf3a33112a28a88295b527e24aba36b065d670",
+      "size": 16075
     },
     {
       "path": "runtime/tests/test_cp_runtime.py",

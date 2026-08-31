@@ -23,7 +23,7 @@ from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "6.6.0"
+VERSION = "6.6.1"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 
 
@@ -64,7 +64,7 @@ def _plugin_item(plugin_list: Mapping[str, Any]) -> Dict[str, Any]:
             continue
         if item.get("pluginId") == PLUGIN_ID:
             if not bool(item.get("installed")) or not bool(item.get("enabled")) or item.get("version") != VERSION:
-                raise AttestationError("Plugin readback does not prove installed/enabled/version=6.6.0")
+                raise AttestationError("Plugin readback does not prove installed/enabled/version=6.6.1")
             return item
     raise AttestationError("target Plugin was not found in Codex readback")
 

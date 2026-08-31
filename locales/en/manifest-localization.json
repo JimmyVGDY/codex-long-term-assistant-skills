@@ -1,0 +1,25 @@
+{
+  "release_name": "Independent bilingual distributions and Windows delayed-seal stability",
+  "generated_for": "Codex Plugin-first cross-project engineering assistance with trusted model-evidence separation, native process locks, delayed signed event sealing, non-destructive archives, reviewer calibration, controlled proposal governance, and a Terra High automatic ceiling",
+  "skills": {
+    "java-backend-engineering": {"display_name": "Java Backend Engineering", "description": "Use for Java backend, Spring, Struts2, MyBatis, JPA, Maven, JVM, transaction, concurrency, SSE, and Java review work. Identify Java and framework versions first."},
+    "python-backend-ai-engineering": {"display_name": "Python Backend and AI Engineering", "description": "Use for Python backend, FastAPI, Django, Flask, async I/O, multiprocessing, Celery, data pipelines, model calls, RAG, GPU workers, and Python reviews."},
+    "frontend-engineering": {"display_name": "Frontend Engineering", "description": "Use for browser, WebView, desktop renderer, JavaScript or TypeScript, web frameworks, state, routing, forms, streaming, build, test, performance, security, SEO, and accessibility work."},
+    "data-middleware-ai-infrastructure": {"display_name": "Data, Middleware, AI, and Infrastructure", "description": "Use for SQL databases, Redis, messaging, search, vector retrieval, storage, GPU resources, containers, orchestration, networks, and infrastructure."},
+    "log-observability-analysis": {"display_name": "Log and Observability Analysis", "description": "Use for logs, metrics, distributed traces, profiling, alerts, and change-event analysis across bounded local, non-production, and production-read-only contexts."},
+    "engineering-quality-delivery": {"display_name": "Engineering Quality and Delivery", "description": "Use when behavior changes or work includes validation, Git, approval, release, rollback, restart, deployment, or production boundaries."},
+    "multi-agent-independent-review": {"display_name": "Independent Multi-Agent Review", "description": "Use for risk-based design gates and independent functional, compatibility, security, performance, contract, concurrency, and delivery reviews."},
+    "technical-document-writing": {"display_name": "Technical Documentation", "description": "Use for technical plans, architecture, implementation plans, API or database documentation, runbooks, incident reports, review reports, management reports, and README work."},
+    "long-running-task-memory": {"display_name": "Long-Running Task Memory", "description": "Use for cross-session, multi-stage, multi-module, multi-repository, multi-agent, observation-window, and context-compaction work that needs recoverable checkpoints."},
+    "controlled-evolution-governance": {"display_name": "Controlled Evolution Governance", "description": "Use only for cross-task retrospectives, observation governance, model-cost routing, reviewer calibration, routing drift, proposal lifecycle, project isolation, and assistant version governance."}
+  },
+  "custom_agents": {
+    "cp_review_functional_business": "Functional correctness and business semantics",
+    "cp_review_compatibility_regression": "Compatibility and regression",
+    "cp_review_security_access": "Security and access control",
+    "cp_review_performance_resources": "Performance and resource usage",
+    "cp_review_data_contract": "Data and contract consistency",
+    "cp_review_state_concurrency": "State, concurrency, and interaction boundaries",
+    "cp_review_test_delivery": "Validation evidence and delivery boundaries"
+  }
+}

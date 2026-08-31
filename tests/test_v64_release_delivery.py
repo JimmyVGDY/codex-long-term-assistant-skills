@@ -184,7 +184,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
                 "installed": [
                     {
                         "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-                        "version": "6.6.0",
+                        "version": "6.6.1",
                         "installed": True,
                         "enabled": True,
                     }
@@ -211,7 +211,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
                 "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
             },
             "release-verification-v6.4.json": {
-                "ok": True, "version": "6.6.0",
+                "ok": True, "version": "6.6.1",
                 "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
                 "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")},
             },
@@ -275,7 +275,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         plugin = self.root / "plugin-list-v6.3.json"
         plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.6.0", "installed": True, "enabled": True,
+            "version": "6.6.1", "installed": True, "enabled": True,
         }]}), encoding="utf-8")
         lifecycle = self.root / "lifecycle-acceptance-v6.3.json"
         lifecycle.write_text(json.dumps({
@@ -290,7 +290,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         version = self.root / "codex-version-v6.3.txt"
         version.write_text("codex-cli 0.150.1\n", encoding="utf-8")
         unified = self.root / "release-verification-v6.4.json"
-        unified.write_text(json.dumps({"ok": True, "version": "6.6.0",
+        unified.write_text(json.dumps({"ok": True, "version": "6.6.1",
             "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
             "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")}}), encoding="utf-8")
         result = run_script(ATTEST, [
@@ -306,7 +306,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         artifact = self.root / "Codex-Skills-V6.6.zip"; artifact.write_bytes(b"artifact-v65")
         plugin = self.root / "plugin.json"; plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.6.0", "installed": True, "enabled": True,
+            "version": "6.6.1", "installed": True, "enabled": True,
         }]}), encoding="utf-8")
         lifecycle = self.root / "life.json"; lifecycle.write_text(json.dumps({
             "ok": True, "project_id": "project-neutral", "repo_fingerprint": "sha256:" + "a" * 64,
@@ -319,7 +319,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         }), encoding="utf-8")
         version = self.root / "version.txt"; version.write_text("codex-cli 0.150.1\n", encoding="utf-8")
         unified = self.root / "unified.json"; unified.write_text(json.dumps({
-            "ok": True, "version": "6.6.0", "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
+            "ok": True, "version": "6.6.1", "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
             "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")}
         }), encoding="utf-8")
         attestation = self.root / "attestation.json"

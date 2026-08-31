@@ -30,6 +30,31 @@ from cp_runtime.seal_queue import enqueue_session_end, launch_worker  # noqa: E4
 ALLOWED_REASONING = {"", "none", "minimal", "low", "medium", "high"}
 ALLOWED_AUTOMATIC_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra"}
 DENY_MARKERS = ("sol", "gpt-5.6-sol", "xhigh", "extra-high", "extra_high", "ultra", "max")
+POLICY_MESSAGES = {
+    "zh-CN": {
+        "model_ceiling": "自动子 Agent 模型不得超过 Terra High；显式 Sol 或更高模型被策略拒绝。",
+        "effort_ceiling": "自动子 Agent reasoning_effort 最高为 high。",
+        "unknown_model": "显式模型无法证明不超过 Terra High，按 fail-closed 策略拒绝；可使用 gpt-5.6-luna、gpt-5.6-terra 或省略显式模型。",
+        "invalid_input": "PreToolUse 输入无法解析，按 fail-closed 策略拒绝自动子 Agent。",
+        "hook_failure": "PreToolUse Hook 异常，按 fail-closed 策略拒绝自动子 Agent。",
+    },
+    "en": {
+        "model_ceiling": "Automatic subagent models cannot exceed Terra High; explicit Sol or stronger models are denied.",
+        "effort_ceiling": "Automatic subagent reasoning_effort cannot exceed high.",
+        "unknown_model": "The explicit model cannot be proven within the Terra High ceiling and is denied fail-closed; use gpt-5.6-luna, gpt-5.6-terra, or omit the explicit model.",
+        "invalid_input": "PreToolUse input could not be parsed; automatic subagent dispatch is denied fail-closed.",
+        "hook_failure": "PreToolUse Hook failed; automatic subagent dispatch is denied fail-closed.",
+    },
+}
+
+
+def _policy_message(name: str) -> str:
+    try:
+        configured = json.loads((ROOT / "config" / "locale.json").read_text(encoding="utf-8"))
+        locale = str(configured.get("locale") or "zh-CN")
+    except (OSError, ValueError, TypeError):
+        locale = "zh-CN"
+    return POLICY_MESSAGES.get(locale, POLICY_MESSAGES["zh-CN"])[name]
 
 
 def _read() -> Dict[str, Any]:
@@ -82,11 +107,11 @@ def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     effort = str(_lookup(args, "reasoning_effort", "reasoning", "effort") or "").strip().lower()
     reason = ""
     if any(marker in model for marker in DENY_MARKERS):
-        reason = "自动子 Agent 模型不得超过 Terra High；显式 Sol/更高模型被 V6 Policy 拒绝。"
+        reason = _policy_message("model_ceiling")
     elif effort not in ALLOWED_REASONING:
-        reason = "自动子 Agent reasoning_effort 最高为 high。"
+        reason = _policy_message("effort_ceiling")
     elif model and model not in ALLOWED_AUTOMATIC_MODELS:
-        reason = "显式模型无法证明不超过 Terra High，按 fail-closed 策略拒绝；请使用 gpt-5.6-luna、gpt-5.6-terra 或省略显式模型。"
+        reason = _policy_message("unknown_model")
     if not reason:
         return None
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason}}
@@ -216,7 +241,7 @@ def main() -> int:
     if hook_name and "hook_event_name" not in data:
         data["hook_event_name"] = hook_name
     if expected_hook == "PreToolUse" and not str(_lookup(data, "tool_name", "tool") or ""):
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "PreToolUse 输入无法解析，按 fail-closed 策略拒绝自动子 Agent。"}}, ensure_ascii=False))
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("invalid_input")}}, ensure_ascii=False))
         return 0
     guard = _guard(data)
     if guard is not None:
@@ -270,7 +295,7 @@ if __name__ == "__main__":
         # failure must never turn into an implicit model-policy allow.
         expected = sys.argv[1] if len(sys.argv) > 1 else ""
         if expected == "PreToolUse":
-            print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "PreToolUse Hook 异常，按 fail-closed 策略拒绝自动子 Agent。"}}, ensure_ascii=False))
+            print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("hook_failure")}}, ensure_ascii=False))
         elif expected == "Stop":
             print("{}")
         raise SystemExit(0)

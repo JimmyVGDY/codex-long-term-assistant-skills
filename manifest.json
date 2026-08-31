@@ -1,8 +1,13 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "6.6.0",
-  "release_name": "可信模型证据边界、多进程恢复、延迟封印与事件健康治理",
+  "version": "6.6.1",
+  "release_name": "双语独立发行与 Windows 延迟封印稳定性修复",
   "generated_for": "Codex Plugin-first cross-project engineering assistant with trusted-host model evidence separation, native process locks, delayed signed event sealing, non-destructive archives, reviewer calibration, controlled proposal lifecycle, and a Luna/Terra model ceiling",
+  "default_locale": "zh-CN",
+  "supported_locales": [
+    "zh-CN",
+    "en"
+  ],
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
@@ -426,6 +431,7 @@
     ]
   },
   "upgrade_from": [
+    "6.6.0",
     "6.5.0",
     "6.4.0",
     "6.3.0",
