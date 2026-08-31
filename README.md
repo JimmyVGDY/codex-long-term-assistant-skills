@@ -1,10 +1,10 @@
-> **V6.5 目标宿主：Windows 原生 Codex CLI 0.150.1。Plugin 成功状态以 `codex plugin list --json` 的 installed、enabled、version 三项读回为准。**
+> **V6.6 目标宿主：Windows 原生 Codex CLI 0.150.1。Plugin 成功状态以 `codex plugin list --json` 的 installed、enabled、version 三项读回为准。**
 
-# Codex 跨项目长期技术助手 Skills 安装包 V6.5
+# Codex 跨项目长期技术助手 Skills 安装包 V6.6
 
-**版本：6.5.0｜宿主事实旁证、可轮换完整性封印与 Reviewer 校准**
+**版本：6.6.0｜可信模型证据边界、多进程恢复、延迟封印与事件健康治理**
 
-V6.5 在 V6.4 端到端证据闭环上增加三项能力：宿主会话事实的诊断旁证、主机绑定且可轮换的完整性 keyring、以及基于稳定结果身份的 Reviewer 校准。事件封印与原始 TaskOutcomeEvent 分离，V6.4 旧进程继续写入时不会破坏既有链。10 个 Skill、7 个 Reviewer、6 个 Hook、TaskOutcomeEvent 2.0、项目双重隔离和 Terra High 自动上限保持兼容。
+V6.6 在 V6.5 完整性闭环上增加可信宿主证明契约、Windows spawn 多进程故障测试、SessionEnd 预算外延迟封印、Reviewer 校准 V2、非破坏事件归档、容量预算和跨项目健康概览。Codex 0.150.1 仍只提供诊断旁证，实际运行模型证据保持 `UNAVAILABLE`。10 个 Skill、7 个 Reviewer、6 个 Hook、TaskOutcomeEvent 2.0、项目双重隔离和 Terra High 自动上限保持兼容。
 
 ## 核心能力
 
@@ -16,6 +16,9 @@ V6.5 在 V6.4 端到端证据闭环上增加三项能力：宿主会话事实的
 - 完整性 keyring：Windows DPAPI 或 POSIX 0600 存储，`event-hmac` 与 `release-attestation` 独立轮换。
 - Detached seal：对当前事件链头形成可轮换 HMAC 封印；旧写入形成未封印尾部，不破坏历史封印。
 - Reviewer Calibration：按 `result_id` 去重，输出 Wilson 95% 区间、样本充分性、重复冲突和收益状态。
+- Reviewer Calibration V2：增加任务难度、根因簇重复、采纳原因和带证据的回归预防收益。
+- 延迟自动封印：SessionEnd 只签名入列并立即返回；独立 worker 追加结束事件、封印和幂等确认。
+- 事件健康治理：非破坏归档已关闭 segment，提供容量预算和不含敏感正文的跨项目概览。
 - 事件安全分段：跨段连续校验，活动尾部半记录审计隔离，进程崩溃后确定性恢复。
 - 双重项目隔离：`project_id + repo_fingerprint` 任一不匹配均拒绝聚合。
 - 可恢复安装事务：Marketplace 子树、manifest、Plugin cache、注册状态和 state schema 迁移均纳入 journal。
@@ -34,7 +37,7 @@ Windows 原生进程若继承 `/mnt/c/.../.codex`，安装器会转换为盘符�
 
 ## 推荐升级流程
 
-在解压后的 V6.5 根目录执行：
+在解压后的 V6.6 根目录执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -49,7 +52,7 @@ codex plugin list --json
 ```text
 installed = true
 enabled   = true
-version   = 6.5.0
+version   = 6.6.0
 ```
 
 `verify` 还会校验 10 个 Skill、7 个 Reviewer、6 个 Hook、载荷 digest、Marketplace/cache 身份及状态文件。文件复制完成不等同于 Plugin 注册成功。
@@ -100,7 +103,13 @@ Lifecycle Hook
   -> 独立实施任务
 ```
 
-默认只记录最小结构化元数据，不保存原始 Prompt、完整回答、代码正文、Diff、Token、Cookie、API Key 或凭据。缺少明确终态时记录 `UNKNOWN`；显式但非法的终态直接拒绝。Hook 事件中的宿主实际模型与推理强度只接受明确字段，不从通用别名推断；生命周期验收可另行关联 Codex 子任务会话中的 `session_meta + turn_context`，但该文件只作诊断旁证，不能单独证明模型门禁或发行状态，也不会回填 Hook 实际字段。
+默认只记录最小结构化元数据，不保存原始 Prompt、完整回答、代码正文、Diff、Token、Cookie、API Key 或凭据。缺少明确终态时记录 `UNKNOWN`；显式但非法的终态直接拒绝。Hook 实际模型与推理强度只有在宿主提供外部信任锚可验证、带有效期且绑定 session/turn/agent 的证明时才标为 `VERIFIED`。Codex 0.150.1 的 `session_meta + turn_context` 只作诊断旁证，不会回填 Hook 实际字段。
+
+```ini
+requested_model_policy = PASS
+runtime_model_evidence = UNAVAILABLE
+diagnostic_model_observation = gpt-5.6-luna / low
+```
 
 ## 完整性封印
 
@@ -109,6 +118,8 @@ python scripts\integrity-key.py init
 python scripts\event-seal.py create --event-file <task-outcome-v2.jsonl>
 python scripts\event-seal.py verify --event-file <task-outcome-v2.jsonl>
 python scripts\integrity-key.py rotate --purpose event-hmac
+python scripts\seal-worker.py --queue <project-context>\<project-id>\feedback\seal-queue
+python scripts\event-archive.py health --project-context-root <project-context>
 ```
 
 DPAPI keyring 绑定 Windows 当前账户与主机，WSL/POSIX 不会静默解密或替代。原始 SHA-256 事件链仍可跨环境验证；跨 issuer 的 HMAC 历史需要分别保留对应 keyring。
@@ -117,8 +128,8 @@ DPAPI keyring 绑定 Windows 当前账户与主机，WSL/POSIX 不会静默解�
 
 ```powershell
 python scripts\validate-package.py
-python scripts\build-release.py reproducible --output Codex-Skills-V6.5.zip --witness deterministic-build-v6.5.json
-python scripts\build-release.py verify --archive Codex-Skills-V6.5.zip
+python scripts\build-release.py reproducible --output Codex-Skills-V6.6.zip --witness deterministic-build-v6.6.json
+python scripts\build-release.py verify --archive Codex-Skills-V6.6.zip
 ```
 
 统一验证器用于绑定正式 ZIP、包内校验、确定性构建见证、Codex 0.150.1、Plugin 精确状态、真实生命周期、已安装 PreToolUse 模型门禁报告和三段 payload 身份。Codex 0.150.1 未提供 Hook 实际模型字段时，宿主会话只保留诊断旁证，不作为发行通过条件：
@@ -140,4 +151,4 @@ python scripts\verify-release.py --help
 - 不自动提交、推送、部署、重启或操作生产环境；
 - Event、Snapshot、Assessment、Proposal、项目上下文和升级备份不会随普通升级或卸载自动删除。
 
-详细操作见 `docs/USER_GUIDE_V6.5.md`，恢复规则见 `docs/INSTALLATION_RECOVERY.md`，版本变化见 `RELEASE_NOTES_V6.5.md`。
+详细操作见 `docs/USER_GUIDE_V6.6.md`，恢复规则见 `docs/INSTALLATION_RECOVERY.md`，版本变化见 `RELEASE_NOTES_V6.6.md`。

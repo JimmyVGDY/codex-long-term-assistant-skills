@@ -1,10 +1,10 @@
-# V6.5 安装、验证与事务恢复
+# V6.6 安装、验证与事务恢复
 
 ## 适用范围
 
 - 目标宿主：Windows 原生 Codex CLI 0.150.1。
 - 推荐形态：账户级 Plugin。
-- 可升级版本：6.1.0、6.2.0、6.3.0。
+- 可升级版本：6.1.0、6.2.0、6.3.0、6.4.0、6.5.0。
 - 受管对象：本包 Marketplace payload、manifest 条目、Plugin cache、Reviewer、全局规则和安装状态。
 
 安装器不改写 `config.toml`，不删除未知 Skill、Agent、Hook、MCP、项目上下文、Event、Snapshot、Assessment、Proposal 或历史备份。
@@ -21,7 +21,7 @@ Windows 原生进程若继承 `/mnt/c/.../.codex`，必须转换为盘符路径�
 
 ## 标准升级
 
-在解压后的 V6.5 根目录依次执行：
+在解压后的 V6.6 根目录依次执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -33,7 +33,7 @@ codex plugin list --json
 
 dry-run 应明确显示：
 
-- `from_version=6.4.0` 与 `to_version=6.5.0`；
+- 当前升级应读回 `from_version=6.5.0` 与 `to_version=6.6.0`；
 - schema 1 到 2 迁移；
 - 新升级备份路径；
 - Marketplace payload、manifest 和 Plugin cache 分离目标；
@@ -41,7 +41,7 @@ dry-run 应明确显示：
 - 完整回滚动作；
 - 无路径越界或链接型路径风险。
 
-完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=6.5.0`，并且 10 个 Skill、7 个 Reviewer、6 个 Hook 和 payload digest 全部通过。文件复制完成不构成 Plugin 成功状态。
+完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=6.6.0`，并且 10 个 Skill、7 个 Reviewer、6 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。文件复制完成不构成 Plugin 成功状态。
 
 ## 事务与能力探测
 
@@ -106,14 +106,14 @@ python scripts\package_manager.py uninstall --scope user --mode plugin
 
 ```powershell
 python scripts\validate-package.py
-python scripts\build-release.py verify --archive ..\Codex-Skills-V6.5.zip
-python scripts\release-attestation.py verify --attestation ..\release-attestation-v6.5.json --artifact ..\Codex-Skills-V6.5.zip
+python scripts\build-release.py verify --archive ..\Codex-Skills-V6.6.zip
+python scripts\release-attestation.py verify --attestation ..\release-attestation-v6.6.json --artifact ..\Codex-Skills-V6.6.zip
 ```
 
 机器证明应绑定正式 ZIP SHA-256、确定性构建见证、Codex 版本、Plugin list、生命周期报告、已安装 PreToolUse 模型门禁报告、统一验证报告和安装后的 payload digest。任一证据缺失或哈希不一致时，正式发行结论失败关闭。宿主会话 JSONL 只作诊断旁证，不能替代模型门禁报告。
 
 ## Windows Hook
 
-六个 Hook 通过 `cp_hook.cmd` 启动，优先使用可用的账户 CPython，再回退 `python.exe` 或 `py.exe -3`。无需额外创建 `python3.exe`。SessionEnd timeout 为 3 秒，与 Codex 0.150.1 限制兼容。
+六个 Hook 通过 `cp_hook.cmd` 启动，优先使用可用的账户 CPython，再回退 `python.exe` 或 `py.exe -3`。无需额外创建 `python3.exe`。SessionEnd timeout 为 3 秒；该 Hook 只签名入列并启动 detached worker，不在三秒预算内扫描事件链或执行封印。
 
 升级前已打开的任务可能继续使用旧 Plugin 快照；升级后新建任务完成最终发现验证。不自动重启 Codex。
