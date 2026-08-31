@@ -136,7 +136,7 @@ $technical-document-writing 和 $long-running-task-memory。
 ```
 
 
-## v3.2 基础能力：实施前设计与影响审查
+## V4.1 基础能力：实施前设计与影响审查
 
 ```text
 使用 $data-middleware-ai-infrastructure 和 $multi-agent-independent-review。
@@ -147,7 +147,7 @@ $technical-document-writing 和 $long-running-task-memory。
 代码完成后的定向测试和独立复审。
 ```
 
-## v3.2 基础能力：多信号可观测性分析
+## V4.1 基础能力：多信号可观测性分析
 
 ```text
 使用 $log-observability-analysis 和对应技术栈 Skill。
@@ -157,7 +157,7 @@ $technical-document-writing 和 $long-running-task-memory。
 不得因为发布后出现异常就直接认定发布为根因，不要在线上重新采集 Profile。
 ```
 
-## v3.2 基础能力：最小充分加载
+## V4.1 基础能力：最小充分加载
 
 ```text
 当前阶段先选择一个主领域 Skill，最多补充两个必要辅助 Skill。
@@ -165,7 +165,7 @@ $technical-document-writing 和 $long-running-task-memory。
 同时需要超过四个 Skill 时，先说明每个 Skill 的唯一职责。
 ```
 
-## v3.2 基础能力：复审状态控制器
+## V4.1 基础能力：复审状态控制器
 
 ```text
 使用 $multi-agent-independent-review 和 $long-running-task-memory。
@@ -193,4 +193,22 @@ $technical-document-writing 和 $long-running-task-memory。
 当前父会话为 danger-full-access，因此本轮最多只能标记为 logical-readonly。
 Reviewer 仍按行为规则不修改文件、不提交、不派生，但最终报告必须明确：
 独立推理已完成，系统级写入隔离没有保证。
+```
+
+
+## V4.1 STANDARD 修复示例
+
+```text
+使用 $java-backend-engineering 和 $engineering-quality-delivery。
+采用 STANDARD 档位，先形成任务执行信封；完成相关定向测试并绑定证据指纹。
+只有风险需要时才启动 Reviewer，Reviewer 使用独立上下文和统一审查包。
+```
+
+## V4.1 STRICT 迁移示例
+
+```text
+使用 $data-middleware-ai-infrastructure、$engineering-quality-delivery、
+$multi-agent-independent-review 和 $long-running-task-memory。
+采用 STRICT 档位，先完成实施前审查和回滚设计；实施后在独立上下文中并行复审，
+所有 Reviewer 使用同一 packet hash，阻塞项解决后才进入交付。
 ```
