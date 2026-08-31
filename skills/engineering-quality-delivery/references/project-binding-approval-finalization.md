@@ -14,7 +14,7 @@ Task Envelope 应绑定 Project ID、仓库根目录和 Profile hash。任一项
 
 ## 2. Approval 与 Evidence 分离
 
-Approval 是用户或流程对特定操作的明确授权；Evidence 是动作或验证结果的证据。二者不能互相替代。
+Approval 是请求方或流程对特定操作的明确授权；Evidence 是动作或验证结果的证据。二者不能互相替代。
 
 受保护操作的 Approval 至少绑定：
 
