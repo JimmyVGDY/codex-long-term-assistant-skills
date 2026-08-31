@@ -1,87 +1,9 @@
-﻿[CmdletBinding()]
-param()
-
-$ErrorActionPreference = "Stop"
-$CodexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
-$SkillsHome = Join-Path (Join-Path $HOME ".agents") "skills"
-$AgentsHome = Join-Path $CodexHome "agents"
-$Failed = $false
-$ExpectedSkills = @(
-    "java-backend-engineering", "python-backend-ai-engineering", "vue-frontend-engineering",
-    "data-middleware-ai-infrastructure", "log-observability-analysis", "engineering-quality-delivery",
-    "multi-agent-independent-review", "technical-document-writing", "long-running-task-memory"
-)
-$ExpectedAgents = @(
-    "cp-review-functional-business.toml", "cp-review-compatibility-regression.toml",
-    "cp-review-security-access.toml", "cp-review-performance-resources.toml",
-    "cp-review-data-contract.toml", "cp-review-state-concurrency.toml",
-    "cp-review-test-delivery.toml"
-)
-$DocTemplates = @(
-    "TECHNICAL_SOLUTION.template.md", "ARCHITECTURE_DESIGN.template.md", "IMPLEMENTATION_PLAN.template.md",
-    "API_DESIGN.template.md", "DATABASE_DESIGN.template.md", "DEPLOYMENT_RUNBOOK.template.md",
-    "INCIDENT_REPORT.template.md", "CODE_REVIEW_REPORT.template.md", "PROJECT_PROGRESS_REPORT.template.md",
-    "TECHNICAL_SELECTION.template.md", "README.template.md", "MANAGEMENT_REPORT.template.md"
-)
-$MemoryTemplates = @(
-    "PROJECT_CONTEXT.template.md", "CURRENT_TASK.template.md", "PLAN.template.md", "PROGRESS.template.md",
-    "DECISIONS.template.md", "HANDOFF.template.md", "KNOWN_ISSUES.template.md", "DELIVERY_RECORD.template.md",
-    "CHECKPOINT_ENTRY.template.md", "RECOVERY_CHECKLIST.template.md"
-)
-$ReviewTemplates = @("PRE_IMPLEMENTATION_REVIEW.template.md", "REVIEW_PLAN.template.md", "REVIEW_RESULT.template.md", "REVIEW_LEDGER.template.md")
-$LogTemplates = @("LOG_ANALYSIS_REPORT.template.md", "LOG_TIMELINE.template.md", "LOG_EVIDENCE_LEDGER.template.md", "METRICS_ANALYSIS.template.md", "TRACE_ANALYSIS.template.md", "OBSERVABILITY_CORRELATION.template.md")
-
-$GlobalFile = Join-Path $CodexHome "AGENTS.md"
-if (Test-Path -LiteralPath $GlobalFile) {
-    $Content = Get-Content -LiteralPath $GlobalFile -Raw
-    if ($Content.Contains("<!-- codex-cross-project-assistant:begin -->") -and $Content.Contains("<!-- codex-cross-project-assistant:end -->")) {
-        Write-Host "[OK] 全局 AGENTS.md 受管区块: $GlobalFile"
-    } else { Write-Host "[缺失或格式错误] $GlobalFile"; $Failed = $true }
-} else { Write-Host "[缺失] $GlobalFile"; $Failed = $true }
-
-foreach ($Name in $ExpectedSkills) {
-    $Dir = Join-Path $SkillsHome $Name
-    $Skill = Join-Path $Dir "SKILL.md"
-    $Metadata = Join-Path $Dir "agents\openai.yaml"
-    if (-not (Test-Path -LiteralPath $Skill)) { Write-Host "[缺失] $Skill"; $Failed = $true; continue }
-    $Text = Get-Content -LiteralPath $Skill -Raw
-    if ($Text -notmatch "(?m)^name:\s*$([regex]::Escape($Name))\s*$" -or $Text -notmatch "(?m)^description:") {
-        Write-Host "[格式错误] $Skill"; $Failed = $true
-    } elseif (-not (Test-Path -LiteralPath $Metadata)) {
-        Write-Host "[缺失] $Metadata"; $Failed = $true
-    } else { Write-Host "[OK] Skill: $Name" }
-}
-
-foreach ($File in $ExpectedAgents) {
-    $Path = Join-Path $AgentsHome $File
-    if (-not (Test-Path -LiteralPath $Path)) { Write-Host "[缺失] Reviewer: $Path"; $Failed = $true; continue }
-    $Text = Get-Content -LiteralPath $Path -Raw
-    if ($Text -notmatch "(?m)^name\s*=" -or $Text -notmatch "(?m)^description\s*=" -or
-        $Text -notmatch "(?m)^developer_instructions\s*=" -or $Text -notmatch '(?m)^sandbox_mode\s*=\s*"read-only"') {
-        Write-Host "[格式错误] Reviewer: $Path"; $Failed = $true
-    } else { Write-Host "[OK] Reviewer: $File" }
-}
-
-function Test-Templates {
-    param([string]$Directory, [string[]]$Names)
-    foreach ($Name in $Names) {
-        $Path = Join-Path $Directory $Name
-        if (-not (Test-Path -LiteralPath $Path)) { Write-Host "[缺失] 模板: $Path"; $script:Failed = $true }
-    }
-}
-Test-Templates -Directory (Join-Path $SkillsHome "technical-document-writing\assets\templates") -Names $DocTemplates
-Test-Templates -Directory (Join-Path $SkillsHome "long-running-task-memory\assets\templates") -Names $MemoryTemplates
-Test-Templates -Directory (Join-Path $SkillsHome "multi-agent-independent-review\assets\templates") -Names $ReviewTemplates
-Test-Templates -Directory (Join-Path $SkillsHome "log-observability-analysis\assets\templates") -Names $LogTemplates
-
-$Checkpoint = Join-Path $SkillsHome "long-running-task-memory\scripts\checkpoint.py"
-if (Test-Path -LiteralPath $Checkpoint) { Write-Host "[OK] 持续检查点辅助脚本" } else { Write-Host "[缺失] $Checkpoint"; $Failed = $true }
-$ReviewController = Join-Path $SkillsHome "multi-agent-independent-review\scripts\review_controller.py"
-if (Test-Path -LiteralPath $ReviewController) { Write-Host "[OK] 复审状态控制器" } else { Write-Host "[缺失] $ReviewController"; $Failed = $true }
-
-if ($Failed) { throw "验证失败。" }
-Write-Host "[OK] Skills: $($ExpectedSkills.Count) 个"
-Write-Host "[OK] 只读 Reviewer: $($ExpectedAgents.Count) 个"
-Write-Host "[OK] 模板: 文档 $($DocTemplates.Count) / 记忆 $($MemoryTemplates.Count) / 复审 $($ReviewTemplates.Count) / 日志 $($LogTemplates.Count)"
-Write-Host "验证通过。请在 Codex 中运行 /skills；新增内容未刷新时重启 Codex。"
-
+﻿[CmdletBinding()]param()
+$ErrorActionPreference="Stop";$CH=if($env:CODEX_HOME){$env:CODEX_HOME}else{Join-Path $HOME ".codex"};$SH=Join-Path (Join-Path $HOME ".agents") "skills";$AH=Join-Path $CH "agents";$Failed=$false
+$Skills=@("java-backend-engineering", "python-backend-ai-engineering", "frontend-engineering", "data-middleware-ai-infrastructure", "log-observability-analysis", "engineering-quality-delivery", "multi-agent-independent-review", "technical-document-writing", "long-running-task-memory");$Agents=@("cp-review-functional-business.toml", "cp-review-compatibility-regression.toml", "cp-review-security-access.toml", "cp-review-performance-resources.toml", "cp-review-data-contract.toml", "cp-review-state-concurrency.toml", "cp-review-test-delivery.toml")
+$G=Join-Path $CH "AGENTS.md";if(-not(Test-Path $G)){$Failed=$true;Write-Host "[缺失] $G"}else{$C=Get-Content $G -Raw;$bc=([regex]::Matches($C,"codex-cross-project-assistant:begin")).Count;$ec=([regex]::Matches($C,"codex-cross-project-assistant:end")).Count;if($bc-ne1 -or $ec-ne1){$Failed=$true;Write-Host "[错误] AGENTS.md 受管区块"}}
+foreach($N in $Skills){$F=Join-Path (Join-Path $SH $N) "SKILL.md";if(-not(Test-Path $F)){$Failed=$true;Write-Host "[缺失] Skill $N"}else{$C=Get-Content $F -Raw;if($C-notmatch("(?m)^name:\s*"+[regex]::Escape($N)+"\s*$")){$Failed=$true;Write-Host "[格式错误] $N"}else{Write-Host "[OK] Skill $N"}}}
+if(Test-Path (Join-Path $SH "vue-frontend-engineering")){$Failed=$true;Write-Host "[残留] 旧 Skill vue-frontend-engineering"}
+$FR=Join-Path $SH "frontend-engineering";foreach($R in @("frontend-core-rules.md","frontend-security-runtime-rules.md","frontend-quality-performance-rules.md","vue-nuxt-rules.md","react-next-remix-rules.md","angular-rules.md","svelte-sveltekit-rules.md","other-modern-frameworks-rules.md","legacy-frontend-rules.md","microfrontend-monorepo-rules.md")){if(-not(Test-Path (Join-Path (Join-Path $FR "references") $R))){$Failed=$true;Write-Host "[缺失] 前端规则 $R"}}
+foreach($A in $Agents){if(-not(Test-Path (Join-Path $AH $A))){$Failed=$true;Write-Host "[缺失] Reviewer $A"}}
+if($Failed){exit 1};Write-Host "文件级验证通过。请重启 Codex 后运行 /skills 做运行时发现验证。"
