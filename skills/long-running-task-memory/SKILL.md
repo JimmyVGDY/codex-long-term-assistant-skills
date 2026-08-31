@@ -31,3 +31,19 @@ description: >-
 - 项目记忆投影、晋升和知识候选：安装后的 `cp-runtime.py`，源码入口为包根目录 `scripts/cp-runtime.py`
 - 外部记忆不得进入项目仓库、Git、项目变更记录或正式工程文档。
 - 不记录冗长内部推理，只记录可验证事实、证据等级、授权、状态、阻塞、风险和下一步。
+
+<!-- V5.1-CONTROLLED-EVOLUTION:BEGIN -->
+## V5.1 自观察与受控自进化
+
+当任务目标是复盘长期失败、模型升级、Reviewer 收益、修复轮次、Skill 路由偏差或跨任务成本时：
+
+1. 先确认 Project ID 和仓库外项目上下文；
+2. 使用 `python3 -B scripts/evolution.py run ... --dry-run`；
+3. 只依据结构化 Feedback、Review、Evidence、Checkpoint 和 Audit 生成观察快照；
+4. 数据满足阈值后才能形成价值/复杂度评估和优化提案；
+5. 所有提案 `execution_authorization=NONE`；
+6. 人工 ACCEPT 也不等于执行授权；
+7. 真正修改必须另建任务并经过现有 Execution Guard、Review Packet 和 Finalization。
+
+详细规则按需读取 `references/controlled-self-evolution.md`，不要在普通任务中加载全部 Evolution 文档。
+<!-- V5.1-CONTROLLED-EVOLUTION:END -->
