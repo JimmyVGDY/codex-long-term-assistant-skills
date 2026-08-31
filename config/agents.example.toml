@@ -1,0 +1,11 @@
+# 可选配置示例。安装脚本不会自动修改 ${CODEX_HOME:-$HOME/.codex}/config.toml。
+# 当前 Codex 版本默认启用 subagents；仅在你的配置显式关闭或需要限制并发时合并本段。
+
+[agents]
+enabled = true
+# 主 Agent 不计入该数值。本包自身仍按最多 6 个并行 Reviewer 执行。
+max_concurrent_threads_per_session = 6
+
+# 模型与推理强度不在本包中写死，默认由当前 Codex 版本、父会话和用户配置决定。
+# 如需设置 agents.default_subagent_model 或 agents.default_subagent_reasoning_effort，
+# 请先按当前 Codex 官方配置文档确认可用模型和参数值。
