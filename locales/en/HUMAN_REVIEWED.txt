@@ -58,6 +58,10 @@ skills/frontend-engineering/references/microfrontend-monorepo-rules.md
 skills/frontend-engineering/SKILL.md
 skills/java-backend-engineering/agents/openai.yaml
 skills/java-backend-engineering/references/java-backend-rules.md
+skills/java-backend-engineering/references/java-architecture-framework.md
+skills/java-backend-engineering/references/java-concurrency-integration.md
+skills/java-backend-engineering/references/java-core-version.md
+skills/java-backend-engineering/references/java-security-performance-testing.md
 skills/java-backend-engineering/SKILL.md
 skills/log-observability-analysis/agents/openai.yaml
 skills/log-observability-analysis/assets/templates/LOG_ANALYSIS_REPORT.template.md
@@ -91,6 +95,10 @@ skills/multi-agent-independent-review/references/controlled-self-evolution.md
 skills/multi-agent-independent-review/SKILL.md
 skills/python-backend-ai-engineering/agents/openai.yaml
 skills/python-backend-ai-engineering/references/python-backend-ai-rules.md
+skills/python-backend-ai-engineering/references/python-concurrency-deployment.md
+skills/python-backend-ai-engineering/references/python-core-web-frameworks.md
+skills/python-backend-ai-engineering/references/python-data-contract-security.md
+skills/python-backend-ai-engineering/references/python-tasks-quality-testing.md
 skills/python-backend-ai-engineering/SKILL.md
 skills/technical-document-writing/agents/openai.yaml
 skills/technical-document-writing/assets/templates/API_DESIGN.template.md
