@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""V6 安装/验证/卸载器。
+"""中文：V6 安装、验证与卸载器：支持官方账户 Skill 目录、Plugin-first、standalone 兼容、仓库级隔离、路径安全、事务恢复、漂移检测与 dry-run；不自动删除未知资产。
 
-设计目标：官方账户 Skill 目录、Plugin-first、standalone 兼容、仓库作用域隔离、
-路径逃逸防护、备份、漂移检测与 dry-run。不会自动删除未知使用方资产。
+English: V6 installer, verifier, and uninstaller for the standard account Skill directory, Plugin-first and standalone compatibility, repository isolation, path safety, transaction recovery, drift detection, and dry-run. It never automatically removes unknown assets.
 """
 from __future__ import annotations
 
@@ -46,19 +45,28 @@ JOURNAL_STAGES = {"PREPARED", "BACKED_UP", "APPLYING", "ACTIVATING", "COMMITTED"
 
 
 def _hard_crash(point: str) -> None:
-    """Test-only true process termination; never enabled without an explicit env point."""
+    """中文：仅供测试的真实进程终止点，缺少显式环境变量时绝不启用。
+
+    English: Test-only true process termination, never enabled without an explicit environment variable.
+    """
     if os.environ.get("CP_ASSISTANT_TEST_HARD_CRASH_POINT") == point:
         os._exit(91)
 
 
 def transaction_path(scope: str, repo: Optional[Path] = None) -> Path:
-    """One durable journal per scope.  It is deliberately outside a backup."""
+    """中文：每个作用域只有一份持久事务日志，并刻意放在备份目录之外。
+
+    English: Keep one durable transaction journal per scope, deliberately outside backup directories.
+    """
     return state_path(scope, repo).with_name("cp-assistant-v6-transaction.json")
 
 
 @contextlib.contextmanager
 def scope_lock(scope: str, repo: Optional[Path] = None) -> Iterable[None]:
-    """Serialize every mutating operation in a user/repository scope."""
+    """中文：串行化账户或仓库作用域内的所有变更操作。
+
+    English: Serialize every mutating operation within an account or repository scope.
+    """
     lock = transaction_path(scope, repo).with_name("cp-assistant-v6.lock")
     reject_link_ancestors(lock.parent, repo if scope == "repo" else None)
     _io_path(lock.parent).mkdir(parents=True, exist_ok=True)
@@ -89,9 +97,10 @@ def scope_lock(scope: str, repo: Optional[Path] = None) -> Iterable[None]:
     finally:
         try:
             if os.name == "nt":
-                # Closing the CRT descriptor releases its byte-range lock.  Calling
-                # LK_UNLCK after Python's buffered file handling is unreliable on
-                # Windows (the current byte can be changed by buffering).
+                # 中文：关闭 CRT 描述符会释放字节范围锁；Windows 缓冲可能改变当前位置，
+                # 中文：因此在 Python 缓冲文件处理后调用 LK_UNLCK 并不可靠。
+                # English: Closing the CRT descriptor releases its byte-range lock;
+                # English: LK_UNLCK is unreliable after Python buffering changes the current byte.
                 pass
             else:
                 import fcntl; fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
@@ -109,7 +118,8 @@ def _journal_write(journal: Dict[str, Any], stage: str) -> None:
     if fault == stage:
         raise InstallError("测试故障注入: %s" % stage)
     if os.environ.get("CP_ASSISTANT_TEST_CRASH_STAGE") == stage:
-        # A controlled exception leaves the durable journal for `doctor --recover`.
+        # 中文：受控异常会保留持久化事务日志，供 `doctor --recover` 恢复。
+        # English: A controlled exception keeps the durable journal for `doctor --recover`.
         journal["crash_injected"] = True
         write_json_atomic(Path(journal["journal_path"]), journal)
         raise InstallError("测试崩溃注入: %s；请执行 doctor --recover" % stage)
@@ -140,7 +150,10 @@ def _archive_final_journal(journal: Dict[str, Any]) -> None:
 
 
 def _finish_journal(journal: Dict[str, Any]) -> None:
-    """Archive a terminal transaction and remove its live recovery marker."""
+    """中文：归档终态事务并移除活动恢复标记。
+
+    English: Archive a terminal transaction and remove its live recovery marker.
+    """
     _archive_final_journal(journal)
     _io_path(Path(journal["journal_path"])).unlink(missing_ok=True)
 
@@ -157,10 +170,15 @@ def _require_no_live_transaction(scope: str, repo: Optional[Path] = None) -> Non
 
 
 def _target_owned(record: Mapping[str, Any], journal: Mapping[str, Any]) -> bool:
-    """Do not delete a target changed by somebody after this transaction."""
+    """中文：事务完成后若目标被外部修改，不删除该目标。
+
+    English: Do not delete a target changed externally after this transaction.
+    """
     label = str(record.get("label") or "")
     if label in {"global", "hooks-json"}:
-        return True  # restoration is merge-based and preserves external edits.
+        # 中文：恢复采用合并方式，并保留外部修改。
+        # English: Restoration is merge-based and preserves external edits.
+        return True
     target = Path(str(record["target"]))
     if not _io_path(target).exists():
         return True
@@ -168,13 +186,18 @@ def _target_owned(record: Mapping[str, Any], journal: Mapping[str, Any]) -> bool
     expected = (journal.get("applied_hashes") or {}).get(str(target))
     if expected and current == expected:
         return True
-    # A persisted mutation intent may precede the atomic swap. The untouched
-    # pre-transaction tree is also owned and safe to restore idempotently.
+    # 中文：已持久化的变更意图可能早于原子替换；未改动的事务前目录仍由本事务所有，
+    # 中文：可以安全地进行幂等恢复。
+    # English: A persisted mutation intent may precede the atomic swap; the untouched
+    # English: pre-transaction tree is still owned and safe to restore idempotently.
     return bool(record.get("existed") and record.get("sha256") and current == record.get("sha256"))
 
 
 def _record_applied(journal: Dict[str, Any], label: str, target: Path) -> None:
-    """Persist ownership immediately after one destructive target action."""
+    """中文：每次破坏性目标动作后立即持久化所有权。
+
+    English: Persist ownership immediately after each destructive target action.
+    """
     journal.setdefault("applied_targets", {})[label] = {
         "target": str(target), "sha256": tree_sha256(target) if _io_path(target).exists() else "missing"}
     journal.setdefault("applied_hashes", {})[str(target)] = journal["applied_targets"][label]["sha256"]
@@ -187,7 +210,10 @@ def _record_applied(journal: Dict[str, Any], label: str, target: Path) -> None:
 
 
 def _record_mutation_intent(journal: Dict[str, Any], label: str, target: Path, expected_hash: str) -> None:
-    """Persist the only complete post-mutation hash before an atomic target swap."""
+    """中文：在原子替换目标前持久化唯一完整的变更后哈希。
+
+    English: Persist the only complete post-mutation hash before an atomic target replacement.
+    """
     journal.setdefault("pending_targets", {})[label] = {"target": str(target), "sha256": expected_hash}
     journal.setdefault("applied_hashes", {})[str(target)] = expected_hash
     _journal_write(journal, str(journal["stage"]))
@@ -209,12 +235,9 @@ def _repo_mutation(func: Any) -> Any:
 
 
 def _io_path(path: Path) -> Path:
-    """Return an extended-length Windows path for filesystem I/O.
+    """中文：返回用于文件系统 I/O 的 Windows 扩展长度路径；逻辑路径和清单保持可读，只在 I/O 边界添加 Win32 前缀。
 
-    Codex user homes, Marketplace roots and timestamped backup directories can
-    collectively exceed the legacy 260-character limit even when every
-    individual component is valid. Keep logical paths and persisted manifests
-    human-readable, but use the Win32 extended-length prefix at I/O boundaries.
+    English: Return a Windows extended-length path for filesystem I/O. Keep logical paths and manifests readable and add the Win32 prefix only at I/O boundaries.
     """
     absolute = str(path.absolute())
     if os.name != "nt" or absolute.startswith("\\\\?\\"):
@@ -286,9 +309,10 @@ def tree_sha256(path: Path) -> str:
 def _normalize_host_path(raw: str) -> Path:
     value = str(raw).strip()
     if os.name == "nt":
-        # Some Codex Desktop/WSL bridge sessions can inherit `/mnt/c/...` even while the
-        # installer itself is executing under native Windows Python. Convert it before any
-        # ownership/reparse checks so we never create a literal `\\mnt\\c` tree on Windows.
+        # 中文：即使安装器由 Windows 原生 Python 执行，部分 Desktop/WSL 桥接会话仍可能继承
+        # 中文：`/mnt/c/...`；必须先转换，再做所有权与重解析点检查，避免创建字面 `\\mnt\\c` 目录。
+        # English: Some Desktop/WSL bridge sessions inherit `/mnt/c/...` under native Windows
+        # English: Python; convert it before ownership/reparse checks to avoid a literal `\\mnt\\c` tree.
         m = re.match(r"^/mnt/([A-Za-z])(?:/(.*))?$", value.replace("\\", "/"))
         if m:
             drive = m.group(1).upper()
@@ -303,7 +327,8 @@ def codex_home() -> Path:
 
 
 def user_skills_home() -> Path:
-    # Codex 当前账户级 Skills 规范目录，不随 CODEX_HOME 改写。
+    # 中文：Codex 当前账户级 Skills 规范目录不随 CODEX_HOME 改写。
+    # English: The account-level Skills directory is independent of CODEX_HOME.
     return (Path.home() / ".agents" / "skills").expanduser().absolute()
 
 
@@ -336,7 +361,10 @@ def reject_link_ancestors(path: Path, stop: Optional[Path] = None) -> None:
 
 
 def reject_tree_links(path: Path) -> None:
-    """Reject any link/reparse descendant without following it."""
+    """中文：不跟随链接，拒绝树内任何符号链接或 Reparse Point。
+
+    English: Reject every link or reparse descendant without following it.
+    """
     io_root = _io_path(path)
     if not io_root.exists() and not io_root.is_symlink():
         return
@@ -388,9 +416,10 @@ def copy_atomic(src: Path, dst: Path) -> None:
     reject_link_ancestors(dst.parent)
     _io_path(dst.parent).mkdir(parents=True, exist_ok=True)
     reject_link_ancestors(dst.parent)
-    # Keep the staging component deliberately short. Repeating a long Plugin
-    # name plus a "payload" component can cross the legacy Windows MAX_PATH
-    # boundary even when the final destination itself is valid.
+    # 中文：暂存目录名刻意保持简短；重复较长的 Plugin 名和 `payload` 组件可能越过旧版
+    # 中文：Windows MAX_PATH 限制，即使最终目标路径本身有效。
+    # English: Keep the staging component short; repeating a long Plugin name and `payload`
+    # English: can exceed legacy Windows MAX_PATH even when the final destination is valid.
     tmp = Path(tempfile.mkdtemp(prefix=".cp-", dir=str(_io_path(dst.parent))))
     try:
         io_src = _io_path(src)
@@ -465,7 +494,8 @@ def merge_hooks(path: Path, script_path: Path) -> None:
     if not isinstance(hooks, dict):
         raise InstallError("现有 hooks.json 的 hooks 不是对象")
     fragment = hook_fragment(script_path)
-    # 先移除本包旧命令，避免重复安装。
+    # 中文：先移除本包旧命令，避免重复安装。
+    # English: Remove commands from earlier package versions before adding new entries.
     for event, entries in list(hooks.items()):
         if isinstance(entries, list):
             kept = []
@@ -490,7 +520,10 @@ def remove_managed_hooks(path: Path) -> None:
 
 
 def _is_managed_hook_entry(entry: Any) -> bool:
-    """Identify only the standalone Hook command owned by this package."""
+    """中文：只识别本包拥有的 standalone Hook 命令。
+
+    English: Identify only the standalone Hook command owned by this package.
+    """
     if not isinstance(entry, dict):
         return False
     for hook in entry.get("hooks") or []:
@@ -503,11 +536,9 @@ def _is_managed_hook_entry(entry: Any) -> bool:
 
 
 def restore_global_agents(path: Path, previous: Optional[Path]) -> None:
-    """Restore only this package's AGENTS block and preserve user edits.
+    """中文：只恢复本包拥有的 AGENTS 标记区块并保留外部编辑；卸载升级版本时可恢复旧受管区块。
 
-    The installer owns the marked block, not the whole AGENTS.md file. During
-    uninstall an older managed block is restored when upgrading from an older
-    release; user content added before or after installation remains intact.
+    English: Restore only this package's marked AGENTS block and preserve external edits; uninstalling an upgrade may restore the prior managed block.
     """
     io_path = _io_path(path)
     if not io_path.exists():
@@ -537,7 +568,10 @@ def restore_global_agents(path: Path, previous: Optional[Path]) -> None:
 
 
 def restore_managed_hooks(path: Path, previous: Optional[Path]) -> None:
-    """Remove current package Hooks, restore prior package Hooks, keep others."""
+    """中文：移除当前包 Hook、恢复先前包 Hook，并保留其他 Hook。
+
+    English: Remove current package Hooks, restore prior package Hooks, and keep all other Hooks.
+    """
     io_path = _io_path(path)
     if not io_path.exists():
         if previous is not None and _io_path(previous).is_file():
@@ -633,7 +667,10 @@ def payload_report(root: Path) -> Dict[str, Any]:
 
 
 def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
-    """Preserve all prior/unknown fields while making the V6.6 identity fields explicit."""
+    """中文：保留全部既有和未知字段，同时明确 V6.6 身份字段。
+
+    English: Preserve all prior and unknown fields while making the V6.6 identity fields explicit.
+    """
     if not value:
         return {}
     schema = value.get("schema_version")
@@ -671,9 +708,10 @@ def _merged_marketplace_manifest(existing: Any) -> Dict[str, Any]:
         interface = {}
     interface.setdefault("displayName", "Codex Cross Project Assistant Local")
     data["interface"] = interface
-    # V6.1-V6.3 wrote a legacy `owner` block that Codex 0.150.1 no longer
-    # accepts in a local marketplace manifest. This is a known managed field,
-    # not an unknown external entry.
+    # 中文：V6.1-V6.3 写入的旧版 `owner` 区块已不被 Codex 0.150.1 本地市场清单接受；
+    # 中文：它是已知受管字段，不属于未知外部条目。
+    # English: V6.1-V6.3 wrote a legacy `owner` block rejected by Codex 0.150.1 local
+    # English: marketplace manifests; it is a known managed field, not an external entry.
     data.pop("owner", None)
     data["plugins"] = plugins
     return data
@@ -709,7 +747,8 @@ def _run_codex(args: List[str], timeout: int = 60, check: bool = True) -> subpro
 
 
 def _activate_plugin(market: Path) -> None:
-    # 0.150.1: marketplace add accepts the Marketplace ROOT, then plugin add installs/enables it.
+    # 中文：在 0.150.1 中，marketplace add 接收市场根目录，plugin add 随后安装并启用插件。
+    # English: In 0.150.1, marketplace add accepts the root, then plugin add installs and enables it.
     _run_codex(["plugin", "marketplace", "add", str(market)])
     _run_codex(["plugin", "add", "%s@%s" % (PACKAGE, MARKETPLACE)])
 
@@ -718,7 +757,8 @@ def _deactivate_plugin(check: bool = True) -> None:
     result = _run_codex(["plugin", "remove", "%s@%s" % (PACKAGE, MARKETPLACE)], check=False)
     if check and result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
-        # Already-absent is acceptable during rollback/uninstall.
+        # 中文：回滚或卸载时，目标已经不存在属于可接受状态。
+        # English: An already-absent target is acceptable during rollback or uninstall.
         lowered = detail.lower()
         if not any(token in lowered for token in ("not installed", "not found", "no plugin")):
             raise InstallError("Codex Plugin 卸载失败: %s" % detail[-2000:])
@@ -734,7 +774,10 @@ def _remove_marketplace(check: bool = True) -> None:
 
 
 def _remove_empty_marketplace_dirs() -> None:
-    """Remove only empty directories created for this marketplace; never recurse."""
+    """中文：只移除本 Marketplace 创建的空目录，绝不递归删除。
+
+    English: Remove only empty directories created for this Marketplace and never delete recursively.
+    """
     market = plugin_marketplace_root()
     for candidate in (market / "plugins", market / ".agents" / "plugins", market / ".agents", market):
         try:
@@ -784,7 +827,10 @@ def _verify_restored_plugin(previous: Mapping[str, Any]) -> None:
 
 
 def _probe_plugin_host() -> Dict[str, Any]:
-    """Read-only capability profile for the supported 0.150.1 Plugin host."""
+    """中文：读取支持的 Codex 0.150.1 Plugin 宿主能力，不修改状态。
+
+    English: Read the supported Codex 0.150.1 Plugin host capability profile without changing state.
+    """
     version = _codex_version_text()
     version_ok = bool(re.search(r"(?:^|\s)0\.150\.1(?:\s|$)", version))
     result = _run_codex(["plugin", "list", "--json"], check=False)
@@ -809,7 +855,10 @@ def _probe_plugin_host() -> Dict[str, Any]:
 
 
 def _legacy_marketplace_repairable() -> bool:
-    """Recognize the exact V6.1-V6.3 managed manifest drift before mutation."""
+    """中文：变更前只识别 V6.1 到 V6.3 的确切受管 Marketplace 清单漂移。
+
+    English: Recognize only the exact managed V6.1-to-V6.3 Marketplace manifest drift before mutation.
+    """
     try:
         state = load_json(state_path("user"), {})
         manifest = load_json(plugin_marketplace_manifest(), {})
@@ -828,7 +877,10 @@ def _legacy_marketplace_repairable() -> bool:
 
 
 def _require_plugin_host() -> Dict[str, Any]:
-    """Fail closed before changing files when the host cannot prove capability."""
+    """中文：宿主无法证明能力时，在修改文件前失败关闭。
+
+    English: Fail closed before changing files when the host cannot prove required capabilities.
+    """
     profile = _probe_plugin_host()
     if not profile["version_ok"]:
         raise InstallError("Plugin 模式仅支持 Codex CLI 0.150.1；当前: %s" %
@@ -845,7 +897,8 @@ def _require_plugin_host() -> Dict[str, Any]:
 
 def install_user(mode: str, dry_run: bool, force: bool) -> None:
     ch = codex_home(); sh = user_skills_home(); home = Path.home().absolute()
-    # 防止误把源码/安装包目录当成 CODEX_HOME 后自覆盖。
+    # 中文：防止误把源码或安装包目录当成 CODEX_HOME 后发生自覆盖。
+    # English: Prevent self-overwrite when the source or package directory is mistaken for CODEX_HOME.
     source_root = ROOT.absolute()
     try:
         ch.relative_to(source_root)
@@ -915,13 +968,15 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         }
         _journal_write(journal, "BACKED_UP")
         _journal_write(journal, "APPLYING")
-        # global managed block
+        # 中文：更新全局受管区块。
+        # English: Update the global managed block.
         gp = ch / "AGENTS.md"; _io_path(gp.parent).mkdir(parents=True, exist_ok=True)
         io_gp = _io_path(gp)
         existing = io_gp.read_text(encoding="utf-8-sig") if io_gp.exists() else ""
         text_atomic(gp, managed_global_text(existing))
         _record_applied(journal, "global", gp)
-        # reviewer agents
+        # 中文：安装 Reviewer Agent 定义。
+        # English: Install Reviewer Agent definitions.
         for src in agent_files():
             dst = ch / "agents" / src.name; copy_atomic(src, dst); _record_applied(journal, "agent:" + src.name, dst)
         if mode == "standalone":
@@ -988,9 +1043,10 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                                          "marketplace_digest":marketplace_report["payload_digest"],
                                          "cache_digest":cache_report["payload_digest"] if cache_report else None,
                                          "file_count":source_report["file_count"]}
-            # V6.6 SessionEnd only enqueues a signed job.  Initialize the
-            # host-bound keyring before committing installation; existing V6.5
-            # keys and all RETIRED verification history are preserved.
+            # 中文：V6.6 SessionEnd 仅入队签名任务；提交安装前初始化主机绑定密钥环，
+            # 中文：同时保留既有 V6.5 密钥和全部 RETIRED 验证历史。
+            # English: V6.6 SessionEnd only enqueues a signed job; initialize the host-bound
+            # English: keyring before commit while preserving V6.5 keys and RETIRED history.
             init_keyring()
             state["integrity_keyring"] = verify_keyring()
         write_json_atomic(state_path("user"), state)
@@ -1005,7 +1061,8 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal.get("crash_injected"):
             _archive_final_journal(journal)
             raise
-        # 安装事务失败：撤销本次 Plugin 注册、恢复文件/旧状态，再尽力恢复升级前 Plugin。
+        # 中文：安装事务失败时，撤销本次 Plugin 注册并恢复文件与旧状态，再尽力恢复升级前 Plugin。
+        # English: On transaction failure, undo Plugin registration, restore files/state, then restore the prior Plugin.
         _journal_write(journal, "ROLLBACK_STARTED")
         if mode == "plugin" and shutil.which("codex"):
             try:
@@ -1205,7 +1262,8 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
     for raw, expected in hashes.items():
         path=Path(raw)
         if _io_path(path).exists() and str(expected) not in {"", "missing"} and tree_sha256(path)!=expected:
-            # global 保存的是源区块 hash，整文件天然不同，不做整文件漂移比较。
+            # 中文：global 保存的是源区块哈希，整文件天然不同，因此不做整文件漂移比较。
+            # English: The global record stores a source-block hash, so whole-file drift comparison does not apply.
             if path.name != "AGENTS.md": drift.append(str(path))
     if drift and not force:
         raise InstallError("检测到外部修改，拒绝覆盖式卸载；确认后使用 --force：%s" % drift)
@@ -1291,8 +1349,10 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
         _record_applied(journal, str(record.get("label") or "managed"), target)
     if installed_mode == "plugin" and not any(record.get("existed") for record in previous_market_records):
         _remove_empty_marketplace_dirs()
-    # V6.6 records its own state file as a transactional target. If an older V6 state existed,
-    # the restore loop has put it back; otherwise ensure no current state remains.
+    # 中文：V6.6 将自身状态文件记为事务目标；若旧 V6 状态存在，恢复循环已将其还原，
+    # 中文：否则必须确保当前状态文件不存在。
+    # English: V6.6 records its state file as a transactional target; the restore loop reinstates
+    # English: an older V6 state when present, otherwise no current state file may remain.
     if not previous_state_record:
         _io_path(sp).unlink(missing_ok=True)
     if installed_mode == "plugin" and previous_state.get("mode") == "plugin" and shutil.which("codex") and _io_path(plugin_marketplace_root()).exists():
@@ -1337,8 +1397,9 @@ def recover_transaction(scope: str, repo_path: Optional[str] = None) -> None:
     if journal["stage"] in {"ROLLED_BACK"}:
         _archive_final_journal(journal); _io_path(path).unlink(missing_ok=True)
         print("[OK] 已归档并清理已回滚事务 journal"); return
-    # PREPARED is persisted before the backup directory exists.  No managed
-    # target has been touched at this point, so recovery is an archive/cleanup.
+    # 中文：PREPARED 在备份目录创建前持久化；此时尚未触碰受管目标，恢复只需归档并清理。
+    # English: PREPARED is persisted before the backup exists; no managed target has been touched,
+    # English: so recovery only archives and cleans up the journal.
     if journal["stage"] == "PREPARED" and not journal.get("backup"):
         _journal_write(journal, "ROLLED_BACK"); _finish_journal(journal)
         print("[OK] PREPARED 事务尚未写入受管目标，已安全清理"); return

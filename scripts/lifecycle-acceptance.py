@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Verify one real Codex lifecycle without exporting raw task identifiers."""
+"""中文：验证一次真实 Codex 生命周期，不导出原始任务标识。
+
+English: Verify one real Codex lifecycle without exporting raw task identifiers.
+"""
 from __future__ import annotations
 
 import argparse

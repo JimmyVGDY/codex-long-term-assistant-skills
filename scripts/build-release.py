@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Build and verify byte-reproducible V6.6.1 locale-specific archives."""
+"""中文：构建并验证字节级可复现的 V6.6.1 语言发行包。
+
+English: Build and verify byte-reproducible V6.6.1 locale-specific archives.
+"""
 from __future__ import annotations
 
 import argparse

@@ -1,18 +1,7 @@
 #!/usr/bin/env python3
-"""Persist and enforce bounded multi-agent review workflow and model-routing policy.
+"""中文：持久化并约束多 Agent 复审流程和模型路由策略；不启动 Agent、不修改源码仓库，只写入有界复审账本并执行 Luna Low 到 Terra High 的自动上限。
 
-This helper never launches agents and never modifies source repositories. It writes a
-JSON ledger under ``--review-dir`` so the parent agent can audit review scope,
-budgets, runtime isolation evidence, requested model profiles, and stop conditions.
-
-The controller enforces the package policy for automatic reviewer dispatches:
-
-    luna-low -> luna-medium -> terra-medium -> terra-high
-
-No automatic profile may exceed ``gpt-5.6-terra`` with ``high`` reasoning. Because
-Codex itself performs the spawn, runtime model confirmation remains evidence supplied
-by the reviewer result; the controller records mismatches instead of pretending it
-can inspect hidden runtime state.
+English: Persist and enforce bounded multi-agent review workflow and model-routing policy. This helper launches no agents, modifies no source repositories, writes only a bounded review ledger, and enforces the Luna Low to Terra High automatic ceiling.
 """
 from __future__ import annotations
 
@@ -31,7 +20,8 @@ STATE_FILE = "review-state.json"
 LOCK_FILE = ".review-controller.lock"
 SCHEMA_VERSION = 4
 
-# Cost-conscious defaults. They may be raised explicitly, but never beyond HARD_LIMITS.
+# 中文：默认值以成本为先；可显式提高，但绝不能超过 HARD_LIMITS。
+# English: Defaults are cost-conscious; they may be raised explicitly but never beyond HARD_LIMITS.
 DEFAULT_LIMITS = {
     "max_agent_depth": 2,
     "max_post_review_rounds": 2,
@@ -43,8 +33,9 @@ DEFAULT_LIMITS = {
     "max_terra_high_reviewers": 1,
 }
 
-# Backward-compatible ceilings preserve V4.1 emergency capacity while preventing
-# accidental expansion by prompt wording or repeated tool calls.
+# 中文：向后兼容上限保留 V4.1 紧急容量，同时防止提示词或重复工具调用意外扩大规模。
+# English: Backward-compatible ceilings preserve V4.1 emergency capacity while preventing
+# English: accidental expansion through prompt wording or repeated tool calls.
 HARD_LIMITS = {
     "max_agent_depth": 3,
     "max_post_review_rounds": 3,
@@ -100,7 +91,8 @@ VALID_CONCLUSIONS = {
     "达到复审上限，仍有阻塞或未验证项",
     "工具或环境受限，未完成独立复审",
     "不适用",
-    # Backward-compatible values.
+    # 中文：保留向后兼容值。
+    # English: Preserve backward-compatible values.
     "通过，无阻塞项",
     "有非阻塞问题",
     "工具或环境受限，未完成严格独立复审",

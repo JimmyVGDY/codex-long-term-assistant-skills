@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Exercise the installed automatic subagent request ceiling."""
+"""中文：验证已安装环境的自动子 Agent 请求上限。
+
+English: Exercise the installed automatic-subagent request ceiling.
+"""
 from __future__ import annotations
 
 import argparse

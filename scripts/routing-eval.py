@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Validate and score manual Codex Skill-routing observations."""
+"""中文：验证并评分人工记录的 Codex Skill 路由观察。
+
+English: Validate and score manually recorded Codex Skill-routing observations.
+"""
 from __future__ import annotations
 
 import argparse

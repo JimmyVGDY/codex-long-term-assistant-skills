@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""V6.6 installer security and scope smoke tests."""
+"""中文：V6.6 安装器安全与作用域冒烟测试。
+
+English: V6.6 installer security and scope smoke tests.
+"""
 from __future__ import annotations
 import json, os, shutil, subprocess, sys, tempfile, time, unittest
 from pathlib import Path
@@ -396,8 +399,9 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         state=json.loads(io_path(long_codex/'cp-assistant-v6-state.json').read_text(encoding='utf-8'))
         backup=Path(state['backup'])
         self.assertTrue(io_path(backup/'backup-manifest.json').is_file())
-        # First uninstall restores the first V6.3 installation; the second
-        # returns the isolated HOME to its original empty state.
+        # 中文：第一次卸载恢复首个 V6.3 安装，第二次将隔离 HOME 恢复为空的初始状态。
+        # English: The first uninstall restores the initial V6.3 installation; the second
+        # English: returns the isolated HOME to its original empty state.
         run(['uninstall','--scope','user','--mode','plugin'],env)
         run(['uninstall','--scope','user','--mode','plugin'],env)
         self.assertFalse(io_path(long_home/'.agents'/'plugins'/'cp-assistant-marketplace').exists())

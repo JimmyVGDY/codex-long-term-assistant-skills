@@ -1,6 +1,6 @@
-"""自观察数据脱敏。
+"""中文：自观察数据脱敏：只处理明确的结构化字段，并把凭据、Token、Cookie、私钥和疑似代码替换为固定标记。
 
-只输出分析所需的结构化字段；疑似密钥、令牌、Cookie、私钥及连接串均替换为固定标记。
+English: Redact self-observation data by processing explicit structured fields and replacing credentials, tokens, cookies, private keys, and suspected source content with fixed markers.
 """
 from __future__ import annotations
 
@@ -25,7 +25,8 @@ _PATTERNS = (
 
 def is_sensitive_key(key: str) -> bool:
     normalized = str(key).strip().lower()
-    # 治理字段描述的是授权状态，不是凭据本身，不能被误删，否则会破坏合同哈希。
+# 中文：治理字段描述授权状态而非凭据，不能误删，否则会破坏契约哈希。
+# English: Governance fields describe authorization state rather than credentials and must not be removed because that would break contract hashes.
     if normalized in {
         "execution_authorization",
         "automatic_execution",
@@ -65,7 +66,10 @@ def redact(value: Any) -> Any:
 
 
 def contains_obvious_secret(value: Any) -> bool:
-    """用于测试和最终写入前的保守检查。"""
+    """中文：供测试和最终写入前使用的保守敏感信息检查。
+
+    English: Conservative sensitive-data check for tests and final pre-write validation.
+    """
     text = repr(value)
     if _REDACTED in text:
         text = text.replace(_REDACTED, "")

@@ -1,4 +1,7 @@
-"""Append-only execution feedback for later human-reviewed cost/routing optimization."""
+"""中文：追加式执行反馈，用于后续人工审核的成本与路由优化。
+
+English: Append-only execution feedback for later human-reviewed cost and routing optimization.
+"""
 from __future__ import annotations
 
 from pathlib import Path

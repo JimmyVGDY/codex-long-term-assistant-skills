@@ -1,4 +1,7 @@
-"""自观察 → 分析 → 提案的受控编排服务。"""
+"""中文：自观察、分析与提案的受控闭环服务。
+
+English: Controlled closed-loop service for observation, analysis, and proposals.
+"""
 from __future__ import annotations
 
 import json
@@ -34,7 +37,10 @@ def load_policy(path: Optional[Path] = None) -> EvolutionPolicy:
 
 
 class ControlledEvolutionService:
-    """仅产生分析产物和人工评审提案，不提供自动执行接口。"""
+    """中文：只生成分析产物和待人工评审提案，不提供自动执行接口。
+
+    English: Generate analytical artifacts and proposals for human review without exposing an automatic execution interface.
+    """
 
     def __init__(
         self,

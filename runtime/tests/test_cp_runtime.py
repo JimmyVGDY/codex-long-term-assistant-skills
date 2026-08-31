@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""V5.0 project governance runtime contract tests."""
+"""中文：V5.0 项目治理 Runtime 契约测试。
+
+English: V5.0 project-governance runtime contract tests.
+"""
 from __future__ import annotations
 
 import json

@@ -1,4 +1,7 @@
-"""Project identity, bounded read-only onboarding and project-state management."""
+"""中文：项目身份、有界只读 Onboarding 与项目状态管理。
+
+English: Project identity, bounded read-only onboarding, and project-state management.
+"""
 from __future__ import annotations
 
 import hashlib

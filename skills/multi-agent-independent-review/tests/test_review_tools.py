@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Regression tests for V5.0 inherited review packet, budgets and model routing."""
+"""中文：V5.0 继承的 Review Packet、预算与模型路由回归测试。
+
+English: Regression tests for V5.0 inherited Review Packet, budgets, and model routing.
+"""
 from __future__ import annotations
 
 import json
@@ -105,7 +108,8 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
     run(PACKET, "validate", "--packet-dir", str(packet))
     run(PACKET, "freshness", "--packet-dir", str(packet), "--repo-path", str(repo))
 
-    # A workspace change invalidates the packet; exit code 2 is the stale signal.
+    # 中文：工作区变化会使 packet 失效，退出码 2 表示过期。
+    # English: A workspace change invalidates the packet; exit code 2 signals staleness.
     (repo / "later.txt").write_text("changed after packet\n", encoding="utf-8")
     run(PACKET, "freshness", "--packet-dir", str(packet), "--repo-path", str(repo), expected=2)
     (repo / "later.txt").unlink()
@@ -230,7 +234,8 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
         "ok",
     )
 
-    # A clean round on the same packet must stop mechanical additional rounds.
+    # 中文：同一 packet 的干净轮次必须阻止机械追加复审轮次。
+    # English: A clean round on the same packet must stop mechanical additional rounds.
     failed = run(
         CONTROLLER,
         "plan",
@@ -252,7 +257,8 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
     )
     assert "相同审查包无问题通过" in failed.stderr
 
-    # Terra High is allowed only for high/critical risk and with an explicit reason.
+    # 中文：仅高风险或关键风险且给出明确理由时，才允许 Terra High。
+    # English: Terra High is allowed only for high or critical risk with an explicit reason.
     high_review = work / "high-review"
     run(CONTROLLER, "init", "--review-dir", str(high_review), "--boundary-id", "FB2", "--risk-level", "high")
     run(

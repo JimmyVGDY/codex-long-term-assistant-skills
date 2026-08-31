@@ -1,4 +1,7 @@
-"""从项目上下文中的结构化执行记录生成自观察快照。"""
+"""中文：从项目上下文中的结构化执行记录生成自观察快照。
+
+English: Generate self-observation snapshots from structured execution records in project context.
+"""
 from __future__ import annotations
 
 import json
@@ -45,7 +48,10 @@ _TIME_FIELDS = (
 
 
 class ObservationError(RuntimeError):
-    """观察输入不足、损坏或越界。"""
+    """中文：观察输入不足、损坏或越界。
+
+    English: Observation input is insufficient, corrupted, or out of bounds.
+    """
 
 
 def _to_int(value: Any, default: int = 0) -> int:
@@ -308,7 +314,10 @@ def _expected_repo_fingerprint(project_dir: Path) -> Optional[str]:
 
 
 def _with_hashed_v2_session_ids(source: Path, rows: Sequence[JsonLineRecord]) -> List[JsonLineRecord]:
-    """恢复仅用于分组的 session 稳定代号，绝不把原 session_id 写入快照或日志。"""
+    """中文：恢复仅用于分组的稳定 session 代号，不把原始 session_id 写入快照或日志。
+
+    English: Recover a stable session alias only for grouping and never write the raw session_id to snapshots or logs.
+    """
     raw_by_line: Dict[int, Mapping[str, Any]] = {}
     for number, line in enumerate(source.read_text(encoding="utf-8").splitlines(), 1):
         if line.strip():
@@ -330,7 +339,10 @@ def _with_hashed_v2_session_ids(source: Path, rows: Sequence[JsonLineRecord]) ->
 
 
 def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, project_dir: Path) -> Tuple[List[JsonLineRecord], int, int, Mapping[str, Any]]:
-    """V6：严格项目隔离、event_id 去重，并将生命周期事件按 task_id 折叠。"""
+    """中文：V6 严格隔离项目、按 event_id 去重，并把生命周期事件按 task_id 折叠。
+
+    English: V6 strictly isolates projects, deduplicates by event_id, and folds lifecycle events by task_id.
+    """
     expected_fp = _expected_repo_fingerprint(project_dir)
     observed_fp: Optional[str] = expected_fp
     legacy: List[JsonLineRecord] = []
@@ -495,7 +507,8 @@ def observe_project(
                 max_records=policy.max_record_count,
             )
         rows = _with_hashed_v2_session_ids(source, rows)
-        # V6 Hook 事件采用独立 hash-chain/HMAC 合同；任何链路损坏都失败关闭。
+        # 中文：V6 Hook 事件采用独立 hash-chain/HMAC 契约；任何链路损坏都失败关闭。
+        # English: V6 Hook events use an independent hash-chain and HMAC contract; any chain corruption fails closed.
         if rows and all(str(row.payload.get("schema_version", "")) == "2.0" and row.payload.get("event_id") for row in rows):
             try:
                 chain_result = chain_data if is_task_outcome else {"duplicate_event_id_count": 0}
@@ -660,7 +673,8 @@ def observe_project(
                                                         for name in ("accepted", "rejected", "duplicate"))
             findings = result.get("findings")
             if isinstance(findings, list):
-                # V6：明细是权威来源，避免与汇总数字重复计数。
+                # 中文：V6 明细是权威来源，避免与汇总数字重复计数。
+                # English: V6 detail records are authoritative and prevent double counting against summaries.
                 for finding in findings:
                     if not isinstance(finding, Mapping):
                         continue
@@ -935,7 +949,8 @@ def observe_project(
         yield_rate = (float(total_findings) / invocations) if invocations else 0.0
         attribution_coverage = (float(stats["attribution_count"]) / invocations) if invocations else 0.0
         benefit_proxy = float(stats["repaired"] + stats["regressions_prevented"]) / max(1.0, stats["cost_units"])
-        # 缺少因果归因时，禁止仅根据 finding 数量将 Reviewer 判定为低收益。
+        # 中文：缺少因果归因时，禁止仅根据 finding 数量将 Reviewer 判定为低收益。
+        # English: Without causal attribution, finding count alone must not classify a Reviewer as low value.
         calibration = normalized_reviewer_metrics[reviewer]
         if calibration["calibration_status"] != "LOW_YIELD_CANDIDATE":
             continue

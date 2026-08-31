@@ -1,4 +1,7 @@
-"""Host-bound integrity keyring and detached event-chain seals."""
+"""中文：宿主绑定的完整性密钥环与独立事件链封印。
+
+English: Host-bound integrity keyring and detached event-chain seals.
+"""
 from __future__ import annotations
 
 import base64
@@ -256,7 +259,10 @@ def _load_seals(path: Path) -> List[Dict[str, Any]]:
 
 
 def _atomic_seals(path: Path, seals: List[Mapping[str, Any]]) -> None:
-    """Publish a complete seal chain so interruption leaves old-or-new valid state."""
+    """中文：发布完整封印链，使中断后仍保留旧状态或新状态中的有效版本。
+
+    English: Publish a complete seal chain so interruption leaves either the old or the new state valid.
+    """
     native = _native_path(path)
     native.parent.mkdir(parents=True, exist_ok=True)
     fd, name = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(native.parent))

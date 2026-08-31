@@ -1,4 +1,7 @@
-"""Controlled Task Checkpoint -> Project Memory -> Knowledge Candidate promotion."""
+"""中文：受控的 Task Checkpoint 到 Project Memory 再到 Knowledge Candidate 晋升。
+
+English: Controlled Task Checkpoint to Project Memory to Knowledge Candidate promotion.
+"""
 from __future__ import annotations
 
 import json

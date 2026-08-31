@@ -1,4 +1,7 @@
-"""Immutable contracts shared by the V5.0 runtime."""
+"""中文：V5.0 Runtime 共享的不可变契约。
+
+English: Immutable contracts shared by the V5.0 runtime.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

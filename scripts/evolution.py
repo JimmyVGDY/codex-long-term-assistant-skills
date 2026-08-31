@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""V6.6 controlled-evolution CLI for source-tree and installed usage."""
+"""中文：源码树与安装环境共用的 V6.6 受控演进命令行入口。
+
+English: V6.6 controlled-evolution CLI for source-tree and installed usage.
+"""
 from __future__ import annotations
 
 import sys

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Regression test for idempotent checkpoint append and V5.0 inherited defaults."""
+"""中文：幂等检查点追加与 V5.0 继承默认值的回归测试。
+
+English: Regression tests for idempotent checkpoint append and V5.0 inherited defaults.
+"""
 from __future__ import annotations
 
 import re

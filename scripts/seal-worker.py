@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Process signed SessionEnd append-and-seal jobs outside the Hook budget."""
+"""中文：在 Hook 预算外处理签名 SessionEnd 追加与封印任务。
+
+English: Process signed SessionEnd append-and-seal jobs outside the Hook budget.
+"""
 from __future__ import annotations
 
 import argparse

@@ -1,4 +1,7 @@
-"""追加式优化提案注册表与人工决策记录。"""
+"""中文：追加式优化提案注册表与人工决策记录。
+
+English: Append-only optimization-proposal registry and human-decision records.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -25,7 +28,10 @@ from .lifecycle import LifecycleEventType, ProposalLifecycleEvent
 
 
 class RegistryError(RuntimeError):
-    """提案注册、查询、决策或完整性异常。"""
+    """中文：提案注册、查询、决策或完整性异常。
+
+    English: Proposal registration, query, decision, or integrity failure.
+    """
 
 
 @dataclass(frozen=True)
@@ -94,9 +100,9 @@ def _decision_status(decision: DecisionType) -> ProposalStatus:
 
 
 class ProposalRegistry:
-    """每个项目一个追加式注册表。
+    """中文：每个项目一个追加式注册表；ACCEPT 只记录人工认可，不产生执行授权或修改工具。
 
-    ACCEPT 只表达人工认可提案方向，仍不会产生执行权限或修改任何规则。
+    English: One append-only registry per project. ACCEPT records human approval only and creates neither execution authority nor mutation tooling.
     """
 
     def __init__(self, evolution_root: Path, project_id: str) -> None:
@@ -196,7 +202,8 @@ class ProposalRegistry:
         with FileLock(self.guard_path):
             for existing in self.list():
                 if existing.proposal.fingerprint == proposal.fingerprint:
-                    # V6：证据摘要相同即不机械重生；只有证据/策略变化导致新 fingerprint 才能注册新提案。
+            # 中文：相同证据摘要不触发机械重生；只有证据或策略变化形成新 fingerprint 时才能注册新提案。
+            # English: An identical evidence digest cannot trigger mechanical rebirth; a new proposal requires evidence or policy change that produces a new fingerprint.
                     return existing, False
             append_hash_chain(self.proposals_path, proposal)
         return self.get(proposal.proposal_id), True

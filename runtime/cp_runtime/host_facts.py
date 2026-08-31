@@ -1,8 +1,6 @@
-"""Read privacy-bounded Codex host facts as diagnostic-only evidence.
+"""中文：以诊断旁证读取隐私有界的 Codex 宿主事实；宿主会话文件属于不可信输入，关联检查不能把记录提升为授权或模型门禁证明。
 
-Host session files are user-controlled inputs.  Correlation can detect drift and
-conflicts, but never upgrades these records into an authorization or model-gate
-proof.
+English: Read privacy-bounded Codex host facts as diagnostic-only evidence. Host session files are untrusted inputs; correlation never promotes records into authorization or model-gate proof.
 """
 from __future__ import annotations
 

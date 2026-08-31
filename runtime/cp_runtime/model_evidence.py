@@ -1,8 +1,6 @@
-"""Verify future host-attested runtime model evidence.
+"""中文：验证未来宿主提供的实际模型证明；Codex 0.150.1 尚无此契约，缺少带外信任锚时状态保持 UNAVAILABLE，诊断记录不得进入可信证明路径。
 
-Codex 0.150.1 does not provide this contract.  In the absence of an explicit
-out-of-band trust anchor every observation is UNAVAILABLE; diagnostic rollout
-records are intentionally handled elsewhere and can never enter this path.
+English: Verify future host-attested runtime model evidence. Codex 0.150.1 lacks this contract; without an out-of-band trust anchor the status remains UNAVAILABLE, and diagnostic records never enter the trusted proof path.
 """
 from __future__ import annotations
 

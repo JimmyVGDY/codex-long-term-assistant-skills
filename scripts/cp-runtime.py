@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Installed/source-tree entrypoint for cp_runtime."""
+"""中文：已安装或源码树中的 cp_runtime 入口。
+
+English: Installed or source-tree entry point for cp_runtime.
+"""
 from __future__ import annotations
 
 import sys

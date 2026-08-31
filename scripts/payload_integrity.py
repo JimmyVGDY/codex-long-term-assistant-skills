@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Deterministic Plugin payload manifest and verifier."""
+"""中文：确定性 Plugin payload 清单生成与验证。
+
+English: Deterministic Plugin payload manifest generation and verification.
+"""
 from __future__ import annotations
 
 import argparse

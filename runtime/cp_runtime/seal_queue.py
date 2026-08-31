@@ -1,4 +1,7 @@
-"""Durable, signed SessionEnd append-and-seal queue."""
+"""中文：持久、签名的 SessionEnd 追加与封印队列。
+
+English: Durable, signed SessionEnd append-and-seal queue.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -191,7 +194,9 @@ def _pid_alive(pid: int) -> bool:
             exit_code = ctypes.c_ulong()
             ok = ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
             ctypes.windll.kernel32.CloseHandle(handle)
-            return bool(ok and exit_code.value == 259)  # STILL_ACTIVE
+            # 中文：Windows 状态码 259 表示进程仍在运行。
+            # English: Windows status code 259 means the process is still active.
+            return bool(ok and exit_code.value == 259)
         return False
     try:
         os.kill(pid, 0); return True
@@ -202,7 +207,10 @@ def _pid_alive(pid: int) -> bool:
 
 
 def _process_identity(pid: int) -> str:
-    """Return a PID-reuse-resistant process-start identity when observable."""
+    """中文：在可观察时返回抵抗 PID 复用的进程启动身份。
+
+    English: Return a PID-reuse-resistant process-start identity when observable.
+    """
     if pid <= 0:
         return ""
     if os.name == "nt":

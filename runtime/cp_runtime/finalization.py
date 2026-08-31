@@ -1,4 +1,7 @@
-"""Accepted-final-state readback and claim verification."""
+"""中文：已接受终态的读回与声明验证。
+
+English: Accepted-final-state readback and claim verification.
+"""
 from __future__ import annotations
 
 import json

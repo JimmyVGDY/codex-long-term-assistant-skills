@@ -1,6 +1,6 @@
-"""确定性价值/复杂度分析。
+"""中文：确定性价值与复杂度分析；只依据结构化数据和固定规则，不调用模型，也不产生执行授权。
 
-分析只依据结构化快照与固定策略，不调用模型，也不产生执行授权。
+English: Deterministic value and complexity analysis based only on structured data and fixed rules. It calls no model and grants no execution authority.
 """
 from __future__ import annotations
 
@@ -45,7 +45,10 @@ _BASE_COMPLEXITY = {
 
 
 class AnalysisError(RuntimeError):
-    """价值复杂度分析无法安全完成。"""
+    """中文：价值与复杂度分析无法安全完成。
+
+    English: Value and complexity analysis could not complete safely.
+    """
 
 
 def _metric(signal: PatternSignal, name: str, default: float = 0.0) -> float:

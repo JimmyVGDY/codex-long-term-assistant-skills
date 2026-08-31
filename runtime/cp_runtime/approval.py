@@ -1,4 +1,7 @@
-"""Explicit workflow-level approval records bound to project, task and baseline."""
+"""中文：绑定项目、任务与基线的显式工作流授权记录。
+
+English: Explicit workflow-level approval records bound to project, task, and baseline.
+"""
 from __future__ import annotations
 
 from pathlib import Path

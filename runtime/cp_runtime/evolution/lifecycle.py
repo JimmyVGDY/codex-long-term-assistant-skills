@@ -1,4 +1,7 @@
-"""V6 Optimization Proposal 实施/验证生命周期事件。"""
+"""中文：V6 Optimization Proposal 实施与验证生命周期事件。
+
+English: V6 Optimization Proposal implementation and validation lifecycle events.
+"""
 from __future__ import annotations
 
 import hashlib

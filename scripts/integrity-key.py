@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Manage the V6.6 host-bound integrity keyring without exporting secrets."""
+"""中文：管理 V6.6 宿主绑定完整性密钥环，不导出密钥。
+
+English: Manage the V6.6 host-bound integrity keyring without exporting secrets.
+"""
 from __future__ import annotations
 
 import argparse

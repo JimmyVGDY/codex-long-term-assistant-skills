@@ -1,4 +1,7 @@
-"""CLI for the V5.0 cross-project governance runtime."""
+"""中文：V5.0 跨项目治理 Runtime 的命令行入口。
+
+English: CLI for the V5.0 cross-project governance runtime.
+"""
 from __future__ import annotations
 
 import argparse

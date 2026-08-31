@@ -1,4 +1,7 @@
-"""Evidence records and freshness checks independent from authorization."""
+"""中文：独立于授权的 Evidence 记录与时效检查。
+
+English: Evidence records and freshness checks independent from authorization.
+"""
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,4 +1,7 @@
-"""Codex 跨项目长期技术助手 V6.0 受控自进化运行时。"""
+"""中文：Codex 跨项目长期技术助手 V6.0 受控演进 Runtime。
+
+English: Codex Cross-Project Engineering Assistant V6.0 controlled-evolution runtime.
+"""
 from .analysis import assess_snapshot
 from .contracts import (
     ConfidenceLevel,

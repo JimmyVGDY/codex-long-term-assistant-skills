@@ -1,4 +1,7 @@
-"""Non-destructive event archives, capacity budgets, and privacy-safe health."""
+"""中文：非破坏事件归档、容量预算与隐私安全健康概览。
+
+English: Non-destructive event archives, capacity budgets, and privacy-safe health summaries.
+"""
 from __future__ import annotations
 
 import hashlib

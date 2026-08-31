@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Codex V6 生命周期 Hook：模型上限防护 + 本地最小元数据观测。"""
+"""中文：Codex V6 生命周期 Hook：模型上限防护与本地最小元数据观测。
+
+English: Codex V6 lifecycle Hook for model-ceiling enforcement and minimal local metadata observation.
+"""
 from __future__ import annotations
 
 import json
@@ -11,9 +14,8 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, Mapping
 
-# Codex writes hook payloads as UTF-8. Windows native Python otherwise decodes
-# redirected stdin with the active ANSI code page (for example GBK), which
-# breaks Stop payloads containing a Chinese last_assistant_message.
+# 中文：Codex 以 UTF-8 写入 Hook payload；Windows 原生 Python 默认使用活动 ANSI 代码页解码重定向 stdin，会破坏含中文 last_assistant_message 的 Stop payload。
+# English: Codex writes Hook payloads as UTF-8; native Windows Python otherwise decodes redirected stdin with the active ANSI code page and can corrupt Stop payloads containing Chinese text.
 if hasattr(sys.stdin, "reconfigure"):
     sys.stdin.reconfigure(encoding="utf-8", errors="strict")
 if hasattr(sys.stdout, "reconfigure"):
@@ -60,16 +62,14 @@ def _policy_message(name: str) -> str:
 def _read() -> Dict[str, Any]:
     raw = b""
     try:
-        # Let json.loads inspect the raw byte stream (including an optional
-        # UTF BOM) instead of depending on Windows' redirected-text encoding.
+        # 中文：由 json.loads 直接检查原始字节流及可选 UTF BOM，不依赖 Windows 重定向文本编码。
+        # English: Let json.loads inspect the raw byte stream and optional UTF BOM instead of relying on Windows redirected-text encoding.
         raw = sys.stdin.buffer.read()
         data = json.loads(raw) if raw.strip() else {}
         return data
     except Exception:
-        # Codex CLI 0.150.1 on native Windows can truncate a non-ASCII
-        # last_assistant_message while constructing Stop stdin. All lifecycle
-        # identity fields precede that final free-text field, so discard only
-        # the damaged suffix and recover the valid JSON object prefix.
+        # 中文：Windows 原生 Codex CLI 0.150.1 构造 Stop stdin 时可能截断非 ASCII 的 last_assistant_message；生命周期身份字段位于该自由文本字段之前，因此只丢弃损坏尾部并恢复有效 JSON 前缀。
+        # English: Native Windows Codex CLI 0.150.1 can truncate a non-ASCII last_assistant_message while constructing Stop stdin; lifecycle identity fields precede it, so discard only the damaged suffix and recover the valid JSON prefix.
         damaged = re.search(rb',\s*"last_assistant_message"\s*:', raw)
         if damaged is not None:
             try:
@@ -78,8 +78,8 @@ def _read() -> Dict[str, Any]:
                     return recovered
             except Exception:
                 pass
-        # Last-resort event-name recovery keeps Stop stdout valid without
-        # persisting any prompt or assistant content.
+        # 中文：最后的事件名恢复只维持 Stop stdout 有效，不持久化 Prompt 或回答正文。
+        # English: Last-resort event-name recovery keeps Stop stdout valid without persisting prompt or answer content.
         hook = re.search(rb'"hook_event_name"\s*:\s*"([A-Za-z]+)"', raw)
         if hook is not None:
             return {"hook_event_name": hook.group(1).decode("ascii")}
@@ -135,8 +135,8 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     session_id = str(_lookup(data, "session_id", "sessionId", "thread_id") or "")
     turn_id = str(_lookup(data, "turn_id", "turnId") or "")
     task_id = str(_lookup(data, "task_id", "taskId") or turn_id or session_id)
-    # Actual runtime values require an externally configured host trust anchor.
-    # Codex 0.150.1 provides no such attestation, so its values stay unavailable.
+    # 中文：实际运行值需要外部配置的宿主信任锚；Codex 0.150.1 未提供此证明，因此状态保持不可用。
+    # English: Actual runtime values require an externally configured host trust anchor; Codex 0.150.1 provides no such attestation, so the values remain unavailable.
     runtime_evidence = verify_hook_runtime_evidence(data, hook)
     model = runtime_evidence["model"] if runtime_evidence["status"] == "VERIFIED" else ""
     effort = runtime_evidence["reasoning_effort"] if runtime_evidence["status"] == "VERIFIED" else ""
@@ -187,12 +187,9 @@ def _data_path(event: Mapping[str, Any]) -> Path:
 
 
 def _sandbox_fallback_path(event: Mapping[str, Any]) -> Path:
-    """Return a repo-external path that Codex workspace-write sandboxes permit.
+    """中文：返回 Codex workspace-write 沙箱允许的仓库外路径；仅在账户级 CODEX_HOME 写入被拒时使用，完整性或 Schema 错误仍失败关闭，不重定向到新链。
 
-    Native Windows Codex currently permits the process temporary directory but
-    can deny a Hook's write to the user-level CODEX_HOME. The fallback is used
-    only for that permission failure; integrity/schema errors still fail closed
-    inside append_event and are never redirected to a fresh chain.
+    English: Return a repository-external path permitted by the Codex workspace-write sandbox. Use it only when account-level CODEX_HOME writes are denied; integrity and schema errors still fail closed and never redirect to a fresh chain.
     """
     temp_root = Path(os.environ.get("TEMP") or os.environ.get("TMP") or tempfile.gettempdir())
     return (
@@ -206,7 +203,10 @@ def _sandbox_fallback_path(event: Mapping[str, Any]) -> Path:
 
 
 def _session_end_diagnostic(event: Mapping[str, Any], code: str) -> None:
-    """Emit an explicit, body-free status when bounded SessionEnd work fails."""
+    """中文：有界 SessionEnd 工作失败时输出不含正文的显式状态。
+
+    English: Emit an explicit, body-free status when bounded SessionEnd work fails.
+    """
     identity = "|".join(str(event.get(key) or "") for key in (
         "session_id", "turn_id", "task_id", "project_id", "repo_fingerprint"))
     diagnostic = {
@@ -226,8 +226,8 @@ def _enqueue_and_launch(event_path: Path, event: Mapping[str, Any]) -> None:
     try:
         launch_worker(ROOT, queue)
     except Exception:
-        # The signed pending job remains durable and can be recovered by a
-        # later worker.  Report the launch failure instead of silently hiding it.
+        # 中文：已签名 pending 任务保持持久，可由后续 worker 恢复；启动失败需显式报告。
+        # English: The signed pending job remains durable and recoverable by a later worker; report launch failure explicitly.
         _session_end_diagnostic(event, "SEAL_WORKER_LAUNCH_FAILED")
 
 
@@ -250,10 +250,8 @@ def main() -> int:
     try:
         event = _event(data)
     except Exception:
-        # Observation metadata can be incomplete or malformed on some native
-        # Windows host paths. Never let event construction prevent Stop from
-        # returning its valid neutral response. The PreToolUse model guard has
-        # already run above and remains fail-closed.
+        # 中文：部分 Windows 原生宿主路径可能产生不完整或异常的观察元数据；事件构造失败不得阻止 Stop 返回有效中性响应，PreToolUse 模型门禁仍失败关闭。
+        # English: Some native Windows host paths may yield incomplete or malformed observation metadata; event-construction failure must not block Stop's neutral response, while the PreToolUse model guard remains fail-closed.
         event = None
     if event is not None:
         try:
@@ -270,16 +268,17 @@ def main() -> int:
                 else:
                     append_event(event_path, event, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
             except Exception:
-                # 观察失败不打断开发任务；模型上限拦截在前面单独 fail-closed。
+                # 中文：观察失败不打断开发任务；模型上限门禁已在前面独立失败关闭。
+                # English: Observation failure does not interrupt engineering work; the model-ceiling guard has already failed closed independently.
                 if event["event_type"] == "SESSION_ENDED":
                     _session_end_diagnostic(event, "SESSION_END_FALLBACK_ENQUEUE_FAILED")
         except Exception:
-            # 数据损坏或哈希链错误不得通过创建新链绕过。
+            # 中文：数据损坏或哈希链错误不得通过创建新链绕过。
+            # English: Data corruption or hash-chain failure must not be bypassed by creating a fresh chain.
             if event["event_type"] == "SESSION_ENDED":
                 _session_end_diagnostic(event, "SESSION_END_ENQUEUE_FAILED")
-    # Normal Stop handling returns the neutral response documented by the host.
-    # The recovery above is what ensures this branch still runs when Windows
-    # truncates a non-ASCII last_assistant_message payload.
+    # 中文：正常 Stop 处理返回宿主规定的中性响应；上方恢复逻辑确保 Windows 截断非 ASCII last_assistant_message 时仍能进入该分支。
+    # English: Normal Stop handling returns the host-defined neutral response; the recovery above preserves this branch when Windows truncates a non-ASCII last_assistant_message.
     if hook_name == "Stop":
         print("{}")
     return 0
@@ -291,8 +290,8 @@ if __name__ == "__main__":
     except SystemExit:
         raise
     except Exception:
-        # Lifecycle observation is fail-open, but an unexpected PreToolUse
-        # failure must never turn into an implicit model-policy allow.
+        # 中文：生命周期观察可失败开放，但意外的 PreToolUse 失败绝不能变成模型策略的隐式放行。
+        # English: Lifecycle observation is fail-open, but an unexpected PreToolUse failure must never become an implicit model-policy allow.
         expected = sys.argv[1] if len(sys.argv) > 1 else ""
         if expected == "PreToolUse":
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("hook_failure")}}, ensure_ascii=False))

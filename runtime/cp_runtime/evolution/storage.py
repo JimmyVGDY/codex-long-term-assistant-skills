@@ -1,7 +1,6 @@
-"""受控自进化状态存储。
+"""中文：受控演进状态存储：提供安全路径、原子写入、跨平台锁和追加式哈希链；格式损坏时失败关闭，不在存储层形成优化结论。
 
-实现安全路径、原子写入、跨平台锁文件和追加式哈希链。任何格式损坏均失败关闭，
-不会跳过坏行后继续形成优化结论。
+English: Controlled-evolution state storage with safe paths, atomic writes, cross-platform locks, and append-only hash chains. It fails closed on format corruption and forms no optimization conclusions in the storage layer.
 """
 from __future__ import annotations
 
@@ -22,7 +21,10 @@ ZERO_HASH = "0" * 64
 
 
 class StorageError(RuntimeError):
-    """状态存储、路径或哈希链异常。"""
+    """中文：状态存储、路径或哈希链异常。
+
+    English: State-storage, path, or hash-chain failure.
+    """
 
 
 @dataclass(frozen=True)
@@ -34,7 +36,10 @@ class JsonLineRecord:
 
 
 class FileLock:
-    """使用 O_EXCL 创建锁文件，兼容 Windows 与 Linux。"""
+    """中文：使用 O_EXCL 创建锁文件，兼容 Windows 与 Linux。
+
+    English: Create lock files with O_EXCL for Windows and Linux compatibility.
+    """
 
     def __init__(self, target: Path, timeout_seconds: float = 10.0, stale_seconds: float = 300.0) -> None:
         self.lock_path = Path(str(target) + ".lock")
@@ -186,7 +191,10 @@ def atomic_write_json(path: Path, value: Any) -> None:
 
 
 def exclusive_write_json(path: Path, value: Any) -> None:
-    """只允许首次创建；存在同名快照时失败关闭，禁止静默覆盖。"""
+    """中文：只允许首次创建；同名快照存在时失败关闭，禁止静默覆盖。
+
+    English: Allow first creation only; fail closed when a same-name snapshot exists and never overwrite silently.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     _reject_symlink_components(path.parent)

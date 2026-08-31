@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Read-only, bounded frontend stack detector using only Python standard library."""
+"""中文：仅使用 Python 标准库的只读、有界前端技术栈检测器。
+
+English: Read-only, bounded frontend-stack detector using only the Python standard library.
+"""
 from __future__ import annotations
 
 import argparse
@@ -129,7 +132,9 @@ RENDER_HINTS = {
 def read_json(path):
     try:
         return json.loads(path.read_text(encoding="utf-8-sig")), None
-    except Exception as exc:  # keep parse failure as evidence, never hide it
+    # 中文：保留解析失败作为证据，不得隐藏。
+    # English: Keep parse failure as evidence; never hide it.
+    except Exception as exc:
         return {}, str(exc)
 
 
@@ -241,7 +246,8 @@ def detect(root, max_depth=6, max_files=2000):
             for name in hits:
                 versions[name] = deps.get(name)
 
-    # Ionic packages can identify the UI framework even when package metadata is sparse.
+    # 中文：即使包元数据稀少，Ionic 依赖仍可用于识别 UI 框架。
+    # English: Ionic packages can identify the UI framework even when package metadata is sparse.
     ionic_framework_map = {
         "@ionic/react": "react",
         "@ionic/vue": "vue",

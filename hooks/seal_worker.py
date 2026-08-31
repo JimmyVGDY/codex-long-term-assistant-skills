@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Installed Plugin entry point for delayed SessionEnd append and sealing."""
+"""中文：已安装 Plugin 的延迟 SessionEnd 追加与封印入口。
+
+English: Installed Plugin entry point for delayed SessionEnd append and sealing.
+"""
 from __future__ import annotations
 
 import argparse

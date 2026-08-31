@@ -1,7 +1,6 @@
-"""受控自进化运行时合同。
+"""中文：受控演进 Runtime 契约；只定义不可变数据、枚举和确定性校验，不自动修改 Skill、Reviewer、模型路由、业务仓库或生产环境。
 
-该模块只定义不可变数据对象、枚举和完整性校验，不包含任何自动修改
-Skill、Reviewer、模型路由、业务仓库或运行环境的能力。
+English: Controlled-evolution runtime contracts defining immutable data, enums, and deterministic validation without automatically modifying Skills, Reviewers, model routing, business repositories, or production environments.
 """
 from __future__ import annotations
 
@@ -22,15 +21,20 @@ _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 
 
 class ContractError(ValueError):
-    """合同字段非法或完整性校验失败。"""
+    """中文：合同字段非法或完整性校验失败。
+
+    English: Contract fields are invalid or integrity validation failed.
+    """
 
 
 class ConfidenceLevel(str, Enum):
-    L0 = "L0"  # 无法形成结论
-    L1 = "L1"  # 弱信号
-    L2 = "L2"  # 有限证据
-    L3 = "L3"  # 多任务一致证据
-    L4 = "L4"  # 长窗口、多来源、稳定证据
+    # 中文：证据强度从无法形成结论递增到长窗口、多来源且稳定的证据。
+    # English: Evidence strength increases from no conclusion to stable, multi-source evidence over a long window.
+    L0 = "L0"
+    L1 = "L1"
+    L2 = "L2"
+    L3 = "L3"
+    L4 = "L4"
 
 
 class RiskLevel(str, Enum):
@@ -66,7 +70,10 @@ class DecisionType(str, Enum):
 
 
 class ExecutionAuthorization(str, Enum):
-    """V6.0 只允许 NONE，防止分析提案被误当作执行授权。"""
+    """中文：V6.0 只允许 NONE，防止分析提案被误当作执行授权。
+
+    English: V6.0 permits only NONE so analytical proposals cannot be mistaken for execution authorization.
+    """
 
     NONE = "NONE"
 
@@ -289,7 +296,8 @@ class SelfObservationSnapshot:
             "metrics": metrics,
             "signals": [to_primitive(item) for item in signals],
         }))
-        # V6 快照 ID 必须唯一；source_digest 单独用于同源内容比较。
+        # 中文：V6 快照 ID 必须唯一；source_digest 单独用于同源内容比较。
+        # English: V6 snapshot IDs must be unique; source_digest separately compares identical source content.
         seed = "%s|%s|%s" % (project_id, timestamp, uuid.uuid4().hex)
         payload: Dict[str, Any] = {
             "schema_version": SCHEMA_VERSION,
@@ -465,8 +473,8 @@ class OptimizationProposal:
             "signal_id": assessment.signal_id,
             "action_type": action_type.value,
             "policy_version": assessment.policy_version,
-            # V6：证据不变时 fingerprint 不变，REJECTED/DEFERRED 不会机械重生；
-            # 新证据会自然产生新 fingerprint。
+            # 中文：证据不变时 fingerprint 不变，REJECTED 或 DEFERRED 提案不会机械重生；新证据会自然产生新 fingerprint。
+            # English: Unchanged evidence keeps the same fingerprint, preventing mechanical rebirth of REJECTED or DEFERRED proposals; new evidence naturally yields a new fingerprint.
             "evidence": [
                 {"source_path": e.source_path, "line_number": e.line_number, "record_id": e.record_id, "record_hash": e.record_hash}
                 for e in assessment.evidence

@@ -1,4 +1,7 @@
-"""Shared deterministic I/O, integrity and Git snapshot helpers."""
+"""中文：共享的确定性 I/O、完整性与 Git 快照辅助函数。
+
+English: Shared deterministic I/O, integrity, and Git snapshot helpers.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -25,7 +28,10 @@ SENSITIVE_PATTERNS = (
 
 
 class RuntimeContractError(RuntimeError):
-    """A fail-closed contract violation."""
+    """中文：失败关闭的 Runtime 契约异常。
+
+    English: A fail-closed runtime contract violation.
+    """
 
 
 def utc_now() -> str:

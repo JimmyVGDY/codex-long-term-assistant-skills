@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Deterministic Markdown checkpoints for long-running Codex tasks.
+"""中文：长期 Codex 任务的确定性 Markdown 检查点；仅使用 Python 标准库，只写入显式外部记忆目录，并可只读 Git 仓库生成工作区指纹。
 
-The helper uses only Python's standard library. It writes only to the external
-memory directory passed through --project-dir and optionally reads a Git
-repository to record a workspace fingerprint.
+English: Deterministic Markdown checkpoints for long-running Codex tasks. The helper uses only the Python standard library, writes only to the explicit external-memory directory, and may read a Git repository to record a workspace fingerprint.
 """
 from __future__ import annotations
 
@@ -91,7 +89,10 @@ def atomic_write(path: Path, content: str) -> None:
 
 @contextmanager
 def project_lock(project_dir: Path, force_unlock: bool = False) -> Iterator[None]:
-    """Prevent accidental concurrent writers to shared task-memory files."""
+    """中文：防止共享任务记忆文件被意外并发写入。
+
+    English: Prevent accidental concurrent writes to shared task-memory files.
+    """
     lock_path = project_dir / ".checkpoint.lock"
     if force_unlock and lock_path.exists():
         lock_path.unlink()
@@ -443,11 +444,9 @@ def command_init(args: argparse.Namespace) -> None:
 
 
 def checkpoint_payload_fingerprint(args: argparse.Namespace, snapshot: Dict[str, str]) -> str:
-    """Build a stable digest for idempotent checkpoint appends.
+    """中文：为幂等检查点追加构建稳定摘要；时间和检查点 ID 不参与，除非显式强制，相同工作区与内容再次追加会成为 no-op。
 
-    Time and checkpoint ID are intentionally excluded. Repeating the same append
-    command against the same Git workspace becomes a no-op unless --force-append
-    is supplied.
+    English: Build a stable digest for idempotent checkpoint appends. Time and checkpoint ID are excluded, so the same workspace and content become a no-op unless explicitly forced.
     """
     values: List[str] = [
         one_line(args.task_id),
@@ -598,7 +597,8 @@ def command_append(args: argparse.Namespace) -> None:
             progress, project_dir, args.task_id, timestamp, args.hot_limit
         )
 
-        # First persist the append-only evidence. If CURRENT_TASK update fails, repair can recover from it.
+        # 中文：先持久化只追加证据；若 CURRENT_TASK 更新失败，修复流程可据此恢复。
+        # English: Persist append-only evidence first so repair can recover if CURRENT_TASK update fails.
         atomic_write(progress_path, progress)
 
         current = replace_field(current, "状态版本", str(state_version))

@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Create, validate, and reuse a deterministic, progressive review packet.
+"""中文：创建、验证并复用确定性渐进式 Review Packet；Reviewer 先读摘要，再按分配范围展开。
 
-Reviewers should read ``manifest.json`` and ``packet-summary.md`` first, then inspect
-only their assigned files or hunks. ``diff.patch`` remains available for complete
-evidence but is not intended to be injected wholesale into every subagent prompt.
+English: Create, validate, and reuse a deterministic progressive Review Packet. Reviewers read summaries first and expand only within assigned scope.
 """
 from __future__ import annotations
 
@@ -251,7 +249,8 @@ def command_create(args: argparse.Namespace) -> None:
     repo = Path(args.repo_path).expanduser().resolve()
     output = Path(args.output_dir).expanduser().resolve()
     if not (repo / ".git").exists():
-        # Worktrees may use a .git file; rev-parse is the final authority.
+        # 中文：工作树可能使用 .git 文件，最终以 rev-parse 结果为准。
+        # English: Worktrees may use a .git file; rev-parse is the final authority.
         run(["git", "rev-parse", "--is-inside-work-tree"], repo)
     if inside(output, repo) and not args.allow_inside_repo:
         die("审查包默认必须写在仓库外；需要时显式 --allow-inside-repo")

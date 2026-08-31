@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""V5.0 deterministic task envelope, project binding, approvals and finalization."""
+"""中文：V5.0 确定性 Task Envelope、项目绑定、授权与终态控制器。
+
+English: V5.0 deterministic Task Envelope, project binding, approval, and finalization controller.
+"""
 from __future__ import annotations
 
 import argparse
@@ -8,7 +11,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
-# Source tree: <root>/skills/.../scripts; installed tree: <CODEX_HOME>/skills/.../scripts.
+# 中文：源码目录为 <root>/skills/.../scripts，安装目录为 <CODEX_HOME>/skills/.../scripts。
+# English: Source tree: <root>/skills/.../scripts; installed tree: <CODEX_HOME>/skills/.../scripts.
 _RUNTIME_ROOT = Path(__file__).resolve().parents[3] / "runtime"
 if str(_RUNTIME_ROOT) not in sys.path:
     sys.path.insert(0, str(_RUNTIME_ROOT))
@@ -82,7 +86,10 @@ def inside(child: Path, parent: Path) -> bool:
 
 
 def capture_repo_fingerprint(repo: Path) -> Dict[str, Any]:
-    """Capture the full repository fingerprint, including untracked_sha256."""
+    """中文：捕获包含 untracked_sha256 的完整仓库指纹。
+
+    English: Capture the complete repository fingerprint, including untracked_sha256.
+    """
     fingerprint = repo_snapshot(repo)
     if not fingerprint.get("untracked_sha256"):
         raise RuntimeContractError("仓库指纹缺少 untracked_sha256")

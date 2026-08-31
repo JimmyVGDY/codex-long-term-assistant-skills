@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Manage non-destructive V6.6 event archives and health reports."""
+"""中文：管理非破坏 V6.6 事件归档与健康报告。
+
+English: Manage non-destructive V6.6 event archives and health reports.
+"""
 from __future__ import annotations
 
 import argparse

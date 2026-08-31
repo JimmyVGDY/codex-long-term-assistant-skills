@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Create or verify detached HMAC seals for a TaskOutcomeEvent V2 chain."""
+"""中文：创建或验证 TaskOutcomeEvent V2 事件链的独立 HMAC 封印。
+
+English: Create or verify detached HMAC seals for a TaskOutcomeEvent V2 chain.
+"""
 from __future__ import annotations
 
 import argparse

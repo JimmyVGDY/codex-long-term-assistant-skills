@@ -1,4 +1,7 @@
-"""V6 受控演进命令行入口。"""
+"""中文：V6 受控演进命令行入口。
+
+English: V6 controlled-evolution command-line entry point.
+"""
 from __future__ import annotations
 
 import argparse

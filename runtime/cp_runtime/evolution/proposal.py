@@ -1,4 +1,7 @@
-"""根据确定性评估生成只读优化提案。"""
+"""中文：根据确定性评估生成只读优化提案。
+
+English: Generate read-only optimization proposals from deterministic assessments.
+"""
 from __future__ import annotations
 
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple

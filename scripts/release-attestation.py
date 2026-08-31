@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Create and verify a privacy-bounded V6.6 release attestation."""
+"""中文：创建并验证隐私有界的 V6.6 发行证明。
+
+English: Create and verify a privacy-bounded V6.6 release attestation.
+"""
 from __future__ import annotations
 
 import argparse

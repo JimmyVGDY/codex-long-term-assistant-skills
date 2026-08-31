@@ -1,6 +1,6 @@
-"""TaskOutcomeEvent V2：最小、可验证、默认脱敏的生命周期事件。
+"""中文：TaskOutcomeEvent V2：最小、可验证、默认脱敏的生命周期事件；仅负责本地观察，不授予仓库写入、提交、部署或环境修改权限。
 
-该模块只负责本地观测，不授予仓库写入、提交、部署或自修改权限。
+English: TaskOutcomeEvent V2 provides minimal, verifiable, redacted-by-default lifecycle events. It observes locally and grants no repository write, commit, deployment, or environment-modification authority.
 """
 from __future__ import annotations
 
@@ -56,7 +56,10 @@ def _nonnegative(value: Any, name: str) -> int:
 
 
 def sanitize(value: Any, depth: int = 0) -> Any:
-    """仅保留结构化元数据；疑似原文/凭据字段直接丢弃或脱敏。"""
+    """中文：仅保留结构化元数据；疑似原文或凭据字段直接丢弃或脱敏。
+
+    English: Keep only structured metadata; drop or redact fields suspected of containing raw content or credentials.
+    """
     if depth > 6:
         return "<depth-limit>"
     if isinstance(value, Mapping):
@@ -191,11 +194,9 @@ def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 class OwnerTokenLock:
-    """Process-owned native file lock.
+    """中文：进程拥有的原生文件锁；锁文件保持存在，所有权由操作系统句柄维持，进程终止会释放锁，不依赖删除陈旧文件或 PID 复用判断。
 
-    The lock file is intentionally persistent.  Ownership lives in the OS file
-    handle, so process termination releases it without stale-file deletion,
-    PID reuse checks, or compare-and-unlink races.
+    English: Process-owned native file lock. The lock file remains persistent while ownership lives in the OS handle; process termination releases it without stale-file deletion or PID-reuse checks.
     """
     def __init__(self, path: Path, timeout: float = 2.0, stale: float = 120.0) -> None:
         self.path = Path(str(path) + ".lock")
@@ -272,7 +273,10 @@ def event_segment_paths(path: Path) -> List[Path]:
 
 
 def _quarantine_partial_tail(path: Path) -> Optional[Path]:
-    """Recover only an uncommitted tail in the active file, never a history segment."""
+    """中文：只恢复活动文件中尚未提交的尾部，不修改历史分段。
+
+    English: Recover only an uncommitted tail in the active file, never a historical segment.
+    """
     if not path.is_file():
         return None
     raw = path.read_bytes()
@@ -402,8 +406,8 @@ def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] =
     path.parent.mkdir(parents=True, exist_ok=True)
     with OwnerTokenLock(path):
         _files, existing, _quarantine = _read_event_files_unlocked(path, recover_active_tail=True)
-        # Duplicate ids remain observable and are handled by aggregation policy;
-        # append must still be able to extend an otherwise valid legacy chain.
+        # 中文：重复 ID 保持可观察并由聚合策略处理；追加操作仍需扩展其他部分有效的旧事件链。
+        # English: Duplicate IDs remain observable and are handled by aggregation policy; append must still extend an otherwise valid legacy chain.
         verification = _verify_events(existing, hmac_key, allow_duplicate_ids=True)
         if deduplicate_event_id:
             for stored in existing:
@@ -460,7 +464,9 @@ def _pid_is_alive(pid: int) -> bool:
                 return True
             return False
         except Exception:
-            return True  # inability to prove death is fail-closed
+            # 中文：无法证明进程已退出时失败关闭。
+            # English: Inability to prove process exit is fail-closed.
+            return True
     try:
         os.kill(pid, 0)
         return True
@@ -476,7 +482,10 @@ def verify_event_chain(path: Path, hmac_key: Optional[str] = None, allow_duplica
 
 
 def aggregate_by_task(events: Iterable[Mapping[str, Any]], project_id: str, repo_fingerprint: str) -> Dict[str, Dict[str, Any]]:
-    """先 event_id 去重，再按 task_id 聚合；项目或仓库不一致直接拒绝。"""
+    """中文：先按 event_id 去重，再按 task_id 聚合；项目或仓库身份不一致时直接拒绝。
+
+    English: Deduplicate by event_id, then aggregate by task_id; reject mismatched project or repository identity.
+    """
     result: Dict[str, Dict[str, Any]] = {}
     seen = set()
     for raw in events:

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Task Envelope V2, Approval and Finalization integration tests."""
+"""中文：Task Envelope V2、Approval 与 Finalization 集成测试。
+
+English: Task Envelope V2, Approval, and Finalization integration tests.
+"""
 from __future__ import annotations
 
 import json
@@ -100,7 +103,8 @@ class ExecutionGuardV5Tests(unittest.TestCase):
             "--state-dir", str(self.state), "--action", "committed",
             "--approval", str(approval),
         ])
-        # No commit yet: readback must fail because HEAD did not advance.
+        # 中文：尚未提交，因此 HEAD 未前进，读回必须失败。
+        # English: No commit exists yet, so readback must fail because HEAD did not advance.
         run([
             sys.executable, "-B", str(GUARD), "record-action",
             "--state-dir", str(self.state), "--action", "committed",
@@ -127,7 +131,8 @@ class ExecutionGuardV5Tests(unittest.TestCase):
         raw["project_name"] = "tampered"
         self.profile.write_text(json.dumps(raw), encoding="utf-8")
         approval = self.context / "approval.json"
-        # No valid Approval can be issued from a tampered profile.
+        # 中文：被篡改的配置不得签发有效 Approval。
+        # English: A tampered profile cannot issue a valid Approval.
         run([
             sys.executable, "-B", str(RUNTIME_CLI), "approval-issue",
             "--output", str(approval), "--approval-id", "APR-02",
