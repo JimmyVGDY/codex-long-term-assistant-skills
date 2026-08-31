@@ -11,7 +11,7 @@ $AgentsHome = Join-Path $CodexHome "agents"
 $BackupRoot = Join-Path (Join-Path $HOME ".codex-skill-backups") ("uninstall-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 $BeginMarker = "<!-- codex-cross-project-assistant:begin -->"
 $EndMarker = "<!-- codex-cross-project-assistant:end -->"
-$ManagedSkills = @("java-backend-engineering", "python-backend-ai-engineering", "vue-frontend-engineering", "data-middleware-ai-infrastructure", "engineering-quality-delivery", "multi-agent-independent-review", "technical-document-writing", "long-running-task-memory")
+$ManagedSkills = @("java-backend-engineering", "python-backend-ai-engineering", "vue-frontend-engineering", "data-middleware-ai-infrastructure", "log-observability-analysis", "engineering-quality-delivery", "multi-agent-independent-review", "technical-document-writing", "long-running-task-memory")
 $ManagedAgents = @("cp-review-functional-business.toml", "cp-review-compatibility-regression.toml", "cp-review-security-access.toml", "cp-review-performance-resources.toml", "cp-review-data-contract.toml", "cp-review-state-concurrency.toml", "cp-review-test-delivery.toml")
 
 function Backup-Path { param([string]$Path, [string]$RelativeName); if ($NoBackup -or -not (Test-Path -LiteralPath $Path)) { return }; $Dest = Join-Path $BackupRoot $RelativeName; New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Dest) | Out-Null; Copy-Item -LiteralPath $Path -Destination $Dest -Recurse -Force }
@@ -30,4 +30,5 @@ function Remove-Skills { foreach ($Name in $ManagedSkills) { $Target = Join-Path
 function Remove-ReviewAgents { foreach ($Name in $ManagedAgents) { $Target = Join-Path $AgentsHome $Name; if (Test-Path -LiteralPath $Target) { Backup-Path -Path $Target -RelativeName (Join-Path "agents" $Name); Remove-Item -LiteralPath $Target -Force; Write-Host "已卸载 Reviewer: $Name" } } }
 switch ($Component) { "All" { Remove-GlobalBlock; Remove-Skills; Remove-ReviewAgents }; "SkillsOnly" { Remove-Skills }; "GlobalOnly" { Remove-GlobalBlock }; "ReviewAgentsOnly" { Remove-ReviewAgents } }
 Write-Host "卸载完成。其他规则、Skills 和自定义 Agent 未被删除。"
-if (-not $NoBackup) { Write-Host "备份目录: $BackupRoot" }
+if (-not $NoBackup) { Write-Host "备份目录: $BackupRoot" }
+

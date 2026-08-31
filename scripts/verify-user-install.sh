@@ -6,7 +6,7 @@ skills_home="$HOME/.agents/skills"
 agents_home="$codex_home/agents"
 expected_skills=(
   java-backend-engineering python-backend-ai-engineering vue-frontend-engineering
-  data-middleware-ai-infrastructure engineering-quality-delivery
+  data-middleware-ai-infrastructure log-observability-analysis engineering-quality-delivery
   multi-agent-independent-review technical-document-writing long-running-task-memory
 )
 expected_agents=(
@@ -27,6 +27,7 @@ memory_templates=(
   CHECKPOINT_ENTRY.template.md RECOVERY_CHECKLIST.template.md
 )
 review_templates=(REVIEW_PLAN.template.md REVIEW_RESULT.template.md REVIEW_LEDGER.template.md)
+log_templates=(LOG_ANALYSIS_REPORT.template.md LOG_TIMELINE.template.md LOG_EVIDENCE_LEDGER.template.md)
 failed=0
 agents_file="$codex_home/AGENTS.md"
 
@@ -74,6 +75,7 @@ check_templates() {
 check_templates "$skills_home/technical-document-writing/assets/templates" "${doc_templates[@]}"
 check_templates "$skills_home/long-running-task-memory/assets/templates" "${memory_templates[@]}"
 check_templates "$skills_home/multi-agent-independent-review/assets/templates" "${review_templates[@]}"
+check_templates "$skills_home/log-observability-analysis/assets/templates" "${log_templates[@]}"
 
 checkpoint="$skills_home/long-running-task-memory/scripts/checkpoint.py"
 if [[ -f "$checkpoint" ]]; then echo "[OK] 持续检查点辅助脚本"; else echo "[缺失] $checkpoint"; failed=1; fi
@@ -82,5 +84,5 @@ if [[ "$failed" -ne 0 ]]; then echo "验证失败。" >&2; exit 1; fi
 
 echo "[OK] Skills: ${#expected_skills[@]} 个"
 echo "[OK] 只读 Reviewer: ${#expected_agents[@]} 个"
-echo "[OK] 模板: 文档 ${#doc_templates[@]} / 记忆 ${#memory_templates[@]} / 复审 ${#review_templates[@]}"
+echo "[OK] 模板: 文档 ${#doc_templates[@]} / 记忆 ${#memory_templates[@]} / 复审 ${#review_templates[@]} / 日志 ${#log_templates[@]}"
 echo "验证通过。请在 Codex 中运行 /skills；新增内容未刷新时重启 Codex。"

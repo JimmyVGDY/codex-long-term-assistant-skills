@@ -23,12 +23,13 @@ except ImportError as exc:  # pragma: no cover - Python < 3.11
     raise SystemExit("Python 3.11+ is required to validate TOML files") from exc
 
 ROOT = Path(__file__).resolve().parent.parent
-EXPECTED_VERSION = "3.0.0"
+EXPECTED_VERSION = "3.1.0"
 EXPECTED_SKILLS = {
     "java-backend-engineering",
     "python-backend-ai-engineering",
     "vue-frontend-engineering",
     "data-middleware-ai-infrastructure",
+    "log-observability-analysis",
     "engineering-quality-delivery",
     "multi-agent-independent-review",
     "technical-document-writing",
@@ -69,6 +70,11 @@ MEMORY_TEMPLATES = {
     "CHECKPOINT_ENTRY.template.md",
     "RECOVERY_CHECKLIST.template.md",
 }
+LOG_TEMPLATES = {
+    "LOG_ANALYSIS_REPORT.template.md",
+    "LOG_TIMELINE.template.md",
+    "LOG_EVIDENCE_LEDGER.template.md",
+}
 REVIEW_TEMPLATES = {
     "REVIEW_PLAN.template.md",
     "REVIEW_RESULT.template.md",
@@ -90,6 +96,8 @@ REQUIRED_SCRIPTS = {
 REQUIRED_GLOBAL_PHRASES = {
     "$multi-agent-independent-review",
     "$long-running-task-memory",
+    "$log-observability-analysis",
+    "生产只读日志",
     "最大逻辑递归深度 3",
     "最大复审轮次 3",
     "最大并行 Reviewer 6",
@@ -234,7 +242,7 @@ def validate_manifest() -> Dict[str, object]:
     for key, expected in expected_limits.items():
         if limits.get(key) != expected:
             error("manifest quality_limits.{} 应为 {}".format(key, expected))
-    ok("manifest.json: version 3.0.0，8 Skills，7 Reviewer")
+    ok("manifest.json: version 3.1.0，9 Skills，7 Reviewer")
     return manifest
 
 
@@ -565,6 +573,9 @@ def main() -> None:
     )
     validate_template_set(
         "skills/multi-agent-independent-review/assets/templates", REVIEW_TEMPLATES, "复审模板"
+    )
+    validate_template_set(
+        "skills/log-observability-analysis/assets/templates", LOG_TEMPLATES, "日志分析模板"
     )
     validate_markdown_and_paths()
     validate_shell_scripts()

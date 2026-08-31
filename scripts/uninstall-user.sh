@@ -12,7 +12,7 @@ timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_root="$HOME/.codex-skill-backups/uninstall-$timestamp"
 begin_marker='<!-- codex-cross-project-assistant:begin -->'
 end_marker='<!-- codex-cross-project-assistant:end -->'
-managed_skills=(java-backend-engineering python-backend-ai-engineering vue-frontend-engineering data-middleware-ai-infrastructure engineering-quality-delivery multi-agent-independent-review technical-document-writing long-running-task-memory)
+managed_skills=(java-backend-engineering python-backend-ai-engineering vue-frontend-engineering data-middleware-ai-infrastructure log-observability-analysis engineering-quality-delivery multi-agent-independent-review technical-document-writing long-running-task-memory)
 managed_agents=(cp-review-functional-business.toml cp-review-compatibility-regression.toml cp-review-security-access.toml cp-review-performance-resources.toml cp-review-data-contract.toml cp-review-state-concurrency.toml cp-review-test-delivery.toml)
 
 backup_path() { local src="$1" relative="$2"; [[ -e "$src" ]] || return 0; mkdir -p "$(dirname "$backup_root/$relative")"; cp -a "$src" "$backup_root/$relative"; }

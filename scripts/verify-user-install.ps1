@@ -8,7 +8,7 @@ $AgentsHome = Join-Path $CodexHome "agents"
 $Failed = $false
 $ExpectedSkills = @(
     "java-backend-engineering", "python-backend-ai-engineering", "vue-frontend-engineering",
-    "data-middleware-ai-infrastructure", "engineering-quality-delivery",
+    "data-middleware-ai-infrastructure", "log-observability-analysis", "engineering-quality-delivery",
     "multi-agent-independent-review", "technical-document-writing", "long-running-task-memory"
 )
 $ExpectedAgents = @(
@@ -29,6 +29,7 @@ $MemoryTemplates = @(
     "CHECKPOINT_ENTRY.template.md", "RECOVERY_CHECKLIST.template.md"
 )
 $ReviewTemplates = @("REVIEW_PLAN.template.md", "REVIEW_RESULT.template.md", "REVIEW_LEDGER.template.md")
+$LogTemplates = @("LOG_ANALYSIS_REPORT.template.md", "LOG_TIMELINE.template.md", "LOG_EVIDENCE_LEDGER.template.md")
 
 $GlobalFile = Join-Path $CodexHome "AGENTS.md"
 if (Test-Path -LiteralPath $GlobalFile) {
@@ -71,6 +72,7 @@ function Test-Templates {
 Test-Templates -Directory (Join-Path $SkillsHome "technical-document-writing\assets\templates") -Names $DocTemplates
 Test-Templates -Directory (Join-Path $SkillsHome "long-running-task-memory\assets\templates") -Names $MemoryTemplates
 Test-Templates -Directory (Join-Path $SkillsHome "multi-agent-independent-review\assets\templates") -Names $ReviewTemplates
+Test-Templates -Directory (Join-Path $SkillsHome "log-observability-analysis\assets\templates") -Names $LogTemplates
 
 $Checkpoint = Join-Path $SkillsHome "long-running-task-memory\scripts\checkpoint.py"
 if (Test-Path -LiteralPath $Checkpoint) { Write-Host "[OK] 持续检查点辅助脚本" } else { Write-Host "[缺失] $Checkpoint"; $Failed = $true }
@@ -78,5 +80,6 @@ if (Test-Path -LiteralPath $Checkpoint) { Write-Host "[OK] 持续检查点辅助
 if ($Failed) { throw "验证失败。" }
 Write-Host "[OK] Skills: $($ExpectedSkills.Count) 个"
 Write-Host "[OK] 只读 Reviewer: $($ExpectedAgents.Count) 个"
-Write-Host "[OK] 模板: 文档 $($DocTemplates.Count) / 记忆 $($MemoryTemplates.Count) / 复审 $($ReviewTemplates.Count)"
-Write-Host "验证通过。请在 Codex 中运行 /skills；新增内容未刷新时重启 Codex。"
+Write-Host "[OK] 模板: 文档 $($DocTemplates.Count) / 记忆 $($MemoryTemplates.Count) / 复审 $($ReviewTemplates.Count) / 日志 $($LogTemplates.Count)"
+Write-Host "验证通过。请在 Codex 中运行 /skills；新增内容未刷新时重启 Codex。"
+
