@@ -1,134 +1,485 @@
 {
   "schema_version": 1,
-  "description": "Codex Skill 最小充分加载回归用例。required 必须加载，forbidden 不应加载，optional 可按代码和上下文决定。",
+  "description": "v4.0 路由回归：覆盖最小充分加载、Reviewer 隔离边界和跨框架/传统/混合前端识别。",
   "cases": [
     {
       "id": "java-concept-readonly",
       "prompt": "解释一下 Java CompletableFuture 的异常传播，不修改代码。",
-      "required": ["java-backend-engineering"],
+      "required": [
+        "java-backend-engineering"
+      ],
       "optional": [],
-      "forbidden": ["engineering-quality-delivery", "multi-agent-independent-review", "long-running-task-memory", "technical-document-writing"],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "long-running-task-memory",
+        "technical-document-writing"
+      ],
       "max_active": 1
     },
     {
       "id": "java-local-fix",
       "prompt": "修复 Spring 事务自调用失效问题，执行相关后端定向测试，本地修改但不要提交。",
-      "required": ["java-backend-engineering", "engineering-quality-delivery"],
-      "optional": ["multi-agent-independent-review"],
-      "forbidden": ["technical-document-writing", "log-observability-analysis"],
+      "required": [
+        "java-backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "multi-agent-independent-review"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
       "max_active": 3
     },
     {
       "id": "python-worker-log-readonly",
       "prompt": "只读分析 Celery Worker 日志中的任务反复重试和 WorkerLost，不要修改任何文件。",
-      "required": ["log-observability-analysis", "python-backend-ai-engineering"],
-      "optional": ["data-middleware-ai-infrastructure"],
-      "forbidden": ["engineering-quality-delivery", "multi-agent-independent-review"],
+      "required": [
+        "log-observability-analysis",
+        "python-backend-ai-engineering"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
       "max_active": 3
     },
     {
       "id": "production-rabbitmq-log-readonly",
       "prompt": "仅在生产只读分析 RabbitMQ Ready、Unacked 和消费者错误日志，限制时间窗口，禁止重启和数据写入。",
-      "required": ["log-observability-analysis", "data-middleware-ai-infrastructure"],
+      "required": [
+        "log-observability-analysis",
+        "data-middleware-ai-infrastructure"
+      ],
       "optional": [],
-      "forbidden": ["engineering-quality-delivery", "multi-agent-independent-review", "technical-document-writing"],
-      "max_active": 2
-    },
-    {
-      "id": "vue-fix-build",
-      "prompt": "修复 Vue 页面路由切换后的请求竞态，并执行正式生产构建。",
-      "required": ["vue-frontend-engineering", "engineering-quality-delivery"],
-      "optional": [],
-      "forbidden": ["long-running-task-memory", "technical-document-writing", "log-observability-analysis"],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "technical-document-writing"
+      ],
       "max_active": 2
     },
     {
       "id": "database-index-analysis",
       "prompt": "分析这条 MySQL SQL 的执行计划和联合索引设计，只给方案。",
-      "required": ["data-middleware-ai-infrastructure"],
+      "required": [
+        "data-middleware-ai-infrastructure"
+      ],
       "optional": [],
-      "forbidden": ["engineering-quality-delivery", "multi-agent-independent-review", "technical-document-writing"],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "technical-document-writing"
+      ],
       "max_active": 1
     },
     {
       "id": "architecture-document",
       "prompt": "基于当前 Java 和 Python 混合项目代码编写正式系统架构设计文档。",
-      "required": ["technical-document-writing"],
-      "optional": ["java-backend-engineering", "python-backend-ai-engineering", "data-middleware-ai-infrastructure"],
-      "forbidden": ["engineering-quality-delivery", "multi-agent-independent-review"],
+      "required": [
+        "technical-document-writing"
+      ],
+      "optional": [
+        "java-backend-engineering",
+        "python-backend-ai-engineering",
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
       "max_active": 4
     },
     {
       "id": "long-running-refactor",
       "prompt": "这个跨多个模块的改造会持续几天，每完成一个可恢复小节点就更新任务文档，修改后测试并本地提交但不推送。",
-      "required": ["long-running-task-memory", "engineering-quality-delivery"],
-      "optional": ["java-backend-engineering", "python-backend-ai-engineering", "vue-frontend-engineering", "data-middleware-ai-infrastructure", "multi-agent-independent-review"],
+      "required": [
+        "long-running-task-memory",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "java-backend-engineering",
+        "python-backend-ai-engineering",
+        "frontend-engineering",
+        "data-middleware-ai-infrastructure",
+        "multi-agent-independent-review"
+      ],
       "forbidden": [],
       "max_active": 4
     },
     {
       "id": "preimplementation-db-migration-review",
       "prompt": "在开始写数据库迁移代码前，先从兼容、数据、安全和性能角度做实施前设计审查。",
-      "required": ["multi-agent-independent-review", "data-middleware-ai-infrastructure"],
-      "optional": ["engineering-quality-delivery", "long-running-task-memory"],
-      "forbidden": ["log-observability-analysis"],
+      "required": [
+        "multi-agent-independent-review",
+        "data-middleware-ai-infrastructure"
+      ],
+      "optional": [
+        "engineering-quality-delivery",
+        "long-running-task-memory"
+      ],
+      "forbidden": [
+        "log-observability-analysis"
+      ],
       "max_active": 4
     },
     {
       "id": "post-change-independent-review",
-      "prompt": "代码和定向测试已经完成，请多个只读 Reviewer 全面复审当前 git diff，先收齐问题再集中归因。",
-      "required": ["multi-agent-independent-review"],
-      "optional": ["engineering-quality-delivery", "long-running-task-memory"],
-      "forbidden": ["technical-document-writing", "log-observability-analysis"],
+      "prompt": "代码和定向测试已经完成，请多个 Reviewer 全面复审当前 git diff，先记录父会话权限和隔离等级，再收齐问题并集中归因。",
+      "required": [
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "engineering-quality-delivery",
+        "long-running-task-memory"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
       "max_active": 3
     },
     {
       "id": "metrics-only-analysis",
       "prompt": "分析接口 P95、错误率、CPU、连接池和消息堆积指标，建立故障时间线，不修改环境。",
-      "required": ["log-observability-analysis"],
-      "optional": ["data-middleware-ai-infrastructure", "java-backend-engineering", "python-backend-ai-engineering"],
-      "forbidden": ["engineering-quality-delivery", "multi-agent-independent-review"],
+      "required": [
+        "log-observability-analysis"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure",
+        "java-backend-engineering",
+        "python-backend-ai-engineering"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
       "max_active": 3
     },
     {
       "id": "trace-critical-path",
       "prompt": "根据分布式 Trace 分析关键路径、慢 Span 和下游超时，只做只读分析。",
-      "required": ["log-observability-analysis"],
-      "optional": ["data-middleware-ai-infrastructure"],
-      "forbidden": ["engineering-quality-delivery", "multi-agent-independent-review"],
+      "required": [
+        "log-observability-analysis"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
       "max_active": 2
     },
     {
       "id": "profiling-analysis",
       "prompt": "分析现有 JFR 和线程 Dump，判断 CPU 飙高和锁竞争原因，不在线上重新采集。",
-      "required": ["log-observability-analysis", "java-backend-engineering"],
+      "required": [
+        "log-observability-analysis",
+        "java-backend-engineering"
+      ],
       "optional": [],
-      "forbidden": ["engineering-quality-delivery", "multi-agent-independent-review"],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
       "max_active": 2
     },
     {
       "id": "readme-punctuation",
       "prompt": "把 README 中的一处中文标点改正确。",
       "required": [],
-      "optional": ["technical-document-writing", "engineering-quality-delivery"],
-      "forbidden": ["multi-agent-independent-review", "long-running-task-memory", "log-observability-analysis"],
+      "optional": [
+        "technical-document-writing",
+        "engineering-quality-delivery"
+      ],
+      "forbidden": [
+        "multi-agent-independent-review",
+        "long-running-task-memory",
+        "log-observability-analysis"
+      ],
       "max_active": 1
     },
     {
       "id": "incident-report-from-logs",
       "prompt": "根据这批日志、指标和 Trace 写一份正式故障复盘报告，不修改系统。",
-      "required": ["log-observability-analysis", "technical-document-writing"],
-      "optional": ["java-backend-engineering", "python-backend-ai-engineering", "data-middleware-ai-infrastructure"],
-      "forbidden": ["engineering-quality-delivery", "multi-agent-independent-review"],
+      "required": [
+        "log-observability-analysis",
+        "technical-document-writing"
+      ],
+      "optional": [
+        "java-backend-engineering",
+        "python-backend-ai-engineering",
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
       "max_active": 4
     },
     {
       "id": "java-rabbitmq-fix",
       "prompt": "修复 Java RabbitMQ 消费重复处理问题，补充幂等和定向测试，提交前独立复审。",
-      "required": ["java-backend-engineering", "data-middleware-ai-infrastructure", "engineering-quality-delivery", "multi-agent-independent-review"],
-      "optional": ["long-running-task-memory"],
-      "forbidden": ["technical-document-writing", "log-observability-analysis"],
+      "required": [
+        "java-backend-engineering",
+        "data-middleware-ai-infrastructure",
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "long-running-task-memory"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
       "max_active": 4
+    },
+    {
+      "id": "strict-readonly-review-gate",
+      "prompt": "当前任务涉及生产权限和真实数据，要求系统强制只读复审。先确认父会话实际为 read-only；若当前会话可写，不要派发 Reviewer。",
+      "required": [
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "long-running-task-memory"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "logical-readonly-review-disclosure",
+      "prompt": "当前父会话是 danger-full-access，只做独立逻辑只读复审，并明确不能声称系统级只读隔离。",
+      "required": [
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "engineering-quality-delivery"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "vue-fix-build-generic-frontend",
+      "prompt": "修复 Vue 页面路由切换后的请求竞态，并执行正式生产构建。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "long-running-task-memory",
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "react-next-hydration-fix",
+      "prompt": "修复 Next.js Hydration mismatch 和客户端重复请求，执行类型检查、相关测试和正式生产构建。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "log-observability-analysis",
+        "technical-document-writing",
+        "long-running-task-memory"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "angular-rxjs-readonly-review",
+      "prompt": "只读审查 Angular 组件中的 RxJS 订阅释放、路由 Guard 和 Interceptor 重试问题，不修改代码。",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "long-running-task-memory"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "sveltekit-server-boundary",
+      "prompt": "分析 SvelteKit load、Form Action、SSR 缓存和客户端状态边界，只给设计建议。",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "legacy-jquery-layui-fix",
+      "prompt": "修复 jQuery 与 Layui 页面重复绑定事件和旧 Ajax 结果覆盖，保留原架构并执行最小运行验证。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "java-backend-engineering"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "long-running-task-memory",
+        "log-observability-analysis"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "microfrontend-module-federation",
+      "prompt": "评估 Module Federation 主子应用的共享依赖、路由、样式隔离、灰度和回滚方案，不修改代码。",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "technical-document-writing"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "frontend-security-ssr",
+      "prompt": "审查 Next.js Server Action、Cookie、缓存隔离和客户端 Secret 泄漏风险，只读分析。",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "long-running-task-memory"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "node-backend-not-frontend",
+      "prompt": "排查纯 Node.js Fastify 后端 API 的数据库事务和 RabbitMQ 消费问题，不涉及浏览器页面。",
+      "required": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "optional": [
+        "engineering-quality-delivery"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "technical-document-writing"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "static-html-accessibility-readonly",
+      "prompt": "只读审查一个没有 package.json 的静态 HTML/CSS/JavaScript 网站，重点检查可访问性、浏览器兼容和资源缓存。",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "data-middleware-ai-infrastructure"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "jsp-legacy-frontend-fix",
+      "prompt": "修复 JSP、jQuery 和 Layui 页面中的重复事件绑定与 XSS 转义问题，保持旧架构并执行最小运行验证。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "java-backend-engineering"
+      ],
+      "forbidden": [
+        "long-running-task-memory",
+        "log-observability-analysis"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "preact-vite-review",
+      "prompt": "只读审查 Preact + Vite 组件中的 Signals、Hooks、Bundle 和 SSR 兼容问题，不修改代码。",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "ionic-capacitor-hybrid-boundary",
+      "prompt": "分析 Ionic React + Capacitor 应用的 WebView 状态、原生 Bridge 权限、深链和真机验证边界，只给方案。",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "technical-document-writing"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "electron-main-process-not-frontend",
+      "prompt": "只读分析 Electron 主进程中的文件系统、自动更新、进程启动和 IPC 权限问题，不涉及 Renderer 页面。",
+      "required": [],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "frontend-monorepo-boundary",
+      "prompt": "评估 pnpm Workspace 中 React、Vue 和共享组件包的目录边界、构建缓存、版本兼容和发布顺序，不修改代码。",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "technical-document-writing"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
     }
   ]
 }
