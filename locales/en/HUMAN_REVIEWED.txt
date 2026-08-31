@@ -1,6 +1,8 @@
 # One canonical source path per line. Machine drafts are intentionally absent.
 .codex-plugin/plugin.json
 CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
 README.md
 RECONSTRUCTED_HISTORY.zh-CN.md
 RELEASE_ARCHIVES.md
@@ -12,6 +14,7 @@ RELEASE_NOTES_V6.4.md
 RELEASE_NOTES_V6.5.md
 RELEASE_NOTES_V6.6.md
 RELEASE_NOTES_V6.6.1.md
+SECURITY.md
 VALIDATION_REPORT_V6.6.1.md
 V6.6.1_AUDIT_REPORT.md
 V6.0_BUILD_INFO.json
