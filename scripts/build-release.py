@@ -24,7 +24,9 @@ VERSION = "6.6.1"
 PACKAGE = "codex-cross-project-engineering-assistant"
 SUPPORTED_LOCALES = ("zh-CN", "en")
 FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)
-EXCLUDED_DIRS = {"__pycache__", ".git", ".pytest_cache", ".mypy_cache", "locales", "dist"}
+EXCLUDED_DIRS = {
+    "__pycache__", ".git", ".github", ".pytest_cache", ".mypy_cache", "locales", "dist"
+}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".zip"}
 EXCLUDED_NAMES = {"cp-assistant-v6.lock"}
 CHECKSUM_FILE = "CHECKSUMS.sha256"
@@ -107,6 +109,8 @@ def _apply_overlay(staging: Path, locale: str) -> None:
         }:
             continue
         relative = source.relative_to(overlay)
+        if any(part in EXCLUDED_DIRS for part in relative.parts):
+            continue
         destination = staging / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, destination)

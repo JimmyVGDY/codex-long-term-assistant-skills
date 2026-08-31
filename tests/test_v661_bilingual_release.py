@@ -142,6 +142,11 @@ class V661BilingualReleaseTests(unittest.TestCase):
                     self.assertNotIn(excluded_brand, text, path)
                     self.assertNotIn("c:\\users\\hp", text, path)
 
+    def test_repository_community_metadata_is_not_shipped(self) -> None:
+        for locale in ("zh-CN", "en"):
+            _, entries = self._entries(locale)
+            self.assertFalse(any(path.startswith(".github/") for path in entries))
+
     def test_semantic_lint_accepts_runtime_source_key_catalog(self) -> None:
         result = subprocess.run(
             [sys.executable, str(ROOT / "scripts" / "semantic-lint.py")],

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json, sys, tomllib
+import json, re, sys, tomllib
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 errors=[]
@@ -67,6 +67,7 @@ banned_natural_language={
 }
 excluded_brand='clau'+'de'
 neutral_language_exclusions={Path('locales/en/runtime-strings.json')}
+url_pattern=re.compile(r'https?://[^\s\)\]\}>"\']+',re.IGNORECASE)
 for path in ROOT.rglob('*'):
     if not path.is_file() or path.suffix not in text_extensions:
         continue
@@ -75,8 +76,9 @@ for path in ROOT.rglob('*'):
         errors.append('Codex 发行命中无关品牌: '+str(path.relative_to(ROOT)))
     relative=path.relative_to(ROOT)
     if relative not in neutral_language_exclusions:
+        neutral_text=url_pattern.sub('',text)
         for phrase in banned_natural_language:
-            if phrase in text:
+            if phrase in neutral_text:
                 errors.append('中性语言门禁命中 %s: %s' % (phrase.encode('unicode_escape').decode('ascii'),relative))
 if errors:
     for e in errors: print('[FAIL]',e)
