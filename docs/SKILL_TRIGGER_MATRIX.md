@@ -183,7 +183,7 @@ python3 scripts/routing-eval.py evaluate --results routing-observations.json
 - 高风险、生产和严格只读任务必须使用整体只读父会话或有效系统隔离证据；
 - 自查不能冒充独立 Reviewer，逻辑只读不能冒充系统隔离。
 
-## v4.0 通用前端路由
+## V4.1 通用前端路由
 
 | 场景 | 主 Skill | 辅助 Skill |
 |---|---|---|

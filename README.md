@@ -1,83 +1,81 @@
-# Codex 跨项目长期技术助手 Skills 安装包 v4.0
+# Codex 跨项目长期技术助手 Skills 安装包 V4.1
 
-本包将跨项目工程规则安装为原生 Skills、全局受管规则和专业 Reviewer。v4.0 是破坏性前端能力升级：原 `vue-frontend-engineering` 直接改名并重构为跨框架 `frontend-engineering`。
+V4.1 在 V4.0 通用前端工程基础上，重点提升 Agent 的执行确定性、独立上下文委派、证据有效性、安装诊断和 Token 控制，不增加 Skill 数量。
 
-## v4.0 核心变化
+## 9 个 Skills
 
-- 通用前端覆盖 Vue/Nuxt、React/Next/Remix、Preact、Angular、Svelte/SvelteKit、Astro/Solid/Qwik/Ember/Web Components、Alpine/HTMX、Ionic/Capacitor、原生 JavaScript、jQuery、Layui 和 JSP；
-- 明确 Browser、SSR/Edge、PWA、WebView、Extension、Electron/Tauri Renderer 与主进程/原生桥边界；
-- 通用核心、框架专项、安全运行时、质量性能、设计系统/SEO、微前端 Monorepo 分层按需加载；
-- 新增只读且有界的 `detect_frontend_stack.py`，综合 package.json、锁文件、Workspace、配置和源码签名生成候选技术栈快照；
-- 检测器可识别无 package.json 的静态 HTML/JSP、Fullstack Web、Hybrid Web 和纯 Node.js 后端排除场景；
-- 新增技术栈快照、前端审查报告和验证矩阵模板；
-- 路由回归覆盖 React、Angular、SvelteKit、Preact、Hybrid Web、微前端、SSR 安全、传统页面、静态站点和桌面主进程排除；
-- 安装脚本会备份并移除旧 Vue Skill，不保留兼容别名，避免重复发现和缓存碎片；
-- 包校验禁止携带 `__pycache__`/`.pyc` 等本机运行产物。
+- `$java-backend-engineering`
+- `$python-backend-ai-engineering`
+- `$frontend-engineering`
+- `$data-middleware-ai-infrastructure`
+- `$log-observability-analysis`
+- `$engineering-quality-delivery`
+- `$multi-agent-independent-review`
+- `$technical-document-writing`
+- `$long-running-task-memory`
 
-## Skills
+## V4.1 核心增强
 
-| Skill | 主要用途 |
-|---|---|
-| `$frontend-engineering` | 跨框架 Web 前端、SSR、Hybrid Web、微前端、传统页面、构建、安全、性能与测试 |
-| `$java-backend-engineering` | Java、Spring、MyBatis、事务、并发、JVM |
-| `$python-backend-ai-engineering` | Python Web、异步、Celery、AI、RAG、GPU Worker |
-| `$data-middleware-ai-infrastructure` | 数据库、Redis、MQ、ES、文件、Docker、K8s |
-| `$log-observability-analysis` | Logs、Metrics、Trace、Profiling、告警和变更事件 |
-| `$engineering-quality-delivery` | 修改、测试、Git、部署和生产安全 |
-| `$multi-agent-independent-review` | 实施前/后多 Reviewer 复审与预算控制 |
-| `$technical-document-writing` | 技术方案、架构、接口、部署和正式报告 |
-| `$long-running-task-memory` | 跨会话持续检查点与恢复 |
+1. 所有大型 Reference 分片，按任务渐进加载；
+2. `LIGHT / STANDARD / STRICT` 执行档位；
+3. `IDENTIFY → PLAN → IMPLEMENT → VALIDATE → REVIEW → DELIVER` 阶段状态机；
+4. 任务执行信封和 `execution_guard.py`；
+5. 验证/复审证据绑定 Git 与差异指纹，代码变化后自动 `stale`；
+6. 子 Agent 使用独立上下文，主 Agent 只传最小任务包并接收结构化摘要；
+7. `review_packet.py` 统一 Reviewer 基线，`review_controller.py` 管理预算、隔离、packet hash 和成本档位；
+8. Reviewer `economy / balanced / deep` 三档；
+9. 安装支持 dry-run、doctor、备份与一键恢复；
+10. 语义校验检查版本、Skill 引用、旧名称、路径和隔离逻辑。
 
-## 前端 Skill 使用
+## 安装
 
-```text
-$frontend-engineering
+可从 V4.0 或更早的本包版本原地升级，无需先卸载。建议先执行 dry-run，确认目标目录、备份位置、旧 Skill 清理和潜在冲突后再正式安装。
 
-先识别实际技术栈、版本、渲染载体与客户端/服务端边界，再按需读取一个主要框架规则和必要的安全/质量规则。修改运行行为时执行项目实际生产构建与受影响验证。
-```
-
-技术栈检测：
-
-```bash
-python skills/frontend-engineering/scripts/detect_frontend_stack.py \
-  --project-dir /path/to/project \
-  --format markdown \
-  --max-depth 6 \
-  --max-files 2000
-```
-
-脚本只读，不安装依赖、不执行项目脚本、不修改项目。输出是有界候选证据，仍需结合配置、入口、源码和运行结果确认。
-
-## 升级
-
-不需要先卸载旧版。解压后在包根目录运行安装脚本；旧 `vue-frontend-engineering` 会先备份再移除。升级后重启客户端并确认技能列表只显示 `frontend-engineering`。
+Codex 用户级 Skills 默认安装到 `${CODEX_HOME:-$HOME/.codex}/skills`；doctor 会检查旧 `$HOME/.agents/skills` 中的本包重复副本。
 
 ### Windows
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File ".\scripts\install-user.ps1" -DryRun
 powershell -ExecutionPolicy Bypass -File ".\scripts\install-user.ps1"
 powershell -ExecutionPolicy Bypass -File ".\scripts\verify-user-install.ps1"
+powershell -ExecutionPolicy Bypass -File ".\scripts\doctor.ps1"
 ```
 
 ### WSL / Linux
 
 ```bash
-chmod +x scripts/*.sh
-./scripts/install-user.sh
+./scripts/install-user.sh all --dry-run
+./scripts/install-user.sh all
 ./scripts/verify-user-install.sh
+./scripts/doctor.sh
 ```
 
-## 验证
+安装脚本会备份同名受管资源。需要恢复最近一次安装前状态：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\scripts\restore-latest-backup.ps1"
+```
+
+```bash
+./scripts/restore-latest-backup.sh
+```
+
+## 运行验证
+
+安装后重启客户端并检查 Skills。结构和语义校验：
 
 ```bash
 python3 scripts/validate-package.py
+python3 scripts/semantic-lint.py
 ```
 
-验证覆盖 9 个 Skills、Reviewer、全局受管区块、11 份前端参考规则、3 个模板、12 个检测器自测、路由回归、Shell 安装升级与旧 Skill 清理。PowerShell 实机结果以本机验证脚本为准。
+## 重要边界
 
-## 迁移提示
+- 子 Agent 独立上下文用于隔离探索噪声，但不等于权限隔离；
+- Reviewer 使用统一审查包，不复制整个主会话；
+- 低风险任务使用 LIGHT，不机械多开 Agent；
+- 生产、真实数据、不可逆迁移和权限安全任务使用 STRICT；
+- 验证或复审后代码变化，旧证据必须重新执行或标记失效。
 
-- 旧显式调用：`$vue-frontend-engineering`
-- 新显式调用：`$frontend-engineering`
-
-详见 `docs/FRONTEND_SKILL_MIGRATION.md` 和 `docs/FRONTEND_SKILL_V4_DESIGN.md`。
+详见 `docs/V4_1_EXECUTION_ARCHITECTURE.md`、`docs/SUBAGENT_INDEPENDENT_CONTEXT.md`、`docs/DESIGN_REFERENCES.md` 和 `docs/VALIDATION_REPORT.md`。

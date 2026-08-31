@@ -1,48 +1,38 @@
-# v4.0 安装包验证报告
+# V4.1 安装包验证报告
 
 ## 验证对象
 
 - 平台：Codex
-- 版本：`4.0.0`
-- 基线：v3.3 Reviewer 隔离修正版
-- 日期：2026-07-31
+- 版本：`4.1.0`
+- 版本名称：执行确定性与独立上下文增强版
 - 环境：Linux 容器，Python、Bash、Git 可用；PowerShell 和真实客户端运行不可用
 
-## 变更范围
+## 已实际验证
 
-- `vue-frontend-engineering` 直接改名为 `frontend-engineering`；
-- 通用前端覆盖主要现代框架、传统页面、静态 HTML/JSP、Hybrid Web 与 Renderer 边界；
-- 11 份前端参考规则、3 个模板、只读有界技术栈检测器和 12 个检测器自测；
-- 检测器增加 Workspace、源码签名、无 package.json、Fullstack Web、Hybrid Web 和纯 Node.js 负向识别；
-- 用户级与仓库级升级自动备份/清理旧 Skill；
-- 路由回归覆盖多框架、微前端、SSR 安全、传统/静态页面、Hybrid Web 和桌面主进程排除；
-- 分发包禁止残留 `__pycache__` 与 `.pyc`；
-- 保留 v3.3 Reviewer 运行时隔离修正。
+- 9 个 Skills、Frontmatter、引用和平台元数据；
+- 大 Reference 渐进分片和索引长度；
+- 前端技术栈检测器原有测试；
+- `execution_guard.py` 阶段、门禁、Git/差异指纹、未跟踪内容和 stale 证据测试；
+- `review_packet.py` 统一审查包、未跟踪安全快照、packet hash 和结构化结果校验；
+- `review_controller.py` 实施前/后轮次、深度、总预算、写入成功反证优先级、packet hash 和成本档位；
+- `package_manager.py` dry-run、安装、重复升级、验证、doctor、旧路径迁移和恢复；
+- 语义一致性扫描；
+- Shell、Python、ZIP 和包内校验和完整性；
+- 独立上下文委派协议、结构化结果 Schema 和文档完整性。
 
-## 自动验证结果
-
-结果：**通过**
+## 验证输出
 
 ```text
 验证通过。
 ```
 
-已实际执行：
-
-- 9 个 Skill 的名称、Frontmatter、目录和相对引用检查；
-- 11 份前端 references 与 3 个模板完整性检查；
-- 检测器和测试脚本语法检查；
-- 12 个检测器单元测试；
-- 路由用例结构、旧名称清理和纯 Node/桌面主进程负向场景检查；
-- Shell 脚本语法；
-- 隔离 HOME 中的用户级首次安装、重复升级、验证和卸载；
-- 仓库级旧 Skill 清理和新 Skill 安装；
-- 第三方 Skill 保留；
-- Python 缓存文件零残留；
-- ZIP 完整性和包内 SHA-256 清单。
-
 ## 明确未验证项
 
-- 当前环境未执行 Windows PowerShell 5.1 / 7 实机安装；
-- 未在真实 Codex 客户端执行隐式 Skill 自动触发；
-- 最终应在本机执行验证脚本，重启客户端并检查 `/skills`。
+- Windows PowerShell 5.1 / 7 实机包装脚本；
+- 真实 Codex 客户端中的隐式 Skill 路由、自定义 Agent 发现和并行行为；
+- 真实多子 Agent 并行性能、Token 与缓存数据；
+- 运行时权限隔离仍必须按平台和父会话实际验证，不能由 TOML 声明替代。
+
+## 结论
+
+当前环境中的结构、工具、单元测试、安装恢复和语义验证通过；客户端运行时能力保留为本机验收项。
