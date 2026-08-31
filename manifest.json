@@ -1,9 +1,11 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "2.0.0",
-  "generated_for": "Codex local user and repository skills",
+  "version": "3.0.0",
+  "release_name": "持续记忆与多 Agent 复审版",
+  "generated_for": "Codex local user and repository skills with deterministic checkpoints and read-only review agents",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
+  "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
   "skills": [
     {
       "name": "java-backend-engineering",
@@ -32,20 +34,75 @@
     {
       "name": "engineering-quality-delivery",
       "display_name": "研发质量与安全交付",
-      "description": "代码或配置修改、Bug 修复、优化、测试、最低定向验证、对抗性验证、独立六维复审、Git 提交、CHANGELOG、部署、重启、灰度、回滚或生产操作任务时使用。只读简单解释通常不需要。",
+      "description": "代码或配置修改、Bug 修复、优化、测试、最低定向验证、对抗性验证、独立复审、Git 提交、CHANGELOG、部署、重启、灰度、回滚或生产操作任务时使用。需要多个 Reviewer 时组合 multi-agent-independent-review。",
       "source_mapping": "workflows/01-研发质量与交付工作流.md"
     },
     {
-      "name": "long-running-task-memory",
-      "display_name": "长期任务外部记忆",
-      "description": "任务跨会话、多阶段、多模块、多仓库、多 Agent、生产观察期、上下文可能压缩，或用户要求持续维护计划、进度、决策、交接和交付记录时使用。简单一次性任务不要触发。",
-      "source_mapping": "06-长期任务外部记忆机制.md"
+      "name": "multi-agent-independent-review",
+      "display_name": "多 Agent 独立复审",
+      "description": "代码改动后的独立复审、高风险变更审查、希望多个专业 Reviewer 并行发现完整问题集、统一归因并减少回炉次数时使用。Reviewer 只读，最多 3 层、3 轮、并行 6 个、单边界总计 12 个。",
+      "source_mapping": "new/multi-agent-independent-review"
     },
     {
       "name": "technical-document-writing",
       "display_name": "技术文档与正式报告",
       "description": "技术文档、技术方案、架构设计、实施方案、接口文档、数据库设计、部署运维文档、故障报告、代码审查报告、项目进度报告、选型评估、README、Markdown 重构或基于现有资料整理正式报告时使用。",
       "source_mapping": "new/technical-document-writing"
+    },
+    {
+      "name": "long-running-task-memory",
+      "display_name": "长期任务外部记忆与持续检查点",
+      "description": "任务跨会话、多阶段、多模块、多仓库、多 Agent、上下文可能压缩，或要求每个可恢复小节点持续更新目标、进度、证据、决策和交接时使用。启用后不得让已完成节点只存在于聊天上下文。",
+      "source_mapping": "06-长期任务外部记忆机制.md"
     }
-  ]
+  ],
+  "custom_agents": [
+    {
+      "name": "cp_review_functional_business",
+      "file": "custom-agents/cp-review-functional-business.toml",
+      "scope": "功能正确性与业务口径"
+    },
+    {
+      "name": "cp_review_compatibility_regression",
+      "file": "custom-agents/cp-review-compatibility-regression.toml",
+      "scope": "原有功能回归与兼容性"
+    },
+    {
+      "name": "cp_review_security_access",
+      "file": "custom-agents/cp-review-security-access.toml",
+      "scope": "权限与安全"
+    },
+    {
+      "name": "cp_review_performance_resources",
+      "file": "custom-agents/cp-review-performance-resources.toml",
+      "scope": "性能与资源负担"
+    },
+    {
+      "name": "cp_review_data_contract",
+      "file": "custom-agents/cp-review-data-contract.toml",
+      "scope": "数据与契约一致性"
+    },
+    {
+      "name": "cp_review_state_concurrency",
+      "file": "custom-agents/cp-review-state-concurrency.toml",
+      "scope": "状态、并发与交互边界"
+    },
+    {
+      "name": "cp_review_test_delivery",
+      "file": "custom-agents/cp-review-test-delivery.toml",
+      "scope": "测试证据与交付边界"
+    }
+  ],
+  "quality_limits": {
+    "max_review_agent_depth": 3,
+    "max_review_rounds": 3,
+    "max_parallel_reviewers": 6,
+    "max_total_review_agents_per_boundary": 12,
+    "max_repair_rounds": 3,
+    "max_unpersisted_completed_nodes": 0,
+    "max_substantive_actions_without_checkpoint": 5,
+    "recent_checkpoints_to_load": 5,
+    "hot_progress_checkpoint_limit": 30,
+    "single_memory_writer": true
+  }
 }
