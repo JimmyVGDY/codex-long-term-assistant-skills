@@ -1,6 +1,39 @@
-# Codex Skills 使用示例（v3.0）
+# Codex Skills 使用示例（v3.1）
 
-## 一、Java 本地修复、持续检查点和严格复审
+## 一、本地日志文件分析
+
+```text
+使用 $log-observability-analysis。
+
+分析当前目录中的应用日志、轮转日志和压缩日志包。先列出文件、大小、
+时间范围、时区、编码和完整性；在不覆盖原文件的前提下分块处理。
+建立异常聚类、跨文件时间线和证据台账，区分已确认、高概率、推测和未验证。
+输出时脱敏，不把时间相关性直接写成根因。
+```
+
+## 二、生产只读跨组件日志分析
+
+```text
+使用 $log-observability-analysis、$java-backend-engineering
+和 $data-middleware-ai-infrastructure。
+
+只在生产执行当前授权范围内的只读日志、监控和低风险状态查询。
+分析最近 60 分钟应用、HikariCP、MySQL、RabbitMQ 和容器日志，统一时区并
+通过 traceId/时间线关联。禁止修改、清理、重启、部署、切流和任何数据写入；
+禁止无限 tail -f、无边界扫描、KEYS * 和高消耗全表查询。
+```
+
+## 三、跨会话日志排障
+
+```text
+使用 $log-observability-analysis 和 $long-running-task-memory。
+
+按应用、数据库、中间件和基础设施来源并行只读分析，由主 Agent 统一时间线、
+证据等级和候选根因。每完成一个可恢复节点就追加 PROGRESS.md 并刷新
+CURRENT_TASK.md；子 Agent 不修改共享记忆。
+```
+
+## 四、Java 本地修复、持续检查点和严格复审
 
 ```text
 使用 $java-backend-engineering、$data-middleware-ai-infrastructure、
@@ -18,7 +51,7 @@ $engineering-quality-delivery、$multi-agent-independent-review
 更新项目已有 CHANGELOG，创建本地提交但不要推送。
 ```
 
-## 二、只读多 Agent 全方位复审
+## 五、只读多 Agent 全方位复审
 
 ```text
 使用 $multi-agent-independent-review、$java-backend-engineering
@@ -32,7 +65,7 @@ $engineering-quality-delivery、$multi-agent-independent-review
 最终输出阻塞项、非阻塞项、未验证项和建议的最小完整修复集合。
 ```
 
-## 三、跨会话大型改造
+## 六、跨会话大型改造
 
 ```text
 使用 $long-running-task-memory、$engineering-quality-delivery
@@ -47,7 +80,7 @@ $engineering-quality-delivery、$multi-agent-independent-review
 代码、配置和验证证据。存在冲突时先记录状态分歧，不要直接继续修改。
 ```
 
-## 四、派发 Reviewer 前先写检查点
+## 七、派发 Reviewer 前先写检查点
 
 ```text
 使用 $multi-agent-independent-review 和 $long-running-task-memory。
@@ -58,7 +91,7 @@ $engineering-quality-delivery、$multi-agent-independent-review
 所有结果由主协调 Agent 收齐后写入复审归并检查点和台账。
 ```
 
-## 五、编写系统架构设计文档
+## 八、编写系统架构设计文档
 
 ```text
 使用 $technical-document-writing、$java-backend-engineering、
@@ -70,7 +103,7 @@ $python-backend-ai-engineering 和 $data-middleware-ai-infrastructure。
 部署、监控、容量、风险和演进路线。
 ```
 
-## 六、基于现有文档全面重构
+## 九、基于现有文档全面重构
 
 ```text
 使用 $technical-document-writing。
@@ -80,7 +113,7 @@ $python-backend-ai-engineering 和 $data-middleware-ai-infrastructure。
 验证和回滚。材料没有支持的内容标记为待确认，不要自行补成事实。
 ```
 
-## 七、Python AI Worker 故障排查和复盘
+## 十、Python AI Worker 故障排查和复盘
 
 ```text
 使用 $python-backend-ai-engineering、$data-middleware-ai-infrastructure、
@@ -92,7 +125,7 @@ $technical-document-writing 和 $long-running-task-memory。
 高概率、推测或未验证。最后输出正式故障分析报告。
 ```
 
-## 八、生产操作前暂停确认
+## 十一、生产操作前暂停确认
 
 ```text
 使用 $engineering-quality-delivery 和 $long-running-task-memory。

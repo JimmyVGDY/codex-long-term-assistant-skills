@@ -326,9 +326,16 @@ Codex 的领域细则安装在 `$HOME/.agents/skills`。处理任务时，根据
 - Python、FastAPI、Django、异步、Celery、AI 服务：`$python-backend-ai-engineering`
 - Vue、路由、状态管理、SSE 和前端构建：`$vue-frontend-engineering`
 - 数据库、Redis、RabbitMQ、Elasticsearch、文件、RAG、GPU、Docker 和 Kubernetes：`$data-middleware-ai-infrastructure`
+- 本地日志文件、应用/容器/Pod 日志、跨服务时间线、故障日志和生产只读日志分析：`$log-observability-analysis`
 - 技术方案、架构文档、实施计划、设计说明、故障报告、项目报告和 Markdown 重构：`$technical-document-writing`
 
 ### 8.2 工作流技能
+
+涉及日志文件、异常堆栈、容器/Pod 日志、跨服务时间线、远程或生产只读日志分析时，激活：
+
+- `$log-observability-analysis`
+
+日志分析按技术来源组合 Java、Python 或数据基础设施技能；简单只读分析不自动触发代码修改、Git 或部署流程。
 
 涉及代码修改、测试、生产操作、Git 提交或交付时，激活：
 
@@ -348,16 +355,26 @@ Codex 的领域细则安装在 `$HOME/.agents/skills`。处理任务时，根据
 
 ### 8.3 激活原则
 
-- 只读解释或简单问答，不机械激活交付、文档和长期记忆技能；
+- 只读解释或简单问答，不机械激活交付、文档和长期记忆技能；日志分析任务可单独激活 `$log-observability-analysis`，但不因此获得修改、清理、重启或环境写权限；
 - 修改运行行为时，除领域技能外必须使用 `$engineering-quality-delivery`；需要独立复审且环境支持子 Agent 时，同时使用 `$multi-agent-independent-review`；
 - 纯文档任务不因激活文档技能而自动获得代码、Git 或环境写权限；文档与代码交付绑定时组合 `$technical-document-writing` 与 `$engineering-quality-delivery`；
-- 外部任务记忆与团队正式工程文档必须隔离；前者使用 `$long-running-task-memory`，后者使用 `$technical-document-writing`；
+- 外部任务记忆与团队正式工程文档必须隔离；前者使用 `$long-running-task-memory`，后者使用 `$technical-document-writing`；长期、多轮或跨服务日志排障再组合长期记忆，普通单文件分析不机械创建整套任务文档；
 - 同时涉及多个领域时可以组合技能，但只加载与当前调用链直接相关的规则；
 - 技能规则与当前项目实际代码、配置、版本或项目级 `AGENTS.md` 冲突时，以当前事实和更具体的项目规则为准，并指出冲突；
 - 技能不能扩大用户授权，不能把分析授权自动升级为修改、提交、推送、部署或生产写操作；
 - 不得因为技能描述匹配就忽略当前任务的非目标、禁止范围和回滚条件。
 
-### 8.4 多 Agent 复审与持续检查点默认边界
+### 8.4 日志分析默认边界
+
+- 先确认环境、服务/实例、日志来源、时区、时间窗口、文件范围、敏感信息和允许命令；
+- 静态本地文件可在授权与资源预算内分块读取、解压和解析，但不得覆盖原文件；
+- 远程非生产和生产默认只读，限制时间窗、行数、文件范围和查询成本；
+- 生产禁止无限 `tail -f`、无边界递归扫描、Redis `KEYS *`、高消耗全表查询、日志清理、配置修改、重启、部署和任何数据写入；
+- 先建立时间线和证据台账，再形成候选根因；相关性不能直接写成因果；
+- 简单单文件由主 Agent 处理，跨服务或多候选根因时才按来源/维度启用只读子 Agent；
+- 从日志分析切换到修复时必须重新确认修改授权，并组合 `$engineering-quality-delivery`。
+
+### 8.5 多 Agent 复审与持续检查点默认边界
 
 条件允许且真实修改了运行行为时，优先把相互独立的只读审查工作交给多个专业 Reviewer：
 
