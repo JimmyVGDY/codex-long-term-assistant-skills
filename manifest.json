@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "6.2.0",
-  "release_name": "Windows 实机兼容固化版",
-  "generated_for": "Codex Plugin-first cross-project engineering assistant with deterministic lifecycle hooks, TaskOutcomeEvent V2, project/repository isolation, controlled proposal lifecycle, Luna/Terra model ceiling, safe install/rollback, and progressive Skill loading",
+  "version": "6.3.0",
+  "release_name": "可恢复事务与可证明发行版",
+  "generated_for": "Codex Plugin-first cross-project engineering assistant with durable install transactions, reproducible release artifacts, real lifecycle attestation, TaskOutcomeEvent V2 data-quality gates, controlled proposal lifecycle, and a Luna/Terra model ceiling",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
@@ -299,12 +299,21 @@
     "manager": "scripts/package_manager.py",
     "dry_run": true,
     "doctor": true,
+    "doctor_recover": true,
+    "status_json": true,
+    "durable_transaction_journal": true,
+    "scope_mutex": true,
+    "rollback_failure_reporting": true,
+    "mode_switch_fail_closed": true,
     "restore_latest_backup": true,
     "runtime_target": "${CODEX_HOME:-$HOME/.codex}/runtime/cp_runtime",
     "tool_target": "${CODEX_HOME:-$HOME/.codex}/tools/cp-runtime.py",
     "backup_manifest_integrity": true,
     "restore_target_allowlist": true,
     "source_directory_protection": true,
+    "legacy_state_schemas": [
+      1
+    ],
     "evolution_tool_target": "${CODEX_HOME:-$HOME/.codex}/tools/evolution.py"
   },
   "compatibility_hard_limits": {
@@ -414,6 +423,7 @@
     ]
   },
   "upgrade_from": [
+    "6.2.0",
     "6.1.0",
     "6.0.0",
     "5.1.0",
@@ -448,6 +458,15 @@
     "repo_install_smoke": true,
     "windows_extended_length_path_regression": true,
     "codex_0_150_1_v61_to_v62_plugin_upgrade_restore": true,
+    "codex_0_150_1_v61_to_v63_plugin_upgrade_restore": true,
+    "durable_transaction_fault_injection": true,
+    "transaction_lock_concurrency": true,
+    "doctor_recovery_tests": true,
+    "lifecycle_completeness_tests": true,
+    "reviewer_attribution_tests": true,
+    "deterministic_zip_two_build_test": true,
+    "release_attestation_tamper_test": true,
+    "real_lifecycle_attestation": true,
     "neutral_language_gate": true
   },
   "controlled_evolution": {
@@ -498,6 +517,14 @@
     ],
     "snapshot_write": "exclusive-create",
     "snapshot_source_digest": "sha256",
+    "data_quality_gate": {
+      "lifecycle_completeness": true,
+      "session_end_coverage": true,
+      "terminal_outcome_coverage": true,
+      "actual_model_coverage": true,
+      "reviewer_attribution_coverage": true,
+      "insufficient_evidence_blocks_proposals": true
+    },
     "lifecycle_registry": "project-context/<project-id>/evolution/lifecycle.jsonl"
   },
   "plugin_manifest": ".codex-plugin/plugin.json",
@@ -506,7 +533,21 @@
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
     "tested_target": "0.150.1",
+    "verified_versions": [
+      "0.150.1"
+    ],
+    "unknown_version_policy": "fail-closed-for-plugin-install",
+    "capability_probe": [
+      "plugin-marketplace-add",
+      "plugin-add",
+      "plugin-list-json",
+      "commandWindows-hooks",
+      "session-end-timeout-3s"
+    ],
     "plugin_marketplace_layout": ".agents/plugins/marketplace.json",
-    "plugin_cli": "codex plugin add"
+    "plugin_cli": "codex plugin add",
+    "release_builder": "scripts/build-release.py",
+    "release_attestation": "scripts/release-attestation.py",
+    "lifecycle_acceptance": "scripts/lifecycle-acceptance.py"
   }
 }
