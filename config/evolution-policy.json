@@ -1,0 +1,18 @@
+{
+  "policy_version": "v5.1-default-1",
+  "min_records": 5,
+  "min_independent_tasks": 3,
+  "repeated_failure_count": 3,
+  "model_escalation_rate": 0.4,
+  "routing_deviation_rate": 0.3,
+  "excessive_repair_average": 1.5,
+  "high_repair_rounds": 2,
+  "reviewer_min_invocations": 8,
+  "reviewer_low_yield_rate": 0.05,
+  "negative_outcome_rate": 0.25,
+  "deprecation_min_invocations": 20,
+  "deprecation_min_window_days": 30,
+  "max_source_files": 100,
+  "max_source_file_bytes": 20971520,
+  "max_record_count": 200000
+}
