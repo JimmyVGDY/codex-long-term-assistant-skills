@@ -26,6 +26,7 @@ TEXT_SUFFIXES = CODE_SUFFIXES | DOCUMENT_SUFFIXES | STRUCTURED_SUFFIXES | {".psd
 DIRECTIVE = re.compile(r"^(?:#!|#\s*(?:noqa|type:|pragma:|coding[:=]|fmt:|nosec|pylint:|coverage:))", re.I)
 CJK = re.compile(r"[\u4e00-\u9fff]")
 REVIEWED_PATH = ROOT / "locales" / "en" / "HUMAN_REVIEWED.txt"
+EXCLUDED_ROOTS = {"dist"}
 
 
 def human_reviewed_paths() -> set[str]:
@@ -43,7 +44,15 @@ def tracked_files() -> list[Path]:
     result = subprocess.run(
         ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
         cwd=ROOT, capture_output=True, check=True)
-    return [ROOT / item.decode("utf-8") for item in result.stdout.split(b"\0") if item]
+    files: list[Path] = []
+    for item in result.stdout.split(b"\0"):
+        if not item:
+            continue
+        relative = Path(item.decode("utf-8"))
+        if relative.parts and relative.parts[0] in EXCLUDED_ROOTS:
+            continue
+        files.append(ROOT / relative)
+    return files
 
 
 def issue(code: str, path: Path, line: int = 1, detail: str = "") -> dict[str, Any]:

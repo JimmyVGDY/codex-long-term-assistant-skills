@@ -11,6 +11,7 @@ import tomllib
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -172,6 +173,15 @@ class V661BilingualReleaseTests(unittest.TestCase):
             auditor.REVIEWED_PATH = reviewed
             report = auditor.audit([reviewed])
         self.assertTrue(report["ok"], report["findings"])
+
+    def test_localization_audit_excludes_distribution_artifacts(self) -> None:
+        auditor = _load_localization_auditor()
+        completed = subprocess.CompletedProcess(
+            args=[], returncode=0,
+            stdout=b"README.md\0dist/package-validation-v6.6.1.json\0")
+        with mock.patch.object(auditor.subprocess, "run", return_value=completed):
+            paths = auditor.tracked_files()
+        self.assertEqual([auditor.ROOT / "README.md"], paths)
 
 
 if __name__ == "__main__":
