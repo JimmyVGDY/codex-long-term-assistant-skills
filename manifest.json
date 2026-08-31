@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "4.2.0",
-  "release_name": "模型分级与成本收敛版",
-  "generated_for": "Codex Skills with progressive disclosure, Luna/Terra subagent routing, conservative review budgets, packet freshness, duplicate-work protection, evidence fingerprints, independent-context reviewers, deterministic checkpoints, installation doctor/rollback, and semantic validation",
+  "version": "5.0.0",
+  "release_name": "项目治理与证据闭环版",
+  "generated_for": "Codex Skills with project identity/onboarding, Task Envelope V2, approval/evidence separation, finalization readback, controlled memory promotion, Luna/Terra cost routing, deterministic checkpoints, independent review, safe installation/restore, and semantic validation",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "${CODEX_HOME:-$HOME/.codex}/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
@@ -167,7 +167,35 @@
     "review_packet_schema_version": 3,
     "review_result_schema_version": 2,
     "duplicate_review_dispatch_protection": true,
-    "checkpoint_content_deduplication": true
+    "checkpoint_content_deduplication": true,
+    "task_complexity_levels": [
+      "L0",
+      "L1",
+      "L2",
+      "L3",
+      "L4"
+    ],
+    "project_stages": [
+      "UNPROFILED",
+      "ONBOARDING",
+      "ACTIVE",
+      "PAUSED",
+      "ARCHIVED"
+    ],
+    "host_surfaces": [
+      "main-session",
+      "subagent",
+      "direct-workspace",
+      "worktree",
+      "mcp",
+      "long-running-task"
+    ],
+    "approval_baseline_binding_required_for_protected_actions": true,
+    "checkpoint_to_project_memory_requires_promotion": true,
+    "project_memory_to_knowledge_requires_candidate_review": true,
+    "finalization_readback_required_for_external_action_claims": true,
+    "task_execution_envelope_schema_version": 2,
+    "execution_state_schema_version": 3
   },
   "log_analysis_modes": [
     "static-file-analysis",
@@ -241,7 +269,15 @@
     "review_packet": "skills/multi-agent-independent-review/scripts/review_packet.py",
     "semantic_lint": "scripts/semantic-lint.py",
     "review_controller": "skills/multi-agent-independent-review/scripts/review_controller.py",
-    "checkpoint": "skills/long-running-task-memory/scripts/checkpoint.py"
+    "checkpoint": "skills/long-running-task-memory/scripts/checkpoint.py",
+    "project_runtime": "runtime/cp_runtime",
+    "project_cli": "scripts/cp-runtime.py",
+    "project_profile": "project-profile.json",
+    "project_state": "project-state.json",
+    "approval_contract": "runtime/cp_runtime/approval.py",
+    "evidence_contract": "runtime/cp_runtime/evidence.py",
+    "memory_promotion": "runtime/cp_runtime/memory.py",
+    "finalization": "runtime/cp_runtime/finalization.py"
   },
   "subagent_context_model": {
     "independent_context": true,
@@ -253,7 +289,12 @@
     "manager": "scripts/package_manager.py",
     "dry_run": true,
     "doctor": true,
-    "restore_latest_backup": true
+    "restore_latest_backup": true,
+    "runtime_target": "${CODEX_HOME:-$HOME/.codex}/runtime/cp_runtime",
+    "tool_target": "${CODEX_HOME:-$HOME/.codex}/tools/cp-runtime.py",
+    "backup_manifest_integrity": true,
+    "restore_target_allowlist": true,
+    "source_directory_protection": true
   },
   "compatibility_hard_limits": {
     "max_review_agent_depth": 3,
@@ -301,5 +342,73 @@
     "recommended_max_concurrent_threads_per_session": 3,
     "config_example": "config/agents.example.toml",
     "policy_scope": "skill-and-controller-workflow; not a platform-level allowlist"
+  },
+  "project_governance": {
+    "runtime": "runtime/cp_runtime",
+    "cli": "scripts/cp-runtime.py",
+    "default_context_root": "${CODEX_HOME:-$HOME/.codex}/project-context/<project-id>",
+    "profile_file": "project-profile.json",
+    "state_file": "project-state.json",
+    "onboarding_mode": "bounded-readonly",
+    "network_access_during_onboarding": false,
+    "production_access_during_onboarding": false,
+    "project_binding_fail_closed": true
+  },
+  "authority_registry": {
+    "package_registry": "manifest.json",
+    "project_identity": "project-profile.json",
+    "project_runtime_state": "project-state.json",
+    "task_execution_state": "execution-state.json via execution_guard.py",
+    "review_dispatch_state": "review-state.json via review_controller.py",
+    "review_input_baseline": "review packet manifest via review_packet.py",
+    "task_recovery_state": "CURRENT_TASK.md + PROGRESS.md via checkpoint.py",
+    "project_memory": "project-memory.md after reviewed projection promotion",
+    "cross_project_knowledge": "knowledge candidate records; never auto-active"
+  },
+  "approval_evidence_finalization": {
+    "approval_schema_version": 1,
+    "evidence_schema_version": 1,
+    "finalization_schema_version": 1,
+    "protected_actions": [
+      "commit",
+      "push",
+      "deploy",
+      "restart",
+      "data-write",
+      "production-operation",
+      "make-effective"
+    ],
+    "environments": [
+      "local",
+      "nonproduction",
+      "production"
+    ],
+    "approval_is_workflow_level_not_platform_security": true,
+    "evidence_never_grants_permission": true,
+    "finalization_surfaces": [
+      "modified",
+      "validated",
+      "reviewed",
+      "committed",
+      "pushed",
+      "deployed",
+      "restarted",
+      "effective"
+    ]
+  },
+  "upgrade_from": [
+    "4.2.0",
+    "4.1.0",
+    "4.0.0"
+  ],
+  "release_validation": {
+    "python_syntax": true,
+    "unit_and_regression_tests": true,
+    "isolated_install_restore": true,
+    "source_tree_hash_stability_check": true,
+    "zip_crc_readback": true,
+    "path_traversal_scan": true,
+    "symlink_scan": true,
+    "secret_pattern_scan": true
   }
 }
