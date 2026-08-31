@@ -1,0 +1,6 @@
+interface:
+  display_name: "技术文档与正式报告"
+  short_description: "技术方案、架构文档、实施报告、设计说明与 Markdown 重构"
+  default_prompt: "使用技术文档与正式报告技能，基于当前资料编写可审查、可执行的正式文档，区分事实、推断和未验证项，并保留原有业务口径。"
+policy:
+  allow_implicit_invocation: true
