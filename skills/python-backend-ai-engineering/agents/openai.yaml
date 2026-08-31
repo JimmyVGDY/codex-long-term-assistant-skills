@@ -1,0 +1,6 @@
+interface:
+  display_name: "Python 后端与 AI 服务"
+  short_description: "Python Web、异步 Worker、Celery、AI 与 GPU 服务规则"
+  default_prompt: "使用 Python 后端与 AI 服务技能处理当前任务，区分同步、异步、CPU、I/O 和 GPU 工作负载，并保持业务与资源边界清晰。"
+policy:
+  allow_implicit_invocation: true
