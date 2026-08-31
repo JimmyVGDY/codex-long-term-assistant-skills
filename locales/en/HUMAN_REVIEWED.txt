@@ -37,9 +37,15 @@ global/AGENTS.md
 manifest.json
 skills/controlled-evolution-governance/agents/openai.yaml
 skills/controlled-evolution-governance/references/proposal-lifecycle-v6.md
+skills/controlled-evolution-governance/references/task-outcome-event-v2.md
 skills/controlled-evolution-governance/SKILL.md
 skills/data-middleware-ai-infrastructure/agents/openai.yaml
 skills/data-middleware-ai-infrastructure/references/data-middleware-ai-infrastructure-rules.md
+skills/data-middleware-ai-infrastructure/references/ai-rag-gpu-services.md
+skills/data-middleware-ai-infrastructure/references/data-contract-database.md
+skills/data-middleware-ai-infrastructure/references/redis-messaging.md
+skills/data-middleware-ai-infrastructure/references/search-storage-streaming.md
+skills/data-middleware-ai-infrastructure/references/security-observability-runtime.md
 skills/data-middleware-ai-infrastructure/SKILL.md
 skills/engineering-quality-delivery/agents/openai.yaml
 skills/engineering-quality-delivery/assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml
