@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## 5.1.0 - 2026-08-26
+
+### Added
+
+- `runtime/cp_runtime/evolution` 受控自进化权威实现；
+- Self Observation、Value/Complexity Analysis、Optimization Proposal 和 Human Decision 链路；
+- Proposal/Decision 追加式哈希链、去重、人工 ACCEPT/REJECT/DEFER 与完整性验证；
+- 数据源路径隔离、JSONL 失败关闭、敏感字段脱敏和 Reviewer 退役高置信度门槛；
+- `scripts/evolution.py`、PowerShell/CMD 包装器、V5.1 专项测试与操作文档。
+
+### Changed
+
+- 全局路由新增受控自进化触发边界：普通任务只记录 Feedback，不自动运行完整分析；
+- 包版本、README、Manifest、语义校验和发布校验统一到 V5.1；
+- 接受提案仍需另建实施任务，重新经过 Task Envelope、Approval、Execution Guard、独立 Review 和 Finalization。
+
+### Security
+
+- 所有提案的 `execution_authorization` 固定为 `NONE`；
+- CLI 不提供 `execute`、`apply`、`autofix`、`self-modify` 或 `auto-accept`；
+- 项目串线、数据源越界、哈希链损坏、记录格式错误或证据不足时失败关闭。
+
+### Compatibility
+
+- 保留 V5.0 的 9 个 Skill、7 个 Reviewer、项目治理、Approval/Evidence、Checkpoint/Memory、Finalization 与安装恢复流程；
+- V5.0 项目上下文可直接复用，新增 Evolution 数据仍位于业务仓库外。
+
 ## 5.0.0 - 2026-08-26
 
 ### Added

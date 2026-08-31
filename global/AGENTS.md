@@ -179,4 +179,15 @@ Skill 激活不自动提高模型档位，也不扩大文件、Git、环境、�
 
 信息充分且在当前授权范围内时直接完成，不反复询问。涉及生产、真实数据、不可逆操作或重大架构决策时，必须明确影响范围、停止条件和回滚方式。
 
+<!-- V5.1-CONTROLLED-EVOLUTION:BEGIN -->
+## 十一、V5.1 受控自进化
+
+- 仅在用户明确要求自进化、长期失败分析、成本优化、Reviewer/模型/Skill 路由复盘，或明确授权的版本复盘节点运行完整 Evolution 分析；普通开发任务结束后只记录必要 Feedback。
+- 统一入口为 `scripts/evolution.py`，权威实现为 `runtime/cp_runtime/evolution/`；先执行 `--dry-run` 核对 Project ID、数据源、时间窗口、Task ID 和 Evidence。
+- Proposal、Evidence、Checkpoint、Project Memory 和 `ACCEPTED` 决策均不授予修改权限；所有提案的 `execution_authorization` 必须为 `NONE`。
+- 不得自动修改 Skill、Reviewer、模型档位、`AGENTS.md`、配置或业务代码，不得自动接受、执行、部署或删除能力。
+- 被接受的提案必须转成新的实施任务，重新冻结 Git 基线并经过 Approval、Execution Guard、独立 Review 和 Finalization。
+- 数据不足、记录损坏、哈希链失败、项目串线或来源越界时失败关闭，不得猜测后继续。
+<!-- V5.1-CONTROLLED-EVOLUTION:END -->
+
 <!-- codex-cross-project-assistant:end -->
