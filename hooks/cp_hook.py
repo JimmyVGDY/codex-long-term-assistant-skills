@@ -132,7 +132,14 @@ def _data_path(event: Mapping[str, Any]) -> Path:
     if base:
         root = Path(base).expanduser() / event["project_id"]
     else:
-        codex_home = Path(os.environ.get("CODEX_HOME") or (Path.home() / ".codex"))
+        configured = os.environ.get("CODEX_HOME")
+        if configured and os.name == "nt":
+            match = re.match(r"^/mnt/([A-Za-z])(?:/(.*))?$", configured.strip().replace("\\", "/"))
+            if match:
+                drive = match.group(1).upper()
+                rest = (match.group(2) or "").replace("/", "\\")
+                configured = drive + ":\\" + rest if rest else drive + ":\\"
+        codex_home = Path(configured) if configured else (Path.home() / ".codex")
         root = codex_home / "project-context" / event["project_id"]
     return root / "feedback" / "task-outcome-v2.jsonl"
 
