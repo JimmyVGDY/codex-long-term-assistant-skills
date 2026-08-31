@@ -4,7 +4,7 @@
 
 ## Main changes
 
-- 
+- Add a concise item.
 
 ## Validation evidence
 
