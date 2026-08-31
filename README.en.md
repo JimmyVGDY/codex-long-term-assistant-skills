@@ -9,7 +9,7 @@ Two complete, independently installable, reproducible archives are provided:
 - `Codex-Skills-V6.6.1-zh-CN.zip`
 - `Codex-Skills-V6.6.1-en.zip`
 
-Both distributions share the same runtime, Hooks, installer, schemas, tests, and safety policy. English primary surfaces cover the README, global rules, ten Skill entry points, seven Reviewer definitions, installation, configuration, operating guidance, and release notes. Historical evidence and low-level fixtures remain preserved in their original form.
+Both distributions share the same runtime, Hooks, installer, schemas, tests, and safety policy. The English distribution covers every natural-language document, all ten Skills and their References and templates, seven Reviewer definitions, examples, structured descriptions, and Python runtime messages. Source comments and docstrings use a consistent paired Chinese/English format. Only immutable historical archive filenames, canonical path identifiers, and low-level test fixtures retain their original values as evidence.
 
 ## Capabilities
 
@@ -51,7 +51,7 @@ codex plugin list --json
 
 The dry run must show a bounded backup, contained paths, preserved unknown files, rejected link and reparse risks, and a complete rollback plan. File copying alone is not Plugin success.
 
-Further guidance: `docs/USER_GUIDE_V6.6.1.en.md`, `docs/INSTALLATION_RECOVERY.en.md`, and `docs/CODEX_CONFIG_GUIDE.en.md`.
+Further guidance in the packaged distribution: `docs/USER_GUIDE_V6.6.1.md`, `docs/INSTALLATION_RECOVERY.md`, and `docs/CODEX_CONFIG_GUIDE.md`.
 
 ## Safety boundaries
 

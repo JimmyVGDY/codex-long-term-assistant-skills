@@ -7,8 +7,8 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 ### Added
 
 - Complete, independently installable, deterministic `zh-CN` and `en` archives.
-- English README, global rules, ten Skill entry points, seven Reviewer definitions, installation, configuration, operating, and release guidance.
-- Locale binding, reproducible-build checks, and primary-surface language validation.
+- Human-reviewed English counterparts for every natural-language document, all ten Skills and their References and templates, seven Reviewer definitions, examples, structured descriptions, and Python runtime messages.
+- Locale binding, reproducible-build checks, full-project translation coverage, and fail-closed runtime-literal validation.
 
 ### Fixed
 

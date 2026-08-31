@@ -7,8 +7,8 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 ### Added
 
 - 增加 `zh-CN` 与 `en` 两个完整、可独立安装的确定性发行包。
-- 增加英文 README、全局规则、10 个 Skill 入口、7 个 Reviewer、安装配置、使用说明与发行说明。
-- 增加双语发行结构、locale 绑定、可复现构建和主界面语言验证。
+- 增加全部自然语言文档、10 个 Skill 及其 Reference/模板、7 个 Reviewer、示例、结构化说明和 Python 运行时提示的人工英文配套。
+- 增加双语发行结构、locale 绑定、可复现构建、全项目翻译覆盖审计和运行时字面量失败关闭门禁。
 
 ### Fixed
 

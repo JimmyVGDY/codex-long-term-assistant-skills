@@ -9,7 +9,7 @@ V6.6.1 提供两个完整、可独立安装、可复现构建的发行包：
 - `Codex-Skills-V6.6.1-zh-CN.zip`
 - `Codex-Skills-V6.6.1-en.zip`
 
-两个发行包共享 Runtime、Hooks、安装器、Schema、测试和安全策略。英文发行覆盖 README、全局规则、10 个 Skill 入口、7 个 Reviewer、安装配置、使用说明和发行说明；历史证据与底层测试夹具按原始形态保留。
+两个发行包共享 Runtime、Hooks、安装器、Schema、测试和安全策略。英文发行已覆盖全部自然语言文档、10 个 Skill 及其 Reference/模板、7 个 Reviewer、示例、结构化说明和 Python 运行时提示；源码注释与 Docstring 采用整齐的中英成对格式。仅作为不可改写证据的历史归档文件名、规范路径标识和底层测试夹具保留原值。
 
 ## 能力范围
 
@@ -51,7 +51,7 @@ codex plugin list --json
 
 dry-run 需证明备份范围有界、路径未越界、链接与 Reparse Point 风险被拒绝、未知文件被保留、回滚链完整。仅复制文件不构成 Plugin 安装成功。
 
-详细入口：`docs/USER_GUIDE_V6.6.1.md`、`docs/INSTALLATION_RECOVERY.md`、`docs/CODEX_CONFIG_GUIDE.md`。对应英文文档使用同名 `.en.md` 文件。
+详细入口：`docs/USER_GUIDE_V6.6.1.md`、`docs/INSTALLATION_RECOVERY.md`、`docs/CODEX_CONFIG_GUIDE.md`。源码仓库中的对应英文文档使用同名 `.en.md` 文件；英文 ZIP 内会覆盖到规范文件名，无需添加 `.en`。
 
 ## 发行构建
 

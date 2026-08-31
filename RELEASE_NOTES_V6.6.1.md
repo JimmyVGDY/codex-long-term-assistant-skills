@@ -5,7 +5,8 @@
 ## 已实现
 
 - 新增 `zh-CN` 与 `en` 两个可复现、可独立安装的完整发行包。
-- 英文发行覆盖 README、全局规则、10 个 Skill 入口、7 个 Reviewer、安装配置、使用说明和发行说明。
+- 英文发行覆盖全部自然语言文档、10 个 Skill 及其 Reference/模板、7 个 Reviewer、示例、结构化说明和 Python 运行时提示。
+- 代码注释与 Docstring 采用中英成对格式；运行时英文映射逐字面量人工校订并在构建时失败关闭。
 - Windows 原子文件发布对短暂共享冲突实施有界重试。
 - 新增仅用于验证的封印进程显式等待；生产 SessionEnd 仍为异步，不占用三秒预算。
 - Plugin 成功判定保持 `installed=true`、`enabled=true`、`version=6.6.1` 三项精确读回。
