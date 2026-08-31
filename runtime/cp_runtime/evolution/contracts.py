@@ -16,7 +16,7 @@ from types import MappingProxyType
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 SCHEMA_VERSION = "1.0"
-POLICY_VERSION = "v6.3-default-1"
+POLICY_VERSION = "v6.5-default-1"
 _PROJECT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 
@@ -562,6 +562,9 @@ class EvolutionPolicy:
     excessive_repair_average: float = 1.50
     high_repair_rounds: int = 2
     reviewer_min_invocations: int = 8
+    reviewer_min_independent_tasks: int = 5
+    reviewer_min_labeled_findings: int = 5
+    reviewer_high_duplicate_rate: float = 0.50
     reviewer_low_yield_rate: float = 0.05
     min_lifecycle_completeness_rate: float = 0.80
     min_session_end_coverage: float = 0.80
@@ -581,13 +584,14 @@ class EvolutionPolicy:
         _require_text(self.policy_version, "policy_version", 3, 128)
         integer_fields = (
             "min_records", "min_independent_tasks", "repeated_failure_count",
-            "high_repair_rounds", "reviewer_min_invocations", "deprecation_min_invocations",
+            "high_repair_rounds", "reviewer_min_invocations", "reviewer_min_independent_tasks",
+            "reviewer_min_labeled_findings", "deprecation_min_invocations",
             "deprecation_min_window_days", "min_observation_window_days", "max_source_files", "max_source_file_bytes", "max_record_count",
         )
         for name in integer_fields:
             if int(getattr(self, name)) <= 0:
                 raise ContractError("%s 必须大于 0" % name)
-        for name in ("model_escalation_rate", "routing_deviation_rate", "reviewer_low_yield_rate", "negative_outcome_rate", "min_lifecycle_completeness_rate", "min_session_end_coverage", "min_actual_model_coverage", "min_known_terminal_outcome_coverage", "min_project_repo_binding_coverage", "reviewer_min_attribution_coverage"):
+        for name in ("model_escalation_rate", "routing_deviation_rate", "reviewer_low_yield_rate", "reviewer_high_duplicate_rate", "negative_outcome_rate", "min_lifecycle_completeness_rate", "min_session_end_coverage", "min_actual_model_coverage", "min_known_terminal_outcome_coverage", "min_project_repo_binding_coverage", "reviewer_min_attribution_coverage"):
             value = float(getattr(self, name))
             if not 0.0 <= value <= 1.0:
                 raise ContractError("%s 必须在 0-1 之间" % name)

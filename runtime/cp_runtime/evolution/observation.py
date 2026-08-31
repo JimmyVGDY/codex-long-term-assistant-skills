@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -73,6 +74,16 @@ def _to_float(value: Any, default: float = 0.0) -> float:
         except ValueError:
             return default
     return default
+
+
+def _wilson(successes: int, total: int, z: float = 1.959963984540054) -> Tuple[Optional[float], Optional[float]]:
+    if total <= 0:
+        return None, None
+    proportion = float(successes) / total
+    denominator = 1.0 + z * z / total
+    centre = proportion + z * z / (2.0 * total)
+    margin = z * math.sqrt((proportion * (1.0 - proportion) + z * z / (4.0 * total)) / total)
+    return max(0.0, (centre - margin) / denominator), min(1.0, (centre + margin) / denominator)
 
 
 def _first_text(mapping: Mapping[str, Any], names: Sequence[str]) -> Optional[str]:
@@ -529,6 +540,7 @@ def observe_project(
     repair_evidence: List[EvidenceReference] = []
     negative_evidence: List[EvidenceReference] = []
     reviewer_stats: Dict[str, Dict[str, Any]] = {}
+    reviewer_result_identities: Dict[Tuple[str, str, str], str] = {}
     skill_usage: Counter[str] = Counter()
     records_without_task = 0
 
@@ -607,7 +619,27 @@ def observe_project(
                 "accepted": 0, "rejected": 0, "duplicate": 0, "repaired": 0,
                 "regressions_prevented": 0, "duration_ms": 0, "cost_units": 0.0,
                 "attribution_count": 0,
+                "labeled_finding_count": 0, "unattributed_result_count": 0,
+                "duplicate_result_count": 0, "conflicting_result_count": 0,
             })
+            result_id = _first_text(result, ("result_id", "review_result_id"))
+            review_round = _first_text(result, ("review_round", "round"))
+            packet_hash = _first_text(result, ("packet_sha256", "packet_hash"))
+            if not result_id and task_id and review_round and packet_hash:
+                result_id = "derived:" + sha256_hex("%s|%s|%s|%s" % (task_id, reviewer, review_round, packet_hash))
+            if not task_id or not result_id:
+                stats["unattributed_result_count"] += 1
+                continue
+            identity = (task_id, reviewer, result_id)
+            result_hash = sha256_hex(canonical_json(result))
+            previous_result_hash = reviewer_result_identities.get(identity)
+            if previous_result_hash is not None:
+                if previous_result_hash == result_hash:
+                    stats["duplicate_result_count"] += 1
+                else:
+                    stats["conflicting_result_count"] += 1
+                continue
+            reviewer_result_identities[identity] = result_hash
             stats["invocations"] += 1
             for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented"):
                 stats[name] += max(0, _to_int(result.get(name), 0))
@@ -615,6 +647,8 @@ def observe_project(
             stats["cost_units"] += max(0.0, _to_float(result.get("cost_units"), 0.0))
             if any(name in result for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented")):
                 stats["attribution_count"] += 1
+                stats["labeled_finding_count"] += sum(max(0, _to_int(result.get(name), 0))
+                                                        for name in ("accepted", "rejected", "duplicate"))
             findings = result.get("findings")
             if isinstance(findings, list):
                 # V6：明细是权威来源，避免与汇总数字重复计数。
@@ -626,6 +660,8 @@ def observe_project(
                         stats["blocking_findings"] += 1
                     else:
                         stats["nonblocking_findings"] += 1
+                    if any(str(finding.get(name) or "").strip() for name in ("status", "outcome", "disposition", "label")):
+                        stats["labeled_finding_count"] += 1
             else:
                 stats["blocking_findings"] += max(0, _to_int(result.get("blocking_findings"), 0))
                 stats["nonblocking_findings"] += max(0, _to_int(result.get("nonblocking_findings"), 0))
@@ -671,20 +707,52 @@ def observe_project(
     for reviewer, stats in sorted(reviewer_stats.items()):
         total_findings = stats["blocking_findings"] + stats["nonblocking_findings"]
         invocations = stats["invocations"]
+        task_count = len(stats["tasks"])
+        attribution_coverage = float(stats["attribution_count"]) / invocations if invocations else 0.0
+        adoption_total = stats["accepted"] + stats["rejected"]
+        adoption_low, adoption_high = _wilson(stats["accepted"], adoption_total)
+        duplicate_rate = float(stats["duplicate"]) / max(1, total_findings)
+        benefit_proxy = float(stats["repaired"] + stats["regressions_prevented"]) / max(1.0, stats["cost_units"])
+        sample_sufficient = (invocations >= policy.reviewer_min_invocations
+                             and task_count >= policy.reviewer_min_independent_tasks
+                             and attribution_coverage >= policy.reviewer_min_attribution_coverage
+                             and stats["labeled_finding_count"] >= policy.reviewer_min_labeled_findings)
+        if stats["conflicting_result_count"]:
+            calibration_status = "CONFLICT"
+        elif not sample_sufficient:
+            calibration_status = "INSUFFICIENT_DATA"
+        elif duplicate_rate >= policy.reviewer_high_duplicate_rate:
+            calibration_status = "HIGH_DUPLICATION"
+        elif adoption_high is not None and adoption_high < 0.20 and benefit_proxy <= policy.reviewer_low_yield_rate:
+            calibration_status = "LOW_YIELD_CANDIDATE"
+        elif (adoption_low is not None and adoption_low >= 0.20) or benefit_proxy > policy.reviewer_low_yield_rate:
+            calibration_status = "EFFECTIVE"
+        else:
+            calibration_status = "OBSERVE"
         normalized_reviewer_metrics[reviewer] = {
             "invocations": invocations,
             "blocking_findings": stats["blocking_findings"],
             "nonblocking_findings": stats["nonblocking_findings"],
             "findings_per_invocation": (float(total_findings) / invocations) if invocations else 0.0,
-            "independent_task_count": len(stats["tasks"]),
+            "independent_task_count": task_count,
             "accepted": stats["accepted"], "rejected": stats["rejected"], "duplicate": stats["duplicate"],
             "repaired": stats["repaired"], "regressions_prevented": stats["regressions_prevented"],
             "duration_ms": stats["duration_ms"], "cost_units": round(stats["cost_units"], 6),
-            "attribution_coverage": round(float(stats["attribution_count"]) / invocations, 6) if invocations else 0.0,
+            "attribution_coverage": round(attribution_coverage, 6),
             "adoption_rate": round(float(stats["accepted"]) / (stats["accepted"] + stats["rejected"]), 6) if stats["accepted"] + stats["rejected"] else None,
+            "adoption_wilson_95": [round(adoption_low, 6), round(adoption_high, 6)] if adoption_low is not None else None,
             "repair_conversion_rate": round(float(stats["repaired"]) / stats["accepted"], 6) if stats["accepted"] else None,
-            "duplicate_rate": round(float(stats["duplicate"]) / total_findings, 6) if total_findings else None,
-            "benefit_proxy": round(float(stats["repaired"] + stats["regressions_prevented"]) / max(1.0, stats["cost_units"]), 6),
+            "duplicate_rate": round(duplicate_rate, 6) if total_findings else None,
+            "duration_per_invocation_ms": round(float(stats["duration_ms"]) / invocations, 6) if invocations else None,
+            "cost_per_accepted": round(float(stats["cost_units"]) / stats["accepted"], 6) if stats["accepted"] else None,
+            "cost_per_repaired": round(float(stats["cost_units"]) / stats["repaired"], 6) if stats["repaired"] else None,
+            "benefit_proxy": round(benefit_proxy, 6),
+            "labeled_finding_count": stats["labeled_finding_count"],
+            "sample_sufficient": sample_sufficient,
+            "calibration_status": calibration_status,
+            "unattributed_result_count": stats["unattributed_result_count"],
+            "duplicate_result_count": stats["duplicate_result_count"],
+            "conflicting_result_count": stats["conflicting_result_count"],
         }
 
     metrics: Dict[str, Any] = {
@@ -823,7 +891,8 @@ def observe_project(
         attribution_coverage = (float(stats["attribution_count"]) / invocations) if invocations else 0.0
         benefit_proxy = float(stats["repaired"] + stats["regressions_prevented"]) / max(1.0, stats["cost_units"])
         # 缺少因果归因时，禁止仅根据 finding 数量将 Reviewer 判定为低收益。
-        if invocations < policy.reviewer_min_invocations or attribution_coverage < policy.reviewer_min_attribution_coverage or benefit_proxy > policy.reviewer_low_yield_rate:
+        calibration = normalized_reviewer_metrics[reviewer]
+        if calibration["calibration_status"] != "LOW_YIELD_CANDIDATE":
             continue
         independent = len(stats["tasks"])
         signals.append(PatternSignal(
