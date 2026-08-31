@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "v4.0 路由回归：覆盖最小充分加载、Reviewer 隔离边界和跨框架/传统/混合前端识别。",
+  "description": "V4.1 路由回归：覆盖最小充分加载、执行档位、独立上下文 Reviewer、证据有效性和跨框架/传统/混合前端识别。",
   "cases": [
     {
       "id": "java-concept-readonly",
@@ -480,6 +480,58 @@
         "log-observability-analysis"
       ],
       "max_active": 2
+    },
+    {
+      "id": "light-readonly-explanation",
+      "prompt": "只解释这个 Java 异常含义，不改代码。",
+      "required": [
+        "java-backend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "long-running-task-memory"
+      ]
+    },
+    {
+      "id": "standard-code-change",
+      "prompt": "修复普通 Spring Service Bug，跑相关测试，不推送。",
+      "required": [
+        "java-backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "multi-agent-independent-review"
+      ],
+      "forbidden": [
+        "technical-document-writing"
+      ]
+    },
+    {
+      "id": "strict-schema-migration",
+      "prompt": "设计并实施生产数据库不可逆风险迁移，需要灰度、回滚和独立复审。",
+      "required": [
+        "data-middleware-ai-infrastructure",
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "long-running-task-memory"
+      ],
+      "optional": [
+        "technical-document-writing"
+      ],
+      "forbidden": []
+    },
+    {
+      "id": "subagent-context-review",
+      "prompt": "将功能、安全和性能审查委派给独立上下文子 Agent，使用同一审查包并只返回结构化摘要。",
+      "required": [
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "long-running-task-memory"
+      ],
+      "forbidden": []
     }
   ]
 }
