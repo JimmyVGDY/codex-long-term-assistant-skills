@@ -1,0 +1,37 @@
+name: 改进建议（中文）
+description: 提交有边界、可验证的改进方案
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 目标问题
+      description: 描述当前限制、影响场景和已有替代方式。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+      description: 说明范围、关键行为与不包含的内容。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收口径
+      description: 列出可观察、可重复验证的完成条件。
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: 兼容与安全影响
+      description: 说明升级、回滚、权限、隐私、模型策略或跨项目隔离影响。
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: 安全边界
+      options:
+        - label: 方案不把优化提案等同于自动实施授权。
+          required: true

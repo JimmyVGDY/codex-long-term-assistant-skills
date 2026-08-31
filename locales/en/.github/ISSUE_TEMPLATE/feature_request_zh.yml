@@ -1,0 +1,37 @@
+name: Improvement proposal (English)
+description: Propose a bounded and verifiable improvement
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Target problem
+      description: Describe the current limitation, affected scenarios, and available alternatives.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Define the scope, key behavior, and explicit non-goals.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable and repeatable completion conditions.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and safety impact
+      description: Cover upgrade, rollback, authority, privacy, model policy, and cross-project isolation.
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Safety boundary
+      options:
+        - label: The proposal does not treat an optimization proposal as automatic implementation authority.
+          required: true

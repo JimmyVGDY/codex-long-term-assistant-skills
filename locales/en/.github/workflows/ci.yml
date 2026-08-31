@@ -1,0 +1,57 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Audit bilingual coverage
+        run: python scripts/localization-audit.py --strict
+      - name: Validate complete package
+        run: python scripts/validate-package.py
+
+  build:
+    name: Build bilingual distributions
+    needs: validate
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build zh-CN package
+        run: python scripts/build-release.py reproducible --locale zh-CN --output "${{ runner.temp }}\Codex-Skills-V6.6.1-zh-CN.zip" --witness "${{ runner.temp }}\witness-zh-CN.json"
+      - name: Build English package
+        run: python scripts/build-release.py reproducible --locale en --output "${{ runner.temp }}\Codex-Skills-V6.6.1-en.zip" --witness "${{ runner.temp }}\witness-en.json"
+      - name: Upload candidate artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6.6.1-bilingual-candidate
+          path: |
+            ${{ runner.temp }}\Codex-Skills-V6.6.1-zh-CN.zip
+            ${{ runner.temp }}\Codex-Skills-V6.6.1-en.zip
+            ${{ runner.temp }}\witness-zh-CN.json
+            ${{ runner.temp }}\witness-en.json
+          retention-days: 7

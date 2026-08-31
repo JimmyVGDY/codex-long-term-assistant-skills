@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 私密漏洞报告 / Private vulnerability reporting
+    url: https://github.com/JimmyVGDY/codex-long-term-assistant-skills/security/advisories/new
+    about: 安全问题与敏感证据使用私密渠道 / Use the private channel for security findings and sensitive evidence

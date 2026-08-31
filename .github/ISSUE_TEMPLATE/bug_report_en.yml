@@ -1,0 +1,47 @@
+name: Bug report (English)
+description: Report a reproducible defect with validation evidence
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for reporting a defect. Use private vulnerability reporting for security findings.
+  - type: input
+    id: version
+    attributes:
+      label: Version and environment
+      description: Include the package, Codex, operating-system, and Python versions.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem description
+      description: Describe the actual result, expected result, and impact.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Provide stable, minimal steps without sensitive information.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted evidence
+      description: Add command output, log excerpts, or screenshots after removing credentials and private paths.
+  - type: textarea
+    id: verification
+    attributes:
+      label: Attempted validation
+      description: List completed checks and their actual results.
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: Existing Issues have been searched and no duplicate was found.
+          required: true
+        - label: This report contains no tokens, cookies, API keys, passwords, or other sensitive information.
+          required: true
