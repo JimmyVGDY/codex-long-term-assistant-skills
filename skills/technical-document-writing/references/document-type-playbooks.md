@@ -1,5 +1,16 @@
 # 文档类型选择与编写 Playbook
 
+## 本文件目录
+
+- 一、选择矩阵
+- 二、技术方案 Playbook
+- 三、架构设计 Playbook
+- 四、实施计划 Playbook
+- 五、API 与数据库设计 Playbook
+- 六、故障报告 Playbook
+- 七、代码审查 Playbook
+- 八、管理报告 Playbook
+
 本文件用于在已经确定文档类型后快速选择结构。只读取与当前任务相关的部分。
 
 ## 一、选择矩阵
