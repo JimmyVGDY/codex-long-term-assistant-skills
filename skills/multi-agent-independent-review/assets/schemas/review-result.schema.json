@@ -5,6 +5,7 @@
   "additionalProperties": false,
   "required": [
     "schema_version",
+    "result_id",
     "reviewer",
     "boundary_id",
     "packet_sha256",
@@ -19,6 +20,10 @@
   "properties": {
     "schema_version": {
       "const": 2
+    },
+    "result_id": {
+      "type": "string",
+      "pattern": "^RVR_[a-f0-9]{64}$"
     },
     "reviewer": {
       "type": "string",

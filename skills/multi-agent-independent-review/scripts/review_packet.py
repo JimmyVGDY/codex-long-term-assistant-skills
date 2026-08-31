@@ -440,8 +440,12 @@ def command_result_template(args: argparse.Namespace) -> None:
     if profile not in MODEL_PROFILES:
         die("未知 model-profile")
     config = MODEL_PROFILES[profile]
+    result_id = "RVR_" + hashlib.sha256(
+        (manifest["boundary_id"] + "|" + args.reviewer + "|" + manifest["packet_sha256"]).encode("utf-8")
+    ).hexdigest()
     result = {
         "schema_version": 2,
+        "result_id": result_id,
         "reviewer": args.reviewer,
         "boundary_id": manifest["boundary_id"],
         "packet_sha256": manifest["packet_sha256"],
@@ -472,6 +476,7 @@ def command_validate_result(args: argparse.Namespace) -> None:
     result = json.loads(Path(args.result_file).read_text(encoding="utf-8-sig"))
     required = {
         "schema_version",
+        "result_id",
         "reviewer",
         "boundary_id",
         "packet_sha256",
@@ -487,6 +492,11 @@ def command_validate_result(args: argparse.Namespace) -> None:
         die("Reviewer 结果缺少字段: " + ",".join(missing))
     if result["schema_version"] != 2:
         die("Reviewer 结果 schema_version 必须是 2")
+    expected_result_id = "RVR_" + hashlib.sha256(
+        (manifest["boundary_id"] + "|" + str(result["reviewer"]) + "|" + manifest["packet_sha256"]).encode("utf-8")
+    ).hexdigest()
+    if result["result_id"] != expected_result_id:
+        die("Reviewer 结果 result_id 与审查包身份不匹配")
     if result["boundary_id"] != manifest["boundary_id"]:
         die("Reviewer 结果 boundary_id 不匹配")
     if result["packet_sha256"] != manifest["packet_sha256"]:

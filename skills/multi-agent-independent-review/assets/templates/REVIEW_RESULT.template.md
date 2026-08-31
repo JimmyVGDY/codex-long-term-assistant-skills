@@ -3,6 +3,7 @@
 ## 基本信息
 
 - Reviewer：
+- 结果 ID：由 `result-template` 生成，不手工改写
 - 职责：
 - 审查阶段：pre / post
 - 轮次：
