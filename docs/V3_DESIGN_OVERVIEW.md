@@ -1,5 +1,8 @@
 # v3.0 基础设计说明：持续外部记忆与多 Agent 独立复审
 
+> 历史设计文档：其中预算和流程默认值已被 V4.2 替代；当前规则以 `V4_2_COST_FLOW_OPTIMIZATION.md`、`MODEL_ROUTING_AND_COST_POLICY.md` 和实际脚本为准。
+
+
 ## 一、升级目标
 
 v3.0 重点解决长期 Agent 任务中的两个系统性问题：

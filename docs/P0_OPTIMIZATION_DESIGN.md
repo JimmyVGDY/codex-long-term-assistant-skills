@@ -1,5 +1,8 @@
 # v3.2 P0 优化设计说明
 
+> 历史设计文档：其中预算和流程默认值已被 V4.2 替代；当前规则以 `V4_2_COST_FLOW_OPTIMIZATION.md`、`MODEL_ROUTING_AND_COST_POLICY.md` 和实际脚本为准。
+
+
 > v3.3 修正说明：本文中的 Reviewer `read-only` 应理解为 TOML 配置声明和行为约束。运行时系统隔离必须按 `REVIEWER_RUNTIME_ISOLATION.md` 单独验证。
 
 ## 一、目标

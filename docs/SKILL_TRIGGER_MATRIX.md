@@ -101,12 +101,12 @@ MAX_ACTIVE_SKILLS_WITHOUT_JUSTIFICATION = 4
 
 ### 选择规则
 
-- 低风险：1～2 个 Reviewer；
-- 中风险：3～4 个 Reviewer；
-- 高风险：5～6 个 Reviewer；
+- 低风险：0～1 个 Reviewer，默认 `economy` / Luna；
+- 中风险：1～2 个 Reviewer，默认 `balanced`；
+- 高风险：2～3 个 Reviewer，默认 `deep`，仅关键维度可 Terra High；
 - 不为凑数量启动职责重复的 Reviewer；
 - 第一轮未全部返回前不边审边改；
-- 总深度、轮次、并行数、总量和修复轮次均受上限约束。
+- 默认并行 3、累计 6、post 2 轮、修复 2 轮、Terra High 1 个；模型、人数、上下文和轮次同时受预算约束。
 
 ## 五、长期任务记忆触发测试
 

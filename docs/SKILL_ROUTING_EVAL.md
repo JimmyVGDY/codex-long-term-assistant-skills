@@ -41,11 +41,13 @@ python3 scripts/routing-eval.py evaluate --results routing-observations.json
 
 Codex 是否展示完整隐式 Skill 激活信息取决于当前客户端能力。无法直接观察时，可要求主 Agent 在测试模式下仅报告激活计划，不执行任务。该报告仍属于模型输出，不能替代对实际工作行为的抽查。
 
-## v3.3 隔离门禁用例
+## V4.2 隔离与模型路由用例
 
 路由集新增：
 
 - 严格只读复审：必须加载 `multi-agent-independent-review`，先检查父会话权限；
 - 可写父会话中的逻辑只读复审：必须明确 `logical-readonly`，不能把 TOML 声明当作系统隔离。
 
-路由测试只能验证 Skill 选择，不能证明子 Agent 的沙箱权限。运行时隔离必须通过父会话权限或单独的临时仓库探针验证。
+路由集还应抽查：机械任务优先 Luna、业务判断使用 Terra、自动上限 Terra High、多个 Skill 不累加强度。
+
+路由测试只能验证 Skill 与计划选择，不能证明子 Agent 的实际模型或沙箱权限；运行时信息必须由线程证据、结构化结果和隔离记录核验。
