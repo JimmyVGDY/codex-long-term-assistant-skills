@@ -34,16 +34,16 @@ def run_script(script: Path, arguments: list[str], environment: dict[str, str] |
     return result
 
 
-class V63ReleaseDeliveryTests(unittest.TestCase):
+class V64ReleaseDeliveryTests(unittest.TestCase):
     def setUp(self):
-        self.temporary = tempfile.TemporaryDirectory(prefix="cp-v63-release-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="cp-v64-release-")
         self.root = Path(self.temporary.name)
 
     def tearDown(self):
         self.temporary.cleanup()
 
     def test_release_build_is_byte_reproducible_and_normalized(self):
-        artifact = self.root / "Codex-Skills-V6.3.zip"
+        artifact = self.root / "Codex-Skills-V6.4.zip"
         witness = self.root / "deterministic-build-v6.3.json"
         result = run_script(BUILD, ["reproducible", "--output", str(artifact), "--witness", str(witness)])
         report = json.loads(result.stdout)
@@ -107,15 +107,83 @@ class V63ReleaseDeliveryTests(unittest.TestCase):
         self.assertNotIn(child, serialized)
         self.assertIn("gpt-5.6-luna", report["actual_subagent_models"])
 
+    def test_lifecycle_uses_correlated_host_session_model_without_rewriting_hook_facts(self):
+        event_file = self.root / "task-outcome-v2-unavailable.jsonl"
+        session = "session-host-fact"
+        parent = "parent-host-fact"
+        child = "child-host-fact"
+        fingerprint = stable_repo_fingerprint(str(self.root))
+        project = project_id_for(fingerprint, str(self.root))
+        sequence = [
+            ("TURN_OPENED", parent),
+            ("SUBAGENT_STARTED", child),
+            ("SUBAGENT_STOPPED", child),
+            ("TASK_COMPLETED", parent),
+            ("SESSION_ENDED", session),
+        ]
+        for index, (event_type, task_id) in enumerate(sequence):
+            append_event(event_file, make_event({
+                "event_id": "HOST-%d" % index,
+                "event_type": event_type,
+                "session_id": session,
+                "turn_id": task_id,
+                "task_id": task_id,
+                "project_id": project,
+                "repo_fingerprint": fingerprint,
+                "terminal_outcome": "PASS" if event_type == "TASK_COMPLETED" else "UNKNOWN",
+            }))
+        host_log = self.root / "subagent-rollout.jsonl"
+        host_log.write_text("\n".join(json.dumps(record) for record in [
+            {
+                "type": "session_meta",
+                "payload": {
+                    "session_id": session,
+                    "id": "child-thread",
+                    "model": "gpt-5.6-luna",
+                    "agent_role": "cp_review_test_delivery",
+                    "source": {"subagent": {"thread_spawn": {"parent_thread_id": session}}},
+                },
+            },
+            {
+                "type": "turn_context",
+                "payload": {"turn_id": child, "model": "gpt-5.6-luna", "effort": "low"},
+            },
+        ]) + "\n", encoding="utf-8")
+        result = run_script(LIFECYCLE, [
+            "--event-file", str(event_file),
+            "--session-id", session,
+            "--project-id", project,
+            "--repo-fingerprint", fingerprint,
+            "--expected-subagent-model", "gpt-5.6-luna",
+            "--expected-reasoning-effort", "low",
+            "--host-session-log", str(host_log),
+            "--output", str(self.root / "host-model-report.json"),
+        ])
+        report = json.loads(result.stdout)
+        self.assertEqual([], report["actual_subagent_models"])
+        self.assertEqual("PASS", report["subagent_model_evidence"]["status"])
+        self.assertTrue(report["subagent_model_evidence"]["host_session_match"])
+        self.assertTrue(report["subagent_model_evidence"]["actual_model_fact_preserved"])
+        self.assertEqual(["low"], report["subagent_model_evidence"]["observed_reasoning_efforts"])
+
+        run_script(LIFECYCLE, [
+            "--event-file", str(event_file),
+            "--session-id", session,
+            "--project-id", project,
+            "--repo-fingerprint", fingerprint,
+            "--expected-subagent-model", "gpt-5.6-luna",
+            "--output", str(self.root / "missing-model-report.json"),
+        ], expected=2)
+
     def test_attestation_binds_artifact_and_all_evidence(self):
-        artifact = self.root / "Codex-Skills-V6.3.zip"
-        artifact.write_bytes(b"artifact-v63")
+        artifact = self.root / "Codex-Skills-V6.4.zip"
+        artifact.write_bytes(b"artifact-v64")
         evidence = {
             "plugin-list-v6.3.json": {
                 "installed": [
                     {
                         "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-                        "version": "6.3.0",
+                        "version": "6.4.0",
                         "installed": True,
                         "enabled": True,
                     }
@@ -139,7 +207,12 @@ class V63ReleaseDeliveryTests(unittest.TestCase):
             "deterministic-build-v6.3.json": {
                 "ok": True,
                 "reproducible": True,
-                "artifact_sha256": hashlib.sha256(b"artifact-v63").hexdigest(),
+                "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
+            },
+            "release-verification-v6.4.json": {
+                "ok": True, "version": "6.4.0",
+                "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
+                "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")},
             },
         }
         for name, value in evidence.items():
@@ -162,6 +235,8 @@ class V63ReleaseDeliveryTests(unittest.TestCase):
                 str(self.root / "package-validation-v6.3.json"),
                 "--deterministic-witness",
                 str(self.root / "deterministic-build-v6.3.json"),
+                "--unified-verification",
+                str(self.root / "release-verification-v6.4.json"),
                 "--codex-version-evidence",
                 str(version_evidence),
                 "--output",
@@ -194,12 +269,12 @@ class V63ReleaseDeliveryTests(unittest.TestCase):
         )
 
     def test_attestation_rejects_witness_for_another_artifact(self):
-        artifact = self.root / "Codex-Skills-V6.3.zip"
-        artifact.write_bytes(b"artifact-v63")
+        artifact = self.root / "Codex-Skills-V6.4.zip"
+        artifact.write_bytes(b"artifact-v64")
         plugin = self.root / "plugin-list-v6.3.json"
         plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.3.0", "installed": True, "enabled": True,
+            "version": "6.4.0", "installed": True, "enabled": True,
         }]}), encoding="utf-8")
         lifecycle = self.root / "lifecycle-acceptance-v6.3.json"
         lifecycle.write_text(json.dumps({
@@ -213,19 +288,24 @@ class V63ReleaseDeliveryTests(unittest.TestCase):
         witness.write_text(json.dumps({"ok": True, "reproducible": True, "artifact_sha256": "0" * 64}), encoding="utf-8")
         version = self.root / "codex-version-v6.3.txt"
         version.write_text("codex-cli 0.150.1\n", encoding="utf-8")
+        unified = self.root / "release-verification-v6.4.json"
+        unified.write_text(json.dumps({"ok": True, "version": "6.4.0",
+            "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
+            "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")}}), encoding="utf-8")
         result = run_script(ATTEST, [
             "create", "--artifact", str(artifact), "--plugin-list", str(plugin),
             "--lifecycle-report", str(lifecycle), "--package-validation", str(validation),
             "--deterministic-witness", str(witness), "--codex-version-evidence", str(version),
+            "--unified-verification", str(unified),
             "--output", str(self.root / "attestation.json"),
         ], expected=2)
         self.assertIn("not bound", result.stderr)
 
     def test_attestation_hmac_and_unsafe_evidence_name_fail_closed(self):
-        artifact = self.root / "Codex-Skills-V6.3.zip"; artifact.write_bytes(b"artifact-v63")
+        artifact = self.root / "Codex-Skills-V6.4.zip"; artifact.write_bytes(b"artifact-v64")
         plugin = self.root / "plugin.json"; plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.3.0", "installed": True, "enabled": True,
+            "version": "6.4.0", "installed": True, "enabled": True,
         }]}), encoding="utf-8")
         lifecycle = self.root / "life.json"; lifecycle.write_text(json.dumps({
             "ok": True, "project_id": "project-neutral", "repo_fingerprint": "sha256:" + "a" * 64,
@@ -234,14 +314,19 @@ class V63ReleaseDeliveryTests(unittest.TestCase):
         }), encoding="utf-8")
         validation = self.root / "validation.json"; validation.write_text(json.dumps({"ok": True}), encoding="utf-8")
         witness = self.root / "witness.json"; witness.write_text(json.dumps({
-            "ok": True, "reproducible": True, "artifact_sha256": hashlib.sha256(b"artifact-v63").hexdigest(),
+            "ok": True, "reproducible": True, "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
         }), encoding="utf-8")
         version = self.root / "version.txt"; version.write_text("codex-cli 0.150.1\n", encoding="utf-8")
+        unified = self.root / "unified.json"; unified.write_text(json.dumps({
+            "ok": True, "version": "6.4.0", "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
+            "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")}
+        }), encoding="utf-8")
         attestation = self.root / "attestation.json"
-        good_env = {**os.environ, "CP_ASSISTANT_ATTESTATION_HMAC_KEY": "test-key-v63"}
+        good_env = {**os.environ, "CP_ASSISTANT_ATTESTATION_HMAC_KEY": "test-key-v64"}
         create_args = ["create", "--artifact", str(artifact), "--plugin-list", str(plugin),
                        "--lifecycle-report", str(lifecycle), "--package-validation", str(validation),
                        "--deterministic-witness", str(witness), "--codex-version-evidence", str(version),
+                       "--unified-verification", str(unified),
                        "--output", str(attestation)]
         run_script(ATTEST, create_args, good_env)
         run_script(ATTEST, ["verify", "--attestation", str(attestation), "--artifact", str(artifact)], good_env)
@@ -284,3 +369,4 @@ class V63ReleaseDeliveryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

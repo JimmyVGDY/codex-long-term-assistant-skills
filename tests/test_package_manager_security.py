@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""V6.3 installer security and scope smoke tests."""
+"""V6.4 installer security and scope smoke tests."""
 from __future__ import annotations
-import json, os, shutil, subprocess, sys, tempfile, unittest
+import json, os, shutil, subprocess, sys, tempfile, time, unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -22,7 +22,7 @@ def run(args, env, expected=0):
     return r
 
 
-class PackageManagerV63Tests(unittest.TestCase):
+class PackageManagerV64Tests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(prefix='cp-v63-pm-')
         self.home=Path(self.tmp.name)/'home'; self.home.mkdir()
@@ -30,28 +30,42 @@ class PackageManagerV63Tests(unittest.TestCase):
         self.bin=Path(self.tmp.name)/'bin'; self.bin.mkdir()
         fake=self.bin/'fake_codex.py'
         fake.write_text("""#!/usr/bin/env python3
-import json, os, sys
+import json, os, shutil, sys
 from pathlib import Path
+def io_path(path):
+    absolute=str(path.absolute())
+    return Path((r'\\\\?' + os.sep + absolute) if os.name=='nt' and not absolute.startswith(r'\\\\?') else absolute)
 home=Path(os.environ.get('CODEX_HOME') or '.')
 state=home/'fake-codex-plugin-state.json'
+market_file=home/'fake-codex-marketplace-path.txt'
 args=sys.argv[1:]
 if args == ['--version']:
     print(os.environ.get('FAKE_CODEX_VERSION', 'codex-cli 0.150.1')); raise SystemExit(0)
 if args[:3] == ['plugin','marketplace','add']:
+    if len(args) > 3 and args[3] != '--help': market_file.write_text(args[3],encoding='utf-8')
     print('marketplace added'); raise SystemExit(0)
 if args[:3] == ['plugin','marketplace','remove']:
     print('marketplace removed'); raise SystemExit(0)
 if args[:2] == ['plugin','add']:
+    if len(args) > 2 and args[2] == '--help': print('plugin add help'); raise SystemExit(0)
     home.mkdir(parents=True,exist_ok=True)
     state.write_text(json.dumps({'installed':True}),encoding='utf-8')
+    version=os.environ.get('FAKE_PLUGIN_VERSION','6.4.0')
+    source=Path(market_file.read_text(encoding='utf-8'))/'plugins'/'codex-cross-project-engineering-assistant'
+    cache=home/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/version
+    if io_path(cache).exists(): shutil.rmtree(io_path(cache))
+    shutil.copytree(io_path(source),io_path(cache))
     print('plugin added'); raise SystemExit(0)
 if args[:2] == ['plugin','remove']:
+    if len(args) > 2 and args[2] == '--help': print('plugin remove help'); raise SystemExit(0)
     state.unlink(missing_ok=True)
     print('plugin removed'); raise SystemExit(0)
 if args == ['plugin','list','--json']:
+    if os.environ.get('FAKE_LIST_INVALID_UNTIL_MARKETPLACE_ADD') == '1' and not market_file.exists():
+        print('configured marketplace manifest is invalid',file=sys.stderr); raise SystemExit(2)
     installed=[]
     if state.exists():
-        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','6.3.0'),'installed':True,'enabled':True}]
+        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','6.4.0'),'installed':True,'enabled':True}]
     print(json.dumps({'installed':installed,'available':[]})); raise SystemExit(0)
 print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemExit(2)
 """,encoding='utf-8')
@@ -100,10 +114,45 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertTrue((self.codex/'fake-codex-plugin-state.json').is_file())
         run(['uninstall','--scope','user','--mode','plugin'],self.env)
 
+    def test_legacy_invalid_marketplace_is_canonicalized_before_activation(self):
+        self.codex.mkdir(parents=True,exist_ok=True)
+        state={
+            'schema_version':1,
+            'package':'codex-cross-project-engineering-assistant',
+            'version':'6.3.0',
+            'scope':'user',
+            'mode':'plugin',
+            'backup':'legacy-backup',
+            'managed_hashes':{},
+        }
+        (self.codex/'cp-assistant-v6-state.json').write_text(json.dumps(state),encoding='utf-8')
+        manifest=self.home/'.agents'/'plugins'/'cp-assistant-marketplace'/'.agents'/'plugins'/'marketplace.json'
+        manifest.parent.mkdir(parents=True)
+        manifest.write_text(json.dumps({
+            'name':'cp-assistant-local',
+            'owner':{'name':'local-user'},
+            'plugins':[{
+                'name':'codex-cross-project-engineering-assistant',
+                'source':{'source':'local','path':'./plugins/codex-cross-project-engineering-assistant'},
+                'description':'legacy',
+            }],
+        }),encoding='utf-8')
+        env={**self.env,'FAKE_LIST_INVALID_UNTIL_MARKETPLACE_ADD':'1'}
+        run(['install','--scope','user','--mode','plugin','--dry-run'],env)
+        run(['install','--scope','user','--mode','plugin'],env)
+        current=json.loads(manifest.read_text(encoding='utf-8'))
+        self.assertNotIn('owner',current)
+        self.assertEqual('Codex Cross Project Assistant Local',current['interface']['displayName'])
+        entry=next(item for item in current['plugins'] if item['name']=='codex-cross-project-engineering-assistant')
+        self.assertEqual('AVAILABLE',entry['policy']['installation'])
+        self.assertEqual('ON_INSTALL',entry['policy']['authentication'])
+        self.assertEqual('Productivity',entry['category'])
+        run(['verify','--scope','user','--mode','plugin'],env)
+
     def test_plugin_install_rejects_wrong_registered_version(self):
         env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
         result=run(['install','--scope','user','--mode','plugin'],env,2)
-        self.assertIn('version=6.3.0',result.stderr)
+        self.assertIn('version=6.4.0',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
@@ -184,7 +233,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['doctor','--recover'],self.env)
         self.assertFalse(journal.exists())
         status=json.loads(run(['status','--json'],self.env).stdout)
-        self.assertEqual('6.3.0',status['version'])
+        self.assertEqual('6.4.0',status['version'])
         self.assertIn('live_transaction',status)
 
     def test_mode_switch_is_refused_without_force(self):
@@ -280,6 +329,55 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
             (self.codex/'agents').symlink_to(outside,target_is_directory=True)
         r=run(['install','--scope','user','--mode','standalone'],self.env,2)
         self.assertTrue('符号链接' in r.stderr or 'Reparse' in r.stderr)
+
+    def test_real_process_hard_crash_boundaries_recover_prior_install(self):
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        market=self.home/'.agents'/'plugins'/'cp-assistant-marketplace'
+        unknown=market/'unknown-user-file.txt'
+        unknown.write_text('preserve',encoding='utf-8')
+        for point in ('PLUGIN:AFTER_ADD','PLUGIN:AFTER_CACHE_VERIFY','PLUGIN:AFTER_STATE_WRITE'):
+            with self.subTest(point=point):
+                env={**self.env,'CP_ASSISTANT_TEST_HARD_CRASH_POINT':point}
+                run(['install','--scope','user','--mode','plugin'],env,91)
+                self.assertTrue((self.codex/'cp-assistant-v6-transaction.json').is_file())
+                run(['doctor','--recover'],self.env)
+                self.assertEqual('preserve',unknown.read_text(encoding='utf-8'))
+                run(['verify','--scope','user','--mode','plugin'],self.env)
+
+    def test_second_process_is_rejected_while_scope_lock_is_live(self):
+        code=(
+            "import sys,time; sys.path.insert(0,r'%s'); "
+            "import package_manager as p; "
+            "\nwith p.scope_lock('user'):\n print('LOCKED',flush=True)\n time.sleep(5)" % str(ROOT/'scripts')
+        )
+        holder=subprocess.Popen([sys.executable,'-B','-c',code],env=self.env,text=True,
+                                stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        try:
+            self.assertEqual('LOCKED',holder.stdout.readline().strip())
+            blocked=run(['install','--scope','user','--mode','standalone'],self.env,2)
+            self.assertIn('scope',blocked.stderr)
+        finally:
+            holder.terminate()
+            holder.communicate(timeout=10)
+
+    def test_nested_reparse_inside_managed_plugin_tree_is_rejected(self):
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        external=Path(self.tmp.name)/'external-nested'; external.mkdir()
+        (external/'sentinel.txt').write_text('keep',encoding='utf-8')
+        link=self.home/'.agents'/'plugins'/'cp-assistant-marketplace'/'plugins'/'codex-cross-project-engineering-assistant'/'runtime'/'linked-external'
+        if os.name == 'nt':
+            created=subprocess.run(['cmd','/c','mklink','/J',str(link),str(external)],capture_output=True,text=True)
+            if created.returncode != 0:
+                self.skipTest('Junction creation unavailable: '+created.stderr)
+        else:
+            link.symlink_to(external,target_is_directory=True)
+        try:
+            failed=run(['install','--scope','user','--mode','plugin'],self.env,2)
+            self.assertTrue('Reparse' in failed.stderr or '符号链接' in failed.stderr)
+            self.assertEqual('keep',(external/'sentinel.txt').read_text(encoding='utf-8'))
+        finally:
+            if link.exists() or link.is_symlink():
+                link.rmdir() if link.is_dir() else link.unlink()
 
     @unittest.skipUnless(os.name == 'nt','Windows extended-length path regression')
     def test_plugin_reinstall_supports_long_windows_backup_paths(self):
