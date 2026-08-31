@@ -9,3 +9,7 @@ max_concurrent_threads_per_session = 6
 # 模型与推理强度不在本包中写死，默认由当前 Codex 版本、父会话和用户配置决定。
 # 如需设置 agents.default_subagent_model 或 agents.default_subagent_reasoning_effort，
 # 请先按当前 Codex 官方配置文档确认可用模型和参数值。
+
+# 重要：Reviewer TOML 中 sandbox_mode="read-only" 不能单独证明运行时独立降权。
+# 当前父会话可写时，子 Agent 可能继承可写能力。严格只读复审请从整体 read-only
+# 父会话启动；不要仅依赖自定义 Agent TOML 作为系统隔离证据。
