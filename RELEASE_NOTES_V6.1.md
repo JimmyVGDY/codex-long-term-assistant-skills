@@ -6,7 +6,7 @@ V6.1 基于 V6.0，针对 Codex CLI 0.150.1 的 Plugin/Marketplace/Hooks 实际�
 
 - Marketplace manifest 使用 Codex 0.150.1 支持的 `.agents/plugins/marketplace.json` 布局。
 - Plugin 模式安装器会实际执行 `codex plugin marketplace add <root>` 与 `codex plugin add <plugin>@<marketplace>`。
-- `verify --mode plugin` 不再只检查文件落盘，而是读取 `codex plugin list --json`，要求插件 `installed=true` 且 `enabled=true`。
+- `verify --mode plugin` 不再只检查文件落盘，而是读取 `codex plugin list --json`，校验插件 `installed=true` 且 `enabled=true`。
 - Plugin Hooks 同时提供 Unix `command` 与 Windows `commandWindows`，避免 `$PLUGIN_ROOT` 在 `cmd.exe` 下无法展开。
 - `SessionEnd` 超时设为 3 秒，与当前 Codex 宿主限制一致。
 - 保留 V6 的 10 Skills、7 Reviewer、TaskOutcomeEvent V2、Terra High 自动子代理上限、受控演进权限边界。

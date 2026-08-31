@@ -6,7 +6,7 @@ V5.0 不建立 AICTO 式完整组织治理层，而是在 V4.2 工程执行平�
 
 ```mermaid
 flowchart TD
-    U[用户请求] --> G[Project Governance]
+    U[任务请求] --> G[Project Governance]
     G --> S[现有 9 个 Skills]
     S --> E[Execution Guard]
     S --> R[Review Packet / Controller]
@@ -127,4 +127,4 @@ Project Profile
 - 不自动把项目推断写成确认事实；
 - 不建立 Portfolio、Investment 或完整 Capability 生命周期；
 - 不把所有项目规则一次性加载到上下文；
-- 不使用检查器通过代替用户验收和生产 Gate。
+- 不使用检查器通过代替业务验收和生产 Gate。

@@ -6,7 +6,7 @@ V6.0 不是扩大“自动自我修改”权限，而是提高 **观察确定性
 
 ## 关键变更
 
-1. 用户级 Skill 目录修正为 `$HOME/.agents/skills`；Repo 级仍为 `$REPO_ROOT/.agents/skills`。
+1. 账户级 Skill 目录修正为 `$HOME/.agents/skills`；Repo 级仍为 `$REPO_ROOT/.agents/skills`。
 2. 新增 Plugin Manifest 与六类 Hooks，并保留 standalone/repo 兼容模式。
 3. 新增 `TaskOutcomeEvent V2`，所有计数字段强制非负，默认脱敏，不记录 Prompt/回答/代码/Patch/凭据正文。
 4. 自观察先做 Event 去重和 Task 聚合，再做 Project 统计。

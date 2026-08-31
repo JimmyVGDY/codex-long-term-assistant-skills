@@ -2,7 +2,7 @@
 
 ## 一、配置目标
 
-- 主 Agent 继续由你在 Codex 中选择 Terra 或其他模型；
+- 主 Agent 继续在 Codex 中选择 Terra 或其他模型；
 - 未显式指定的子 Agent 默认使用 Luna Medium；
 - 本 Skill 根据任务把少量子 Agent 升到 Terra Medium 或 Terra High；
 - 默认同时最多 3 个子 Agent；
@@ -19,7 +19,7 @@ $env:USERPROFILE + "\.codex\config.toml"
 通常是：
 
 ```text
-C:\Users\你的用户名\.codex\config.toml
+C:\Users\account-name\.codex\config.toml
 ```
 
 ### WSL / Linux / macOS
@@ -34,7 +34,7 @@ ${CODEX_HOME:-$HOME/.codex}/config.toml
 ~/.codex/config.toml
 ```
 
-Codex 在 Windows 和 WSL 中运行时可能读取不同的用户目录。在哪个环境启动 Codex，就修改那个环境对应的配置文件。
+Codex 在 Windows 和 WSL 中运行时可能读取不同的账户目录。在哪个环境启动 Codex，就修改那个环境对应的配置文件。
 
 ## 三、先备份
 
@@ -108,7 +108,7 @@ bash ./scripts/install-user.sh
 bash ./scripts/verify-user-install.sh
 ```
 
-安装脚本会更新受管的 `AGENTS.md`、Skills 和自定义 Reviewer，但不会自动修改你的 `config.toml`。
+安装脚本会更新受管的 `AGENTS.md`、Skills 和自定义 Reviewer，但不会自动修改现有 `config.toml`。
 
 ## 七、重启 Codex
 
@@ -116,8 +116,8 @@ bash ./scripts/verify-user-install.sh
 
 ## 八、验证配置
 
-1. 主会话通过 `/model` 确认仍使用你选择的主模型，例如 Terra Medium。
-2. 让 Codex执行一个明确的小型只读任务，并要求使用一个 Luna Reviewer。
+1. 主会话通过 `/model` 确认仍使用当前选择的主模型，例如 Terra Medium。
+2. 让 Codex执行一个明确的小型只读任务，并需使用一个 Luna Reviewer。
 3. 查看子 Agent 线程或活动面板，确认没有无理由启动大量 Reviewer。
 4. 使用复审控制器的 `status` 查看请求档位分布。
 
@@ -137,4 +137,4 @@ Terra High Reviewer: 0 / 1
 
 ## 九、配置边界
 
-`[agents]` 中的模型和强度是默认值，显式 spawn 可以覆盖。V5.0 通过 Skill 规则和 `review_controller.py` 限制本工作流的自动派发，但它不是 Codex 平台级模型 allowlist；用户手工绕过控制器启动更高模型时，包无法从底层阻止，只能在流程审计中识别和报告。
+`[agents]` 中的模型和强度是默认值，显式 spawn 可以覆盖。V5.0 通过 Skill 规则和 `review_controller.py` 限制本工作流的自动派发，但它不是 Codex 平台级模型 allowlist；外部手工绕过控制器启动更高模型时，包无法从底层阻止，只能在流程审计中识别和报告。

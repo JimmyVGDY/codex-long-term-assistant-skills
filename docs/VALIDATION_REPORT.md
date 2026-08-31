@@ -15,7 +15,7 @@
 - `runtime/cp_runtime` 仍是唯一共享运行时；
 - `runtime/cp_runtime/evolution` 是唯一受控自进化实现；
 - 安装器同时管理 `tools/cp-runtime.py` 与 `tools/evolution.py`；
-- V5.1 不删除 V5.0 文件，不自动修改业务仓库或用户 `config.toml`。
+- V5.1 不删除 V5.0 文件，不自动修改业务仓库或现有 `config.toml`。
 
 ## 3. 受控自进化边界
 

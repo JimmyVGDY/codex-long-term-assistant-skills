@@ -1,10 +1,10 @@
-> **V6.1 兼容目标：Codex CLI 0.150.1。Plugin 安装必须以 `codex plugin list --json` 的 installed+enabled 读回为成功标准。**
+> **V6.2 兼容目标：Codex CLI 0.150.1。Plugin 安装必须以 `codex plugin list --json` 的 installed+enabled+version 读回为成功标准。**
 
-# Codex 跨项目长期技术助手 Skills 安装包 V6.1
+# Codex 跨项目长期技术助手 Skills 安装包 V6.2
 
-**版本：6.1.0｜插件化确定性自观察版**
+**版本：6.2.0｜Windows 实机兼容固化版**
 
-V6.1 在 V5.1 的项目身份、Task Envelope、Approval/Evidence、独立 Reviewer、长期任务记忆和受控优化提案基础上，重点解决“Skill 发现目录、普通任务是否稳定记录、自观察数据可信度、模型成本硬上限、安装/回滚安全和 Proposal 实施闭环”六类问题。
+V6.2 基于已经完成 Windows 原生 Codex CLI 0.150.1 实机验收的 V6.1 修复版，将 Windows Hook 启动、UTF-8/中文 Stop、安装路径长度和测试隔离修复正式纳入发行包；同时保留项目身份、Task Envelope、Approval/Evidence、独立 Reviewer、长期任务记忆、确定性自观察和受控优化提案能力。
 
 ## 核心能力
 
@@ -21,7 +21,7 @@ V6.1 在 V5.1 的项目身份、Task Envelope、Approval/Evidence、独立 Revie
 
 ## 目录约定
 
-- 用户级 Skills：`$HOME/.agents/skills`
+- 账户级 Skills：`$HOME/.agents/skills`
 - 仓库级 Skills：`$REPO_ROOT/.agents/skills`
 - 自定义 Reviewer：`${CODEX_HOME:-$HOME/.codex}/agents`
 - 全局规则：`${CODEX_HOME:-$HOME/.codex}/AGENTS.md`
@@ -59,7 +59,7 @@ python scripts/package_manager.py install --scope user --mode standalone
 python scripts/package_manager.py verify  --scope user --mode standalone
 ```
 
-Standalone 会把用户 Skills 安装到 `$HOME/.agents/skills`，Reviewer/Runtime/Hooks 安装到 `CODEX_HOME` 对应目录，并合并本包受管 Hook，不覆盖其他 Hook 条目。
+Standalone 会把账户 Skills 安装到 `$HOME/.agents/skills`，Reviewer/Runtime/Hooks 安装到 `CODEX_HOME` 对应目录，并合并本包受管 Hook，不覆盖其他 Hook 条目。
 
 ### C. 仓库级 Skills
 
@@ -69,7 +69,7 @@ python scripts/package_manager.py install --scope repo --repo-path /path/to/repo
 python scripts/package_manager.py verify  --scope repo --repo-path /path/to/repository
 ```
 
-Repo 模式只安装当前仓库 `.agents/skills`，不修改用户级 Reviewer、Hooks 或全局 AGENTS。
+Repo 模式只安装当前仓库 `.agents/skills`，不修改账户级 Reviewer、Hooks 或全局 AGENTS。
 
 ## 卸载
 
@@ -83,7 +83,7 @@ python scripts/package_manager.py uninstall --scope user --mode standalone
 python scripts/package_manager.py uninstall --scope user --mode plugin
 ```
 
-检测到受管资源被用户修改时默认拒绝覆盖式卸载；确认后才使用 `--force`。项目上下文和观察数据不会随卸载自动删除。
+检测到受管资源被外部修改时默认拒绝覆盖式卸载；确认后才使用 `--force`。项目上下文和观察数据不会随卸载自动删除。
 
 ## 确定性自观察
 
@@ -130,4 +130,4 @@ V6 发布验证明确区分：
 - 35 条路由用例定义是否合法：可自动验证；
 - 真实 Codex 隐式 Skill 激活率、不同宿主 Plugin/Hooks 端到端、Windows PowerShell 实机：没有实际环境证据时必须标记 `NOT_EXECUTED`。
 
-详见 `RELEASE_NOTES_V6.1.md` 和 `docs/V6_ARCHITECTURE.md`。
+详见 `RELEASE_NOTES_V6.2.md`、`docs/USER_GUIDE_V6.2.md` 和 `docs/V6_ARCHITECTURE.md`。

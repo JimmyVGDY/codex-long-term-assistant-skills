@@ -13,11 +13,11 @@
 - 自动自修改：禁用
 - 路由用例 Schema：35 cases PASS
 - Plugin 安装事务：PASS（模拟 Codex 0.150.1 CLI）
-- Plugin verify：PASS（要求 installed + enabled）
+- Plugin verify：PASS（校验 installed + enabled）
 - Plugin uninstall/Marketplace cleanup：PASS
 - Standalone install/verify/uninstall：PASS
 - Windows WSL-style CODEX_HOME 原生路径转换：已实现
-- 真实 Codex 0.150.1 Windows 端到端：需用户实机安装后验收
+- 真实 Codex 0.150.1 Windows 端到端：需在实机安装后验收
 
 ## V6.1 关键修复
 

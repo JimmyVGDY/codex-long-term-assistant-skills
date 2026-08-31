@@ -23,7 +23,7 @@ Approval 至少绑定：
 
 ### 2.1 记录明确授权
 
-上层已经获得用户明确授权后：
+上层已经获得已取得明确授权后：
 
 ```bash
 python3 scripts/cp-runtime.py approval-issue \

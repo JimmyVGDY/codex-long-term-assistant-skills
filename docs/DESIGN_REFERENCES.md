@@ -8,7 +8,7 @@ V5.0 延续 V4.2 的原则，不把外部资料原文复制进提示词，而是
 - Codex Skills：先用名称与描述路由，选中后再加载完整 `SKILL.md` 与按需 Reference；
 - Codex 模型：Luna 面向低成本明确任务，Terra 面向日常工程与复杂判断；更高推理强度通常增加耗时和 Token；
 - Codex `[agents]`：默认子模型、默认推理强度、并发线程和中断消息配置；
-- 用户确认的使用偏好：主 Agent 通常使用 Terra，自动子 Agent 最高不得超过 Terra High。
+- 请求方确认的使用偏好：主 Agent 通常使用 Terra，自动子 Agent 最高不得超过 Terra High。
 
 ## 落地原则
 

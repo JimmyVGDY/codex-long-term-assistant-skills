@@ -39,7 +39,7 @@ python3 scripts/routing-eval.py evaluate --results routing-observations.json
 
 ## 限制
 
-Codex 是否展示完整隐式 Skill 激活信息取决于当前客户端能力。无法直接观察时，可要求主 Agent 在测试模式下仅报告激活计划，不执行任务。该报告仍属于模型输出，不能替代对实际工作行为的抽查。
+Codex 是否展示完整隐式 Skill 激活信息取决于当前客户端能力。无法直接观察时，可让主 Agent 在测试模式下仅报告激活计划，不执行任务。该报告仍属于模型输出，不能替代对实际工作行为的抽查。
 
 ## V4.2 隔离与模型路由用例
 
