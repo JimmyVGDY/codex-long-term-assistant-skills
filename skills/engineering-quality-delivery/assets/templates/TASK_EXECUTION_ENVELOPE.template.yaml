@@ -1,28 +1,41 @@
-schema_version: 1
+schema_version: 2
 task_id: TASK-YYYYMMDD-001
 title: ""
 project:
-  name: ""
+  project_id: ""
+  profile_path: ""
+  state_path: ""
+  profile_binding_sha256: ""
   repo_path: ""
-  branch: ""
-  baseline_commit: ""
+  baseline_head: ""
+  baseline_sha256: ""
+routing:
+  complexity: L1  # L0 | L1 | L2 | L3 | L4
+  project_stage: ACTIVE  # UNPROFILED | ONBOARDING | ACTIVE | PAUSED | ARCHIVED
+  execution_profile: STANDARD  # LIGHT | STANDARD | STRICT
+  reviewer_budget: balanced  # economy | balanced | deep
+  model_profile: terra-medium  # luna-low | luna-medium | terra-medium | terra-high
+  host_surface: direct-workspace  # main-session | subagent | direct-workspace | worktree | mcp | long-running-task
 execution:
-  mode: analysis  # analysis | local-modification | nonproduction | production
-  profile: STANDARD  # LIGHT | STANDARD | STRICT
+  mode: local-modification
   phase: IDENTIFY
   risk_level: medium
+  environment: local  # local | nonproduction | production
 skills:
   primary: ""
   supporting: []
   deferred: []
 authorization:
-  modify_files: false
-  create_commit: false
-  push: false
-  deploy: false
-  restart: false
-  database_write: false
-  cache_or_mq_write: false
+  declared_intent:
+    modify_files: false
+    create_commit: false
+    push: false
+    deploy: false
+    restart: false
+    database_write: false
+    cache_or_mq_write: false
+  approval_records: []
+  note: "布尔意图不能代替绑定项目、任务、环境、基线和有效期的 Approval"
 scope:
   goals: []
   non_goals: []
@@ -35,8 +48,17 @@ stop_conditions: []
 rollback_conditions: []
 acceptance_criteria: []
 evidence:
-  repo_fingerprint: ""
   validations: []
   reviews: []
   stale_items: []
+actions:
+  committed: NOT_CAPTURED
+  pushed: NOT_CAPTURED
+  deployed: NOT_CAPTURED
+  restarted: NOT_CAPTURED
+  effective: NOT_CAPTURED
+finalization:
+  accepted_claims: []
+  readback_report: ""
+  unsupported_claims: []
 next_action: ""
