@@ -1,10 +1,10 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "5.1.0",
-  "release_name": "自观察与受控自进化版",
-  "generated_for": "Codex Skills with project identity/onboarding, Task Envelope V2, approval/evidence separation, finalization readback, controlled memory promotion, controlled self-observation and optimization proposal generation, Luna/Terra cost routing, deterministic checkpoints, independent review, safe installation/restore, and semantic validation",
+  "version": "6.0.0",
+  "release_name": "插件化确定性自观察版",
+  "generated_for": "Codex Plugin-first cross-project engineering assistant with deterministic lifecycle hooks, TaskOutcomeEvent V2, project/repository isolation, controlled proposal lifecycle, Luna/Terra model ceiling, safe install/rollback, and progressive Skill loading",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
-  "user_skills_target": "${CODEX_HOME:-$HOME/.codex}/skills",
+  "user_skills_target": "$HOME/.agents/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
   "skills": [
     {
@@ -60,6 +60,12 @@
       "display_name": "长期任务外部记忆与持续检查点",
       "description": "跨会话、多阶段、多模块、多 Agent 或上下文压缩任务时使用。采用事件驱动检查点、内容指纹去重、最近 3 个检查点恢复和单一写入者。",
       "source_mapping": "06-长期任务外部记忆机制.md"
+    },
+    {
+      "name": "controlled-evolution-governance",
+      "display_name": "受控演进与项目治理",
+      "description": "跨任务复盘、自观察数据治理、模型成本路由、Reviewer 收益评估、Skill 路由偏差、优化提案生命周期和项目隔离时使用；普通编码任务不要触发。",
+      "source_mapping": "v6/controlled-evolution-governance"
     }
   ],
   "custom_agents": [
@@ -369,11 +375,12 @@
     "task_recovery_state": "CURRENT_TASK.md + PROGRESS.md via checkpoint.py",
     "project_memory": "project-memory.md after reviewed projection promotion",
     "cross_project_knowledge": "knowledge candidate records; never auto-active",
-    "controlled_evolution": "runtime/cp_runtime/evolution; project-scoped evolution/proposals.jsonl and decisions.jsonl",
+    "controlled_evolution": "runtime/cp_runtime/evolution; project-scoped proposal/decision/lifecycle append-only registries",
     "evolution_observation": "evolution/snapshots/*.json via runtime/cp_runtime/evolution",
     "evolution_assessment": "evolution/assessments/*.json via runtime/cp_runtime/evolution",
     "evolution_proposals": "evolution/proposals.jsonl append-only hash chain",
-    "evolution_decisions": "evolution/decisions.jsonl append-only hash chain"
+    "evolution_decisions": "evolution/decisions.jsonl append-only hash chain",
+    "evolution_lifecycle": "evolution/lifecycle.jsonl append-only hash chain"
   },
   "approval_evidence_finalization": {
     "approval_schema_version": 1,
@@ -407,6 +414,7 @@
     ]
   },
   "upgrade_from": [
+    "5.1.0",
     "5.0.0",
     "4.2.0",
     "4.1.0",
@@ -427,7 +435,15 @@
     "controlled_evolution_cli_e2e": true,
     "append_only_hash_chain_tamper_test": true,
     "proposal_hash_chain_tamper_test": true,
-    "installed_evolution_tool_test": true
+    "installed_evolution_tool_test": true,
+    "task_outcome_event_v2_tests": true,
+    "hook_model_ceiling_tests": true,
+    "project_repo_isolation_tests": true,
+    "immutable_snapshot_tests": true,
+    "proposal_lifecycle_tests": true,
+    "plugin_manifest_validation": true,
+    "standalone_install_smoke": true,
+    "repo_install_smoke": true
   },
   "controlled_evolution": {
     "runtime": "runtime/cp_runtime/evolution",
@@ -435,10 +451,14 @@
     "installed_cli": "${CODEX_HOME:-$HOME/.codex}/tools/evolution.py",
     "policy": "config/evolution-policy.json",
     "pipeline": [
-      "OBSERVATION",
+      "HOOK_OBSERVATION",
+      "TASK_AGGREGATION",
       "ANALYSIS",
       "PROPOSAL",
-      "HUMAN_DECISION"
+      "HUMAN_DECISION",
+      "IMPLEMENTATION_LINK",
+      "VALIDATION_RECORD",
+      "CLOSE"
     ],
     "execution_authorization": "NONE",
     "automatic_execution": false,
@@ -455,6 +475,28 @@
       "automatic-proposal-execution"
     ],
     "automatic_acceptance": false,
-    "implementation_requires_new_task": true
-  }
+    "implementation_requires_new_task": true,
+    "task_outcome_event_schema": "2.0",
+    "deterministic_hooks": [
+      "UserPromptSubmit",
+      "PreToolUse",
+      "SubagentStart",
+      "SubagentStop",
+      "Stop",
+      "SessionEnd"
+    ],
+    "event_deduplication": "event_id",
+    "aggregation_key": "task_id",
+    "project_isolation": [
+      "project_id",
+      "repo_fingerprint"
+    ],
+    "snapshot_write": "exclusive-create",
+    "snapshot_source_digest": "sha256",
+    "lifecycle_registry": "project-context/<project-id>/evolution/lifecycle.jsonl"
+  },
+  "plugin_manifest": ".codex-plugin/plugin.json",
+  "plugin_hooks": "hooks/hooks.json",
+  "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
+  "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json"
 }
