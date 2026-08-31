@@ -19,7 +19,8 @@ description: >-
 5. MQ 检查生产确认、ACK、幂等、重试、死信、顺序、堆积和 Poison Message；明确业务成功边界。
 6. AI / RAG / GPU 检查输出校验、注入、超时、降级、检索权限、资源队列、显存、取消和失败恢复。
 7. Docker / Kubernetes 检查镜像来源、资源限制、探针、优雅停机、配置和密钥、滚动发布与回滚。
-8. 修改、测试、复审、提交、发布或生产操作时，同时使用 `$engineering-quality-delivery`。
+8. 任务以数据库、中间件、容器、Kubernetes、网络或存储日志为主要证据时，同时使用 `$log-observability-analysis`。
+9. 修改、测试、复审、提交、发布或生产操作时，同时使用 `$engineering-quality-delivery`。
 
 ## 边界
 
