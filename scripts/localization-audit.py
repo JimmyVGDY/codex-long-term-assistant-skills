@@ -160,7 +160,9 @@ def audit(files: Iterable[Path]) -> dict[str, Any]:
                 elif relative.as_posix() not in reviewed:
                     findings.append(issue("ENGLISH_PAIR_NOT_HUMAN_REVIEWED", path))
             english_document = path.name.endswith(".en.md") or "locales/en" in relative.as_posix()
-            if english_document and CJK.search(natural_language_without_code(text)):
+            # 中文：人工校订索引保存规范源路径，中文文件名属于路径数据而不是英文正文。
+            # English: The review index stores canonical source paths; Chinese filenames are path data, not English prose.
+            if english_document and path != REVIEWED_PATH and CJK.search(natural_language_without_code(text)):
                 findings.append(issue("ENGLISH_DOCUMENT_CONTAINS_CJK", path))
         elif path.suffix.lower() in STRUCTURED_SUFFIXES:
             counts["structured"] += 1

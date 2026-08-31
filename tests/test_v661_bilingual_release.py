@@ -25,6 +25,15 @@ def _load_builder():
     return module
 
 
+def _load_localization_auditor():
+    spec = importlib.util.spec_from_file_location(
+        "localization_audit", ROOT / "scripts" / "localization-audit.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class V661BilingualReleaseTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -115,6 +124,18 @@ class V661BilingualReleaseTests(unittest.TestCase):
         reason = json.loads(result.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
         self.assertIsNone(re.search(r"[\u4e00-\u9fff]", reason))
         self.assertIn("Terra High", reason)
+
+    def test_human_review_index_accepts_canonical_paths_with_chinese_filenames(self) -> None:
+        auditor = _load_localization_auditor()
+        with tempfile.TemporaryDirectory(prefix="cp-v661-review-index-") as temporary:
+            root = Path(temporary)
+            reviewed = root / "locales" / "en" / "HUMAN_REVIEWED.txt"
+            reviewed.parent.mkdir(parents=True)
+            reviewed.write_text("docs/V5.0_升级说明与迁移指南.md\n", encoding="utf-8")
+            auditor.ROOT = root
+            auditor.REVIEWED_PATH = reviewed
+            report = auditor.audit([reviewed])
+        self.assertTrue(report["ok"], report["findings"])
 
 
 if __name__ == "__main__":
