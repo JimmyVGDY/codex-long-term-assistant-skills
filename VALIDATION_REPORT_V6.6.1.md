@@ -22,8 +22,9 @@ English: [VALIDATION_REPORT_V6.6.1.en.md](VALIDATION_REPORT_V6.6.1.en.md)
 - 事件哈希链、延迟封印与故障恢复：PASS
 - 自动模型上限 Terra High：PASS
 - 路由用例：35 条 PASS
-- 双语确定性发行：5 项专项 PASS
-- package 测试：98 项 PASS
+- 全量本地化严格审计：520 个源码路径、515 个文本文件、355 个文档、94 个代码文件、66 个结构化文件，0 项发现
+- 双语确定性发行：10 项专项 PASS
+- package 测试：106 项 PASS
 - runtime 测试：6 项 PASS
 - `execution_authorization=NONE`：PASS
 - 自动修改能力：关闭
