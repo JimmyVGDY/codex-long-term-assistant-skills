@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "3.2.0",
-  "release_name": "P0 调度与执行确定性增强版",
-  "generated_for": "Codex local user and repository skills with minimal sufficient routing, pre/post review gates, deterministic review budgets, secure task memory, and multi-signal observability analysis",
+  "version": "4.0.0",
+  "release_name": "通用前端工程增强版",
+  "generated_for": "Codex Skills with framework-neutral frontend engineering, reviewer runtime-isolation disclosure, deterministic review budgets, secure task memory, and multi-signal observability",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
@@ -10,7 +10,7 @@
     {
       "name": "java-backend-engineering",
       "display_name": "Java 后端工程",
-      "description": "Java 后端、Spring Boot、Spring Cloud、Struts2、MyBatis、JPA、Maven、JVM、事务、并发、SSE 或 Java 代码审查任务时使用。先识别 Java 与框架版本；不要用于纯 Python 或纯 Vue 任务。",
+      "description": "Java 后端、Spring Boot、Spring Cloud、Struts2、MyBatis、JPA、Maven、JVM、事务、并发、SSE 或 Java 代码审查任务时使用。先识别 Java 与框架版本；不要用于纯 Python 或纯前端任务。",
       "source_mapping": "rules/02-Java后端规则.md"
     },
     {
@@ -20,10 +20,10 @@
       "source_mapping": "rules/03-Python后端与AI服务规则.md"
     },
     {
-      "name": "vue-frontend-engineering",
-      "display_name": "Vue 前端工程",
-      "description": "Vue 2、Vue 3、Vite、Vue CLI、Vuex、Pinia、路由、表单、文件上传、SSE、WebSocket、异步竞态、前端性能或 Vue 代码审查任务时使用。不要替代后端权限校验。",
-      "source_mapping": "rules/04-Vue前端工程规则.md"
+      "name": "frontend-engineering",
+      "display_name": "通用前端工程",
+      "description": "Web 前端、浏览器、WebView 或桌面 Renderer 层任务时使用，覆盖 JavaScript/TypeScript、Vue/Nuxt、React/Next/Remix、Preact、Angular、Svelte/SvelteKit、Astro/Solid/Qwik/Ember、Web Components、Alpine/HTMX、Ionic/Capacitor 和传统页面；先识别框架、版本、运行载体与客户端/服务端边界，纯 Node.js 后端和桌面主进程不要使用。",
+      "source_mapping": "rules/04-通用前端工程规则.md"
     },
     {
       "name": "data-middleware-ai-infrastructure",
@@ -46,7 +46,7 @@
     {
       "name": "multi-agent-independent-review",
       "display_name": "多 Agent 独立复审",
-      "description": "高风险实施前设计与影响审查，或代码改动后的多 Agent 独立复审、统一归因和最少有效修复轮次时使用。Reviewer 只读，预算和轮次由状态控制器约束。",
+      "description": "高风险实施前设计与影响审查，或代码改动后的多 Agent 独立复审、统一归因和最少有效修复轮次时使用。必须区分 TOML read-only 声明、逻辑只读与运行时系统隔离。",
       "source_mapping": "new/multi-agent-independent-review"
     },
     {
@@ -66,37 +66,51 @@
     {
       "name": "cp_review_functional_business",
       "file": "custom-agents/cp-review-functional-business.toml",
-      "scope": "功能正确性与业务口径"
+      "scope": "功能正确性与业务口径",
+      "declared_sandbox": "read-only",
+      "runtime_isolation": "must-be-verified-separately"
     },
     {
       "name": "cp_review_compatibility_regression",
       "file": "custom-agents/cp-review-compatibility-regression.toml",
-      "scope": "原有功能回归与兼容性"
+      "scope": "原有功能回归与兼容性",
+      "declared_sandbox": "read-only",
+      "runtime_isolation": "must-be-verified-separately"
     },
     {
       "name": "cp_review_security_access",
       "file": "custom-agents/cp-review-security-access.toml",
-      "scope": "权限与安全"
+      "scope": "权限与安全",
+      "declared_sandbox": "read-only",
+      "runtime_isolation": "must-be-verified-separately"
     },
     {
       "name": "cp_review_performance_resources",
       "file": "custom-agents/cp-review-performance-resources.toml",
-      "scope": "性能与资源负担"
+      "scope": "性能与资源负担",
+      "declared_sandbox": "read-only",
+      "runtime_isolation": "must-be-verified-separately"
     },
     {
       "name": "cp_review_data_contract",
       "file": "custom-agents/cp-review-data-contract.toml",
-      "scope": "数据与契约一致性"
+      "scope": "数据与契约一致性",
+      "declared_sandbox": "read-only",
+      "runtime_isolation": "must-be-verified-separately"
     },
     {
       "name": "cp_review_state_concurrency",
       "file": "custom-agents/cp-review-state-concurrency.toml",
-      "scope": "状态、并发与交互边界"
+      "scope": "状态、并发与交互边界",
+      "declared_sandbox": "read-only",
+      "runtime_isolation": "must-be-verified-separately"
     },
     {
       "name": "cp_review_test_delivery",
       "file": "custom-agents/cp-review-test-delivery.toml",
-      "scope": "测试证据与交付边界"
+      "scope": "测试证据与交付边界",
+      "declared_sandbox": "read-only",
+      "runtime_isolation": "must-be-verified-separately"
     }
   ],
   "quality_limits": {
@@ -117,7 +131,9 @@
     "max_active_skills_without_justification": 4,
     "external_memory_secret_scan": true,
     "default_completed_task_retention_days": 90,
-    "default_temporary_analysis_retention_days": 30
+    "default_temporary_analysis_retention_days": 30,
+    "strict_readonly_review_requires_parent_readonly": true,
+    "review_runtime_isolation_evidence_required": true
   },
   "log_analysis_modes": [
     "static-file-analysis",
@@ -137,5 +153,51 @@
     "cases": "tests/skill-routing-cases.json",
     "tool": "scripts/routing-eval.py",
     "runtime_observation_required": true
+  },
+  "review_isolation_levels": {
+    "system-readonly": "父会话实际只读，或有效受控探针明确被沙箱拒绝；可用于严格只读复审",
+    "logical-readonly": "父会话可写，Reviewer 依靠行为指令不写；不得声称系统隔离",
+    "self-review": "实施 Agent 自查，不能替代独立 Reviewer",
+    "unknown": "运行时证据不足"
+  },
+  "review_runtime_validation": {
+    "toml_declaration_is_not_runtime_proof": true,
+    "temporary_repository_probe_only": true,
+    "production_probe_forbidden": true
+  },
+  "deprecated_skills": [
+    "vue-frontend-engineering"
+  ],
+  "breaking_changes": [
+    "vue-frontend-engineering renamed to frontend-engineering; no compatibility alias is installed"
+  ],
+  "frontend_engineering": {
+    "detector": "skills/frontend-engineering/scripts/detect_frontend_stack.py",
+    "frameworks": [
+      "vanilla-js",
+      "typescript",
+      "vue",
+      "nuxt",
+      "react",
+      "nextjs",
+      "remix",
+      "angular",
+      "svelte",
+      "sveltekit",
+      "astro",
+      "solid",
+      "qwik",
+      "web-components",
+      "jquery",
+      "layui",
+      "jsp"
+    ],
+    "conditional_domains": [
+      "security-runtime",
+      "quality-performance",
+      "microfrontend-monorepo"
+    ],
+    "templates": 3,
+    "negative_route": "pure-node-backend"
   }
 }
