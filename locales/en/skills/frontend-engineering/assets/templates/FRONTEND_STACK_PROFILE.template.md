@@ -1,0 +1,26 @@
+# Frontend Stack Profile
+
+- Project/directory:
+- Identified at:
+- Evidence sources:
+- Classification: Frontend / Fullstack Web / Hybrid Web / Node Backend / Unknown
+- Confidence: High / Medium / Low
+- Primary framework and version:
+- Secondary framework/migration/micro-frontend:
+- Runtime surface: Browser / WebView / PWA / Extension / Electron Renderer / Tauri Renderer / SSR / Edge
+- JavaScript / TypeScript:
+- Node and package manager:
+- Lockfile and authoritative dependency source:
+- Workspace / Monorepo:
+- Build tool:
+- Rendering mode: CSR / SSR / SSG / ISR / MPA / Islands / Hybrid
+- Client/server/native/main-process boundaries:
+- Routing:
+- State and data layer:
+- UI/styling/design system:
+- PWA/offline/realtime:
+- Test tools:
+- Target browsers/devices:
+- Deployment, CDN, and caching:
+- Conflicts or unresolved items:
+- Specialized references to load:
