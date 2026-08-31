@@ -1,4 +1,4 @@
-# Codex Skills 使用示例（v3.2）
+# Codex Skills 使用示例（v3.3）
 
 ## 一、本地日志文件分析
 
@@ -44,7 +44,7 @@ $engineering-quality-delivery、$multi-agent-independent-review
 每完成一个可独立恢复的小节点，立即更新 CURRENT_TASK.md 和 PROGRESS.md；
 已完成节点不能只保留在对话中。
 
-完成相关后端定向测试后，按当前风险选择不同职责的只读 Reviewer。
+完成相关后端定向测试后，按当前风险选择不同职责的 Reviewer，并记录本轮是 system-readonly 还是 logical-readonly。
 第一轮结果全部返回前不要零散修改。由主协调 Agent 统一去重、根因聚类、
 冲突裁决和分级，形成最小完整修复集合后集中修改。
 最多 3 轮复审和 3 轮集中修复，达到上限时如实停止并报告。
@@ -136,7 +136,7 @@ $technical-document-writing 和 $long-running-task-memory。
 ```
 
 
-## v3.2：实施前设计与影响审查
+## v3.2 基础能力：实施前设计与影响审查
 
 ```text
 使用 $data-middleware-ai-infrastructure 和 $multi-agent-independent-review。
@@ -147,7 +147,7 @@ $technical-document-writing 和 $long-running-task-memory。
 代码完成后的定向测试和独立复审。
 ```
 
-## v3.2：多信号可观测性分析
+## v3.2 基础能力：多信号可观测性分析
 
 ```text
 使用 $log-observability-analysis 和对应技术栈 Skill。
@@ -157,7 +157,7 @@ $technical-document-writing 和 $long-running-task-memory。
 不得因为发布后出现异常就直接认定发布为根因，不要在线上重新采集 Profile。
 ```
 
-## v3.2：最小充分加载
+## v3.2 基础能力：最小充分加载
 
 ```text
 当前阶段先选择一个主领域 Skill，最多补充两个必要辅助 Skill。
@@ -165,10 +165,32 @@ $technical-document-writing 和 $long-running-task-memory。
 同时需要超过四个 Skill 时，先说明每个 Skill 的唯一职责。
 ```
 
-## v3.2：复审状态控制器
+## v3.2 基础能力：复审状态控制器
 
 ```text
 使用 $multi-agent-independent-review 和 $long-running-task-memory。
 为当前功能边界初始化 review-state.json。每次计划、派发、收回 Reviewer、归并和集中修复
 都更新控制器状态；上下文压缩后先执行 status / validate，未确认剩余预算前不要继续派生。
+```
+
+
+## v3.3：严格只读复审
+
+```text
+使用 $multi-agent-independent-review。
+
+本任务涉及生产权限和真实数据，要求 Level A system-readonly。
+先确认父会话实际运行在 read-only；若父会话可写，停止派发 Reviewer，
+不要仅凭 Reviewer TOML 的 sandbox_mode 声称系统隔离。
+记录实际 Agent 类型、配置路径、父会话沙箱、隔离等级和未验证项。
+```
+
+## v3.3：可写会话中的逻辑只读复审
+
+```text
+使用 $multi-agent-independent-review。
+
+当前父会话为 danger-full-access，因此本轮最多只能标记为 logical-readonly。
+Reviewer 仍按行为规则不修改文件、不提交、不派生，但最终报告必须明确：
+独立推理已完成，系统级写入隔离没有保证。
 ```

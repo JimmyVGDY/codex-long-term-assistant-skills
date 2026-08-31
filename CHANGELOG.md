@@ -1,4 +1,49 @@
-# 安装包变更记录
+# CHANGELOG
+
+## 4.0.0 - 2026-07-31
+
+### 通用前端工程增强
+
+- `vue-frontend-engineering` 直接改名为 `frontend-engineering`，不保留兼容别名；
+- 覆盖 Vue/Nuxt、React/Next/Remix、Preact、Angular、Svelte/SvelteKit、Astro/Solid/Qwik/Ember/Web Components、Alpine/HTMX、Ionic/Capacitor、传统页面与静态 HTML/JSP；
+- 明确 Browser、SSR/Edge、PWA、WebView、Extension、Electron/Tauri Renderer 与主进程/原生桥边界；
+- 新增安全运行时、质量性能、设计系统/SEO、微前端 Monorepo 等按需规则；
+- 技术栈检测器升级为只读有界扫描，支持 Workspace、源码签名、无 package.json、Fullstack Web、Hybrid Web 和纯 Node.js 后端排除；
+- 检测器自测扩充为 12 个，新增 Preact、Ionic/Capacitor、JSP、静态 HTML、Workspace、无效 package.json 和 Electron 负向场景；
+- 新增并强化技术栈快照、前端审查报告和验证矩阵模板；
+- 路由回归新增静态站点、JSP、Preact、Hybrid Web、Monorepo 和桌面主进程排除场景；
+- 升级脚本备份并清理旧 Skill，验证脚本阻止旧名称和 Python 缓存文件残留；
+- 更新全局调度、Manifest、示例、触发矩阵和文档；
+- 继承 v3.3 Reviewer 运行时隔离修正。
+
+# 变更记录
+
+## 3.3.0 - 2026-07-29
+
+### Reviewer 运行时隔离修正
+
+- 根据 Windows Codex 运行时探针修正安全表述：在父会话为 `danger-full-access` 时，指定 Reviewer 即使 TOML 声明 `sandbox_mode = "read-only"`，仍可成功写入临时探针文件；
+- 不再把 TOML `read-only` 声明或“本次没有写文件”表述为系统级只读隔离通过；
+- 新增 Level A `system-readonly`、Level B `logical-readonly`、Level C `self-review` 和 `unknown` 四种隔离等级；
+- 生产、真实数据、权限安全、不可逆迁移和用户明确要求严格只读的任务，要求整体只读父会话或有效系统隔离证据；
+- 更新 7 个 Reviewer 的职责说明：保留 `sandbox_mode = "read-only"` 作为期望配置，但明确父会话可写时只能报告逻辑只读；
+- 增加 `REVIEW_ISOLATION_EVIDENCE.template.md`，记录实际 Agent、TOML 路径、父会话沙箱、探针结果和严格只读资格。
+
+### 复审状态控制器
+
+- `review_controller.py` schema 升级到 v2；
+- 新增 `isolation` 命令，持久化父会话权限、配置声明、探针结果、Agent 确认和证据摘要；
+- `init` 新增 `--risk-level` 与 `--strict-readonly-required`；
+- 严格只读要求未满足时，控制器阻止计划和派发 Reviewer；
+- `status`、`validate`、`dispatch`、`result`、`merge` 和 `close` 均记录或校验隔离等级；
+- 最终结论区分系统隔离复审、逻辑只读复审、未验证和失败，不允许逻辑只读冒充系统隔离。
+
+### 安装与验证
+
+- 用户级验证脚本改为只验证 Reviewer TOML 的配置声明，并明确提示运行时隔离需要单独验收；
+- 包验证脚本新增逻辑只读、严格门禁和系统只读两条控制器路径测试；
+- 新增 `docs/REVIEWER_RUNTIME_ISOLATION.md`，给出临时仓库受控探针、判断标准和双会话推荐流程；
+- 升级版本为 `3.3.0`，保留 9 个 Skills 和 7 个 Reviewer 名称，支持从 v3.2 原地升级。
 
 ## 3.2.0 - 2026-07-29
 
