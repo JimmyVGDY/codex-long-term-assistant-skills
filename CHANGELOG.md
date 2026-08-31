@@ -195,3 +195,12 @@
 - 增加主机绑定 keyring、独立用途轮换和 detached event seal。
 - 增加 Reviewer 稳定结果身份、重放去重、冲突检测、Wilson 区间和校准状态。
 - 保持 TaskOutcomeEvent 2.0、Plugin/Marketplace 身份、Terra High 上限和受控演进授权边界。
+
+# V6.6.0
+
+- 增加可信宿主模型证明契约，并固定请求策略、运行时证据和诊断旁证三个独立字段。
+- 共享状态锁改用进程所有的原生文件锁，增加 spawn 多进程、强制终止和 keyring 原子替换故障测试。
+- SessionEnd 改为签名入列与 detached worker 延迟封印，不执行全链扫描。
+- Reviewer 校准增加任务难度、根因簇重复、采纳原因和回归预防证据率。
+- 增加非破坏事件归档、容量预算和隐私受限的跨项目健康概览。
+- 保持 TaskOutcomeEvent 2.0、历史 key、项目双重隔离、Terra High 上限和 `execution_authorization=NONE`。
