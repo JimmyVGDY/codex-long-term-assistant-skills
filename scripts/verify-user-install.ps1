@@ -1,9 +1,11 @@
-﻿[CmdletBinding()]param()
-$ErrorActionPreference="Stop";$CH=if($env:CODEX_HOME){$env:CODEX_HOME}else{Join-Path $HOME ".codex"};$SH=Join-Path (Join-Path $HOME ".agents") "skills";$AH=Join-Path $CH "agents";$Failed=$false
-$Skills=@("java-backend-engineering", "python-backend-ai-engineering", "frontend-engineering", "data-middleware-ai-infrastructure", "log-observability-analysis", "engineering-quality-delivery", "multi-agent-independent-review", "technical-document-writing", "long-running-task-memory");$Agents=@("cp-review-functional-business.toml", "cp-review-compatibility-regression.toml", "cp-review-security-access.toml", "cp-review-performance-resources.toml", "cp-review-data-contract.toml", "cp-review-state-concurrency.toml", "cp-review-test-delivery.toml")
-$G=Join-Path $CH "AGENTS.md";if(-not(Test-Path $G)){$Failed=$true;Write-Host "[缺失] $G"}else{$C=Get-Content $G -Raw;$bc=([regex]::Matches($C,"codex-cross-project-assistant:begin")).Count;$ec=([regex]::Matches($C,"codex-cross-project-assistant:end")).Count;if($bc-ne1 -or $ec-ne1){$Failed=$true;Write-Host "[错误] AGENTS.md 受管区块"}}
-foreach($N in $Skills){$F=Join-Path (Join-Path $SH $N) "SKILL.md";if(-not(Test-Path $F)){$Failed=$true;Write-Host "[缺失] Skill $N"}else{$C=Get-Content $F -Raw;if($C-notmatch("(?m)^name:\s*"+[regex]::Escape($N)+"\s*$")){$Failed=$true;Write-Host "[格式错误] $N"}else{Write-Host "[OK] Skill $N"}}}
-if(Test-Path (Join-Path $SH "vue-frontend-engineering")){$Failed=$true;Write-Host "[残留] 旧 Skill vue-frontend-engineering"}
-$FR=Join-Path $SH "frontend-engineering";foreach($R in @("frontend-core-rules.md","frontend-security-runtime-rules.md","frontend-quality-performance-rules.md","vue-nuxt-rules.md","react-next-remix-rules.md","angular-rules.md","svelte-sveltekit-rules.md","other-modern-frameworks-rules.md","legacy-frontend-rules.md","microfrontend-monorepo-rules.md")){if(-not(Test-Path (Join-Path (Join-Path $FR "references") $R))){$Failed=$true;Write-Host "[缺失] 前端规则 $R"}}
-foreach($A in $Agents){if(-not(Test-Path (Join-Path $AH $A))){$Failed=$true;Write-Host "[缺失] Reviewer $A"}}
-if($Failed){exit 1};Write-Host "文件级验证通过。请重启 Codex 后运行 /skills 做运行时发现验证。"
+$ErrorActionPreference="Stop"
+function Invoke-PackagePython {
+    param([string[]]$ManagerArgs)
+    $Script = Join-Path $PSScriptRoot "package_manager.py"
+    if (Get-Command python -ErrorAction SilentlyContinue) { & python $Script @ManagerArgs }
+    elseif (Get-Command py -ErrorAction SilentlyContinue) { & py -3 $Script @ManagerArgs }
+    elseif (Get-Command python3 -ErrorAction SilentlyContinue) { & python3 $Script @ManagerArgs }
+    else { throw "未找到 Python 3；请安装 Python 或使用 WSL/Linux 安装脚本。" }
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+Invoke-PackagePython @("verify")

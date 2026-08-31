@@ -1,5 +1,3 @@
-[CmdletBinding()]
-param([ValidateSet("All","SkillsOnly","GlobalOnly","ReviewAgentsOnly")][string]$Component="All",[switch]$ForceReplaceGlobal,[switch]$DryRun)
 $ErrorActionPreference="Stop"
 function Invoke-PackagePython {
     param([string[]]$ManagerArgs)
@@ -10,6 +8,4 @@ function Invoke-PackagePython {
     else { throw "未找到 Python 3；请安装 Python 或使用 WSL/Linux 安装脚本。" }
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
-$Map=@{"All"="all";"SkillsOnly"="skills";"GlobalOnly"="global";"ReviewAgentsOnly"="agents"}
-$ManagerArgs=@("install","--component",$Map[$Component]);if($ForceReplaceGlobal){$ManagerArgs+="--force-replace-global"};if($DryRun){$ManagerArgs+="--dry-run"}
-Invoke-PackagePython $ManagerArgs
+Invoke-PackagePython @("doctor")

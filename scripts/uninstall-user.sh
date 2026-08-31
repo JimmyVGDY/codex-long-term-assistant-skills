@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-c="${1:-all}";ch="${CODEX_HOME:-$HOME/.codex}";sh="$HOME/.agents/skills";skills=(java-backend-engineering python-backend-ai-engineering frontend-engineering data-middleware-ai-infrastructure log-observability-analysis engineering-quality-delivery multi-agent-independent-review technical-document-writing long-running-task-memory);agents=(cp-review-functional-business.toml cp-review-compatibility-regression.toml cp-review-security-access.toml cp-review-performance-resources.toml cp-review-data-contract.toml cp-review-state-concurrency.toml cp-review-test-delivery.toml);b='<!-- codex-cross-project-assistant:begin -->';e='<!-- codex-cross-project-assistant:end -->'
-g(){ f="$ch/AGENTS.md";[[ -f "$f" ]]||return;tmp=$(mktemp);awk -v b="$b" -v e="$e" '$0==b{s=1;next}$0==e{s=0;next}!s{print}' "$f">"$tmp";if grep -q '[^[:space:]]' "$tmp";then mv "$tmp" "$f";else rm -f "$tmp" "$f";fi;};s(){ for n in "${skills[@]}";do rm -rf "$sh/$n";done;};a(){ for n in "${agents[@]}";do rm -f "$ch/agents/$n";done;}
-case "$c" in all)g;s;a;;skills)s;;global)g;;agents)a;;*)exit 2;;esac;echo '卸载完成。'
+if command -v python3 >/dev/null 2>&1; then PY=python3; elif command -v python >/dev/null 2>&1; then PY=python; else echo "[FAIL] 未找到 Python 3" >&2; exit 1; fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+component="${1:-all}";shift || true
+"$PY" "$SCRIPT_DIR/package_manager.py" uninstall --component "$component" "$@"

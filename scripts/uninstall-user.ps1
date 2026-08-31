@@ -1,6 +1,15 @@
-﻿[CmdletBinding()]param([ValidateSet("All","SkillsOnly","GlobalOnly","ReviewAgentsOnly")][string]$Component="All")
-$CH=if($env:CODEX_HOME){$env:CODEX_HOME}else{Join-Path $HOME ".codex"};$SH=Join-Path (Join-Path $HOME ".agents") "skills";$Skills=@("java-backend-engineering", "python-backend-ai-engineering", "frontend-engineering", "data-middleware-ai-infrastructure", "log-observability-analysis", "engineering-quality-delivery", "multi-agent-independent-review", "technical-document-writing", "long-running-task-memory");$Agents=@("cp-review-functional-business.toml", "cp-review-compatibility-regression.toml", "cp-review-security-access.toml", "cp-review-performance-resources.toml", "cp-review-data-contract.toml", "cp-review-state-concurrency.toml", "cp-review-test-delivery.toml");$B="<!-- codex-cross-project-assistant:begin -->";$E="<!-- codex-cross-project-assistant:end -->"
-function G{$F=Join-Path $CH "AGENTS.md";if(Test-Path $F){$C=Get-Content $F -Raw;$P="(?s)\s*"+[regex]::Escape($B)+".*?"+[regex]::Escape($E)+"\s*";$U=[regex]::Replace($C,$P,[Environment]::NewLine,1).Trim();if($U){Set-Content $F $U -Encoding UTF8}else{Remove-Item $F -Force}}}
-function S{foreach($N in $Skills){$P=Join-Path $SH $N;if(Test-Path $P){Remove-Item $P -Recurse -Force}}}
-function A{foreach($N in $Agents){$P=Join-Path (Join-Path $CH "agents") $N;if(Test-Path $P){Remove-Item $P -Force}}}
-switch($Component){"All"{G;S;A}"SkillsOnly"{S}"GlobalOnly"{G}"ReviewAgentsOnly"{A}};Write-Host '卸载完成。'
+[CmdletBinding()]
+param([ValidateSet("All","SkillsOnly","GlobalOnly","ReviewAgentsOnly")][string]$Component="All",[switch]$DryRun)
+$ErrorActionPreference="Stop"
+function Invoke-PackagePython {
+    param([string[]]$ManagerArgs)
+    $Script = Join-Path $PSScriptRoot "package_manager.py"
+    if (Get-Command python -ErrorAction SilentlyContinue) { & python $Script @ManagerArgs }
+    elseif (Get-Command py -ErrorAction SilentlyContinue) { & py -3 $Script @ManagerArgs }
+    elseif (Get-Command python3 -ErrorAction SilentlyContinue) { & python3 $Script @ManagerArgs }
+    else { throw "未找到 Python 3；请安装 Python 或使用 WSL/Linux 安装脚本。" }
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+$Map=@{"All"="all";"SkillsOnly"="skills";"GlobalOnly"="global";"ReviewAgentsOnly"="agents"}
+$ManagerArgs=@("uninstall","--component",$Map[$Component]);if($DryRun){$ManagerArgs+="--dry-run"}
+Invoke-PackagePython $ManagerArgs
