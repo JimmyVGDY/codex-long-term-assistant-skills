@@ -137,4 +137,4 @@ Terra High Reviewer: 0 / 1
 
 ## 九、配置边界
 
-`[agents]` 中的模型和强度是默认值，显式 spawn 可以覆盖。V4.2 通过 Skill 规则和 `review_controller.py` 限制本工作流的自动派发，但它不是 Codex 平台级模型 allowlist；用户手工绕过控制器启动更高模型时，包无法从底层阻止，只能在流程审计中识别和报告。
+`[agents]` 中的模型和强度是默认值，显式 spawn 可以覆盖。V5.0 通过 Skill 规则和 `review_controller.py` 限制本工作流的自动派发，但它不是 Codex 平台级模型 allowlist；用户手工绕过控制器启动更高模型时，包无法从底层阻止，只能在流程审计中识别和报告。

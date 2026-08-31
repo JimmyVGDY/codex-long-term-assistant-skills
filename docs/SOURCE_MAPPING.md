@@ -1,6 +1,6 @@
-# 源规则到 Codex V4.2 资源的映射
+# 源规则到 Codex V5.0 资源的映射
 
-| 规则或能力 | Codex V4.2 目标 |
+| 规则或能力 | Codex V5.0 目标 |
 |---|---|
 | 全局跨项目边界、授权和模型路由 | `global/AGENTS.md` |
 | Java 后端 | `skills/java-backend-engineering/` |
