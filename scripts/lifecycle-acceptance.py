@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Mapping, Sequence
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v2 import EventContractError, read_event_chain  # noqa: E402
+from cp_runtime.host_facts import HostFactError, load_host_session_facts  # noqa: E402
+from cp_runtime.integrity import IntegrityError, verify_event_seals  # noqa: E402
 
 REQUIRED_SEQUENCE = (
     "TURN_OPENED",
@@ -32,65 +34,35 @@ def _ref(value: str) -> str:
     return "sha256:" + hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _load_host_session_facts(path: Path, parent_session_id: str) -> List[Dict[str, str]]:
-    facts: List[Dict[str, str]] = []
-    session_meta: Mapping[str, Any] | None = None
-    try:
-        lines = path.read_text(encoding="utf-8-sig").splitlines()
-    except (OSError, UnicodeError) as exc:
-        raise AcceptanceError("host session evidence could not be read") from exc
-    for line in lines:
-        if not line.strip():
-            continue
-        try:
-            record = json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise AcceptanceError("host session evidence is not valid JSONL") from exc
-        if not isinstance(record, dict) or not isinstance(record.get("payload"), dict):
-            continue
-        payload = record["payload"]
-        if record.get("type") == "session_meta":
-            source = payload.get("source") or {}
-            subagent = source.get("subagent") if isinstance(source, dict) else {}
-            spawn = subagent.get("thread_spawn") if isinstance(subagent, dict) else {}
-            if isinstance(spawn, dict) and str(spawn.get("parent_thread_id") or "") == parent_session_id:
-                session_meta = payload
-        elif record.get("type") == "turn_context" and session_meta is not None:
-            model = str(payload.get("model") or session_meta.get("model") or "")
-            effort = str(payload.get("effort") or "")
-            turn_id = str(payload.get("turn_id") or "")
-            role = str(session_meta.get("agent_role") or "")
-            if model and turn_id:
-                facts.append({"turn_id": turn_id, "model": model, "reasoning_effort": effort, "agent_role": role})
-    if not facts:
-        raise AcceptanceError("host session evidence does not contain a correlated subagent turn")
-    return facts
-
-
 def _model_evidence(
     paired_tasks: Sequence[str],
     starts: Sequence[Mapping[str, Any]],
     expected_model: str,
     expected_effort: str,
-    host_session_log: Path | None,
+    host_session_log: Path | Sequence[Path] | None,
     parent_session_id: str,
 ) -> Dict[str, Any]:
-    actual_models = sorted({str(event.get("actual_model") or "") for event in starts if event.get("actual_model")})
-    hook_match = bool(expected_model and expected_model in actual_models)
+    hook_facts = [event for event in starts
+                  if event.get("actual_model_source") == "hook-payload"
+                  and event.get("actual_reasoning_effort_source") in {"hook-payload", "unavailable"}]
+    hook_match = any(
+        str(event.get("actual_model") or "") == expected_model
+        and (not expected_effort or str(event.get("actual_reasoning_effort") or "") == expected_effort)
+        for event in hook_facts
+    ) if expected_model else False
     host_match = False
     observed_efforts: List[str] = []
-    host_log_hash = ""
+    host_log_hash: str | List[str] = ""
+    host_diagnostic: Dict[str, Any] = {"trust_level": "DIAGNOSTIC", "source_count": 0,
+                                      "correlated_turn_count": 0, "source_sha256": []}
     if host_session_log is not None:
-        facts = _load_host_session_facts(host_session_log, parent_session_id)
-        host_log_hash = _sha256_file(host_session_log)
+        paths = [host_session_log] if isinstance(host_session_log, Path) else list(host_session_log)
+        try:
+            host_diagnostic = load_host_session_facts(paths, parent_session_id, paired_tasks)
+        except HostFactError as exc:
+            raise AcceptanceError(str(exc)) from exc
+        facts = host_diagnostic["facts"]
+        host_log_hash = host_diagnostic["source_sha256"]
         matching = [fact for fact in facts if fact["turn_id"] in paired_tasks]
         if expected_model:
             matching = [fact for fact in matching if fact["model"] == expected_model]
@@ -98,15 +70,23 @@ def _model_evidence(
             matching = [fact for fact in matching if fact["reasoning_effort"] == expected_effort]
         host_match = bool(matching)
         observed_efforts = sorted({fact["reasoning_effort"] for fact in matching if fact["reasoning_effort"]})
-    if expected_model and not (hook_match or host_match):
-        raise AcceptanceError("expected subagent model was not proven by hook or correlated host session evidence")
+        hook_models = {(str(event.get("actual_model") or ""),
+                        str(event.get("actual_reasoning_effort") or "")) for event in hook_facts}
+        host_models = {(fact["model"], fact["reasoning_effort"]) for fact in matching}
+        if hook_models and host_models and not (hook_models & host_models):
+            raise AcceptanceError("hook and host session model facts conflict")
+    if expected_model and not hook_match:
+        raise AcceptanceError("expected subagent model was not proven by trusted hook facts")
     return {
-        "status": "PASS" if expected_model and (hook_match or host_match) else "NOT_REQUESTED",
+        "status": "PASS" if expected_model and hook_match else "NOT_REQUESTED",
         "expected_model": expected_model,
         "expected_reasoning_effort": expected_effort,
         "hook_payload_match": hook_match,
         "host_session_match": host_match,
         "host_session_log_sha256": host_log_hash,
+        "host_session_trust_level": "DIAGNOSTIC",
+        "host_session_source_count": host_diagnostic["source_count"],
+        "host_session_correlated_turn_count": host_diagnostic["correlated_turn_count"],
         "observed_reasoning_efforts": observed_efforts,
         "actual_model_fact_preserved": True,
     }
@@ -119,12 +99,23 @@ def verify_lifecycle(
     repo_fingerprint: str,
     expected_subagent_model: str = "",
     expected_reasoning_effort: str = "",
-    host_session_log: Path | None = None,
+    host_session_log: Path | Sequence[Path] | None = None,
+    seal_file: Path | None = None,
+    keyring_path: Path | None = None,
 ) -> Dict[str, Any]:
     try:
         chain = read_event_chain(event_file, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
     except EventContractError as exc:
         raise AcceptanceError("event hash chain validation failed: %s" % exc) from exc
+    seal_evidence: Dict[str, Any] = {"seal_status": "UNAVAILABLE", "seal_count": 0,
+                                    "sealed_record_count": 0}
+    if seal_file is not None or keyring_path is not None:
+        try:
+            seal_evidence = verify_event_seals(event_file, seal_file, keyring_path)
+        except IntegrityError as exc:
+            raise AcceptanceError("event seal validation failed: %s" % exc) from exc
+        if seal_evidence.get("seal_status") != "SEALED_CURRENT":
+            raise AcceptanceError("current event chain head is not sealed")
     selected = [event for event in chain["events"] if str(event.get("session_id") or "") == session_id]
     if not selected:
         raise AcceptanceError("target session was not found")
@@ -224,6 +215,10 @@ def verify_lifecycle(
             "head": chain["head_hash"],
             "files": chain["files"],
             "hmac_verified": bool(os.environ.get("CP_ASSISTANT_HMAC_KEY")),
+            "seal_status": seal_evidence.get("seal_status"),
+            "seal_count": seal_evidence.get("seal_count", 0),
+            "sealed_record_count": seal_evidence.get("sealed_record_count", 0),
+            "seal_key_ids": seal_evidence.get("key_ids", []),
         },
         "privacy": {
             "raw_session_id_exported": False,
@@ -234,14 +229,16 @@ def verify_lifecycle(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.4 real lifecycle verifier")
+    parser = argparse.ArgumentParser(description="V6.5 real lifecycle verifier")
     parser.add_argument("--event-file", required=True)
     parser.add_argument("--session-id", required=True)
     parser.add_argument("--project-id", required=True)
     parser.add_argument("--repo-fingerprint", required=True)
     parser.add_argument("--expected-subagent-model", default="")
     parser.add_argument("--expected-reasoning-effort", default="")
-    parser.add_argument("--host-session-log")
+    parser.add_argument("--host-session-log", action="append", default=[])
+    parser.add_argument("--seal-file")
+    parser.add_argument("--keyring")
     parser.add_argument("--output", required=True)
     arguments = parser.parse_args()
     report = verify_lifecycle(
@@ -251,7 +248,9 @@ def main() -> None:
         arguments.repo_fingerprint,
         arguments.expected_subagent_model,
         arguments.expected_reasoning_effort,
-        Path(arguments.host_session_log) if arguments.host_session_log else None,
+        [Path(item) for item in arguments.host_session_log] if arguments.host_session_log else None,
+        Path(arguments.seal_file) if arguments.seal_file else None,
+        Path(arguments.keyring) if arguments.keyring else None,
     )
     output = Path(arguments.output)
     output.parent.mkdir(parents=True, exist_ok=True)

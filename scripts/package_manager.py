@@ -29,7 +29,7 @@ from payload_integrity import (MANIFEST_NAME as PAYLOAD_MANIFEST_NAME,
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "6.4.0"
+VERSION = "6.5.0"
 MARKETPLACE = "cp-assistant-local"
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
 END = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:END -->"
@@ -631,7 +631,7 @@ def payload_report(root: Path) -> Dict[str, Any]:
 
 
 def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
-    """Preserve all prior/unknown fields while making the V6.4 identity fields explicit."""
+    """Preserve all prior/unknown fields while making the V6.5 identity fields explicit."""
     if not value:
         return {}
     schema = value.get("schema_version")
@@ -1044,7 +1044,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("安装失败且回滚不完整；请执行 doctor --recover：%s" % "; ".join(journal["rollback_errors"])) from exc
         raise
-    print("[OK] V6.4 账户级安装完成，mode=%s" % mode)
+    print("[OK] V6.5 账户级安装完成，mode=%s" % mode)
     if mode == "plugin":
         print("[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add")
 
@@ -1109,7 +1109,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("仓库安装回滚不完整；请执行 doctor --recover") from exc
         raise
-    print("[OK] V6.4 仓库级 Skills 安装完成: %s" % repo)
+    print("[OK] V6.5 仓库级 Skills 安装完成: %s" % repo)
 
 
 def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
@@ -1162,7 +1162,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                 state = migrate_state_v1_to_v2(load_json(state_path("user"), {}) or {}, "user", mode)
                 identity = state.get("payload_identity") or {}
                 if state.get("version") != VERSION or state.get("schema_version") != 2:
-                    errors.append("安装状态不是 V6.4 schema 2")
+                    errors.append("安装状态不是 V6.5 schema 2")
                 if any(identity.get(key) != source_report["payload_digest"]
                        for key in ("manifest_digest", "marketplace_digest", "cache_digest")):
                     errors.append("安装状态 payload 身份读回不一致")
@@ -1176,7 +1176,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     if errors:
         for item in errors: print("[FAIL]",item)
         raise SystemExit(1)
-    print("[OK] V6.4 安装验证通过 scope=%s mode=%s" % (scope, mode))
+    print("[OK] V6.5 安装验证通过 scope=%s mode=%s" % (scope, mode))
 
 
 def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_run: bool) -> None:
@@ -1277,7 +1277,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
         _record_applied(journal, str(record.get("label") or "managed"), target)
     if installed_mode == "plugin" and not any(record.get("existed") for record in previous_market_records):
         _remove_empty_marketplace_dirs()
-    # V6.4 records its own state file as a transactional target. If an older V6 state existed,
+    # V6.5 records its own state file as a transactional target. If an older V6 state existed,
     # the restore loop has put it back; otherwise ensure no current state remains.
     if not previous_state_record:
         _io_path(sp).unlink(missing_ok=True)
@@ -1293,7 +1293,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
-    print("[OK] V6.4 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
+    print("[OK] V6.5 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
 
 
 def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict[str, Any]]:
@@ -1429,7 +1429,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
 
 
 def main() -> None:
-    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V6.4 安装器")
+    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V6.5 安装器")
     sub=p.add_subparsers(dest="command",required=True)
     for name in ("install","verify","uninstall"):
         q=sub.add_parser(name)

@@ -4,7 +4,7 @@ import argparse, json, re, subprocess, sys, tomllib
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-parser=argparse.ArgumentParser(description='V6.4 package-only validation')
+parser=argparse.ArgumentParser(description='V6.5 package-only validation')
 parser.add_argument('--output')
 arguments=parser.parse_args()
 
@@ -21,7 +21,7 @@ for path in ROOT.rglob('*.toml'):
     tomllib.loads(path.read_text(encoding='utf-8-sig'))
 run([sys.executable,'-m','compileall','-q',str(ROOT/'runtime'),str(ROOT/'scripts'),str(ROOT/'hooks')])
 run([sys.executable,str(ROOT/'scripts'/'payload-integrity.py'),'verify','--root',str(ROOT),
-     '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','6.4.0'])
+     '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','6.5.0'])
 run([sys.executable,str(ROOT/'scripts'/'semantic-lint.py')])
 run([sys.executable,str(ROOT/'scripts'/'routing-eval.py'),'validate'])
 tests=run([sys.executable,'-m','unittest','discover','-s','tests','-p','test_*.py'])
@@ -36,14 +36,14 @@ def test_count(output):
 package_test_count=test_count(tests)
 runtime_test_count=test_count(runtime_tests)
 result={
- 'ok':True,'evidence_scope':'package-only','version':'6.4.0','skill_count':10,'reviewer_count':7,
+ 'ok':True,'evidence_scope':'package-only','version':'6.5.0','skill_count':10,'reviewer_count':7,
  'hooks':['UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'],
  'task_outcome_event':'2.0','execution_authorization':'NONE','automatic_self_modification':False,
  'semantic_lint':'PASS','routing_case_schema':'PASS (35 cases)','plugin_payload_manifest':'PASS',
  'unit_regression_tests':'PASS (%d package + %d runtime)' % (package_test_count,runtime_test_count),
  'durable_install_transaction':'PASS (tests/test_package_manager_security.py)',
- 'event_segmentation_and_recovery':'PASS (tests/test_v64_resilience.py)',
- 'unified_release_verifier':'PASS (tests/test_v64_release.py)',
+ 'event_segmentation_and_recovery':'PASS (tests/test_v65_resilience.py)',
+ 'unified_release_verifier':'PASS (tests/test_v65_release.py)',
  'observation_quality_gate':'PASS (tests/test_v60_deterministic_observation.py)',
  'validation_evidence':{
    'package_test_count':package_test_count,'runtime_test_count':runtime_test_count,
