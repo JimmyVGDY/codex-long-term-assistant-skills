@@ -59,7 +59,7 @@ $engineering-quality-delivery、$multi-agent-independent-review
 
 只读审查当前分支相对基线的真实 git diff。根据风险从功能业务、
 回归兼容、权限安全、性能资源、数据契约、状态并发、测试交付中选择
-必要 Reviewer，并行执行但最多 6 个。本轮全部返回后统一归并。
+必要 Reviewer，默认并行最多 3 个；测试/兼容扫描优先 Luna，业务和高风险判断按需使用 Terra，自动最高 Terra High。本轮全部返回后统一归并。
 
 不要修改任何文件，不要创建提交、推送、部署、重启或写数据。
 最终输出阻塞项、非阻塞项、未验证项和建议的最小完整修复集合。
@@ -73,10 +73,10 @@ $engineering-quality-delivery、$multi-agent-independent-review
 
 先读取或初始化仓库外的外部记忆文档。把对话上下文视为当前小节点的
 临时缓存：每完成一个可恢复节点就追加 PROGRESS.md 并刷新 CURRENT_TASK.md；
-连续最多 5 个实质性动作必须形成检查点；高风险操作前后分别记录。
+连续最多 8 个实质性动作必须形成检查点；高风险操作前后分别记录。
 
 上下文压缩、模型切换或会话恢复后，先读取当前授权、任务快照、计划、
-最近 5 个检查点和相关决策，再核对分支、HEAD、git status、git diff、
+最近 3 个检查点和相关决策，再核对分支、HEAD、git status、git diff、
 代码、配置和验证证据。存在冲突时先记录状态分歧，不要直接继续修改。
 ```
 
@@ -135,6 +135,16 @@ $technical-document-writing 和 $long-running-task-memory。
 不要执行数据库、Redis、MQ、文件、部署、重启或切流操作。
 ```
 
+
+## V4.2 基础能力：模型分级与成本收敛
+
+```text
+当前任务使用主 Agent 完成决策。只把相互独立、读取密集且能结构化返回的子任务委派出去。
+模型按 luna-low -> luna-medium -> terra-medium -> terra-high 逐级选择；
+搜索、提取、测试证据和兼容扫描优先 Luna，业务语义、事务、并发和安全判断再用 Terra。
+自动子 Agent 最高不得超过 Terra High，不得自动使用 Sol、xhigh、max 或 ultra。
+默认并行不超过 3、累计不超过 6；相同 Reviewer 不重复审查未变化的 packet。
+```
 
 ## V4.1 基础能力：实施前设计与影响审查
 
