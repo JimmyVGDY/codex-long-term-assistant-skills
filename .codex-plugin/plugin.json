@@ -1,0 +1,7 @@
+{
+  "name": "codex-cross-project-engineering-assistant",
+  "version": "6.0.0",
+  "description": "跨项目长期技术助手：十类工程 Skills、独立 Reviewer、确定性自观察 Hooks 与人工受控优化闭环。",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
+}
