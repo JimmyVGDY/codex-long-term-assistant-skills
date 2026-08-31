@@ -32,8 +32,8 @@ description: >-
 
 > 只在独立判断能增加有效信息时派发 Reviewer；用 Luna 承担读取密集和机械核验，用 Terra 承担业务与高风险判断。
 
-<!-- V5.1-CONTROLLED-EVOLUTION:BEGIN -->
-## V5.1 自观察与受控自进化
+<!-- V6.0-CONTROLLED-EVOLUTION:BEGIN -->
+## V6.0 自观察与受控自进化
 
 当任务目标是复盘长期失败、模型升级、Reviewer 收益、修复轮次、Skill 路由偏差或跨任务成本时：
 
@@ -46,4 +46,4 @@ description: >-
 7. 真正修改必须另建任务并经过现有 Execution Guard、Review Packet 和 Finalization。
 
 详细规则按需读取 `references/controlled-self-evolution.md`，不要在普通任务中加载全部 Evolution 文档。
-<!-- V5.1-CONTROLLED-EVOLUTION:END -->
+<!-- V6.0-CONTROLLED-EVOLUTION:END -->
