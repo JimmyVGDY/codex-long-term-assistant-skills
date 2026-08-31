@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for V4.2 review packet, budgets and model routing."""
+"""Regression tests for V5.0 inherited review packet, budgets and model routing."""
 from __future__ import annotations
 
 import json
@@ -70,7 +70,7 @@ def create_confirmed_result(packet_dir: Path, output: Path, reviewer: str, profi
     output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-with tempfile.TemporaryDirectory(prefix="review-tools-v42-") as temp:
+with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
     work = Path(temp)
     repo = work / "repo"
     packet = work / "packet"

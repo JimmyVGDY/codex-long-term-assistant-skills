@@ -11,7 +11,7 @@ description: >-
 1. 先读取 `references/multi-agent-independent-review-workflow.md`，只加载当前阶段需要的分片。
 2. 分别选择执行流程 `LIGHT/STANDARD/STRICT`、Reviewer 成本 `economy/balanced/deep` 和模型档位；三者不得混为一谈。
 3. 自动模型按 `luna-low -> luna-medium -> terra-medium -> terra-high` 逐级路由，最高为 Terra High；禁止自动使用 Sol、`xhigh`、`max` 或 `ultra`。
-4. 使用 `review_packet.py` 生成统一审查包并检查 freshness；使用 `review_controller.py` 记录隔离、预算、packet hash、模型档位、结果和停止状态。
+4. 使用 `review_packet.py` 生成统一审查包并检查 freshness；使用 `review_controller.py` 记录隔离、预算、packet hash、模型档位、结果和停止状态。审查包必须与当前 Project ID、Task ID、Git 基线和 Task Envelope 一致。
 5. Reviewer 先读摘要和统计，只展开分配范围；同一轮收齐后统一去重、根因聚类和集中修复，不边审边改。
 6. 修复后只重跑受影响验证、刷新 packet 并定向复核；相同 Reviewer/相同 packet、无新信息或已无问题通过时停止重复派发。
 7. 默认并行不超过 3、累计不超过 6、实施后不超过 2 轮、集中修复不超过 2 轮、Terra High 不超过 1 个；显式放宽也不得超过控制器硬上限。
@@ -21,6 +21,7 @@ description: >-
 - 子 Agent 只接收任务边界、差异、约束、证据和未验证项，不复制父会话全部历史。
 - 最终只返回结构化 findings、检查范围、未验证项和模型/隔离证据，不回传原始长日志或内部推理。
 - 独立上下文不等于系统只读；父会话可写且没有沙箱拒绝证据时，只能报告 `logical-readonly`。
+- Review Evidence 不授予修改、提交、推送、部署或重启权限；修复后基线变化会使旧 packet 和结论失效。
 
 ## 工具与资产
 
