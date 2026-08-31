@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create and verify a privacy-bounded V6.5 release attestation."""
+"""Create and verify a privacy-bounded V6.6 release attestation."""
 from __future__ import annotations
 
 import argparse
@@ -23,7 +23,7 @@ from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "6.5.0"
+VERSION = "6.6.0"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 
 
@@ -64,14 +64,28 @@ def _plugin_item(plugin_list: Mapping[str, Any]) -> Dict[str, Any]:
             continue
         if item.get("pluginId") == PLUGIN_ID:
             if not bool(item.get("installed")) or not bool(item.get("enabled")) or item.get("version") != VERSION:
-                raise AttestationError("Plugin readback does not prove installed/enabled/version=6.5.0")
+                raise AttestationError("Plugin readback does not prove installed/enabled/version=6.6.0")
             return item
     raise AttestationError("target Plugin was not found in Codex readback")
 
 
 def _model_gate_valid(report: Mapping[str, Any]) -> bool:
-    if report.get("ok") is not True or report.get("automatic_ceiling") != "gpt-5.6-terra + high":
+    if report.get("ok") is not True or report.get("automatic_ceiling") not in {
+        "gpt-5.6-terra + high", "gpt-5.6-terra / high"
+    }:
         return False
+    allow_rows = report.get("allow_cases")
+    deny_rows = report.get("deny_cases")
+    if isinstance(allow_rows, list) and isinstance(deny_rows, list):
+        allowed = {(str(row.get("model") or ""), str(row.get("reasoning_effort") or "")): not bool(row.get("denied"))
+                   for row in allow_rows if isinstance(row, dict) and row.get("exit_code") == 0}
+        denied = {(str(row.get("model") or ""), str(row.get("reasoning_effort") or "")): bool(row.get("denied"))
+                  for row in deny_rows if isinstance(row, dict) and row.get("exit_code") == 0}
+        required_allow = {("gpt-5.6-luna", "low"), ("gpt-5.6-luna", "medium"),
+                          ("gpt-5.6-terra", "medium"), ("gpt-5.6-terra", "high")}
+        required_deny = {("gpt-5.6-terra", "xhigh"), ("gpt-5.6-sol", "high")}
+        return all(allowed.get(key) is True for key in required_allow) \
+            and all(denied.get(key) is True for key in required_deny)
     rows = report.get("cases")
     if not isinstance(rows, list):
         return False
@@ -340,7 +354,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.5 release attestation")
+    parser = argparse.ArgumentParser(description="V6.6 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)

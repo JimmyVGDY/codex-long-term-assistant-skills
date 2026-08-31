@@ -43,8 +43,13 @@ def _model_evidence(
     parent_session_id: str,
 ) -> Dict[str, Any]:
     hook_facts = [event for event in starts
-                  if event.get("actual_model_source") == "hook-payload"
-                  and event.get("actual_reasoning_effort_source") in {"hook-payload", "unavailable"}]
+                  if event.get("actual_model_source") == "host-attested-hook-payload"
+                  and event.get("actual_reasoning_effort_source") == "host-attested-hook-payload"
+                  and isinstance(event.get("metadata"), Mapping)
+                  and str(event.get("metadata", {}).get("host_attestation_ref") or "").startswith("sha256:")]
+    attestation_refs = [str(event["metadata"]["host_attestation_ref"]) for event in hook_facts]
+    if len(attestation_refs) != len(set(attestation_refs)):
+        raise AcceptanceError("trusted runtime model attestation was replayed")
     hook_match = any(
         str(event.get("actual_model") or "") == expected_model
         and (not expected_effort or str(event.get("actual_reasoning_effort") or "") == expected_effort)
@@ -73,12 +78,17 @@ def _model_evidence(
         hook_models = {(str(event.get("actual_model") or ""),
                         str(event.get("actual_reasoning_effort") or "")) for event in hook_facts}
         host_models = {(fact["model"], fact["reasoning_effort"]) for fact in matching}
-        if hook_models and host_models and not (hook_models & host_models):
-            raise AcceptanceError("hook and host session model facts conflict")
-    if expected_model and not hook_match:
-        raise AcceptanceError("expected subagent model was not proven by trusted hook facts")
+        diagnostic_conflict = bool(hook_models and host_models and not (hook_models & host_models))
+    else:
+        diagnostic_conflict = False
+    if expected_model and hook_facts and not hook_match:
+        raise AcceptanceError("trusted runtime model evidence conflicts with the expected model")
+    observations = sorted({"%s / %s" % (fact["model"], fact["reasoning_effort"] or "unknown")
+                           for fact in host_diagnostic.get("facts", [])})
     return {
-        "status": "PASS" if expected_model and hook_match else "NOT_REQUESTED",
+        "status": "VERIFIED" if hook_match else "UNAVAILABLE",
+        "runtime_model_evidence": "VERIFIED" if hook_match else "UNAVAILABLE",
+        "diagnostic_model_observation": ", ".join(observations) if observations else "UNAVAILABLE",
         "expected_model": expected_model,
         "expected_reasoning_effort": expected_effort,
         "hook_payload_match": hook_match,
@@ -88,6 +98,7 @@ def _model_evidence(
         "host_session_source_count": host_diagnostic["source_count"],
         "host_session_correlated_turn_count": host_diagnostic["correlated_turn_count"],
         "observed_reasoning_efforts": observed_efforts,
+        "diagnostic_conflict_with_runtime_evidence": diagnostic_conflict,
         "actual_model_fact_preserved": True,
     }
 
@@ -102,6 +113,7 @@ def verify_lifecycle(
     host_session_log: Path | Sequence[Path] | None = None,
     seal_file: Path | None = None,
     keyring_path: Path | None = None,
+    requested_model_policy: str = "UNAVAILABLE",
 ) -> Dict[str, Any]:
     try:
         chain = read_event_chain(event_file, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
@@ -189,12 +201,16 @@ def verify_lifecycle(
         for field in source_fields
     }
     fact_coverage = {
-        field: sum(1 for event in selected if event.get(field) == "hook-payload") / len(selected)
+        field: sum(1 for event in selected
+                   if event.get(field) in {"hook-payload", "host-attested-hook-payload"}) / len(selected)
         for field in source_fields
     }
     return {
         "ok": True,
-        "schema_version": "1.0",
+        "schema_version": "1.1",
+        "requested_model_policy": requested_model_policy,
+        "runtime_model_evidence": model_evidence["runtime_model_evidence"],
+        "diagnostic_model_observation": model_evidence["diagnostic_model_observation"],
         "project_id": project_id,
         "repo_fingerprint": repo_fingerprint,
         "session_ref": _ref(session_id),
@@ -229,7 +245,7 @@ def verify_lifecycle(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.5 real lifecycle verifier")
+    parser = argparse.ArgumentParser(description="V6.6 real lifecycle verifier")
     parser.add_argument("--event-file", required=True)
     parser.add_argument("--session-id", required=True)
     parser.add_argument("--project-id", required=True)
@@ -239,6 +255,7 @@ def main() -> None:
     parser.add_argument("--host-session-log", action="append", default=[])
     parser.add_argument("--seal-file")
     parser.add_argument("--keyring")
+    parser.add_argument("--requested-model-policy", choices=("PASS", "FAIL", "UNAVAILABLE"), default="UNAVAILABLE")
     parser.add_argument("--output", required=True)
     arguments = parser.parse_args()
     report = verify_lifecycle(
@@ -251,6 +268,7 @@ def main() -> None:
         [Path(item) for item in arguments.host_session_log] if arguments.host_session_log else None,
         Path(arguments.seal_file) if arguments.seal_file else None,
         Path(arguments.keyring) if arguments.keyring else None,
+        arguments.requested_model_policy,
     )
     output = Path(arguments.output)
     output.parent.mkdir(parents=True, exist_ok=True)

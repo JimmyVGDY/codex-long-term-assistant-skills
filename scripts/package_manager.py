@@ -27,9 +27,11 @@ from payload_integrity import (MANIFEST_NAME as PAYLOAD_MANIFEST_NAME,
                                verify_payload)
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "runtime"))
+from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "6.5.0"
+VERSION = "6.6.0"
 MARKETPLACE = "cp-assistant-local"
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
 END = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:END -->"
@@ -631,7 +633,7 @@ def payload_report(root: Path) -> Dict[str, Any]:
 
 
 def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
-    """Preserve all prior/unknown fields while making the V6.5 identity fields explicit."""
+    """Preserve all prior/unknown fields while making the V6.6 identity fields explicit."""
     if not value:
         return {}
     schema = value.get("schema_version")
@@ -986,6 +988,11 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                                          "marketplace_digest":marketplace_report["payload_digest"],
                                          "cache_digest":cache_report["payload_digest"] if cache_report else None,
                                          "file_count":source_report["file_count"]}
+            # V6.6 SessionEnd only enqueues a signed job.  Initialize the
+            # host-bound keyring before committing installation; existing V6.5
+            # keys and all RETIRED verification history are preserved.
+            init_keyring()
+            state["integrity_keyring"] = verify_keyring()
         write_json_atomic(state_path("user"), state)
         _record_applied(journal, "install-state", state_path("user"))
         _hard_crash("PLUGIN:AFTER_STATE_WRITE")
@@ -1044,7 +1051,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("安装失败且回滚不完整；请执行 doctor --recover：%s" % "; ".join(journal["rollback_errors"])) from exc
         raise
-    print("[OK] V6.5 账户级安装完成，mode=%s" % mode)
+    print("[OK] V6.6 账户级安装完成，mode=%s" % mode)
     if mode == "plugin":
         print("[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add")
 
@@ -1109,7 +1116,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("仓库安装回滚不完整；请执行 doctor --recover") from exc
         raise
-    print("[OK] V6.5 仓库级 Skills 安装完成: %s" % repo)
+    print("[OK] V6.6 仓库级 Skills 安装完成: %s" % repo)
 
 
 def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
@@ -1134,6 +1141,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
             if not _io_path(market/".agents"/"plugins"/"marketplace.json").is_file(): errors.append("缺少 Codex Marketplace manifest")
             if not _io_path(plugin/".codex-plugin"/"plugin.json").is_file(): errors.append("缺少 Plugin")
             if not _io_path(plugin/"hooks"/"hooks.json").is_file(): errors.append("缺少 Plugin Hooks")
+            if not _io_path(plugin/"hooks"/"seal_worker.py").is_file(): errors.append("缺少延迟封印 Worker")
             if os.name == "nt" and not _io_path(plugin/"hooks"/"cp_hook.cmd").is_file(): errors.append("缺少 Windows Hook 启动器")
             if _io_path(plugin/"hooks"/"hooks.json").is_file():
                 hook_manifest = load_json(plugin/"hooks"/"hooks.json", {}) or {}
@@ -1148,8 +1156,10 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                     ]
                     if os.name == "nt" and not any("cp_hook.cmd" in command for command in commands):
                         errors.append("Windows Hook 启动命令缺失 %s" % hook_name)
-                    if os.name == "nt" and not any(command.startswith("cmd.exe /d /c ") and '"' not in command for command in commands):
-                        errors.append("Windows Hook 启动命令与 Codex 0.150.1 不兼容 %s" % hook_name)
+                    quoted_prefix = 'cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\cp_hook.cmd" '
+                    if os.name == "nt" and not any(command.startswith(quoted_prefix) and command.endswith('"')
+                                                     for command in commands):
+                        errors.append("Windows Hook 启动路径未完整引用 %s" % hook_name)
             active, detail = _plugin_activation_status(VERSION)
             if not active: errors.append("Plugin 未被 Codex 实际安装并启用: %s" % detail)
             try:
@@ -1162,12 +1172,16 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                 state = migrate_state_v1_to_v2(load_json(state_path("user"), {}) or {}, "user", mode)
                 identity = state.get("payload_identity") or {}
                 if state.get("version") != VERSION or state.get("schema_version") != 2:
-                    errors.append("安装状态不是 V6.5 schema 2")
+                    errors.append("安装状态不是 V6.6 schema 2")
                 if any(identity.get(key) != source_report["payload_digest"]
                        for key in ("manifest_digest", "marketplace_digest", "cache_digest")):
                     errors.append("安装状态 payload 身份读回不一致")
             except InstallError as exc:
                 errors.append(str(exc))
+            try:
+                verify_keyring()
+            except Exception as exc:
+                errors.append("完整性 keyring 不可用: %s" % exc)
         for src in agent_files():
             if not _io_path(ch/"agents"/src.name).is_file(): errors.append("缺少 Reviewer %s" % src.name)
         io_agents = _io_path(ch/"AGENTS.md")
@@ -1176,7 +1190,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     if errors:
         for item in errors: print("[FAIL]",item)
         raise SystemExit(1)
-    print("[OK] V6.5 安装验证通过 scope=%s mode=%s" % (scope, mode))
+    print("[OK] V6.6 安装验证通过 scope=%s mode=%s" % (scope, mode))
 
 
 def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_run: bool) -> None:
@@ -1277,7 +1291,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
         _record_applied(journal, str(record.get("label") or "managed"), target)
     if installed_mode == "plugin" and not any(record.get("existed") for record in previous_market_records):
         _remove_empty_marketplace_dirs()
-    # V6.5 records its own state file as a transactional target. If an older V6 state existed,
+    # V6.6 records its own state file as a transactional target. If an older V6 state existed,
     # the restore loop has put it back; otherwise ensure no current state remains.
     if not previous_state_record:
         _io_path(sp).unlink(missing_ok=True)
@@ -1293,7 +1307,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
-    print("[OK] V6.5 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
+    print("[OK] V6.6 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
 
 
 def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict[str, Any]]:
@@ -1429,7 +1443,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
 
 
 def main() -> None:
-    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V6.5 安装器")
+    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V6.6 安装器")
     sub=p.add_subparsers(dest="command",required=True)
     for name in ("install","verify","uninstall"):
         q=sub.add_parser(name)

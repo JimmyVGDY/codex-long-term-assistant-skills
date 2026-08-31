@@ -143,7 +143,7 @@ def write_manifest(root: Path, package: str, version: str, output: Path | None =
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.5 Plugin payload 身份工具")
+    parser = argparse.ArgumentParser(description="V6.6 Plugin payload 身份工具")
     sub = parser.add_subparsers(dest="command", required=True)
     generate = sub.add_parser("generate")
     generate.add_argument("--root", required=True)

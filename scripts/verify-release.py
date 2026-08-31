@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed V6.5 end-to-end release verifier."""
+"""Fail-closed V6.6 end-to-end release verifier."""
 from __future__ import annotations
 
 import argparse
@@ -14,7 +14,7 @@ from typing import Any, Dict, Mapping
 
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
 
-VERSION = "6.5.0"
+VERSION = "6.6.0"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
@@ -43,7 +43,7 @@ def _sha256(path: Path) -> str:
 
 
 def _artifact_payload(artifact: Path) -> Dict[str, Any]:
-    with tempfile.TemporaryDirectory(prefix="cp-v65-verify-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="cp-v66-verify-") as temporary:
         root = Path(temporary)
         try:
             with zipfile.ZipFile(artifact, "r") as archive:
@@ -54,8 +54,8 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
         except (OSError, zipfile.BadZipFile) as exc:
             raise VerificationError("artifact 不是有效 ZIP") from exc
         children = [item for item in root.iterdir() if item.is_dir()]
-        if len(children) != 1 or children[0].name != "Codex-Skills-V6.5":
-            raise VerificationError("artifact 根目录不是 Codex-Skills-V6.5")
+        if len(children) != 1 or children[0].name != "Codex-Skills-V6.6":
+            raise VerificationError("artifact 根目录不是 Codex-Skills-V6.6")
         package_root = children[0]
         try:
             manifest = load_manifest(package_root / MANIFEST_NAME)
@@ -65,8 +65,21 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
 
 
 def _verify_model_gate(report: Mapping[str, Any]) -> Dict[str, Any]:
-    if report.get("ok") is not True or report.get("automatic_ceiling") != "gpt-5.6-terra + high":
+    if report.get("ok") is not True or report.get("requested_model_policy") != "PASS" \
+            or report.get("automatic_ceiling") not in {"gpt-5.6-terra + high", "gpt-5.6-terra / high"}:
         raise VerificationError("自动模型门禁报告无效")
+    if isinstance(report.get("allow_cases"), list) and isinstance(report.get("deny_cases"), list):
+        allowed = {(str(row.get("model") or ""), str(row.get("reasoning_effort") or "")): not bool(row.get("denied"))
+                   for row in report["allow_cases"] if isinstance(row, dict) and row.get("exit_code") == 0}
+        denied = {(str(row.get("model") or ""), str(row.get("reasoning_effort") or "")): bool(row.get("denied"))
+                  for row in report["deny_cases"] if isinstance(row, dict) and row.get("exit_code") == 0}
+        required_allow = {("gpt-5.6-luna", "low"), ("gpt-5.6-luna", "medium"),
+                          ("gpt-5.6-terra", "medium"), ("gpt-5.6-terra", "high")}
+        required_deny = {("gpt-5.6-terra", "xhigh"), ("gpt-5.6-sol", "high")}
+        if not all(allowed.get(key) is True for key in required_allow) or not all(denied.get(key) is True for key in required_deny):
+            raise VerificationError("自动模型门禁未证明默认成本路线与 Terra High 上限")
+        return {"automatic_ceiling": "gpt-5.6-terra / high",
+                "requested_model_policy": "PASS", "required_cases": len(required_allow) + len(required_deny)}
     rows = report.get("cases")
     if not isinstance(rows, list):
         raise VerificationError("自动模型门禁 cases 无效")
@@ -113,7 +126,7 @@ def verify_release(artifact: Path, package_validation: Mapping[str, Any], witnes
     artifact_payload = _artifact_payload(artifact)
     package_ok = package_validation.get("ok") is True and package_validation.get("version") == VERSION
     if not package_ok:
-        raise VerificationError("包内验证未证明 V6.5 PASS")
+        raise VerificationError("包内验证未证明 V6.6 PASS")
     artifact_ok = (witness.get("ok") is True and witness.get("reproducible") is True
                    and witness.get("version") == VERSION and witness.get("artifact_sha256") == artifact_hash)
     if not artifact_ok:
@@ -127,13 +140,20 @@ def verify_release(artifact: Path, package_validation: Mapping[str, Any], witnes
     plugin_ok = len(matches) == 1 and matches[0].get("installed") is True and matches[0].get("enabled") is True \
         and str(matches[0].get("version") or "") == VERSION
     if not plugin_ok:
-        raise VerificationError("Plugin 未精确证明 installed/enabled/version=6.5.0")
+        raise VerificationError("Plugin 未精确证明 installed/enabled/version=6.6.0")
     lifecycle_ok = lifecycle.get("ok") is True and (lifecycle.get("event_chain") or {}).get("valid") is True
     project_id = str(lifecycle.get("project_id") or "")
     repo_fingerprint = str(lifecycle.get("repo_fingerprint") or "")
     if not lifecycle_ok or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", project_id) \
             or not re.fullmatch(r"sha256:[0-9a-f]{64}", repo_fingerprint):
         raise VerificationError("生命周期或项目双重绑定证据无效")
+    if lifecycle.get("requested_model_policy") != "PASS":
+        raise VerificationError("生命周期未绑定 requested_model_policy=PASS")
+    if lifecycle.get("runtime_model_evidence") not in {"VERIFIED", "UNAVAILABLE"}:
+        raise VerificationError("runtime_model_evidence 口径无效")
+    diagnostic = lifecycle.get("diagnostic_model_observation")
+    if not isinstance(diagnostic, str) or not diagnostic:
+        raise VerificationError("diagnostic_model_observation 缺失")
     if model_gate_report is not None:
         model_gate = _verify_model_gate(model_gate_report)
     elif _legacy_luna_model_proven(lifecycle):
@@ -163,6 +183,9 @@ def verify_release(artifact: Path, package_validation: Mapping[str, Any], witnes
         "repo_fingerprint": repo_fingerprint,
         "status": {"package": "PASS", "artifact": "PASS", "host": "PASS", "plugin": "PASS",
                    "lifecycle": "PASS", "model_gate": "PASS", "payload": "PASS"},
+        "requested_model_policy": lifecycle["requested_model_policy"],
+        "runtime_model_evidence": lifecycle["runtime_model_evidence"],
+        "diagnostic_model_observation": lifecycle["diagnostic_model_observation"],
         "evidence": {"plugin": matches[0], "codex_version": version_text,
                      "event_chain_head": (lifecycle.get("event_chain") or {}).get("head"),
                      "model_gate": model_gate,
@@ -173,7 +196,7 @@ def verify_release(artifact: Path, package_validation: Mapping[str, Any], witnes
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.5 端到端发行验证")
+    parser = argparse.ArgumentParser(description="V6.6 端到端发行验证")
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--package-validation", required=True)
     parser.add_argument("--build-witness", required=True)

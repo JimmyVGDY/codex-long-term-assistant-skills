@@ -13,7 +13,7 @@ from cp_runtime.integrity import IntegrityError, seal_event_chain, verify_event_
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.5 event chain seal")
+    parser = argparse.ArgumentParser(description="V6.6 event chain seal")
     parser.add_argument("command", choices=["create", "verify"])
     parser.add_argument("--event-file", required=True)
     parser.add_argument("--seal-file")

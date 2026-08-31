@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manage the V6.5 host-bound integrity keyring without exporting secrets."""
+"""Manage the V6.6 host-bound integrity keyring without exporting secrets."""
 from __future__ import annotations
 
 import argparse
@@ -13,7 +13,7 @@ from cp_runtime.integrity import IntegrityError, init_keyring, keyring_status, r
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.5 integrity keyring")
+    parser = argparse.ArgumentParser(description="V6.6 integrity keyring")
     parser.add_argument("--keyring")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("init")
