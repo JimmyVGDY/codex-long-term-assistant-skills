@@ -2,6 +2,7 @@
 .codex-plugin/plugin.json
 CHANGELOG.md
 README.md
+RECONSTRUCTED_HISTORY.zh-CN.md
 RELEASE_ARCHIVES.md
 RELEASE_NOTES_V6.0.md
 RELEASE_NOTES_V6.1.md
@@ -14,8 +15,11 @@ RELEASE_NOTES_V6.6.1.md
 VALIDATION_REPORT_V6.6.1.md
 V6.6.1_AUDIT_REPORT.md
 V6.0_BUILD_INFO.json
+V6.1_AUDIT_REPORT.md
 V6.2_BUILD_INFO.json
 V6.3_BUILD_INFO.json
+V6.5_AUDIT_REPORT.md
+VALIDATION_REPORT_V6.5.md
 config/agents.example.toml
 custom-agents/cp-review-compatibility-regression.toml
 custom-agents/cp-review-data-contract.toml
@@ -25,13 +29,17 @@ custom-agents/cp-review-security-access.toml
 custom-agents/cp-review-state-concurrency.toml
 custom-agents/cp-review-test-delivery.toml
 docs/CODEX_CONFIG_GUIDE.md
+docs/FRONTEND_SKILL_MIGRATION.md
 docs/INSTALLATION_RECOVERY.md
 docs/USER_GUIDE_V6.6.1.md
+docs/VALIDATION_REPORT.md
 global/AGENTS.md
 manifest.json
 skills/controlled-evolution-governance/agents/openai.yaml
+skills/controlled-evolution-governance/references/proposal-lifecycle-v6.md
 skills/controlled-evolution-governance/SKILL.md
 skills/data-middleware-ai-infrastructure/agents/openai.yaml
+skills/data-middleware-ai-infrastructure/references/data-middleware-ai-infrastructure-rules.md
 skills/data-middleware-ai-infrastructure/SKILL.md
 skills/engineering-quality-delivery/agents/openai.yaml
 skills/engineering-quality-delivery/assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml
@@ -40,8 +48,10 @@ skills/frontend-engineering/agents/openai.yaml
 skills/frontend-engineering/assets/templates/FRONTEND_REVIEW_REPORT.template.md
 skills/frontend-engineering/assets/templates/FRONTEND_STACK_PROFILE.template.md
 skills/frontend-engineering/assets/templates/FRONTEND_VALIDATION_MATRIX.template.md
+skills/frontend-engineering/references/microfrontend-monorepo-rules.md
 skills/frontend-engineering/SKILL.md
 skills/java-backend-engineering/agents/openai.yaml
+skills/java-backend-engineering/references/java-backend-rules.md
 skills/java-backend-engineering/SKILL.md
 skills/log-observability-analysis/agents/openai.yaml
 skills/log-observability-analysis/assets/templates/LOG_ANALYSIS_REPORT.template.md
@@ -50,6 +60,7 @@ skills/log-observability-analysis/assets/templates/LOG_TIMELINE.template.md
 skills/log-observability-analysis/assets/templates/METRICS_ANALYSIS.template.md
 skills/log-observability-analysis/assets/templates/OBSERVABILITY_CORRELATION.template.md
 skills/log-observability-analysis/assets/templates/TRACE_ANALYSIS.template.md
+skills/log-observability-analysis/references/log-observability-analysis-workflow.md
 skills/log-observability-analysis/SKILL.md
 skills/long-running-task-memory/agents/openai.yaml
 skills/long-running-task-memory/assets/templates/CHECKPOINT_ENTRY.template.md
@@ -62,6 +73,7 @@ skills/long-running-task-memory/assets/templates/PLAN.template.md
 skills/long-running-task-memory/assets/templates/PROGRESS.template.md
 skills/long-running-task-memory/assets/templates/PROJECT_CONTEXT.template.md
 skills/long-running-task-memory/assets/templates/RECOVERY_CHECKLIST.template.md
+skills/long-running-task-memory/references/controlled-self-evolution.md
 skills/long-running-task-memory/SKILL.md
 skills/multi-agent-independent-review/agents/openai.yaml
 skills/multi-agent-independent-review/assets/templates/PRE_IMPLEMENTATION_REVIEW.template.md
@@ -69,8 +81,10 @@ skills/multi-agent-independent-review/assets/templates/REVIEW_ISOLATION_EVIDENCE
 skills/multi-agent-independent-review/assets/templates/REVIEW_LEDGER.template.md
 skills/multi-agent-independent-review/assets/templates/REVIEW_PLAN.template.md
 skills/multi-agent-independent-review/assets/templates/REVIEW_RESULT.template.md
+skills/multi-agent-independent-review/references/controlled-self-evolution.md
 skills/multi-agent-independent-review/SKILL.md
 skills/python-backend-ai-engineering/agents/openai.yaml
+skills/python-backend-ai-engineering/references/python-backend-ai-rules.md
 skills/python-backend-ai-engineering/SKILL.md
 skills/technical-document-writing/agents/openai.yaml
 skills/technical-document-writing/assets/templates/API_DESIGN.template.md
@@ -85,4 +99,5 @@ skills/technical-document-writing/assets/templates/PROJECT_PROGRESS_REPORT.templ
 skills/technical-document-writing/assets/templates/README.template.md
 skills/technical-document-writing/assets/templates/TECHNICAL_SELECTION.template.md
 skills/technical-document-writing/assets/templates/TECHNICAL_SOLUTION.template.md
+skills/technical-document-writing/references/technical-document-writing-rules.md
 skills/technical-document-writing/SKILL.md
