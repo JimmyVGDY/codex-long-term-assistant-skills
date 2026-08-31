@@ -1,10 +1,10 @@
-> **V6.2 兼容目标：Codex CLI 0.150.1。Plugin 安装必须以 `codex plugin list --json` 的 installed+enabled+version 读回为成功标准。**
+> **V6.3 已验证宿主：Codex CLI 0.150.1。Plugin 安装必须以 `codex plugin list --json` 的 installed+enabled+version 读回为成功标准。**
 
-# Codex 跨项目长期技术助手 Skills 安装包 V6.2
+# Codex 跨项目长期技术助手 Skills 安装包 V6.3
 
-**版本：6.2.0｜Windows 实机兼容固化版**
+**版本：6.3.0｜可恢复事务与可证明发行版**
 
-V6.2 基于已经完成 Windows 原生 Codex CLI 0.150.1 实机验收的 V6.1 修复版，将 Windows Hook 启动、UTF-8/中文 Stop、安装路径长度和测试隔离修复正式纳入发行包；同时保留项目身份、Task Envelope、Approval/Evidence、独立 Reviewer、长期任务记忆、确定性自观察和受控优化提案能力。
+V6.3 基于 V6.2 Windows 实机兼容基线，增加持久化安装事务、崩溃恢复、并发互斥、机器可读发行证明、真实生命周期验收、观测完整率、Reviewer 收益归因和字节级确定性 ZIP；项目身份、Task Envelope、Approval/Evidence、模型上限与受控 Proposal 边界保持不变。
 
 ## 核心能力
 
@@ -17,7 +17,9 @@ V6.2 基于已经完成 Windows 原生 Codex CLI 0.150.1 实机验收的 V6.1 �
 - **双重项目隔离**：`project_id + repo_fingerprint` 任一不匹配都拒绝聚合。
 - **不可覆盖 Snapshot**：唯一 ID + `source_digest` + exclusive-create。
 - **受控 Proposal 生命周期**：人工决定后仍需独立实施 Task、Git Baseline、Commit 和验证 Evidence；`execution_authorization` 永远为 `NONE`。
-- **安全安装事务**：符号链接/Junction/Reparse Point 防护、备份、原子替换、漂移检测、dry-run、卸载恢复。
+- **可恢复安装事务**：首个写入前持久化 Journal，全流程互斥、故障恢复、回滚失败可见、旧状态兼容。
+- **可证明发行**：两次干净构建必须字节一致；外部 Attestation 绑定正式 ZIP、实机 Plugin 读回和真实生命周期证据。
+- **观测质量门禁**：生命周期完整率、SessionEnd 覆盖率、终态覆盖率和 Reviewer 归因完整率不足时只形成 Snapshot。
 
 ## 目录约定
 
@@ -33,6 +35,7 @@ V6 不再把 `$HOME/.agents/skills` 当成旧目录，也不会自动清理该�
 
 ```bash
 python scripts/package_manager.py doctor
+python scripts/package_manager.py status --scope user --mode plugin --json
 ```
 
 ### A. Plugin 模式（推荐）
@@ -49,7 +52,7 @@ python scripts/package_manager.py install --scope user --mode plugin --dry-run
 python scripts/package_manager.py install --scope user --mode plugin
 ```
 
-安装器会输出当前环境对应的下一步 Marketplace / Plugin 注册命令。Plugin 是否被宿主加载必须以 Codex 实际读回为准，不把“文件已复制”表述为“插件已激活”。
+安装器直接执行 Marketplace 与 Plugin 注册，并在提交事务前读回宿主状态。若检测到未完成事务，先执行 `python scripts/package_manager.py doctor --recover`。
 
 ### B. Standalone 模式
 
@@ -122,6 +125,7 @@ python scripts/evolution.py close ... --final-outcome PASS
 
 ```bash
 python scripts/validate-package.py
+python scripts/build-release.py reproducible --output Codex-Skills-V6.3.zip --witness deterministic-build-v6.3.json
 ```
 
 V6 发布验证明确区分：
@@ -130,4 +134,4 @@ V6 发布验证明确区分：
 - 35 条路由用例定义是否合法：可自动验证；
 - 真实 Codex 隐式 Skill 激活率、不同宿主 Plugin/Hooks 端到端、Windows PowerShell 实机：没有实际环境证据时必须标记 `NOT_EXECUTED`。
 
-详见 `RELEASE_NOTES_V6.2.md`、`docs/USER_GUIDE_V6.2.md` 和 `docs/V6_ARCHITECTURE.md`。
+详见 `RELEASE_NOTES_V6.3.md`、`docs/USER_GUIDE_V6.3.md` 和 `docs/V6_ARCHITECTURE.md`。

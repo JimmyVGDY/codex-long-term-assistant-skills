@@ -1,15 +1,15 @@
-# Codex 跨项目长期技术助手 V6.2 使用说明
+# Codex 跨项目长期技术助手 V6.3 使用说明
 
 ## 1. 文档信息
 
-- 适用版本：V6.2.0
+- 适用版本：V6.3.0
 - 主要目标环境：Windows 原生 Codex CLI 0.150.1
 - 推荐安装方式：账户级 Plugin 模式
 - 适用读者：需要使用 Codex 处理多技术栈工程任务、独立复审、长期任务和受控演进的开发者
 
 ## 2. 这个包是什么
 
-V6.2 不是需要单独启动的桌面软件，也不是业务项目模板。它是安装到 Codex 中的工程工作流增强包，包含：
+V6.3 不是需要单独启动的桌面软件，也不是业务项目模板。它是安装到 Codex 中的工程工作流增强包，包含：
 
 - 10 个工程 Skills；
 - 7 个专业 Reviewer；
@@ -17,7 +17,8 @@ V6.2 不是需要单独启动的桌面软件，也不是业务项目模板。它
 - TaskOutcomeEvent V2 与事件哈希链；
 - 长期任务检查点与项目外部记忆；
 - 受控 Evolution Snapshot、Assessment 和 Proposal 流程；
-- 安装、备份、验证、回滚和卸载工具。
+- 持久化安装事务、并发互斥、崩溃恢复和卸载工具；
+- 真实生命周期验收、字节级确定性构建和机器可读发行证明。
 
 安装后仍然像平常一样在 Codex 中打开项目并使用自然语言交代任务。Agent 会按任务类型渐进加载合适的 Skill；不需要每次手工运行包内脚本。
 
@@ -32,7 +33,7 @@ codex --version
 python --version
 ```
 
-V6.2 的目标 Codex 版本为 `0.150.1`。Windows 原生安装路径应为：
+V6.3 的目标 Codex 版本为 `0.150.1`。Windows 原生安装路径应为：
 
 ```text
 C:\Users\<account-name>\.codex
@@ -45,8 +46,8 @@ C:\Users\<account-name>\.codex
 不要直接修改或在 ZIP 内运行。示例：
 
 ```powershell
-Expand-Archive -LiteralPath .\Codex-Skills-V6.2.zip -DestinationPath .\Codex-Skills-V6.2-unpacked
-Set-Location .\Codex-Skills-V6.2-unpacked\Codex-Skills-V6.2
+Expand-Archive -LiteralPath .\Codex-Skills-V6.3.zip -DestinationPath .\Codex-Skills-V6.3-unpacked
+Set-Location .\Codex-Skills-V6.3-unpacked\Codex-Skills-V6.3
 ```
 
 ### 3.3 环境检查
@@ -55,7 +56,16 @@ Set-Location .\Codex-Skills-V6.2-unpacked\Codex-Skills-V6.2
 python scripts\package_manager.py doctor
 ```
 
-确认输出中的 `version` 为 `6.2.0`、`target_codex` 与实际 `codex_version` 均为 0.150.1，并检查 `codex_home` 是否为 Windows 原生路径。
+确认输出中的 `version` 为 `6.3.0`、`target_codex` 与实际 `codex_version` 均为 0.150.1，并检查 `codex_home` 是否为 Windows 原生路径。
+
+若 `doctor` 报告未完成事务，先读取状态并恢复，不要直接重复安装：
+
+```powershell
+python scripts\package_manager.py status --scope user
+python scripts\package_manager.py recover --scope user
+```
+
+恢复完成后重新执行 `doctor` 和 dry-run。
 
 ### 3.4 dry-run
 
@@ -71,6 +81,8 @@ python scripts\package_manager.py install --scope user --mode plugin --dry-run
 - 是否存在 Junction、Reparse Point 或符号链接阻断；
 - 是否存在外部修改漂移；
 - 是否有未知文件会被覆盖。
+
+dry-run 不应创建备份、事务日志或 Plugin 注册变更。正式安装开始后，同一 `CODEX_HOME` 同时只允许一个安装事务。
 
 ### 3.5 正式升级
 
@@ -95,10 +107,12 @@ codex plugin list --json
 pluginId = codex-cross-project-engineering-assistant@cp-assistant-local
 installed = true
 enabled = true
-version = 6.2.0
+version = 6.3.0
 ```
 
 升级完成后，关闭并重新打开升级前已存在的 Codex App、CLI 或 IDE 任务。无需重启 Windows。
+
+升级备份和已提交事务归档默认保留，用于后续审计和恢复。
 
 ## 4. 日常使用
 
@@ -230,7 +244,9 @@ TaskOutcomeEvent V2 保存最小结构化元数据，例如：
 - 明确的终态；缺少明确结果时为 `UNKNOWN`；
 - 前向 SHA-256 哈希链，可选 HMAC。
 
-默认不会保存原始 Prompt、完整回答、代码正文、Diff、Token、Cookie、API Key 或其他凭据。安装 V6.2 以前没有记录的数据不会自动补写。
+V6.3 同时计算生命周期完整率、SessionEnd 覆盖率、重复与乱序事件、跨任务/跨会话串线，以及项目和仓库绑定覆盖率。Reviewer 收益只在发现项能够关联采纳、修复或回归预防证据时评估；缺少因果证据时标记为 `insufficient-evidence`。
+
+默认不会保存原始 Prompt、完整回答、代码正文、Diff、Token、Cookie、API Key 或其他凭据。安装 V6.3 以前没有记录的数据不会自动补写。
 
 ## 9. 受控演进与复盘
 
@@ -315,6 +331,13 @@ python scripts\validate-package.py
 python scripts\routing-eval.py validate
 ```
 
+验证正式 ZIP 的确定性与机器证明：
+
+```powershell
+python scripts\build-release.py verify --archive ..\Codex-Skills-V6.3.zip
+python scripts\release-attestation.py verify --attestation ..\release-attestation-v6.3.json --artifact ..\Codex-Skills-V6.3.zip
+```
+
 常见问题：
 
 ### Plugin 文件存在但未启用
@@ -323,11 +346,11 @@ python scripts\routing-eval.py validate
 
 ### Windows Hook 找不到 Python
 
-V6.2 无需 `python3.exe`。确认本机账户 Python、PATH 中的 `python.exe` 或 Python Launcher `py.exe` 至少有一个可用。
+V6.3 无需 `python3.exe`。确认本机账户 Python、PATH 中的 `python.exe` 或 Python Launcher `py.exe` 至少有一个可用。
 
 ### 中文 Stop 或 Hook 输出异常
 
-确认实际 Plugin 版本为 6.2.0，并检查六个 Hook 是否通过 `cp_hook.cmd` 启动。升级前已打开的 Codex 任务需要关闭后重开。
+确认实际 Plugin 版本为 6.3.0，并检查六个 Hook 是否通过 `cp_hook.cmd` 启动。升级前已打开的 Codex 任务需要关闭后重开。
 
 ### 项目事件没有进入聚合
 
@@ -335,7 +358,18 @@ V6.2 无需 `python3.exe`。确认本机账户 Python、PATH 中的 `python.exe`
 
 ### 历史任务缺少复盘数据
 
-V6.2 不回填安装前事件。使用现有 Git、日志、测试、旧检查点和 Evidence；不足部分标记为未验证。从后续长期任务开始明确启用长期任务记忆。
+V6.3 不回填安装前事件。使用现有 Git、日志、测试、旧检查点和 Evidence；不足部分标记为未验证。从后续长期任务开始明确启用长期任务记忆。
+
+### 安装进程中断
+
+不要删除整个 `.codex`、`.agents` 或 plugins 目录。执行：
+
+```powershell
+python scripts\package_manager.py status --scope user
+python scripts\package_manager.py recover --scope user
+```
+
+恢复会依据事务日志回退已记录的受管动作，并恢复原 Plugin 注册状态；检测到未知内容或归属冲突时停止并保留日志。
 
 ## 13. 卸载和恢复
 
@@ -355,18 +389,23 @@ python scripts\package_manager.py uninstall --scope user --mode plugin
 
 项目上下文、自观察 Event、Snapshot、Assessment、Proposal 和历史备份不会随普通卸载自动删除。
 
+完整恢复规则参见 `docs/INSTALLATION_RECOVERY.md`。
+
 ## 14. 验收清单
 
 - [ ] `codex --version` 为目标版本 0.150.1
-- [ ] `doctor` 显示 V6.2.0 和正确 Windows CODEX_HOME
+- [ ] `doctor` 显示 V6.3.0 和正确 Windows CODEX_HOME
 - [ ] dry-run 无路径、Reparse Point、漂移或回滚阻断
 - [ ] 正式安装退出码为 0
 - [ ] `verify --mode plugin` 通过
-- [ ] Plugin 为 installed=true、enabled=true、version=6.2.0
+- [ ] Plugin 为 installed=true、enabled=true、version=6.3.0
 - [ ] 10 个 Skills 可发现
 - [ ] 7 个 Reviewer 可发现且未写死模型
 - [ ] 6 个 Hook 可加载，SessionEnd timeout=3 秒
 - [ ] 不需要创建 `python3.exe`
 - [ ] 主 Agent 模型配置未被覆盖
 - [ ] 历史项目上下文和升级备份仍保留
-
+- [ ] 活动安装事务已清理，已提交事务归档仍可追溯
+- [ ] 两次干净构建的 ZIP 字节一致
+- [ ] 机器证明绑定正式 ZIP、Codex、Plugin 和验证证据哈希
+- [ ] 真实会话产生五类生命周期事件且哈希链连续
