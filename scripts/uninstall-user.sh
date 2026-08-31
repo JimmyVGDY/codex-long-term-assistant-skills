@@ -2,81 +2,46 @@
 set -euo pipefail
 
 component="${1:-all}"
-case "$component" in
-  all|skills|global) ;;
-  *) echo "用法: $0 [all|skills|global]" >&2; exit 2 ;;
-esac
+[[ "$component" == "review-agents" ]] && component="agents"
+case "$component" in all|skills|global|agents) ;; *) echo "用法: $0 [all|skills|global|agents]" >&2; exit 2 ;; esac
 
 codex_home="${CODEX_HOME:-$HOME/.codex}"
 skills_home="$HOME/.agents/skills"
+agents_home="$codex_home/agents"
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_root="$HOME/.codex-skill-backups/uninstall-$timestamp"
 begin_marker='<!-- codex-cross-project-assistant:begin -->'
 end_marker='<!-- codex-cross-project-assistant:end -->'
-managed=(
-  java-backend-engineering
-  python-backend-ai-engineering
-  vue-frontend-engineering
-  data-middleware-ai-infrastructure
-  engineering-quality-delivery
-  technical-document-writing
-  long-running-task-memory
-)
+managed_skills=(java-backend-engineering python-backend-ai-engineering vue-frontend-engineering data-middleware-ai-infrastructure engineering-quality-delivery multi-agent-independent-review technical-document-writing long-running-task-memory)
+managed_agents=(cp-review-functional-business.toml cp-review-compatibility-regression.toml cp-review-security-access.toml cp-review-performance-resources.toml cp-review-data-contract.toml cp-review-state-concurrency.toml cp-review-test-delivery.toml)
 
-backup_path() {
-  local src="$1" relative="$2"
-  [[ -e "$src" ]] || return 0
-  mkdir -p "$(dirname "$backup_root/$relative")"
-  cp -a "$src" "$backup_root/$relative"
-}
+backup_path() { local src="$1" relative="$2"; [[ -e "$src" ]] || return 0; mkdir -p "$(dirname "$backup_root/$relative")"; cp -a "$src" "$backup_root/$relative"; }
 
 remove_global_block() {
-  local target="$codex_home/AGENTS.md"
+  local target="$codex_home/AGENTS.md" begin_count end_count start end tmp total
   [[ -f "$target" ]] || { echo "未找到全局 AGENTS.md，跳过。"; return; }
   backup_path "$target" "codex/AGENTS.md"
-  local begin_count end_count
-  begin_count="$(grep -cF "$begin_marker" "$target" || true)"
-  end_count="$(grep -cF "$end_marker" "$target" || true)"
-  if [[ "$begin_count" -ne "$end_count" || "$begin_count" -gt 1 ]]; then
-    echo "AGENTS.md 的受管标记不完整或重复，已停止卸载: $target" >&2
-    exit 1
-  fi
+  begin_count="$(grep -cF "$begin_marker" "$target" || true)"; end_count="$(grep -cF "$end_marker" "$target" || true)"
+  [[ "$begin_count" -eq "$end_count" && "$begin_count" -le 1 ]] || { echo "AGENTS.md 受管标记异常，已停止卸载" >&2; exit 1; }
   [[ "$begin_count" -eq 1 ]] || { echo "AGENTS.md 中没有本包受管区块，跳过。"; return; }
-
-  local start end tmp total
-  start="$(grep -nF "$begin_marker" "$target" | cut -d: -f1)"
-  end="$(grep -nF "$end_marker" "$target" | cut -d: -f1)"
-  tmp="$(mktemp)"
-  if [[ "$start" -gt 1 ]]; then head -n $((start - 1)) "$target" >> "$tmp"; fi
-  total="$(wc -l < "$target")"
-  if [[ "$end" -lt "$total" ]]; then tail -n +$((end + 1)) "$target" >> "$tmp"; fi
-
+  start="$(grep -nF "$begin_marker" "$target" | cut -d: -f1)"; end="$(grep -nF "$end_marker" "$target" | cut -d: -f1)"; total="$(wc -l < "$target")"; tmp="$(mktemp)"
+  [[ "$start" -le 1 ]] || head -n $((start - 1)) "$target" >> "$tmp"
+  [[ "$end" -ge "$total" ]] || tail -n +$((end + 1)) "$target" >> "$tmp"
   if grep -q '[^[:space:]]' "$tmp"; then
-    awk 'BEGIN{blank=0} /^[[:space:]]*$/{blank++; if(blank<=2) print; next} {blank=0; print}' "$tmp" > "$target"
-    echo "已移除本包受管区块，其他规则保持不变: $target"
-  else
-    rm -f "$target"
-    echo "已删除仅包含本包规则的 AGENTS.md: $target"
-  fi
+    awk 'BEGIN{b=0} /^[[:space:]]*$/{b++; if(b<=2) print; next} {b=0; print}' "$tmp" > "$target"
+    echo "已移除本包 AGENTS.md 受管区块。"
+  else rm -f "$target"; echo "已删除仅包含本包规则的 AGENTS.md。"; fi
   rm -f "$tmp"
 }
-
-remove_skills() {
-  for name in "${managed[@]}"; do
-    local target="$skills_home/$name"
-    if [[ -d "$target" ]]; then
-      backup_path "$target" "skills/$name"
-      rm -rf "$target"
-      echo "已卸载 Skill: $name"
-    fi
-  done
-}
+remove_skills() { local n t; for n in "${managed_skills[@]}"; do t="$skills_home/$n"; [[ -e "$t" ]] || continue; backup_path "$t" "skills/$n"; rm -rf "$t"; echo "已卸载 Skill: $n"; done; }
+remove_agents() { local n t; for n in "${managed_agents[@]}"; do t="$agents_home/$n"; [[ -e "$t" ]] || continue; backup_path "$t" "agents/$n"; rm -f "$t"; echo "已卸载 Reviewer: $n"; done; }
 
 case "$component" in
-  all) remove_global_block; remove_skills ;;
+  all) remove_global_block; remove_skills; remove_agents ;;
   skills) remove_skills ;;
   global) remove_global_block ;;
+  agents) remove_agents ;;
 esac
 
-echo "卸载完成。其他 Skills 和 AGENTS.md 中的非本包规则未被删除。"
+echo "卸载完成。其他规则、Skills 和自定义 Agent 未被删除。"
 echo "备份目录: $backup_root"
