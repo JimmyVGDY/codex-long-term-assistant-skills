@@ -16,6 +16,7 @@ from typing import Any, Dict, Mapping, Optional
 
 from .event_v2 import OwnerTokenLock, append_event, canonical_json, make_event
 from .integrity import active_secret, seal_event_chain, secret_by_id
+from .atomic_io import replace_with_retry
 
 JOB_SCHEMA = "1.0"
 JOB_STATES = ("pending", "running", "done", "dead-letter")
@@ -122,7 +123,7 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
             handle.flush(); os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        replace_with_retry(temporary, path)
     finally:
         try:
             os.unlink(temporary)
@@ -250,9 +251,9 @@ def _recover_running(queue: Path, keyring_path: Optional[Path]) -> None:
             job.update(state="pending", lease_pid=0, lease_process_identity="",
                        error_code="RECOVERED_AFTER_WORKER_EXIT")
             _atomic_json(path, _resign(job, keyring_path))
-            os.replace(path, _job_file(queue, "pending", path.name))
+            replace_with_retry(path, _job_file(queue, "pending", path.name))
         except Exception:
-            os.replace(path, _job_file(queue, "dead-letter", path.name))
+            replace_with_retry(path, _job_file(queue, "dead-letter", path.name))
 
 
 def _crash(point: str) -> None:
@@ -276,11 +277,11 @@ def process_queue(queue: Path, keyring_path: Optional[Path] = None, max_jobs: in
             try:
                 job = _verify(_load(pending), keyring_path)
             except Exception:
-                os.replace(pending, _job_file(queue, "dead-letter", pending.name))
+                replace_with_retry(pending, _job_file(queue, "dead-letter", pending.name))
                 dead += 1
                 continue
             if job.get("project_id") != project_id or job.get("event_file") != event_path.name:
-                os.replace(pending, _job_file(queue, "dead-letter", pending.name)); dead += 1; continue
+                replace_with_retry(pending, _job_file(queue, "dead-letter", pending.name)); dead += 1; continue
             job["state"] = "running"; job["attempt"] = int(job.get("attempt") or 0) + 1
             job["lease_epoch"] = int(job.get("lease_epoch") or 0) + 1; job["lease_pid"] = os.getpid()
             job["lease_process_identity"] = _process_identity(os.getpid())
@@ -288,7 +289,7 @@ def process_queue(queue: Path, keyring_path: Optional[Path] = None, max_jobs: in
                 raise SealQueueError("WORKER_PROCESS_IDENTITY_UNAVAILABLE")
             _atomic_json(pending, _resign(job, keyring_path))
             running = _job_file(queue, "running", pending.name)
-            os.replace(pending, running)
+            replace_with_retry(pending, running)
         _crash("AFTER_CLAIM")
         processed += 1
         try:
@@ -307,7 +308,7 @@ def process_queue(queue: Path, keyring_path: Optional[Path] = None, max_jobs: in
                                completion={"seal_status": seal["seal_status"],
                                            "sealed_record_count": seal["sealed_record_count"]})
                 _atomic_json(running, _resign(current, keyring_path)); _crash("BEFORE_ACK")
-                os.replace(running, _job_file(queue, "done", running.name))
+                replace_with_retry(running, _job_file(queue, "done", running.name))
             completed += 1
         except Exception as exc:
             code = str(exc) if isinstance(exc, SealQueueError) and re.fullmatch(r"[A-Z0-9_]+", str(exc)) else "WORKER_OPERATION_FAILED"
@@ -319,7 +320,7 @@ def process_queue(queue: Path, keyring_path: Optional[Path] = None, max_jobs: in
                                lease_pid=0, lease_process_identity="", error_code=code)
                 _atomic_json(running, _resign(current, keyring_path))
                 target_state = str(current["state"])
-                os.replace(running, _job_file(queue, target_state, running.name))
+                replace_with_retry(running, _job_file(queue, target_state, running.name))
                 if target_state == "dead-letter": dead += 1
                 else: retried += 1
     return {"ok": dead == 0, "processed": processed, "completed": completed,
@@ -340,4 +341,12 @@ def launch_worker(plugin_root: Path, queue: Path, keyring_path: Optional[Path] =
     else:
         kwargs["start_new_session"] = True
     process = subprocess.Popen(command, **kwargs)
-    return {"launched": True, "worker_pid": process.pid}
+    wait_ms = int(os.environ.get("CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS", "0") or "0")
+    if wait_ms > 0:
+        try:
+            exit_code = process.wait(timeout=min(wait_ms, 2500) / 1000.0)
+        except subprocess.TimeoutExpired:
+            return {"launched": True, "worker_pid": process.pid, "test_wait_status": "TIMEOUT"}
+        return {"launched": True, "worker_pid": process.pid, "test_wait_status": "EXITED",
+                "worker_exit_code": exit_code}
+    return {"launched": True, "worker_pid": process.pid, "test_wait_status": "NOT_REQUESTED"}

@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Mapping, Optional
 
 from .event_v2 import (EventContractError, OwnerTokenLock, ZERO_HASH, _read_event_files_unlocked,
                        _verify_events, canonical_json, event_segment_paths)
+from .atomic_io import replace_with_retry
 
 KEYRING_SCHEMA = 1
 SEAL_SCHEMA = 1
@@ -127,7 +128,7 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
             os._exit(93)
         if os.environ.get("CP_ASSISTANT_TEST_KEYRING_HARD_CRASH_POINT") == "BEFORE_REPLACE":
             os._exit(93)
-        os.replace(name, native)
+        replace_with_retry(name, native)
         if os.environ.get("CP_ASSISTANT_TEST_KEYRING_HARD_CRASH_POINT") == "AFTER_REPLACE":
             os._exit(93)
         if os.name != "nt":
@@ -271,7 +272,7 @@ def _atomic_seals(path: Path, seals: List[Mapping[str, Any]]) -> None:
             os._exit(95)
         if os.environ.get("CP_ASSISTANT_TEST_SEAL_HARD_CRASH_POINT") == "BEFORE_REPLACE":
             os._exit(95)
-        os.replace(name, native)
+        replace_with_retry(name, native)
         if os.environ.get("CP_ASSISTANT_TEST_SEAL_HARD_CRASH_POINT") == "AFTER_REPLACE":
             os._exit(95)
         if os.name != "nt":

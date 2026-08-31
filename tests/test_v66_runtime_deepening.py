@@ -26,6 +26,7 @@ from cp_runtime.integrity import init_keyring, rotate_key, seal_event_chain, ver
 from cp_runtime.model_evidence import verify_hook_runtime_evidence
 from cp_runtime.seal_queue import enqueue_session_end, process_queue
 from cp_runtime import seal_queue as seal_queue_module
+from cp_runtime.atomic_io import replace_with_retry
 
 
 def _event(path: str, index: int, project: str, repo: str) -> None:
@@ -250,6 +251,32 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         self.assertTrue(process_queue(self.queue, self.keyring)["ok"])
         self.assertEqual(21, verify_event_chain(self.event_file)["record_count"])
 
+    def test_windows_atomic_replace_retries_only_transient_sharing_failures(self) -> None:
+        source = self.root / "atomic.tmp"; target = self.root / "atomic.json"
+        source.write_text("stable", encoding="utf-8")
+        transient = OSError("sharing violation"); transient.winerror = 32
+        real_replace = os.replace
+        calls = []
+
+        def flaky_replace(left, right):
+            calls.append((left, right))
+            if len(calls) < 3:
+                raise transient
+            return real_replace(left, right)
+
+        with mock.patch("cp_runtime.atomic_io.os.name", "nt"), \
+             mock.patch("cp_runtime.atomic_io.os.replace", side_effect=flaky_replace):
+            replace_with_retry(source, target, timeout=0.2)
+        self.assertEqual("stable", target.read_text(encoding="utf-8"))
+        self.assertEqual(3, len(calls))
+
+        denied = self.root / "denied.tmp"; denied.write_text("blocked", encoding="utf-8")
+        permanent = OSError("permanent"); permanent.winerror = 87
+        with mock.patch("cp_runtime.atomic_io.os.name", "nt"), \
+             mock.patch("cp_runtime.atomic_io.os.replace", side_effect=permanent):
+            with self.assertRaises(OSError):
+                replace_with_retry(denied, target, timeout=0.2)
+
     def test_non_destructive_archive_capacity_and_privacy_health(self) -> None:
         previous = os.environ.get("CP_ASSISTANT_EVENT_SEGMENT_BYTES")
         os.environ["CP_ASSISTANT_EVENT_SEGMENT_BYTES"] = "256"
@@ -316,7 +343,8 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         shutil.copytree(ROOT / "runtime", plugin / "runtime")
         hooks = json.loads((ROOT / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
         env = dict(os.environ, PLUGIN_ROOT=str(plugin), CP_ASSISTANT_DATA=str(self.data),
-                   CP_ASSISTANT_KEYRING_PATH=str(self.keyring))
+                   CP_ASSISTANT_KEYRING_PATH=str(self.keyring),
+                   CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS="2000")
         for hook_name, entries in hooks.items():
             command = entries[0]["hooks"][0]["commandWindows"]
             self.assertIn('"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd"', command)
