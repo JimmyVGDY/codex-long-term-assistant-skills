@@ -20,6 +20,7 @@ description: >-
 6. 主动检查事务失效、连接池、线程池、幂等、资源释放、序列化兼容、权限、安全和性能高频路径。
 7. 修改、测试、复审、提交或交付时，同时使用 `$engineering-quality-delivery`。
 8. 涉及数据库、Redis、MQ、搜索、文件、RAG、GPU 或基础设施时，同时使用 `$data-middleware-ai-infrastructure`。
+9. 任务以日志文件、异常堆栈、GC、线程、容器或跨服务时间线为主要证据时，同时使用 `$log-observability-analysis`。
 
 ## 边界
 
