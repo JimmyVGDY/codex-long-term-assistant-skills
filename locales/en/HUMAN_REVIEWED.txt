@@ -71,6 +71,10 @@ skills/log-observability-analysis/assets/templates/METRICS_ANALYSIS.template.md
 skills/log-observability-analysis/assets/templates/OBSERVABILITY_CORRELATION.template.md
 skills/log-observability-analysis/assets/templates/TRACE_ANALYSIS.template.md
 skills/log-observability-analysis/references/log-observability-analysis-workflow.md
+skills/log-observability-analysis/references/observability-analysis-process.md
+skills/log-observability-analysis/references/observability-domain-safety-output.md
+skills/log-observability-analysis/references/observability-scope-modes.md
+skills/log-observability-analysis/references/observability-signals.md
 skills/log-observability-analysis/SKILL.md
 skills/long-running-task-memory/agents/openai.yaml
 skills/long-running-task-memory/assets/templates/CHECKPOINT_ENTRY.template.md
@@ -114,4 +118,9 @@ skills/technical-document-writing/assets/templates/README.template.md
 skills/technical-document-writing/assets/templates/TECHNICAL_SELECTION.template.md
 skills/technical-document-writing/assets/templates/TECHNICAL_SOLUTION.template.md
 skills/technical-document-writing/references/technical-document-writing-rules.md
+skills/technical-document-writing/references/document-maintenance-quality.md
+skills/technical-document-writing/references/document-scope-evidence.md
+skills/technical-document-writing/references/document-structure-language.md
+skills/technical-document-writing/references/document-type-playbooks.md
+skills/technical-document-writing/references/document-types-comparison.md
 skills/technical-document-writing/SKILL.md
