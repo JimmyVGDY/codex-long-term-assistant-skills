@@ -105,9 +105,12 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     session_id = str(_lookup(data, "session_id", "sessionId", "thread_id") or "")
     turn_id = str(_lookup(data, "turn_id", "turnId") or "")
     task_id = str(_lookup(data, "task_id", "taskId") or turn_id or session_id)
-    model = str(_lookup(data, "model", "actual_model") or "")
-    effort = str(_lookup(data, "reasoning_effort", "actual_reasoning_effort") or "")
-    terminal = str(_lookup(data, "terminal_outcome", "quality_outcome") or "UNKNOWN") if event_type == "TASK_COMPLETED" else "UNKNOWN"
+    # Only explicit host-fact fields are admissible. Generic model/status fields
+    # may describe recommendations or transport state and must never be inferred.
+    model = str(data.get("actual_model") or "").strip()
+    effort = str(data.get("actual_reasoning_effort") or "").strip().lower()
+    terminal_value = data.get("terminal_outcome") if event_type == "TASK_COMPLETED" else None
+    terminal = str(terminal_value or "UNKNOWN").upper()
     metadata: Dict[str, Any] = {}
     for key in ("agent_id", "agent_type", "permission_mode", "tool_name", "stop_hook_active"):
         value = data.get(key)
@@ -121,8 +124,11 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
         "project_id": project_id_for(fingerprint, cwd),
         "repo_fingerprint": fingerprint,
         "terminal_outcome": terminal,
+        "terminal_outcome_source": "hook-payload" if terminal_value is not None and terminal != "UNKNOWN" else "unavailable",
         "actual_model": model,
+        "actual_model_source": "hook-payload" if model else "unavailable",
         "actual_reasoning_effort": effort,
+        "actual_reasoning_effort_source": "hook-payload" if effort else "unavailable",
         "metadata": metadata,
     }
 
