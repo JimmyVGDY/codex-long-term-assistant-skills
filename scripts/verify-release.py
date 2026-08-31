@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Fail-closed V6.6.1 end-to-end release verifier."""
+"""中文：失败关闭的 V6.6.1 端到端发行验证器。
+
+English: Fail-closed V6.6.1 end-to-end release verifier.
+"""
 from __future__ import annotations
 
 import argparse
