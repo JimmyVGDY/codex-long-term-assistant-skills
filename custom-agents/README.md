@@ -1,34 +1,27 @@
 # 多 Agent 独立复审自定义 Agent
 
-本目录包含 7 个窄职责 Reviewer。用户级安装脚本会复制到 `${CODEX_HOME:-$HOME/.codex}/agents/`，仓库级安装在显式启用时复制到 `<repo>/.codex/agents/`。
+本目录包含 7 个窄职责 Reviewer，安装到 `${CODEX_HOME:-$HOME/.codex}/agents/`。
 
-| 文件 | Agent 名称 | 审查维度 |
-|---|---|---|
-| `cp-review-functional-business.toml` | `cp_review_functional_business` | 功能正确性与业务口径 |
-| `cp-review-compatibility-regression.toml` | `cp_review_compatibility_regression` | 原有功能回归与兼容 |
-| `cp-review-security-access.toml` | `cp_review_security_access` | 权限与安全 |
-| `cp-review-performance-resources.toml` | `cp_review_performance_resources` | 性能与资源负担 |
-| `cp-review-data-contract.toml` | `cp_review_data_contract` | 数据与契约一致性 |
-| `cp-review-state-concurrency.toml` | `cp_review_state_concurrency` | 状态、并发与交互边界 |
-| `cp-review-test-delivery.toml` | `cp_review_test_delivery` | 测试证据与交付边界 |
+| 文件 | Agent 名称 | 审查维度 | 常态档位 |
+|---|---|---|---|
+| `cp-review-functional-business.toml` | `cp_review_functional_business` | 功能正确性与业务口径 | `terra-medium` |
+| `cp-review-compatibility-regression.toml` | `cp_review_compatibility_regression` | 原有功能回归与兼容 | `luna-medium` |
+| `cp-review-security-access.toml` | `cp_review_security_access` | 权限与安全 | `terra-medium` |
+| `cp-review-performance-resources.toml` | `cp_review_performance_resources` | 性能与资源负担 | `luna-medium` |
+| `cp-review-data-contract.toml` | `cp_review_data_contract` | 数据与契约一致性 | `terra-medium` |
+| `cp-review-state-concurrency.toml` | `cp_review_state_concurrency` | 状态、并发与交互边界 | `terra-medium` |
+| `cp-review-test-delivery.toml` | `cp_review_test_delivery` | 测试证据与交付边界 | `luna-low` |
 
-所有 Reviewer TOML 均声明 `sandbox_mode = "read-only"`，并在行为规则中要求：
+Reviewer TOML **有意不配置** `model` 和 `model_reasoning_effort`。由主协调 Agent 按 `luna-low -> luna-medium -> terra-medium -> terra-high` 动态指定；自动流程最高为 Terra High。若在 TOML 中写死模型，该静态值可能阻断成本降级。
 
-- 不修改代码、配置、文档或数据；
-- 不提交、推送、部署或重启；
-- 不继续派生子 Agent；
-- 直接基于实际差异、上下文和证据输出结构化发现。
+所有 Reviewer：
 
-## 重要运行时边界
+- 先读审查包摘要、差异统计和分配范围，证据不足时再扩大；
+- 不修改代码、测试、文档、数据或环境，不提交、推送、部署、重启；
+- 不继续派生 Agent；
+- 同一根因合并，默认最多 8 组 findings；
+- 返回结构化检查范围、证据、未验证项、模型运行状态和隔离等级。
 
-TOML 的 `read-only` 只能证明**配置声明**，不能单独证明子 Agent 运行时获得了系统级只读沙箱。实测环境中，父会话为 `danger-full-access` 时，指定 Reviewer 仍可能在可写上下文中运行。
+## 运行时边界
 
-因此必须区分：
-
-- `system-readonly`：父会话实际只读，或有效受控探针明确被沙箱拒绝；
-- `logical-readonly`：父会话可写，Reviewer 仅依靠角色约束不写；
-- `self-review`：实施 Agent 自查，不能冒充独立复审。
-
-高风险、生产、权限安全、真实数据和不可逆操作的严格复审，应在整体只读父会话中执行。不要仅凭 TOML 声明报告“系统强制只读”。
-
-这些 Reviewer 是叶子 Reviewer。主协调 Agent 负责选择组合、记录隔离等级、等待结果、去重归并、集中修复和后续定向复核。
+`sandbox_mode = "read-only"` 只能证明配置意图。父会话可写且没有有效沙箱拒绝证据时，只能报告 `logical-readonly`；高风险、生产、权限安全、真实数据和不可逆操作应在整体只读父会话中执行并验证运行时隔离。
