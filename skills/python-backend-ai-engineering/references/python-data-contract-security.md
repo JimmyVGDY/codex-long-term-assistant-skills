@@ -39,7 +39,7 @@ Schema 校验不能代替权限、业务规则、状态和数据一致性校验�
 
 ### 8.3 时间
 
-明确数据库、API、系统和用户时区，避免 naive datetime 和 aware datetime 混用。定时任务必须指定业务时区。
+明确数据库、API、系统和界面时区，避免 naive datetime 和 aware datetime 混用。定时任务必须指定业务时区。
 
 ### 8.4 序列化
 
