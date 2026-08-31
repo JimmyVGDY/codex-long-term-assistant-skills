@@ -1,0 +1,6 @@
+interface:
+  display_name: "受控演进与项目治理"
+  short_description: "确定性自观察、成本路由和人工受控优化闭环"
+  default_prompt: "只分析结构化观测事实与治理问题；按项目/仓库隔离，先 Task 聚合再形成信号；优化提案永远不构成执行授权。"
+policy:
+  allow_implicit_invocation: true
