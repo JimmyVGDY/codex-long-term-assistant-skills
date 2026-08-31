@@ -21,6 +21,7 @@ from .contracts import (
 )
 from .storage import FileLock, StorageError, append_hash_chain, read_hash_chain, safe_child
 from .redaction import redact_text
+from .lifecycle import LifecycleEventType, ProposalLifecycleEvent
 
 
 class RegistryError(RuntimeError):
@@ -104,6 +105,7 @@ class ProposalRegistry:
         self.root.mkdir(parents=True, exist_ok=True)
         self.proposals_path = safe_child(self.root, "proposals.jsonl", create_parent=True)
         self.decisions_path = safe_child(self.root, "decisions.jsonl", create_parent=True)
+        self.lifecycle_path = safe_child(self.root, "lifecycle.jsonl", create_parent=True)
         self.guard_path = safe_child(self.root, "registry.guard", create_parent=True)
 
     def _proposal_records(self) -> List[OptimizationProposal]:
@@ -132,21 +134,50 @@ class ProposalRegistry:
             decisions.append(decision)
         return decisions
 
+    def _lifecycle_records(self) -> List[ProposalLifecycleEvent]:
+        records = read_hash_chain(self.lifecycle_path)
+        events: List[ProposalLifecycleEvent] = []
+        for record in records:
+            payload = record.get("payload")
+            if not isinstance(payload, Mapping):
+                raise RegistryError("Lifecycle 哈希链 payload 非法")
+            events.append(ProposalLifecycleEvent.from_mapping(payload))
+        return events
+
     def list(self) -> List[ProposalView]:
         proposals = self._proposal_records()
         decisions = self._decision_records()
+        lifecycle = self._lifecycle_records()
         decisions_by_proposal: Dict[str, List[ProposalDecision]] = {}
         for decision in decisions:
             decisions_by_proposal.setdefault(decision.proposal_id, []).append(decision)
         known_ids = {proposal.proposal_id for proposal in proposals}
         unknown = sorted({decision.proposal_id for decision in decisions} - known_ids)
+        unknown_lifecycle = sorted({event.proposal_id for event in lifecycle} - known_ids)
         if unknown:
             raise RegistryError("存在引用未知提案的决策: %s" % ", ".join(unknown))
+        if unknown_lifecycle:
+            raise RegistryError("存在引用未知提案的生命周期事件: %s" % ", ".join(unknown_lifecycle))
+        lifecycle_by_proposal: Dict[str, List[ProposalLifecycleEvent]] = {}
+        for event in lifecycle:
+            lifecycle_by_proposal.setdefault(event.proposal_id, []).append(event)
         views: List[ProposalView] = []
         for proposal in proposals:
             proposal_decisions = decisions_by_proposal.get(proposal.proposal_id, [])
             latest = proposal_decisions[-1] if proposal_decisions else None
             status = _decision_status(latest.decision) if latest else ProposalStatus.PENDING_REVIEW
+            lifecycle_events = lifecycle_by_proposal.get(proposal.proposal_id, [])
+            if lifecycle_events:
+                if status is not ProposalStatus.ACCEPTED:
+                    raise RegistryError("只有 ACCEPTED 提案才能进入实施生命周期")
+                latest_lifecycle = lifecycle_events[-1]
+                status_map = {
+                    LifecycleEventType.IMPLEMENTATION_LINKED: ProposalStatus.IMPLEMENTATION_LINKED,
+                    LifecycleEventType.VALIDATION_RECORDED: ProposalStatus.VALIDATION_RECORDED,
+                    LifecycleEventType.CLOSED: ProposalStatus.CLOSED,
+                    LifecycleEventType.SUPERSEDED: ProposalStatus.SUPERSEDED,
+                }
+                status = status_map[latest_lifecycle.event_type]
             views.append(ProposalView(proposal=proposal, current_status=status, latest_decision=latest))
         return views
 
@@ -164,13 +195,8 @@ class ProposalRegistry:
             raise RegistryError("提案包含非法执行授权")
         with FileLock(self.guard_path):
             for existing in self.list():
-                if existing.proposal.fingerprint != proposal.fingerprint:
-                    continue
-                if existing.current_status in {
-                    ProposalStatus.PENDING_REVIEW,
-                    ProposalStatus.ACCEPTED,
-                    ProposalStatus.DEFERRED,
-                }:
+                if existing.proposal.fingerprint == proposal.fingerprint:
+                    # V6：证据摘要相同即不机械重生；只有证据/策略变化导致新 fingerprint 才能注册新提案。
                     return existing, False
             append_hash_chain(self.proposals_path, proposal)
         return self.get(proposal.proposal_id), True
@@ -184,8 +210,8 @@ class ProposalRegistry:
     ) -> ProposalView:
         with FileLock(self.guard_path):
             current = self.get(proposal_id)
-            if current.current_status in {ProposalStatus.ACCEPTED, ProposalStatus.REJECTED}:
-                raise RegistryError("提案已经完成终态决策，不能覆盖历史决定")
+            if current.current_status in {ProposalStatus.ACCEPTED, ProposalStatus.REJECTED, ProposalStatus.IMPLEMENTATION_LINKED, ProposalStatus.VALIDATION_RECORDED, ProposalStatus.CLOSED, ProposalStatus.SUPERSEDED}:
+                raise RegistryError("提案已经进入不可覆盖状态，不能覆盖历史决定")
             event = ProposalDecision.create(
                 proposal_id=proposal_id,
                 decision=decision,
@@ -193,6 +219,42 @@ class ProposalRegistry:
                 rationale=redact_text(rationale),
             )
             append_hash_chain(self.decisions_path, event)
+        return self.get(proposal_id)
+
+    def link_implementation(self, proposal_id: str, actor: str, implementation_task_id: str, git_baseline: str) -> ProposalView:
+        with FileLock(self.guard_path):
+            current = self.get(proposal_id)
+            if current.current_status is not ProposalStatus.ACCEPTED:
+                raise RegistryError("只有 ACCEPTED 提案才能绑定实施任务")
+            event = ProposalLifecycleEvent.create(proposal_id, LifecycleEventType.IMPLEMENTATION_LINKED, actor, implementation_task_id=implementation_task_id, git_baseline=git_baseline)
+            append_hash_chain(self.lifecycle_path, event)
+        return self.get(proposal_id)
+
+    def record_validation(self, proposal_id: str, actor: str, implementation_commit: str, evidence_refs: Sequence[str]) -> ProposalView:
+        with FileLock(self.guard_path):
+            current = self.get(proposal_id)
+            if current.current_status is not ProposalStatus.IMPLEMENTATION_LINKED:
+                raise RegistryError("必须先绑定实施 Task/Git Baseline，才能记录验证")
+            event = ProposalLifecycleEvent.create(proposal_id, LifecycleEventType.VALIDATION_RECORDED, actor, implementation_commit=implementation_commit, evidence_refs=evidence_refs)
+            append_hash_chain(self.lifecycle_path, event)
+        return self.get(proposal_id)
+
+    def close(self, proposal_id: str, actor: str, final_outcome: str) -> ProposalView:
+        with FileLock(self.guard_path):
+            current = self.get(proposal_id)
+            if current.current_status is not ProposalStatus.VALIDATION_RECORDED:
+                raise RegistryError("只有已记录验证证据的提案才能关闭")
+            event = ProposalLifecycleEvent.create(proposal_id, LifecycleEventType.CLOSED, actor, final_outcome=final_outcome)
+            append_hash_chain(self.lifecycle_path, event)
+        return self.get(proposal_id)
+
+    def supersede(self, proposal_id: str, actor: str, superseded_by: str) -> ProposalView:
+        with FileLock(self.guard_path):
+            current = self.get(proposal_id)
+            if current.current_status is not ProposalStatus.ACCEPTED:
+                raise RegistryError("仅允许在尚未实施的 ACCEPTED 状态标记 SUPERSEDED")
+            event = ProposalLifecycleEvent.create(proposal_id, LifecycleEventType.SUPERSEDED, actor, superseded_by=superseded_by)
+            append_hash_chain(self.lifecycle_path, event)
         return self.get(proposal_id)
 
     def validate(self) -> Mapping[str, Any]:
@@ -204,6 +266,8 @@ class ProposalRegistry:
                 ProposalStatus.PENDING_REVIEW,
                 ProposalStatus.ACCEPTED,
                 ProposalStatus.DEFERRED,
+                ProposalStatus.IMPLEMENTATION_LINKED,
+                ProposalStatus.VALIDATION_RECORDED,
             }:
                 previous = active_fingerprints.get(fingerprint)
                 if previous:
@@ -216,6 +280,10 @@ class ProposalRegistry:
             "accepted_count": sum(1 for view in views if view.current_status is ProposalStatus.ACCEPTED),
             "rejected_count": sum(1 for view in views if view.current_status is ProposalStatus.REJECTED),
             "deferred_count": sum(1 for view in views if view.current_status is ProposalStatus.DEFERRED),
+            "implementation_linked_count": sum(1 for view in views if view.current_status is ProposalStatus.IMPLEMENTATION_LINKED),
+            "validation_recorded_count": sum(1 for view in views if view.current_status is ProposalStatus.VALIDATION_RECORDED),
+            "closed_count": sum(1 for view in views if view.current_status is ProposalStatus.CLOSED),
+            "superseded_count": sum(1 for view in views if view.current_status is ProposalStatus.SUPERSEDED),
             "execution_authorization": ExecutionAuthorization.NONE.value,
             "integrity": "PASS",
         }

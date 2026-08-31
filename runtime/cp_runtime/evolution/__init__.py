@@ -1,4 +1,4 @@
-"""Codex 跨项目长期技术助手 V5.1 受控自进化运行时。"""
+"""Codex 跨项目长期技术助手 V6.0 受控自进化运行时。"""
 from .analysis import assess_snapshot
 from .contracts import (
     ConfidenceLevel,

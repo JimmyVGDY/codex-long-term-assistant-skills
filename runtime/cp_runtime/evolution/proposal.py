@@ -107,6 +107,17 @@ def generate_proposals(
         signal = signals.get(assessment.signal_id)
         if signal is None:
             raise ProposalGenerationError("评估引用了不存在的 signal_id: %s" % assessment.signal_id)
+        if assessment.snapshot_id != snapshot.snapshot_id:
+            raise ProposalGenerationError("assessment.snapshot_id 与当前 snapshot 不一致")
+        if assessment.target != signal.target:
+            raise ProposalGenerationError("assessment.target 与 signal.target 不一致")
+        expected_policy = str(snapshot.metrics.get("policy_version") or "")
+        if expected_policy and assessment.policy_version != expected_policy:
+            raise ProposalGenerationError("assessment.policy_version 与 snapshot 不一致")
+        signal_evidence = {(e.source_path, e.line_number, e.record_id, e.record_hash) for e in signal.evidence}
+        assessment_evidence = {(e.source_path, e.line_number, e.record_id, e.record_hash) for e in assessment.evidence}
+        if not assessment_evidence.issubset(signal_evidence):
+            raise ProposalGenerationError("assessment.evidence 不属于当前 signal/snapshot")
         if not assessment.evidence:
             continue
         if assessment.recommended_action is not ProposalAction.INVESTIGATE:

@@ -16,7 +16,7 @@ from types import MappingProxyType
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 SCHEMA_VERSION = "1.0"
-POLICY_VERSION = "v5.1-default-1"
+POLICY_VERSION = "v6.0-default-1"
 _PROJECT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 
@@ -53,8 +53,10 @@ class ProposalStatus(str, Enum):
     ACCEPTED = "ACCEPTED"
     REJECTED = "REJECTED"
     DEFERRED = "DEFERRED"
-    VALIDATED = "VALIDATED"
+    IMPLEMENTATION_LINKED = "IMPLEMENTATION_LINKED"
+    VALIDATION_RECORDED = "VALIDATION_RECORDED"
     CLOSED = "CLOSED"
+    SUPERSEDED = "SUPERSEDED"
 
 
 class DecisionType(str, Enum):
@@ -64,7 +66,7 @@ class DecisionType(str, Enum):
 
 
 class ExecutionAuthorization(str, Enum):
-    """V5.1 只允许 NONE，防止分析提案被误当作执行授权。"""
+    """V6.0 只允许 NONE，防止分析提案被误当作执行授权。"""
 
     NONE = "NONE"
 
@@ -234,6 +236,7 @@ class SelfObservationSnapshot:
     metrics: Mapping[str, Any]
     signals: Tuple[PatternSignal, ...]
     warnings: Tuple[str, ...]
+    source_digest: str
     content_hash: str
 
     def __post_init__(self) -> None:
@@ -258,6 +261,8 @@ class SelfObservationSnapshot:
         object.__setattr__(self, "metrics", _freeze(self.metrics))
         object.__setattr__(self, "signals", tuple(self.signals))
         object.__setattr__(self, "warnings", tuple(_require_text(v, "warning", 1, 1024) for v in self.warnings))
+        if not re.fullmatch(r"[0-9a-f]{64}", self.source_digest):
+            raise ContractError("source_digest 必须是 SHA-256")
         if not re.fullmatch(r"[0-9a-f]{64}", self.content_hash):
             raise ContractError("content_hash 必须是 SHA-256")
 
@@ -276,7 +281,16 @@ class SelfObservationSnapshot:
         observed_at: Optional[str] = None,
     ) -> "SelfObservationSnapshot":
         timestamp = observed_at or utc_now_iso()
-        seed = "%s|%s|%s|%s" % (project_id, timestamp, record_count, canonical_json(metrics))
+        source_digest = sha256_hex(canonical_json({
+            "project_id": project_id,
+            "source_files": list(source_files),
+            "record_count": int(record_count),
+            "task_count": int(task_count),
+            "metrics": metrics,
+            "signals": [to_primitive(item) for item in signals],
+        }))
+        # V6 快照 ID 必须唯一；source_digest 单独用于同源内容比较。
+        seed = "%s|%s|%s" % (project_id, timestamp, uuid.uuid4().hex)
         payload: Dict[str, Any] = {
             "schema_version": SCHEMA_VERSION,
             "snapshot_id": new_id("OBS", seed),
@@ -290,6 +304,7 @@ class SelfObservationSnapshot:
             "metrics": metrics,
             "signals": tuple(signals),
             "warnings": tuple(warnings),
+            "source_digest": source_digest,
         }
         payload["content_hash"] = _hash_payload(payload)
         return cls(**payload)
@@ -422,7 +437,7 @@ class OptimizationProposal:
         object.__setattr__(self, "validation_plan", tuple(_require_text(v, "validation_step", 3, 2048) for v in self.validation_plan))
         object.__setattr__(self, "constraints", tuple(_require_text(v, "constraint", 3, 2048) for v in self.constraints))
         if self.execution_authorization is not ExecutionAuthorization.NONE:
-            raise ContractError("V5.1 优化提案的 execution_authorization 只能是 NONE")
+            raise ContractError("V6 优化提案的 execution_authorization 只能是 NONE")
         if self.status is not ProposalStatus.PENDING_REVIEW:
             raise ContractError("新建提案状态必须是 PENDING_REVIEW，后续状态由独立决策事件表达")
         if not re.fullmatch(r"[0-9a-f]{64}", self.content_hash):
@@ -450,6 +465,12 @@ class OptimizationProposal:
             "signal_id": assessment.signal_id,
             "action_type": action_type.value,
             "policy_version": assessment.policy_version,
+            # V6：证据不变时 fingerprint 不变，REJECTED/DEFERRED 不会机械重生；
+            # 新证据会自然产生新 fingerprint。
+            "evidence": [
+                {"source_path": e.source_path, "line_number": e.line_number, "record_id": e.record_id, "record_hash": e.record_hash}
+                for e in assessment.evidence
+            ],
         })
         payload: Dict[str, Any] = {
             "schema_version": SCHEMA_VERSION,

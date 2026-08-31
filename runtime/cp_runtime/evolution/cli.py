@@ -1,4 +1,4 @@
-"""V5.1 受控自进化命令行入口。"""
+"""V6 受控演进命令行入口。"""
 from __future__ import annotations
 
 import argparse
@@ -101,6 +101,21 @@ def _cmd_decide(args: argparse.Namespace) -> Mapping[str, Any]:
     }
 
 
+
+def _cmd_link_implementation(args: argparse.Namespace) -> Mapping[str, Any]:
+    view = _registry(args).link_implementation(args.proposal_id, args.actor, args.task_id, args.git_baseline)
+    return {"result": _view_payload(view), "execution_authorization": ExecutionAuthorization.NONE.value}
+
+
+def _cmd_record_validation(args: argparse.Namespace) -> Mapping[str, Any]:
+    view = _registry(args).record_validation(args.proposal_id, args.actor, args.commit, args.evidence or [])
+    return {"result": _view_payload(view), "execution_authorization": ExecutionAuthorization.NONE.value}
+
+
+def _cmd_close(args: argparse.Namespace) -> Mapping[str, Any]:
+    view = _registry(args).close(args.proposal_id, args.actor, args.final_outcome)
+    return {"result": _view_payload(view), "execution_authorization": ExecutionAuthorization.NONE.value}
+
 def _cmd_validate(args: argparse.Namespace) -> Mapping[str, Any]:
     return _registry(args).validate()
 
@@ -117,7 +132,7 @@ def _add_common(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="codex-evolution",
-        description="Codex 跨项目长期技术助手 V5.1 自观察与受控自进化工具。不会自动修改任何规则或代码。",
+        description="Codex 跨项目长期技术助手 V6 确定性自观察与受控演进工具。不会自动修改任何规则或代码。",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -154,7 +169,30 @@ def build_parser() -> argparse.ArgumentParser:
     decide.add_argument("--rationale", required=True, help="至少 10 个字符的决策理由")
     decide.set_defaults(func=_cmd_decide)
 
-    validate = sub.add_parser("validate", help="验证提案和决策哈希链")
+    link_impl = sub.add_parser("link-implementation", help="人工 ACCEPT 后绑定新的实施 Task 与 Git Baseline")
+    _add_common(link_impl)
+    link_impl.add_argument("--proposal-id", required=True)
+    link_impl.add_argument("--actor", required=True)
+    link_impl.add_argument("--task-id", required=True)
+    link_impl.add_argument("--git-baseline", required=True)
+    link_impl.set_defaults(func=_cmd_link_implementation)
+
+    validation_event = sub.add_parser("record-validation", help="记录实施 Commit 与验证 Evidence")
+    _add_common(validation_event)
+    validation_event.add_argument("--proposal-id", required=True)
+    validation_event.add_argument("--actor", required=True)
+    validation_event.add_argument("--commit", required=True)
+    validation_event.add_argument("--evidence", action="append", default=[], required=True)
+    validation_event.set_defaults(func=_cmd_record_validation)
+
+    close_event = sub.add_parser("close", help="验证完成后关闭提案")
+    _add_common(close_event)
+    close_event.add_argument("--proposal-id", required=True)
+    close_event.add_argument("--actor", required=True)
+    close_event.add_argument("--final-outcome", choices=("PASS","FAILED","ROLLED_BACK","CANCELLED"), required=True)
+    close_event.set_defaults(func=_cmd_close)
+
+    validate = sub.add_parser("validate", help="验证提案、决策与生命周期哈希链")
     _add_common(validate)
     validate.set_defaults(func=_cmd_validate)
     return parser

@@ -10,6 +10,7 @@ import os
 import stat
 import tempfile
 import time
+import secrets
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
@@ -40,6 +41,7 @@ class FileLock:
         self.timeout_seconds = timeout_seconds
         self.stale_seconds = stale_seconds
         self._fd: Optional[int] = None
+        self._owner_token = secrets.token_hex(16)
 
     def __enter__(self) -> "FileLock":
         deadline = time.monotonic() + self.timeout_seconds
@@ -47,7 +49,7 @@ class FileLock:
             try:
                 flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
                 self._fd = os.open(str(self.lock_path), flags, 0o600)
-                content = json.dumps({"pid": os.getpid(), "created_at": utc_now_iso()}, ensure_ascii=False)
+                content = json.dumps({"pid": os.getpid(), "created_at": utc_now_iso(), "owner_token": self._owner_token}, ensure_ascii=False)
                 os.write(self._fd, content.encode("utf-8"))
                 os.fsync(self._fd)
                 return self
@@ -73,8 +75,10 @@ class FileLock:
             finally:
                 self._fd = None
         try:
-            self.lock_path.unlink()
-        except FileNotFoundError:
+            current = json.loads(self.lock_path.read_text(encoding="utf-8"))
+            if current.get("owner_token") == self._owner_token:
+                self.lock_path.unlink()
+        except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError):
             pass
 
 
@@ -179,6 +183,29 @@ def atomic_write_json(path: Path, value: Any) -> None:
     content = json.dumps(safe_value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
     atomic_write_text(path, content)
 
+
+
+def exclusive_write_json(path: Path, value: Any) -> None:
+    """只允许首次创建；存在同名快照时失败关闭，禁止静默覆盖。"""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _reject_symlink_components(path.parent)
+    payload = json.dumps(to_primitive(value), ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+    try:
+        fd = os.open(str(path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError as exc:
+        raise StorageError("不可变文件已存在，拒绝覆盖: %s" % path) from exc
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except Exception:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+        raise
 
 def read_json(path: Path, max_bytes: int = 20 * 1024 * 1024) -> Any:
     path = Path(path)

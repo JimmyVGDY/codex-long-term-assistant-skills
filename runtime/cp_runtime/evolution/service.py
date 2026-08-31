@@ -17,7 +17,7 @@ from .contracts import (
 from .observation import observe_project
 from .proposal import generate_proposals
 from .registry import ProposalRegistry, ProposalView
-from .storage import atomic_write_json, read_json, resolve_project_dir, safe_child
+from .storage import atomic_write_json, exclusive_write_json, read_json, resolve_project_dir, safe_child
 
 
 class EvolutionServiceError(RuntimeError):
@@ -90,8 +90,8 @@ class ControlledEvolutionService:
             assessments_dir = safe_child(self.evolution_root, "assessments", create_parent=True)
             snapshots_dir.mkdir(parents=True, exist_ok=True)
             assessments_dir.mkdir(parents=True, exist_ok=True)
-            atomic_write_json(safe_child(snapshots_dir, "%s.json" % snapshot.snapshot_id, create_parent=True), snapshot)
-            atomic_write_json(
+            exclusive_write_json(safe_child(snapshots_dir, "%s.json" % snapshot.snapshot_id, create_parent=True), snapshot)
+            exclusive_write_json(
                 safe_child(assessments_dir, "%s.json" % snapshot.snapshot_id, create_parent=True),
                 {
                     "schema_version": "1.0",

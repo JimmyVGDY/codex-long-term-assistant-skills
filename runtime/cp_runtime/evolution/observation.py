@@ -20,6 +20,7 @@ from .contracts import (
     sha256_hex,
 )
 from .storage import JsonLineRecord, StorageError, read_jsonl, safe_child
+from ..event_v2 import verify_event_chain, EventContractError
 
 _ALLOWED_SOURCE_WORDS = (
     "feedback", "execution", "review", "evidence", "checkpoint", "audit", "outcome", "result"
@@ -188,7 +189,7 @@ def _failure_labels(payload: Mapping[str, Any]) -> Set[str]:
             if severity in {"BLOCKING", "CRITICAL", "HIGH"}:
                 category = str(finding.get("category") or finding.get("type") or "unspecified").strip().lower()
                 labels.add("finding:%s" % category[:160])
-    outcome = _first_text(payload, ("quality_outcome", "outcome", "result", "status"))
+    outcome = _first_text(payload, ("quality_outcome", "terminal_outcome", "outcome", "result"))
     if outcome:
         normalized = outcome.strip().lower()
         if normalized not in _SUCCESS_OUTCOMES and normalized not in _UNKNOWN_OUTCOMES:
@@ -238,7 +239,7 @@ def discover_sources(
             if not candidate.exists() or not candidate.is_file():
                 raise ObservationError("显式数据源不存在: %s" % raw)
             if candidate.suffix.lower() != ".jsonl":
-                raise ObservationError("V5.1 自观察只接受 JSONL 数据源: %s" % raw)
+                raise ObservationError("V6.0 自观察只接受 JSONL 数据源: %s" % raw)
             sources.append(candidate)
     else:
         for candidate in sorted(project_dir.rglob("*.jsonl")):
@@ -271,6 +272,86 @@ def discover_sources(
     return unique
 
 
+
+def _expected_repo_fingerprint(project_dir: Path) -> Optional[str]:
+    profile = project_dir / "project-profile.json"
+    if not profile.is_file():
+        return None
+    try:
+        import json
+        raw = json.loads(profile.read_text(encoding="utf-8-sig"))
+        identity = raw.get("identity") or {}
+        repo_path = str(identity.get("repo_path") or "").strip()
+        remote = str(identity.get("remote_origin") or "").strip()
+        if not repo_path:
+            return None
+        normalized = str(Path(repo_path).expanduser().resolve(strict=False))
+        return "sha256:" + sha256_hex(normalized + "\n" + remote)
+    except Exception:
+        return None
+
+
+def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, project_dir: Path) -> Tuple[List[JsonLineRecord], int, int]:
+    """V6：严格项目隔离、event_id 去重，并将生命周期事件按 task_id 折叠。"""
+    expected_fp = _expected_repo_fingerprint(project_dir)
+    observed_fp: Optional[str] = expected_fp
+    legacy: List[JsonLineRecord] = []
+    events: List[JsonLineRecord] = []
+    seen_event_ids: Set[str] = set()
+    raw_v2 = 0
+    duplicate_v2 = 0
+    for row in rows:
+        payload = row.payload
+        row_project = _first_text(payload, ("project_id",))
+        if row_project and row_project != project_id:
+            raise ObservationError("检测到跨项目记录：%s != %s（%s:%d）" % (row_project, project_id, row.relative_path, row.line_number))
+        is_v2 = str(payload.get("schema_version", "")) == "2.0" and bool(payload.get("event_id"))
+        if not is_v2:
+            legacy.append(row)
+            continue
+        raw_v2 += 1
+        repo_fp = _first_text(payload, ("repo_fingerprint",))
+        if not repo_fp:
+            raise ObservationError("TaskOutcomeEvent V2 缺少 repo_fingerprint：%s:%d" % (row.relative_path, row.line_number))
+        if observed_fp is None:
+            observed_fp = repo_fp
+        if repo_fp != observed_fp:
+            raise ObservationError("检测到跨仓库事件：%s != %s" % (repo_fp, observed_fp))
+        event_id = str(payload.get("event_id"))
+        if event_id in seen_event_ids:
+            duplicate_v2 += 1
+            continue
+        seen_event_ids.add(event_id)
+        events.append(row)
+
+    grouped: DefaultDict[str, List[JsonLineRecord]] = defaultdict(list)
+    for row in events:
+        payload = row.payload
+        task_id = _extract_task_id(payload) or _first_text(payload, ("turn_id", "session_id")) or str(payload.get("event_id"))
+        grouped[task_id].append(row)
+
+    collapsed: List[JsonLineRecord] = []
+    for task_id, group in sorted(grouped.items()):
+        terminal = None
+        for row in group:
+            if str(row.payload.get("event_type", "")).upper() == "TASK_COMPLETED":
+                terminal = row
+        base = terminal or group[-1]
+        merged = dict(base.payload)
+        merged["task_id"] = task_id
+        merged["event_type"] = "TASK_AGGREGATE"
+        merged["lifecycle_event_count"] = len(group)
+        merged["actual_reviewers"] = sum(1 for row in group if str(row.payload.get("event_type", "")).upper() == "SUBAGENT_STARTED")
+        if terminal is not None:
+            merged["terminal_outcome"] = str(terminal.payload.get("terminal_outcome") or "UNKNOWN")
+            for key in ("blocking_findings", "nonblocking_findings", "repair_rounds", "recommended_model", "actual_model", "actual_reasoning_effort"):
+                if key in terminal.payload:
+                    merged[key] = terminal.payload[key]
+        raw_hash = sha256_hex(canonical_json(merged))
+        collapsed.append(JsonLineRecord(relative_path=base.relative_path, line_number=base.line_number, payload=merged, raw_hash=raw_hash))
+    return legacy + collapsed, raw_v2, duplicate_v2
+
+
 def observe_project(
     project_id: str,
     project_dir: Path,
@@ -293,9 +374,21 @@ def observe_project(
             max_bytes=policy.max_source_file_bytes,
             max_records=policy.max_record_count,
         )
+        # V6 Hook 事件采用独立 hash-chain/HMAC 合同；任何链路损坏都失败关闭。
+        if rows and all(str(row.payload.get("schema_version", "")) == "2.0" and row.payload.get("event_id") for row in rows):
+            try:
+                import os
+                verify_event_chain(source, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
+            except EventContractError as exc:
+                raise ObservationError("TaskOutcomeEvent V2 完整性校验失败: %s" % exc) from exc
         all_rows.extend(rows)
         if len(all_rows) > policy.max_record_count:
             raise ObservationError("全部数据源记录总数超过策略上限")
+
+    raw_record_count = len(all_rows)
+    all_rows, raw_v2_event_count, duplicate_v2_event_count = _validate_and_aggregate_v2(all_rows, project_id, project_dir)
+    if duplicate_v2_event_count:
+        warnings.append("%d 条重复 event_id 已在聚合前去重" % duplicate_v2_event_count)
 
     task_ids: Set[str] = set()
     timestamps: List[datetime] = []
@@ -334,7 +427,7 @@ def observe_project(
             except Exception:
                 pass
 
-        outcome = _first_text(payload, ("quality_outcome", "outcome", "result", "status"))
+        outcome = _first_text(payload, ("quality_outcome", "terminal_outcome", "outcome", "result"))
         if outcome:
             normalized_outcome = outcome.lower()
             if normalized_outcome not in _UNKNOWN_OUTCOMES:
@@ -391,10 +484,9 @@ def observe_project(
                 "evidence": [],
             })
             stats["invocations"] += 1
-            stats["blocking_findings"] += max(0, _to_int(result.get("blocking_findings"), 0))
-            stats["nonblocking_findings"] += max(0, _to_int(result.get("nonblocking_findings"), 0))
             findings = result.get("findings")
             if isinstance(findings, list):
+                # V6：明细是权威来源，避免与汇总数字重复计数。
                 for finding in findings:
                     if not isinstance(finding, Mapping):
                         continue
@@ -403,6 +495,9 @@ def observe_project(
                         stats["blocking_findings"] += 1
                     else:
                         stats["nonblocking_findings"] += 1
+            else:
+                stats["blocking_findings"] += max(0, _to_int(result.get("blocking_findings"), 0))
+                stats["nonblocking_findings"] += max(0, _to_int(result.get("nonblocking_findings"), 0))
             if task_id:
                 stats["tasks"].add(task_id)
             if len(stats["evidence"]) < 50:
@@ -457,6 +552,9 @@ def observe_project(
         "policy_version": policy.policy_version,
         "source_file_count": source_count,
         "record_count": len(all_rows),
+        "raw_record_count": raw_record_count,
+        "raw_v2_event_count": raw_v2_event_count,
+        "deduplicated_v2_event_count": duplicate_v2_event_count,
         "task_count": len(task_ids),
         "records_without_task_id": records_without_task,
         "window_days": window_days,
