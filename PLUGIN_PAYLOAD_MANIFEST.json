@@ -1,19 +1,19 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "6.4.0",
+  "version": "6.5.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 164,
-  "payload_digest": "ce3f46f8c55582c4a326bb13f0b950bdb1b725341216d82519c4fc3aeefd45d5",
+  "file_count": 166,
+  "payload_digest": "db4b6483a77084cdce3f66d23c0a881b8211ef3ad23ad6b22e6d2cb6e8a3e1ff",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "ddb6dec710e684d0920d27dfabf550e4c6fa4c1efe7de798e6fb99bd594a442d",
+      "sha256": "1835cace09a8c51014d876f08a2c5b37a226a0fb92f694bbf65af4b84c04b0e9",
       "size": 309
     },
     {
@@ -33,8 +33,8 @@
     },
     {
       "path": "skills/controlled-evolution-governance/references/task-outcome-event-v2.md",
-      "sha256": "4eab590527f0885276ab05108d4c6614158d9a5158d498a98b4e801a7dd0a10a",
-      "size": 1141
+      "sha256": "c2ccf282dda0ede3ed14735706dee6abe0887d5b7ceec31a58e8753c7fb8994d",
+      "size": 1832
     },
     {
       "path": "skills/data-middleware-ai-infrastructure/SKILL.md",
@@ -468,8 +468,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/assets/schemas/review-result.schema.json",
-      "sha256": "dde088ba0c1b2247298f25047db4a47227cda7c98f962b706faf9b0dbe70d115",
-      "size": 3715
+      "sha256": "a8b32fe9cb432fc2c73a260b49508bf9001b784879bc1fc65a01f7bedb7422c0",
+      "size": 3820
     },
     {
       "path": "skills/multi-agent-independent-review/assets/templates/PRE_IMPLEMENTATION_REVIEW.template.md",
@@ -498,8 +498,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/assets/templates/REVIEW_RESULT.template.md",
-      "sha256": "8bfa2304e6e9edec2017a4e1468b3a6ae0b534c5edb596d991be07b33774609c",
-      "size": 1446
+      "sha256": "1538bb68771e011c4a2fd4ba92ef9a14c364a7665cc9b08e1e2d7b8e0f02122a",
+      "size": 1507
     },
     {
       "path": "skills/multi-agent-independent-review/references/controlled-self-evolution.md",
@@ -553,8 +553,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
-      "sha256": "e7ed34148ae9f4421f59aae972181a4df94bb95d2c0ea74a67db7509acc41c4b",
-      "size": 22399
+      "sha256": "bd0067c71d1e2abda71a5ee8475b269c3eb73f0f1cd72d57abbce20bc0cdb871",
+      "size": 22920
     },
     {
       "path": "skills/multi-agent-independent-review/tests/test_review_tools.py",
@@ -763,8 +763,8 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/contracts.py",
-      "sha256": "1fb6ed27e97ebb2ddd615e50a1eced5546901e39fd1e3c022f308873cdd510a0",
-      "size": 24910
+      "sha256": "6503544dc9a9d94c361bd45227320ab4de601be5b48dc8715196db5f57b98415",
+      "size": 25155
     },
     {
       "path": "runtime/cp_runtime/evolution/lifecycle.py",
@@ -778,8 +778,8 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/observation.py",
-      "sha256": "10aaf1ac4e3139c6243bb439838a17278a92ff8927c7ffd4f6d782693f3fcf47",
-      "size": 43236
+      "sha256": "c659bd1fc22bec7c91162346c0f6ccb7514ddd2f07e9dfbd262f669572f91af8",
+      "size": 47610
     },
     {
       "path": "runtime/cp_runtime/evolution/proposal.py",
@@ -815,6 +815,16 @@
       "path": "runtime/cp_runtime/finalization.py",
       "sha256": "a1a689cbcbe1d9fc050bb98da6fa857c6380f0fcb266cd5fc0efaa86efb05cc0",
       "size": 6812
+    },
+    {
+      "path": "runtime/cp_runtime/host_facts.py",
+      "sha256": "4a588c271d3791e21e32b5827e0b8da65ee659be136f6f290a1d17bc29b4af1b",
+      "size": 5651
+    },
+    {
+      "path": "runtime/cp_runtime/integrity.py",
+      "sha256": "94d8bc1b6056ac23d8258e00040caf4014bdcf95c65ee3de7b9ea39a218fe846",
+      "size": 14763
     },
     {
       "path": "runtime/cp_runtime/memory.py",
