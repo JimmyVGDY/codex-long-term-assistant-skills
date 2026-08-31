@@ -16,6 +16,12 @@ description: >-
 6. 日志分析不自动进入修复、Git、部署或复审；明确转入修复后组合 `$engineering-quality-delivery`。
 7. 长期排障组合 `$long-running-task-memory`，正式事故报告组合 `$technical-document-writing`。
 
+## 模型与委派成本
+
+- 时间窗提取、traceId 关联、异常去重、聚类和清单整理优先 `luna-low`；范围明确的时间线和单调用链候选分析使用 `luna-medium`。
+- 跨服务因果判断、证据冲突和复杂资源瓶颈使用 `terra-medium`；只有生产高风险、复杂并发或安全事件裁决才使用 `terra-high`。
+- 日志量大不等于推理难度高；按服务、时间窗和证据域分片，禁止多个子 Agent 重复扫描同一原始日志。
+
 ## 核心边界
 
 - 只读不等于无风险；禁止无限 `tail -f`、无边界扫描、Redis `KEYS *`、高成本全表查询和未授权在线 Profiling。
