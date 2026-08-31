@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "6.5.0",
-  "release_name": "宿主事实旁证、可轮换完整性封印与 Reviewer 校准",
-  "generated_for": "Codex Plugin-first cross-project engineering assistant with diagnostic host facts, host-bound rotating integrity keys, mixed-writer-safe event seals, reviewer calibration, durable install transactions, controlled proposal lifecycle, and a Luna/Terra model ceiling",
+  "version": "6.6.0",
+  "release_name": "可信模型证据边界、多进程恢复、延迟封印与事件健康治理",
+  "generated_for": "Codex Plugin-first cross-project engineering assistant with trusted-host model evidence separation, native process locks, delayed signed event sealing, non-destructive archives, reviewer calibration, controlled proposal lifecycle, and a Luna/Terra model ceiling",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
@@ -426,6 +426,7 @@
     ]
   },
   "upgrade_from": [
+    "6.5.0",
     "6.4.0",
     "6.3.0",
     "6.2.0",
@@ -476,6 +477,14 @@
     ,"host_fact_diagnostic_trust_tests": true
     ,"detached_event_seal_rotation_tests": true
     ,"reviewer_calibration_identity_tests": true
+    ,"trusted_runtime_model_attestation_contract": true
+    ,"windows_spawn_multiprocess_fault_tests": true
+    ,"forced_termination_lock_recovery_tests": true
+    ,"power_loss_key_rotation_tests": true
+    ,"delayed_session_end_signed_seal_queue": true
+    ,"reviewer_calibration_v2_tests": true
+    ,"non_destructive_event_archive_tests": true
+    ,"capacity_budget_and_cross_project_health_tests": true
   },
   "controlled_evolution": {
     "runtime": "runtime/cp_runtime/evolution",
@@ -519,8 +528,15 @@
     ],
     "event_deduplication": "event_id",
     "reviewer_result_deduplication": "task_id + reviewer + result_id",
-    "host_session_evidence_trust": "DIAGNOSTIC",
+    "host_session_evidence_trust": "DIAGNOSTIC_ONLY",
+    "requested_model_policy_field": "requested_model_policy",
+    "runtime_model_evidence_field": "runtime_model_evidence",
+    "diagnostic_model_observation_field": "diagnostic_model_observation",
+    "runtime_model_evidence_codex_0_150_1": "UNAVAILABLE",
     "event_integrity_seal": "detached-keyring-hmac",
+    "session_end_seal_mode": "signed-deferred-worker",
+    "event_archive_mode": "non-destructive-immutable-copy",
+    "automatic_history_deletion": false,
     "aggregation_key": "task_id",
     "project_isolation": [
       "project_id",

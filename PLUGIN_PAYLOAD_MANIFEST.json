@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "6.5.0",
+  "version": "6.6.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 166,
-  "payload_digest": "db4b6483a77084cdce3f66d23c0a881b8211ef3ad23ad6b22e6d2cb6e8a3e1ff",
+  "file_count": 170,
+  "payload_digest": "2251421c9350e29022662a784cf1ef7bb98f4f36de4b0775a751c6f1b0e92885",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "1835cace09a8c51014d876f08a2c5b37a226a0fb92f694bbf65af4b84c04b0e9",
-      "size": 309
+      "sha256": "ec9c0fc42a444f74ffcd52482c75d78cde6abb305cef1cd633ce146c80a14bbc",
+      "size": 318
     },
     {
       "path": "skills/controlled-evolution-governance/SKILL.md",
@@ -33,8 +33,8 @@
     },
     {
       "path": "skills/controlled-evolution-governance/references/task-outcome-event-v2.md",
-      "sha256": "c2ccf282dda0ede3ed14735706dee6abe0887d5b7ceec31a58e8753c7fb8994d",
-      "size": 1832
+      "sha256": "6950e0f95c290e8dd1e44a6bf03fb7c7ce1dd0451dc674e23e80ac2a3b443533",
+      "size": 2702
     },
     {
       "path": "skills/data-middleware-ai-infrastructure/SKILL.md",
@@ -703,13 +703,18 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "f9369ff585acfbfb07d04e8b800c491d0265b2a7594540c4e1a8b67c3068de3c",
-      "size": 10515
+      "sha256": "b0ad7b49d49c041896a02706a2883837edb1e57eaf5e2899eeda9a2ce394cca2",
+      "size": 13017
     },
     {
       "path": "hooks/hooks.json",
-      "sha256": "d27a1d45b6ef4a83ac60f35748492f9a47256f4f72745dd48108a1fb4eae78ad",
-      "size": 1954
+      "sha256": "b325e40c7fc9254638623eedb877be24c14e605b417e4fa72507db234c346921",
+      "size": 2002
+    },
+    {
+      "path": "hooks/seal_worker.py",
+      "sha256": "0eddebd6fb308a345a2bf19b6a86132852387b7b68826563683a321715bd00d9",
+      "size": 1069
     },
     {
       "path": "runtime/cp_runtime/__init__.py",
@@ -737,9 +742,14 @@
       "size": 1911
     },
     {
+      "path": "runtime/cp_runtime/event_archive.py",
+      "sha256": "c62abdd1af37728b3370981a630ed5c12eeec471e6823a39acf6005b7e2827b0",
+      "size": 13736
+    },
+    {
       "path": "runtime/cp_runtime/event_v2.py",
-      "sha256": "54b6a574731cc0213a817a0a3b9172a264c25c858c8469c7e421e7901b8978eb",
-      "size": 22487
+      "sha256": "1523eeb2044adb1c31058c7d519cf1e2434523a0c72de95facc3d3c23b089bb0",
+      "size": 22937
     },
     {
       "path": "runtime/cp_runtime/evidence.py",
@@ -778,8 +788,8 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/observation.py",
-      "sha256": "c659bd1fc22bec7c91162346c0f6ccb7514ddd2f07e9dfbd262f669572f91af8",
-      "size": 47610
+      "sha256": "1102128a546cc9dd66198532a278b6845dac8eb53ddb472103b28e262ecc1b4c",
+      "size": 51525
     },
     {
       "path": "runtime/cp_runtime/evolution/proposal.py",
@@ -823,8 +833,8 @@
     },
     {
       "path": "runtime/cp_runtime/integrity.py",
-      "sha256": "94d8bc1b6056ac23d8258e00040caf4014bdcf95c65ee3de7b9ea39a218fe846",
-      "size": 14763
+      "sha256": "6c2904f8f23129064781aa18fc194c5e7fd6b49f5bd77b4e456ba3759f412409",
+      "size": 16392
     },
     {
       "path": "runtime/cp_runtime/memory.py",
@@ -832,9 +842,19 @@
       "size": 8000
     },
     {
+      "path": "runtime/cp_runtime/model_evidence.py",
+      "sha256": "f5c36e6ce9ac9d891d853585234d7d24450ab3a0f59d2303e50c2cdfb4aef7b9",
+      "size": 4161
+    },
+    {
       "path": "runtime/cp_runtime/project.py",
       "sha256": "63a2f49a3a8f210b73ed3e5557dc4fe26f6c45300f67fbb582f2e3f9cb0dd3fa",
       "size": 14587
+    },
+    {
+      "path": "runtime/cp_runtime/seal_queue.py",
+      "sha256": "da1163810dbdcc0f42fb69ace1b79ba41a34f2cb4544242cf7bb50454416a0e0",
+      "size": 15462
     },
     {
       "path": "runtime/tests/test_cp_runtime.py",
