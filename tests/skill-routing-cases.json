@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "V4.1 路由回归：覆盖最小充分加载、执行档位、独立上下文 Reviewer、证据有效性和跨框架/传统/混合前端识别。",
+  "description": "V4.2 路由回归：覆盖最小充分加载、执行档位、Luna/Terra 子 Agent 分级、独立上下文 Reviewer、证据有效性和跨框架/传统/混合前端识别。",
   "cases": [
     {
       "id": "java-concept-readonly",
@@ -492,7 +492,8 @@
         "engineering-quality-delivery",
         "multi-agent-independent-review",
         "long-running-task-memory"
-      ]
+      ],
+      "max_active": 1
     },
     {
       "id": "standard-code-change",
@@ -506,7 +507,8 @@
       ],
       "forbidden": [
         "technical-document-writing"
-      ]
+      ],
+      "max_active": 3
     },
     {
       "id": "strict-schema-migration",
@@ -520,7 +522,8 @@
       "optional": [
         "technical-document-writing"
       ],
-      "forbidden": []
+      "forbidden": [],
+      "max_active": 4
     },
     {
       "id": "subagent-context-review",
@@ -531,7 +534,8 @@
       "optional": [
         "long-running-task-memory"
       ],
-      "forbidden": []
+      "forbidden": [],
+      "max_active": 2
     }
   ]
 }
