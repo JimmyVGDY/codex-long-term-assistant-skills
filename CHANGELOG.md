@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 6.0.0 — 插件化确定性自观察版
+
+- Plugin-first + standalone/repo 双兼容安装。
+- 用户 Skill 目录修正为 `$HOME/.agents/skills`。
+- 六类 Hooks + TaskOutcomeEvent V2 + Task 聚合。
+- `project_id + repo_fingerprint` 双隔离。
+- Terra High 自动上限与 PreToolUse 前置拦截。
+- 不可覆盖 Snapshot、source_digest、Proposal 完整生命周期。
+- 安装事务统一、安全备份、漂移检测、符号链接/Junction 防护。
+- 新增 `controlled-evolution-governance`，总 Skill 数 10。
+
 ## 5.1.0 - 2026-08-26
 
 ### Added
