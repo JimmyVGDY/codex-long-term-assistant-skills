@@ -325,6 +325,7 @@ Codex 的领域细则安装在 `$HOME/.agents/skills`。处理任务时，根据
 - Python、FastAPI、Django、异步、Celery、AI 服务：`$python-backend-ai-engineering`
 - Vue、路由、状态管理、SSE 和前端构建：`$vue-frontend-engineering`
 - 数据库、Redis、RabbitMQ、Elasticsearch、文件、RAG、GPU、Docker 和 Kubernetes：`$data-middleware-ai-infrastructure`
+- 技术方案、架构文档、实施计划、设计说明、故障报告、项目报告和 Markdown 重构：`$technical-document-writing`
 
 ### 8.2 工作流技能
 
@@ -332,14 +333,20 @@ Codex 的领域细则安装在 `$HOME/.agents/skills`。处理任务时，根据
 
 - `$engineering-quality-delivery`
 
+涉及正式技术文档、技术方案、架构设计、实施方案、接口或数据库设计、部署手册、故障报告、代码审查报告、管理报告或现有文档重构时，激活：
+
+- `$technical-document-writing`
+
 复杂、跨会话、多阶段、多仓库、多 Agent、生产观察期或上下文可能压缩的任务，激活：
 
 - `$long-running-task-memory`
 
 ### 8.3 激活原则
 
-- 只读解释或简单问答，不机械激活交付和长期记忆技能；
+- 只读解释或简单问答，不机械激活交付、文档和长期记忆技能；
 - 修改运行行为时，除领域技能外必须使用 `$engineering-quality-delivery`；
+- 纯文档任务不因激活文档技能而自动获得代码、Git 或环境写权限；文档与代码交付绑定时组合 `$technical-document-writing` 与 `$engineering-quality-delivery`；
+- 外部任务记忆与团队正式工程文档必须隔离；前者使用 `$long-running-task-memory`，后者使用 `$technical-document-writing`；
 - 同时涉及多个领域时可以组合技能，但只加载与当前调用链直接相关的规则；
 - 技能规则与当前项目实际代码、配置、版本或项目级 `AGENTS.md` 冲突时，以当前事实和更具体的项目规则为准，并指出冲突；
 - 技能不能扩大用户授权，不能把分析授权自动升级为修改、提交、推送、部署或生产写操作；
@@ -387,6 +394,10 @@ Codex 的领域细则安装在 `$HOME/.agents/skills`。处理任务时，根据
 ### 10.3 多方案对比
 
 需要比较方案时，至少对比实现成本、上线风险、性能、可维护性、扩展性、运维成本和回滚难度，并给出明确推荐、适用条件和升级条件。
+
+### 10.4 正式技术文档
+
+正式文档必须明确目标读者、用途、事实来源、范围和未验证项。基于用户提供的代码、文件或资料写作时，保留其术语、业务口径和细节层级；材料未支持的结论不得静默补齐。默认使用正式、中立、可执行的 Markdown，简单文档不机械套用完整模板。
 
 ---
 
