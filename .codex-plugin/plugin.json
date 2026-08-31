@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "6.2.0",
-  "description": "跨项目长期技术助手 V6.2：十类工程 Skills、独立 Reviewer、确定性自观察 Hooks、Windows 原生 Codex 0.150.1 实机兼容与人工受控优化闭环。",
+  "version": "6.3.0",
+  "description": "跨项目长期技术助手 V6.3：十类工程 Skills、独立 Reviewer、持久化安装事务、确定性发行、生命周期完整率与人工受控优化闭环。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }
