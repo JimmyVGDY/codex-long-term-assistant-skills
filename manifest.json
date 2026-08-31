@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "6.1.0",
-  "release_name": "插件化确定性自观察版",
+  "version": "6.2.0",
+  "release_name": "Windows 实机兼容固化版",
   "generated_for": "Codex Plugin-first cross-project engineering assistant with deterministic lifecycle hooks, TaskOutcomeEvent V2, project/repository isolation, controlled proposal lifecycle, Luna/Terra model ceiling, safe install/rollback, and progressive Skill loading",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
@@ -414,6 +414,8 @@
     ]
   },
   "upgrade_from": [
+    "6.1.0",
+    "6.0.0",
     "5.1.0",
     "5.0.0",
     "4.2.0",
@@ -443,7 +445,10 @@
     "proposal_lifecycle_tests": true,
     "plugin_manifest_validation": true,
     "standalone_install_smoke": true,
-    "repo_install_smoke": true
+    "repo_install_smoke": true,
+    "windows_extended_length_path_regression": true,
+    "codex_0_150_1_v61_to_v62_plugin_upgrade_restore": true,
+    "neutral_language_gate": true
   },
   "controlled_evolution": {
     "runtime": "runtime/cp_runtime/evolution",

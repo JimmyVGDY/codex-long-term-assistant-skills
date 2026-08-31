@@ -18,3 +18,4 @@ Original archives remain local and are not committed. Public tree digests cover 
 | 5.1.0 | `Codex跨项目长期技术助手Skills安装包_v5.1_自观察与受控自进化版.zip` | `d897dbb4fdcf5177108643c562e6a28a68e9ef6c4265febfd2f6e8b8a9e545a8` | 453801 | 0 | `c5eec73ab0c1012db13cb2eb918a00ad5d7d402d77a9bbea9210d21ecd09f1ca` |
 | 6.0.0 | `Codex-Skills-V6.0.zip` | `5c53080ad59e7b04e35bd9ff8e179288b1d8a5e04437a6504636f1408aaa6d44` | 465999 | 0 | `7b6caca450a256701643217099d6e419e7b8bff90cfe7663e96724fc59fe9577` |
 | 6.1.0 | `Codex-Skills-V6.1.zip` | `dbb6075d4df6f9af62266ab379d255e0bdc04096b41bda5ecf7f1a32d9e55c9c` | 440320 | 0 | `02d606e1ca2a425179487ad65f0cc5abca030a32fee8121104243dd33ecc2bee` |
+| 6.2.0 | `Codex-Skills-V6.2.zip` | `0c4af1dfe7e3c8af33e365b52639694ebd775adeeb5cf75fa927860e21a39a36` | 468718 | 0 | `45568576146ce1b1920736756666f6d0e51fe2a139921268cd79556313c776f5` |
