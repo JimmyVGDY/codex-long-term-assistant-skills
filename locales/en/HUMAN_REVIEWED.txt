@@ -58,4 +58,16 @@ skills/multi-agent-independent-review/SKILL.md
 skills/python-backend-ai-engineering/agents/openai.yaml
 skills/python-backend-ai-engineering/SKILL.md
 skills/technical-document-writing/agents/openai.yaml
+skills/technical-document-writing/assets/templates/API_DESIGN.template.md
+skills/technical-document-writing/assets/templates/ARCHITECTURE_DESIGN.template.md
+skills/technical-document-writing/assets/templates/CODE_REVIEW_REPORT.template.md
+skills/technical-document-writing/assets/templates/DATABASE_DESIGN.template.md
+skills/technical-document-writing/assets/templates/DEPLOYMENT_RUNBOOK.template.md
+skills/technical-document-writing/assets/templates/IMPLEMENTATION_PLAN.template.md
+skills/technical-document-writing/assets/templates/INCIDENT_REPORT.template.md
+skills/technical-document-writing/assets/templates/MANAGEMENT_REPORT.template.md
+skills/technical-document-writing/assets/templates/PROJECT_PROGRESS_REPORT.template.md
+skills/technical-document-writing/assets/templates/README.template.md
+skills/technical-document-writing/assets/templates/TECHNICAL_SELECTION.template.md
+skills/technical-document-writing/assets/templates/TECHNICAL_SOLUTION.template.md
 skills/technical-document-writing/SKILL.md
