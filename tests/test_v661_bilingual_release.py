@@ -99,6 +99,19 @@ class V661BilingualReleaseTests(unittest.TestCase):
             text = entries[path].decode("utf-8")
             self.assertIsNone(re.search(r"[\u4e00-\u9fff]", text), path)
         self.assertFalse(any(path.startswith("locales/") for path in entries))
+        self.assertNotIn("runtime-strings.json", entries)
+
+    def test_english_runtime_python_literals_are_localized_and_compile(self) -> None:
+        auditor = _load_localization_auditor()
+        mapping = auditor.load_mapping()
+        for path in self.english_root.rglob("*.py"):
+            relative = path.relative_to(self.english_root)
+            if "tests" in relative.parts or path.name.startswith("test_"):
+                continue
+            preserved = set(mapping["files"].get(relative.as_posix(), {}).get("preserve", []))
+            findings = [row for row in auditor.extract_literals(path) if row["source"] not in preserved]
+            self.assertEqual([], findings, relative.as_posix())
+            compile(path.read_text(encoding="utf-8-sig"), relative.as_posix(), "exec")
 
     def test_archives_exclude_unrelated_brand_and_personal_paths(self) -> None:
         text_suffixes = {".md", ".json", ".toml", ".yaml", ".yml", ".py", ".ps1", ".sh", ".cmd", ".txt"}

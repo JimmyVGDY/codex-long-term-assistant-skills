@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from payload_integrity import write_manifest as write_payload_manifest
+from runtime_localization import RuntimeLocalizationError, load_mapping, localize_tree
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = "6.6.1"
@@ -101,7 +102,9 @@ def _apply_overlay(staging: Path, locale: str) -> None:
     for source in sorted(overlay.rglob("*")):
         if _is_link(source):
             raise BuildError("locale overlay contains a link: %s" % source.relative_to(overlay).as_posix())
-        if not source.is_file() or source.name in {"manifest-localization.json", "HUMAN_REVIEWED.txt"}:
+        if not source.is_file() or source.name in {
+            "manifest-localization.json", "HUMAN_REVIEWED.txt", "runtime-strings.json"
+        }:
             continue
         relative = source.relative_to(overlay)
         destination = staging / relative
@@ -127,6 +130,10 @@ def _apply_overlay(staging: Path, locale: str) -> None:
     manifest["review_isolation_levels"] = localization["review_isolation_levels"]
     manifest["breaking_changes"] = localization["breaking_changes"]
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    try:
+        localize_tree(staging, load_mapping(overlay / "runtime-strings.json"))
+    except RuntimeLocalizationError as exc:
+        raise BuildError("runtime localization failed: %s" % exc) from exc
 
 
 def _prepare_staging(locale: str, parent: Path) -> Path:

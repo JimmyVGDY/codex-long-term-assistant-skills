@@ -19,6 +19,11 @@ def _load_module():
 
 
 class RuntimeLocalizationTests(unittest.TestCase):
+    def test_repository_runtime_mapping_is_complete(self) -> None:
+        module = _load_module()
+        findings = module.mapping_findings(ROOT, module.load_mapping())
+        self.assertEqual([], findings)
+
     def test_extract_skips_bilingual_docstring_and_finds_runtime_literals(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory(prefix="cp-runtime-i18n-") as temporary:

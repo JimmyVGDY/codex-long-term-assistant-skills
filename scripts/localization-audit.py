@@ -15,6 +15,8 @@ import tokenize
 from pathlib import Path
 from typing import Any, Iterable
 
+from runtime_localization import extract_literals, load_mapping, mapping_findings
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CODE_SUFFIXES = {".py", ".ps1", ".sh", ".cmd"}
@@ -175,6 +177,7 @@ def audit(files: Iterable[Path]) -> dict[str, Any]:
             counts["code"] += 1
             findings.extend(audit_python(path, text) if path.suffix.lower() == ".py"
                             else audit_line_comments(path, text))
+    findings.extend(mapping_findings(ROOT, load_mapping()))
     by_code: dict[str, int] = {}
     for row in findings:
         by_code[row["code"]] = by_code.get(row["code"], 0) + 1
