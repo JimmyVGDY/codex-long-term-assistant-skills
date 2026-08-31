@@ -15,6 +15,12 @@ description: >-
 5. 金额使用 `Decimal`，明确时区并避免 naive/aware datetime 混用。
 6. 修改运行行为时组合 `$engineering-quality-delivery`；涉及数据/缓存/MQ/RAG/GPU/部署时组合 `$data-middleware-ai-infrastructure`；以 Traceback/Worker/容器日志为主要证据时组合 `$log-observability-analysis`。
 
+## 模型与委派成本
+
+- 文件定位、依赖提取、配置核对和日志分类优先 `luna-low`；明确的数据流、任务状态和普通脚本扫描使用 `luna-medium`。
+- 异步调用链、多 Worker 状态、任务恢复和普通 AI 服务判断使用 `terra-medium`；复杂并发、GPU 调度、RAG 权限和不可逆数据处理才使用 `terra-high`。
+- 子 Agent 只处理独立只读证据域，不复制模型输入输出、完整日志或父会话历史。
+
 ## 边界
 
 - 不默认 Python 只能做 AI，也不因性能问题直接建议重写为 Java。
