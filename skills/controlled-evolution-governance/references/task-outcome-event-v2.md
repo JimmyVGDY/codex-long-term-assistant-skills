@@ -10,3 +10,15 @@ V6 事件只保存生命周期元数据。核心键包括 `event_id/event_type/s
 - 默认禁止保存 Prompt、回答、代码、Diff、认证凭据等正文。
 - JSONL 使用前向 SHA-256 链；活动文件达到阈值后在同一锁内形成连续只读分段，跨段链保持连续。活动文件的未提交尾部会进入摘要化隔离文件，历史段损坏失败关闭。
 - 配置 `CP_ASSISTANT_HMAC_KEY` 后增加 HMAC 完整性校验。它是完整性检测，不是不可抵赖审计。
+
+## V6.5 完整性封印
+
+- 原始 TaskOutcomeEvent schema 保持 2.0；
+- keyring HMAC 写入独立 detached seal，不改变事件 envelope；
+- `SEALED_CURRENT` 表示当前链头已封印；合法新事件会形成未封印尾部；
+- V6.4 写入与 V6.5 封印可并存，历史封印不会因新尾部失效；
+- Windows DPAPI keyring 与 POSIX keyring 按 issuer 隔离，不静默跨后端使用。
+
+## Reviewer 校准输入
+
+`reviewer_results` 以 `(task_id, reviewer, result_id)` 去重。相同身份重放只计一次，payload 冲突进入 `CONFLICT`，缺少稳定身份的记录不进入校准样本。校准状态只形成观察或 Proposal 候选，不授予执行权限。
