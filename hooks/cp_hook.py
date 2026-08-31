@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import hashlib
 import sys
 import tempfile
 from pathlib import Path
@@ -17,10 +18,14 @@ if hasattr(sys.stdin, "reconfigure"):
     sys.stdin.reconfigure(encoding="utf-8", errors="strict")
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="strict")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
 
 ROOT = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v2 import append_event, project_id_for, stable_repo_fingerprint  # noqa: E402
+from cp_runtime.model_evidence import verify_hook_runtime_evidence  # noqa: E402
+from cp_runtime.seal_queue import enqueue_session_end, launch_worker  # noqa: E402
 
 ALLOWED_REASONING = {"", "none", "minimal", "low", "medium", "high"}
 ALLOWED_AUTOMATIC_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra"}
@@ -105,10 +110,11 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     session_id = str(_lookup(data, "session_id", "sessionId", "thread_id") or "")
     turn_id = str(_lookup(data, "turn_id", "turnId") or "")
     task_id = str(_lookup(data, "task_id", "taskId") or turn_id or session_id)
-    # Only explicit host-fact fields are admissible. Generic model/status fields
-    # may describe recommendations or transport state and must never be inferred.
-    model = str(data.get("actual_model") or "").strip()
-    effort = str(data.get("actual_reasoning_effort") or "").strip().lower()
+    # Actual runtime values require an externally configured host trust anchor.
+    # Codex 0.150.1 provides no such attestation, so its values stay unavailable.
+    runtime_evidence = verify_hook_runtime_evidence(data, hook)
+    model = runtime_evidence["model"] if runtime_evidence["status"] == "VERIFIED" else ""
+    effort = runtime_evidence["reasoning_effort"] if runtime_evidence["status"] == "VERIFIED" else ""
     terminal_value = data.get("terminal_outcome") if event_type == "TASK_COMPLETED" else None
     terminal = str(terminal_value or "UNKNOWN").upper()
     metadata: Dict[str, Any] = {}
@@ -116,6 +122,11 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
         value = data.get(key)
         if value is not None:
             metadata[key] = value
+    metadata["runtime_model_evidence"] = runtime_evidence["status"]
+    metadata["runtime_model_evidence_reason"] = runtime_evidence["reason_code"]
+    if runtime_evidence.get("attestation_id"):
+        metadata["host_attestation_ref"] = "sha256:" + hashlib.sha256(
+            runtime_evidence["attestation_id"].encode("utf-8")).hexdigest()
     return {
         "event_type": event_type,
         "session_id": session_id,
@@ -126,9 +137,9 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
         "terminal_outcome": terminal,
         "terminal_outcome_source": "hook-payload" if terminal_value is not None and terminal != "UNKNOWN" else "unavailable",
         "actual_model": model,
-        "actual_model_source": "hook-payload" if model else "unavailable",
+        "actual_model_source": "host-attested-hook-payload" if model else "unavailable",
         "actual_reasoning_effort": effort,
-        "actual_reasoning_effort_source": "hook-payload" if effort else "unavailable",
+        "actual_reasoning_effort_source": "host-attested-hook-payload" if effort else "unavailable",
         "metadata": metadata,
     }
 
@@ -169,6 +180,32 @@ def _sandbox_fallback_path(event: Mapping[str, Any]) -> Path:
     )
 
 
+def _session_end_diagnostic(event: Mapping[str, Any], code: str) -> None:
+    """Emit an explicit, body-free status when bounded SessionEnd work fails."""
+    identity = "|".join(str(event.get(key) or "") for key in (
+        "session_id", "turn_id", "task_id", "project_id", "repo_fingerprint"))
+    diagnostic = {
+        "schema_version": "1.0",
+        "component": "cp-assistant-session-end",
+        "status": "DEFERRED_OBSERVATION_FAILED",
+        "error_code": code,
+        "event_ref": "sha256:" + hashlib.sha256(identity.encode("utf-8")).hexdigest(),
+        "contains_event_body": False,
+    }
+    print(json.dumps(diagnostic, ensure_ascii=False, sort_keys=True), file=sys.stderr, flush=True)
+
+
+def _enqueue_and_launch(event_path: Path, event: Mapping[str, Any]) -> None:
+    queue = event_path.parent / "seal-queue"
+    enqueue_session_end(queue, event)
+    try:
+        launch_worker(ROOT, queue)
+    except Exception:
+        # The signed pending job remains durable and can be recovered by a
+        # later worker.  Report the launch failure instead of silently hiding it.
+        _session_end_diagnostic(event, "SEAL_WORKER_LAUNCH_FAILED")
+
+
 def main() -> int:
     data = _read()
     expected_hook = sys.argv[1] if len(sys.argv) > 1 else ""
@@ -196,16 +233,25 @@ def main() -> int:
     if event is not None:
         try:
             event_path = _data_path(event)
-            append_event(event_path, event, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
+            if event["event_type"] == "SESSION_ENDED":
+                _enqueue_and_launch(event_path, event)
+            else:
+                append_event(event_path, event, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
         except PermissionError:
             try:
-                append_event(_sandbox_fallback_path(event), event, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
+                event_path = _sandbox_fallback_path(event)
+                if event["event_type"] == "SESSION_ENDED":
+                    _enqueue_and_launch(event_path, event)
+                else:
+                    append_event(event_path, event, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
             except Exception:
                 # 观察失败不打断开发任务；模型上限拦截在前面单独 fail-closed。
-                pass
+                if event["event_type"] == "SESSION_ENDED":
+                    _session_end_diagnostic(event, "SESSION_END_FALLBACK_ENQUEUE_FAILED")
         except Exception:
             # 数据损坏或哈希链错误不得通过创建新链绕过。
-            pass
+            if event["event_type"] == "SESSION_ENDED":
+                _session_end_diagnostic(event, "SESSION_END_ENQUEUE_FAILED")
     # Normal Stop handling returns the neutral response documented by the host.
     # The recovery above is what ensures this branch still runs when Windows
     # truncates a non-ASCII last_assistant_message payload.
