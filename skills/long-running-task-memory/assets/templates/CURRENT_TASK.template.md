@@ -79,7 +79,13 @@
 ## 多 Agent 复审状态
 
 - 是否需要：
-- 当前门禁：多 Agent 严格独立 / 单 Reviewer 严格独立 / 受限兼容 / 不适用
+- 当前门禁：系统隔离复审 / 逻辑只读复审 / 实施者自查 / 不适用
+- 父会话实际沙箱：read-only / workspace-write / danger-full-access / unknown
+- Reviewer TOML 声明：
+- 运行时隔离等级：system-readonly / logical-readonly / self-review / unknown
+- 是否要求严格只读：
+- 是否满足严格只读资格：
+- 隔离证据路径：
 - 当前复审轮次 / 最大轮次：0 / 3
 - 当前逻辑深度 / 最大深度：0 / 3
 - Reviewer 已使用 / 总量上限：0 / 12

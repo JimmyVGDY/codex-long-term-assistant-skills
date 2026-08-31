@@ -44,6 +44,11 @@
 ### 多 Agent 独立复审
 
 - 门禁类型：
+- Reviewer TOML 声明：
+- 父会话实际沙箱：
+- 运行时隔离等级：system-readonly / logical-readonly / self-review / unknown
+- 是否满足严格只读资格：
+- 隔离证据：
 - 复审轮次：
 - 最大逻辑深度：
 - Reviewer 总数：

@@ -369,7 +369,20 @@ reviews/TASK-XXX/round-01/security.md
 - 不覆盖其他 Agent 记录；
 - 不把内部推理写入文档。
 
-### 9.3 多 Agent 检查点
+### 9.3 Reviewer 隔离状态
+
+共享任务状态必须记录：
+
+- Reviewer TOML 的配置声明；
+- 父会话实际沙箱；
+- 当前隔离等级：`system-readonly` / `logical-readonly` / `self-review` / `unknown`；
+- 是否要求严格只读；
+- 是否满足严格只读资格；
+- 隔离证据文件或受控探针结果。
+
+不得把“Reviewer 没有写文件”或 TOML `read-only` 声明写成系统隔离通过。父会话可写时，默认记录为 `logical-readonly`。
+
+### 9.4 多 Agent 检查点
 
 至少在以下时点持久化：
 
