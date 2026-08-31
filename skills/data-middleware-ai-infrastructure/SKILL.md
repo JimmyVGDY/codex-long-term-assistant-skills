@@ -15,6 +15,12 @@ description: >-
 5. Docker/Kubernetes 检查镜像来源、资源限制、探针、优雅停机、配置密钥、滚动发布和回滚。
 6. 以组件日志、Metrics、Trace 或变更事件为主要证据时组合 `$log-observability-analysis`；修改、测试、发布或生产操作时组合 `$engineering-quality-delivery`。
 
+## 模型与委派成本
+
+- 配置搜索、清单提取、日志/执行计划整理优先 `luna-low`；范围明确的差异对比和初筛使用 `luna-medium`。
+- 普通 SQL、Redis、MQ、容器和资源判断使用 `terra-medium`；事务锁、消息一致性、缓存竞态、不可逆迁移和生产资源风险才使用 `terra-high`。
+- 只委派相互独立的只读证据域；同一组件和同一调用链不得被多个子 Agent 从头重复扫描。
+
 ## 边界
 
 - 不用增加连接池、拆微服务或引入新中间件掩盖未确认的根因。
