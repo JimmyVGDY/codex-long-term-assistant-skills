@@ -49,6 +49,16 @@ skills/data-middleware-ai-infrastructure/references/security-observability-runti
 skills/data-middleware-ai-infrastructure/SKILL.md
 skills/engineering-quality-delivery/agents/openai.yaml
 skills/engineering-quality-delivery/assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml
+skills/engineering-quality-delivery/references/engineering-quality-delivery-workflow.md
+skills/engineering-quality-delivery/references/evidence-fingerprint-protocol.md
+skills/engineering-quality-delivery/references/execution-profiles-and-phases.md
+skills/engineering-quality-delivery/references/project-binding-approval-finalization.md
+skills/engineering-quality-delivery/references/quality-git-delivery.md
+skills/engineering-quality-delivery/references/quality-production-operations.md
+skills/engineering-quality-delivery/references/quality-review-completion.md
+skills/engineering-quality-delivery/references/quality-task-planning.md
+skills/engineering-quality-delivery/references/quality-validation-gates.md
+skills/engineering-quality-delivery/references/task-execution-envelope.md
 skills/engineering-quality-delivery/SKILL.md
 skills/frontend-engineering/agents/openai.yaml
 skills/frontend-engineering/assets/templates/FRONTEND_REVIEW_REPORT.template.md
