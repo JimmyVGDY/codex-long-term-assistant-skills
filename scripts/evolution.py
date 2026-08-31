@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V6.1 controlled-evolution CLI for source-tree and installed usage."""
+"""V6.2 controlled-evolution CLI for source-tree and installed usage."""
 from __future__ import annotations
 
 import sys

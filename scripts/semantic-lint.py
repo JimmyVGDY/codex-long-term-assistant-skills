@@ -5,13 +5,20 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
-if manifest.get('version')!='6.1.0': errors.append('manifest 版本不是 6.1.0')
-if manifest.get('user_skills_target')!='$HOME/.agents/skills': errors.append('用户 Skill 目标不是 $HOME/.agents/skills')
+if manifest.get('version')!='6.2.0': errors.append('manifest 版本不是 6.2.0')
+if manifest.get('user_skills_target')!='$HOME/.agents/skills': errors.append('账户 Skill 目标不是 $HOME/.agents/skills')
 plugin=json.loads((ROOT/'.codex-plugin'/'plugin.json').read_text(encoding='utf-8'))
-if plugin.get('version')!='6.1.0': errors.append('Plugin 版本不一致')
+if plugin.get('version')!='6.2.0': errors.append('Plugin 版本不一致')
+if '6.1.0' not in manifest.get('upgrade_from',[]): errors.append('缺少 V6.1 -> V6.2 升级声明')
 hooks=json.loads((ROOT/'hooks'/'hooks.json').read_text(encoding='utf-8')).get('hooks',{})
 required={'UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'}
 if not required.issubset(hooks): errors.append('生命周期 Hooks 不完整')
+if not (ROOT/'hooks'/'cp_hook.cmd').is_file(): errors.append('缺少 Windows Hook 启动器')
+for hook_name in required:
+    entries=hooks.get(hook_name) or []
+    commands=[hook.get('commandWindows','') for entry in entries for hook in (entry.get('hooks') or []) if isinstance(hook,dict)]
+    if not any('cp_hook.cmd' in command for command in commands): errors.append('Windows Hook 启动命令缺失: '+hook_name)
+    if not any(command.startswith('cmd.exe /d /c ') and '"' not in command for command in commands): errors.append('Windows Hook 必须使用 Codex 0.150.1 兼容的 quote-free cmd 启动方式: '+hook_name)
 skills=[x['name'] for x in manifest.get('skills',[])]
 if len(skills)!=10 or len(set(skills))!=10: errors.append('V6 应包含 10 个唯一 Skill')
 for name in skills:
@@ -25,7 +32,24 @@ for phrase in ('project_id + repo_fingerprint','execution_authorization=NONE','g
 manager=(ROOT/'scripts'/'package_manager.py').read_text(encoding='utf-8')
 for phrase in ('user_skills_home','plugin_marketplace_root','reject_link_ancestors','--scope','standalone'):
     if phrase not in manager: errors.append('安装器缺少: '+phrase)
+text_extensions={'.md','.json','.toml','.yaml','.py','.ps1','.sh','.cmd'}
+banned_natural_language={
+    '\u7528\u6237',
+    '\u8981\u6c42',
+    '\u4f60',
+    '\u6211\u4eec',
+    'Jim'+'my',
+    '\u8c01\u8c01\u8c01',
+    'C:\\'+'Users\\HP',
+}
+for path in ROOT.rglob('*'):
+    if not path.is_file() or path.suffix not in text_extensions:
+        continue
+    text=path.read_text(encoding='utf-8')
+    for phrase in banned_natural_language:
+        if phrase in text:
+            errors.append('中性语言门禁命中 %s: %s' % (phrase.encode('unicode_escape').decode('ascii'),path.relative_to(ROOT)))
 if errors:
     for e in errors: print('[FAIL]',e)
     raise SystemExit(1)
-print('[OK] V6 语义校验通过：10 Skills、Plugin/Hooks、官方用户 Skill 目录、模型上限和受控演进边界一致')
+print('[OK] V6 语义校验通过：10 Skills、Plugin/Hooks、官方账户 Skill 目录、模型上限、受控演进边界和中性语言门禁一致')
