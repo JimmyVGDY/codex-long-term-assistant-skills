@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression test for idempotent checkpoint append and V4.2 defaults."""
+"""Regression test for idempotent checkpoint append and V5.0 inherited defaults."""
 from __future__ import annotations
 
 import re
@@ -27,7 +27,7 @@ def count_entries(progress: Path) -> int:
     return len(re.findall(r"(?m)^### CP-", progress.read_text(encoding="utf-8")))
 
 
-with tempfile.TemporaryDirectory(prefix="checkpoint-v42-") as temp:
+with tempfile.TemporaryDirectory(prefix="checkpoint-v50-") as temp:
     memory = Path(temp) / "memory"
     run("init", "--project-dir", str(memory), "--task-id", "T1", "--title", "test")
     args = (

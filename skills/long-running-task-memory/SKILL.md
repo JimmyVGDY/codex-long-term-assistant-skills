@@ -9,22 +9,25 @@ description: >-
 ## 执行原则
 
 1. 先读取 `references/long-running-task-memory-rules.md`，只加载当前阶段需要的记忆分片。
-2. 任务控制状态、授权、证据和下一步保存到仓库外的 Agent 专用目录；代码、Git、配置和运行结果仍是技术事实真相。
+2. 任务控制状态、授权、Evidence 和下一步保存到仓库外的 Agent 专用目录；代码、Git、配置和运行结果仍是技术事实真相。
 3. 最少维护 `CURRENT_TASK.md` 和 `PROGRESS.md`；多步骤任务再维护 `PLAN.md`，其他文档按事件创建。
 4. 采用事件驱动检查点：完成可恢复节点立即写；尚未成节点时，连续 8 个实质动作才写进行中检查点。
 5. `checkpoint.py append` 对同一工作区和相同内容自动去重；只有确需保留重复快照时才使用 `--force-append`。
 6. 高风险操作前后双检查点；上下文压缩、会话切换或暂停前刷新 `HANDOFF.md`。
 7. 多 Agent 采用单一写入者；子 Agent 只返回结构化结果，不直接更新共享记忆。
-8. 恢复时读取当前任务、计划当前阶段和最近 3 个检查点，再核对 Git 与运行状态；活跃检查点超过 20 条时归档旧记录。
-9. 记忆写入前后执行凭据扫描、权限检查和生命周期治理。
+8. 恢复时读取当前任务、计划当前阶段和最近 3 个检查点，再核对 Project Binding、Git 与运行状态；活跃检查点超过 20 条时归档旧记录。
+9. Task Checkpoint 不能自动进入 Project Memory；先按 `references/memory-projection-governance.md` 生成 Projection Candidate，经明确审核后晋升。
+10. 单项目记忆不能自动成为跨项目知识；必须脱敏、声明适用范围、保留反例和来源证据，再形成待审 Knowledge Candidate。
+11. 记忆写入前后执行凭据扫描、权限检查和生命周期治理。
 
 ## 模型与委派成本
 
-- 本 Skill 默认不派生子 Agent；读取、格式整理、检查点和交接摘要属于 `luna-low` 或 `luna-medium`。
-- 复杂技术冲突由对应领域 Skill 使用 Terra 判断，记忆 Skill 只持久化结论，不重复推理。
+- 本 Skill 默认不派生子 Agent；读取、格式整理、检查点、投影候选和交接摘要属于 `luna-low` 或 `luna-medium`。
+- 复杂技术冲突由对应领域 Skill 使用 Terra 判断，记忆 Skill 只持久化已审核结论，不重复推理。
 
 ## 工具与边界
 
-- 工具：`scripts/checkpoint.py`
+- 当前任务检查点：`scripts/checkpoint.py`
+- 项目记忆投影、晋升和知识候选：安装后的 `cp-runtime.py`，源码入口为包根目录 `scripts/cp-runtime.py`
 - 外部记忆不得进入项目仓库、Git、项目变更记录或正式工程文档。
 - 不记录冗长内部推理，只记录可验证事实、证据等级、授权、状态、阻塞、风险和下一步。
