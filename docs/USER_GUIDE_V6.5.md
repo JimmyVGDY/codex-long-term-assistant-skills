@@ -1,8 +1,8 @@
-# Codex 跨项目长期技术助手 V6.4 使用说明
+# Codex 跨项目长期技术助手 V6.5 使用说明
 
 ## 1. 适用场景
 
-V6.4 用于长期维护多个软件项目，适合以下任务：
+V6.5 用于长期维护多个软件项目，适合以下任务：
 
 - 阅读现有代码、配置、日志和测试后给出证据化结论；
 - 实施 Java、Python、前端、数据、中间件、AI 基础设施等改动；
@@ -27,7 +27,7 @@ codex-cli 0.150.1
 plugin id = codex-cross-project-engineering-assistant@cp-assistant-local
 installed = true
 enabled = true
-version = 6.4.0
+version = 6.5.0
 ```
 
 重新验证：
@@ -66,6 +66,45 @@ python scripts\package_manager.py verify --scope user --mode plugin
 ```
 
 包会根据技术栈自动选择最小充分 Skill，不会因为能力全部存在就同时加载所有 Skill。
+
+## 3.1 V6.5 完整性 keyring 与事件封印
+
+初始化只创建缺失 keyring，不覆盖现有密钥：
+
+```powershell
+python scripts\integrity-key.py init
+python scripts\integrity-key.py status
+python scripts\integrity-key.py verify
+```
+
+为当前 TaskOutcomeEvent V2 链头创建并验证封印：
+
+```powershell
+python scripts\event-seal.py create --event-file <task-outcome-v2.jsonl>
+python scripts\event-seal.py verify --event-file <task-outcome-v2.jsonl>
+```
+
+事件密钥轮换：
+
+```powershell
+python scripts\integrity-key.py rotate --purpose event-hmac
+```
+
+旧密钥进入 `RETIRED` 并继续验证历史封印，新封印只使用 `ACTIVE` 密钥。状态 `SEALED_CURRENT` 表示当前链头已封印；`VALID_SEALED_PREFIX_WITH_UNSEALED_TAIL` 表示历史封印有效、之后又出现合法事件，重新执行 `create` 即可覆盖当前链头。
+
+宿主会话 JSONL 只用于实际模型旁证和冲突探测。即使字段关联完整，也不能升级为可信 Hook 模型事实。发行验证把两件事分开：真实生命周期证明 Reviewer 确实启动和结束；直接调用已安装 PreToolUse Hook 形成的模型门禁报告证明 Luna Low → Luna Medium → Terra Medium → Terra High 路线、Terra High 上限以及 Sol/xhigh 拒绝。两者都通过时发行门禁才通过。
+
+## 3.2 Reviewer 校准
+
+自观察快照中的 `reviewer_stats` 提供：
+
+- 稳定 `result_id` 去重与冲突计数；
+- 独立任务数、归因覆盖率和已标注 finding 数；
+- adoption rate 与 Wilson 95% 区间；
+- 单次耗时、单位采纳/修复成本与收益代理；
+- `INSUFFICIENT_DATA / OBSERVE / EFFECTIVE / HIGH_DUPLICATION / LOW_YIELD_CANDIDATE / CONFLICT` 状态。
+
+校准只形成观察和 Proposal 候选，不自动停用 Reviewer，不改变模型路由，也不产生执行授权。
 
 ## 4. 10 个 Skill
 
@@ -175,7 +214,7 @@ TaskOutcomeEvent 2.0 保存最小结构化元数据：
 - 前向 SHA-256 链，可选 HMAC；
 - 事实来源字段，区分宿主明确值与 unavailable。
 
-V6.4 将事件写入连续 segment。跨段缺失、顺序错误、哈希损坏或 schema 非法时失败关闭。进程中断留下的活动尾部半记录会移动到带时间戳的审计文件，完整链继续保留。
+V6.5 将事件写入连续 segment。跨段缺失、顺序错误、哈希损坏或 schema 非法时失败关闭。进程中断留下的活动尾部半记录会移动到带时间戳的审计文件，完整链继续保留。
 
 默认不保存原始 Prompt、完整回答、代码正文、Diff、Patch、Token、Cookie、API Key 或凭据。安装前不存在的历史事件不会自动补写。
 
@@ -242,7 +281,7 @@ Lifecycle Event
 
 ### Windows Hook 找不到 Python
 
-V6.4 不依赖额外 `python3.exe`。确认可用的账户 CPython、`python.exe` 或 `py.exe -3` 至少存在一个，并检查 Hook 是否由 `cp_hook.cmd` 启动。
+V6.5 不依赖额外 `python3.exe`。确认可用的账户 CPython、`python.exe` 或 `py.exe -3` 至少存在一个，并检查 Hook 是否由 `cp_hook.cmd` 启动。
 
 ### 事件未进入聚合
 
@@ -264,7 +303,7 @@ python scripts\package_manager.py doctor --recover
 ## 12. 验收清单
 
 - [ ] Codex 为 0.150.1
-- [ ] Plugin 为 installed=true、enabled=true、version=6.4.0
+- [ ] Plugin 为 installed=true、enabled=true、version=6.5.0
 - [ ] 10 个 Skill 可发现
 - [ ] 7 个 Reviewer 可发现且 TOML 未固定模型
 - [ ] 6 个 Hook 可加载
@@ -280,6 +319,7 @@ python scripts\package_manager.py doctor --recover
 - [ ] TaskOutcomeEvent schema 为 2.0 且哈希链连续
 - [ ] `project_id + repo_fingerprint` 双重隔离通过
 - [ ] 模型门禁允许 Terra High，拒绝 Terra xhigh、Sol 和更高自动档位
+- [ ] 宿主会话模型仅标记 DIAGNOSTIC，未冒充 Hook 可信字段
 - [ ] 统一验证器和 attestation 绑定全部正式证据
 
-安装与恢复细节见 `docs/INSTALLATION_RECOVERY.md`，版本变化见 `RELEASE_NOTES_V6.4.md`。
+安装与恢复细节见 `docs/INSTALLATION_RECOVERY.md`，版本变化见 `RELEASE_NOTES_V6.5.md`。

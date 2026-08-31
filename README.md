@@ -1,10 +1,10 @@
-> **V6.4 目标宿主：Windows 原生 Codex CLI 0.150.1。Plugin 成功状态以 `codex plugin list --json` 的 installed、enabled、version 三项读回为准。**
+> **V6.5 目标宿主：Windows 原生 Codex CLI 0.150.1。Plugin 成功状态以 `codex plugin list --json` 的 installed、enabled、version 三项读回为准。**
 
-# Codex 跨项目长期技术助手 Skills 安装包 V6.4
+# Codex 跨项目长期技术助手 Skills 安装包 V6.5
 
-**版本：6.4.0｜端到端载荷身份与可恢复证据链**
+**版本：6.5.0｜宿主事实旁证、可轮换完整性封印与 Reviewer 校准**
 
-V6.4 在 V6.3 可恢复事务与可证明发行基线上，补齐 ZIP、Marketplace、Plugin cache 的同源身份校验，增加事件安全分段、半记录恢复、旧状态迁移、Codex 能力探测和统一发行验证器。10 个 Skill、7 个 Reviewer、6 个 Hook、TaskOutcomeEvent 2.0、项目双重隔离和 Terra High 自动上限保持兼容。
+V6.5 在 V6.4 端到端证据闭环上增加三项能力：宿主会话事实的诊断旁证、主机绑定且可轮换的完整性 keyring、以及基于稳定结果身份的 Reviewer 校准。事件封印与原始 TaskOutcomeEvent 分离，V6.4 旧进程继续写入时不会破坏既有链。10 个 Skill、7 个 Reviewer、6 个 Hook、TaskOutcomeEvent 2.0、项目双重隔离和 Terra High 自动上限保持兼容。
 
 ## 核心能力
 
@@ -12,7 +12,10 @@ V6.4 在 V6.3 可恢复事务与可证明发行基线上，补齐 ZIP、Marketpl
 - 7 个逻辑只读 Reviewer：按风险选择，累计预算受控，自动模型最高 `gpt-5.6-terra + high`。
 - Plugin-first：提供账户级 Plugin、standalone 和仓库级 Skill 三种安装形态。
 - 确定性生命周期：覆盖 `UserPromptSubmit / PreToolUse / SubagentStart / SubagentStop / Stop / SessionEnd`。
-- TaskOutcomeEvent V2：严格 schema、最小元数据、前向 SHA-256 链、可选 HMAC。
+- TaskOutcomeEvent V2：严格 schema、最小元数据、前向 SHA-256 链、可选 legacy HMAC。
+- 完整性 keyring：Windows DPAPI 或 POSIX 0600 存储，`event-hmac` 与 `release-attestation` 独立轮换。
+- Detached seal：对当前事件链头形成可轮换 HMAC 封印；旧写入形成未封印尾部，不破坏历史封印。
+- Reviewer Calibration：按 `result_id` 去重，输出 Wilson 95% 区间、样本充分性、重复冲突和收益状态。
 - 事件安全分段：跨段连续校验，活动尾部半记录审计隔离，进程崩溃后确定性恢复。
 - 双重项目隔离：`project_id + repo_fingerprint` 任一不匹配均拒绝聚合。
 - 可恢复安装事务：Marketplace 子树、manifest、Plugin cache、注册状态和 state schema 迁移均纳入 journal。
@@ -31,7 +34,7 @@ Windows 原生进程若继承 `/mnt/c/.../.codex`，安装器会转换为盘符�
 
 ## 推荐升级流程
 
-在解压后的 V6.4 根目录执行：
+在解压后的 V6.5 根目录执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -46,7 +49,7 @@ codex plugin list --json
 ```text
 installed = true
 enabled   = true
-version   = 6.4.0
+version   = 6.5.0
 ```
 
 `verify` 还会校验 10 个 Skill、7 个 Reviewer、6 个 Hook、载荷 digest、Marketplace/cache 身份及状态文件。文件复制完成不等同于 Plugin 注册成功。
@@ -97,17 +100,28 @@ Lifecycle Hook
   -> 独立实施任务
 ```
 
-默认只记录最小结构化元数据，不保存原始 Prompt、完整回答、代码正文、Diff、Token、Cookie、API Key 或凭据。缺少明确终态时记录 `UNKNOWN`；显式但非法的终态直接拒绝。Hook 事件中的宿主实际模型与推理强度只接受明确字段，不从通用别名推断；生命周期验收可另行关联 Codex 子任务会话中的 `session_meta + turn_context`，但不会把该证据回填成 Hook 实际字段。
+默认只记录最小结构化元数据，不保存原始 Prompt、完整回答、代码正文、Diff、Token、Cookie、API Key 或凭据。缺少明确终态时记录 `UNKNOWN`；显式但非法的终态直接拒绝。Hook 事件中的宿主实际模型与推理强度只接受明确字段，不从通用别名推断；生命周期验收可另行关联 Codex 子任务会话中的 `session_meta + turn_context`，但该文件只作诊断旁证，不能单独证明模型门禁或发行状态，也不会回填 Hook 实际字段。
+
+## 完整性封印
+
+```powershell
+python scripts\integrity-key.py init
+python scripts\event-seal.py create --event-file <task-outcome-v2.jsonl>
+python scripts\event-seal.py verify --event-file <task-outcome-v2.jsonl>
+python scripts\integrity-key.py rotate --purpose event-hmac
+```
+
+DPAPI keyring 绑定 Windows 当前账户与主机，WSL/POSIX 不会静默解密或替代。原始 SHA-256 事件链仍可跨环境验证；跨 issuer 的 HMAC 历史需要分别保留对应 keyring。
 
 ## 发行验证
 
 ```powershell
 python scripts\validate-package.py
-python scripts\build-release.py reproducible --output Codex-Skills-V6.4.zip --witness deterministic-build-v6.4.json
-python scripts\build-release.py verify --archive Codex-Skills-V6.4.zip
+python scripts\build-release.py reproducible --output Codex-Skills-V6.5.zip --witness deterministic-build-v6.5.json
+python scripts\build-release.py verify --archive Codex-Skills-V6.5.zip
 ```
 
-统一验证器用于绑定正式 ZIP、包内校验、确定性构建见证、Codex 0.150.1、Plugin 精确状态、生命周期证据和三段 payload 身份：
+统一验证器用于绑定正式 ZIP、包内校验、确定性构建见证、Codex 0.150.1、Plugin 精确状态、真实生命周期、已安装 PreToolUse 模型门禁报告和三段 payload 身份。Codex 0.150.1 未提供 Hook 实际模型字段时，宿主会话只保留诊断旁证，不作为发行通过条件：
 
 ```powershell
 python scripts\verify-release.py --help
@@ -126,4 +140,4 @@ python scripts\verify-release.py --help
 - 不自动提交、推送、部署、重启或操作生产环境；
 - Event、Snapshot、Assessment、Proposal、项目上下文和升级备份不会随普通升级或卸载自动删除。
 
-详细操作见 `docs/USER_GUIDE_V6.4.md`，恢复规则见 `docs/INSTALLATION_RECOVERY.md`，版本变化见 `RELEASE_NOTES_V6.4.md`。
+详细操作见 `docs/USER_GUIDE_V6.5.md`，恢复规则见 `docs/INSTALLATION_RECOVERY.md`，版本变化见 `RELEASE_NOTES_V6.5.md`。
