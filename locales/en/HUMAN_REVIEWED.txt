@@ -55,6 +55,16 @@ skills/frontend-engineering/assets/templates/FRONTEND_REVIEW_REPORT.template.md
 skills/frontend-engineering/assets/templates/FRONTEND_STACK_PROFILE.template.md
 skills/frontend-engineering/assets/templates/FRONTEND_VALIDATION_MATRIX.template.md
 skills/frontend-engineering/references/microfrontend-monorepo-rules.md
+skills/frontend-engineering/references/angular-rules.md
+skills/frontend-engineering/references/framework-detection-matrix.md
+skills/frontend-engineering/references/frontend-core-rules.md
+skills/frontend-engineering/references/frontend-quality-performance-rules.md
+skills/frontend-engineering/references/frontend-security-runtime-rules.md
+skills/frontend-engineering/references/legacy-frontend-rules.md
+skills/frontend-engineering/references/other-modern-frameworks-rules.md
+skills/frontend-engineering/references/react-next-remix-rules.md
+skills/frontend-engineering/references/svelte-sveltekit-rules.md
+skills/frontend-engineering/references/vue-nuxt-rules.md
 skills/frontend-engineering/SKILL.md
 skills/java-backend-engineering/agents/openai.yaml
 skills/java-backend-engineering/references/java-backend-rules.md
