@@ -1,0 +1,14 @@
+*.zip
+*.7z
+*.tar.gz
+_source_archives/
+.reconstruction-work/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+project-context/
+.codex/project-context/
+backups/
+sessions/
