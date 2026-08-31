@@ -45,9 +45,12 @@ docs/SKILL_TRIGGER_MATRIX.md
 docs/SOURCE_MAPPING.md
 docs/SUBAGENT_INDEPENDENT_CONTEXT.md
 docs/USER_GUIDE_V6.6.1.md
+docs/USER_GUIDE_V6.3.md
+docs/USER_GUIDE_V6.5.md
 docs/USER_GUIDE_V6.6.md
 docs/VALIDATION_REPORT.md
 docs/V3_1_LOG_ANALYSIS_DESIGN.md
+docs/V3_DESIGN_OVERVIEW.md
 docs/V4_1_EXECUTION_ARCHITECTURE.md
 docs/V4_2_COST_FLOW_OPTIMIZATION.md
 docs/V5.0_升级说明与迁移指南.md
@@ -58,6 +61,7 @@ docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
 docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md
 examples/AGENTS.project.example.md
 examples/usage-prompts.md
+tests/skill-routing-cases.json
 V6.2_AUDIT_REPORT.md
 V6.3_AUDIT_REPORT.md
 V6.4_AUDIT_REPORT.md

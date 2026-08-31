@@ -1,0 +1,541 @@
+{
+  "schema_version": 1,
+  "description": "V5.0 routing regression suite covering minimum sufficient loading, execution tiers, Luna/Terra subagent tiers, independent-context review, evidence freshness, and recognition of cross-framework, legacy, and hybrid frontends.",
+  "cases": [
+    {
+      "id": "java-concept-readonly",
+      "prompt": "Explain exception propagation in Java CompletableFuture without modifying code.",
+      "required": [
+        "java-backend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "long-running-task-memory",
+        "technical-document-writing"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "java-local-fix",
+      "prompt": "Fix Spring transaction self-invocation, run the relevant targeted backend tests, and modify locally without committing.",
+      "required": [
+        "java-backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "multi-agent-independent-review"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "python-worker-log-readonly",
+      "prompt": "Read-only analyze repeated task retries and WorkerLost errors in Celery Worker logs. Do not modify any files.",
+      "required": [
+        "log-observability-analysis",
+        "python-backend-ai-engineering"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "production-rabbitmq-log-readonly",
+      "prompt": "In production, read-only analyze RabbitMQ Ready, Unacked, and consumer error logs within a bounded time window. Do not restart or write data.",
+      "required": [
+        "log-observability-analysis",
+        "data-middleware-ai-infrastructure"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "technical-document-writing"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "database-index-analysis",
+      "prompt": "Analyze the execution plan and composite-index design for this MySQL query. Provide recommendations only.",
+      "required": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "technical-document-writing"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "architecture-document",
+      "prompt": "Write a formal system architecture design from the current mixed Java and Python project source.",
+      "required": [
+        "technical-document-writing"
+      ],
+      "optional": [
+        "java-backend-engineering",
+        "python-backend-ai-engineering",
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 4
+    },
+    {
+      "id": "long-running-refactor",
+      "prompt": "This multi-module refactor will take several days. Update task documents after every recoverable step, then test and commit locally without pushing.",
+      "required": [
+        "long-running-task-memory",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "java-backend-engineering",
+        "python-backend-ai-engineering",
+        "frontend-engineering",
+        "data-middleware-ai-infrastructure",
+        "multi-agent-independent-review"
+      ],
+      "forbidden": [],
+      "max_active": 4
+    },
+    {
+      "id": "preimplementation-db-migration-review",
+      "prompt": "Before writing the database migration, conduct a pre-implementation design review for compatibility, data, security, and performance.",
+      "required": [
+        "multi-agent-independent-review",
+        "data-middleware-ai-infrastructure"
+      ],
+      "optional": [
+        "engineering-quality-delivery",
+        "long-running-task-memory"
+      ],
+      "forbidden": [
+        "log-observability-analysis"
+      ],
+      "max_active": 4
+    },
+    {
+      "id": "post-change-independent-review",
+      "prompt": "Code and targeted tests are complete. Ask multiple reviewers to examine the current git diff, first record parent-session authority and isolation level, then collect every finding and consolidate attribution.",
+      "required": [
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "engineering-quality-delivery",
+        "long-running-task-memory"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "metrics-only-analysis",
+      "prompt": "Analyze API P95, error rate, CPU, connection-pool, and message-backlog metrics to build an incident timeline without modifying the environment.",
+      "required": [
+        "log-observability-analysis"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure",
+        "java-backend-engineering",
+        "python-backend-ai-engineering"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "trace-critical-path",
+      "prompt": "Use distributed traces to analyze the critical path, slow spans, and downstream timeouts. Read-only analysis only.",
+      "required": [
+        "log-observability-analysis"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "profiling-analysis",
+      "prompt": "Analyze existing JFR recordings and thread dumps to determine the cause of high CPU and lock contention. Do not collect new production profiles.",
+      "required": [
+        "log-observability-analysis",
+        "java-backend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "readme-punctuation",
+      "prompt": "Correct one Chinese punctuation mark in the README.",
+      "required": [],
+      "optional": [
+        "technical-document-writing",
+        "engineering-quality-delivery"
+      ],
+      "forbidden": [
+        "multi-agent-independent-review",
+        "long-running-task-memory",
+        "log-observability-analysis"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "incident-report-from-logs",
+      "prompt": "Write a formal incident review from these logs, metrics, and traces without modifying the system.",
+      "required": [
+        "log-observability-analysis",
+        "technical-document-writing"
+      ],
+      "optional": [
+        "java-backend-engineering",
+        "python-backend-ai-engineering",
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 4
+    },
+    {
+      "id": "java-rabbitmq-fix",
+      "prompt": "Fix duplicate processing in a Java RabbitMQ consumer, add idempotency and targeted tests, and complete independent review before committing.",
+      "required": [
+        "java-backend-engineering",
+        "data-middleware-ai-infrastructure",
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "long-running-task-memory"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
+      "max_active": 4
+    },
+    {
+      "id": "strict-readonly-review-gate",
+      "prompt": "This task concerns production permissions and real data, so require system-enforced read-only review. Confirm that the parent session is actually read-only; if it is writable, do not dispatch reviewers.",
+      "required": [
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "long-running-task-memory"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "logical-readonly-review-disclosure",
+      "prompt": "The parent session uses danger-full-access. Conduct independent logical-read-only review and state explicitly that system-level read-only isolation cannot be claimed.",
+      "required": [
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "engineering-quality-delivery"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "vue-fix-build-generic-frontend",
+      "prompt": "Fix the request race after route changes on a Vue page and run the formal production build.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "long-running-task-memory",
+        "technical-document-writing",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "react-next-hydration-fix",
+      "prompt": "Fix a Next.js hydration mismatch and duplicate client requests, then run type checking, relevant tests, and the formal production build.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "log-observability-analysis",
+        "technical-document-writing",
+        "long-running-task-memory"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "angular-rxjs-readonly-review",
+      "prompt": "Read-only review RxJS subscription cleanup, route Guards, and Interceptor retries in an Angular component. Do not modify code.",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "long-running-task-memory"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "sveltekit-server-boundary",
+      "prompt": "Analyze SvelteKit load functions, Form Actions, SSR caching, and client-state boundaries. Provide design recommendations only.",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "legacy-jquery-layui-fix",
+      "prompt": "Fix duplicate event binding and stale Ajax result overwrites on a jQuery and Layui page. Preserve the existing architecture and perform minimum runtime validation.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "java-backend-engineering"
+      ],
+      "forbidden": [
+        "technical-document-writing",
+        "long-running-task-memory",
+        "log-observability-analysis"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "microfrontend-module-federation",
+      "prompt": "Evaluate shared dependencies, routing, style isolation, staged rollout, and rollback for Module Federation host and remote applications. Do not modify code.",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "technical-document-writing"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "frontend-security-ssr",
+      "prompt": "Read-only review Next.js Server Actions, cookies, cache isolation, and the risk of exposing secrets to the client.",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "long-running-task-memory"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "node-backend-not-frontend",
+      "prompt": "Troubleshoot database transactions and RabbitMQ consumption in a backend-only Node.js Fastify API. No browser page is involved.",
+      "required": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "optional": [
+        "engineering-quality-delivery"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "technical-document-writing"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "static-html-accessibility-readonly",
+      "prompt": "Read-only review a static HTML/CSS/JavaScript site with no package.json, focusing on accessibility, browser compatibility, and resource caching.",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "data-middleware-ai-infrastructure"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "jsp-legacy-frontend-fix",
+      "prompt": "Fix duplicate event binding and XSS escaping in a JSP, jQuery, and Layui page. Preserve the legacy architecture and perform minimum runtime validation.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "java-backend-engineering"
+      ],
+      "forbidden": [
+        "long-running-task-memory",
+        "log-observability-analysis"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "preact-vite-review",
+      "prompt": "Read-only review Signals, Hooks, bundle size, and SSR compatibility in Preact and Vite components. Do not modify code.",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "ionic-capacitor-hybrid-boundary",
+      "prompt": "Analyze WebView state, native Bridge permissions, deep links, and physical-device validation boundaries in an Ionic React and Capacitor app. Provide recommendations only.",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "technical-document-writing"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "electron-main-process-not-frontend",
+      "prompt": "Read-only analyze filesystem access, automatic updates, process startup, and IPC permissions in the Electron main process. No Renderer page is involved.",
+      "required": [],
+      "optional": [
+        "data-middleware-ai-infrastructure"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "frontend-monorepo-boundary",
+      "prompt": "Evaluate directory boundaries, build caching, version compatibility, and release order for React, Vue, and shared packages in a pnpm Workspace. Do not modify code.",
+      "required": [
+        "frontend-engineering"
+      ],
+      "optional": [
+        "technical-document-writing"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "log-observability-analysis"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "light-readonly-explanation",
+      "prompt": "Explain only what this Java exception means. Do not modify code.",
+      "required": [
+        "java-backend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "long-running-task-memory"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "standard-code-change",
+      "prompt": "Fix an ordinary Spring Service bug, run the relevant tests, and do not push.",
+      "required": [
+        "java-backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "multi-agent-independent-review"
+      ],
+      "forbidden": [
+        "technical-document-writing"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "strict-schema-migration",
+      "prompt": "Design and implement a production database migration with irreversible risk, including staged rollout, rollback, and independent review.",
+      "required": [
+        "data-middleware-ai-infrastructure",
+        "engineering-quality-delivery",
+        "multi-agent-independent-review",
+        "long-running-task-memory"
+      ],
+      "optional": [
+        "technical-document-writing"
+      ],
+      "forbidden": [],
+      "max_active": 4
+    },
+    {
+      "id": "subagent-context-review",
+      "prompt": "Delegate functional, security, and performance review to independent-context subagents. Use the same review packet and return structured summaries only.",
+      "required": [
+        "multi-agent-independent-review"
+      ],
+      "optional": [
+        "long-running-task-memory"
+      ],
+      "forbidden": [],
+      "max_active": 2
+    }
+  ]
+}
