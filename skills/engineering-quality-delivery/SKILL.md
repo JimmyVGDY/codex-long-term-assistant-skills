@@ -32,6 +32,7 @@ description: >-
 ## 与其他技能组合
 
 - 根据技术栈组合 Java、Python、Vue 或数据基础设施技能，不无条件加载全部技能。
+- 纯只读日志分析优先使用 `$log-observability-analysis`，不因读取生产日志自动进入修改、Git 或部署流程；只有明确转入修复或环境写操作时才执行本技能的完整交付门禁。
 - 独立复审、多 Agent 六维审查和最少有效修复轮次使用 `$multi-agent-independent-review`。
 - 正式技术文档使用 `$technical-document-writing`；CHANGELOG、验证记录和提交边界仍由本技能负责。
 - 跨会话、长任务、复审轮次和持续检查点使用 `$long-running-task-memory`，不得混入项目正式文档。
