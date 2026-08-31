@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "1.0.0",
-  "generated_for": "Codex local user skills",
+  "version": "2.0.0",
+  "generated_for": "Codex local user and repository skills",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
   "skills": [
@@ -40,6 +40,12 @@
       "display_name": "长期任务外部记忆",
       "description": "任务跨会话、多阶段、多模块、多仓库、多 Agent、生产观察期、上下文可能压缩，或用户要求持续维护计划、进度、决策、交接和交付记录时使用。简单一次性任务不要触发。",
       "source_mapping": "06-长期任务外部记忆机制.md"
+    },
+    {
+      "name": "technical-document-writing",
+      "display_name": "技术文档与正式报告",
+      "description": "技术文档、技术方案、架构设计、实施方案、接口文档、数据库设计、部署运维文档、故障报告、代码审查报告、项目进度报告、选型评估、README、Markdown 重构或基于现有资料整理正式报告时使用。",
+      "source_mapping": "new/technical-document-writing"
     }
   ]
 }
