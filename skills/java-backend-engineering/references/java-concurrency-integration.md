@@ -83,7 +83,7 @@ Bean Validation 不能代替权限、状态、跨字段和业务规则校验。
 
 ### 12.2 时间
 
-现代项目优先 `Instant`、`LocalDate`、`LocalDateTime`、`OffsetDateTime`、`ZonedDateTime` 和 `Duration`。明确系统、数据库、API 和用户显示时区。
+现代项目优先 `Instant`、`LocalDate`、`LocalDateTime`、`OffsetDateTime`、`ZonedDateTime` 和 `Duration`。明确系统、数据库、API 和界面显示时区。
 
 `LocalDateTime` 不包含时区。Java 8 老系统必须共享 `SimpleDateFormat` 时应改为线程隔离或同步保护，通常优先每次创建或 `ThreadLocal` 并确保清理。
 
@@ -112,7 +112,7 @@ InputStream、OutputStream、Reader、Writer、JDBC、HTTP Response、ZipFile、
 - 数据和上下文是否保存；
 - 页面刷新后是否恢复；
 - 任务状态是否最终一致；
-- 用户取消是否传递；
+- 调用方取消是否传递；
 - 连接和线程是否泄漏。
 
 ---

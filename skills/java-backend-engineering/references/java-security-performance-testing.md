@@ -12,7 +12,7 @@
 
 检查直接和传递依赖、版本冲突、Scope、BOM、插件、JDK 兼容、CVE、License、仓库来源和构建可复现性。
 
-未经明确要求不做大版本升级、不升级无关依赖、不替换核心框架、不修改全局 Maven Settings。
+未获明确授权不做大版本升级、不升级无关依赖、不替换核心框架、不修改全局 Maven Settings。
 
 处理冲突时先看依赖树和实际运行版本，再做最小排除并验证兼容。
 
@@ -40,7 +40,7 @@
 
 ### 15.3 日志
 
-统一 traceId、requestId、taskId、messageId、operationId、脱敏用户标识、服务和实例、状态、耗时、重试和失败原因。
+统一 traceId、requestId、taskId、messageId、operationId、脱敏账户标识、服务和实例、状态、耗时、重试和失败原因。
 
 不吞异常、不重复打印同一堆栈、不在高频循环输出大量 INFO、不打印密码、Token、Cookie、大请求响应、文件内容和完整模型输出。不得长期在生产开启大量 DEBUG 或 SQL 全量日志。
 
