@@ -4,7 +4,7 @@
 [agents]
 enabled = true
 
-# 主 Agent 不计入该值。V4.2 默认 Reviewer 并行预算同样为 3。
+# 主 Agent 不计入该值。V5.0 默认 Reviewer 并行预算同样为 3。
 max_concurrent_threads_per_session = 3
 
 # 未显式指定的子 Agent 使用低成本兜底。主 Agent 模型不受这两项影响。
@@ -17,6 +17,6 @@ default_subagent_reasoning_effort = "medium"
 # 重要：
 # 1. 专业 Reviewer TOML 故意不写死 model/model_reasoning_effort，以支持
 #    luna-low -> luna-medium -> terra-medium -> terra-high 动态路由。
-# 2. [agents] 只是默认值；显式 spawn 可覆盖。V4.2 的 Terra High 上限由
+# 2. [agents] 只是默认值；显式 spawn 可覆盖。V5.0 的 Terra High 上限由
 #    Skill 规则和 review_controller.py 审计，不是 Codex 平台级 allowlist。
 # 3. Reviewer TOML 中 sandbox_mode="read-only" 不能单独证明运行时系统隔离。
