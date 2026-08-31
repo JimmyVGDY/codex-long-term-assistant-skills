@@ -1,189 +1,131 @@
-# Codex 跨项目长期技术助手 Skills 安装包 V5.1
+# Codex 跨项目长期技术助手 Skills 安装包 V6.0
 
-V5.1 在 V5.0 项目治理与证据闭环基础上，补充自观察、确定性价值/复杂度分析、优化提案和人工决策链。它保留原有 9 个 Skill、7 个专业 Reviewer、Luna/Terra 模型分级与成本控制，并坚持“只分析与提案、不自动改写、不自动执行”。
+**版本：6.0.0｜插件化确定性自观察版**
 
-## 保持不变
+V6.0 在 V5.1 的项目身份、Task Envelope、Approval/Evidence、独立 Reviewer、长期任务记忆和受控优化提案基础上，重点解决“Skill 发现目录、普通任务是否稳定记录、自观察数据可信度、模型成本硬上限、安装/回滚安全和 Proposal 实施闭环”六类问题。
 
-- 9 个 Skills 与 7 个 Reviewer 保持不变；
-- 主 Agent 仍使用用户当前选择的模型；
-- 自动子 Agent 仍只在 `luna-low -> luna-medium -> terra-medium -> terra-high` 范围内逐级路由；
-- 默认并行 Reviewer 3 个、累计 6 个、Terra High 1 个；
-- Skill 和 Reference 继续按需加载，不建立第二套重型项目生命周期。
+## 核心能力
 
-## V5.0 继承能力
+- **10 个工程 Skills**：Java、Python/AI、前端、数据/中间件/AI 基础设施、日志可观测性、质量交付、多 Agent 复审、技术文档、长期任务记忆、受控演进治理。
+- **7 个专业 Reviewer**：职责隔离，自动模型最高 `gpt-5.6-terra + high`。
+- **Plugin-first**：包含 `.codex-plugin/plugin.json`、`skills/`、`hooks/hooks.json`；同时提供 standalone 和 repo 安装方式。
+- **确定性生命周期观测**：`UserPromptSubmit / PreToolUse / SubagentStart / SubagentStop / Stop / SessionEnd`。
+- **TaskOutcomeEvent V2**：严格字段、非负计数、隐私最小化、SHA-256 链，可选 HMAC。
+- **Task 级聚合**：先按 `event_id` 去重，再按 `task_id` 聚合，避免生命周期事件重复加权。
+- **双重项目隔离**：`project_id + repo_fingerprint` 任一不匹配都拒绝聚合。
+- **不可覆盖 Snapshot**：唯一 ID + `source_digest` + exclusive-create。
+- **受控 Proposal 生命周期**：人工决定后仍需独立实施 Task、Git Baseline、Commit 和验证 Evidence；`execution_authorization` 永远为 `NONE`。
+- **安全安装事务**：符号链接/Junction/Reparse Point 防护、备份、原子替换、漂移检测、dry-run、卸载恢复。
 
-1. `PROJECT_PROFILE`：稳定保存项目身份、仓库、技术栈、入口、边界与未知项；
-2. `PROJECT_STATE`：保存项目阶段、当前基线、风险、阻塞和唯一下一步；
-3. 已有项目采用有界只读 Onboarding，不访问网络、不触碰生产；
-4. Task Envelope V2 同时记录复杂度、项目阶段、执行档位、Reviewer 预算、模型档位和 Host Surface；
-5. Approval 与 Evidence 分离，受保护动作绑定项目、任务、环境、仓库基线和有效期；
-6. 代码变化后旧验证与复审证据自动失效；
-7. Task Checkpoint、Project Memory、Knowledge Candidate 分为三层，禁止自动晋升；
-8. Finalization Integrity 从真实仓库、证据和动作读回状态，阻止把“已修改”误报为“已部署/已生效”；
-9. 新增统一标准库运行时 `runtime/cp_runtime`，安装到 Codex Home 后由各 Skill 共用；
-10. 安装器增加源码目录保护、受管目标白名单、备份完整性和恢复路径边界检查。
+## 目录约定
 
-## 9 个 Skills
+- 用户级 Skills：`$HOME/.agents/skills`
+- 仓库级 Skills：`$REPO_ROOT/.agents/skills`
+- 自定义 Reviewer：`${CODEX_HOME:-$HOME/.codex}/agents`
+- 全局规则：`${CODEX_HOME:-$HOME/.codex}/AGENTS.md`
+- 项目上下文：`${CODEX_HOME:-$HOME/.codex}/project-context/<project-id>`
 
-- `$java-backend-engineering`
-- `$python-backend-ai-engineering`
-- `$frontend-engineering`
-- `$data-middleware-ai-infrastructure`
-- `$log-observability-analysis`
-- `$engineering-quality-delivery`
-- `$multi-agent-independent-review`
-- `$technical-document-writing`
-- `$long-running-task-memory`
+V6 不再把 `$HOME/.agents/skills` 当成旧目录，也不会自动清理该目录中的未知 Skill。
 
-## 安装
-
-建议先执行 dry-run，再正式安装。安装会备份同名受管资源，但不会自动修改 `config.toml`，也不会删除已有项目上下文。
-
-### Windows PowerShell
-
-```powershell
-powershell -ExecutionPolicy Bypass -File ".\scripts\install-user.ps1" -DryRun
-powershell -ExecutionPolicy Bypass -File ".\scripts\install-user.ps1"
-powershell -ExecutionPolicy Bypass -File ".\scripts\verify-user-install.ps1"
-powershell -ExecutionPolicy Bypass -File ".\scripts\doctor.ps1"
-```
-
-### WSL / Linux / macOS
+## 安装前检查
 
 ```bash
-./scripts/install-user.sh all --dry-run
-./scripts/install-user.sh all
-./scripts/verify-user-install.sh
-./scripts/doctor.sh
+python scripts/package_manager.py doctor
 ```
 
-恢复最近一次安装前状态：
+### A. Plugin 模式（推荐）
 
-```powershell
-powershell -ExecutionPolicy Bypass -File ".\scripts\restore-latest-backup.ps1"
-```
+先查看变更：
 
 ```bash
-./scripts/restore-latest-backup.sh
+python scripts/package_manager.py install --scope user --mode plugin --dry-run
 ```
 
-## 首次接管项目
-
-在安装包目录内可直接运行：
+准备本地 Plugin Marketplace、Reviewer 和全局规则：
 
 ```bash
-python3 scripts/cp-runtime.py project-onboard \
-  --repo-path /path/to/repo \
-  --project-id my-project
+python scripts/package_manager.py install --scope user --mode plugin
 ```
 
-安装后入口为：
+安装器会输出当前环境对应的下一步 Marketplace / Plugin 注册命令。Plugin 是否被宿主加载必须以 Codex 实际读回为准，不把“文件已复制”表述为“插件已激活”。
+
+### B. Standalone 模式
 
 ```bash
-python3 "$CODEX_HOME/tools/cp-runtime.py" project-show \
-  --profile "$CODEX_HOME/project-context/my-project/project-profile.json"
+python scripts/package_manager.py install --scope user --mode standalone --dry-run
+python scripts/package_manager.py install --scope user --mode standalone
+python scripts/package_manager.py verify  --scope user --mode standalone
 ```
 
-默认项目上下文位于：
+Standalone 会把用户 Skills 安装到 `$HOME/.agents/skills`，Reviewer/Runtime/Hooks 安装到 `CODEX_HOME` 对应目录，并合并本包受管 Hook，不覆盖其他 Hook 条目。
+
+### C. 仓库级 Skills
+
+```bash
+python scripts/package_manager.py install --scope repo --repo-path /path/to/repository --dry-run
+python scripts/package_manager.py install --scope repo --repo-path /path/to/repository
+python scripts/package_manager.py verify  --scope repo --repo-path /path/to/repository
+```
+
+Repo 模式只安装当前仓库 `.agents/skills`，不修改用户级 Reviewer、Hooks 或全局 AGENTS。
+
+## 卸载
+
+```bash
+python scripts/package_manager.py uninstall --scope user --mode standalone
+```
+
+或：
+
+```bash
+python scripts/package_manager.py uninstall --scope user --mode plugin
+```
+
+检测到受管资源被用户修改时默认拒绝覆盖式卸载；确认后才使用 `--force`。项目上下文和观察数据不会随卸载自动删除。
+
+## 确定性自观察
+
+V6 的普通任务只写最小生命周期元数据，完整 Evolution 分析仍然按需运行：
 
 ```text
-${CODEX_HOME:-$HOME/.codex}/project-context/<project-id>/
-├── project-profile.json
-├── project-state.json
-├── project-memory.md
-├── memory-projections.jsonl
-├── knowledge-candidates.jsonl
-├── evidence-ledger.jsonl
-├── execution-feedback.jsonl
-└── evolution/
-    ├── snapshots/
-    ├── assessments/
-    ├── proposals.jsonl
-    └── decisions.jsonl
+Hooks
+  ↓
+TaskOutcomeEvent V2
+  ↓ event_id 去重
+Task Aggregate
+  ↓ project_id + repo_fingerprint
+Observation Snapshot
+  ↓
+Assessment
+  ↓
+Optimization Proposal
+  ↓
+Human Decision
 ```
 
-## 绑定任务执行状态
+没有明确终态时记录 `UNKNOWN`，不会把 Stop 自动判定为成功，也不会从通用 `status` 推断失败。
+
+## Proposal 实施闭环
 
 ```bash
-python3 skills/engineering-quality-delivery/scripts/execution_guard.py init \
-  --state-dir /external/task-state/TASK-001 \
-  --task-id TASK-001 \
-  --repo-path /path/to/repo \
-  --project-profile "$CODEX_HOME/project-context/my-project/project-profile.json" \
-  --complexity L2 \
-  --profile STANDARD \
-  --reviewer-budget balanced \
-  --model-profile terra-medium \
-  --host-surface direct-workspace \
-  --environment local
+python scripts/evolution.py decide ... --decision accept
+python scripts/evolution.py link-implementation ... --task-id TASK-... --git-baseline <baseline>
+python scripts/evolution.py record-validation ... --commit <commit> --evidence <evidence-ref>
+python scripts/evolution.py close ... --final-outcome PASS
 ```
 
-## Approval、Evidence 与最终读回
-
-- `approval-issue` 只能在用户已经明确授权后记录授权；该命令本身不会替用户作出授权决定；
-- `authorize-action` 在动作前核对并消费 Approval；
-- `record-action` 只记录动作后的实际读回结果，不执行 Commit、Push、部署或重启；
-- `finalize` 检查最终声明是否有当前证据支持。
-
-详细流程见：
-
-- `docs/V5.0_升级说明与迁移指南.md`
-- `docs/V5_0_PROJECT_GOVERNANCE_AND_EVIDENCE_CLOSURE.md`
-- `docs/PROJECT_CONTEXT_AND_ONBOARDING.md`
-- `docs/APPROVAL_EVIDENCE_FINALIZATION.md`
-- `docs/AUTHORITY_REGISTRY.md`
+`ACCEPT` 只认可优化方向，不授予文件修改、提交、推送、部署或生产操作权限。
 
 ## 验证
 
 ```bash
-python3 -B scripts/validate-v51-evolution.py
-python3 -B scripts/validate-package.py
-python3 -B scripts/semantic-lint.py
+python scripts/validate-package.py
 ```
 
-## 重要边界
+V6 发布验证明确区分：
 
-- V5.1 的 Approval 和 Evolution Decision 都是工作流级记录，不是 Codex 平台、操作系统或云平台权限隔离；
-- Evidence 不能替代授权，检查器通过也不能替代真实测试、Review、Release Gate 或用户验收；
-- Onboarding 只做有界只读识别，推断入口必须保留 `inferred-unconfirmed`；
-- 本地 upstream 引用等于 HEAD 不能证明已联网读取远端平台；
-- Project Memory 只接收经过审核的 Projection，Knowledge Candidate 默认永远不是 Active；
-- 生产、真实数据、不可逆迁移和外部发送仍需单独明确授权、停止条件和回滚方案。
+- 本地语法/结构/单元和回归测试：可自动验证；
+- 35 条路由用例定义是否合法：可自动验证；
+- 真实 Codex 隐式 Skill 激活率、不同宿主 Plugin/Hooks 端到端、Windows PowerShell 实机：没有实际环境证据时必须标记 `NOT_EXECUTED`。
 
-<!-- V5.1-CONTROLLED-EVOLUTION:BEGIN -->
-## V5.1 核心增强：自观察与受控自进化
-
-V5.1 在 V5.0 项目治理与证据闭环上增加：
-
-```text
-Observation → Analysis → Optimization Proposal → Human Decision
-```
-
-权威实现：`runtime/cp_runtime/evolution/`。
-
-快速验证：
-
-```bash
-python3 -B scripts/validate-v51-evolution.py
-```
-
-只读试运行（安装包目录）：
-
-```bash
-python3 -B scripts/evolution.py run --project-id <project-id> --dry-run
-```
-
-安装后：
-
-```bash
-python3 "$CODEX_HOME/tools/evolution.py" run --project-id <project-id> --dry-run
-```
-
-所有提案的 `execution_authorization` 固定为 `NONE`。系统不会自动修改 Skill、Reviewer、模型路由、全局配置或业务仓库；接受提案后仍必须新建任务并重新经过 Task Envelope、Approval、Execution Guard 和回归验证。
-
-完整说明见：
-
-- `docs/V5.1_升级说明与迁移指南.md`
-- `docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md`
-- `docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md`
-<!-- V5.1-CONTROLLED-EVOLUTION:END -->
+详见 `RELEASE_NOTES_V6.0.md` 和 `docs/V6_ARCHITECTURE.md`。
