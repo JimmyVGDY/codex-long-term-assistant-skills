@@ -1,4 +1,32 @@
-# Skill 自动触发与组合矩阵（v3.1）
+# Skill 自动触发与组合矩阵（v3.2）
+
+## 零、最小充分加载策略
+
+```text
+PRIMARY_DOMAIN_SKILL_LIMIT = 1
+DEFAULT_SUPPORTING_SKILL_LIMIT = 2
+MAX_ACTIVE_SKILLS_WITHOUT_JUSTIFICATION = 4
+```
+
+1. 每个阶段先选择一个主领域 Skill；
+2. 默认最多补充两个辅助 Skill；
+3. 工作流 Skill 按阶段延迟激活，不在分析开始时提前加载全部交付、复审、文档和记忆规则；
+4. 同时激活超过四个 Skill 时，必须说明每个 Skill 的唯一职责；
+5. 当前阶段结束后，不再需要的 Skill 退出活动集合；
+6. 用户显式指定优先，但仍不得扩大权限和突破项目规则。
+
+典型阶段：
+
+```text
+分析：领域 / 日志 Skill
+→ 方案：必要时实施前复审
+→ 实施：领域 + 质量交付
+→ 稳定差异：实施后复审
+→ 正式报告：文档 Skill
+→ 跨会话：长期记忆
+```
+
+---
 
 ## 一、单 Skill 典型触发
 
@@ -123,3 +151,26 @@
 3. 只更新 CHANGELOG 中的一条记录。
 4. 解释 Redis 缓存击穿。
 5. 执行 `npm run build` 并报告结果。
+
+
+## 七、实际 Codex 路由回归
+
+包内提供：
+
+- `tests/skill-routing-cases.json`：required / optional / forbidden / 最大活动 Skill；
+- `scripts/routing-eval.py`：用例结构校验、观察模板生成和结果评分。
+
+使用方式：
+
+```bash
+python3 scripts/routing-eval.py validate
+python3 scripts/routing-eval.py make-template --output routing-observations.json
+```
+
+然后在 Codex 中逐条发送测试 Prompt，记录实际显示或报告的激活 Skill；不要根据期望值手工补齐。完成后：
+
+```bash
+python3 scripts/routing-eval.py evaluate --results routing-observations.json
+```
+
+包结构校验只能证明用例和工具有效，不能替代本机 Codex 的真实自动激活观察。每次修改 Skill 名称、description、全局调度规则或组合边界后都应重新执行。
