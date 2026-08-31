@@ -8,9 +8,15 @@
 - 轮次：
 - 逻辑深度：
 - 功能边界：
+- 审查包 SHA-256：
 - 基线 / 差异范围：
 - 审查文件：
 - 阅读的上游、下游和共享逻辑：
+- 请求模型档位：luna-low / luna-medium / terra-medium / terra-high
+- 请求模型 / 推理强度：
+- 实际模型 / 推理强度：
+- 模型分配状态：confirmed / fallback / unverified / mismatch
+- 模型分配说明：
 - Reviewer 配置声明：
 - 父会话实际沙箱：
 - 运行时隔离等级：system-readonly / logical-readonly / self-review / unknown
@@ -44,4 +50,4 @@
 - 原因：
 - 建议维度：
 
-> Reviewer 按行为规则只报告、不修改、不提交、不继续派生。只有 isolation=system-readonly 时，才能声明系统级写入隔离。
+> Reviewer 按行为规则只报告、不修改、不提交、不继续派生；同一根因合并，默认最多 8 组。只有 isolation=system-readonly 时，才能声明系统级写入隔离。

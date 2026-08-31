@@ -1,16 +1,30 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "boundary_id": "FB-001",
   "phase": "post",
   "profile": "STANDARD",
   "effort_tier": "balanced",
+  "default_model_profile": "luna-medium",
   "base_ref": "HEAD",
   "head_commit": "",
   "diff_sha256": "",
+  "status_sha256": "",
+  "diff_stat_sha256": "",
+  "name_status_sha256": "",
+  "diff_bytes": 0,
+  "changed_file_count": 0,
   "packet_sha256": "",
   "changed_files": [],
   "untracked_files": [],
   "related_files": [],
   "validation_evidence": [],
-  "constraints": []
+  "constraints": [],
+  "recommended_read_order": [
+    "manifest.json",
+    "packet-summary.md",
+    "diff-stat.txt",
+    "name-status.txt",
+    "assigned files and evidence",
+    "relevant diff.patch hunks"
+  ]
 }

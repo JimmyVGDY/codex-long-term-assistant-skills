@@ -1,6 +1,6 @@
 interface:
   display_name: "多 Agent 独立复审"
-  short_description: "实施前设计门禁、实施后并行复审与确定性预算"
-  default_prompt: "仅在高风险实施前门禁、真实行为改动后的独立复审或用户明确要求时使用。让 Reviewer 在独立上下文中基于统一审查包工作，并记录隔离等级、成本档位、预算和结构化结果。"
+  short_description: "Luna/Terra 分级、统一审查包与成本收敛复审"
+  default_prompt: "仅在独立审查能增加有效信息时使用。先生成统一审查包，按 luna-low、luna-medium、terra-medium、terra-high 逐级路由，最高 Terra High；等待同轮结果后统一归因和定向复核。"
 policy:
   allow_implicit_invocation: true

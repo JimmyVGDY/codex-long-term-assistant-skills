@@ -1,7 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Cross Project Reviewer Result",
+  "title": "Cross Project Reviewer Result V2",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "schema_version",
     "reviewer",
@@ -9,22 +10,27 @@
     "packet_sha256",
     "status",
     "isolation_level",
+    "model_assignment",
     "checked_scope",
     "findings",
-    "unverified_items"
+    "unverified_items",
+    "summary"
   ],
   "properties": {
     "schema_version": {
-      "const": 1
+      "const": 2
     },
     "reviewer": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "boundary_id": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "packet_sha256": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
     },
     "status": {
       "enum": [
@@ -43,16 +49,67 @@
         "unknown"
       ]
     },
+    "model_assignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_profile",
+        "requested_model",
+        "requested_reasoning_effort",
+        "runtime_model",
+        "runtime_reasoning_effort",
+        "status"
+      ],
+      "properties": {
+        "requested_profile": {
+          "enum": [
+            "luna-low",
+            "luna-medium",
+            "terra-medium",
+            "terra-high"
+          ]
+        },
+        "requested_model": {
+          "enum": [
+            "gpt-5.6-luna",
+            "gpt-5.6-terra"
+          ]
+        },
+        "requested_reasoning_effort": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "runtime_model": {
+          "type": "string"
+        },
+        "runtime_reasoning_effort": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "confirmed",
+            "fallback",
+            "unverified",
+            "mismatch"
+          ]
+        }
+      }
+    },
     "checked_scope": {
       "type": "array",
       "items": {
         "type": "string"
-      }
+      },
+      "uniqueItems": true
     },
     "findings": {
       "type": "array",
       "items": {
         "type": "object",
+        "additionalProperties": false,
         "required": [
           "id",
           "dimension",

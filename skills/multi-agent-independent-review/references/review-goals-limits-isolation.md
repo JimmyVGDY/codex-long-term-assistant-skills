@@ -1,139 +1,55 @@
 # 复审目标、预算与运行时隔离
 
-## 本文件目录
-
-- 一、目标
-- 二、默认安全参数
-- 三、运行时隔离等级与严格复审前置条件
-
 ## 一、目标
 
-多 Agent 复审的目标不是无上限增加 Reviewer，而是：
+多 Agent 复审的目标是独立覆盖关键风险，而不是无上限增加 Reviewer：
 
-- 在第一轮尽可能完整地发现功能、回归、安全、性能、数据和状态风险；
-- 把噪声工作移出主线程，保持主协调 Agent 聚焦目标、授权、决策和最终交付；
-- 等待本轮结果收齐后统一去重、归因和分级；
-- 将同一根因导致的多个表象合并为一组完整修复；
-- 降低“改一处、审一次、再改一处”的多次回炉；
-- 对修复后的受影响范围进行定向复核，而不是机械重跑所有 Reviewer。
+> 一次发现、统一归因、集中修复、证据复用、定向复核。
 
-正式原则：
+主协调 Agent 负责唯一派发、预算、归并和最终裁决；Reviewer 不修改工作区、不维护共享台账、不继续派生 Agent。
 
-> **一次发现、统一归因、集中修复、定向复核，追求最少有效修复轮次。**
-
-“最少”不等于隐瞒问题。任何新发现的阻塞问题都必须如实保留和处理。
-
----
-
-## 二、默认安全参数
-
-除非项目规则或用户明确设置更严格上限，采用：
+## 二、保守默认预算
 
 ```text
-MAX_REVIEW_AGENT_DEPTH = 3
+MAX_REVIEW_AGENT_DEPTH = 2
 MAX_PREIMPLEMENTATION_REVIEW_ROUNDS = 1
-MAX_PREIMPLEMENTATION_REVIEWERS = 4
-MAX_POST_REVIEW_ROUNDS = 3
-MAX_PARALLEL_REVIEWERS = 6
-MAX_TOTAL_REVIEW_AGENTS_PER_BOUNDARY = 12
-MAX_REPAIR_ROUNDS = 3
+MAX_PREIMPLEMENTATION_REVIEWERS = 2
+MAX_POST_REVIEW_ROUNDS = 2
+MAX_PARALLEL_REVIEWERS = 3
+MAX_TOTAL_REVIEW_AGENTS_PER_BOUNDARY = 6
+MAX_REPAIR_ROUNDS = 2
+MAX_TERRA_HIGH_REVIEWERS = 1
 ```
 
 含义：
 
-- 深度 0：主协调 Agent；
-- 深度 1：第一轮专业 Reviewer；
-- 深度 2：冲突裁决、证据补足或专项第二意见；
-- 深度 3：最终定向复核；
-- 深度达到 3 后禁止继续派生 Reviewer；
-- 高风险任务在编码前最多自动执行 1 轮实施前审查，使用 2～4 个 Reviewer；
-- 实施后同一功能边界最多自动执行 3 轮复审和 3 轮集中修复；
-- 同时运行的 Reviewer 默认不超过 6；
-- 全部轮次累计 Reviewer 不超过 12。
+- 深度 0 为主协调 Agent，深度 1 为专业 Reviewer，深度 2 只用于阻塞冲突或定向复核；
+- 实施前最多 1 轮、默认 1～2 个 Reviewer；
+- 实施后默认最多 2 轮，第一轮最多 3 个、下一轮最多 2 个；
+- 单功能边界累计最多 6 个 Reviewer；
+- 默认最多 1 个 `terra-high` Reviewer。
 
-当前平台、配置、权限或用户要求的上限更低时，采用更低值。不得通过拆成等价工具调用、隐藏子任务或重复命名规避上限。
+为兼容极少数关键任务，控制器保留 V4.1 硬上限：深度 3、实施后 3 轮、并行 6、累计 12、修复 3、`terra-high` 2。放宽必须显式配置并写明风险理由，不能由提示词自动触发。
 
-### 2.1 单一协调者
+平台、用户或项目上限更低时采用更低值。不得通过拆分等价调用、重复命名或重建台账规避预算。
 
-- 只有主协调 Agent 负责派发 Reviewer、汇总结果、维护预算和决定下一轮；
-- Reviewer 在行为规则上不得自行派生子 Reviewer；该约束是否具有系统强制性取决于运行时权限，必须按隔离等级报告；
-- 需要补充专家时，Reviewer 只提出“建议追加专项复审”，由主协调 Agent 判断是否在预算内执行；
-- 主协调 Agent 是共享复审台账和外部记忆文档的唯一写入者。
+## 三、模型预算
 
----
+自动 Reviewer 只允许 `luna-low / luna-medium / terra-medium / terra-high`。模型路由、升级条件与运行时核验见 `reviewer-model-routing.md`。
 
-## 三、运行时隔离等级与严格复审前置条件
+模型、人数、上下文、轮次必须同时控制。即使模型不超过 Terra High，多个并行 Reviewer 仍会放大总体消耗。
 
-### 3.1 配置声明不等于运行时事实
+## 四、运行时隔离
 
-自定义 Reviewer TOML 中的：
+TOML 的 `sandbox_mode = "read-only"` 只是配置意图。必须分别记录父会话实际沙箱、Agent 类型确认、受控探针和最终隔离等级：
 
-```toml
-sandbox_mode = "read-only"
-```
+| 等级 | 定义 | 可报告内容 |
+|---|---|---|
+| `system-readonly` | 父会话只读或受控探针明确被沙箱拒绝，且 Agent 类型已确认 | 系统隔离复审 |
+| `logical-readonly` | 父会话可写，Reviewer 依靠指令不写 | 逻辑只读复审 |
+| `self-review` | 实施 Agent 自查 | 不能替代独立复审 |
+| `unknown` | 证据不足 | 未验证 |
 
-只表示配置意图和期望行为。主协调 Agent 必须把以下内容分别记录：
+生产、真实数据、权限安全、资金、库存和不可逆迁移默认要求 `system-readonly`。可写父会话且无 sandbox denied 证据时，只能报告 `logical-readonly`。
 
-- Reviewer 配置文件和声明值；
-- 父会话实际沙箱与权限配置；
-- 是否确认运行时真正使用了指定 Agent 类型；
-- 子 Agent 可确认的运行时权限；
-- 是否做过一次性临时仓库的受控写入探针；
-- 最终隔离等级和严格只读资格。
-
-不得把“Reviewer 没有主动写文件”当作“系统阻止 Reviewer 写文件”。
-
-### 3.2 隔离等级
-
-| 等级 | 定义 | 可报告内容 | 适用边界 |
-|---|---|---|---|
-| Level A：`system-readonly` | 父会话实际为只读，或受控探针明确因沙箱拒绝写入 | 系统隔离复审 | 高风险、生产、权限安全、不可逆操作 |
-| Level B：`logical-readonly` | 父会话可写，Reviewer 仅依靠指令不写；写入成功或未形成系统隔离证据 | 逻辑只读复审 | 普通研发复审，必须明确风险 |
-| Level C：`self-review` | 实施 Agent 自己检查，没有独立 Reviewer 上下文 | 自查 | 不能替代独立复审 |
-| `unknown` | 运行时证据不足 | 未验证 | 不得声称系统只读 |
-
-### 3.3 严格只读要求
-
-以下场景默认要求 Level A：
-
-- 生产环境、真实用户数据或敏感凭据；
-- 数据库、Redis、MQ、对象存储等具有写权限的环境；
-- 权限、安全、资金、库存、不可逆迁移；
-- 用户明确要求“系统强制只读”或“严格只读”；
-- Reviewer 运行在高权限主会话中且不能接受逻辑只读降级。
-
-最可靠的工作流是拆分会话：
-
-```text
-可写实施会话：修改、测试、稳定差异
-        ↓
-整体只读父会话：启动 Reviewer 并完成严格复审
-        ↓
-返回可写实施会话：集中修复
-```
-
-如果父会话是 `workspace-write` 或 `danger-full-access`，且没有 `sandbox-denied` 运行时证据，只能判定为 Level B。不得因为 TOML 声明为 `read-only` 就升级为 Level A。
-
-### 3.4 受控写入探针
-
-写入探针不是常规复审步骤，只用于安装或运行时隔离验收：
-
-- 只能在主协调 Agent 新建的一次性临时 Git 仓库中执行；
-- 禁止在正式项目、生产目录、真实数据目录或用户主目录中执行；
-- 只允许创建一个明确命名的探针文件；
-- 命令语法错误、路径错误或 Shell 错误均判定为测试无效；
-- 写入成功表示系统隔离失败；
-- 只有明确的 sandbox denied 才能作为独立子 Agent 系统隔离证据；
-- 测试结束后由主协调 Agent 删除整个临时仓库。
-
-### 3.5 状态控制器记录
-
-复杂任务应先使用：
-
-```text
-review_controller.py isolation
-```
-
-记录 `parent_sandbox`、`declared_sandbox`、`probe_result`、Agent 类型确认和证据摘要。设置 `--strict-readonly-required` 后，控制器会阻止在不满足 Level A 时计划或派发 Reviewer。
-
----
+受控写入探针只允许在一次性临时 Git 仓库中运行；禁止在正式项目、生产目录、用户主目录或真实数据目录测试。

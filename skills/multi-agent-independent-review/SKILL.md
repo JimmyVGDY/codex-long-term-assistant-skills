@@ -1,33 +1,32 @@
 ---
 name: multi-agent-independent-review
 description: >-
-  高风险实施前设计审查，或行为改动后的独立复审、多 Agent 并行审查、回归兼容、安全、性能、数据契约、并发状态和测试证据审查时使用。简单低风险或无行为变化任务不要触发。
+  高风险实施前设计审查，或行为改动后的独立复审、回归兼容、安全、性能、数据契约、并发状态和测试证据审查时使用。简单低风险、证据充分或无行为变化任务不要触发，也不要为了形式固定多开 Reviewer。
 ---
 
 # 多 Agent 独立复审技能
 
-## 独立上下文模型
-
-- Codex 子 Agent 可在独立上下文中执行专门任务；探索、证据收集和中间工具输出留在子 Agent 内，仅把结构化结论返回主会话。
-- 主协调 Agent 不应复制整个父会话历史，只提供最小审查包：任务边界、基线、差异、约束、已执行验证、相关文件和未验证项。
-- **上下文独立不等于权限隔离。** Codex Reviewer 仍必须区分系统只读、逻辑只读和未验证；TOML 声明不能替代实际运行时证据。
-
 ## 强制执行
 
-1. 先读取 `references/multi-agent-independent-review-workflow.md` 索引，只加载当前 pre/post 阶段所需分片。
-2. 选择 `LIGHT / STANDARD / STRICT` 复审强度和 `economy / balanced / deep` Reviewer 成本档位。
-3. 派发前使用 `scripts/review_packet.py` 生成统一审查包，并使用 `scripts/review_controller.py` 记录阶段、轮次、深度、预算、隔离证据和 packet hash。
-4. 同一轮全部 Reviewer 返回前不边审边改；主 Agent 统一去重、根因聚类和冲突裁决，形成最小完整修复集合。
-5. 修复后只重跑受影响验证和定向复核；公共契约变化时扩大范围。
-6. 达到深度、轮次、并发、总量或修复上限后停止自动循环，保留阻塞项和未验证项。
+1. 先读取 `references/multi-agent-independent-review-workflow.md`，只加载当前阶段需要的分片。
+2. 分别选择执行流程 `LIGHT/STANDARD/STRICT`、Reviewer 成本 `economy/balanced/deep` 和模型档位；三者不得混为一谈。
+3. 自动模型按 `luna-low -> luna-medium -> terra-medium -> terra-high` 逐级路由，最高为 Terra High；禁止自动使用 Sol、`xhigh`、`max` 或 `ultra`。
+4. 使用 `review_packet.py` 生成统一审查包并检查 freshness；使用 `review_controller.py` 记录隔离、预算、packet hash、模型档位、结果和停止状态。
+5. Reviewer 先读摘要和统计，只展开分配范围；同一轮收齐后统一去重、根因聚类和集中修复，不边审边改。
+6. 修复后只重跑受影响验证、刷新 packet 并定向复核；相同 Reviewer/相同 packet、无新信息或已无问题通过时停止重复派发。
+7. 默认并行不超过 3、累计不超过 6、实施后不超过 2 轮、集中修复不超过 2 轮、Terra High 不超过 1 个；显式放宽也不得超过控制器硬上限。
+
+## 独立上下文与权限
+
+- 子 Agent 只接收任务边界、差异、约束、证据和未验证项，不复制父会话全部历史。
+- 最终只返回结构化 findings、检查范围、未验证项和模型/隔离证据，不回传原始长日志或内部推理。
+- 独立上下文不等于系统只读；父会话可写且没有沙箱拒绝证据时，只能报告 `logical-readonly`。
 
 ## 工具与资产
 
-- 复审状态：`scripts/review_controller.py`
-- 统一审查包：`scripts/review_packet.py`
-- Reviewer 结构化结果 Schema：`assets/schemas/review-result.schema.json`
-- 复审强度与成本：`references/reviewer-effort-tiers.md`
+- 状态和模型预算：`scripts/review_controller.py`
+- 统一审查包与 freshness：`scripts/review_packet.py`
+- 结果 Schema：`assets/schemas/review-result.schema.json`
+- 模型策略：`references/reviewer-model-routing.md`
 
-## 核心原则
-
-> 用独立上下文隔离噪声，用统一审查包约束事实基线，用结构化结果降低主会话负担；独立推理不等于系统级只读。
+> 只在独立判断能增加有效信息时派发 Reviewer；用 Luna 承担读取密集和机械核验，用 Terra 承担业务与高风险判断。
