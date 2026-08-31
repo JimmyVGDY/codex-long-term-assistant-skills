@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate V5.0 structure, contracts, regressions and isolated installation."""
+"""Validate V5.1 structure, contracts, regressions and isolated installation."""
 from __future__ import annotations
 
 import hashlib
@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 PLATFORM = "codex"
-VERSION = "5.0.0"
+VERSION = "5.1.0"
 ERRORS: List[str] = []
 COMMAND_TIMEOUT_SECONDS = 240
 
@@ -123,6 +123,26 @@ required = [
     "docs/PROJECT_CONTEXT_AND_ONBOARDING.md",
     "docs/APPROVAL_EVIDENCE_FINALIZATION.md",
     "docs/AUTHORITY_REGISTRY.md",
+    "runtime/cp_runtime/evolution/__init__.py",
+    "runtime/cp_runtime/evolution/contracts.py",
+    "runtime/cp_runtime/evolution/redaction.py",
+    "runtime/cp_runtime/evolution/storage.py",
+    "runtime/cp_runtime/evolution/observation.py",
+    "runtime/cp_runtime/evolution/analysis.py",
+    "runtime/cp_runtime/evolution/proposal.py",
+    "runtime/cp_runtime/evolution/registry.py",
+    "runtime/cp_runtime/evolution/service.py",
+    "runtime/cp_runtime/evolution/cli.py",
+    "runtime/cp_runtime/evolution/manifest.json",
+    "config/evolution-policy.json",
+    "scripts/evolution.py",
+    "scripts/evolution.ps1",
+    "scripts/evolution.cmd",
+    "scripts/validate-v51-evolution.py",
+    "tests/test_v51_controlled_evolution.py",
+    "docs/V5.1_升级说明与迁移指南.md",
+    "docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md",
+    "docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md",
 ]
 for relative in required:
     if not (ROOT / relative).is_file():
@@ -183,14 +203,16 @@ for test in [
     ROOT / "skills/multi-agent-independent-review/tests/test_review_tools.py",
     ROOT / "skills/long-running-task-memory/tests/test_checkpoint_dedupe.py",
     ROOT / "tests/test_package_manager_security.py",
+    ROOT / "tests/test_v51_controlled_evolution.py",
 ]:
     run([sys.executable, "-B", str(test)], env=base_env)
 
+run([sys.executable, "-B", str(ROOT / "scripts/validate-v51-evolution.py")], env=base_env)
 run([sys.executable, "-B", str(ROOT / "scripts/semantic-lint.py")], env=base_env)
 run([sys.executable, "-B", str(ROOT / "scripts/routing-eval.py"), "validate"], env=base_env)
 
 # Package manager isolated test: dry-run, install, verify, idempotent reinstall, doctor and restore.
-with tempfile.TemporaryDirectory(prefix="v50-install-") as temp:
+with tempfile.TemporaryDirectory(prefix="v51-install-") as temp:
     home = Path(temp) / "home"
     home.mkdir()
     env = {**base_env, "HOME": str(home), "CODEX_HOME": str(home / ".codex")}
@@ -200,11 +222,12 @@ with tempfile.TemporaryDirectory(prefix="v50-install-") as temp:
     run([sys.executable, "-B", str(manager), "verify"], env=env)
     run([sys.executable, "-B", str(manager), "install"], env=env)
     run([sys.executable, "-B", str(manager), "verify"], env=env)
+    run([sys.executable, "-B", str(home / ".codex" / "tools" / "evolution.py"), "--help"], env=env)
     run([sys.executable, "-B", str(manager), "doctor"], env=env)
     run([sys.executable, "-B", str(manager), "restore"], env=env)
 
 # Bash wrappers in an isolated HOME/CODEX_HOME.
-with tempfile.TemporaryDirectory(prefix="v50-wrapper-") as temp:
+with tempfile.TemporaryDirectory(prefix="v51-wrapper-") as temp:
     home = Path(temp) / "home"
     home.mkdir()
     env = {**base_env, "HOME": str(home), "CODEX_HOME": str(home / ".codex")}
@@ -263,4 +286,4 @@ if any(ROOT.rglob("__pycache__")) or any(ROOT.rglob("*.pyc")) or any(ROOT.rglob(
 if ERRORS:
     print("验证失败", len(ERRORS))
     raise SystemExit(1)
-print("V5.0 安装包验证通过。")
+print("V5.1 安装包验证通过。")

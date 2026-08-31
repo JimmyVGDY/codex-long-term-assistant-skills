@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V5.0 safe install/verify/doctor/uninstall/restore manager for Codex."""
+"""V5.1 safe install/verify/doctor/uninstall/restore manager for Codex."""
 from __future__ import annotations
 
 import argparse
@@ -37,6 +37,7 @@ LEGACY_BEGIN = BEGIN
 LEGACY_END = END
 RUNTIME_SOURCE = ROOT / "runtime" / "cp_runtime"
 TOOL_SOURCE = ROOT / "scripts" / "cp-runtime.py"
+EVOLUTION_TOOL_SOURCE = ROOT / "scripts" / "evolution.py"
 
 
 def lexical(path: Path) -> Path:
@@ -80,7 +81,7 @@ def source_agents_dir() -> Path:
 
 def _managed_targets() -> List[Path]:
     app, skills, agents, global_file, runtime_target, tool_target, legacy, _backups = home_paths()
-    targets: List[Path] = [global_file, runtime_target, tool_target]
+    targets: List[Path] = [global_file, runtime_target, tool_target, app / "tools" / "evolution.py"]
     targets.extend(skills / name for name in SKILLS + DEPRECATED)
     targets.extend(legacy / name for name in SKILLS + DEPRECATED)
     targets.extend(
@@ -115,7 +116,7 @@ def _assert_no_symlink_path(target: Path) -> None:
 def _assert_known_target(target: Path) -> None:
     candidate = lexical(target)
     if candidate not in set(_managed_targets()):
-        raise RuntimeContractError("目标不在 V5.0 受管资源清单中: " + str(target))
+        raise RuntimeContractError("目标不在 V5.1 受管资源清单中: " + str(target))
     _assert_no_symlink_path(candidate)
 
 
@@ -128,6 +129,7 @@ def planned_operations(component: str) -> List[Tuple[str, str]]:
     if component in {"all", "skills"}:
         operations.append(("replace-runtime", str(runtime_target)))
         operations.append(("replace-tool", str(tool_target)))
+        operations.append(("replace-evolution-tool", str(app / "tools" / "evolution.py")))
         for name in DEPRECATED:
             operations.append(("remove-deprecated", str(skills / name)))
         for name in SKILLS:
@@ -254,6 +256,9 @@ def command_install(args: argparse.Namespace) -> None:
             copy_tree_atomic(RUNTIME_SOURCE, runtime_target)
             backup_path(tool_target, backup_root, "tools/cp-runtime.py", records)
             copy_file_atomic(TOOL_SOURCE, tool_target)
+            evolution_tool_target = app / "tools" / "evolution.py"
+            backup_path(evolution_tool_target, backup_root, "tools/evolution.py", records)
+            copy_file_atomic(EVOLUTION_TOOL_SOURCE, evolution_tool_target)
             skills.mkdir(parents=True, exist_ok=True)
             for name in DEPRECATED:
                 target = skills / name
@@ -295,6 +300,7 @@ def command_install(args: argparse.Namespace) -> None:
             "skills_home": str(skills),
             "runtime_home": str(runtime_target),
             "tool": str(tool_target),
+            "evolution_tool": str(app / "tools" / "evolution.py"),
             "backup": str(backup_root),
         }
         atomic_write_json(app / ".cross-project-assistant-install.json", install_state)
@@ -327,6 +333,11 @@ def collect_verification_errors() -> List[str]:
         errors.append("缺少 cp-runtime.py")
     elif tree_sha256(tool_target) != tree_sha256(TOOL_SOURCE):
         errors.append("cp-runtime.py 内容与安装包不一致")
+    evolution_tool_target = app / "tools" / "evolution.py"
+    if not evolution_tool_target.is_file():
+        errors.append("缺少 evolution.py")
+    elif tree_sha256(evolution_tool_target) != tree_sha256(EVOLUTION_TOOL_SOURCE):
+        errors.append("evolution.py 内容与安装包不一致")
     for name in SKILLS:
         target = skills / name
         source = ROOT / "skills" / name
@@ -370,6 +381,7 @@ def command_doctor(_args: argparse.Namespace) -> None:
     print("global:", global_file)
     print("runtime:", runtime_target)
     print("tool:", tool_target)
+    print("evolution_tool:", app / "tools" / "evolution.py")
     print("project_context_root:", app / "project-context")
     print("version:", MANIFEST["version"])
     print("global_exists:", global_file.exists())
@@ -411,7 +423,7 @@ def command_uninstall(args: argparse.Namespace) -> None:
             target = skills / name
             if target.exists() or target.is_symlink():
                 remove_path(target)
-        for target in (runtime_target, tool_target):
+        for target in (runtime_target, tool_target, app / "tools" / "evolution.py"):
             if target.exists() or target.is_symlink():
                 remove_path(target)
     if args.component in {"all", "agents"}:

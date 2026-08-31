@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Semantic consistency checks for the Codex V5.0 package."""
+"""Semantic consistency checks for the Codex V5.1 package."""
 from __future__ import annotations
 
 import json
@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "5.0.0"
+VERSION = "5.1.0"
 ERRORS: List[str] = []
 
 
@@ -25,6 +25,14 @@ manifest = json.loads(read(ROOT / "manifest.json"))
 if manifest.get("version") != VERSION:
     fail("manifest 版本不一致")
 skills = {item["name"] for item in manifest.get("skills", [])}
+
+controlled = manifest.get("controlled_evolution") or {}
+if controlled.get("runtime") != "runtime/cp_runtime/evolution":
+    fail("manifest 未声明唯一 Evolution Runtime")
+if controlled.get("execution_authorization") != "NONE" or controlled.get("automatic_execution") is not False:
+    fail("受控自进化执行边界不正确")
+if controlled.get("implementation_requires_new_task") is not True:
+    fail("受控自进化未要求独立实施任务")
 
 skill_files = list(ROOT.glob("skills/*/SKILL.md"))
 if len(skill_files) != len(skills):
@@ -109,9 +117,10 @@ if len(global_text.splitlines()) > 240:
 for expected in [
     "luna-low", "luna-medium", "terra-medium", "terra-high", "累计最多 6",
     "Project Profile", "Approval", "Evidence", "Finalization",
+    "V5.1 受控自进化", "execution_authorization", "不得自动修改",
 ]:
     if expected not in global_text:
-        fail("全局规则缺少 V5.0 策略: " + expected)
+        fail("全局规则缺少继承策略: " + expected)
 
 execution_guard = read(ROOT / "skills/engineering-quality-delivery/scripts/execution_guard.py")
 review_packet = read(ROOT / "skills/multi-agent-independent-review/scripts/review_packet.py")
@@ -119,7 +128,7 @@ review_controller = read(ROOT / "skills/multi-agent-independent-review/scripts/r
 checkpoint = read(ROOT / "skills/long-running-task-memory/scripts/checkpoint.py")
 for expected in ["Task Envelope V2", "authorize-action", "record-action", "finalize", "project_profile"]:
     if expected not in execution_guard:
-        fail("执行守卫缺少 V5.0 能力: " + expected)
+        fail("执行守卫缺少继承能力: " + expected)
 if "untracked_sha256" not in execution_guard:
     fail("执行证据指纹未覆盖 untracked 内容")
 for expected in ["packet-summary.md", "diff-stat.txt", "name-status.txt", "command_freshness"]:
@@ -143,16 +152,66 @@ for expected in ["DEFAULT_HOT_LIMIT = 20", 'default=3', "--force-append", "check
 for relative in [
     "docs/V5_0_PROJECT_GOVERNANCE_AND_EVIDENCE_CLOSURE.md",
     "docs/V5.0_升级说明与迁移指南.md",
+    "docs/V5.1_升级说明与迁移指南.md",
     "docs/PROJECT_CONTEXT_AND_ONBOARDING.md",
     "docs/APPROVAL_EVIDENCE_FINALIZATION.md",
     "docs/AUTHORITY_REGISTRY.md",
+    "docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md",
+    "docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md",
+    "RELEASE_NOTES_V5.1.md",
 ]:
     if not (ROOT / relative).is_file():
-        fail("缺少 V5.0 文档 " + relative)
-if "## 5.0.0 - 2026-08-26" not in read(ROOT / "CHANGELOG.md"):
-    fail("CHANGELOG 缺少 V5.0 发布记录")
+        fail("缺少版本文档 " + relative)
+changelog = read(ROOT / "CHANGELOG.md")
+if "## 5.0.0 - 2026-08-26" not in changelog:
+    fail("CHANGELOG 缺少 V5.0 历史记录")
+if "## 5.1.0 - 2026-08-26" not in changelog:
+    fail("CHANGELOG 缺少 V5.1 发布记录")
+
+controlled = manifest.get("controlled_evolution") or {}
+if controlled.get("runtime") != "runtime/cp_runtime/evolution":
+    fail("manifest 未声明唯一 Evolution Runtime")
+if controlled.get("execution_authorization") != "NONE":
+    fail("Evolution 提案执行授权必须固定为 NONE")
+if controlled.get("automatic_execution") is not False or controlled.get("automatic_acceptance") is not False:
+    fail("Evolution 不得自动执行或自动接受")
+evolution_dirs = [path for path in ROOT.rglob("evolution") if path.is_dir() and path.parent.name == "cp_runtime"]
+if evolution_dirs != [ROOT / "runtime" / "cp_runtime" / "evolution"]:
+    fail("Evolution Runtime 权威实现不是唯一一份")
+for relative in [
+    "runtime/cp_runtime/evolution/contracts.py",
+    "runtime/cp_runtime/evolution/observation.py",
+    "runtime/cp_runtime/evolution/analysis.py",
+    "runtime/cp_runtime/evolution/proposal.py",
+    "runtime/cp_runtime/evolution/registry.py",
+    "runtime/cp_runtime/evolution/service.py",
+    "runtime/cp_runtime/evolution/cli.py",
+    "runtime/cp_runtime/evolution/manifest.json",
+    "config/evolution-policy.json",
+    "scripts/evolution.py",
+    "scripts/validate-v51-evolution.py",
+    "tests/test_v51_controlled_evolution.py",
+]:
+    if not (ROOT / relative).is_file():
+        fail("缺少 V5.1 受控自进化资源 " + relative)
+if "## 5.1.0 - 2026-08-26" not in read(ROOT / "CHANGELOG.md"):
+    fail("CHANGELOG 缺少 V5.1 发布记录")
+
+package_manager = read(ROOT / "scripts/package_manager.py")
+for expected in ["EVOLUTION_TOOL_SOURCE", '"tools/evolution.py"', "evolution_tool_target"]:
+    if expected not in package_manager:
+        fail("安装器缺少 V5.1 Evolution Tool 管理: " + expected)
+for relative in [
+    "docs/V5.1_升级说明与迁移指南.md",
+    "docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md",
+    "docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md",
+    "runtime/cp_runtime/evolution/manifest.json",
+    "config/evolution-policy.json",
+]:
+    if not (ROOT / relative).is_file():
+        fail("缺少 V5.1 资源 " + relative)
 
 if ERRORS:
     print("语义校验失败", len(ERRORS))
     raise SystemExit(1)
-print("V5.0 语义校验通过。")
+print("V5.1 语义校验通过。")
