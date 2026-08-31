@@ -1,0 +1,6 @@
+interface:
+  display_name: "长期任务外部记忆"
+  short_description: "跨会话计划、进度、决策、交接和交付记录机制"
+  default_prompt: "使用长期任务外部记忆技能建立或恢复当前任务上下文，只记录可验证事实、授权、进度和下一步，不把记忆文档放入项目 Git。"
+policy:
+  allow_implicit_invocation: true
