@@ -1,0 +1,16 @@
+{
+  "name": "cp-assistant-local-package",
+  "interface": {
+    "displayName": "Codex Cross Project Assistant Local Package"
+  },
+  "plugins": [
+    {
+      "name": "codex-cross-project-engineering-assistant",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "description": "Codex 跨项目长期技术助手 V6.1"
+    }
+  ]
+}
