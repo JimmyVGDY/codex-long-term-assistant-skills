@@ -6,7 +6,7 @@
 - 检查登录、Token/Session 过期、刷新、撤销、退出和多标签页同步；
 - LocalStorage、SessionStorage、IndexedDB、Cookie、URL、日志、埋点和 Source Map 不得泄漏敏感信息；
 - 会进入客户端 Bundle 的环境变量一律视为公开信息；
-- 账号或租户切换后清理权限、缓存、路由和用户态数据。
+- 账号或租户切换后清理权限、缓存、路由和会话态数据。
 
 ## 二、Web 安全
 
@@ -18,15 +18,15 @@
 
 - 服务端与客户端输出应确定一致，处理 Hydration mismatch；
 - 浏览器 API 只能在客户端边界使用；
-- 请求级状态不得被模块级或进程级单例跨用户共享；
+- 请求级状态不得被模块级或进程级单例跨账户共享；
 - Secret、数据库实体、内部错误和服务端环境变量不得序列化到客户端；
-- 缓存键、用户/租户隔离、重验证、失效和 CDN Vary 维度必须明确；
+- 缓存键、账户/租户隔离、重验证、失效和 CDN Vary 维度必须明确；
 - Server Action、Route Handler、Loader、Action、Middleware 和 BFF 接口仍需认证、输入校验、CSRF、幂等和限流；
 - Edge Runtime、Node Runtime 和浏览器 Runtime 的 API、连接和依赖兼容必须区分。
 
 ## 四、实时连接、Worker 与 PWA
 
-SSE、WebSocket、轮询、BroadcastChannel、Web Worker 和 Service Worker 检查：认证、心跳、超时、退避重连、关闭、重复连接、消息顺序、断线游标、页面卸载、浏览器休眠、多标签页和用户取消。
+SSE、WebSocket、轮询、BroadcastChannel、Web Worker 和 Service Worker 检查：认证、心跳、超时、退避重连、关闭、重复连接、消息顺序、断线游标、页面卸载、浏览器休眠、多标签页和调用方取消。
 
 PWA/Service Worker 需检查缓存版本、更新提示、旧资源、离线写入、后台同步、Push 权限和新旧前后端兼容。不能只确保“连接不断开”，还要避免资源泄漏和状态错乱。
 
@@ -41,5 +41,5 @@ PWA/Service Worker 需检查缓存版本、更新提示、旧资源、离线写�
 - WebView/Hybrid：原生 Bridge、深链、文件 URI、调试端口和平台权限必须最小化；来自网页、外链和原生回调的数据均视为不可信输入；
 - Electron：优先隔离 Renderer 与 Node 能力，检查 preload 暴露面、IPC 通道、外部导航、下载和自动更新；
 - Tauri：检查 Command/Capability allowlist、路径与 Shell 参数、窗口导航和本地资源协议；
-- 浏览器扩展：检查 Manifest 权限、Host Permission、Content Script、消息通道、页面注入、远程代码和商店发布要求；
+- 浏览器扩展：检查 Manifest 权限、Host Permission、Content Script、消息通道、页面注入、远程代码和商店发布约束；
 - 上述载体的主进程、原生插件和系统命令需要组合更高权限的安全、后端或基础设施审查，不能由前端检查替代。

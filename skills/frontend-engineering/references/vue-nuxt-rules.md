@@ -33,7 +33,7 @@
 检查：
 
 - Vuex / Pinia 是否区分局部状态、全局状态和服务端状态；
-- Store 是否跨用户、跨页面或热更新残留；
+- Store 是否跨账户、跨页面或热更新残留；
 - `KeepAlive`、`activated/deactivated` 和路由复用是否留下旧请求或旧状态；
 - 路由守卫、动态路由、懒加载和权限路由清理；
 - 路由参数变化但组件实例复用时是否重新加载正确数据；
@@ -53,7 +53,7 @@
 - Server/Client Plugin、Middleware、Composable 和 Runtime Config 边界；
 - 仅服务端 Secret 是否泄漏到 public runtime config；
 - `useAsyncData` / `useFetch` 等数据键、缓存、去重和刷新策略；
-- 请求级状态是否被模块级单例跨用户共享；
+- 请求级状态是否被模块级单例跨账户共享；
 - 浏览器 API、随机值、当前时间和本地存储导致的 Hydration mismatch；
 - Server Route 里的认证、输入、数据库和业务逻辑是否按后端规则处理。
 

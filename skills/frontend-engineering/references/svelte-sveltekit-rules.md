@@ -30,7 +30,7 @@
 - `load` 的 server/client 边界、缓存和依赖失效；
 - `+server`、Form Action 和 Hooks 的认证、权限、CSRF、输入与幂等；
 - `private` 环境变量和序列化数据是否泄漏；
-- 请求级状态是否被模块级单例跨用户共享；
+- 请求级状态是否被模块级单例跨账户共享；
 - SSR/Hydration、浏览器 API 和非确定输出；
 - Adapter 与部署运行时的兼容性。
 

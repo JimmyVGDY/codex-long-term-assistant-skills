@@ -36,7 +36,7 @@
 
 - 请求取消、旧结果覆盖、乐观更新和回滚；
 - Suspense、Loading、Error Boundary 和局部失败；
-- 服务端状态缓存键、失效、重复请求和用户隔离；
+- 服务端状态缓存键、失效、重复请求和账户隔离；
 - 事件处理器和异步任务中的异常是否可见；
 - 路由切换、组件卸载和并发渲染下状态是否一致。
 
@@ -47,7 +47,7 @@
 - Server/Client Component 边界和客户端 Bundle 泄漏；
 - Route Handler、Server Action、Loader/Action 的认证、授权、输入校验、CSRF 和幂等；
 - Cookie、Header、缓存、重验证和动态/静态渲染选择；
-- 请求级数据是否被模块级缓存跨用户共享；
+- 请求级数据是否被模块级缓存跨账户共享；
 - Secret、数据库实体和内部错误是否序列化到客户端；
 - Middleware、重定向、并行路由、Streaming 和错误边界；
 - Hydration mismatch、浏览器 API 和非确定输出。

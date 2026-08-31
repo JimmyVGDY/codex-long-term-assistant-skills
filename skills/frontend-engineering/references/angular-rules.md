@@ -50,8 +50,8 @@
 ## 五、Angular SSR 和安全
 
 - 浏览器 API 应受平台边界保护；
-- 请求级状态不得跨用户共享；
-- TransferState、Hydration 和缓存需考虑用户/租户隔离；
+- 请求级状态不得跨账户共享；
+- TransferState、Hydration 和缓存需考虑账户/租户隔离；
 - DomSanitizer 绕过安全必须有明确可信来源；
 - 动态模板、URL 和 HTML 不得绕过清洗。
 
