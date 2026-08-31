@@ -1,7 +1,7 @@
 ---
 name: java-backend-engineering
 description: >-
-  Java 后端、Spring Boot、Spring Cloud、Struts2、MyBatis、JPA、Maven、JVM、事务、并发、SSE 或 Java 代码审查任务时使用。先识别 Java 与框架版本；不要用于纯 Python 或纯 Vue 任务。
+  Java 后端、Spring Boot、Spring Cloud、Struts2、MyBatis、JPA、Maven、JVM、事务、并发、SSE 或 Java 代码审查任务时使用。先识别 Java 与框架版本；不要用于纯 Python 或纯前端任务。
 ---
 
 # Java 后端工程技能
