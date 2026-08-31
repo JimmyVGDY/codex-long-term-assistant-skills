@@ -1,0 +1,45 @@
+{
+  "package": "codex-cross-project-engineering-assistant",
+  "version": "1.0.0",
+  "generated_for": "Codex local user skills",
+  "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
+  "user_skills_target": "$HOME/.agents/skills",
+  "skills": [
+    {
+      "name": "java-backend-engineering",
+      "display_name": "Java 后端工程",
+      "description": "Java 后端、Spring Boot、Spring Cloud、Struts2、MyBatis、JPA、Maven、JVM、事务、并发、SSE 或 Java 代码审查任务时使用。先识别 Java 与框架版本；不要用于纯 Python 或纯 Vue 任务。",
+      "source_mapping": "rules/02-Java后端规则.md"
+    },
+    {
+      "name": "python-backend-ai-engineering",
+      "display_name": "Python 后端与 AI 服务",
+      "description": "Python 后端、FastAPI、Django、Flask、异步 I/O、多进程、Celery、数据处理、模型调用、RAG、GPU Worker 或 Python 代码审查任务时使用。不要默认 Python 仅用于 AI。",
+      "source_mapping": "rules/03-Python后端与AI服务规则.md"
+    },
+    {
+      "name": "vue-frontend-engineering",
+      "display_name": "Vue 前端工程",
+      "description": "Vue 2、Vue 3、Vite、Vue CLI、Vuex、Pinia、路由、表单、文件上传、SSE、WebSocket、异步竞态、前端性能或 Vue 代码审查任务时使用。不要替代后端权限校验。",
+      "source_mapping": "rules/04-Vue前端工程规则.md"
+    },
+    {
+      "name": "data-middleware-ai-infrastructure",
+      "display_name": "数据、中间件、AI 与基础设施",
+      "description": "MySQL、PostgreSQL、SQL、事务锁、Redis、RabbitMQ、Celery、Elasticsearch、向量数据库、NAS、对象存储、SSE、RAG、模型、GPU、Docker、Kubernetes、网络或基础设施任务时使用。",
+      "source_mapping": "rules/05-数据中间件与AI工程规则.md"
+    },
+    {
+      "name": "engineering-quality-delivery",
+      "display_name": "研发质量与安全交付",
+      "description": "代码或配置修改、Bug 修复、优化、测试、最低定向验证、对抗性验证、独立六维复审、Git 提交、CHANGELOG、部署、重启、灰度、回滚或生产操作任务时使用。只读简单解释通常不需要。",
+      "source_mapping": "workflows/01-研发质量与交付工作流.md"
+    },
+    {
+      "name": "long-running-task-memory",
+      "display_name": "长期任务外部记忆",
+      "description": "任务跨会话、多阶段、多模块、多仓库、多 Agent、生产观察期、上下文可能压缩，或用户要求持续维护计划、进度、决策、交接和交付记录时使用。简单一次性任务不要触发。",
+      "source_mapping": "06-长期任务外部记忆机制.md"
+    }
+  ]
+}
