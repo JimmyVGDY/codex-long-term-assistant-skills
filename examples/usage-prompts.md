@@ -1,4 +1,4 @@
-# Codex Skills 使用示例（v3.1）
+# Codex Skills 使用示例（v3.2）
 
 ## 一、本地日志文件分析
 
@@ -133,4 +133,42 @@ $technical-document-writing 和 $long-running-task-memory。
 先只读检查生产环境和当前版本。写入操作前检查点，记录目标环境、实例、
 影响范围、授权、备份、回滚、验收和停止条件。未获得当前任务明确写授权前，
 不要执行数据库、Redis、MQ、文件、部署、重启或切流操作。
+```
+
+
+## v3.2：实施前设计与影响审查
+
+```text
+使用 $data-middleware-ai-infrastructure 和 $multi-agent-independent-review。
+
+本次将新增数据库字段、消息字段并回填历史数据。在开始编码和编写迁移脚本前，
+先形成目标、非目标、兼容、灰度和回滚方案，再从功能、兼容、数据和性能四个维度
+执行一轮只读实施前审查。Reviewer 结果收齐后统一修订方案；实施前审查不能替代
+代码完成后的定向测试和独立复审。
+```
+
+## v3.2：多信号可观测性分析
+
+```text
+使用 $log-observability-analysis 和对应技术栈 Skill。
+
+只读关联同一时间窗的应用日志、P95/P99、错误率、连接池、消息堆积、分布式 Trace、
+已有 JFR/线程 Dump、告警和发布事件。先统一时区和采样范围，再建立多证据源时间线；
+不得因为发布后出现异常就直接认定发布为根因，不要在线上重新采集 Profile。
+```
+
+## v3.2：最小充分加载
+
+```text
+当前阶段先选择一个主领域 Skill，最多补充两个必要辅助 Skill。
+不要提前加载后续阶段的 Git、复审、文档和长期记忆流程；
+同时需要超过四个 Skill 时，先说明每个 Skill 的唯一职责。
+```
+
+## v3.2：复审状态控制器
+
+```text
+使用 $multi-agent-independent-review 和 $long-running-task-memory。
+为当前功能边界初始化 review-state.json。每次计划、派发、收回 Reviewer、归并和集中修复
+都更新控制器状态；上下文压缩后先执行 status / validate，未确认剩余预算前不要继续派生。
 ```
