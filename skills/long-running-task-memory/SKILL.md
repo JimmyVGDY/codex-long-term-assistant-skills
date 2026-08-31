@@ -24,6 +24,8 @@ description: >-
 10. 文档与实际状态冲突时，以实际状态为准，记录冲突并修正文档。
 11. 文档更新不能替代构建、测试、复审、Commit 或生产验证。
 12. 多轮、跨服务或持续观察的日志排障可组合 `$log-observability-analysis`；普通一次性单文件分析不机械建立完整外部记忆体系。
+13. 外部记忆写入前后都要防止明文凭据、隐私、完整生产连接串和大段原始日志落盘；启用后优先使用 `scripts/checkpoint.py` 的 `security-check` 子命令。
+14. 明确保留期限、归档、同步和删除责任；脚本只生成到期候选报告，不自动删除用户文档。
 
 ## 默认参数
 
@@ -35,6 +37,9 @@ HOT_PROGRESS_CHECKPOINT_LIMIT = 30
 SINGLE_MEMORY_WRITER = true
 CHECKPOINT_BEFORE_HIGH_RISK_ACTION = true
 CHECKPOINT_AFTER_HIGH_RISK_ACTION = true
+DEFAULT_COMPLETED_TASK_RETENTION_DAYS = 90
+DEFAULT_TEMPORARY_ANALYSIS_RETENTION_DAYS = 30
+EXTERNAL_MEMORY_SECRET_SCAN = true
 ```
 
 项目级规则或用户要求设置更严格值时，采用更严格值。
@@ -54,11 +59,13 @@ CHECKPOINT_AFTER_HIGH_RISK_ACTION = true
 - `CHECKPOINT_ENTRY.template.md`
 - `RECOVERY_CHECKLIST.template.md`
 
-可选辅助脚本：`scripts/checkpoint.py`。它使用 Python 标准库提供 `init`、`append`、`validate`、`recover`、`repair` 和 `archive`，通过写入锁、原子替换、Git 指纹和热区归档降低共享状态损坏风险；Python 不可用时按同一规则手工维护。
+可选辅助脚本：`scripts/checkpoint.py`。它使用 Python 标准库提供 `init`、`append`、`validate`、`recover`、`repair`、`archive`、`security-check`、`secure` 和 `retention-report`，通过写入锁、原子替换、Git 指纹和热区归档降低共享状态损坏风险；Python 不可用时按同一规则手工维护。
 
 ## 边界
 
 - 外部记忆必须保存在 Agent 专用目录，不得进入项目仓库、Git、项目 CHANGELOG 或正式工程文档。
+- Linux/WSL 目录建议权限 700、文档和状态文件建议 600；Windows 必须确认目录 ACL 仅允许当前用户和受信任管理员访问。
+- 不默认同步到 OneDrive、NAS、公共云盘或其他设备；备份与同步必须符合公司安全策略并由用户明确决定。
 - 只记录可验证事实、证据等级、授权、修改、命令、测试、复审、阻塞、风险和下一步；不记录冗长内部推理。
 - Codex 内置 Memories 或 Chronicle 只能作为辅助召回层，不替代当前任务的确定性检查点和项目硬规则。
 - 项目正式技术方案、架构文档、部署手册和管理报告使用 `$technical-document-writing`。

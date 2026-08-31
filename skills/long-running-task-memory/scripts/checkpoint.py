@@ -34,6 +34,13 @@ ARCHIVE_INDEX_END = "<!-- progress-archive-index:end -->"
 CHECKPOINT_RE = re.compile(r"(?m)^### (CP-(\d{8})-(\d{3,}))\s*$")
 STATE_VERSION_RE = re.compile(r"(?m)^- 状态版本：(\d+)\s*$")
 DEFAULT_HOT_LIMIT = 30
+SENSITIVE_PATTERNS = (
+    ("OpenAI/API Key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
+    ("AWS Access Key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("Bearer Token", re.compile(r"(?i)authorization\s*[:=]\s*bearer\s+[A-Za-z0-9._~+/=-]{16,}")),
+    ("Credential URI", re.compile(r"[a-zA-Z][a-zA-Z0-9+.-]*://[^\s/:]+:[^\s/@]+@")),
+    ("Generic Secret", re.compile(r"(?i)\b(password|passwd|token|secret|access[_-]?key|secret[_-]?key)\b\s*[:=]\s*([^\s`]+)")),
+)
 
 
 def die(message: str, code: int = 1) -> None:
@@ -737,6 +744,100 @@ def command_recover(args: argparse.Namespace) -> None:
         print("- {}: {} -> {}".format(checkpoint_id, summary, action))
 
 
+
+def iter_memory_files(project_dir: Path) -> Iterator[Path]:
+    for path in project_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        if path.name in {".checkpoint.lock"} or path.suffix.lower() not in {".md", ".json", ".txt"}:
+            continue
+        yield path
+
+
+def sensitive_findings(project_dir: Path) -> List[str]:
+    findings: List[str] = []
+    for path in iter_memory_files(project_dir):
+        try:
+            content = path.read_text(encoding="utf-8-sig", errors="replace")
+        except OSError as exc:
+            findings.append("{}: 无法读取 ({})".format(path, exc))
+            continue
+        for line_no, line in enumerate(content.splitlines(), 1):
+            for label, pattern in SENSITIVE_PATTERNS:
+                for match in pattern.finditer(line):
+                    value = match.group(0)
+                    if "<" in value and ">" in value:
+                        continue
+                    if label == "Generic Secret" and len(match.group(2).strip("'\"")) < 8:
+                        continue
+                    findings.append("{}:{}: {}".format(path.relative_to(project_dir), line_no, label))
+    return findings
+
+
+def permission_findings(project_dir: Path) -> List[str]:
+    if os.name == "nt":
+        return []
+    findings: List[str] = []
+    directory_mode = project_dir.stat().st_mode & 0o777
+    if directory_mode & 0o077:
+        findings.append("目录权限过宽: {} (建议 700)".format(oct(directory_mode)))
+    for path in iter_memory_files(project_dir):
+        mode = path.stat().st_mode & 0o777
+        if mode & 0o077:
+            findings.append("文件权限过宽: {} {} (建议 600)".format(path.relative_to(project_dir), oct(mode)))
+    return findings
+
+
+def command_security_check(args: argparse.Namespace) -> None:
+    project_dir = Path(args.project_dir).expanduser().resolve()
+    if not project_dir.is_dir():
+        die("外部记忆目录不存在: " + str(project_dir))
+    findings = sensitive_findings(project_dir)
+    permissions = permission_findings(project_dir)
+    for item in findings:
+        warn("疑似敏感信息: " + item)
+    for item in permissions:
+        warn(item)
+    if findings or (permissions and args.strict_permissions):
+        die("外部记忆安全检查未通过")
+    if permissions:
+        print("[WARN] 当前平台权限检查发现 {} 项；可执行 secure 收紧权限。".format(len(permissions)))
+    print("[OK] 外部记忆安全检查通过；未发现可识别的明文凭据模式。")
+
+
+def command_secure(args: argparse.Namespace) -> None:
+    project_dir = Path(args.project_dir).expanduser().resolve()
+    if os.name == "nt":
+        warn("Windows ACL 不能由本脚本可靠统一设置；请确保目录仅当前用户可访问。")
+        return
+    with project_lock(project_dir, args.force_unlock):
+        for path in sorted(project_dir.rglob("*")):
+            if path.is_dir():
+                os.chmod(path, 0o700)
+            elif path.is_file():
+                os.chmod(path, 0o600)
+        os.chmod(project_dir, 0o700)
+    print("[OK] 已将外部记忆目录收紧为目录 700、文件 600。")
+
+
+def command_retention_report(args: argparse.Namespace) -> None:
+    project_dir = Path(args.project_dir).expanduser().resolve()
+    archive_dir = project_dir / "archive"
+    if not archive_dir.exists():
+        print("[OK] 没有 archive 目录，无保留期候选。")
+        return
+    now = datetime.now(timezone.utc).timestamp()
+    cutoff = now - args.days * 86400
+    candidates = [path for path in archive_dir.rglob("*") if path.is_file() and path.stat().st_mtime < cutoff]
+    print("# 外部记忆保留期报告")
+    print("- 扫描目录: {}".format(archive_dir))
+    print("- 保留阈值: {} 天".format(args.days))
+    print("- 到期候选: {} 个".format(len(candidates)))
+    for path in sorted(candidates):
+        age = int((now - path.stat().st_mtime) / 86400)
+        print("- {}（约 {} 天）".format(path.relative_to(project_dir), age))
+    print("- 本命令只报告，不自动删除。删除、迁移或同步必须单独授权并遵循公司策略。")
+
 def add_common_mutation_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--allow-inside-repo", action="store_true")
     parser.add_argument("--force-unlock", action="store_true")
@@ -805,6 +906,21 @@ def build_parser() -> argparse.ArgumentParser:
     archive.add_argument("--timezone", default="Asia/Shanghai")
     add_common_mutation_args(archive)
     archive.set_defaults(func=command_archive)
+
+    security = sub.add_parser("security-check", help="扫描疑似明文凭据并检查 POSIX 权限")
+    security.add_argument("--project-dir", required=True)
+    security.add_argument("--strict-permissions", action="store_true")
+    security.set_defaults(func=command_security_check)
+
+    secure = sub.add_parser("secure", help="在 POSIX 上将目录收紧为 700、文件收紧为 600")
+    secure.add_argument("--project-dir", required=True)
+    secure.add_argument("--force-unlock", action="store_true")
+    secure.set_defaults(func=command_secure)
+
+    retention = sub.add_parser("retention-report", help="只读列出超过保留期的归档候选")
+    retention.add_argument("--project-dir", required=True)
+    retention.add_argument("--days", type=int, default=90)
+    retention.set_defaults(func=command_retention_report)
     return parser
 
 
