@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## 5.0.0 - 2026-08-26
+
+### Added
+
+- Project Profile、Project State 与已有项目有界只读 Onboarding；
+- Task Envelope V2 六维路由：复杂度、项目阶段、执行档位、Reviewer 预算、模型档位与宿主表面；
+- Approval、Evidence、Finalization 三类独立合同及项目/任务/环境/仓库基线绑定；
+- Task Checkpoint → Project Memory Projection → Knowledge Candidate 受控晋升链路；
+- 共享 `runtime/cp_runtime` 与安装后 `tools/cp-runtime.py` 入口；
+- 项目治理、执行守卫 V5 集成和安装恢复安全回归测试。
+
+### Changed
+
+- `execution_guard.py` 升级为 schema 3，并兼容读取旧任务状态；
+- 安装器增加运行时与工具安装、源码目录保护、符号链接防护和备份完整性校验；
+- 强制重建 Project Profile 时保留已存在的 `project-memory.md`，防止长期记忆被静默覆盖；
+- Approval、Evidence、Finalization 与记忆候选默认必须写在业务仓库外，避免治理文件反向改变仓库指纹；
+- 当前文档、语义校验和发布验证统一到 V5.0。
+
+### Security
+
+- Approval 仅允许受保护操作，禁止过期授权在签发时进入 Active；
+- Project Profile 绑定时检查仓库路径、Project ID、完整性及 Remote 变化；
+- Finalization 校验 execution-state 与实际仓库一致，并阻断无读回证据的外部动作声明。
+
+### Compatibility
+
+- 保留原有 9 个 Skill、7 个 Reviewer、Luna/Terra 四级路由和 Reviewer 成本预算；
+- 不自动改写用户 `config.toml`，不自动删除 `project-context/`；
+- V4.2 的 Review Packet、Review Controller、Checkpoint 和原 `execution_guard` 命令保持兼容。
+
 ## 4.2.0 - 2026-08-12
 
 ### Added
