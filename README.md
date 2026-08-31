@@ -1,137 +1,129 @@
-> **V6.3 已验证宿主：Codex CLI 0.150.1。Plugin 安装必须以 `codex plugin list --json` 的 installed+enabled+version 读回为成功标准。**
+> **V6.4 目标宿主：Windows 原生 Codex CLI 0.150.1。Plugin 成功状态以 `codex plugin list --json` 的 installed、enabled、version 三项读回为准。**
 
-# Codex 跨项目长期技术助手 Skills 安装包 V6.3
+# Codex 跨项目长期技术助手 Skills 安装包 V6.4
 
-**版本：6.3.0｜可恢复事务与可证明发行版**
+**版本：6.4.0｜端到端载荷身份与可恢复证据链**
 
-V6.3 基于 V6.2 Windows 实机兼容基线，增加持久化安装事务、崩溃恢复、并发互斥、机器可读发行证明、真实生命周期验收、观测完整率、Reviewer 收益归因和字节级确定性 ZIP；项目身份、Task Envelope、Approval/Evidence、模型上限与受控 Proposal 边界保持不变。
+V6.4 在 V6.3 可恢复事务与可证明发行基线上，补齐 ZIP、Marketplace、Plugin cache 的同源身份校验，增加事件安全分段、半记录恢复、旧状态迁移、Codex 能力探测和统一发行验证器。10 个 Skill、7 个 Reviewer、6 个 Hook、TaskOutcomeEvent 2.0、项目双重隔离和 Terra High 自动上限保持兼容。
 
 ## 核心能力
 
-- **10 个工程 Skills**：Java、Python/AI、前端、数据/中间件/AI 基础设施、日志可观测性、质量交付、多 Agent 复审、技术文档、长期任务记忆、受控演进治理。
-- **7 个专业 Reviewer**：职责隔离，自动模型最高 `gpt-5.6-terra + high`。
-- **Plugin-first**：包含 `.codex-plugin/plugin.json`、`skills/`、`hooks/hooks.json`；同时提供 standalone 和 repo 安装方式。
-- **确定性生命周期观测**：`UserPromptSubmit / PreToolUse / SubagentStart / SubagentStop / Stop / SessionEnd`。
-- **TaskOutcomeEvent V2**：严格字段、非负计数、隐私最小化、SHA-256 链，可选 HMAC。
-- **Task 级聚合**：先按 `event_id` 去重，再按 `task_id` 聚合，避免生命周期事件重复加权。
-- **双重项目隔离**：`project_id + repo_fingerprint` 任一不匹配都拒绝聚合。
-- **不可覆盖 Snapshot**：唯一 ID + `source_digest` + exclusive-create。
-- **受控 Proposal 生命周期**：人工决定后仍需独立实施 Task、Git Baseline、Commit 和验证 Evidence；`execution_authorization` 永远为 `NONE`。
-- **可恢复安装事务**：首个写入前持久化 Journal，全流程互斥、故障恢复、回滚失败可见、旧状态兼容。
-- **可证明发行**：两次干净构建必须字节一致；外部 Attestation 绑定正式 ZIP、实机 Plugin 读回和真实生命周期证据。
-- **观测质量门禁**：生命周期完整率、SessionEnd 覆盖率、终态覆盖率和 Reviewer 归因完整率不足时只形成 Snapshot。
+- 10 个工程 Skill：Java、Python/AI、前端、数据与基础设施、日志、质量交付、独立复审、技术文档、长期任务记忆、受控演进治理。
+- 7 个逻辑只读 Reviewer：按风险选择，累计预算受控，自动模型最高 `gpt-5.6-terra + high`。
+- Plugin-first：提供账户级 Plugin、standalone 和仓库级 Skill 三种安装形态。
+- 确定性生命周期：覆盖 `UserPromptSubmit / PreToolUse / SubagentStart / SubagentStop / Stop / SessionEnd`。
+- TaskOutcomeEvent V2：严格 schema、最小元数据、前向 SHA-256 链、可选 HMAC。
+- 事件安全分段：跨段连续校验，活动尾部半记录审计隔离，进程崩溃后确定性恢复。
+- 双重项目隔离：`project_id + repo_fingerprint` 任一不匹配均拒绝聚合。
+- 可恢复安装事务：Marketplace 子树、manifest、Plugin cache、注册状态和 state schema 迁移均纳入 journal。
+- 端到端载荷身份：正式 ZIP、Marketplace、Plugin cache 共享规范化 payload digest。
+- 受控 Proposal：`execution_authorization=NONE` 永久成立；决定与实施授权保持分离。
 
-## 目录约定
+## 账户级目录
 
-- 账户级 Skills：`$HOME/.agents/skills`
-- 仓库级 Skills：`$REPO_ROOT/.agents/skills`
-- 自定义 Reviewer：`${CODEX_HOME:-$HOME/.codex}/agents`
+- Skill：`$HOME/.agents/skills`
+- Reviewer：`${CODEX_HOME:-$HOME/.codex}/agents`
 - 全局规则：`${CODEX_HOME:-$HOME/.codex}/AGENTS.md`
+- Plugin Marketplace：`$HOME/.agents/plugins/cp-assistant-marketplace`
 - 项目上下文：`${CODEX_HOME:-$HOME/.codex}/project-context/<project-id>`
 
-V6 不再把 `$HOME/.agents/skills` 当成旧目录，也不会自动清理该目录中的未知 Skill。
+Windows 原生进程若继承 `/mnt/c/.../.codex`，安装器会转换为盘符路径；WSL 风格路径不会直接作为 Windows 安装目标。
 
-## 安装前检查
+## 推荐升级流程
 
-```bash
-python scripts/package_manager.py doctor
-python scripts/package_manager.py status --scope user --mode plugin --json
+在解压后的 V6.4 根目录执行：
+
+```powershell
+python scripts\package_manager.py doctor
+python scripts\package_manager.py install --scope user --mode plugin --dry-run
+python scripts\package_manager.py install --scope user --mode plugin
+python scripts\package_manager.py verify --scope user --mode plugin
+codex plugin list --json
 ```
 
-### A. Plugin 模式（推荐）
-
-先查看变更：
-
-```bash
-python scripts/package_manager.py install --scope user --mode plugin --dry-run
-```
-
-准备本地 Plugin Marketplace、Reviewer 和全局规则：
-
-```bash
-python scripts/package_manager.py install --scope user --mode plugin
-```
-
-安装器直接执行 Marketplace 与 Plugin 注册，并在提交事务前读回宿主状态。若检测到未完成事务，先执行 `python scripts/package_manager.py doctor --recover`。
-
-### B. Standalone 模式
-
-```bash
-python scripts/package_manager.py install --scope user --mode standalone --dry-run
-python scripts/package_manager.py install --scope user --mode standalone
-python scripts/package_manager.py verify  --scope user --mode standalone
-```
-
-Standalone 会把账户 Skills 安装到 `$HOME/.agents/skills`，Reviewer/Runtime/Hooks 安装到 `CODEX_HOME` 对应目录，并合并本包受管 Hook，不覆盖其他 Hook 条目。
-
-### C. 仓库级 Skills
-
-```bash
-python scripts/package_manager.py install --scope repo --repo-path /path/to/repository --dry-run
-python scripts/package_manager.py install --scope repo --repo-path /path/to/repository
-python scripts/package_manager.py verify  --scope repo --repo-path /path/to/repository
-```
-
-Repo 模式只安装当前仓库 `.agents/skills`，不修改账户级 Reviewer、Hooks 或全局 AGENTS。
-
-## 卸载
-
-```bash
-python scripts/package_manager.py uninstall --scope user --mode standalone
-```
-
-或：
-
-```bash
-python scripts/package_manager.py uninstall --scope user --mode plugin
-```
-
-检测到受管资源被外部修改时默认拒绝覆盖式卸载；确认后才使用 `--force`。项目上下文和观察数据不会随卸载自动删除。
-
-## 确定性自观察
-
-V6 的普通任务只写最小生命周期元数据，完整 Evolution 分析仍然按需运行：
+只有 Plugin 读回同时满足以下条件，才可判定账户级升级成功：
 
 ```text
-Hooks
-  ↓
-TaskOutcomeEvent V2
-  ↓ event_id 去重
-Task Aggregate
-  ↓ project_id + repo_fingerprint
-Observation Snapshot
-  ↓
-Assessment
-  ↓
-Optimization Proposal
-  ↓
-Human Decision
+installed = true
+enabled   = true
+version   = 6.4.0
 ```
 
-没有明确终态时记录 `UNKNOWN`，不会把 Stop 自动判定为成功，也不会从通用 `status` 推断失败。
+`verify` 还会校验 10 个 Skill、7 个 Reviewer、6 个 Hook、载荷 digest、Marketplace/cache 身份及状态文件。文件复制完成不等同于 Plugin 注册成功。
 
-## Proposal 实施闭环
+## 其他安装形态
 
-```bash
-python scripts/evolution.py decide ... --decision accept
-python scripts/evolution.py link-implementation ... --task-id TASK-... --git-baseline <baseline>
-python scripts/evolution.py record-validation ... --commit <commit> --evidence <evidence-ref>
-python scripts/evolution.py close ... --final-outcome PASS
+Standalone：
+
+```powershell
+python scripts\package_manager.py install --scope user --mode standalone --dry-run
+python scripts\package_manager.py install --scope user --mode standalone
+python scripts\package_manager.py verify --scope user --mode standalone
 ```
 
-`ACCEPT` 只认可优化方向，不授予文件修改、提交、推送、部署或生产操作权限。
+仓库级 Skill：
 
-## 验证
-
-```bash
-python scripts/validate-package.py
-python scripts/build-release.py reproducible --output Codex-Skills-V6.3.zip --witness deterministic-build-v6.3.json
+```powershell
+python scripts\package_manager.py install --scope repo --repo-path <repository> --dry-run
+python scripts\package_manager.py install --scope repo --repo-path <repository>
+python scripts\package_manager.py verify --scope repo --repo-path <repository>
 ```
 
-V6 发布验证明确区分：
+仓库级形态不改动账户级 Reviewer、Hook、全局规则或 Plugin 注册。
 
-- 本地语法/结构/单元和回归测试：可自动验证；
-- 35 条路由用例定义是否合法：可自动验证；
-- 真实 Codex 隐式 Skill 激活率、不同宿主 Plugin/Hooks 端到端、Windows PowerShell 实机：没有实际环境证据时必须标记 `NOT_EXECUTED`。
+## 崩溃恢复
 
-详见 `RELEASE_NOTES_V6.3.md`、`docs/USER_GUIDE_V6.3.md` 和 `docs/V6_ARCHITECTURE.md`。
+检测到活动事务时，先读取状态，再执行恢复：
+
+```powershell
+python scripts\package_manager.py status --scope user --mode plugin --json
+python scripts\package_manager.py doctor --recover
+```
+
+恢复仅处理 journal 中已声明且归属本包的受管目标。未知文件、外部漂移、路径越界、符号链接、Junction、Reparse Point、未知 state schema 或不完整备份均失败关闭。不得通过删除整个 `.codex`、`.agents` 或 plugins 目录处理故障。
+
+## 自观察与复盘
+
+```text
+Lifecycle Hook
+  -> TaskOutcomeEvent V2
+  -> event_id 去重
+  -> Task 聚合
+  -> project_id + repo_fingerprint 隔离
+  -> Snapshot
+  -> Assessment
+  -> Proposal
+  -> 人工决策
+  -> 独立实施任务
+```
+
+默认只记录最小结构化元数据，不保存原始 Prompt、完整回答、代码正文、Diff、Token、Cookie、API Key 或凭据。缺少明确终态时记录 `UNKNOWN`；显式但非法的终态直接拒绝。Hook 事件中的宿主实际模型与推理强度只接受明确字段，不从通用别名推断；生命周期验收可另行关联 Codex 子任务会话中的 `session_meta + turn_context`，但不会把该证据回填成 Hook 实际字段。
+
+## 发行验证
+
+```powershell
+python scripts\validate-package.py
+python scripts\build-release.py reproducible --output Codex-Skills-V6.4.zip --witness deterministic-build-v6.4.json
+python scripts\build-release.py verify --archive Codex-Skills-V6.4.zip
+```
+
+统一验证器用于绑定正式 ZIP、包内校验、确定性构建见证、Codex 0.150.1、Plugin 精确状态、生命周期证据和三段 payload 身份：
+
+```powershell
+python scripts\verify-release.py --help
+```
+
+没有实际宿主证据的状态必须保持 `NOT_EXECUTED` 或未验证，不得写成 PASS。
+
+## 安全边界
+
+- 不改写 `config.toml` 或主 Agent 模型配置；
+- Reviewer TOML 不固定模型；
+- 自动路线为 Luna Low → Luna Medium → Terra Medium → Terra High；
+- 自动流程最高 Terra High；
+- 不自动修改 Skill、Reviewer、路由、全局规则或业务仓库；
+- 不自动接受或实施 Proposal；
+- 不自动提交、推送、部署、重启或操作生产环境；
+- Event、Snapshot、Assessment、Proposal、项目上下文和升级备份不会随普通升级或卸载自动删除。
+
+详细操作见 `docs/USER_GUIDE_V6.4.md`，恢复规则见 `docs/INSTALLATION_RECOVERY.md`，版本变化见 `RELEASE_NOTES_V6.4.md`。

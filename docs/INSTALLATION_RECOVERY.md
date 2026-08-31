@@ -1,28 +1,27 @@
-# V6.3 安装、验证与事务恢复
+# V6.4 安装、验证与事务恢复
 
 ## 适用范围
 
 - 目标宿主：Windows 原生 Codex CLI 0.150.1。
-- 推荐形态：账户级 Plugin 模式。
-- 升级基线：V6.1.0 或 V6.2.0。
-- 受管目录：账户 Skill、Reviewer、全局规则、Plugin Marketplace 与 Plugin 注册状态。
+- 推荐形态：账户级 Plugin。
+- 可升级版本：6.1.0、6.2.0、6.3.0。
+- 受管对象：本包 Marketplace payload、manifest 条目、Plugin cache、Reviewer、全局规则和安装状态。
 
-安装器不改写 `config.toml`，不删除项目上下文、Event、Snapshot、Assessment、Proposal 或历史备份。
+安装器不改写 `config.toml`，不删除未知 Skill、Agent、Hook、MCP、项目上下文、Event、Snapshot、Assessment、Proposal 或历史备份。
 
-## 账户级目录
+## 路径规则
 
 - Skill：`$HOME/.agents/skills`
 - Reviewer：`${CODEX_HOME:-$HOME/.codex}/agents`
-- Global：`${CODEX_HOME:-$HOME/.codex}/AGENTS.md`
-- Plugin Marketplace：`$HOME/.agents/plugins/cp-assistant-marketplace`
-- 安装状态：`${CODEX_HOME:-$HOME/.codex}/cp-assistant-v6-state.json`
-- 安装锁与活动事务：位于 `CODEX_HOME`，只覆盖本包的安装操作。
+- 全局规则：`${CODEX_HOME:-$HOME/.codex}/AGENTS.md`
+- Marketplace：`$HOME/.agents/plugins/cp-assistant-marketplace`
+- state：`${CODEX_HOME:-$HOME/.codex}/cp-assistant-v6-state.json`
 
-Windows 原生进程若继承 `/mnt/c/Users/.../.codex`，必须先转换为盘符路径。安装目标不得保留 WSL 风格路径。
+Windows 原生进程若继承 `/mnt/c/.../.codex`，必须转换为盘符路径。路径目标及其祖先、受管树后代均不得含符号链接、Junction 或 Reparse Point。
 
-## 标准升级流程
+## 标准升级
 
-在解压后的 V6.3 根目录执行：
+在解压后的 V6.4 根目录依次执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -32,80 +31,89 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-完成条件为 Plugin `installed=true`、`enabled=true`、`version=6.3.0`，同时 10 个 Skill、7 个 Reviewer 和 6 个 Hook 均通过安装校验。仅复制文件不构成 Plugin 安装成功。
+dry-run 应明确显示：
 
-## 持久化事务
+- `from_version=6.3.0` 与 `to_version=6.4.0`；
+- schema 1 到 2 迁移；
+- 新升级备份路径；
+- Marketplace payload、manifest 和 Plugin cache 分离目标；
+- 未知条目保留；
+- 完整回滚动作；
+- 无路径越界或链接型路径风险。
 
-安装与卸载在首次受管写入前建立事务日志和互斥锁。事务记录旧状态、备份、计划动作、已完成动作和 Plugin 注册阶段；成功提交后归档事务并移除活动日志。
+完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=6.4.0`，并且 10 个 Skill、7 个 Reviewer、6 个 Hook 和 payload digest 全部通过。文件复制完成不构成 Plugin 成功状态。
 
-以下情况按失败关闭处理：
+## 事务与能力探测
 
-- 存在未完成活动事务；
-- Codex 版本或 Plugin 命令能力不兼容；
-- 目标或祖先目录为 Junction、Reparse Point 或符号链接；
-- 受管文件发生未解释漂移；
-- 备份、状态或事务完整性校验失败；
-- 回滚不能恢复文件或 Plugin 注册状态。
+安装前 `doctor` 检查：
 
-同一 `CODEX_HOME` 同时只允许一个本包安装事务。锁冲突输出持有进程与事务位置，不进行并发写入。
+- Codex 版本精确为 0.150.1；
+- `plugin list --json` 可执行；
+- Marketplace add/remove 与 Plugin add/remove 命令存在；
+- state schema 可识别；
+- 无活动事务或可恢复残留；
+- 载荷 manifest 与当前源树一致。
 
-## 崩溃后检查与恢复
+首次受管写入前建立互斥锁和 journal。journal 记录旧状态、备份、每个目标的 mutation intent、Plugin 注册阶段、cache 候选路径及新旧 digest。成功提交后活动 journal 被清理，归档记录保留。
 
-先读取状态，不直接重复安装：
+## 崩溃恢复
+
+先读取状态：
 
 ```powershell
-python scripts\package_manager.py status --scope user
+python scripts\package_manager.py status --scope user --mode plugin --json
 python scripts\package_manager.py doctor
 ```
 
 存在未提交事务时执行：
 
 ```powershell
-python scripts\package_manager.py recover --scope user
+python scripts\package_manager.py doctor --recover
 ```
 
-恢复只处理日志中已记录且归属本包的动作：
+恢复流程按 journal 所有权处理：
 
-- `PREPARED` 且尚未发生写入时，清理空事务；
-- 已发生文件写入时，按备份恢复受管文件；
-- 已发生 Plugin 注册变更时，恢复原 Plugin 版本与启用状态；
-- 合并型 `AGENTS.md` 与 standalone `hooks.json` 只撤销本包标记区块；
-- 遇到未知内容或归属冲突时停止并保留证据，不覆盖外部修改。
+1. 恢复 Marketplace payload 与 manifest；
+2. 恢复原 Plugin cache 或清理本次候选 cache；
+3. 恢复原 Plugin 版本和启用状态；
+4. 恢复 state 与合并型全局规则；
+5. 再次读取 Plugin list 与 payload digest。
 
-恢复完成后重新执行 `doctor`、dry-run、正式安装和 `verify`。不得手工删除整个 `.codex`、`.agents` 或 plugins 目录。
+未知内容、归属漂移、损坏 journal、不完整备份或恢复后读回不一致时停止并保留日志。不得直接递归删除整个 `.codex`、`.agents` 或 plugins 目录。
 
-## 回滚与卸载
+## 手动回滚
 
-先查看计划：
+优先使用安装器恢复，不直接复制整棵账户目录：
+
+```powershell
+python scripts\package_manager.py recover --scope user
+python scripts\package_manager.py verify --scope user --mode plugin
+codex plugin list --json
+```
+
+若正式安装已提交但需回到旧版本，可从保留的升级备份和旧正式包执行明确版本恢复。恢复完成后应确认原版本 installed/enabled、原 cache digest、原 state、主配置哈希和历史项目上下文数量。
+
+## 卸载
 
 ```powershell
 python scripts\package_manager.py uninstall --scope user --mode plugin --dry-run
-```
-
-正式卸载：
-
-```powershell
 python scripts\package_manager.py uninstall --scope user --mode plugin
 ```
 
-卸载按安装状态和内容哈希识别受管资产，并恢复升级前备份。外部漂移默认阻断；`--force` 仅适用于已确认的受管漂移，不授权删除未知资产。
+受管资源发生外部修改时默认拒绝覆盖式卸载。`--force` 只在归属和覆盖影响已经明确时使用。普通卸载不删除项目上下文、自观察数据或历史备份。
 
-## 发行包证明
-
-确定性构建：
+## 正式制品验证
 
 ```powershell
-python scripts\build-release.py reproducible `
-  --output ..\Codex-Skills-V6.3.zip `
-  --witness ..\deterministic-build-v6.3.json
+python scripts\validate-package.py
+python scripts\build-release.py verify --archive ..\Codex-Skills-V6.4.zip
+python scripts\release-attestation.py verify --attestation ..\release-attestation-v6.4.json --artifact ..\Codex-Skills-V6.4.zip
 ```
 
-机器证明由正式 ZIP 哈希、Codex 版本证据、Plugin 状态、生命周期报告、包校验与确定性构建见证共同构成。验证命令：
+机器证明应绑定正式 ZIP SHA-256、确定性构建见证、Codex 版本、Plugin list、生命周期报告、统一验证报告和安装后的 payload digest。任一证据缺失或哈希不一致时，正式发行结论失败关闭。
 
-```powershell
-python scripts\release-attestation.py verify `
-  --attestation ..\release-attestation-v6.3.json `
-  --artifact ..\Codex-Skills-V6.3.zip
-```
+## Windows Hook
 
-机器证明只保存白名单摘要与证据哈希，不保存原始 Prompt、完整回答、代码正文、凭据或原始会话标识。
+六个 Hook 通过 `cp_hook.cmd` 启动，优先使用可用的账户 CPython，再回退 `python.exe` 或 `py.exe -3`。无需额外创建 `python3.exe`。SessionEnd timeout 为 3 秒，与 Codex 0.150.1 限制兼容。
+
+升级前已打开的任务可能继续使用旧 Plugin 快照；升级后新建任务完成最终发现验证。不自动重启 Codex。
