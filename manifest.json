@@ -1,10 +1,10 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "4.0.0",
-  "release_name": "通用前端工程增强版",
-  "generated_for": "Codex Skills with framework-neutral frontend engineering, reviewer runtime-isolation disclosure, deterministic review budgets, secure task memory, and multi-signal observability",
+  "version": "4.1.0",
+  "release_name": "执行确定性与独立上下文增强版",
+  "generated_for": "Codex Skills with progressive references, execution profiles, deterministic task envelopes, evidence fingerprints, independent-context subagents, review packets, installation doctor/rollback, and semantic validation",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
-  "user_skills_target": "$HOME/.agents/skills",
+  "user_skills_target": "${CODEX_HOME:-$HOME/.codex}/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
   "skills": [
     {
@@ -133,7 +133,28 @@
     "default_completed_task_retention_days": 90,
     "default_temporary_analysis_retention_days": 30,
     "strict_readonly_review_requires_parent_readonly": true,
-    "review_runtime_isolation_evidence_required": true
+    "review_runtime_isolation_evidence_required": true,
+    "execution_profiles": [
+      "LIGHT",
+      "STANDARD",
+      "STRICT"
+    ],
+    "execution_phases": [
+      "IDENTIFY",
+      "PLAN",
+      "IMPLEMENT",
+      "VALIDATE",
+      "REVIEW",
+      "DELIVER"
+    ],
+    "evidence_fingerprint_required": true,
+    "review_packet_required_for_multi_agent": true,
+    "subagent_independent_context": true,
+    "reviewer_effort_tiers": [
+      "economy",
+      "balanced",
+      "deep"
+    ]
   },
   "log_analysis_modes": [
     "static-file-analysis",
@@ -199,5 +220,24 @@
     ],
     "templates": 3,
     "negative_route": "pure-node-backend"
+  },
+  "legacy_user_skills_target": "$HOME/.agents/skills",
+  "execution_determinism": {
+    "task_envelope": "skills/engineering-quality-delivery/assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml",
+    "guard": "skills/engineering-quality-delivery/scripts/execution_guard.py",
+    "review_packet": "skills/multi-agent-independent-review/scripts/review_packet.py",
+    "semantic_lint": "scripts/semantic-lint.py"
+  },
+  "subagent_context_model": {
+    "independent_context": true,
+    "minimal_delegation_packet": true,
+    "structured_summary_only": true,
+    "permission_isolation_separate": true
+  },
+  "installation_management": {
+    "manager": "scripts/package_manager.py",
+    "dry_run": true,
+    "doctor": true,
+    "restore_latest_backup": true
   }
 }
