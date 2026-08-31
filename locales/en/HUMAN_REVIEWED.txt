@@ -103,6 +103,14 @@ skills/multi-agent-independent-review/assets/templates/REVIEW_LEDGER.template.md
 skills/multi-agent-independent-review/assets/templates/REVIEW_PLAN.template.md
 skills/multi-agent-independent-review/assets/templates/REVIEW_RESULT.template.md
 skills/multi-agent-independent-review/references/controlled-self-evolution.md
+skills/multi-agent-independent-review/references/multi-agent-independent-review-workflow.md
+skills/multi-agent-independent-review/references/review-goals-limits-isolation.md
+skills/multi-agent-independent-review/references/review-postimplementation.md
+skills/multi-agent-independent-review/references/review-preimplementation-controller.md
+skills/multi-agent-independent-review/references/review-stop-output-memory.md
+skills/multi-agent-independent-review/references/review-triggers-reviewers.md
+skills/multi-agent-independent-review/references/reviewer-effort-tiers.md
+skills/multi-agent-independent-review/references/reviewer-model-routing.md
 skills/multi-agent-independent-review/SKILL.md
 skills/python-backend-ai-engineering/agents/openai.yaml
 skills/python-backend-ai-engineering/references/python-backend-ai-rules.md
