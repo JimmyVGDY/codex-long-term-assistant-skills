@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "files": {
+    "hooks/cp_hook.py": {
+      "plain": {
+        "自动子 Agent 模型不得超过 Terra High；显式 Sol 或更高模型被策略拒绝。": "Automatic subagent models cannot exceed Terra High; explicit Sol or stronger models are denied.",
+        "自动子 Agent reasoning_effort 最高为 high。": "Automatic subagent reasoning_effort cannot exceed high.",
+        "显式模型无法证明不超过 Terra High，按 fail-closed 策略拒绝；可使用 gpt-5.6-luna、gpt-5.6-terra 或省略显式模型。": "The explicit model cannot be proven within the Terra High ceiling and is denied fail-closed; use gpt-5.6-luna, gpt-5.6-terra, or omit the explicit model.",
+        "PreToolUse 输入无法解析，按 fail-closed 策略拒绝自动子 Agent。": "PreToolUse input could not be parsed; automatic subagent dispatch is denied fail-closed.",
+        "PreToolUse Hook 异常，按 fail-closed 策略拒绝自动子 Agent。": "PreToolUse Hook failed; automatic subagent dispatch is denied fail-closed."
+      }
+    },
+    "runtime/cp_runtime/approval.py": {
+      "plain": {
+        "approval operations 不能为空": "approval operations cannot be empty",
+        "不支持的 Approval operation: ": "Unsupported Approval operation: ",
+        "Approval 过期时间必须晚于当前时间": "Approval expiry must be later than the current time",
+        "这是工作流级授权记录，不是 Codex 平台或操作系统权限边界": "This is a workflow-level approval record, not a Codex platform or operating-system permission boundary",
+        "Evidence 不会自动创建 Approval": "Evidence never creates Approval automatically",
+        "基线、项目、任务、环境或操作不一致时必须失败关闭": "Fail closed when the baseline, project, task, environment, or operation does not match",
+        "Approval 仓库与 Project Profile 不一致": "The Approval repository does not match the Project Profile",
+        "不支持的 Approval schema_version": "Unsupported Approval schema_version",
+        "Approval 无效: ": "Approval is invalid: "
+      }
+    },
+    "runtime/cp_runtime/common.py": {
+      "plain": {
+        "时间必须包含时区": "The timestamp must include a time zone",
+        "记录": "Record",
+        "缺少受支持的完整性字段": " is missing a supported integrity field",
+        "完整性校验失败": " failed integrity validation",
+        "项目治理状态默认必须保存在业务仓库外": "Project-governance state must remain outside the business repository by default",
+        "environment 仅允许 local/nonproduction/production": "environment allows only local/nonproduction/production",
+        "命令失败: {}\n{}": "Command failed: {}\n{}",
+        "仓库目录不存在: ": "Repository directory does not exist: ",
+        "目标目录不是 Git 仓库: ": "Target directory is not a Git repository: ",
+        "禁止把受管根目录本身作为替换目标": "The managed root itself cannot be used as a replacement target"
+      },
+      "fstring": {
+        "f\"{label} 格式非法: {value!r}\"": "f\"{label} has an invalid format: {value!r}\"",
+        "f\"缺少文件: {path}\"": "f\"Missing file: {path}\"",
+        "f\"读取 JSON 失败 {path}: {exc}\"": "f\"Failed to read JSON {path}: {exc}\"",
+        "f\"JSON 顶层必须是对象: {path}\"": "f\"The JSON top level must be an object: {path}\"",
+        "f\"目标路径越界: {resolved_target}\"": "f\"Target path escapes its boundary: {resolved_target}\""
+      }
+    },
+    "runtime/cp_runtime/evidence.py": {
+      "plain": {
+        "非法 Evidence kind": "Invalid Evidence kind",
+        "非法 Evidence status": "Invalid Evidence status",
+        "Evidence 仓库与 Project Profile 不一致": "The Evidence repository does not match the Project Profile",
+        "Evidence 只证明记录范围内的观察，不授予 commit/push/deploy/restart/data-write 权限": "Evidence proves only observations within its recorded scope and grants no commit, push, deploy, restart, or data-write authority",
+        "仓库指纹变化后必须重新判断 freshness": "Freshness must be reassessed after the repository fingerprint changes",
+        "不支持的 Evidence schema_version": "Unsupported Evidence schema_version"
+      }
+    },
+    "runtime/cp_runtime/finalization.py": {
+      "plain": {
+        "execution-state 缺少 repo_path": "execution-state is missing repo_path",
+        "execution-state 与 Finalization 仓库不一致": "execution-state does not match the Finalization repository",
+        "未知 Finalization claim: ": "Unknown Finalization claim: ",
+        "本检查器不会执行 commit/push/deploy/restart 或生产操作": "This checker does not commit, push, deploy, restart, or perform production operations",
+        "Push 只有显式动作读回证据才能标记为已确认，本地 upstream ref 不能替代远端读回": "Push can be confirmed only by explicit action readback evidence; a local upstream ref cannot replace remote readback",
+        "未记录 readback evidence 的外部动作必须保持 not-confirmed": "External actions without recorded readback evidence must remain not-confirmed"
+      }
+    },
+    "runtime/cp_runtime/cli.py": {
+      "plain": {
+        "Codex 跨项目技术助手 V5.0 项目治理运行时": "Codex Cross-Project Engineering Assistant V5.0 project-governance runtime"
+      }
+    },
+    "runtime/cp_runtime/feedback.py": {
+      "plain": {
+        "反馈仅用于人工评估，不自动修改模型、预算或路由规则": "Feedback is for human evaluation only and never changes models, budgets, or routing rules automatically"
+      }
+    }
+  }
+}
