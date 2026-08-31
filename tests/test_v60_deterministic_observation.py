@@ -52,7 +52,7 @@ class V60DeterministicObservationTests(unittest.TestCase):
         rows=[]
         for i in range(5):
             rows.append({'record_id':f'R{i}','task_id':f'TASK-{i}','timestamp':datetime(2026,8,1,tzinfo=timezone.utc).isoformat(),
-                         'status':'PLAN','reviewer_results':[{'reviewer':'r1','blocking_findings':1,'nonblocking_findings':1,
+                         'status':'PLAN','reviewer_results':[{'reviewer':'r1','result_id':f'RR-{i}','blocking_findings':1,'nonblocking_findings':1,
                          'findings':[{'severity':'HIGH'},{'severity':'LOW'}]}]})
         self.write_jsonl('review/review-results.jsonl',rows)
         snap=observe_project(self.project_id,self.project_dir)
@@ -90,7 +90,7 @@ class V60DeterministicObservationTests(unittest.TestCase):
         for index in range(5):
             rows.append({'record_id':f'R{index}','task_id':f'T{index}','timestamp':datetime(2026,8,1+index,tzinfo=timezone.utc).isoformat(),
                          'terminal_outcome':'UNKNOWN','actual_model':'gpt-5.6-luna',
-                         'reviewer_results':[{'reviewer':'r1','accepted':1,'rejected':1,'duplicate':1,'repaired':1,'regressions_prevented':1,'duration_ms':10,'cost_units':2}]})
+                         'reviewer_results':[{'reviewer':'r1','result_id':f'RR-{index}','accepted':1,'rejected':1,'duplicate':1,'repaired':1,'regressions_prevented':1,'duration_ms':10,'cost_units':2}]})
         self.write_jsonl('review/review-results.jsonl',rows)
         snap=observe_project(self.project_id,self.project_dir)
         self.assertEqual(0,snap.metrics['known_outcome_count'])

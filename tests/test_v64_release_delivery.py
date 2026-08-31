@@ -18,13 +18,16 @@ from cp_runtime.event_v2 import append_event, make_event, stable_repo_fingerprin
 
 
 def run_script(script: Path, arguments: list[str], environment: dict[str, str] | None = None, expected: int = 0):
+    effective_environment = dict(environment or os.environ)
+    if "CP_ASSISTANT_KEYRING_PATH" not in effective_environment:
+        effective_environment["CODEX_HOME"] = str(ROOT / ".isolated-test-codex-home")
     result = subprocess.run(
         [sys.executable, "-B", str(script), *arguments],
         text=True,
         encoding="utf-8",
         errors="replace",
         capture_output=True,
-        env=environment,
+        env=effective_environment,
         timeout=120,
     )
     if result.returncode != expected:
@@ -36,14 +39,14 @@ def run_script(script: Path, arguments: list[str], environment: dict[str, str] |
 
 class V64ReleaseDeliveryTests(unittest.TestCase):
     def setUp(self):
-        self.temporary = tempfile.TemporaryDirectory(prefix="cp-v64-release-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="cp-v65-release-")
         self.root = Path(self.temporary.name)
 
     def tearDown(self):
         self.temporary.cleanup()
 
     def test_release_build_is_byte_reproducible_and_normalized(self):
-        artifact = self.root / "Codex-Skills-V6.4.zip"
+        artifact = self.root / "Codex-Skills-V6.5.zip"
         witness = self.root / "deterministic-build-v6.3.json"
         result = run_script(BUILD, ["reproducible", "--output", str(artifact), "--witness", str(witness)])
         report = json.loads(result.stdout)
@@ -107,7 +110,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         self.assertNotIn(child, serialized)
         self.assertIn("gpt-5.6-luna", report["actual_subagent_models"])
 
-    def test_lifecycle_uses_correlated_host_session_model_without_rewriting_hook_facts(self):
+    def test_lifecycle_rejects_host_only_model_proof_without_rewriting_hook_facts(self):
         event_file = self.root / "task-outcome-v2-unavailable.jsonl"
         session = "session-host-fact"
         parent = "parent-host-fact"
@@ -158,13 +161,8 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             "--expected-reasoning-effort", "low",
             "--host-session-log", str(host_log),
             "--output", str(self.root / "host-model-report.json"),
-        ])
-        report = json.loads(result.stdout)
-        self.assertEqual([], report["actual_subagent_models"])
-        self.assertEqual("PASS", report["subagent_model_evidence"]["status"])
-        self.assertTrue(report["subagent_model_evidence"]["host_session_match"])
-        self.assertTrue(report["subagent_model_evidence"]["actual_model_fact_preserved"])
-        self.assertEqual(["low"], report["subagent_model_evidence"]["observed_reasoning_efforts"])
+        ], expected=2)
+        self.assertIn("trusted hook facts", result.stderr)
 
         run_script(LIFECYCLE, [
             "--event-file", str(event_file),
@@ -176,14 +174,14 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         ], expected=2)
 
     def test_attestation_binds_artifact_and_all_evidence(self):
-        artifact = self.root / "Codex-Skills-V6.4.zip"
-        artifact.write_bytes(b"artifact-v64")
+        artifact = self.root / "Codex-Skills-V6.5.zip"
+        artifact.write_bytes(b"artifact-v65")
         evidence = {
             "plugin-list-v6.3.json": {
                 "installed": [
                     {
                         "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-                        "version": "6.4.0",
+                        "version": "6.5.0",
                         "installed": True,
                         "enabled": True,
                     }
@@ -201,17 +199,17 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
                     "SESSION_ENDED",
                 ],
                 "actual_subagent_models": ["gpt-5.6-luna"],
-                "event_chain": {"valid": True},
+                "event_chain": {"valid": True, "seal_status": "SEALED_CURRENT", "hmac_verified": True},
             },
             "package-validation-v6.3.json": {"ok": True},
             "deterministic-build-v6.3.json": {
                 "ok": True,
                 "reproducible": True,
-                "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
+                "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
             },
             "release-verification-v6.4.json": {
-                "ok": True, "version": "6.4.0",
-                "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
+                "ok": True, "version": "6.5.0",
+                "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
                 "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")},
             },
         }
@@ -219,7 +217,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             (self.root / name).write_text(json.dumps(value), encoding="utf-8")
         version_evidence = self.root / "codex-version-v6.3.txt"
         version_evidence.write_text("codex-cli 0.150.1\n", encoding="utf-8")
-        environment = dict(os.environ)
+        environment = {**os.environ, "CP_ASSISTANT_ATTESTATION_HMAC_KEY": "legacy-release-test-key"}
         attestation = self.root / "release-attestation-v6.3.json"
         run_script(
             ATTEST,
@@ -269,18 +267,18 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         )
 
     def test_attestation_rejects_witness_for_another_artifact(self):
-        artifact = self.root / "Codex-Skills-V6.4.zip"
-        artifact.write_bytes(b"artifact-v64")
+        artifact = self.root / "Codex-Skills-V6.5.zip"
+        artifact.write_bytes(b"artifact-v65")
         plugin = self.root / "plugin-list-v6.3.json"
         plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.4.0", "installed": True, "enabled": True,
+            "version": "6.5.0", "installed": True, "enabled": True,
         }]}), encoding="utf-8")
         lifecycle = self.root / "lifecycle-acceptance-v6.3.json"
         lifecycle.write_text(json.dumps({
             "ok": True, "project_id": "project-neutral", "repo_fingerprint": "sha256:" + "a" * 64,
             "required_sequence": list(("TURN_OPENED", "SUBAGENT_STARTED", "SUBAGENT_STOPPED", "TASK_COMPLETED", "SESSION_ENDED")),
-            "actual_subagent_models": ["gpt-5.6-luna"], "event_chain": {"valid": True},
+            "actual_subagent_models": ["gpt-5.6-luna"], "event_chain": {"valid": True, "seal_status": "SEALED_CURRENT", "hmac_verified": True},
         }), encoding="utf-8")
         validation = self.root / "package-validation-v6.3.json"
         validation.write_text(json.dumps({"ok": True}), encoding="utf-8")
@@ -289,8 +287,8 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         version = self.root / "codex-version-v6.3.txt"
         version.write_text("codex-cli 0.150.1\n", encoding="utf-8")
         unified = self.root / "release-verification-v6.4.json"
-        unified.write_text(json.dumps({"ok": True, "version": "6.4.0",
-            "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
+        unified.write_text(json.dumps({"ok": True, "version": "6.5.0",
+            "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
             "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")}}), encoding="utf-8")
         result = run_script(ATTEST, [
             "create", "--artifact", str(artifact), "--plugin-list", str(plugin),
@@ -302,32 +300,36 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         self.assertIn("not bound", result.stderr)
 
     def test_attestation_hmac_and_unsafe_evidence_name_fail_closed(self):
-        artifact = self.root / "Codex-Skills-V6.4.zip"; artifact.write_bytes(b"artifact-v64")
+        artifact = self.root / "Codex-Skills-V6.5.zip"; artifact.write_bytes(b"artifact-v65")
         plugin = self.root / "plugin.json"; plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.4.0", "installed": True, "enabled": True,
+            "version": "6.5.0", "installed": True, "enabled": True,
         }]}), encoding="utf-8")
         lifecycle = self.root / "life.json"; lifecycle.write_text(json.dumps({
             "ok": True, "project_id": "project-neutral", "repo_fingerprint": "sha256:" + "a" * 64,
             "required_sequence": ["TURN_OPENED", "SUBAGENT_STARTED", "SUBAGENT_STOPPED", "TASK_COMPLETED", "SESSION_ENDED"],
-            "actual_subagent_models": ["gpt-5.6-luna"], "event_chain": {"valid": True},
+            "actual_subagent_models": ["gpt-5.6-luna"], "event_chain": {"valid": True, "seal_status": "SEALED_CURRENT", "hmac_verified": True},
         }), encoding="utf-8")
         validation = self.root / "validation.json"; validation.write_text(json.dumps({"ok": True}), encoding="utf-8")
         witness = self.root / "witness.json"; witness.write_text(json.dumps({
-            "ok": True, "reproducible": True, "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
+            "ok": True, "reproducible": True, "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
         }), encoding="utf-8")
         version = self.root / "version.txt"; version.write_text("codex-cli 0.150.1\n", encoding="utf-8")
         unified = self.root / "unified.json"; unified.write_text(json.dumps({
-            "ok": True, "version": "6.4.0", "artifact_sha256": hashlib.sha256(b"artifact-v64").hexdigest(),
+            "ok": True, "version": "6.5.0", "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
             "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")}
         }), encoding="utf-8")
         attestation = self.root / "attestation.json"
-        good_env = {**os.environ, "CP_ASSISTANT_ATTESTATION_HMAC_KEY": "test-key-v64"}
+        good_env = {**os.environ, "CP_ASSISTANT_ATTESTATION_HMAC_KEY": "test-key-v65"}
         create_args = ["create", "--artifact", str(artifact), "--plugin-list", str(plugin),
                        "--lifecycle-report", str(lifecycle), "--package-validation", str(validation),
                        "--deterministic-witness", str(witness), "--codex-version-evidence", str(version),
                        "--unified-verification", str(unified),
                        "--output", str(attestation)]
+        no_backend_env = dict(os.environ)
+        no_backend_env.pop("CP_ASSISTANT_ATTESTATION_HMAC_KEY", None)
+        no_backend_env["CODEX_HOME"] = str(self.root / "no-keyring-home")
+        run_script(ATTEST, create_args, no_backend_env, expected=2)
         run_script(ATTEST, create_args, good_env)
         run_script(ATTEST, ["verify", "--attestation", str(attestation), "--artifact", str(artifact)], good_env)
         bad_env = {**good_env, "CP_ASSISTANT_ATTESTATION_HMAC_KEY": "wrong-key"}

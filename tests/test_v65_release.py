@@ -23,11 +23,11 @@ def load_script(name: str, filename: str):
 class V64ReleaseTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temporary = tempfile.TemporaryDirectory(prefix="cp-v64-release-")
+        cls.temporary = tempfile.TemporaryDirectory(prefix="cp-v65-release-")
         cls.root = Path(cls.temporary.name)
-        cls.builder = load_script("build_release_v64", "build-release.py")
-        cls.verifier = load_script("verify_release_v64", "verify-release.py")
-        cls.artifact = cls.root / "Codex-Skills-V6.4.zip"
+        cls.builder = load_script("build_release_v65", "build-release.py")
+        cls.verifier = load_script("verify_release_v65", "verify-release.py")
+        cls.artifact = cls.root / "Codex-Skills-V6.5.zip"
         cls.build = cls.builder.build_release(ROOT, cls.artifact)
 
     @classmethod
@@ -36,19 +36,32 @@ class V64ReleaseTests(unittest.TestCase):
 
     def evidence(self):
         digest = json.loads((ROOT / "PLUGIN_PAYLOAD_MANIFEST.json").read_text(encoding="utf-8"))["payload_digest"]
-        package = {"ok": True, "version": "6.4.0"}
-        witness = {"ok": True, "reproducible": True, "version": "6.4.0",
+        package = {"ok": True, "version": "6.5.0"}
+        witness = {"ok": True, "reproducible": True, "version": "6.5.0",
                    "artifact_sha256": hashlib.sha256(self.artifact.read_bytes()).hexdigest()}
         plugin = {"installed": [{"pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
                                   "name": "codex-cross-project-engineering-assistant",
-                                  "marketplaceName": "cp-assistant-local", "version": "6.4.0",
+                                  "marketplaceName": "cp-assistant-local", "version": "6.5.0",
                                   "installed": True, "enabled": True}]}
-        lifecycle = {"ok": True, "project_id": "project-v64", "repo_fingerprint": "sha256:" + "b" * 64,
-                     "actual_subagent_models": ["gpt-5.6-luna"],
+        lifecycle = {"ok": True, "project_id": "project-v65", "repo_fingerprint": "sha256:" + "b" * 64,
+                     "actual_subagent_models": [],
+                     "subagent_model_evidence": {"status": "NOT_REQUESTED", "host_session_match": True,
+                                                  "host_session_trust_level": "DIAGNOSTIC"},
                      "event_chain": {"valid": True, "head": "c" * 64}}
+        gate = {"ok": True, "automatic_ceiling": "gpt-5.6-terra + high", "cases": [
+            {"model": model, "reasoning_effort": effort, "actual": actual,
+             "expected": actual, "returncode": 0, "pass": True}
+            for model, effort, actual in (
+                ("gpt-5.6-luna", "low", "allow"),
+                ("gpt-5.6-luna", "medium", "allow"),
+                ("gpt-5.6-terra", "medium", "allow"),
+                ("gpt-5.6-terra", "high", "allow"),
+                ("gpt-5.6-terra", "xhigh", "deny"),
+                ("gpt-5.6-sol", "low", "deny"),
+            )]}
         host = {"codex_version": "codex-cli 0.150.1", "capability_profile": {"ok": True}}
         report = {key: {"ok": True, "payload_digest": digest} for key in ("source", "marketplace", "cache")}
-        return package, witness, plugin, lifecycle, host, report
+        return package, witness, plugin, lifecycle, gate, host, report
 
     def test_unified_verifier_derives_all_pass_states(self) -> None:
         result = self.verifier.verify_release(self.artifact, *self.evidence())
@@ -61,7 +74,14 @@ class V64ReleaseTests(unittest.TestCase):
         with self.assertRaises(self.verifier.VerificationError):
             self.verifier.verify_release(self.artifact, *evidence)
         evidence = list(self.evidence())
-        evidence[4]["capability_profile"] = {"ok": False}
+        evidence[5]["capability_profile"] = {"ok": False}
+        with self.assertRaises(self.verifier.VerificationError):
+            self.verifier.verify_release(self.artifact, *evidence)
+
+    def test_unified_verifier_rejects_incomplete_model_gate(self) -> None:
+        evidence = list(self.evidence())
+        evidence[4]["cases"] = [row for row in evidence[4]["cases"]
+                                if row["reasoning_effort"] != "xhigh"]
         with self.assertRaises(self.verifier.VerificationError):
             self.verifier.verify_release(self.artifact, *evidence)
 

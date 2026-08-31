@@ -68,6 +68,7 @@ class ControlledEvolutionTest(unittest.TestCase):
                 "skill": "problem-troubleshooting",
                 "reviewer_results": [{
                     "reviewer": "correctness-reviewer",
+                    "result_id": "review-result-%d" % index,
                     "blocking_findings": 1,
                     "nonblocking_findings": 0,
                 }],
@@ -184,6 +185,7 @@ class ControlledEvolutionTest(unittest.TestCase):
                 "quality_outcome": "accepted",
                 "reviewer_results": [{
                     "reviewer": "low-yield-reviewer",
+                    "result_id": "review-result-%d" % index,
                     "blocking_findings": 0,
                     "nonblocking_findings": 0,
                     "rejected": 1,

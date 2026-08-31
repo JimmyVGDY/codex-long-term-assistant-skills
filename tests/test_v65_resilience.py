@@ -22,7 +22,7 @@ from cp_hook import _event
 
 
 def load_package_manager():
-    spec = importlib.util.spec_from_file_location("package_manager_v64", ROOT / "scripts" / "package_manager.py")
+    spec = importlib.util.spec_from_file_location("package_manager_v65", ROOT / "scripts" / "package_manager.py")
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -31,9 +31,9 @@ def load_package_manager():
 
 class V64ResilienceTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory(prefix="cp-v64-resilience-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="cp-v65-resilience-")
         self.root = Path(self.temporary.name)
-        self.project = "project-v64"
+        self.project = "project-v65"
         self.repo = "sha256:" + "a" * 64
 
     def tearDown(self) -> None:
@@ -52,13 +52,13 @@ class V64ResilienceTests(unittest.TestCase):
         }
 
     def test_payload_manifest_is_deterministic_and_tamper_fails(self) -> None:
-        first = build_manifest(ROOT, "codex-cross-project-engineering-assistant", "6.4.0")
-        second = build_manifest(ROOT, "codex-cross-project-engineering-assistant", "6.4.0")
+        first = build_manifest(ROOT, "codex-cross-project-engineering-assistant", "6.5.0")
+        second = build_manifest(ROOT, "codex-cross-project-engineering-assistant", "6.5.0")
         self.assertEqual(first, second)
         payload = self.root / "payload"
         for name in (".codex-plugin", "skills", "hooks", "runtime"):
             shutil.copytree(ROOT / name, payload / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        verify_payload(payload, first, package="codex-cross-project-engineering-assistant", version="6.4.0")
+        verify_payload(payload, first, package="codex-cross-project-engineering-assistant", version="6.5.0")
         target = next(path for path in (payload / "hooks").rglob("*.py"))
         target.write_bytes(target.read_bytes() + b"\n# tamper\n")
         with self.assertRaises(PayloadIntegrityError):
