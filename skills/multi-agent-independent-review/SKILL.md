@@ -31,3 +31,19 @@ description: >-
 - 模型策略：`references/reviewer-model-routing.md`
 
 > 只在独立判断能增加有效信息时派发 Reviewer；用 Luna 承担读取密集和机械核验，用 Terra 承担业务与高风险判断。
+
+<!-- V5.1-CONTROLLED-EVOLUTION:BEGIN -->
+## V5.1 自观察与受控自进化
+
+当任务目标是复盘长期失败、模型升级、Reviewer 收益、修复轮次、Skill 路由偏差或跨任务成本时：
+
+1. 先确认 Project ID 和仓库外项目上下文；
+2. 使用 `python3 -B scripts/evolution.py run ... --dry-run`；
+3. 只依据结构化 Feedback、Review、Evidence、Checkpoint 和 Audit 生成观察快照；
+4. 数据满足阈值后才能形成价值/复杂度评估和优化提案；
+5. 所有提案 `execution_authorization=NONE`；
+6. 人工 ACCEPT 也不等于执行授权；
+7. 真正修改必须另建任务并经过现有 Execution Guard、Review Packet 和 Finalization。
+
+详细规则按需读取 `references/controlled-self-evolution.md`，不要在普通任务中加载全部 Evolution 文档。
+<!-- V5.1-CONTROLLED-EVOLUTION:END -->
