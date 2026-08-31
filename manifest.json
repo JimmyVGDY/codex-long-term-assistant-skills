@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "4.1.0",
-  "release_name": "执行确定性与独立上下文增强版",
-  "generated_for": "Codex Skills with progressive references, execution profiles, deterministic task envelopes, evidence fingerprints, independent-context subagents, review packets, installation doctor/rollback, and semantic validation",
+  "version": "4.2.0",
+  "release_name": "模型分级与成本收敛版",
+  "generated_for": "Codex Skills with progressive disclosure, Luna/Terra subagent routing, conservative review budgets, packet freshness, duplicate-work protection, evidence fingerprints, independent-context reviewers, deterministic checkpoints, installation doctor/rollback, and semantic validation",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "${CODEX_HOME:-$HOME/.codex}/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
@@ -46,7 +46,7 @@
     {
       "name": "multi-agent-independent-review",
       "display_name": "多 Agent 独立复审",
-      "description": "高风险实施前设计与影响审查，或代码改动后的多 Agent 独立复审、统一归因和最少有效修复轮次时使用。必须区分 TOML read-only 声明、逻辑只读与运行时系统隔离。",
+      "description": "高风险实施前设计审查或行为改动后的独立复审时使用。统一审查包、渐进读取、Luna/Terra 四级模型路由、集中归因和定向复核；简单低风险任务不机械多开。",
       "source_mapping": "new/multi-agent-independent-review"
     },
     {
@@ -58,7 +58,7 @@
     {
       "name": "long-running-task-memory",
       "display_name": "长期任务外部记忆与持续检查点",
-      "description": "任务跨会话、多阶段、多模块、多仓库、多 Agent、上下文可能压缩，或要求每个可恢复小节点持续更新目标、进度、证据、决策和交接时使用。启用后不得让已完成节点只存在于聊天上下文。",
+      "description": "跨会话、多阶段、多模块、多 Agent 或上下文压缩任务时使用。采用事件驱动检查点、内容指纹去重、最近 3 个检查点恢复和单一写入者。",
       "source_mapping": "06-长期任务外部记忆机制.md"
     }
   ],
@@ -114,18 +114,18 @@
     }
   ],
   "quality_limits": {
-    "max_review_agent_depth": 3,
-    "max_review_rounds": 3,
-    "max_parallel_reviewers": 6,
-    "max_total_review_agents_per_boundary": 12,
-    "max_repair_rounds": 3,
+    "max_review_agent_depth": 2,
+    "max_review_rounds": 2,
+    "max_parallel_reviewers": 3,
+    "max_total_review_agents_per_boundary": 6,
+    "max_repair_rounds": 2,
     "max_unpersisted_completed_nodes": 0,
-    "max_substantive_actions_without_checkpoint": 5,
-    "recent_checkpoints_to_load": 5,
-    "hot_progress_checkpoint_limit": 30,
+    "max_substantive_actions_without_checkpoint": 8,
+    "recent_checkpoints_to_load": 3,
+    "hot_progress_checkpoint_limit": 20,
     "single_memory_writer": true,
     "max_preimplementation_review_rounds": 1,
-    "max_preimplementation_reviewers": 4,
+    "max_preimplementation_reviewers": 2,
     "primary_domain_skill_limit": 1,
     "default_supporting_skill_limit": 2,
     "max_active_skills_without_justification": 4,
@@ -154,7 +154,20 @@
       "economy",
       "balanced",
       "deep"
-    ]
+    ],
+    "max_terra_high_reviewers": 1,
+    "reviewer_model_profiles": [
+      "luna-low",
+      "luna-medium",
+      "terra-medium",
+      "terra-high"
+    ],
+    "automatic_reviewer_model_ceiling": "gpt-5.6-terra",
+    "automatic_reviewer_reasoning_ceiling": "high",
+    "review_packet_schema_version": 3,
+    "review_result_schema_version": 2,
+    "duplicate_review_dispatch_protection": true,
+    "checkpoint_content_deduplication": true
   },
   "log_analysis_modes": [
     "static-file-analysis",
@@ -226,7 +239,9 @@
     "task_envelope": "skills/engineering-quality-delivery/assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml",
     "guard": "skills/engineering-quality-delivery/scripts/execution_guard.py",
     "review_packet": "skills/multi-agent-independent-review/scripts/review_packet.py",
-    "semantic_lint": "scripts/semantic-lint.py"
+    "semantic_lint": "scripts/semantic-lint.py",
+    "review_controller": "skills/multi-agent-independent-review/scripts/review_controller.py",
+    "checkpoint": "skills/long-running-task-memory/scripts/checkpoint.py"
   },
   "subagent_context_model": {
     "independent_context": true,
@@ -239,5 +254,52 @@
     "dry_run": true,
     "doctor": true,
     "restore_latest_backup": true
+  },
+  "compatibility_hard_limits": {
+    "max_review_agent_depth": 3,
+    "max_review_rounds": 3,
+    "max_parallel_reviewers": 6,
+    "max_total_review_agents_per_boundary": 12,
+    "max_repair_rounds": 3,
+    "max_preimplementation_reviewers": 4,
+    "max_terra_high_reviewers": 2
+  },
+  "model_routing": {
+    "main_agent": "user-selected",
+    "automatic_subagent_profiles": {
+      "luna-low": {
+        "model": "gpt-5.6-luna",
+        "reasoning_effort": "low"
+      },
+      "luna-medium": {
+        "model": "gpt-5.6-luna",
+        "reasoning_effort": "medium"
+      },
+      "terra-medium": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "medium"
+      },
+      "terra-high": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "high"
+      }
+    },
+    "upgrade_chain": [
+      "luna-low",
+      "luna-medium",
+      "terra-medium",
+      "terra-high"
+    ],
+    "forbidden_automatic": [
+      "gpt-5.6-sol",
+      "xhigh",
+      "max",
+      "ultra"
+    ],
+    "recommended_default_subagent_model": "gpt-5.6-luna",
+    "recommended_default_subagent_reasoning_effort": "medium",
+    "recommended_max_concurrent_threads_per_session": 3,
+    "config_example": "config/agents.example.toml",
+    "policy_scope": "skill-and-controller-workflow; not a platform-level allowlist"
   }
 }

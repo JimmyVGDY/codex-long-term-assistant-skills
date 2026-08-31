@@ -13,3 +13,4 @@ Original archives remain local and are not committed. Public tree digests cover 
 | 3.2.0 | `Codex跨项目长期技术助手Skills安装包_v3.2.zip` | `71f5ca4d91c46149be6f042115bffa7d20fc3896030f6c0617198e4b800edac2` | 227713 | 4 | `488f0602efdec92ddde92390a9265cf92f2143660e78e8c808368344235f92c1` |
 | 4.0.0 | `Codex跨项目长期技术助手Skills安装包_v4.0_通用前端工程增强版.zip` | `1dd489d5be3e87750f085447cd63dc0bc470b888c28796e3a78f138197d6d564` | 259971 | 3 | `bb977d6733eca264854f36cfe7cc968defa18675b37b7d3b7802bc80df1c9eb7` |
 | 4.1.0 | `Codex跨项目长期技术助手Skills安装包_v4.1_执行确定性与独立上下文增强版.zip` | `02a15f0ce7cfb1aa0bbd3363c26c399d16aaac9a1565cad77d030c28ded7422b` | 322138 | 13 | `acc60d8b0f872ce2e298ac0d29e61ac25e58b07d293137260cd60ae7a0486aa3` |
+| 4.2.0 | `Codex跨项目长期技术助手Skills安装包_v4.2_模型分级与成本收敛版.zip` | `a936b7f6c705dc26eac16fbd67810eb7cf26cc27832e88716206be25330cef10` | 371470 | 3 | `d1a5058dfb0111110791e948c61078d5b49a4a1a9aadd3dab5c0564fd384b207` |
