@@ -19,7 +19,7 @@ from typing import Any, Dict, Iterator, List
 
 STATE_FILE = "review-state.json"
 LOCK_FILE = ".review-controller.lock"
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 DEFAULT_LIMITS = {
     "max_agent_depth": 3,
     "max_post_review_rounds": 3,
@@ -30,6 +30,7 @@ DEFAULT_LIMITS = {
     "max_repair_rounds": 3,
 }
 VALID_PHASES = {"pre", "post"}
+VALID_EFFORT_TIERS = {"economy", "balanced", "deep"}
 VALID_RESULT_STATUSES = {"pass", "nonblocking", "blocking", "incomplete"}
 VALID_PARENT_SANDBOXES = {"read-only", "workspace-write", "danger-full-access", "unknown"}
 VALID_DECLARED_SANDBOXES = {"read-only", "workspace-write", "danger-full-access", "unknown"}
@@ -138,14 +139,18 @@ def derive_isolation_level(data: Dict[str, Any]) -> tuple[str, bool]:
 
     if review_mode == "self-review":
         return "self-review", False
-    if parent_sandbox == "read-only":
-        return "system-readonly", True
-    if probe_result == "sandbox-denied":
-        return "system-readonly", True
-    if parent_sandbox in {"workspace-write", "danger-full-access"}:
-        return "logical-readonly", False
+    # Runtime write success is stronger counter-evidence than any declared or parent mode.
     if probe_result == "write-succeeded":
         return "logical-readonly", False
+    # An explicit sandbox denial is direct runtime evidence, but identity must still be confirmed.
+    if probe_result == "sandbox-denied":
+        confirmed = bool(data.get("runtime_agent_confirmed"))
+        return ("system-readonly", True) if confirmed else ("unknown", False)
+    if parent_sandbox in {"workspace-write", "danger-full-access"}:
+        return "logical-readonly", False
+    if parent_sandbox == "read-only":
+        confirmed = bool(data.get("runtime_agent_confirmed")) and bool(data.get("agent_config_confirmed"))
+        return ("system-readonly", True) if confirmed else ("unknown", False)
     return "unknown", False
 
 
@@ -159,6 +164,15 @@ def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
         state.setdefault("notes", []).append(
             "从 schema v1 升级：原状态没有运行时隔离证据，默认标记为 unknown。"
         )
+    elif version == 2:
+        state["schema_version"] = SCHEMA_VERSION
+        state.setdefault("risk_level", "unknown")
+        state.setdefault("strict_readonly_required", False)
+        state.setdefault("isolation", default_isolation())
+        state.setdefault("notes", []).append("从 schema v2 升级：重新按 V4.1 证据优先级计算隔离等级。")
+        level, eligible = derive_isolation_level(state["isolation"])
+        state["isolation"]["isolation_level"] = level
+        state["isolation"]["strict_readonly_eligible"] = eligible
     elif version == SCHEMA_VERSION:
         state.setdefault("risk_level", "unknown")
         state.setdefault("strict_readonly_required", False)
@@ -372,6 +386,8 @@ def command_plan(args: argparse.Namespace) -> None:
             die("实施前 Reviewer 最多 {} 个".format(state["limits"]["max_preimplementation_reviewers"]))
         if len(reviewers) > state["limits"]["max_parallel_reviewers"]:
             die("计划 Reviewer 超过并行上限")
+        if len(reviewers) > 1 and not args.packet_sha256:
+            die("多 Reviewer 复审必须提供统一审查包 packet_sha256")
         remaining = state["limits"]["max_total_reviewers"] - state["counters"]["total_reviewers"]
         if len(reviewers) > remaining:
             die("Reviewer 总预算不足；剩余 {}，计划 {}".format(remaining, len(reviewers)))
@@ -381,6 +397,8 @@ def command_plan(args: argparse.Namespace) -> None:
             "phase": args.phase,
             "depth": args.depth,
             "purpose": args.purpose,
+            "effort_tier": args.effort_tier,
+            "packet_sha256": args.packet_sha256,
             "planned_reviewers": reviewers,
             "active": [],
             "results": {},
@@ -423,6 +441,8 @@ def command_dispatch(args: argparse.Namespace) -> None:
         round_data.setdefault("dispatch", {})[args.reviewer] = {
             "scope": args.scope,
             "isolation_level": state["isolation"]["isolation_level"],
+            "packet_sha256": round_data.get("packet_sha256", ""),
+            "effort_tier": round_data.get("effort_tier", "balanced"),
             "dispatched_at": now_iso(),
         }
         state["counters"]["total_reviewers"] += 1
@@ -439,6 +459,23 @@ def command_result(args: argparse.Namespace) -> None:
         state = load_state(review_dir)
         validate_state_data(state)
         round_data = get_round(state, args.phase, args.round)
+        expected_packet = round_data.get("packet_sha256", "")
+        if expected_packet and not args.result_file:
+            die("当前轮绑定了审查包，必须提供结构化 result_file")
+        if args.result_file:
+            result_path = Path(args.result_file).expanduser().resolve()
+            if not result_path.is_file():
+                die("Reviewer result_file 不存在")
+            try:
+                result_payload = json.loads(result_path.read_text(encoding="utf-8-sig"))
+            except json.JSONDecodeError as exc:
+                die("Reviewer result_file 不是有效 JSON: {}".format(exc))
+            if result_payload.get("reviewer") != args.reviewer:
+                die("Reviewer result_file 身份不匹配")
+            if result_payload.get("boundary_id") != state.get("boundary_id"):
+                die("Reviewer result_file boundary_id 不匹配")
+            if expected_packet and result_payload.get("packet_sha256") != expected_packet:
+                die("Reviewer result_file packet_sha256 不匹配")
         if args.reviewer not in round_data["active"]:
             die("Reviewer 当前不处于 active 状态")
         round_data["active"].remove(args.reviewer)
@@ -624,6 +661,8 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--depth", type=int, required=True)
     plan.add_argument("--reviewers", required=True)
     plan.add_argument("--purpose", required=True)
+    plan.add_argument("--effort-tier", choices=sorted(VALID_EFFORT_TIERS), default="balanced")
+    plan.add_argument("--packet-sha256", default="")
     plan.set_defaults(func=command_plan)
 
     dispatch = sub.add_parser("dispatch")

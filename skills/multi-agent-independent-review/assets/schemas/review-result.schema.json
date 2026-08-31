@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cross Project Reviewer Result",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "reviewer",
+    "boundary_id",
+    "packet_sha256",
+    "status",
+    "isolation_level",
+    "checked_scope",
+    "findings",
+    "unverified_items"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "reviewer": {
+      "type": "string"
+    },
+    "boundary_id": {
+      "type": "string"
+    },
+    "packet_sha256": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "nonblocking",
+        "blocking",
+        "incomplete"
+      ]
+    },
+    "isolation_level": {
+      "enum": [
+        "system-readonly",
+        "logical-readonly",
+        "tool-restricted",
+        "self-review",
+        "unknown"
+      ]
+    },
+    "checked_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "dimension",
+          "severity",
+          "evidence_level",
+          "blocking",
+          "summary",
+          "location",
+          "root_cause_group",
+          "required_validation"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dimension": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "blocking",
+              "high",
+              "medium",
+              "low",
+              "suggestion"
+            ]
+          },
+          "evidence_level": {
+            "enum": [
+              "confirmed",
+              "high-probability",
+              "inference",
+              "unverified"
+            ]
+          },
+          "blocking": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "root_cause_group": {
+            "type": "string"
+          },
+          "required_validation": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "unverified_items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string"
+    }
+  }
+}

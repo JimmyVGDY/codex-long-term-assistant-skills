@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "boundary_id": "FB-001",
+  "phase": "post",
+  "profile": "STANDARD",
+  "effort_tier": "balanced",
+  "base_ref": "HEAD",
+  "head_commit": "",
+  "diff_sha256": "",
+  "packet_sha256": "",
+  "changed_files": [],
+  "untracked_files": [],
+  "related_files": [],
+  "validation_evidence": [],
+  "constraints": []
+}
