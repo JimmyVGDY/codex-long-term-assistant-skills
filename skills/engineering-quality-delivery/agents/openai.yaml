@@ -1,0 +1,6 @@
+interface:
+  display_name: "研发质量与安全交付"
+  short_description: "修改、验证、六维复审、生产安全与 Git 交付门禁"
+  default_prompt: "使用研发质量与安全交付技能执行当前变更，明确授权和功能边界，完成最低定向验证、六维复审，并如实报告 Git 与环境状态。"
+policy:
+  allow_implicit_invocation: true
