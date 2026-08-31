@@ -86,7 +86,8 @@ class V64ResilienceTests(unittest.TestCase):
         self.assertEqual("unavailable", result["actual_model_source"])
         explicit = dict(base, actual_model="gpt-5.6-terra", actual_reasoning_effort="high", terminal_outcome="PASS")
         validated = make_event(_event(explicit) or {})
-        self.assertEqual("hook-payload", validated["actual_model_source"])
+        self.assertEqual("unavailable", validated["actual_model_source"])
+        self.assertEqual("", validated["actual_model"])
         self.assertEqual("hook-payload", validated["terminal_outcome_source"])
 
     def test_invalid_terminal_unknown_model_and_hash_consistent_bad_schema_fail(self) -> None:

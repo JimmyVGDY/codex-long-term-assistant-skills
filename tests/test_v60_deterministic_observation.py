@@ -156,14 +156,13 @@ class V60DeterministicObservationTests(unittest.TestCase):
         with self.assertRaises(ObservationError):
             observe_project(self.project_id,self.project_dir)
 
-    def test_live_owner_lock_is_not_stolen_after_stale_threshold(self):
+    def test_persistent_lock_metadata_does_not_create_a_stale_lock(self):
         event_path=self.root/'live-owner-events.jsonl'
         lock_path=Path(str(event_path)+'.lock')
         lock_path.write_text(json.dumps({'pid':os.getpid(),'token':'live','created_at':'old'}),encoding='utf-8')
         os.utime(lock_path,(1,1))
-        with self.assertRaises(TimeoutError):
-            with OwnerTokenLock(event_path,timeout=0.08,stale=0.0):
-                pass
+        with OwnerTokenLock(event_path,timeout=0.08,stale=0.0):
+            pass
 
     @unittest.skipUnless(os.name == 'nt', 'Windows native path normalization')
     def test_windows_runtime_converts_wsl_style_codex_home(self):
@@ -246,7 +245,7 @@ class V60DeterministicObservationTests(unittest.TestCase):
         self.assertEqual(expected,set(hooks))
         for event in expected:
             command=hooks[event][0]['hooks'][0]['commandWindows']
-            self.assertEqual(f'cmd.exe /d /c %PLUGIN_ROOT%\\hooks\\cp_hook.cmd {event}',command)
+            self.assertEqual(f'cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\cp_hook.cmd" {event}"',command)
         self.assertEqual(3,hooks['SessionEnd'][0]['hooks'][0]['timeout'])
 
     def test_proposal_lifecycle_requires_accept_task_baseline_validation_and_close(self):

@@ -27,7 +27,7 @@ class V64ReleaseTests(unittest.TestCase):
         cls.root = Path(cls.temporary.name)
         cls.builder = load_script("build_release_v65", "build-release.py")
         cls.verifier = load_script("verify_release_v65", "verify-release.py")
-        cls.artifact = cls.root / "Codex-Skills-V6.5.zip"
+        cls.artifact = cls.root / "Codex-Skills-V6.6.zip"
         cls.build = cls.builder.build_release(ROOT, cls.artifact)
 
     @classmethod
@@ -36,19 +36,21 @@ class V64ReleaseTests(unittest.TestCase):
 
     def evidence(self):
         digest = json.loads((ROOT / "PLUGIN_PAYLOAD_MANIFEST.json").read_text(encoding="utf-8"))["payload_digest"]
-        package = {"ok": True, "version": "6.5.0"}
-        witness = {"ok": True, "reproducible": True, "version": "6.5.0",
+        package = {"ok": True, "version": "6.6.0"}
+        witness = {"ok": True, "reproducible": True, "version": "6.6.0",
                    "artifact_sha256": hashlib.sha256(self.artifact.read_bytes()).hexdigest()}
         plugin = {"installed": [{"pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
                                   "name": "codex-cross-project-engineering-assistant",
-                                  "marketplaceName": "cp-assistant-local", "version": "6.5.0",
+                                  "marketplaceName": "cp-assistant-local", "version": "6.6.0",
                                   "installed": True, "enabled": True}]}
         lifecycle = {"ok": True, "project_id": "project-v65", "repo_fingerprint": "sha256:" + "b" * 64,
+                     "requested_model_policy": "PASS", "runtime_model_evidence": "UNAVAILABLE",
+                     "diagnostic_model_observation": "gpt-5.6-luna / low",
                      "actual_subagent_models": [],
                      "subagent_model_evidence": {"status": "NOT_REQUESTED", "host_session_match": True,
                                                   "host_session_trust_level": "DIAGNOSTIC"},
                      "event_chain": {"valid": True, "head": "c" * 64}}
-        gate = {"ok": True, "automatic_ceiling": "gpt-5.6-terra + high", "cases": [
+        gate = {"ok": True, "requested_model_policy": "PASS", "automatic_ceiling": "gpt-5.6-terra + high", "cases": [
             {"model": model, "reasoning_effort": effort, "actual": actual,
              "expected": actual, "returncode": 0, "pass": True}
             for model, effort, actual in (

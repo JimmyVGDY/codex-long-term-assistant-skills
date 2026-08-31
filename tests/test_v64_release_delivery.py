@@ -46,7 +46,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def test_release_build_is_byte_reproducible_and_normalized(self):
-        artifact = self.root / "Codex-Skills-V6.5.zip"
+        artifact = self.root / "Codex-Skills-V6.6.zip"
         witness = self.root / "deterministic-build-v6.3.json"
         result = run_script(BUILD, ["reproducible", "--output", str(artifact), "--witness", str(witness)])
         report = json.loads(result.stdout)
@@ -161,27 +161,30 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             "--expected-reasoning-effort", "low",
             "--host-session-log", str(host_log),
             "--output", str(self.root / "host-model-report.json"),
-        ], expected=2)
-        self.assertIn("trusted hook facts", result.stderr)
+        ])
+        report = json.loads(result.stdout)
+        self.assertEqual("UNAVAILABLE", report["runtime_model_evidence"])
+        self.assertEqual("gpt-5.6-luna / low", report["diagnostic_model_observation"])
 
-        run_script(LIFECYCLE, [
+        result = run_script(LIFECYCLE, [
             "--event-file", str(event_file),
             "--session-id", session,
             "--project-id", project,
             "--repo-fingerprint", fingerprint,
             "--expected-subagent-model", "gpt-5.6-luna",
             "--output", str(self.root / "missing-model-report.json"),
-        ], expected=2)
+        ])
+        self.assertEqual("UNAVAILABLE", json.loads(result.stdout)["runtime_model_evidence"])
 
     def test_attestation_binds_artifact_and_all_evidence(self):
-        artifact = self.root / "Codex-Skills-V6.5.zip"
+        artifact = self.root / "Codex-Skills-V6.6.zip"
         artifact.write_bytes(b"artifact-v65")
         evidence = {
             "plugin-list-v6.3.json": {
                 "installed": [
                     {
                         "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-                        "version": "6.5.0",
+                        "version": "6.6.0",
                         "installed": True,
                         "enabled": True,
                     }
@@ -208,7 +211,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
                 "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
             },
             "release-verification-v6.4.json": {
-                "ok": True, "version": "6.5.0",
+                "ok": True, "version": "6.6.0",
                 "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
                 "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")},
             },
@@ -267,12 +270,12 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         )
 
     def test_attestation_rejects_witness_for_another_artifact(self):
-        artifact = self.root / "Codex-Skills-V6.5.zip"
+        artifact = self.root / "Codex-Skills-V6.6.zip"
         artifact.write_bytes(b"artifact-v65")
         plugin = self.root / "plugin-list-v6.3.json"
         plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.5.0", "installed": True, "enabled": True,
+            "version": "6.6.0", "installed": True, "enabled": True,
         }]}), encoding="utf-8")
         lifecycle = self.root / "lifecycle-acceptance-v6.3.json"
         lifecycle.write_text(json.dumps({
@@ -287,7 +290,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         version = self.root / "codex-version-v6.3.txt"
         version.write_text("codex-cli 0.150.1\n", encoding="utf-8")
         unified = self.root / "release-verification-v6.4.json"
-        unified.write_text(json.dumps({"ok": True, "version": "6.5.0",
+        unified.write_text(json.dumps({"ok": True, "version": "6.6.0",
             "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
             "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")}}), encoding="utf-8")
         result = run_script(ATTEST, [
@@ -300,10 +303,10 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         self.assertIn("not bound", result.stderr)
 
     def test_attestation_hmac_and_unsafe_evidence_name_fail_closed(self):
-        artifact = self.root / "Codex-Skills-V6.5.zip"; artifact.write_bytes(b"artifact-v65")
+        artifact = self.root / "Codex-Skills-V6.6.zip"; artifact.write_bytes(b"artifact-v65")
         plugin = self.root / "plugin.json"; plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.5.0", "installed": True, "enabled": True,
+            "version": "6.6.0", "installed": True, "enabled": True,
         }]}), encoding="utf-8")
         lifecycle = self.root / "life.json"; lifecycle.write_text(json.dumps({
             "ok": True, "project_id": "project-neutral", "repo_fingerprint": "sha256:" + "a" * 64,
@@ -316,7 +319,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         }), encoding="utf-8")
         version = self.root / "version.txt"; version.write_text("codex-cli 0.150.1\n", encoding="utf-8")
         unified = self.root / "unified.json"; unified.write_text(json.dumps({
-            "ok": True, "version": "6.5.0", "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
+            "ok": True, "version": "6.6.0", "artifact_sha256": hashlib.sha256(b"artifact-v65").hexdigest(),
             "status": {key: "PASS" for key in ("package", "artifact", "host", "plugin", "lifecycle", "payload")}
         }), encoding="utf-8")
         attestation = self.root / "attestation.json"

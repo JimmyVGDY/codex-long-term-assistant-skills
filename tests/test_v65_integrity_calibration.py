@@ -103,23 +103,26 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
                                                       "effort": "low"}},
         ]
         host.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
-        with self.assertRaises(lifecycle.AcceptanceError):
-            lifecycle._model_evidence(["CHILD"], [], "gpt-5.6-luna", "low", host, "PARENT")
+        diagnostic = lifecycle._model_evidence(["CHILD"], [], "gpt-5.6-luna", "low", host, "PARENT")
+        self.assertEqual("UNAVAILABLE", diagnostic["runtime_model_evidence"])
+        self.assertEqual("gpt-5.6-luna / low", diagnostic["diagnostic_model_observation"])
         hook = [{"actual_model": "gpt-5.6-luna", "actual_reasoning_effort": "low",
-                 "actual_model_source": "hook-payload", "actual_reasoning_effort_source": "hook-payload"}]
+                 "actual_model_source": "host-attested-hook-payload",
+                 "actual_reasoning_effort_source": "host-attested-hook-payload",
+                 "metadata": {"host_attestation_ref": "sha256:" + "1" * 64}}]
         evidence = lifecycle._model_evidence(["CHILD"], hook, "gpt-5.6-luna", "low", host, "PARENT")
-        self.assertEqual("PASS", evidence["status"])
+        self.assertEqual("VERIFIED", evidence["status"])
         self.assertEqual("DIAGNOSTIC", evidence["host_session_trust_level"])
 
     def test_release_attestation_key_rotation_verifies_old_and_new_signatures(self) -> None:
         attestation_module = load_script("release_attestation_v65", "release-attestation.py")
-        artifact = self.root / "Codex-Skills-V6.5.zip"
+        artifact = self.root / "Codex-Skills-V6.6.zip"
         artifact.write_bytes(b"v65-artifact")
         digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
         plugin = self.root / "plugin.json"
         plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.5.0", "installed": True, "enabled": True}]}), encoding="utf-8")
+            "version": "6.6.0", "installed": True, "enabled": True}]}), encoding="utf-8")
         event_file = self.root / "attestation-events.jsonl"
         append_event(event_file, self.event(99))
         seal_state = seal_event_chain(event_file, keyring_path=self.keyring)
@@ -137,7 +140,7 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
         witness = self.root / "witness.json"; witness.write_text(json.dumps({
             "ok": True, "reproducible": True, "artifact_sha256": digest}), encoding="utf-8")
         unified = self.root / "unified.json"; unified.write_text(json.dumps({
-            "ok": True, "version": "6.5.0", "artifact_sha256": digest,
+            "ok": True, "version": "6.6.0", "artifact_sha256": digest,
             "status": {name: "PASS" for name in ("package", "artifact", "host", "plugin", "lifecycle", "model_gate", "payload")}}), encoding="utf-8")
         model_gate = self.root / "model-gate.json"; model_gate.write_text(json.dumps({
             "ok": True, "automatic_ceiling": "gpt-5.6-terra + high", "cases": [
