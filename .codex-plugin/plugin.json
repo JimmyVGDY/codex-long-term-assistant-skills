@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "6.5.0",
-  "description": "跨项目长期技术助手 V6.5：十类工程 Skills、独立 Reviewer、宿主事实旁证、可轮换完整性封印与人工受控优化闭环。",
+  "version": "6.6.0",
+  "description": "跨项目长期技术助手 V6.6：十类工程 Skills、独立 Reviewer、可信模型证据边界、延迟封印、事件归档与人工受控优化闭环。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }
