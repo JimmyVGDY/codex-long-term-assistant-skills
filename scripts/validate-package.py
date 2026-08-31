@@ -23,7 +23,7 @@ except ImportError as exc:  # pragma: no cover - Python < 3.11
     raise SystemExit("Python 3.11+ is required to validate TOML files") from exc
 
 ROOT = Path(__file__).resolve().parent.parent
-EXPECTED_VERSION = "3.1.0"
+EXPECTED_VERSION = "3.2.0"
 EXPECTED_SKILLS = {
     "java-backend-engineering",
     "python-backend-ai-engineering",
@@ -74,8 +74,12 @@ LOG_TEMPLATES = {
     "LOG_ANALYSIS_REPORT.template.md",
     "LOG_TIMELINE.template.md",
     "LOG_EVIDENCE_LEDGER.template.md",
+    "METRICS_ANALYSIS.template.md",
+    "TRACE_ANALYSIS.template.md",
+    "OBSERVABILITY_CORRELATION.template.md",
 }
 REVIEW_TEMPLATES = {
+    "PRE_IMPLEMENTATION_REVIEW.template.md",
     "REVIEW_PLAN.template.md",
     "REVIEW_RESULT.template.md",
     "REVIEW_LEDGER.template.md",
@@ -92,6 +96,7 @@ REQUIRED_SCRIPTS = {
     "uninstall-repo-skills.ps1",
     "uninstall-repo-skills.sh",
     "validate-package.py",
+    "routing-eval.py",
 }
 REQUIRED_GLOBAL_PHRASES = {
     "$multi-agent-independent-review",
@@ -99,11 +104,15 @@ REQUIRED_GLOBAL_PHRASES = {
     "$log-observability-analysis",
     "生产只读日志",
     "最大逻辑递归深度 3",
-    "最大复审轮次 3",
+    "实施后最多 3 轮",
     "最大并行 Reviewer 6",
     "Reviewer 总量 12",
     "每完成一个可独立恢复的小节点",
     "已完成节点不得只存在于当前聊天上下文",
+    "PRIMARY_DOMAIN_SKILL_LIMIT = 1",
+    "MAX_ACTIVE_SKILLS_WITHOUT_JUSTIFICATION = 4",
+    "实施前最多 1 轮和 4 个 Reviewer",
+    "Metrics、Trace、Profile",
 }
 PERSONAL_PATH_PATTERNS = (
     r"C:\\Users\\Example(?:\\|$)",
@@ -233,16 +242,24 @@ def validate_manifest() -> Dict[str, object]:
         "max_parallel_reviewers": 6,
         "max_total_review_agents_per_boundary": 12,
         "max_repair_rounds": 3,
+        "max_preimplementation_review_rounds": 1,
+        "max_preimplementation_reviewers": 4,
+        "primary_domain_skill_limit": 1,
+        "default_supporting_skill_limit": 2,
+        "max_active_skills_without_justification": 4,
         "max_unpersisted_completed_nodes": 0,
         "max_substantive_actions_without_checkpoint": 5,
         "recent_checkpoints_to_load": 5,
         "hot_progress_checkpoint_limit": 30,
         "single_memory_writer": True,
+        "external_memory_secret_scan": True,
+        "default_completed_task_retention_days": 90,
+        "default_temporary_analysis_retention_days": 30,
     }
     for key, expected in expected_limits.items():
         if limits.get(key) != expected:
             error("manifest quality_limits.{} 应为 {}".format(key, expected))
-    ok("manifest.json: version 3.1.0，9 Skills，7 Reviewer")
+    ok("manifest.json: version 3.2.0，9 Skills，7 Reviewer")
     return manifest
 
 
@@ -480,10 +497,86 @@ def validate_checkpoint_helper() -> None:
         progress_text = (memory / "PROGRESS.md").read_text(encoding="utf-8")
         if progress_text.count("### CP-") > 2:
             error("checkpoint.py archive 未限制活跃检查点数量")
+        run(base + ["security-check", "--project-dir", str(memory)])
+        secret_file = memory / "SENSITIVE_TEST.txt"
+        secret_file.write_text("token=sk-abcdefghijklmnopqrstuvwxyz123456\n", encoding="utf-8")
+        secret_result = run(base + ["security-check", "--project-dir", str(memory)], expect_success=False)
+        if secret_result.returncode == 0:
+            error("checkpoint.py security-check 未识别测试凭据")
+        secret_file.unlink()
+        run(base + ["secure", "--project-dir", str(memory)])
+        if os.name != "nt":
+            if (memory.stat().st_mode & 0o777) != 0o700:
+                error("checkpoint.py secure 未将目录设置为 700")
+            if ((memory / "CURRENT_TASK.md").stat().st_mode & 0o777) != 0o600:
+                error("checkpoint.py secure 未将文件设置为 600")
+        retention = run(base + ["retention-report", "--project-dir", str(memory), "--days", "0"])
+        if "到期候选" not in retention.stdout:
+            error("checkpoint.py retention-report 输出不完整")
         if (memory / ".checkpoint.lock").exists():
             error("checkpoint.py 遗留写入锁")
-    ok("checkpoint.py: init / append / validate / recover / repair / archive")
+    ok("checkpoint.py: init / append / validate / recover / repair / archive / security / retention")
 
+
+
+def validate_review_controller() -> None:
+    helper = ROOT / "skills" / "multi-agent-independent-review" / "scripts" / "review_controller.py"
+    with tempfile.TemporaryDirectory(prefix="codex-review-controller-compile-") as compile_tmp:
+        try:
+            py_compile.compile(str(helper), cfile=str(Path(compile_tmp) / "review_controller.pyc"), doraise=True)
+        except py_compile.PyCompileError as exc:
+            error("review_controller.py 语法编译失败: " + str(exc))
+    with tempfile.TemporaryDirectory(prefix="codex-review-controller-") as tmp_value:
+        review_dir = Path(tmp_value) / "review"
+        base = [sys.executable, str(helper)]
+        run(base + ["init", "--review-dir", str(review_dir), "--boundary-id", "FB-001", "--title", "复审控制器自测"])
+        run(base + ["plan", "--review-dir", str(review_dir), "--phase", "pre", "--depth", "1", "--reviewers", "cp_review_functional_business,cp_review_data_contract", "--purpose", "实施前方案审查"])
+        for reviewer in ("cp_review_functional_business", "cp_review_data_contract"):
+            run(base + ["dispatch", "--review-dir", str(review_dir), "--phase", "pre", "--round", "1", "--reviewer", reviewer, "--scope", "方案与契约"])
+            run(base + ["result", "--review-dir", str(review_dir), "--phase", "pre", "--round", "1", "--reviewer", reviewer, "--status", "pass", "--summary", "无阻塞项"])
+        run(base + ["merge", "--review-dir", str(review_dir), "--phase", "pre", "--round", "1", "--summary", "实施前通过"])
+        second_pre = run(base + ["plan", "--review-dir", str(review_dir), "--phase", "pre", "--depth", "1", "--reviewers", "cp_review_security_access", "--purpose", "越界第二轮"], expect_success=False)
+        if second_pre.returncode == 0:
+            error("review_controller.py 未阻止第二轮实施前审查")
+        run(base + ["plan", "--review-dir", str(review_dir), "--phase", "post", "--depth", "1", "--reviewers", "cp_review_functional_business,cp_review_compatibility_regression,cp_review_test_delivery", "--purpose", "实施后复审"])
+        for reviewer in ("cp_review_functional_business", "cp_review_compatibility_regression", "cp_review_test_delivery"):
+            run(base + ["dispatch", "--review-dir", str(review_dir), "--phase", "post", "--round", "1", "--reviewer", reviewer, "--scope", "git diff"])
+            run(base + ["result", "--review-dir", str(review_dir), "--phase", "post", "--round", "1", "--reviewer", reviewer, "--status", "nonblocking", "--nonblocking-count", "1", "--summary", "仅非阻塞建议"])
+        run(base + ["merge", "--review-dir", str(review_dir), "--phase", "post", "--round", "1", "--nonblocking-count", "2", "--root-cause-groups", "1", "--summary", "归并完成"])
+        run(base + ["repair", "--review-dir", str(review_dir), "--summary", "集中处理建议", "--affected-dimensions", "功能,兼容", "--validation", "定向验证通过"])
+        run(base + ["validate", "--review-dir", str(review_dir)])
+        status = run(base + ["status", "--review-dir", str(review_dir)])
+        if "累计 Reviewer: 5 / 12" not in status.stdout:
+            error("review_controller.py 状态输出不符合预期")
+        run(base + ["close", "--review-dir", str(review_dir), "--conclusion", "有非阻塞问题"])
+        if (review_dir / ".review-controller.lock").exists():
+            error("review_controller.py 遗留写入锁")
+    ok("review_controller.py: pre/post 轮次、派发、结果、归并、修复和上限")
+
+
+def validate_routing_cases() -> None:
+    cases_path = ROOT / "tests" / "skill-routing-cases.json"
+    tool = ROOT / "scripts" / "routing-eval.py"
+    try:
+        py_compile.compile(str(tool), cfile=str(Path(tempfile.gettempdir()) / "routing-eval.pyc"), doraise=True)
+    except py_compile.PyCompileError as exc:
+        error("routing-eval.py 语法编译失败: " + str(exc))
+    result = run([sys.executable, str(tool), "validate", "--cases", str(cases_path)])
+    if "路由用例有效" not in result.stdout:
+        error("Skill 路由用例未通过结构校验")
+    with tempfile.TemporaryDirectory(prefix="codex-routing-") as tmp_value:
+        observations = Path(tmp_value) / "observations.json"
+        run([sys.executable, str(tool), "make-template", "--cases", str(cases_path), "--output", str(observations)])
+        data = json.loads(observations.read_text(encoding="utf-8"))
+        if len(data.get("observations", [])) < 12:
+            error("Skill 路由回归用例数量不足")
+        cases = json.loads(cases_path.read_text(encoding="utf-8"))["cases"]
+        required_by_id = {item["id"]: item["required"] for item in cases}
+        for item in data["observations"]:
+            item["activated"] = required_by_id[item["id"]]
+        observations.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        run([sys.executable, str(tool), "evaluate", "--cases", str(cases_path), "--results", str(observations)])
+    ok("Skill 路由回归用例与观察工具（实际 Codex 激活结果需本机记录）")
 
 def validate_shell_installers_runtime() -> None:
     with tempfile.TemporaryDirectory(prefix="codex-install-") as tmp_value:
@@ -581,6 +674,8 @@ def main() -> None:
     validate_shell_scripts()
     validate_powershell_scripts()
     validate_checkpoint_helper()
+    validate_review_controller()
+    validate_routing_cases()
     validate_shell_installers_runtime()
     validate_repo_installers_runtime()
 

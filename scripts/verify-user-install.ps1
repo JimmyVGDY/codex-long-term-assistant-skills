@@ -28,8 +28,8 @@ $MemoryTemplates = @(
     "DECISIONS.template.md", "HANDOFF.template.md", "KNOWN_ISSUES.template.md", "DELIVERY_RECORD.template.md",
     "CHECKPOINT_ENTRY.template.md", "RECOVERY_CHECKLIST.template.md"
 )
-$ReviewTemplates = @("REVIEW_PLAN.template.md", "REVIEW_RESULT.template.md", "REVIEW_LEDGER.template.md")
-$LogTemplates = @("LOG_ANALYSIS_REPORT.template.md", "LOG_TIMELINE.template.md", "LOG_EVIDENCE_LEDGER.template.md")
+$ReviewTemplates = @("PRE_IMPLEMENTATION_REVIEW.template.md", "REVIEW_PLAN.template.md", "REVIEW_RESULT.template.md", "REVIEW_LEDGER.template.md")
+$LogTemplates = @("LOG_ANALYSIS_REPORT.template.md", "LOG_TIMELINE.template.md", "LOG_EVIDENCE_LEDGER.template.md", "METRICS_ANALYSIS.template.md", "TRACE_ANALYSIS.template.md", "OBSERVABILITY_CORRELATION.template.md")
 
 $GlobalFile = Join-Path $CodexHome "AGENTS.md"
 if (Test-Path -LiteralPath $GlobalFile) {
@@ -76,6 +76,8 @@ Test-Templates -Directory (Join-Path $SkillsHome "log-observability-analysis\ass
 
 $Checkpoint = Join-Path $SkillsHome "long-running-task-memory\scripts\checkpoint.py"
 if (Test-Path -LiteralPath $Checkpoint) { Write-Host "[OK] 持续检查点辅助脚本" } else { Write-Host "[缺失] $Checkpoint"; $Failed = $true }
+$ReviewController = Join-Path $SkillsHome "multi-agent-independent-review\scripts\review_controller.py"
+if (Test-Path -LiteralPath $ReviewController) { Write-Host "[OK] 复审状态控制器" } else { Write-Host "[缺失] $ReviewController"; $Failed = $true }
 
 if ($Failed) { throw "验证失败。" }
 Write-Host "[OK] Skills: $($ExpectedSkills.Count) 个"

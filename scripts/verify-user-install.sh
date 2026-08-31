@@ -26,8 +26,8 @@ memory_templates=(
   DECISIONS.template.md HANDOFF.template.md KNOWN_ISSUES.template.md DELIVERY_RECORD.template.md
   CHECKPOINT_ENTRY.template.md RECOVERY_CHECKLIST.template.md
 )
-review_templates=(REVIEW_PLAN.template.md REVIEW_RESULT.template.md REVIEW_LEDGER.template.md)
-log_templates=(LOG_ANALYSIS_REPORT.template.md LOG_TIMELINE.template.md LOG_EVIDENCE_LEDGER.template.md)
+review_templates=(PRE_IMPLEMENTATION_REVIEW.template.md REVIEW_PLAN.template.md REVIEW_RESULT.template.md REVIEW_LEDGER.template.md)
+log_templates=(LOG_ANALYSIS_REPORT.template.md LOG_TIMELINE.template.md LOG_EVIDENCE_LEDGER.template.md METRICS_ANALYSIS.template.md TRACE_ANALYSIS.template.md OBSERVABILITY_CORRELATION.template.md)
 failed=0
 agents_file="$codex_home/AGENTS.md"
 
@@ -79,6 +79,8 @@ check_templates "$skills_home/log-observability-analysis/assets/templates" "${lo
 
 checkpoint="$skills_home/long-running-task-memory/scripts/checkpoint.py"
 if [[ -f "$checkpoint" ]]; then echo "[OK] 持续检查点辅助脚本"; else echo "[缺失] $checkpoint"; failed=1; fi
+review_controller="$skills_home/multi-agent-independent-review/scripts/review_controller.py"
+if [[ -f "$review_controller" ]]; then echo "[OK] 复审状态控制器"; else echo "[缺失] $review_controller"; failed=1; fi
 
 if [[ "$failed" -ne 0 ]]; then echo "验证失败。" >&2; exit 1; fi
 
