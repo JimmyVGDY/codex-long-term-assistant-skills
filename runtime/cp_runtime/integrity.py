@@ -57,6 +57,13 @@ def _backend() -> str:
     return "windows-dpapi" if os.name == "nt" else "posix-0600"
 
 
+def _native_path(path: Path) -> Path:
+    absolute = str(Path(path).absolute())
+    if os.name == "nt" and not absolute.startswith("\\\\?\\"):
+        return Path("\\\\?\\" + absolute)
+    return Path(absolute)
+
+
 def _dpapi(data: bytes, protect: bool, entropy: bytes) -> bytes:
     if os.name != "nt":
         raise IntegrityError("BACKEND_UNAVAILABLE: Windows DPAPI is unavailable")
@@ -105,8 +112,9 @@ def _unprotect(value: str, purpose: str, backend: str) -> bytes:
 
 
 def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, name = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(path.parent))
+    native = _native_path(path)
+    native.parent.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(native.parent))
     try:
         if os.name != "nt":
             os.fchmod(fd, 0o600)
@@ -115,9 +123,15 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(name, path)
+        if os.environ.get("CP_ASSISTANT_TEST_KEYRING_HARD_CRASH_POINT") == "AFTER_TEMP_FSYNC":
+            os._exit(93)
+        if os.environ.get("CP_ASSISTANT_TEST_KEYRING_HARD_CRASH_POINT") == "BEFORE_REPLACE":
+            os._exit(93)
+        os.replace(name, native)
+        if os.environ.get("CP_ASSISTANT_TEST_KEYRING_HARD_CRASH_POINT") == "AFTER_REPLACE":
+            os._exit(93)
         if os.name != "nt":
-            os.chmod(path, 0o600)
+            os.chmod(native, 0o600)
     finally:
         try:
             os.unlink(name)
@@ -134,7 +148,7 @@ def _new_key(purpose: str) -> Dict[str, Any]:
 def init_keyring(path: Optional[Path] = None) -> Dict[str, Any]:
     target = Path(path or default_keyring_path())
     with OwnerTokenLock(target, timeout=10.0):
-        if target.exists():
+        if _native_path(target).exists():
             return keyring_status(target)
         value = {"schema_version": KEYRING_SCHEMA, "backend": _backend(), "binding_id": _binding_id(),
                  "created_at": _now(), "purposes": {purpose: [_new_key(purpose)] for purpose in PURPOSES}}
@@ -144,12 +158,13 @@ def init_keyring(path: Optional[Path] = None) -> Dict[str, Any]:
 
 def load_keyring(path: Optional[Path] = None, decrypt: bool = False) -> Dict[str, Any]:
     target = Path(path or default_keyring_path())
+    native = _native_path(target)
     try:
-        if target.is_symlink() or (target.exists() and bool(getattr(target.lstat(), "st_file_attributes", 0) & 0x400)):
+        if native.is_symlink() or (native.exists() and bool(getattr(native.lstat(), "st_file_attributes", 0) & 0x400)):
             raise IntegrityError("keyring must not be a reparse point")
-        if os.name != "nt" and target.exists() and stat.S_IMODE(target.stat().st_mode) & 0o077:
+        if os.name != "nt" and native.exists() and stat.S_IMODE(native.stat().st_mode) & 0o077:
             raise IntegrityError("keyring permissions must be 0600")
-        value = json.loads(target.read_text(encoding="utf-8"))
+        value = json.loads(native.read_text(encoding="utf-8"))
     except IntegrityError:
         raise
     except (OSError, ValueError) as exc:
@@ -239,6 +254,35 @@ def _load_seals(path: Path) -> List[Dict[str, Any]]:
     return seals
 
 
+def _atomic_seals(path: Path, seals: List[Mapping[str, Any]]) -> None:
+    """Publish a complete seal chain so interruption leaves old-or-new valid state."""
+    native = _native_path(path)
+    native.parent.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(native.parent))
+    try:
+        if os.name != "nt":
+            os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            for seal in seals:
+                handle.write(canonical_json(seal) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        if os.environ.get("CP_ASSISTANT_TEST_SEAL_HARD_CRASH_POINT") == "AFTER_TEMP_FSYNC":
+            os._exit(95)
+        if os.environ.get("CP_ASSISTANT_TEST_SEAL_HARD_CRASH_POINT") == "BEFORE_REPLACE":
+            os._exit(95)
+        os.replace(name, native)
+        if os.environ.get("CP_ASSISTANT_TEST_SEAL_HARD_CRASH_POINT") == "AFTER_REPLACE":
+            os._exit(95)
+        if os.name != "nt":
+            os.chmod(native, 0o600)
+    finally:
+        try:
+            os.unlink(name)
+        except FileNotFoundError:
+            pass
+
+
 def _verify_seals(seals: List[Dict[str, Any]], event_heads: List[str], event_log_id: str,
                   keyring_path: Optional[Path]) -> Dict[str, Any]:
     previous = ZERO_HASH
@@ -311,11 +355,7 @@ def seal_event_chain(event_path: Path, seal_path: Optional[Path] = None,
         seal_hash = _sha(state["seal_head"] + "\n" + canonical_json(unsigned))
         signed = dict(unsigned, seal_hash=seal_hash)
         signed["hmac_sha256"] = hmac.new(secret, canonical_json(signed).encode("utf-8"), hashlib.sha256).hexdigest()
-        target.parent.mkdir(parents=True, exist_ok=True)
-        with target.open("a", encoding="utf-8", newline="\n") as handle:
-            handle.write(canonical_json(signed) + "\n")
-            handle.flush()
-            os.fsync(handle.fileno())
         seals.append(signed)
+        _atomic_seals(target, seals)
         return {**_verify_seals(seals, heads, _sha(event_path.name), keyring_path),
                 "event_chain_head": chain["head_hash"]}

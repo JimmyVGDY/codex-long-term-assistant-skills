@@ -617,10 +617,14 @@ def observe_project(
                 "tasks": set(),
                 "evidence": [],
                 "accepted": 0, "rejected": 0, "duplicate": 0, "repaired": 0,
-                "regressions_prevented": 0, "duration_ms": 0, "cost_units": 0.0,
+                "regressions_prevented": 0, "reported_regressions_prevented": 0,
+                "regression_prevention_claim_count": 0, "regression_prevention_evidence_count": 0,
+                "duration_ms": 0, "cost_units": 0.0,
                 "attribution_count": 0,
                 "labeled_finding_count": 0, "unattributed_result_count": 0,
                 "duplicate_result_count": 0, "conflicting_result_count": 0,
+                "difficulty_distribution": Counter(), "finding_clusters": Counter(),
+                "adoption_reasons": Counter(),
             })
             result_id = _first_text(result, ("result_id", "review_result_id"))
             review_round = _first_text(result, ("review_round", "round"))
@@ -641,8 +645,13 @@ def observe_project(
                 continue
             reviewer_result_identities[identity] = result_hash
             stats["invocations"] += 1
-            for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented"):
+            for name in ("accepted", "rejected", "duplicate", "repaired"):
                 stats[name] += max(0, _to_int(result.get(name), 0))
+            stats["reported_regressions_prevented"] += max(0, _to_int(result.get("regressions_prevented"), 0))
+            difficulty = str(result.get("task_difficulty") or "UNKNOWN").strip().upper()
+            if difficulty not in {"LOW", "MEDIUM", "HIGH", "CRITICAL"}:
+                difficulty = "UNKNOWN"
+            stats["difficulty_distribution"][difficulty] += 1
             stats["duration_ms"] += max(0, _to_int(result.get("duration_ms"), 0))
             stats["cost_units"] += max(0.0, _to_float(result.get("cost_units"), 0.0))
             if any(name in result for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented")):
@@ -662,6 +671,24 @@ def observe_project(
                         stats["nonblocking_findings"] += 1
                     if any(str(finding.get(name) or "").strip() for name in ("status", "outcome", "disposition", "label")):
                         stats["labeled_finding_count"] += 1
+                    cluster = _first_text(finding, ("root_cause_group", "cluster_id", "finding_fingerprint"))
+                    if cluster:
+                        stats["finding_clusters"][sha256_hex(cluster)] += 1
+                    disposition = str(_first_text(finding, ("disposition", "status", "outcome", "label")) or "").upper()
+                    reason = str(_first_text(finding, ("adoption_reason", "disposition_reason")) or "UNSPECIFIED").upper()
+                    if reason not in {"CORRECTNESS", "SECURITY", "COMPATIBILITY", "PERFORMANCE", "DATA_CONTRACT",
+                                      "REGRESSION_PREVENTION", "OUT_OF_SCOPE", "DUPLICATE", "INSUFFICIENT_EVIDENCE",
+                                      "DEFERRED", "REJECTED", "UNSPECIFIED"}:
+                        reason = "UNSPECIFIED"
+                    if disposition in {"ACCEPTED", "REPAIRED", "REGRESSION_PREVENTED", "REJECTED", "DEFERRED", "OUT_OF_SCOPE"}:
+                        stats["adoption_reasons"][reason] += 1
+                    regression_claim = bool(finding.get("regression_prevented")) or disposition == "REGRESSION_PREVENTED"
+                    if regression_claim:
+                        stats["regression_prevention_claim_count"] += 1
+                        references = finding.get("regression_evidence") or finding.get("regression_test_refs") or []
+                        if isinstance(references, list) and any(isinstance(item, Mapping) or str(item).strip() for item in references):
+                            stats["regression_prevention_evidence_count"] += 1
+                            stats["regressions_prevented"] += 1
             else:
                 stats["blocking_findings"] += max(0, _to_int(result.get("blocking_findings"), 0))
                 stats["nonblocking_findings"] += max(0, _to_int(result.get("nonblocking_findings"), 0))
@@ -712,6 +739,10 @@ def observe_project(
         adoption_total = stats["accepted"] + stats["rejected"]
         adoption_low, adoption_high = _wilson(stats["accepted"], adoption_total)
         duplicate_rate = float(stats["duplicate"]) / max(1, total_findings)
+        clustered_findings = sum(stats["finding_clusters"].values())
+        duplicate_cluster_findings = sum(max(0, count - 1) for count in stats["finding_clusters"].values())
+        clustered_duplicate_rate = float(duplicate_cluster_findings) / clustered_findings if clustered_findings else None
+        effective_duplicate_rate = max(duplicate_rate, clustered_duplicate_rate or 0.0)
         benefit_proxy = float(stats["repaired"] + stats["regressions_prevented"]) / max(1.0, stats["cost_units"])
         sample_sufficient = (invocations >= policy.reviewer_min_invocations
                              and task_count >= policy.reviewer_min_independent_tasks
@@ -721,7 +752,7 @@ def observe_project(
             calibration_status = "CONFLICT"
         elif not sample_sufficient:
             calibration_status = "INSUFFICIENT_DATA"
-        elif duplicate_rate >= policy.reviewer_high_duplicate_rate:
+        elif effective_duplicate_rate >= policy.reviewer_high_duplicate_rate:
             calibration_status = "HIGH_DUPLICATION"
         elif adoption_high is not None and adoption_high < 0.20 and benefit_proxy <= policy.reviewer_low_yield_rate:
             calibration_status = "LOW_YIELD_CANDIDATE"
@@ -737,6 +768,20 @@ def observe_project(
             "independent_task_count": task_count,
             "accepted": stats["accepted"], "rejected": stats["rejected"], "duplicate": stats["duplicate"],
             "repaired": stats["repaired"], "regressions_prevented": stats["regressions_prevented"],
+            "reported_regressions_prevented": stats["reported_regressions_prevented"],
+            "regression_prevention_claim_count": stats["regression_prevention_claim_count"],
+            "regression_prevention_evidence_count": stats["regression_prevention_evidence_count"],
+            "regression_prevention_evidence_rate": round(float(stats["regression_prevention_evidence_count"]) /
+                                                         stats["regression_prevention_claim_count"], 6)
+            if stats["regression_prevention_claim_count"] else None,
+            "task_difficulty_distribution": dict(sorted(stats["difficulty_distribution"].items())),
+            "known_task_difficulty_coverage": round(float(invocations - stats["difficulty_distribution"]["UNKNOWN"]) / invocations, 6)
+            if invocations else 0.0,
+            "finding_cluster_count": len(stats["finding_clusters"]),
+            "clustered_finding_count": clustered_findings,
+            "duplicate_cluster_finding_count": duplicate_cluster_findings,
+            "clustered_duplicate_rate": round(clustered_duplicate_rate, 6) if clustered_duplicate_rate is not None else None,
+            "adoption_reasons": dict(sorted(stats["adoption_reasons"].items())),
             "duration_ms": stats["duration_ms"], "cost_units": round(stats["cost_units"], 6),
             "attribution_coverage": round(attribution_coverage, 6),
             "adoption_rate": round(float(stats["accepted"]) / (stats["accepted"] + stats["rejected"]), 6) if stats["accepted"] + stats["rejected"] else None,

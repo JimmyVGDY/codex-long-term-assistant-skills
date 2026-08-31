@@ -19,7 +19,7 @@ SCHEMA_VERSION = "2.0"
 ZERO_HASH = "0" * 64
 TERMINAL_OUTCOMES = {"PASS", "BLOCKED", "FAILED", "CANCELLED", "PARTIAL", "UNKNOWN"}
 EVENT_TYPES = {"TURN_OPENED", "PRE_TOOL_GUARD", "SUBAGENT_STARTED", "SUBAGENT_STOPPED", "TASK_COMPLETED", "SESSION_ENDED"}
-FACT_SOURCES = {"hook-payload", "unavailable"}
+FACT_SOURCES = {"hook-payload", "host-attested-hook-payload", "unavailable"}
 REASONING_EFFORTS = {"none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"}
 KNOWN_CODEX_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.5",
                       "gpt-5.4", "gpt-5.4-mini", "gpt-5.3-codex-spark"}
@@ -157,9 +157,9 @@ def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
     }
     if any(source not in FACT_SOURCES for source in sources.values()):
         raise EventContractError("宿主事实来源非法")
-    if sources["actual_model_source"] == "hook-payload" and not actual_model:
+    if sources["actual_model_source"] in {"hook-payload", "host-attested-hook-payload"} and not actual_model:
         raise EventContractError("actual_model 与来源不一致")
-    if sources["actual_reasoning_effort_source"] == "hook-payload" and not actual_effort:
+    if sources["actual_reasoning_effort_source"] in {"hook-payload", "host-attested-hook-payload"} and not actual_effort:
         raise EventContractError("actual_reasoning_effort 与来源不一致")
     if sources["terminal_outcome_source"] == "hook-payload" and terminal == "UNKNOWN":
         raise EventContractError("terminal_outcome 与来源不一致")
@@ -191,54 +191,63 @@ def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 class OwnerTokenLock:
-    """O_EXCL 锁 + owner token，旧持有者不能删除新锁。"""
+    """Process-owned native file lock.
+
+    The lock file is intentionally persistent.  Ownership lives in the OS file
+    handle, so process termination releases it without stale-file deletion,
+    PID reuse checks, or compare-and-unlink races.
+    """
     def __init__(self, path: Path, timeout: float = 2.0, stale: float = 120.0) -> None:
         self.path = Path(str(path) + ".lock")
         self.timeout = timeout
         self.stale = stale
         self.token = secrets.token_hex(16)
-        self.fd: Optional[int] = None
+        self.handle: Any = None
 
     def __enter__(self) -> "OwnerTokenLock":
         deadline = time.monotonic() + self.timeout
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        raw_path = str(self.path.absolute())
+        native_path = "\\\\?\\" + raw_path if os.name == "nt" and not raw_path.startswith("\\\\?\\") else raw_path
+        try:
+            descriptor = os.open(native_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            try:
+                os.write(descriptor, b"0"); os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+        except FileExistsError:
+            pass
+        self.handle = open(native_path, "r+b")
         while True:
             try:
-                self.fd = os.open(str(self.path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-                os.write(self.fd, canonical_json({"pid": os.getpid(), "token": self.token, "created_at": utc_now()}).encode("utf-8"))
-                os.fsync(self.fd)
+                self.handle.seek(0)
+                if os.name == "nt":
+                    import msvcrt
+                    msvcrt.locking(self.handle.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(self.handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 return self
-            except FileExistsError:
-                try:
-                    current = json.loads(self.path.read_text(encoding="utf-8"))
-                    stale_token = current.get("token")
-                    owner_pid = int(current.get("pid") or 0)
-                    # A dead process can be recovered immediately; wall-clock
-                    # age alone never permits stealing a live writer's lock.
-                    if stale_token and owner_pid > 0 and not _pid_is_alive(owner_pid):
-                        confirmed = json.loads(self.path.read_text(encoding="utf-8"))
-                        if confirmed.get("token") != stale_token:
-                            continue
-                        self.path.unlink(missing_ok=True)
-                        continue
-                except (OSError, ValueError, json.JSONDecodeError):
-                    pass
+            except (OSError, BlockingIOError):
                 if time.monotonic() >= deadline:
+                    self.handle.close()
+                    self.handle = None
                     raise TimeoutError("获取事件锁超时")
                 time.sleep(0.03)
 
     def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
-        if self.fd is not None:
+        if self.handle is not None:
             try:
-                os.close(self.fd)
+                self.handle.seek(0)
+                if os.name == "nt":
+                    import msvcrt
+                    msvcrt.locking(self.handle.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(self.handle.fileno(), fcntl.LOCK_UN)
             finally:
-                self.fd = None
-        try:
-            current = json.loads(self.path.read_text(encoding="utf-8"))
-            if current.get("token") == self.token:
-                self.path.unlink(missing_ok=True)
-        except (OSError, ValueError, json.JSONDecodeError):
-            pass
+                self.handle.close()
+                self.handle = None
 
 
 def _segment_pattern(path: Path) -> re.Pattern[str]:
@@ -386,7 +395,8 @@ def read_event_chain(path: Path, hmac_key: Optional[str] = None, allow_duplicate
                 "quarantined_tail": str(quarantine) if quarantine else None}
 
 
-def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] = None) -> Dict[str, Any]:
+def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] = None,
+                 *, deduplicate_event_id: bool = False) -> Dict[str, Any]:
     validated = make_event(event)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -395,6 +405,10 @@ def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] =
         # Duplicate ids remain observable and are handled by aggregation policy;
         # append must still be able to extend an otherwise valid legacy chain.
         verification = _verify_events(existing, hmac_key, allow_duplicate_ids=True)
+        if deduplicate_event_id:
+            for stored in existing:
+                if stored.get("event_id") == validated["event_id"]:
+                    return {key: value for key, value in stored.items() if not key.startswith("__event_source_")}
         threshold = int(os.environ.get("CP_ASSISTANT_EVENT_SEGMENT_BYTES", str(8 * 1024 * 1024)))
         if threshold < 256:
             raise EventContractError("事件分段阈值过小")
