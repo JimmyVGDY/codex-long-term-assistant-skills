@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "3.1.0",
-  "release_name": "日志与可观测性分析增强版",
-  "generated_for": "Codex local user and repository skills with deterministic checkpoints, read-only review agents, and cross-environment log observability analysis",
+  "version": "3.2.0",
+  "release_name": "P0 调度与执行确定性增强版",
+  "generated_for": "Codex local user and repository skills with minimal sufficient routing, pre/post review gates, deterministic review budgets, secure task memory, and multi-signal observability analysis",
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
@@ -28,13 +28,13 @@
     {
       "name": "data-middleware-ai-infrastructure",
       "display_name": "数据、中间件、AI 与基础设施",
-      "description": "MySQL、PostgreSQL、SQL、事务锁、Redis、RabbitMQ、Celery、Elasticsearch、向量数据库、NAS、对象存储、SSE、RAG、模型、GPU、Docker、Kubernetes、网络或基础设施任务时使用。",
+      "description": "数据库、事务锁、Redis、RabbitMQ、Elasticsearch、向量检索、文件存储、GPU 资源、Docker、Kubernetes、网络或基础设施任务时使用。纯 Python 应用与模型调用代码优先 Python Skill。",
       "source_mapping": "rules/05-数据中间件与AI工程规则.md"
     },
     {
       "name": "log-observability-analysis",
       "display_name": "日志与可观测性分析",
-      "description": "日志分析、日志文件、异常堆栈、应用/容器/Pod/GC/Nginx/数据库/中间件日志、跨服务时间线和生产只读排障时使用。覆盖本地文件、非生产和生产只读模式，不自动获得写权限。",
+      "description": "日志、Metrics、Trace、Profiling、告警、发布和配置变更事件分析时使用。覆盖本地、非生产和生产只读模式，不自动获得写入或在线采集权限。",
       "source_mapping": "new/log-observability-analysis"
     },
     {
@@ -46,7 +46,7 @@
     {
       "name": "multi-agent-independent-review",
       "display_name": "多 Agent 独立复审",
-      "description": "代码改动后的独立复审、高风险变更审查、希望多个专业 Reviewer 并行发现完整问题集、统一归因并减少回炉次数时使用。Reviewer 只读，最多 3 层、3 轮、并行 6 个、单边界总计 12 个。",
+      "description": "高风险实施前设计与影响审查，或代码改动后的多 Agent 独立复审、统一归因和最少有效修复轮次时使用。Reviewer 只读，预算和轮次由状态控制器约束。",
       "source_mapping": "new/multi-agent-independent-review"
     },
     {
@@ -109,12 +109,33 @@
     "max_substantive_actions_without_checkpoint": 5,
     "recent_checkpoints_to_load": 5,
     "hot_progress_checkpoint_limit": 30,
-    "single_memory_writer": true
+    "single_memory_writer": true,
+    "max_preimplementation_review_rounds": 1,
+    "max_preimplementation_reviewers": 4,
+    "primary_domain_skill_limit": 1,
+    "default_supporting_skill_limit": 2,
+    "max_active_skills_without_justification": 4,
+    "external_memory_secret_scan": true,
+    "default_completed_task_retention_days": 90,
+    "default_temporary_analysis_retention_days": 30
   },
   "log_analysis_modes": [
     "static-file-analysis",
     "local-runtime-analysis",
     "remote-nonproduction-readonly",
     "production-readonly"
-  ]
+  ],
+  "observability_sources": [
+    "logs",
+    "metrics",
+    "traces",
+    "profiles",
+    "alerts",
+    "change-events"
+  ],
+  "routing_regression": {
+    "cases": "tests/skill-routing-cases.json",
+    "tool": "scripts/routing-eval.py",
+    "runtime_observation_required": true
+  }
 }
