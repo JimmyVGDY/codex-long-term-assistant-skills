@@ -380,7 +380,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
             self.assertEqual('keep',(external/'sentinel.txt').read_text(encoding='utf-8'))
         finally:
             if link.exists() or link.is_symlink():
-                link.rmdir() if link.is_dir() else link.unlink()
+                link.unlink() if link.is_symlink() else link.rmdir()
 
     @unittest.skipUnless(os.name == 'nt','Windows extended-length path regression')
     def test_plugin_reinstall_supports_long_windows_backup_paths(self):
