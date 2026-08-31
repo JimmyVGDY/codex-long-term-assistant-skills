@@ -1,0 +1,6 @@
+interface:
+  display_name: "通用前端工程"
+  short_description: "跨框架 Web、SSR、Hybrid Web、微前端、构建、安全与验证"
+  default_prompt: "使用通用前端工程技能处理当前任务：先识别框架、版本、包管理器、渲染模式、运行载体和客户端/服务端边界，只加载匹配的框架与风险专项规则，再检查状态、异步、权限、资源释放、构建和运行验证。"
+policy:
+  allow_implicit_invocation: true

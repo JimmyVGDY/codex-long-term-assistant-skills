@@ -1,0 +1,26 @@
+# 前端技术栈快照
+
+- 项目/目录：
+- 识别时间：
+- 证据来源：
+- 分类：Frontend / Fullstack Web / Hybrid Web / Node Backend / Unknown
+- 置信度：高 / 中 / 低
+- 主要框架与版本：
+- 次要框架/迁移期/微前端：
+- 运行载体：Browser / WebView / PWA / Extension / Electron Renderer / Tauri Renderer / SSR / Edge
+- JavaScript / TypeScript：
+- Node 与包管理器：
+- 锁文件与唯一有效来源：
+- Workspace / Monorepo：
+- 构建工具：
+- 渲染模式：CSR / SSR / SSG / ISR / MPA / Islands / Hybrid
+- 客户端/服务端/原生/主进程边界：
+- 路由：
+- 状态与数据层：
+- UI/样式/设计系统：
+- PWA/离线/实时连接：
+- 测试工具：
+- 浏览器/设备目标：
+- 部署、CDN 与缓存：
+- 冲突或未确认项：
+- 应加载的专项规则：
