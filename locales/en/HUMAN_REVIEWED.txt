@@ -88,6 +88,13 @@ skills/long-running-task-memory/assets/templates/PROGRESS.template.md
 skills/long-running-task-memory/assets/templates/PROJECT_CONTEXT.template.md
 skills/long-running-task-memory/assets/templates/RECOVERY_CHECKLIST.template.md
 skills/long-running-task-memory/references/controlled-self-evolution.md
+skills/long-running-task-memory/references/long-running-task-memory-rules.md
+skills/long-running-task-memory/references/memory-checkpoints.md
+skills/long-running-task-memory/references/memory-multiagent-events.md
+skills/long-running-task-memory/references/memory-principles-layout.md
+skills/long-running-task-memory/references/memory-projection-governance.md
+skills/long-running-task-memory/references/memory-recovery-conflicts.md
+skills/long-running-task-memory/references/memory-security-lifecycle.md
 skills/long-running-task-memory/SKILL.md
 skills/multi-agent-independent-review/agents/openai.yaml
 skills/multi-agent-independent-review/assets/templates/PRE_IMPLEMENTATION_REVIEW.template.md
