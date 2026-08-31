@@ -189,3 +189,9 @@
 - Reviewer 使用独立上下文，只接收最小审查包并返回结构化摘要；
 - 修复 review_controller 中“父会话声明只读但写入探针成功”仍可能判为系统只读的问题；
 - 清理过时 Vue/v3.2 语义和脚本相对路径。
+# V6.5.0
+
+- 增加诊断级宿主事实适配器，不允许 host-only 模型证据进入发行通过状态。
+- 增加主机绑定 keyring、独立用途轮换和 detached event seal。
+- 增加 Reviewer 稳定结果身份、重放去重、冲突检测、Wilson 区间和校准状态。
+- 保持 TaskOutcomeEvent 2.0、Plugin/Marketplace 身份、Terra High 上限和受控演进授权边界。
