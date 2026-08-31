@@ -13,12 +13,16 @@ import secrets
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, Mapping, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 SCHEMA_VERSION = "2.0"
 ZERO_HASH = "0" * 64
 TERMINAL_OUTCOMES = {"PASS", "BLOCKED", "FAILED", "CANCELLED", "PARTIAL", "UNKNOWN"}
 EVENT_TYPES = {"TURN_OPENED", "PRE_TOOL_GUARD", "SUBAGENT_STARTED", "SUBAGENT_STOPPED", "TASK_COMPLETED", "SESSION_ENDED"}
+FACT_SOURCES = {"hook-payload", "unavailable"}
+REASONING_EFFORTS = {"none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"}
+KNOWN_CODEX_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.5",
+                      "gpt-5.4", "gpt-5.4-mini", "gpt-5.3-codex-spark"}
 SENSITIVE_KEY = re.compile(r"(prompt|content|message|response|completion|patch|diff|code|token|secret|password|authorization|cookie|api.?key|private.?key)", re.I)
 
 class EventContractError(ValueError):
@@ -138,7 +142,27 @@ def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
         raise EventContractError("project_id 非法")
     terminal = _text(payload.get("terminal_outcome"), "UNKNOWN").upper()
     if terminal not in TERMINAL_OUTCOMES:
-        terminal = "UNKNOWN"
+        raise EventContractError("terminal_outcome 非法")
+    actual_model = _text(payload.get("actual_model"))[:128]
+    actual_effort = _text(payload.get("actual_reasoning_effort")).lower()[:64]
+    if actual_model and actual_model not in KNOWN_CODEX_MODELS:
+        raise EventContractError("actual_model 非法")
+    if actual_effort and actual_effort not in REASONING_EFFORTS:
+        raise EventContractError("actual_reasoning_effort 非法")
+    sources = {
+        "actual_model_source": _text(payload.get("actual_model_source"), "unavailable"),
+        "actual_reasoning_effort_source": _text(payload.get("actual_reasoning_effort_source"), "unavailable"),
+        "terminal_outcome_source": _text(payload.get("terminal_outcome_source"),
+                                         "unavailable"),
+    }
+    if any(source not in FACT_SOURCES for source in sources.values()):
+        raise EventContractError("宿主事实来源非法")
+    if sources["actual_model_source"] == "hook-payload" and not actual_model:
+        raise EventContractError("actual_model 与来源不一致")
+    if sources["actual_reasoning_effort_source"] == "hook-payload" and not actual_effort:
+        raise EventContractError("actual_reasoning_effort 与来源不一致")
+    if sources["terminal_outcome_source"] == "hook-payload" and terminal == "UNKNOWN":
+        raise EventContractError("terminal_outcome 与来源不一致")
     event: Dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "event_id": _text(payload.get("event_id")) or ("EVT_" + secrets.token_hex(16)),
@@ -152,8 +176,9 @@ def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
         "repo_fingerprint": repo_fingerprint,
         "terminal_outcome": terminal,
         "recommended_model": _text(payload.get("recommended_model"))[:128],
-        "actual_model": _text(payload.get("actual_model"))[:128],
-        "actual_reasoning_effort": _text(payload.get("actual_reasoning_effort"))[:64],
+        "actual_model": actual_model,
+        "actual_reasoning_effort": actual_effort,
+        **sources,
         "recommended_reviewers": _nonnegative(payload.get("recommended_reviewers"), "recommended_reviewers"),
         "actual_reviewers": _nonnegative(payload.get("actual_reviewers"), "actual_reviewers"),
         "blocking_findings": _nonnegative(payload.get("blocking_findings"), "blocking_findings"),
@@ -185,18 +210,17 @@ class OwnerTokenLock:
                 return self
             except FileExistsError:
                 try:
-                    if time.time() - self.path.stat().st_mtime > self.stale:
-                        current = json.loads(self.path.read_text(encoding="utf-8"))
-                        stale_token = current.get("token")
-                        owner_pid = int(current.get("pid") or 0)
-                        # A slow but live writer must never lose its lock merely
-                        # because the wall-clock stale threshold elapsed.
-                        if stale_token and owner_pid > 0 and not _pid_is_alive(owner_pid):
-                            confirmed = json.loads(self.path.read_text(encoding="utf-8"))
-                            if confirmed.get("token") != stale_token:
-                                continue
-                            self.path.unlink(missing_ok=True)
+                    current = json.loads(self.path.read_text(encoding="utf-8"))
+                    stale_token = current.get("token")
+                    owner_pid = int(current.get("pid") or 0)
+                    # A dead process can be recovered immediately; wall-clock
+                    # age alone never permits stealing a live writer's lock.
+                    if stale_token and owner_pid > 0 and not _pid_is_alive(owner_pid):
+                        confirmed = json.loads(self.path.read_text(encoding="utf-8"))
+                        if confirmed.get("token") != stale_token:
                             continue
+                        self.path.unlink(missing_ok=True)
+                        continue
                 except (OSError, ValueError, json.JSONDecodeError):
                     pass
                 if time.monotonic() >= deadline:
@@ -217,18 +241,149 @@ class OwnerTokenLock:
             pass
 
 
-def _last_hash(path: Path) -> str:
+def _segment_pattern(path: Path) -> re.Pattern[str]:
+    return re.compile(r"^%s\.segment-(\d{6})%s$" % (re.escape(path.stem), re.escape(path.suffix)))
+
+
+def event_segment_paths(path: Path) -> List[Path]:
+    path = Path(path)
+    pattern = _segment_pattern(path)
+    numbered: List[Tuple[int, Path]] = []
+    for candidate in path.parent.glob(path.stem + ".segment-*" + path.suffix):
+        match = pattern.fullmatch(candidate.name)
+        if not match:
+            raise EventContractError("事件分段文件名非法: %s" % candidate.name)
+        numbered.append((int(match.group(1)), candidate))
+    numbered.sort(key=lambda item: item[0])
+    expected = list(range(1, len(numbered) + 1))
+    actual = [number for number, _ in numbered]
+    if actual != expected:
+        raise EventContractError("事件分段编号不连续: %s" % actual)
+    return [candidate for _, candidate in numbered]
+
+
+def _quarantine_partial_tail(path: Path) -> Optional[Path]:
+    """Recover only an uncommitted tail in the active file, never a history segment."""
     if not path.is_file():
-        return ZERO_HASH
-    last = ""
-    with path.open("r", encoding="utf-8") as handle:
-        for line in handle:
-            if line.strip():
-                last = line
-    if not last:
-        return ZERO_HASH
-    obj = json.loads(last)
-    return _text(obj.get("record_hash"), ZERO_HASH)
+        return None
+    raw = path.read_bytes()
+    if not raw or raw.endswith(b"\n"):
+        return None
+    split = raw.rfind(b"\n")
+    prefix = raw[:split + 1] if split >= 0 else b""
+    tail = raw[split + 1:] if split >= 0 else raw
+    digest = hashlib.sha256(tail).hexdigest()[:16]
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    quarantine = path.with_name(path.stem + ".corrupt-tail-" + stamp + "-" + digest + ".bin")
+    with quarantine.open("xb") as handle:
+        handle.write(tail)
+        handle.flush()
+        os.fsync(handle.fileno())
+    with path.open("r+b") as handle:
+        handle.truncate(len(prefix))
+        handle.flush()
+        os.fsync(handle.fileno())
+    return quarantine
+
+
+def _read_event_files_unlocked(path: Path, *, recover_active_tail: bool = False) -> Tuple[List[Path], List[Dict[str, Any]], Optional[Path]]:
+    path = Path(path)
+    quarantine = _quarantine_partial_tail(path) if recover_active_tail else None
+    files = event_segment_paths(path)
+    if path.is_file():
+        files.append(path)
+    events: List[Dict[str, Any]] = []
+    for source in files:
+        raw = source.read_bytes()
+        if raw and not raw.endswith(b"\n"):
+            raise EventContractError("事件文件存在未提交尾部: %s" % source)
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise EventContractError("事件文件不是有效 UTF-8: %s" % source) from exc
+        for number, line in enumerate(text.splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                value = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise EventContractError("%s 第 %d 行 JSON 无效" % (source.name, number)) from exc
+            if not isinstance(value, dict):
+                raise EventContractError("%s 第 %d 行不是对象" % (source.name, number))
+            value["__event_source_file"] = source.name
+            value["__event_source_line"] = number
+            events.append(value)
+    return files, events, quarantine
+
+
+_STORED_REQUIRED_FIELDS = {
+    "schema_version", "event_id", "event_type", "captured_at", "captured_by", "session_id", "turn_id",
+    "task_id", "project_id", "repo_fingerprint", "terminal_outcome", "recommended_model", "actual_model",
+    "actual_reasoning_effort", "recommended_reviewers", "actual_reviewers", "blocking_findings",
+    "nonblocking_findings", "repair_rounds", "duration_ms", "metadata",
+}
+_STORED_OPTIONAL_FIELDS = {"actual_model_source", "actual_reasoning_effort_source", "terminal_outcome_source"}
+
+
+def _validate_stored_payload(payload: Mapping[str, Any], source: str, number: int) -> None:
+    if payload.get("schema_version") != SCHEMA_VERSION:
+        raise EventContractError("%s 第 %d 行 schema_version 非法" % (source, number))
+    missing = _STORED_REQUIRED_FIELDS - set(payload)
+    unknown = set(payload) - _STORED_REQUIRED_FIELDS - _STORED_OPTIONAL_FIELDS
+    if missing or unknown:
+        raise EventContractError("%s 第 %d 行 schema 字段不完整 missing=%s unknown=%s" %
+                                 (source, number, sorted(missing), sorted(unknown)))
+    validated = make_event(payload)
+    for key, value in payload.items():
+        if validated.get(key) != value:
+            raise EventContractError("%s 第 %d 行字段非法或未规范化: %s" % (source, number, key))
+
+
+def _verify_events(events: Iterable[Mapping[str, Any]], hmac_key: Optional[str], allow_duplicate_ids: bool) -> Dict[str, Any]:
+    previous = ZERO_HASH
+    count = 0
+    duplicate_count = 0
+    seen = set()
+    for obj_with_source in events:
+        obj = dict(obj_with_source)
+        source = obj.pop("__event_source_file", "event")
+        number = obj.pop("__event_source_line", count + 1)
+        if obj.get("previous_hash") != previous:
+            raise EventContractError("%s 第 %d 行 previous_hash 不一致" % (source, number))
+        record_hash = obj.get("record_hash")
+        payload = {k: v for k, v in obj.items() if k not in {"previous_hash", "record_hash", "record_hmac_sha256"}}
+        _validate_stored_payload(payload, str(source), int(number))
+        expected = sha256_hex(previous + "\n" + canonical_json(payload))
+        if expected != record_hash:
+            raise EventContractError("%s 第 %d 行 record_hash 不一致" % (source, number))
+        event_id = obj.get("event_id")
+        if event_id in seen:
+            duplicate_count += 1
+            if not allow_duplicate_ids:
+                raise EventContractError("event_id 重复: %s" % event_id)
+        seen.add(event_id)
+        if hmac_key:
+            signature = obj.get("record_hmac_sha256")
+            unsigned = {k: v for k, v in obj.items() if k != "record_hmac_sha256"}
+            expected_hmac = hmac.new(hmac_key.encode("utf-8"), canonical_json(unsigned).encode("utf-8"), hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(_text(signature), expected_hmac):
+                raise EventContractError("%s 第 %d 行 HMAC 不一致" % (source, number))
+        previous = record_hash
+        count += 1
+    return {"ok": True, "record_count": count, "head_hash": previous,
+            "duplicate_event_id_count": duplicate_count}
+
+
+def read_event_chain(path: Path, hmac_key: Optional[str] = None, allow_duplicate_ids: bool = False,
+                     *, recover_active_tail: bool = False) -> Dict[str, Any]:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with OwnerTokenLock(path):
+        files, internal, quarantine = _read_event_files_unlocked(path, recover_active_tail=recover_active_tail)
+        verification = _verify_events(internal, hmac_key, allow_duplicate_ids)
+        events = [{k: v for k, v in item.items() if not k.startswith("__event_source_")} for item in internal]
+        return {**verification, "files": [str(item) for item in files], "events": events,
+                "quarantined_tail": str(quarantine) if quarantine else None}
 
 
 def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] = None) -> Dict[str, Any]:
@@ -236,7 +391,21 @@ def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] =
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with OwnerTokenLock(path):
-        previous = _last_hash(path)
+        _files, existing, _quarantine = _read_event_files_unlocked(path, recover_active_tail=True)
+        # Duplicate ids remain observable and are handled by aggregation policy;
+        # append must still be able to extend an otherwise valid legacy chain.
+        verification = _verify_events(existing, hmac_key, allow_duplicate_ids=True)
+        threshold = int(os.environ.get("CP_ASSISTANT_EVENT_SEGMENT_BYTES", str(8 * 1024 * 1024)))
+        if threshold < 256:
+            raise EventContractError("事件分段阈值过小")
+        if path.is_file() and path.stat().st_size >= threshold and path.stat().st_size > 0:
+            number = len(event_segment_paths(path)) + 1
+            segment = path.with_name("%s.segment-%06d%s" % (path.stem, number, path.suffix))
+            if segment.exists():
+                raise EventContractError("事件分段目标已存在: %s" % segment)
+            os.replace(path, segment)
+            _hard_crash_event("AFTER_SEGMENT_RENAME")
+        previous = verification["head_hash"]
         envelope = dict(validated)
         envelope["previous_hash"] = previous
         digest = sha256_hex(previous + "\n" + canonical_json(validated))
@@ -244,10 +413,23 @@ def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] =
         if hmac_key:
             envelope["record_hmac_sha256"] = hmac.new(hmac_key.encode("utf-8"), canonical_json(envelope).encode("utf-8"), hashlib.sha256).hexdigest()
         with path.open("a", encoding="utf-8", newline="\n") as handle:
-            handle.write(canonical_json(envelope) + "\n")
+            serialized = canonical_json(envelope) + "\n"
+            hard_point = os.environ.get("CP_ASSISTANT_TEST_EVENT_HARD_CRASH_POINT")
+            if hard_point == "MID_RECORD":
+                prefix = serialized.encode("utf-8")[:max(1, len(serialized.encode("utf-8")) // 2)]
+                handle.buffer.write(prefix)
+                handle.flush()
+                os.fsync(handle.fileno())
+                os._exit(92)
+            handle.write(serialized)
             handle.flush()
             os.fsync(handle.fileno())
         return envelope
+
+
+def _hard_crash_event(point: str) -> None:
+    if os.environ.get("CP_ASSISTANT_TEST_EVENT_HARD_CRASH_POINT") == point:
+        os._exit(92)
 
 
 def _pid_is_alive(pid: int) -> bool:
@@ -275,36 +457,8 @@ def _pid_is_alive(pid: int) -> bool:
 
 
 def verify_event_chain(path: Path, hmac_key: Optional[str] = None, allow_duplicate_ids: bool = False) -> Dict[str, Any]:
-    previous = ZERO_HASH
-    count = 0
-    duplicate_count = 0
-    seen = set()
-    for number, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), 1):
-        if not line.strip():
-            continue
-        obj = json.loads(line)
-        if obj.get("previous_hash") != previous:
-            raise EventContractError("第 %d 行 previous_hash 不一致" % number)
-        record_hash = obj.get("record_hash")
-        payload = {k: v for k, v in obj.items() if k not in {"previous_hash", "record_hash", "record_hmac_sha256"}}
-        expected = sha256_hex(previous + "\n" + canonical_json(payload))
-        if expected != record_hash:
-            raise EventContractError("第 %d 行 record_hash 不一致" % number)
-        event_id = obj.get("event_id")
-        if event_id in seen:
-            duplicate_count += 1
-            if not allow_duplicate_ids:
-                raise EventContractError("event_id 重复: %s" % event_id)
-        seen.add(event_id)
-        if hmac_key:
-            signature = obj.get("record_hmac_sha256")
-            unsigned = {k: v for k, v in obj.items() if k != "record_hmac_sha256"}
-            expected_hmac = hmac.new(hmac_key.encode("utf-8"), canonical_json(unsigned).encode("utf-8"), hashlib.sha256).hexdigest()
-            if not hmac.compare_digest(_text(signature), expected_hmac):
-                raise EventContractError("第 %d 行 HMAC 不一致" % number)
-        previous = record_hash
-        count += 1
-    return {"ok": True, "record_count": count, "head_hash": previous, "duplicate_event_id_count": duplicate_count}
+    result = read_event_chain(path, hmac_key=hmac_key, allow_duplicate_ids=allow_duplicate_ids)
+    return {key: value for key, value in result.items() if key != "events"}
 
 
 def aggregate_by_task(events: Iterable[Mapping[str, Any]], project_id: str, repo_fingerprint: str) -> Dict[str, Dict[str, Any]]:

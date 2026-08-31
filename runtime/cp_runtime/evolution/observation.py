@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -21,7 +22,7 @@ from .contracts import (
     sha256_hex,
 )
 from .storage import JsonLineRecord, StorageError, read_jsonl, safe_child
-from ..event_v2 import verify_event_chain, EventContractError
+from ..event_v2 import read_event_chain, EventContractError
 
 _ALLOWED_SOURCE_WORDS = (
     "feedback", "execution", "review", "evidence", "checkpoint", "audit", "outcome", "result"
@@ -237,7 +238,9 @@ def discover_sources(
     if explicit_sources:
         for raw in explicit_sources:
             candidate = safe_child(project_dir, raw)
-            if not candidate.exists() or not candidate.is_file():
+            has_segments = candidate.name == "task-outcome-v2.jsonl" and any(
+                candidate.parent.glob(candidate.stem + ".segment-*" + candidate.suffix))
+            if (not candidate.exists() or not candidate.is_file()) and not has_segments:
                 raise ObservationError("显式数据源不存在: %s" % raw)
             if candidate.suffix.lower() != ".jsonl":
                 raise ObservationError("V6.0 自观察只接受 JSONL 数据源: %s" % raw)
@@ -258,7 +261,8 @@ def discover_sources(
                 continue
             if len(parts) > 5:
                 continue
-            sources.append(candidate)
+            segment = re.fullmatch(r"(.+)\.segment-\d{6}(\.jsonl)", candidate.name)
+            sources.append(candidate.with_name(segment.group(1) + segment.group(2)) if segment else candidate)
     unique: List[Path] = []
     seen: Set[str] = set()
     for source in sources:
@@ -456,18 +460,34 @@ def observe_project(
 
     all_rows: List[JsonLineRecord] = []
     for source in sources:
-        rows = read_jsonl(
-            source,
-            relative_to=project_dir,
-            max_bytes=policy.max_source_file_bytes,
-            max_records=policy.max_record_count,
-        )
+        is_task_outcome = source.name == "task-outcome-v2.jsonl"
+        if is_task_outcome:
+            try:
+                import os
+                chain_data = read_event_chain(source, os.environ.get("CP_ASSISTANT_HMAC_KEY"), allow_duplicate_ids=True)
+            except EventContractError as exc:
+                raise ObservationError("TaskOutcomeEvent V2 完整性校验失败: %s" % exc) from exc
+            total_bytes = sum(Path(item).stat().st_size for item in chain_data["files"])
+            if total_bytes > policy.max_source_file_bytes:
+                raise ObservationError("TaskOutcomeEvent V2 分段总大小超过策略上限")
+            if len(chain_data["events"]) > policy.max_record_count:
+                raise ObservationError("TaskOutcomeEvent V2 记录数超过策略上限")
+            relative = source.resolve(strict=False).relative_to(project_dir).as_posix()
+            rows = [JsonLineRecord(relative_path=relative, line_number=index,
+                                   payload=item, raw_hash=sha256_hex(canonical_json(item)))
+                    for index, item in enumerate(chain_data["events"], 1)]
+        else:
+            rows = read_jsonl(
+                source,
+                relative_to=project_dir,
+                max_bytes=policy.max_source_file_bytes,
+                max_records=policy.max_record_count,
+            )
         rows = _with_hashed_v2_session_ids(source, rows)
         # V6 Hook 事件采用独立 hash-chain/HMAC 合同；任何链路损坏都失败关闭。
         if rows and all(str(row.payload.get("schema_version", "")) == "2.0" and row.payload.get("event_id") for row in rows):
             try:
-                import os
-                chain_result = verify_event_chain(source, os.environ.get("CP_ASSISTANT_HMAC_KEY"), allow_duplicate_ids=True)
+                chain_result = chain_data if is_task_outcome else {"duplicate_event_id_count": 0}
                 if chain_result.get("duplicate_event_id_count"):
                     warnings.append("TaskOutcomeEvent V2 检测到重复 event_id，完整链验证后按 event_id 去重")
             except EventContractError as exc:
