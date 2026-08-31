@@ -5,11 +5,12 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
-if manifest.get('version')!='6.2.0': errors.append('manifest 版本不是 6.2.0')
+if manifest.get('version')!='6.3.0': errors.append('manifest 版本不是 6.3.0')
 if manifest.get('user_skills_target')!='$HOME/.agents/skills': errors.append('账户 Skill 目标不是 $HOME/.agents/skills')
 plugin=json.loads((ROOT/'.codex-plugin'/'plugin.json').read_text(encoding='utf-8'))
-if plugin.get('version')!='6.2.0': errors.append('Plugin 版本不一致')
-if '6.1.0' not in manifest.get('upgrade_from',[]): errors.append('缺少 V6.1 -> V6.2 升级声明')
+if plugin.get('version')!='6.3.0': errors.append('Plugin 版本不一致')
+for previous in ('6.1.0','6.2.0'):
+    if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V6.3 升级声明' % previous)
 hooks=json.loads((ROOT/'hooks'/'hooks.json').read_text(encoding='utf-8')).get('hooks',{})
 required={'UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'}
 if not required.issubset(hooks): errors.append('生命周期 Hooks 不完整')
@@ -30,8 +31,10 @@ global_text=(ROOT/'global'/'AGENTS.md').read_text(encoding='utf-8')
 for phrase in ('project_id + repo_fingerprint','execution_authorization=NONE','gpt-5.6-terra + high','TaskOutcomeEvent V2'):
     if phrase not in global_text: errors.append('全局规则缺少: '+phrase)
 manager=(ROOT/'scripts'/'package_manager.py').read_text(encoding='utf-8')
-for phrase in ('user_skills_home','plugin_marketplace_root','reject_link_ancestors','--scope','standalone'):
+for phrase in ('user_skills_home','plugin_marketplace_root','reject_link_ancestors','--scope','standalone','recover','transaction'):
     if phrase not in manager: errors.append('安装器缺少: '+phrase)
+for release_script in ('build-release.py','lifecycle-acceptance.py','release-attestation.py'):
+    if not (ROOT/'scripts'/release_script).is_file(): errors.append('缺少 V6.3 发布证明脚本: '+release_script)
 text_extensions={'.md','.json','.toml','.yaml','.py','.ps1','.sh','.cmd'}
 banned_natural_language={
     '\u7528\u6237',
@@ -52,4 +55,4 @@ for path in ROOT.rglob('*'):
 if errors:
     for e in errors: print('[FAIL]',e)
     raise SystemExit(1)
-print('[OK] V6 语义校验通过：10 Skills、Plugin/Hooks、官方账户 Skill 目录、模型上限、受控演进边界和中性语言门禁一致')
+print('[OK] V6.3 语义校验通过：10 Skills、Plugin/Hooks、官方账户 Skill 目录、事务恢复、发布证明、模型上限、受控演进边界和中性语言门禁一致')
