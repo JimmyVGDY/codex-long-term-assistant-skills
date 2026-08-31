@@ -16,7 +16,7 @@ description: >-
 2. 优先运行只读脚本：
 
    ```bash
-   python scripts/detect_frontend_stack.py --project-dir <项目目录> --format markdown
+   python3 "${CODEX_HOME:-$HOME/.codex}/skills/frontend-engineering/scripts/detect_frontend_stack.py" --project-dir <项目目录> --format markdown
    ```
 
    或手工读取 `package.json`、唯一有效锁文件、Workspace 配置、构建配置、入口文件和源码结构，确认框架、版本、Node、包管理器、渲染模式、运行载体和客户端/服务端边界。检测脚本采用有界扫描，输出只是候选证据，不能替代源码确认。
