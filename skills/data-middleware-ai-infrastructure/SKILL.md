@@ -1,14 +1,14 @@
 ---
 name: data-middleware-ai-infrastructure
 description: >-
-  MySQL、PostgreSQL、SQL、事务锁、Redis、RabbitMQ、Celery、Elasticsearch、向量数据库、NAS、对象存储、SSE、RAG、模型、GPU、Docker、Kubernetes、网络或基础设施任务时使用。
+  MySQL、PostgreSQL、SQL、事务锁、Redis、RabbitMQ、Elasticsearch、向量检索、NAS、对象存储、GPU 资源、Docker、Kubernetes、网络或基础设施任务时使用。纯 Python 应用、模型调用代码和业务 Worker 优先使用 Python Skill。
 ---
 
 # 数据、中间件、AI 与基础设施技能
 
 ## 使用范围
 
-用于数据库、SQL、Redis、消息队列、Elasticsearch、向量数据库、文件与对象存储、SSE / WebSocket、AI / RAG / Agent、GPU、Docker、Kubernetes、网络和可观测性。
+用于数据库、SQL、Redis、消息队列、Elasticsearch、向量检索、文件与对象存储、SSE / WebSocket、RAG 检索基础设施、GPU 资源、Docker、Kubernetes、网络和基础设施。Python 应用代码、模型调用和 Worker 实现由 Python Skill 主导。
 
 ## 执行步骤
 
