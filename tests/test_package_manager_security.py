@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V5.0 installer path, integrity and restore security tests."""
+"""V5.1 installer path, integrity and restore security tests."""
 from __future__ import annotations
 
 import json
