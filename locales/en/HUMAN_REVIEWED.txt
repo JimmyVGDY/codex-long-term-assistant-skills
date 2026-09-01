@@ -10,6 +10,7 @@ docs/history/README.md
 docs/history/RECONSTRUCTED_HISTORY.zh-CN.md
 docs/history/RELEASE_ARCHIVES.md
 docs/history/RELEASE_ARCHIVES.en.md
+docs/releases/RELEASE_AUTOMATION.md
 docs/releases/README.md
 docs/releases/v6.0.0/BUILD_INFO.json
 docs/releases/v6.0.0/RELEASE_NOTES.md
@@ -217,6 +218,7 @@ scripts/restore-latest-backup.sh
 .github/workflows/ci.yml
 .github/workflows/links.yml
 .github/workflows/pages.yml
+.github/workflows/release.yml
 .github/mkdocs.yml
 .github/ISSUE_TEMPLATE/bug_report_zh.yml
 .github/ISSUE_TEMPLATE/feature_request_zh.yml

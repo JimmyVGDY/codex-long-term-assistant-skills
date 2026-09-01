@@ -1,0 +1,127 @@
+name: Release Candidate and Provenance
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: "1"
+
+jobs:
+  validate:
+    name: Pre-release validation (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate tag and package version
+        run: python scripts/release-workflow.py metadata --tag "${{ github.ref_type == 'tag' && github.ref_name || '' }}"
+      - name: Audit bilingual coverage
+        run: python scripts/localization-audit.py --strict
+      - name: Check repository-wide links
+        run: python scripts/check-links.py --strict
+      - name: Validate complete package
+        run: python scripts/validate-package.py
+
+  build:
+    name: Build and attest bilingual artifacts
+    needs: validate
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Read constrained release metadata
+        id: metadata
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: |
+          $lines = python scripts/release-workflow.py metadata --tag "$env:RELEASE_TAG" --format github
+          $lines | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+      - name: Create release directory and bilingual notes
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist\release | Out-Null
+          python scripts/release-workflow.py notes --output dist\release\GITHUB_RELEASE_NOTES.md
+      - name: Build reproducible zh-CN package
+        run: python scripts/build-release.py reproducible --locale zh-CN --output "dist\release\${{ steps.metadata.outputs.archive_zh }}" --witness "dist\release\${{ steps.metadata.outputs.witness_zh }}"
+      - name: Build reproducible English package
+        run: python scripts/build-release.py reproducible --locale en --output "dist\release\${{ steps.metadata.outputs.archive_en }}" --witness "dist\release\${{ steps.metadata.outputs.witness_en }}"
+      - name: Generate GitHub build provenance
+        id: attest
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            dist/release/${{ steps.metadata.outputs.archive_zh }}
+            dist/release/${{ steps.metadata.outputs.archive_en }}
+      - name: Preserve attestation bundle
+        shell: pwsh
+        run: Copy-Item -LiteralPath "${{ steps.attest.outputs.bundle-path }}" -Destination "dist\release\${{ steps.metadata.outputs.provenance }}"
+      - name: Generate final checksums
+        run: python scripts/release-workflow.py checksums --directory dist\release --output dist\release\SHA256SUMS.txt
+      - name: Upload attested release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.metadata.outputs.tag }}-attested-bilingual-candidate
+          path: dist/release/
+          if-no-files-found: error
+          retention-days: 14
+
+  draft-release:
+    name: Create maintainer-review draft
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download attested release candidate
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.tag }}-attested-bilingual-candidate
+          path: dist/release
+      - name: Create draft without publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+        shell: bash
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release already exists; no assets were replaced."
+            exit 0
+          fi
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --draft \
+            --title "V${RELEASE_VERSION} | Bilingual release candidate" \
+            --notes-file dist/release/GITHUB_RELEASE_NOTES.md \
+            dist/release/*.zip \
+            dist/release/*.json \
+            dist/release/SHA256SUMS.txt

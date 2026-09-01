@@ -4,6 +4,8 @@ English: [README.en.md](README.en.md)
 
 发行证据按语义版本集中保存。每个目录只包含该版本实际存在的说明、构建信息、审计与验证材料；缺失文件不会以空白占位补造。
 
+新版本的标签、可复现构建、签名来源证明和人工发布门禁见 [Release 自动化与制品来源证明](RELEASE_AUTOMATION.md)。
+
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- |
 | 6.6.1 | [查看](v6.6.1/RELEASE_NOTES.md) | [查看](v6.6.1/AUDIT_REPORT.md) | [查看](v6.6.1/VALIDATION_REPORT.md) | [JSON](v6.6.1/BUILD_INFO.json) | [JSON](v6.6.1/PACKAGE_VALIDATION.json) |

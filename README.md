@@ -150,6 +150,16 @@ python scripts\validate-package.py
 
 发行构建采用固定时间戳、稳定排序和 SHA-256 见证。源码仓库与发行安装包是不同证据层：仓库 CI 证明当前提交，Release 附件及其见证证明可下载产物。
 
+## 发行来源证明
+
+`Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。标签流程只创建草稿，不会自动公开发布或覆盖既有 Release。
+
+```shell
+gh attestation verify Codex-Skills-V6.6.1-zh-CN.zip --repo OWNER/REPOSITORY
+```
+
+完整门禁和新版本发布步骤见 [Release 自动化与制品来源证明](docs/releases/RELEASE_AUTOMATION.md)。
+
 ## 安全边界
 
 - 不自动修改 Skill、Reviewer、模型路由、全局配置或业务仓库。

@@ -4,6 +4,8 @@ Chinese: [README.md](README.md)
 
 Release evidence is grouped by semantic version. Each directory contains only the notes, build metadata, audit, and validation material that actually exists for that release; absent evidence is not replaced with empty placeholders.
 
+See [Release automation and artifact provenance](RELEASE_AUTOMATION.en.md) for version tags, reproducible builds, signed provenance, and maintainer publication gates.
+
 | Version | Release notes | Audit | Validation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- |
 | 6.6.1 | [Open](v6.6.1/RELEASE_NOTES.en.md) | [Open](v6.6.1/AUDIT_REPORT.en.md) | [Open](v6.6.1/VALIDATION_REPORT.en.md) | [JSON](v6.6.1/BUILD_INFO.json) | [JSON](v6.6.1/PACKAGE_VALIDATION.json) |

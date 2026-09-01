@@ -7,6 +7,7 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 - Add repository-wide Markdown path, anchor, and same-repository URL checks, with scheduled external-link probing.
 - Add separate Chinese and English documentation sites published by GitHub Actions, with navigation, search, theme switching, and versioned release evidence.
 - Fix the documentation language selector path difference between repository checks and the generated Pages tree.
+- Add fail-closed tag-version validation, reproducible bilingual artifacts, GitHub-signed provenance, and draft-only Release automation.
 
 ## 6.6.1 - 2026-08-31
 

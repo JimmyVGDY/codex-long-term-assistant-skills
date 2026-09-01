@@ -151,6 +151,16 @@ python scripts\validate-package.py
 
 Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The source repository and release archive are separate evidence layers: repository CI validates a commit, while Release assets and witnesses validate downloadable artifacts.
 
+## Release provenance
+
+The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. Tag runs create drafts only; they never publish automatically or overwrite an existing Release.
+
+```shell
+gh attestation verify Codex-Skills-V6.6.1-en.zip --repo OWNER/REPOSITORY
+```
+
+See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.en.md) for the complete gates and new-version procedure.
+
 ## Safety boundaries
 
 - No automatic Skill, Reviewer, model-route, global-configuration, or business-repository modification.
