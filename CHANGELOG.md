@@ -9,6 +9,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 - 修复文档站语言入口模板在仓库检查与 Pages 生成目录之间的路径差异。
 - 增加标签版本失败关闭、双语可复现产物、GitHub 签名来源证明和仅创建草稿的 Release 自动化。
 - 为 V1.0.0 至 V6.6.0 增加双语 GitHub Release 页面索引，并明确历史原始 ZIP 不公开上传的零附件策略。
+- 修复新增同级英文文档未进入 Pages 英文源目录导致的严格构建失败。
 
 ## 6.6.1 - 2026-08-31
 

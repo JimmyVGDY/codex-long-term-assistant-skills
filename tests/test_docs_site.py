@@ -34,6 +34,10 @@ class DocumentationSiteTests(unittest.TestCase):
             self.assertTrue((output / "en" / "index.md").is_file())
             self.assertTrue((output / "zh-CN" / "docs" / "INSTALLATION_RECOVERY.md").is_file())
             self.assertTrue((output / "en" / "docs" / "INSTALLATION_RECOVERY.md").is_file())
+            self.assertTrue((output / "zh-CN" / "docs" / "history" / "GITHUB_RELEASES.md").is_file())
+            self.assertTrue((output / "en" / "docs" / "history" / "GITHUB_RELEASES.md").is_file())
+            self.assertTrue((output / "en" / "docs" / "releases" / "RELEASE_AUTOMATION.md").is_file())
+            self.assertEqual(report["chinese_markdown"], report["english_markdown"])
             self.assertGreater(report["chinese_markdown"], 50)
             self.assertGreater(report["english_markdown"], 50)
             chinese_home = (output / "zh-CN" / "index.md").read_text(encoding="utf-8")
@@ -55,6 +59,8 @@ class DocumentationSiteTests(unittest.TestCase):
                 output / "en" / "docs" / "README.md",
                 output / "en" / "docs" / "INSTALLATION_RECOVERY.md",
                 output / "en" / "docs" / "USER_GUIDE_V6.6.1.md",
+                output / "en" / "docs" / "history" / "GITHUB_RELEASES.md",
+                output / "en" / "docs" / "releases" / "RELEASE_AUTOMATION.md",
             ]
             for path in paths:
                 text = path.read_text(encoding="utf-8-sig")

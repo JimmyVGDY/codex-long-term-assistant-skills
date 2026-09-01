@@ -74,6 +74,21 @@ def copy_files(source: Path, destination: Path, include: Callable[[Path], bool])
         shutil.copyfile(path, target)
 
 
+def copy_english_pairs(source: Path, destination: Path) -> None:
+    """中文：把源码树中的同级英文文档复制为站点规范路径。
+
+    English: Copy sibling English documents to their canonical site paths.
+    """
+    for path in sorted(source.rglob("*.en.md")):
+        if is_link(path):
+            raise DocumentationBuildError(f"documentation source contains a link: {path}")
+        relative = path.relative_to(source)
+        normalized = relative.with_name(relative.name[:-6] + ".md")
+        target = destination / normalized
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, target)
+
+
 def rewrite_target(path: Path, output: Path, target: str) -> str:
     """中文：把源码双语跳转转换为 Pages 暂存目录中的实际位置。
 
@@ -167,6 +182,7 @@ def prepare(output: Path = DEFAULT_OUTPUT) -> dict[str, object]:
 
     copy_files(ROOT / "docs", chinese / "docs", lambda path: not path.name.endswith(".en.md"))
     copy_files(ROOT / "docs", english / "docs", lambda path: path.suffix.lower() != ".md")
+    copy_english_pairs(ROOT / "docs", english / "docs")
     copy_files(ROOT / "locales" / "en" / "docs", english / "docs", lambda _: True)
     reconstructed = ROOT / "docs" / "history" / "RECONSTRUCTED_HISTORY.en.md"
     if reconstructed.is_file():

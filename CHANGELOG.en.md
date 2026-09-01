@@ -9,6 +9,7 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 - Fix the documentation language selector path difference between repository checks and the generated Pages tree.
 - Add fail-closed tag-version validation, reproducible bilingual artifacts, GitHub-signed provenance, and draft-only Release automation.
 - Add a bilingual GitHub Release page index for V1.0.0 through V6.6.0 and document the zero-asset policy that keeps historical original ZIP files private.
+- Fix strict Pages builds by copying newly added sibling English documents into the English site source tree.
 
 ## 6.6.1 - 2026-08-31
 
