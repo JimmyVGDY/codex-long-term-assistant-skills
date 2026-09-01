@@ -7,6 +7,7 @@
 CHANGELOG.md
 README.md
 docs/history/README.md
+docs/history/GITHUB_RELEASES.md
 docs/history/RECONSTRUCTED_HISTORY.zh-CN.md
 docs/history/RELEASE_ARCHIVES.md
 docs/history/RELEASE_ARCHIVES.en.md

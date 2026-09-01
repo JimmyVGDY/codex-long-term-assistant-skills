@@ -8,6 +8,7 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 - Add separate Chinese and English documentation sites published by GitHub Actions, with navigation, search, theme switching, and versioned release evidence.
 - Fix the documentation language selector path difference between repository checks and the generated Pages tree.
 - Add fail-closed tag-version validation, reproducible bilingual artifacts, GitHub-signed provenance, and draft-only Release automation.
+- Add a bilingual GitHub Release page index for V1.0.0 through V6.6.0 and document the zero-asset policy that keeps historical original ZIP files private.
 
 ## 6.6.1 - 2026-08-31
 
