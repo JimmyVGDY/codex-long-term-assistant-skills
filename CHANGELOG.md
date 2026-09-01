@@ -5,6 +5,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 ## 未发布
 
 - 增加全仓库 Markdown 路径、锚点和同仓库 URL 检查，并通过定时工作流补充外部链接探测。
+- 增加由 GitHub Actions 发布的中英文独立文档站，提供导航、搜索、主题切换和版本化发行资料入口。
 
 ## 6.6.1 - 2026-08-31
 

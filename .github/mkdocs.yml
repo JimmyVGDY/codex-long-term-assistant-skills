@@ -1,0 +1,109 @@
+site_name: Codex 跨项目长期技术助手 / Cross-Project Engineering Assistant
+site_description: Codex Skills、Reviewer、Hooks、长期任务记忆与受控演进的双语文档站
+site_url: https://jimmyvgdy.github.io/codex-long-term-assistant-skills/
+repo_url: https://github.com/JimmyVGDY/codex-long-term-assistant-skills
+repo_name: codex-long-term-assistant-skills
+docs_dir: ../dist/docs-source
+site_dir: ../dist/site
+use_directory_urls: true
+strict: true
+
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: 切换到深色模式 / Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: 切换到浅色模式 / Switch to light mode
+
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  alternate:
+    - name: 简体中文
+      link: /codex-long-term-assistant-skills/zh-CN/
+      lang: zh
+    - name: English
+      link: /codex-long-term-assistant-skills/en/
+      lang: en
+
+nav:
+  - 语言 / Language: index.md
+  - 简体中文:
+      - 项目概览: zh-CN/index.md
+      - 文档中心: zh-CN/docs/README.md
+      - 开始使用:
+          - V6.6.1 使用指南: zh-CN/docs/USER_GUIDE_V6.6.1.md
+          - 安装、升级与恢复: zh-CN/docs/INSTALLATION_RECOVERY.md
+          - Codex 配置: zh-CN/docs/CODEX_CONFIG_GUIDE.md
+          - 项目上下文与接入: zh-CN/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
+      - 架构与治理:
+          - V6 架构: zh-CN/docs/V6_ARCHITECTURE.md
+          - 模型路由与成本: zh-CN/docs/MODEL_ROUTING_AND_COST_POLICY.md
+          - Reviewer 隔离: zh-CN/docs/REVIEWER_RUNTIME_ISOLATION.md
+          - Skill 触发矩阵: zh-CN/docs/SKILL_TRIGGER_MATRIX.md
+          - 审批、证据与终结: zh-CN/docs/APPROVAL_EVIDENCE_FINALIZATION.md
+          - 受控演进操作: zh-CN/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
+      - 发行与历史:
+          - V6.6.1 发行说明: zh-CN/docs/releases/v6.6.1/RELEASE_NOTES.md
+          - V6.6.1 验证报告: zh-CN/docs/releases/v6.6.1/VALIDATION_REPORT.md
+          - 历版发行资料: zh-CN/docs/releases/README.md
+          - 公开重建历史: zh-CN/docs/history/README.md
+          - 版本记录: zh-CN/CHANGELOG.md
+  - English:
+      - Overview: en/index.md
+      - Documentation hub: en/docs/README.md
+      - Getting started:
+          - V6.6.1 user guide: en/docs/USER_GUIDE_V6.6.1.md
+          - Installation and recovery: en/docs/INSTALLATION_RECOVERY.md
+          - Codex configuration: en/docs/CODEX_CONFIG_GUIDE.md
+          - Project context and onboarding: en/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
+      - Architecture and governance:
+          - V6 architecture: en/docs/V6_ARCHITECTURE.md
+          - Model routing and cost: en/docs/MODEL_ROUTING_AND_COST_POLICY.md
+          - Reviewer isolation: en/docs/REVIEWER_RUNTIME_ISOLATION.md
+          - Skill trigger matrix: en/docs/SKILL_TRIGGER_MATRIX.md
+          - Approval, evidence, and finalization: en/docs/APPROVAL_EVIDENCE_FINALIZATION.md
+          - Controlled-evolution operations: en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
+      - Release and history:
+          - V6.6.1 release notes: en/docs/releases/v6.6.1/RELEASE_NOTES.md
+          - V6.6.1 validation report: en/docs/releases/v6.6.1/VALIDATION_REPORT.md
+          - Release evidence: en/docs/releases/README.md
+          - Public reconstruction history: en/docs/history/README.md
+          - Changelog: en/CHANGELOG.md

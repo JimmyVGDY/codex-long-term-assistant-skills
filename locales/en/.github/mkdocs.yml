@@ -1,0 +1,109 @@
+site_name: Codex Cross-Project Engineering Assistant
+site_description: Bilingual documentation for Codex Skills, Reviewers, Hooks, recoverable task memory, and controlled evolution
+site_url: https://jimmyvgdy.github.io/codex-long-term-assistant-skills/
+repo_url: https://github.com/JimmyVGDY/codex-long-term-assistant-skills
+repo_name: codex-long-term-assistant-skills
+docs_dir: ../dist/docs-source
+site_dir: ../dist/site
+use_directory_urls: true
+strict: true
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  alternate:
+    - name: Simplified Chinese
+      link: /codex-long-term-assistant-skills/zh-CN/
+      lang: zh
+    - name: English
+      link: /codex-long-term-assistant-skills/en/
+      lang: en
+
+nav:
+  - Language: index.md
+  - Simplified Chinese:
+      - Overview: zh-CN/index.md
+      - Documentation hub: zh-CN/docs/README.md
+      - Getting started:
+          - V6.6.1 user guide: zh-CN/docs/USER_GUIDE_V6.6.1.md
+          - Installation and recovery: zh-CN/docs/INSTALLATION_RECOVERY.md
+          - Codex configuration: zh-CN/docs/CODEX_CONFIG_GUIDE.md
+          - Project context and onboarding: zh-CN/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
+      - Architecture and governance:
+          - V6 architecture: zh-CN/docs/V6_ARCHITECTURE.md
+          - Model routing and cost: zh-CN/docs/MODEL_ROUTING_AND_COST_POLICY.md
+          - Reviewer isolation: zh-CN/docs/REVIEWER_RUNTIME_ISOLATION.md
+          - Skill trigger matrix: zh-CN/docs/SKILL_TRIGGER_MATRIX.md
+          - Approval, evidence, and finalization: zh-CN/docs/APPROVAL_EVIDENCE_FINALIZATION.md
+          - Controlled-evolution operations: zh-CN/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
+      - Release and history:
+          - V6.6.1 release notes: zh-CN/docs/releases/v6.6.1/RELEASE_NOTES.md
+          - V6.6.1 validation report: zh-CN/docs/releases/v6.6.1/VALIDATION_REPORT.md
+          - Release evidence: zh-CN/docs/releases/README.md
+          - Public reconstruction history: zh-CN/docs/history/README.md
+          - Changelog: zh-CN/CHANGELOG.md
+  - English:
+      - Overview: en/index.md
+      - Documentation hub: en/docs/README.md
+      - Getting started:
+          - V6.6.1 user guide: en/docs/USER_GUIDE_V6.6.1.md
+          - Installation and recovery: en/docs/INSTALLATION_RECOVERY.md
+          - Codex configuration: en/docs/CODEX_CONFIG_GUIDE.md
+          - Project context and onboarding: en/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
+      - Architecture and governance:
+          - V6 architecture: en/docs/V6_ARCHITECTURE.md
+          - Model routing and cost: en/docs/MODEL_ROUTING_AND_COST_POLICY.md
+          - Reviewer isolation: en/docs/REVIEWER_RUNTIME_ISOLATION.md
+          - Skill trigger matrix: en/docs/SKILL_TRIGGER_MATRIX.md
+          - Approval, evidence, and finalization: en/docs/APPROVAL_EVIDENCE_FINALIZATION.md
+          - Controlled-evolution operations: en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
+      - Release and history:
+          - V6.6.1 release notes: en/docs/releases/v6.6.1/RELEASE_NOTES.md
+          - V6.6.1 validation report: en/docs/releases/v6.6.1/VALIDATION_REPORT.md
+          - Release evidence: en/docs/releases/README.md
+          - Public reconstruction history: en/docs/history/README.md
+          - Changelog: en/CHANGELOG.md

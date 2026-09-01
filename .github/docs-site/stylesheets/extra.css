@@ -1,0 +1,17 @@
+:root {
+  --md-primary-fg-color: #0b1f3a;
+  --md-accent-fg-color: #00b8a9;
+}
+
+.md-header {
+  background: linear-gradient(90deg, #071a33 0%, #102b55 100%);
+}
+
+.md-main__inner {
+  max-width: 80rem;
+}
+
+.md-typeset h1,
+.md-typeset h2 {
+  font-weight: 700;
+}
