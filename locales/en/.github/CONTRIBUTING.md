@@ -1,6 +1,6 @@
 # Contributing guide
 
-Chinese version: [CONTRIBUTING.md](CONTRIBUTING.md)
+Chinese version: [CONTRIBUTING.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CONTRIBUTING.md)
 
 Thank you for contributing to the Codex Cross-Project Engineering Assistant. Every change should preserve safety boundaries, bilingual consistency, and rollback capability.
 
@@ -9,7 +9,7 @@ Thank you for contributing to the Codex Cross-Project Engineering Assistant. Eve
 1. Search existing Issues and Pull Requests to avoid duplicate work.
 2. A defect report should include a minimal reproduction, actual result, expected result, and environment details.
 3. Open an Issue before a substantial behavior change to define scope, compatibility, and validation evidence.
-4. Never place vulnerabilities or sensitive information in a public Issue. Follow the [security policy](SECURITY.en.md).
+4. Never place vulnerabilities or sensitive information in a public Issue. Follow the [security policy](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.en.md).
 
 ## Development conventions
 

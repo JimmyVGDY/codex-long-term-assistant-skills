@@ -1,6 +1,6 @@
 # 行为准则
 
-English: [CODE_OF_CONDUCT.en.md](CODE_OF_CONDUCT.en.md)
+English: [CODE_OF_CONDUCT.en.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CODE_OF_CONDUCT.en.md)
 
 本项目致力于建立专业、尊重、可验证的公共协作环境。
 
@@ -24,4 +24,4 @@ English: [CODE_OF_CONDUCT.en.md](CODE_OF_CONDUCT.en.md)
 
 本准则适用于仓库、Issue、Pull Request、讨论区及代表本项目参与的公共交流。维护方可根据影响采取提醒、编辑、锁定、关闭、移除内容或限制参与等措施，并尽量说明依据。
 
-涉及安全漏洞时使用 [安全策略](SECURITY.md) 中的私密渠道，不在公共区域披露细节。
+涉及安全漏洞时使用 [安全策略](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.md) 中的私密渠道，不在公共区域披露细节。

@@ -1,6 +1,6 @@
 # 安全策略
 
-English: [SECURITY.en.md](SECURITY.en.md)
+English: [SECURITY.en.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.en.md)
 
 ## 支持范围
 

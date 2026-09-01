@@ -1,6 +1,6 @@
 # 贡献指南
 
-English: [CONTRIBUTING.en.md](CONTRIBUTING.en.md)
+English: [CONTRIBUTING.en.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CONTRIBUTING.en.md)
 
 感谢参与 Codex 跨项目长期技术助手。改动应保持安全边界、双语一致性与可回滚性。
 
@@ -9,7 +9,7 @@ English: [CONTRIBUTING.en.md](CONTRIBUTING.en.md)
 1. 先搜索现有 Issue 与 Pull Request，避免重复工作。
 2. 缺陷修复应提供最小复现、实际结果、预期结果与环境信息。
 3. 行为变化较大的方案宜先建立 Issue，明确范围、兼容性和验证口径。
-4. 漏洞或敏感信息不得进入公开 Issue，处理方式见 [安全策略](SECURITY.md)。
+4. 漏洞或敏感信息不得进入公开 Issue，处理方式见 [安全策略](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.md)。
 
 ## 开发约定
 

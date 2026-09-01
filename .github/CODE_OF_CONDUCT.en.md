@@ -1,6 +1,6 @@
 # Code of conduct
 
-Chinese version: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+Chinese version: [CODE_OF_CONDUCT.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CODE_OF_CONDUCT.md)
 
 This project is committed to a professional, respectful, and evidence-based public collaboration environment.
 
@@ -24,4 +24,4 @@ This project is committed to a professional, respectful, and evidence-based publ
 
 This code applies to the repository, Issues, Pull Requests, discussions, and public interactions made on behalf of the project. Maintainers may respond with a reminder, edit, lock, closure, content removal, or participation restriction according to impact, and will explain the basis where practical.
 
-Use the private channel in the [security policy](SECURITY.en.md) for vulnerabilities. Do not disclose security details in public areas.
+Use the private channel in the [security policy](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.en.md) for vulnerabilities. Do not disclose security details in public areas.

@@ -1,6 +1,6 @@
 # Security policy
 
-Chinese version: [SECURITY.md](SECURITY.md)
+Chinese version: [SECURITY.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.md)
 
 ## Supported versions
 

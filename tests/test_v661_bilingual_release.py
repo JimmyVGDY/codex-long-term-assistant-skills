@@ -152,6 +152,26 @@ class V661BilingualReleaseTests(unittest.TestCase):
             _, entries = self._entries(locale)
             self.assertFalse(any(path.startswith(".github/") for path in entries))
 
+    def test_repository_community_links_are_context_independent(self) -> None:
+        community_names = {
+            "CONTRIBUTING.md", "CONTRIBUTING.en.md",
+            "SECURITY.md", "SECURITY.en.md",
+            "CODE_OF_CONDUCT.md", "CODE_OF_CONDUCT.en.md",
+        }
+        canonical_prefix = (
+            "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/"
+            "blob/main/.github/"
+        )
+        markdown_link = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+        for path in (ROOT / ".github").glob("*.md"):
+            targets = markdown_link.findall(path.read_text(encoding="utf-8-sig"))
+            for target in targets:
+                if Path(target).name in community_names:
+                    self.assertTrue(
+                        target.startswith(canonical_prefix),
+                        "%s uses render-context-dependent link %s" % (path.name, target),
+                    )
+
     def test_repository_root_is_compact_and_release_evidence_is_versioned(self) -> None:
         root_files = {path.name for path in ROOT.iterdir() if path.is_file()}
         self.assertFalse(any(name.startswith(("RELEASE_NOTES_", "VALIDATION_REPORT_"))
