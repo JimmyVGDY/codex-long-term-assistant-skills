@@ -12,3 +12,4 @@ project-context/
 .codex/project-context/
 backups/
 sessions/
+.vscode/settings.json
