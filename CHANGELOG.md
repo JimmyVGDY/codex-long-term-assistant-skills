@@ -4,6 +4,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 ## 未发布
 
+- 将文档站根页重构为双语项目入口，增加项目定位、语言卡片、能力指标、发行与源码入口，并补充响应式、深浅色和键盘访问适配。
 - 增加全仓库 Markdown 路径、锚点和同仓库 URL 检查，并通过定时工作流补充外部链接探测。
 - 增加由 GitHub Actions 发布的中英文独立文档站，提供导航、搜索、主题切换和版本化发行资料入口。
 - 修复文档站语言入口模板在仓库检查与 Pages 生成目录之间的路径差异。

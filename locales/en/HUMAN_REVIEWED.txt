@@ -4,6 +4,7 @@
 .github/CONTRIBUTING.md
 .github/PULL_REQUEST_TEMPLATE.md
 .github/SECURITY.md
+.github/docs-site/index.md
 CHANGELOG.md
 README.md
 docs/history/README.md

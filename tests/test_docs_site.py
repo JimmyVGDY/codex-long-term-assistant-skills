@@ -66,6 +66,30 @@ class DocumentationSiteTests(unittest.TestCase):
                 text = path.read_text(encoding="utf-8-sig")
                 self.assertIsNone(re.search(r"[\u4e00-\u9fff]", text), path)
 
+    def test_root_landing_page_is_bilingual_responsive_and_accessible(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cp-docs-landing-") as temporary:
+            output = Path(temporary) / "docs-source"
+            self.builder.prepare(output)
+            root = (output / "index.md").read_text(encoding="utf-8")
+        english_pair = (
+            ROOT / ".github" / "docs-site" / "index.en.md"
+        ).read_text(encoding="utf-8")
+        stylesheet = (
+            ROOT / ".github" / "docs-site" / "stylesheets" / "extra.css"
+        ).read_text(encoding="utf-8")
+        self.assertIn('class="landing-hero"', root)
+        self.assertIn('lang="zh-CN"', root)
+        self.assertIn('lang="en"', root)
+        self.assertIn("10</strong><span>Skills", root)
+        self.assertIn("2.0</strong><span>TaskOutcomeEvent", root)
+        self.assertIn("social-preview.png", root)
+        self.assertIn("/codex-long-term-assistant-skills/zh-CN/", root)
+        self.assertIn("/codex-long-term-assistant-skills/en/", root)
+        self.assertIsNone(re.search(r"[\u4e00-\u9fff]", english_pair))
+        self.assertIn("@media (max-width: 640px)", stylesheet)
+        self.assertIn(":focus-visible", stylesheet)
+        self.assertIn("@media (prefers-reduced-motion: reduce)", stylesheet)
+
     def test_existing_nondefault_output_is_not_overwritten(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cp-docs-boundary-") as temporary:
             output = Path(temporary) / "docs-source"
