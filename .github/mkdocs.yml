@@ -54,6 +54,9 @@ markdown_extensions:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - javascripts/repository-facts.js
+
 extra:
   alternate:
     - name: 简体中文
@@ -69,11 +72,12 @@ nav:
       - 项目概览: zh-CN/index.md
       - 文档中心: zh-CN/docs/README.md
       - 开始使用:
-          - V6.6.1 使用指南: zh-CN/docs/USER_GUIDE_V6.6.1.md
+          - V7.0 使用指南: zh-CN/docs/USER_GUIDE_V7.0.md
           - 安装、升级与恢复: zh-CN/docs/INSTALLATION_RECOVERY.md
           - Codex 配置: zh-CN/docs/CODEX_CONFIG_GUIDE.md
           - 项目上下文与接入: zh-CN/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
       - 架构与治理:
+          - V7 通用领域 Skill 架构: zh-CN/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
           - V6 架构: zh-CN/docs/V6_ARCHITECTURE.md
           - 模型路由与成本: zh-CN/docs/MODEL_ROUTING_AND_COST_POLICY.md
           - Reviewer 隔离: zh-CN/docs/REVIEWER_RUNTIME_ISOLATION.md
@@ -81,8 +85,9 @@ nav:
           - 审批、证据与终结: zh-CN/docs/APPROVAL_EVIDENCE_FINALIZATION.md
           - 受控演进操作: zh-CN/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
       - 发行与历史:
-          - V6.6.1 发行说明: zh-CN/docs/releases/v6.6.1/RELEASE_NOTES.md
-          - V6.6.1 验证报告: zh-CN/docs/releases/v6.6.1/VALIDATION_REPORT.md
+          - V7.0.0 发行说明: zh-CN/docs/releases/v7.0.0/RELEASE_NOTES.md
+          - V7.0.0 验证报告: zh-CN/docs/releases/v7.0.0/VALIDATION_REPORT.md
+          - V7.0.0 审计报告: zh-CN/docs/releases/v7.0.0/AUDIT_REPORT.md
           - 历版发行资料: zh-CN/docs/releases/README.md
           - 公开重建历史: zh-CN/docs/history/README.md
           - 版本记录: zh-CN/CHANGELOG.md
@@ -90,11 +95,12 @@ nav:
       - Overview: en/index.md
       - Documentation hub: en/docs/README.md
       - Getting started:
-          - V6.6.1 user guide: en/docs/USER_GUIDE_V6.6.1.md
+          - V7.0 user guide: en/docs/USER_GUIDE_V7.0.md
           - Installation and recovery: en/docs/INSTALLATION_RECOVERY.md
           - Codex configuration: en/docs/CODEX_CONFIG_GUIDE.md
           - Project context and onboarding: en/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
       - Architecture and governance:
+          - V7 general-domain Skill architecture: en/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
           - V6 architecture: en/docs/V6_ARCHITECTURE.md
           - Model routing and cost: en/docs/MODEL_ROUTING_AND_COST_POLICY.md
           - Reviewer isolation: en/docs/REVIEWER_RUNTIME_ISOLATION.md
@@ -102,8 +108,9 @@ nav:
           - Approval, evidence, and finalization: en/docs/APPROVAL_EVIDENCE_FINALIZATION.md
           - Controlled-evolution operations: en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
       - Release and history:
-          - V6.6.1 release notes: en/docs/releases/v6.6.1/RELEASE_NOTES.md
-          - V6.6.1 validation report: en/docs/releases/v6.6.1/VALIDATION_REPORT.md
+          - V7.0.0 release notes: en/docs/releases/v7.0.0/RELEASE_NOTES.md
+          - V7.0.0 validation report: en/docs/releases/v7.0.0/VALIDATION_REPORT.md
+          - V7.0.0 audit report: en/docs/releases/v7.0.0/AUDIT_REPORT.md
           - Release evidence: en/docs/releases/README.md
           - Public reconstruction history: en/docs/history/README.md
           - Changelog: en/CHANGELOG.md

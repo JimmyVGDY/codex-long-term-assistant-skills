@@ -32,10 +32,10 @@ MAX_ACTIVE_SKILLS_WITHOUT_JUSTIFICATION = 4
 
 | Skill | 应触发示例 | 通常不应单独触发 |
 |---|---|---|
-| `java-backend-engineering` | “分析这个 Spring 事务为什么失效” | 纯 Vue 样式调整 |
-| `python-backend-ai-engineering` | “排查 FastAPI async 接口阻塞” | 纯 Java MyBatis 查询 |
+| `backend-engineering` | “分析 Spring 事务、FastAPI async、Fastify 或 Gin 服务端问题” | 纯 Vue 样式或纯 SQL 执行计划 |
 | `frontend-engineering` | “修复路由切换后的请求竞态” | 纯数据库索引分析 |
-| `data-middleware-ai-infrastructure` | “分析 Redis 热点 Key 和缓存击穿” | 普通 Java 空指针说明 |
+| `ai-engineering` | “校验模型结构化输出、RAG 权限和 Agent 工具调用” | 不含模型行为的普通后端 Bug |
+| `data-middleware-infrastructure` | “分析 Redis 热点 Key、数据库锁或 GPU 资源” | 普通服务端空指针说明 |
 | `log-observability-analysis` | “分析这批本地日志并建立跨服务时间线” | 纯代码重构且没有日志输入 |
 | `engineering-quality-delivery` | “修改后测试、复审并本地提交” | 只解释一个概念 |
 | `multi-agent-independent-review` | “让多个 Reviewer 全面复审当前改动并减少回炉” | 无行为变化的文字修正 |
@@ -46,10 +46,10 @@ MAX_ACTIVE_SKILLS_WITHOUT_JUSTIFICATION = 4
 
 | 任务 | 推荐组合 |
 |---|---|
-| Java Bug 修复 | Java + 质量交付；中高风险再加多 Agent 复审 |
-| Java + Redis / MQ 修复 | Java + 数据基础设施 + 质量交付 + 多 Agent 复审 |
-| Python AI Worker 故障 | 日志 + Python + 数据基础设施；修改时加质量交付，高风险加多 Agent 复审 |
-| 前端与后端 SSE 全链路修复 | 通用前端 + Java/Python + 数据基础设施 + 质量交付 + 多 Agent 复审 |
+| 任意语言后端 Bug 修复 | 通用后端 + 质量交付；中高风险再加多 Agent 复审 |
+| 后端 + Redis / MQ 修复 | 通用后端 + 数据基础设施 + 质量交付；高风险再加多 Agent 复审 |
+| AI / RAG / GPU Worker 故障 | AI + 日志；按实际链路组合后端或数据基础设施，修改时加质量交付 |
+| 前端与后端 SSE 全链路修复 | 通用前端 + 通用后端 + 数据基础设施 + 质量交付；高风险再加多 Agent 复审 |
 | 基于代码写架构文档 | 文档 + 实际技术栈对应 Skill |
 | 修改代码并同步正式方案 | 技术栈 + 质量交付 + 文档 |
 | 跨会话大型改造 | 技术栈 + 质量交付 + 长期任务记忆；代码稳定后加多 Agent 复审 |
@@ -192,4 +192,15 @@ python3 scripts/routing-eval.py evaluate --results routing-observations.json
 | 微前端/Monorepo | `frontend-engineering` | 按修改组合质量/文档 |
 | Hybrid Web / WebView / Renderer | `frontend-engineering` | 原生桥、主进程和系统能力另行审查 |
 | Electron/Tauri 主进程、原生移动端 | 不使用 `frontend-engineering` | 按系统/后端/安全边界选择能力 |
-| 纯 Node.js 后端 API/Worker | 不使用 `frontend-engineering` | 后端/数据 Skill |
+| 纯 Node.js 后端 API/Worker | 不使用 `frontend-engineering` | `backend-engineering`；涉及数据库/MQ 时组合数据基础设施 |
+
+## V7 四主领域路由
+
+| 场景 | 主 Skill | 可选支撑 Skill |
+|---|---|---|
+| Java、Python、Node.js、Go、.NET、Rust 或其他服务端应用 | `backend-engineering` | 修改时质量交付；数据组件按需组合基础设施 |
+| 浏览器、WebView、Renderer 与前端框架 | `frontend-engineering` | 后端、AI、数据按实际调用链组合 |
+| 模型调用、RAG、Agent、AI 评测、推理与多模态生成 | `ai-engineering` | SDK/Worker 组合后端；向量库/GPU 资源组合基础设施 |
+| 数据库、缓存、MQ、搜索/向量存储、文件、GPU 资源、容器和网络 | `data-middleware-infrastructure` | 应用调用方组合后端；AI 语义组合 AI |
+
+同一阶段只选一个主领域。项目使用 Python 不等于 AI，项目名称包含 AI 也不等于当前任务应触发 AI；`package.json` 不等于前端，纯 Node.js 服务端必须路由通用后端。

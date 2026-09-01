@@ -15,8 +15,8 @@ claims. Redact sensitive data in the output, and do not treat temporal correlati
 ## 2. Read-Only Cross-Component Production Log Analysis
 
 ```text
-Use $log-observability-analysis, $java-backend-engineering,
-and $data-middleware-ai-infrastructure.
+Use $log-observability-analysis, $backend-engineering,
+and $data-middleware-infrastructure.
 
 In production, perform only the read-only log, monitoring, and low-risk state queries covered by
 the current authorization. Analyze application, HikariCP, MySQL, RabbitMQ, and container logs from
@@ -39,7 +39,7 @@ modify shared memory.
 ## 4. Local Java Repair with Continuous Checkpoints and Strict Review
 
 ```text
-Use $java-backend-engineering, $data-middleware-ai-infrastructure,
+Use $backend-engineering, $data-middleware-infrastructure,
 $engineering-quality-delivery, $multi-agent-independent-review,
 and $long-running-task-memory.
 
@@ -58,8 +58,8 @@ the limit is reached. Update the project's existing CHANGELOG, create a local co
 ## 5. Comprehensive Read-Only Multi-Agent Review
 
 ```text
-Use $multi-agent-independent-review, $java-backend-engineering,
-and $data-middleware-ai-infrastructure.
+Use $multi-agent-independent-review, $backend-engineering,
+and $data-middleware-infrastructure.
 
 Review the actual git diff between the current branch and its baseline without modifying it. Based on
 risk, choose the necessary reviewers from functional/business correctness, compatibility/regression,
@@ -104,8 +104,8 @@ coordinating agent writes the consolidated-review checkpoint and evidence ledger
 ## 8. Write a System Architecture Design
 
 ```text
-Use $technical-document-writing, $java-backend-engineering,
-$python-backend-ai-engineering, and $data-middleware-ai-infrastructure.
+Use $technical-document-writing, $backend-engineering,
+$ai-engineering, and $data-middleware-infrastructure.
 
 Write a system architecture design from the repository's actual code, configuration, and deployment
 files. Do not invent components that are not implemented. Distinguish confirmed facts, inferences,
@@ -127,8 +127,9 @@ confirmation instead of inventing facts.
 ## 10. Troubleshoot and Review a Python AI Worker Failure
 
 ```text
-Use $python-backend-ai-engineering, $data-middleware-ai-infrastructure,
-$technical-document-writing, and $long-running-task-memory.
+During diagnosis use $ai-engineering, $backend-engineering,
+$data-middleware-infrastructure, and $long-running-task-memory.
+When producing the formal report, retire completed technical domains and switch to $technical-document-writing.
 
 Investigate an intermittently stalled GPU worker using read-only access. Write a checkpoint after
 every clear exclusion or confirmation. Correlate logs, processes, threads/coroutines, queues, database
@@ -163,7 +164,7 @@ packet again.
 ## V4.1 Foundation: Pre-Implementation Design and Impact Review
 
 ```text
-Use $data-middleware-ai-infrastructure and $multi-agent-independent-review.
+Use $data-middleware-infrastructure and $multi-agent-independent-review.
 
 This change adds a database field and a message field and backfills historical data. Before writing
 code or a migration, define the objective, non-goals, compatibility, staged rollout, and rollback plan.
@@ -227,7 +228,7 @@ was not guaranteed.
 ## V4.1 STANDARD Repair Example
 
 ```text
-Use $java-backend-engineering and $engineering-quality-delivery.
+Use $backend-engineering and $engineering-quality-delivery.
 Use the STANDARD tier and create a task execution envelope first. Complete the relevant targeted tests
 and bind their evidence fingerprints. Start reviewers only when risk requires them, using independent
 context and one consistent review packet.
@@ -236,7 +237,7 @@ context and one consistent review packet.
 ## V4.1 STRICT Migration Example
 
 ```text
-Use $data-middleware-ai-infrastructure, $engineering-quality-delivery,
+Use $data-middleware-infrastructure, $engineering-quality-delivery,
 $multi-agent-independent-review, and $long-running-task-memory.
 Use the STRICT tier. Complete pre-implementation review and rollback design first. After implementation,
 review in parallel from independent contexts. Every reviewer must use the same packet hash, and delivery

@@ -2,7 +2,7 @@
 
 ## Scope
 
-V6.6.1 does not override the main-agent model. Reviewer TOML files omit model settings so the bounded coordinator policy can select Luna or Terra profiles dynamically.
+V7.0 does not override the main-agent model. Reviewer TOML files omit model settings so the bounded coordinator policy can select Luna or Terra profiles dynamically.
 
 ## Windows path normalization
 

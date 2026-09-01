@@ -7,13 +7,13 @@ hide:
 <div class="landing-page">
   <section class="landing-hero" aria-labelledby="landing-title">
     <div class="landing-hero__copy">
-      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V6.6.1</p>
+      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.0.0</p>
       <h1 id="landing-title">
         <span lang="zh-CN">Codex 跨项目长期技术助手</span>
         <span lang="en">Cross-Project Engineering Assistant</span>
       </h1>
-      <p class="landing-lead" lang="zh-CN">将 Skill 路由、独立复审、生命周期事件与受控演进组织为可验证、可恢复的工程工作流。</p>
-      <p class="landing-lead landing-lead--en" lang="en">A verifiable, recoverable engineering workflow for skill routing, independent review, lifecycle events, and controlled evolution.</p>
+      <p class="landing-lead" lang="zh-CN">以通用后端、前端、AI 与数据基础设施 Skill 为主领域，将独立复审、生命周期事件与受控演进组织为可验证、可恢复的工程工作流。</p>
+      <p class="landing-lead landing-lead--en" lang="en">A verifiable, recoverable engineering workflow built around language-neutral backend, frontend, AI, and data-infrastructure Skills.</p>
       <div class="landing-actions" aria-label="语言入口 / Language selection">
         <a class="landing-button landing-button--primary" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/" lang="zh-CN">
           进入中文文档 <span aria-hidden="true">→</span>
@@ -30,7 +30,7 @@ hide:
     </div>
     <div class="landing-hero__visual">
       <img
-        src="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/assets/social-preview.png"
+        src="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/assets/social-preview.jpg"
         alt="Codex 跨项目工程能力关系图 / Codex cross-project engineering capability map"
         width="1280"
         height="640"
@@ -89,7 +89,7 @@ hide:
         <strong><span lang="zh-CN">源码仓库</span> <span aria-hidden="true">/</span> <span lang="en">Source repository</span></strong>
         <small><span lang="zh-CN">浏览源码与公开历史</span> <span aria-hidden="true">·</span> <span lang="en">Source and public history</span></small>
       </a>
-      <a class="landing-resource-card" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V6.6.1/">
+      <a class="landing-resource-card" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.0/">
         <span aria-hidden="true">◇</span>
         <strong><span lang="zh-CN">快速开始</span> <span aria-hidden="true">/</span> <span lang="en">Quick start</span></strong>
         <small><span lang="zh-CN">从安装到首次验证</span> <span aria-hidden="true">·</span> <span lang="en">Installation through first verification</span></small>

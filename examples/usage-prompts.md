@@ -14,8 +14,8 @@
 ## 二、生产只读跨组件日志分析
 
 ```text
-使用 $log-observability-analysis、$java-backend-engineering
-和 $data-middleware-ai-infrastructure。
+使用 $log-observability-analysis、$backend-engineering
+和 $data-middleware-infrastructure。
 
 只在生产执行当前授权范围内的只读日志、监控和低风险状态查询。
 分析最近 60 分钟应用、HikariCP、MySQL、RabbitMQ 和容器日志，统一时区并
@@ -36,7 +36,7 @@ CURRENT_TASK.md；子 Agent 不修改共享记忆。
 ## 四、Java 本地修复、持续检查点和严格复审
 
 ```text
-使用 $java-backend-engineering、$data-middleware-ai-infrastructure、
+使用 $backend-engineering、$data-middleware-infrastructure、
 $engineering-quality-delivery、$multi-agent-independent-review
 和 $long-running-task-memory。
 
@@ -54,8 +54,8 @@ $engineering-quality-delivery、$multi-agent-independent-review
 ## 五、只读多 Agent 全方位复审
 
 ```text
-使用 $multi-agent-independent-review、$java-backend-engineering
-和 $data-middleware-ai-infrastructure。
+使用 $multi-agent-independent-review、$backend-engineering
+和 $data-middleware-infrastructure。
 
 只读审查当前分支相对基线的真实 git diff。根据风险从功能业务、
 回归兼容、权限安全、性能资源、数据契约、状态并发、测试交付中选择
@@ -94,8 +94,8 @@ $engineering-quality-delivery、$multi-agent-independent-review
 ## 八、编写系统架构设计文档
 
 ```text
-使用 $technical-document-writing、$java-backend-engineering、
-$python-backend-ai-engineering 和 $data-middleware-ai-infrastructure。
+使用 $technical-document-writing、$backend-engineering、
+$ai-engineering 和 $data-middleware-infrastructure。
 
 基于当前仓库实际代码、配置和部署文件编写系统架构设计文档。
 不得编造未实现组件；区分已确认事实、推断和未验证项。
@@ -116,8 +116,9 @@ $python-backend-ai-engineering 和 $data-middleware-ai-infrastructure。
 ## 十、Python AI Worker 故障排查和复盘
 
 ```text
-使用 $python-backend-ai-engineering、$data-middleware-ai-infrastructure、
-$technical-document-writing 和 $long-running-task-memory。
+排障阶段使用 $ai-engineering、$backend-engineering、
+$data-middleware-infrastructure 和 $long-running-task-memory；
+形成正式报告时退出已完成的技术域，切换到 $technical-document-writing。
 
 只读排查 GPU Worker 间歇停摆。每完成一个明确排除或确认节点就写检查点。
 结合日志、进程、线程/协程、队列、数据库连接、NAS I/O、GPU 显存和任务状态
@@ -149,7 +150,7 @@ $technical-document-writing 和 $long-running-task-memory。
 ## V4.1 基础能力：实施前设计与影响审查
 
 ```text
-使用 $data-middleware-ai-infrastructure 和 $multi-agent-independent-review。
+使用 $data-middleware-infrastructure 和 $multi-agent-independent-review。
 
 本次将新增数据库字段、消息字段并回填历史数据。在开始编码和编写迁移脚本前，
 先形成目标、非目标、兼容、灰度和回滚方案，再从功能、兼容、数据和性能四个维度
@@ -209,7 +210,7 @@ Reviewer 仍按行为规则不修改文件、不提交、不派生，但最终�
 ## V4.1 STANDARD 修复示例
 
 ```text
-使用 $java-backend-engineering 和 $engineering-quality-delivery。
+使用 $backend-engineering 和 $engineering-quality-delivery。
 采用 STANDARD 档位，先形成任务执行信封；完成相关定向测试并绑定证据指纹。
 只有风险需要时才启动 Reviewer，Reviewer 使用独立上下文和统一审查包。
 ```
@@ -217,7 +218,7 @@ Reviewer 仍按行为规则不修改文件、不提交、不派生，但最终�
 ## V4.1 STRICT 迁移示例
 
 ```text
-使用 $data-middleware-ai-infrastructure、$engineering-quality-delivery、
+使用 $data-middleware-infrastructure、$engineering-quality-delivery、
 $multi-agent-independent-review 和 $long-running-task-memory。
 采用 STRICT 档位，先完成实施前审查和回滚设计；实施后在独立上下文中并行复审，
 所有 Reviewer 使用同一 packet hash，阻塞项解决后才进入交付。

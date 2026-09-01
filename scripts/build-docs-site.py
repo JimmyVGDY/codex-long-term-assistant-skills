@@ -167,6 +167,7 @@ def prepare(output: Path = DEFAULT_OUTPUT) -> dict[str, object]:
     reset_output(output)
     shutil.copyfile(SITE_TEMPLATE / "index.md", output / "index.md")
     copy_files(SITE_TEMPLATE / "stylesheets", output / "stylesheets", lambda _: True)
+    copy_files(SITE_TEMPLATE / "javascripts", output / "javascripts", lambda _: True)
 
     chinese = output / "zh-CN"
     english = output / "en"

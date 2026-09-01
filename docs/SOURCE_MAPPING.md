@@ -1,12 +1,12 @@
-# 源规则到 Codex V5.0 资源的映射
+# 源规则到 Codex V7.0 资源的映射
 
 | 规则或能力 | Codex V5.0 目标 |
 |---|---|
 | 全局跨项目边界、授权和模型路由 | `global/AGENTS.md` |
-| Java 后端 | `skills/java-backend-engineering/` |
-| Python 后端与 AI 服务 | `skills/python-backend-ai-engineering/` |
+| 通用后端（含 Java/Python/Node.js/Go/.NET/Rust 专项） | `skills/backend-engineering/` |
 | 通用前端工程 | `skills/frontend-engineering/` |
-| 数据、中间件、AI 与基础设施 | `skills/data-middleware-ai-infrastructure/` |
+| 通用 AI 工程 | `skills/ai-engineering/` |
+| 数据、中间件与基础设施 | `skills/data-middleware-infrastructure/` |
 | 日志与可观测性 | `skills/log-observability-analysis/` |
 | 研发质量、执行信封与证据指纹 | `skills/engineering-quality-delivery/` |
 | 技术文档与正式报告 | `skills/technical-document-writing/` |

@@ -32,10 +32,10 @@ Analysis: domain or log Skill
 
 | Skill | Should Trigger | Normally Should Not Trigger Alone |
 |---|---|---|
-| `java-backend-engineering` | “Analyze why this Spring transaction is ineffective.” | A Vue styling adjustment |
-| `python-backend-ai-engineering` | “Diagnose blocking in this FastAPI async endpoint.” | A pure Java MyBatis query |
+| `backend-engineering` | “Analyze a Spring transaction, FastAPI async chain, Fastify API, or Gin service.” | A pure Vue styling or SQL-plan task |
 | `frontend-engineering` | “Repair the request race after route navigation.” | Pure database-index analysis |
-| `data-middleware-ai-infrastructure` | “Analyze this Redis hot key and cache breakdown.” | Explain an ordinary Java null dereference |
+| `ai-engineering` | “Validate model schemas, RAG access, and agent tool calls.” | An ordinary backend bug with no model behavior |
+| `data-middleware-infrastructure` | “Analyze a Redis hot key, database lock, or GPU resource issue.” | An ordinary server null dereference |
 | `log-observability-analysis` | “Analyze these local logs and build a cross-service timeline.” | Refactoring without observability input |
 | `engineering-quality-delivery` | “Modify, test, review, and commit locally.” | Explain one concept |
 | `multi-agent-independent-review` | “Have several Reviewers comprehensively review the diff and reduce rework.” | Wording without behavior change |
@@ -46,10 +46,10 @@ Analysis: domain or log Skill
 
 | Task | Recommended Combination |
 |---|---|
-| Java bug repair | Java + quality delivery; add multi-agent review for medium/high risk |
-| Java plus Redis/MQ repair | Java + data infrastructure + quality delivery + multi-agent review |
-| Python AI worker incident | Logs + Python + data infrastructure; add quality delivery for modification and review for high risk |
-| End-to-end frontend/backend SSE repair | Frontend + Java/Python + data infrastructure + quality delivery + multi-agent review |
+| Backend bug repair in any language | General backend + quality delivery; add multi-agent review for medium/high risk |
+| Backend plus Redis/MQ repair | General backend + data infrastructure + quality delivery; add review for high risk |
+| AI, RAG, or GPU Worker incident | AI + logs; add backend or data infrastructure for the actual chain and delivery for changes |
+| End-to-end frontend/backend SSE repair | Frontend + general backend + data infrastructure + quality delivery; add review for high risk |
 | Architecture document from code | Documentation + actual technology Skill |
 | Modify code and formal design | Technology + quality delivery + documentation |
 | Large cross-session change | Technology + quality delivery + memory; add review after code stabilizes |
@@ -189,4 +189,15 @@ Package validation proves the cases and tool are valid, not that local Codex act
 | Microfrontend/monorepo | `frontend-engineering` | Quality/documentation according to the change |
 | Hybrid Web, WebView, or renderer | `frontend-engineering` | Review native bridge, main process, and system capability separately |
 | Electron/Tauri main process or native mobile | Do not use `frontend-engineering` | Choose system/backend/security capabilities |
-| Pure Node.js backend API/worker | Do not use `frontend-engineering` | Backend/data Skill |
+| Pure Node.js backend API/worker | Do not use `frontend-engineering` | `backend-engineering`; add data infrastructure for databases or messaging |
+
+## V7 Four Primary Domains
+
+| Scenario | Primary Skill | Optional support |
+|---|---|---|
+| Java, Python, Node.js, Go, .NET, Rust, or another server application | `backend-engineering` | Quality delivery for changes; data infrastructure for data components |
+| Browser, WebView, Renderer, and frontend frameworks | `frontend-engineering` | Backend, AI, or data according to the actual call chain |
+| Model calls, RAG, agents, AI evaluation, inference, and multimodal generation | `ai-engineering` | Backend for SDK/Worker mechanics; data infrastructure for vector/GPU resources |
+| Databases, caches, messaging, search/vector storage, files, GPU resources, containers, and networks | `data-middleware-infrastructure` | Backend for application callers; AI for AI semantics |
+
+Choose one primary domain per phase. Python does not imply AI, an AI project name does not imply the current task is AI work, and `package.json` does not imply frontend. A pure Node.js server routes to general backend.

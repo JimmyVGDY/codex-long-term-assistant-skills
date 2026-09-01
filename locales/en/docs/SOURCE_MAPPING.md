@@ -1,12 +1,12 @@
-# Mapping Source Rules to Codex V5.0 Resources
+# Mapping Source Rules to Codex V7.0 Resources
 
 | Rule or Capability | Codex V5.0 Target |
 |---|---|
 | Global cross-project boundaries, authorization, and model routing | `global/AGENTS.md` |
-| Java backend | `skills/java-backend-engineering/` |
-| Python backend and AI services | `skills/python-backend-ai-engineering/` |
+| General backend, including Java/Python/Node.js/Go/.NET/Rust guidance | `skills/backend-engineering/` |
 | General frontend engineering | `skills/frontend-engineering/` |
-| Data, middleware, AI, and infrastructure | `skills/data-middleware-ai-infrastructure/` |
+| General AI engineering | `skills/ai-engineering/` |
+| Data, middleware, and infrastructure | `skills/data-middleware-infrastructure/` |
 | Logs and observability | `skills/log-observability-analysis/` |
 | Engineering quality, execution envelopes, and evidence fingerprints | `skills/engineering-quality-delivery/` |
 | Technical documentation and formal reports | `skills/technical-document-writing/` |

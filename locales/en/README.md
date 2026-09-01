@@ -5,7 +5,7 @@
 # Codex Cross-Project Engineering Assistant
 
 <p align="center">
-  <img src="docs/assets/social-preview.png" alt="Codex bilingual project preview" width="100%">
+  <img src="docs/assets/social-preview.jpg" alt="Codex bilingual project preview" width="100%">
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
   <img alt="Codex CLI 0.150.1" src="https://img.shields.io/badge/Codex%20CLI-0.150.1-111827">
 </p>
 
-V6.6.1 targets native Windows Codex CLI 0.150.1 and provides two independently installable, reproducibly built Plugin distributions. The main Agent model configuration remains untouched, while Terra High is the maximum automatic sub-agent policy tier.
+V7.0.0 introduces four language-neutral primary domains—backend, AI, frontend, and data/middleware/infrastructure—while retaining Java and Python as progressive backend specializations. It targets native Windows Codex CLI 0.150.1 and provides two independently installable, reproducibly built Plugin distributions. The main Agent model configuration remains untouched, while Terra High is the maximum automatic sub-agent policy tier.
 
 **Quick links:** [Downloads](#downloads) · [Usage example](#reproducible-usage-example) · [Compatibility](#compatibility-matrix) · [Installation](#five-minute-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -28,8 +28,8 @@ V6.6.1 targets native Windows Codex CLI 0.150.1 and provides two independently i
 
 | Distribution | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V6.6.1-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v6.6.1/Codex-Skills-V6.6.1-zh-CN.zip) |
-| `Codex-Skills-V6.6.1-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v6.6.1/Codex-Skills-V6.6.1-en.zip) |
+| `Codex-Skills-V7.0.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.0.0/Codex-Skills-V7.0.0-zh-CN.zip) |
+| `Codex-Skills-V7.0.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.0.0/Codex-Skills-V7.0.0-en.zip) |
 
 [Open the latest Release, checksums, and build witnesses](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -92,10 +92,10 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Native Windows Codex CLI 0.150.1 + Plugin | Primary target | Plugin, Marketplace, Hooks, and lifecycle have a native-host acceptance baseline; V6.6.1 package validation passes | The public V6.6.1 artifact should still be installed and read back independently in the target account |
+| Native Windows Codex CLI 0.150.1 + Plugin | Primary target | The V7.0.0 source tree completed a `6.6.0 -> 7.0.0` Plugin upgrade, three-way payload readback, and fresh-task implicit-routing observation | The public ZIP should still be installed and read back independently in the target account |
 | Windows `windows-latest` + Python 3.13 | CI | Bilingual audit, complete-package validation, and release build | CI does not replace acceptance in a real Codex account |
 | Ubuntu `ubuntu-latest` + Python 3.13 | CI package compatibility | Bilingual audit and complete-package validation | This is not Linux host acceptance for Plugin, Marketplace, or Hooks |
-| standalone mode | Compatibility mode | Installation structure and regression coverage | Not the primary V6.6.1 release-acceptance path |
+| standalone mode | Compatibility mode | Installation structure and regression coverage | Not the primary V7.0.0 release-acceptance path |
 | macOS | Unverified | No current CI or host-acceptance evidence | Status remains `UNVERIFIED` |
 
 The Python source declares 3.8+ support; public CI currently runs 3.13. For any different environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
@@ -113,9 +113,9 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. The upgrade is established only when the Plugin readback reports `installed=true`, `enabled=true`, and `version=6.6.1`.
+3. The upgrade is established only when the Plugin readback reports `installed=true`, `enabled=true`, and `version=7.0.0`, and every legacy Skill directory declared by the Manifest is absent.
 
-The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, and preserves unknown files. See [Installation and recovery](docs/INSTALLATION_RECOVERY.md) and the [User guide](docs/USER_GUIDE_V6.6.1.md).
+The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, preserves unknown files, and removes only Manifest-declared legacy Skill directories: the three V7 domain replacements plus the previously deprecated Vue Skill. See [Installation and recovery](docs/INSTALLATION_RECOVERY.md) and the [User guide](docs/USER_GUIDE_V7.0.md).
 
 ## Model evidence boundary
 
@@ -139,7 +139,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.md) · [V6.6.1 release notes](docs/releases/v6.6.1/RELEASE_NOTES.md)
+- [Changelog](CHANGELOG.md) · [V7.0.0 release notes](docs/releases/v7.0.0/RELEASE_NOTES.md)
 
 ## Local validation
 

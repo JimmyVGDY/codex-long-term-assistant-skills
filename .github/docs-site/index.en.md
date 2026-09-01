@@ -7,9 +7,9 @@ hide:
 <div class="landing-page">
   <section class="landing-hero" aria-labelledby="landing-title">
     <div class="landing-hero__copy">
-      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V6.6.1</p>
+      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.0.0</p>
       <h1 id="landing-title">Codex Cross-Project Engineering Assistant</h1>
-      <p class="landing-lead">A verifiable, recoverable engineering workflow for skill routing, independent review, lifecycle events, and controlled evolution.</p>
+      <p class="landing-lead">A verifiable, recoverable engineering workflow built around language-neutral backend, frontend, AI, and data-infrastructure Skills.</p>
       <div class="landing-actions" aria-label="Language selection">
         <a class="landing-button landing-button--primary" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Simplified Chinese <span aria-hidden="true">→</span></a>
         <a class="landing-button landing-button--secondary" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/en/">English documentation <span aria-hidden="true">→</span></a>
@@ -43,7 +43,7 @@ hide:
     <div class="landing-resource-grid">
       <a class="landing-resource-card" href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases"><span aria-hidden="true">↓</span><strong>Releases</strong><small>Release notes and packages</small></a>
       <a class="landing-resource-card" href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills"><span aria-hidden="true">&lt;/&gt;</span><strong>Source repository</strong><small>Source and public history</small></a>
-      <a class="landing-resource-card" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/en/docs/USER_GUIDE_V6.6.1/"><span aria-hidden="true">◇</span><strong>Quick start</strong><small>Installation through first verification</small></a>
+      <a class="landing-resource-card" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/en/docs/USER_GUIDE_V7.0/"><span aria-hidden="true">◇</span><strong>Quick start</strong><small>Installation through first verification</small></a>
     </div>
   </section>
 </div>

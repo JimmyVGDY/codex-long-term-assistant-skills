@@ -6,8 +6,8 @@ Chinese version: [SECURITY.md](https://github.com/JimmyVGDY/codex-long-term-assi
 
 | Version | Status |
 | --- | --- |
-| 6.6.1 | Currently maintained |
-| 6.6.0 and earlier | Historical evidence only; upgrade preferred |
+| 7.0.0 | Currently maintained |
+| 6.6.1 and earlier | Historical evidence only; upgrade preferred |
 
 ## Reporting a vulnerability
 

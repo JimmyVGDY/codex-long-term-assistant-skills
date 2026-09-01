@@ -1,5 +1,31 @@
 # Changelog
 
+## 7.0.0 - 2026-09-01
+
+### Added
+
+- Added language-neutral `backend-engineering` and independent `ai-engineering`.
+- Added a four-domain responsibility matrix and 45 positive/negative routing cases covering Node.js, Go, .NET, Rust, mixed backends, pure AI, and AI plus GPU boundaries.
+- Added bilingual documentation sites, repository-wide Markdown link auditing, versioned release evidence, reproducible bilingual artifacts, and draft-only GitHub Release automation with signed provenance.
+
+### Changed
+
+- Java and Python are progressive backend specializations; the data domain is now `data-middleware-infrastructure`.
+- Manifest, AGENTS, bilingual documentation, recovery flows, and release tooling target 7.0.0.
+- The bilingual landing page, navigation, and security support matrix now target V7. The project preview no longer embeds a release number and uses a reusable 1280×640 JPEG below GitHub's 1 MB upload limit.
+- Main CI now reads versioned archive and witness names from constrained release metadata instead of hard-coding an older release.
+
+### Fixed
+
+- Fixed Material for MkDocs retaining stale repository release facts in browser session storage, which could leave `v6.6.1` in the header. The site now repairs both the cached and visible version facts.
+- Upgrades remove only the four Manifest-declared legacy Skill directories while preserving unknown Skills and custom files.
+- Fixed documentation language-selector paths and strict Pages inclusion for sibling English documents.
+
+### Validation
+
+- 128 package tests, 6 runtime tests, strict bilingual audit, Markdown link audit, and strict MkDocs build pass.
+- The source tree completed a native Windows Codex CLI 0.150.1 `6.6.0 -> 7.0.0` Plugin upgrade readback, and a fresh read-only task selected the general backend and data-infrastructure routes. Public ZIP artifacts remain independently built and attested by the tag workflow.
+
 ## 6.6.1 - 2026-08-31
 
 ### Added
