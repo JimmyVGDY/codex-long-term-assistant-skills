@@ -1,3 +1,7 @@
+<p align="right">
+  <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/README.md">Chinese</a> · <strong>English</strong>
+</p>
+
 # Codex Cross-Project Engineering Assistant
 
 <p align="center">
@@ -12,11 +16,9 @@
   <img alt="Codex CLI 0.150.1" src="https://img.shields.io/badge/Codex%20CLI-0.150.1-111827">
 </p>
 
-<p align="center">
-  <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/README.md">Chinese</a> · <strong>English</strong>
-</p>
-
 V6.6.1 targets native Windows Codex CLI 0.150.1 and provides two independently installable, reproducibly built Plugin distributions. The main Agent model configuration remains untouched, while Terra High is the maximum automatic sub-agent policy tier.
+
+**Quick links:** [Downloads](#downloads) · [Usage example](#reproducible-usage-example) · [Compatibility](#compatibility-matrix) · [Installation](#five-minute-upgrade) · [Documentation](#documentation-and-collaboration)
 
 ## Downloads
 
@@ -48,6 +50,51 @@ flowchart LR
     G --> H[Snapshot / Assessment / Proposal]
     H --> I[Human decision]
 ```
+
+## Reproducible usage example
+
+The following input, flow, and inspectable outcome show a typical read-only task. This is an illustrative usage example, not runtime evidence for the current session.
+
+**Task input**
+
+```text
+Inspect the installer upgrade path in the current repository without modifying files.
+Select a Reviewer according to actual risk, and separate confirmed facts, inferences,
+and unverified items.
+```
+
+**Expected flow**
+
+```text
+Task input
+  -> route engineering-quality-delivery
+  -> read the installer, manifests, tests, and upgrade documentation
+  -> start a logically read-only Reviewer when justified by risk
+  -> deduplicate and reconcile Reviewer findings
+  -> report evidence, risks, and unverified boundaries
+```
+
+The lifecycle can produce `TURN_OPENED -> SUBAGENT_STARTED -> SUBAGENT_STOPPED -> TASK_COMPLETED`; `SessionEnd` then enters the delayed sealing path. Model evidence stays separated into three fields:
+
+```ini
+requested_model_policy = PASS
+runtime_model_evidence = UNAVAILABLE
+diagnostic_model_observation = host diagnostic only
+```
+
+Here, `requested_model_policy=PASS` only proves that automatic dispatch did not request a configuration above Terra High. It does not attest to the model that actually ran.
+
+## Compatibility matrix
+
+| Environment or mode | Current role | Existing validation level | Boundary |
+| --- | --- | --- | --- |
+| Native Windows Codex CLI 0.150.1 + Plugin | Primary target | Plugin, Marketplace, Hooks, and lifecycle have a native-host acceptance baseline; V6.6.1 package validation passes | The public V6.6.1 artifact should still be installed and read back independently in the target account |
+| Windows `windows-latest` + Python 3.13 | CI | Bilingual audit, complete-package validation, and release build | CI does not replace acceptance in a real Codex account |
+| Ubuntu `ubuntu-latest` + Python 3.13 | CI package compatibility | Bilingual audit and complete-package validation | This is not Linux host acceptance for Plugin, Marketplace, or Hooks |
+| standalone mode | Compatibility mode | Installation structure and regression coverage | Not the primary V6.6.1 release-acceptance path |
+| macOS | Unverified | No current CI or host-acceptance evidence | Status remains `UNVERIFIED` |
+
+The Python source declares 3.8+ support; public CI currently runs 3.13. For any different environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
 
 ## Five-minute upgrade
 

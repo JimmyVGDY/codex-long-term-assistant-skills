@@ -1,3 +1,7 @@
+<p align="right">
+  <strong>简体中文</strong> · <a href="README.en.md">English</a>
+</p>
+
 # Codex 跨项目长期技术助手
 
 <p align="center">
@@ -12,11 +16,9 @@
   <img alt="Codex CLI 0.150.1" src="https://img.shields.io/badge/Codex%20CLI-0.150.1-111827">
 </p>
 
-<p align="center">
-  <strong>简体中文</strong> · <a href="README.en.md">English</a>
-</p>
-
 V6.6.1 面向 Windows 原生 Codex CLI 0.150.1，提供中文、英文两个可独立安装且可复现构建的 Plugin 发行包。主 Agent 的模型配置保持不变，自动子 Agent 的最高策略边界为 Terra High。
+
+**快速入口：** [下载](#下载) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#五分钟升级) · [文档](#文档与协作)
 
 ## 下载
 
@@ -48,6 +50,50 @@ flowchart LR
     G --> H[Snapshot / Assessment / Proposal]
     H --> I[人工决策]
 ```
+
+## 可复现使用示例
+
+以下内容展示一次典型只读任务的输入、流程和可检查结果；它是使用示例，不是当前会话的运行证明。
+
+**任务输入**
+
+```text
+检查当前仓库的安装器升级路径，只读分析，不修改文件；
+按风险选择 Reviewer，并区分已确认事实、推断和未验证项。
+```
+
+**预期流程**
+
+```text
+任务输入
+  -> 路由 engineering-quality-delivery
+  -> 读取安装器、清单、测试与升级文档
+  -> 按实际风险启动逻辑只读 Reviewer
+  -> 汇总并去重 Reviewer 发现
+  -> 输出证据、风险和未验证边界
+```
+
+生命周期可形成 `TURN_OPENED -> SUBAGENT_STARTED -> SUBAGENT_STOPPED -> TASK_COMPLETED` 事件序列；会话结束后由 `SessionEnd` 进入延迟封印流程。模型证据应保持三个独立字段：
+
+```ini
+requested_model_policy = PASS
+runtime_model_evidence = UNAVAILABLE
+diagnostic_model_observation = host diagnostic only
+```
+
+其中 `requested_model_policy=PASS` 只证明自动流程未主动请求超过 Terra High 的配置，不证明实际运行模型。
+
+## 兼容矩阵
+
+| 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
+| --- | --- | --- | --- |
+| Windows 原生 Codex CLI 0.150.1 + Plugin | 主要目标 | Plugin、Marketplace、Hooks 与生命周期已有实机验收基础；V6.6.1 包级验证通过 | V6.6.1 公开制品的宿主端安装仍应在目标账户独立读回 |
+| Windows `windows-latest` + Python 3.13 | CI | 双语审计、完整包验证与发行构建 | CI 不替代真实 Codex 账户验收 |
+| Ubuntu `ubuntu-latest` + Python 3.13 | CI 包级兼容 | 双语审计与完整包验证 | 不代表 Plugin、Marketplace 或 Hook 的 Linux 宿主验收 |
+| standalone 模式 | 兼容模式 | 安装结构与回归测试覆盖 | 不是 V6.6.1 的主要发行验收路径 |
+| macOS | 未验证 | 无当前 CI 或宿主验收证据 | 状态保持 `UNVERIFIED` |
+
+Python 源码声明支持 3.8+；当前公开 CI 固定使用 3.13。与目标环境不同的组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
 
 ## 五分钟升级
 
