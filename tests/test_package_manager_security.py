@@ -4,11 +4,17 @@
 English: V6.6 installer security and scope smoke tests.
 """
 from __future__ import annotations
-import json, os, shutil, subprocess, sys, tempfile, time, unittest
+import importlib.util, json, os, shutil, subprocess, sys, tempfile, time, unittest
+from unittest import mock
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 MANAGER=ROOT/'scripts'/'package_manager.py'
+sys.path.insert(0,str(ROOT/'scripts'))
+SPEC=importlib.util.spec_from_file_location('package_manager_under_test',MANAGER)
+assert SPEC and SPEC.loader
+package_manager=importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(package_manager)
 
 
 def io_path(path: Path) -> Path:
@@ -53,7 +59,7 @@ if args[:2] == ['plugin','add']:
     if len(args) > 2 and args[2] == '--help': print('plugin add help'); raise SystemExit(0)
     home.mkdir(parents=True,exist_ok=True)
     state.write_text(json.dumps({'installed':True}),encoding='utf-8')
-    version=os.environ.get('FAKE_PLUGIN_VERSION','6.6.1')
+    version=os.environ.get('FAKE_PLUGIN_VERSION','7.0.0')
     source=Path(market_file.read_text(encoding='utf-8'))/'plugins'/'codex-cross-project-engineering-assistant'
     cache=home/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/version
     if io_path(cache).exists(): shutil.rmtree(io_path(cache))
@@ -68,7 +74,7 @@ if args == ['plugin','list','--json']:
         print('configured marketplace manifest is invalid',file=sys.stderr); raise SystemExit(2)
     installed=[]
     if state.exists():
-        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','6.6.1'),'installed':True,'enabled':True}]
+        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','7.0.0'),'installed':True,'enabled':True}]
     print(json.dumps({'installed':installed,'available':[]})); raise SystemExit(0)
 print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemExit(2)
 """,encoding='utf-8')
@@ -107,6 +113,51 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertEqual(hooks['hooks']['SessionEnd'][0]['hooks'][0]['timeout'],3)
         run(['uninstall','--scope','user','--mode','standalone'],self.env)
         self.assertFalse((self.home/'.agents'/'skills'/'controlled-evolution-governance').exists())
+
+    def test_v70_upgrade_removes_only_declared_legacy_skills(self):
+        skills_home=self.home/'.agents'/'skills'
+        legacy=(
+            'java-backend-engineering',
+            'python-backend-ai-engineering',
+            'data-middleware-ai-infrastructure',
+            'vue-frontend-engineering',
+        )
+        for name in legacy:
+            target=skills_home/name
+            target.mkdir(parents=True,exist_ok=True)
+            (target/'SKILL.md').write_text('legacy',encoding='utf-8')
+        unknown=skills_home/'user-owned-skill'
+        unknown.mkdir(parents=True)
+        (unknown/'SKILL.md').write_text('keep',encoding='utf-8')
+
+        run(['install','--scope','user','--mode','standalone'],self.env)
+        run(['verify','--scope','user','--mode','standalone'],self.env)
+
+        for name in legacy:
+            self.assertFalse((skills_home/name).exists())
+        self.assertEqual('keep',(unknown/'SKILL.md').read_text(encoding='utf-8'))
+        self.assertTrue((skills_home/'backend-engineering'/'SKILL.md').is_file())
+        self.assertTrue((skills_home/'ai-engineering'/'SKILL.md').is_file())
+
+    def test_manifest_skill_directory_names_fail_closed_before_account_io(self):
+        skills_home=self.home/'.agents'/'skills'
+        sentinel=self.home/'outside-sentinel.txt'
+        sentinel.write_text('keep',encoding='utf-8')
+        invalid_names=('../outside','/outside','C:\\outside','..','nested/name','nested\\name')
+        for invalid in invalid_names:
+            with self.subTest(name=invalid):
+                manifest_path=Path(self.tmp.name)/('manifest-'+str(len(invalid))+'.json')
+                manifest_path.write_text(json.dumps({
+                    'skills':[{'name':'backend-engineering'}],
+                    'deprecated_skills':[invalid],
+                }),encoding='utf-8')
+                with mock.patch.object(package_manager,'MANIFEST_PATH',manifest_path), \
+                     mock.patch.object(package_manager,'codex_home',return_value=self.codex), \
+                     mock.patch.object(package_manager,'user_skills_home',return_value=skills_home):
+                    with self.assertRaises(package_manager.InstallError):
+                        package_manager.install_user('standalone',True,False)
+                self.assertEqual('keep',sentinel.read_text(encoding='utf-8'))
+                self.assertFalse((self.home/'outside').exists())
 
     def test_plugin_install_verify_uninstall(self):
         run(['install','--scope','user','--mode','plugin'],self.env)
@@ -155,7 +206,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_install_rejects_wrong_registered_version(self):
         env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
         result=run(['install','--scope','user','--mode','plugin'],env,2)
-        self.assertIn('version=6.6.1',result.stderr)
+        self.assertIn('version=7.0.0',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
@@ -236,7 +287,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['doctor','--recover'],self.env)
         self.assertFalse(journal.exists())
         status=json.loads(run(['status','--json'],self.env).stdout)
-        self.assertEqual('6.6.1',status['version'])
+        self.assertEqual('7.0.0',status['version'])
         self.assertIn('live_transaction',status)
 
     def test_mode_switch_is_refused_without_force(self):

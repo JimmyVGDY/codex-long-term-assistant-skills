@@ -1,4 +1,4 @@
-# Cross-Project Engineering Assistant Core Rules (V6)
+# Cross-Project Engineering Assistant Core Rules (V7)
 
 Global context retains only non-bypassable cross-project boundaries. Domain procedures load progressively from the matching Skill.
 
@@ -21,7 +21,7 @@ Global context retains only non-bypassable cross-project boundaries. Domain proc
 
 Use one primary domain Skill and at most two supporting Skills per phase unless an explicit reason is recorded.
 
-Primary domains: Java, Python, frontend, or data/middleware/infrastructure. Supporting domains: observability, engineering delivery, independent review, technical documentation, long-running memory, and controlled evolution.
+Primary domains: general backend, frontend, AI, or data/middleware/infrastructure. Supporting domains: observability, engineering delivery, independent review, technical documentation, long-running memory, and controlled evolution.
 
 Skill activation does not expand file, Git, environment, production, or data authorization and does not increase model strength.
 

@@ -1,4 +1,4 @@
-# 跨项目长期技术助手全局核心规则（V6）
+# 跨项目长期技术助手全局核心规则（V7）
 
 > 全局上下文只保留不可绕过的跨项目边界。领域流程、检查清单和受控演进细节由对应 Skill 渐进加载。
 
@@ -15,17 +15,17 @@
 - 非简单任务先确认 Git Root、分支、语言/框架版本、构建/测试入口、目标环境与数据边界。
 - 跨会话或长期任务绑定仓库外 Project Profile / State；项目 ID、仓库身份或 Task Envelope 不一致时失败关闭。
 - 禁止把其他项目的表结构、接口、凭据、业务口径、运行结论或观察记录带入当前项目。
-- V6 自观察记录必须同时匹配 `project_id + repo_fingerprint`；任一不一致不得聚合。
+- 自观察记录必须同时匹配 `project_id + repo_fingerprint`；任一不一致不得聚合。
 
 ## 3. Skill 最小充分路由
 
 每阶段默认 1 个主领域 Skill，最多组合 2 个支撑 Skill；超过时说明理由。
 
 主领域：
-- Java/Spring/JVM/事务/并发/Maven：`$java-backend-engineering`
-- Python/FastAPI/Django/Flask/异步/AI 服务：`$python-backend-ai-engineering`
+- 服务端/API/业务/事务/并发/Worker（任意语言）：`$backend-engineering`
 - 浏览器/WebView/前端框架/Renderer：`$frontend-engineering`
-- DB/Redis/RabbitMQ/ES/存储/GPU/容器/网络：`$data-middleware-ai-infrastructure`
+- 模型调用/RAG/Agent/AI 评测/推理与多模态生成：`$ai-engineering`
+- DB/Redis/MQ/搜索/存储/GPU 资源/容器/网络：`$data-middleware-infrastructure`
 
 支撑：
 - 日志/Metrics/Trace/Profile：`$log-observability-analysis`
@@ -61,7 +61,7 @@ Skill 激活不扩大文件、Git、环境、生产或数据权限，也不自�
 - 恢复优先读取 CURRENT_TASK、计划、最近检查点和实际 Git/运行状态，不加载完整历史。
 - Checkpoint -> Project Memory -> Cross-project Knowledge 必须逐级人工审核，不自动晋升。
 
-## 7. V6 确定性自观察与受控演进
+## 7. 确定性自观察与受控演进
 
 生命周期链：
 

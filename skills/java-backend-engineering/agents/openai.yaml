@@ -1,6 +1,0 @@
-interface:
-  display_name: "Java 后端工程"
-  short_description: "Java、Spring、事务、并发、JVM 与服务端工程规则"
-  default_prompt: "使用 Java 后端工程技能处理当前任务，先识别项目版本和调用链，再按最小充分改动原则分析、实现或审查。"
-policy:
-  allow_implicit_invocation: true

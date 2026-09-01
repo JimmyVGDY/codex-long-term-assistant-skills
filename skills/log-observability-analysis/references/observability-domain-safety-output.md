@@ -11,7 +11,7 @@
 
 ### Java / JVM
 
-组合 `$java-backend-engineering`，检查：
+组合 `$backend-engineering` 并加载 Java/JVM 专项，检查：
 
 - 异常链和被包装的根因；
 - Spring 事务、代理、自调用和线程上下文；
@@ -21,7 +21,7 @@
 
 ### Python / Worker
 
-组合 `$python-backend-ai-engineering`，检查：
+组合 `$backend-engineering` 并加载 Python 专项，检查：
 
 - Traceback 链、协程未等待和 Event Loop 阻塞；
 - 多 Worker 状态不一致；
@@ -29,9 +29,19 @@
 - CPU/GPU/NAS/FFmpeg 长任务；
 - 导入时副作用和资源泄漏。
 
+### AI / RAG / 推理任务
+
+组合 `$ai-engineering`，检查：
+
+- 模型、Prompt、Schema、检索和工具版本；
+- Provider 响应、任务持久化、业务终态和前端轮询时间线；
+- Token、模型耗时、结构化输出失败、降级和重试放大；
+- RAG 召回/引用/权限、Agent 工具结果和生成任务恢复；
+- GPU OOM、队列和资源指标与 AI 任务状态是否一致。
+
 ### 数据与基础设施
 
-组合 `$data-middleware-ai-infrastructure`，检查：
+组合 `$data-middleware-infrastructure`，检查：
 
 - 慢 SQL、锁等待、连接池和主从延迟；
 - Redis 热点、大 Key、超时和主从切换；

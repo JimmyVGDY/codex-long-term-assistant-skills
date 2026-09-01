@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：V6 安装、验证与卸载器：支持官方账户 Skill 目录、Plugin-first、standalone 兼容、仓库级隔离、路径安全、事务恢复、漂移检测与 dry-run；不自动删除未知资产。
+"""中文：V7 安装、验证与卸载器：支持官方账户 Skill 目录、Plugin-first、standalone 兼容、仓库级隔离、路径安全、事务恢复、受管旧 Skill 迁移、漂移检测与 dry-run；不自动删除未知资产。
 
-English: V6 installer, verifier, and uninstaller for the standard account Skill directory, Plugin-first and standalone compatibility, repository isolation, path safety, transaction recovery, drift detection, and dry-run. It never automatically removes unknown assets.
+English: V7 installer, verifier, and uninstaller for the standard account Skill directory, Plugin-first and standalone compatibility, repository isolation, path safety, transaction recovery, managed legacy-Skill migration, drift detection, and dry-run. It never automatically removes unknown assets.
 """
 from __future__ import annotations
 
@@ -30,8 +30,9 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "6.6.1"
+VERSION = "7.0.0"
 MARKETPLACE = "cp-assistant-local"
+SKILL_DIR_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
 END = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:END -->"
 
@@ -613,8 +614,46 @@ def manifest() -> Dict[str, Any]:
     return load_json(MANIFEST_PATH, {})
 
 
+def _validated_skill_dir_name(value: Any, field: str) -> str:
+    """中文：Manifest 中的 Skill 只能是单层安全目录名。
+
+    English: A manifest Skill must be one safe, single directory component.
+    """
+    if not isinstance(value, str) or not SKILL_DIR_NAME_PATTERN.fullmatch(value):
+        raise InstallError("Manifest %s 包含不安全的 Skill 目录名: %r" % (field, value))
+    return value
+
+
 def skill_names() -> List[str]:
-    return [str(item["name"]) for item in manifest().get("skills", [])]
+    values = manifest().get("skills", [])
+    if not isinstance(values, list):
+        raise InstallError("Manifest skills 必须是数组")
+    names: List[str] = []
+    for item in values:
+        if not isinstance(item, dict) or "name" not in item:
+            raise InstallError("Manifest skills 条目必须包含 name")
+        name = _validated_skill_dir_name(item["name"], "skills")
+        if name in names:
+            raise InstallError("Manifest skills 包含重复目录名: %s" % name)
+        names.append(name)
+    return names
+
+
+def deprecated_skill_names() -> List[str]:
+    """中文：返回需要备份并移除的受管旧 Skill，不把当前 Skill 当作旧目录。
+
+    English: Return managed legacy Skills to back up and remove, excluding current Skills.
+    """
+    values = manifest().get("deprecated_skills", [])
+    if not isinstance(values, list):
+        raise InstallError("Manifest deprecated_skills 必须是数组")
+    current = set(skill_names())
+    names: List[str] = []
+    for value in values:
+        name = _validated_skill_dir_name(value, "deprecated_skills")
+        if name not in current and name not in names:
+            names.append(name)
+    return names
 
 
 def agent_files() -> List[Path]:
@@ -667,9 +706,9 @@ def payload_report(root: Path) -> Dict[str, Any]:
 
 
 def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
-    """中文：保留全部既有和未知字段，同时明确 V6.6 身份字段。
+    """中文：保留全部既有和未知字段，同时明确 V7 身份字段。
 
-    English: Preserve all prior and unknown fields while making the V6.6 identity fields explicit.
+    English: Preserve all prior and unknown fields while making the V7 identity fields explicit.
     """
     if not value:
         return {}
@@ -897,6 +936,8 @@ def _require_plugin_host() -> Dict[str, Any]:
 
 def install_user(mode: str, dry_run: bool, force: bool) -> None:
     ch = codex_home(); sh = user_skills_home(); home = Path.home().absolute()
+    current_skills = skill_names()
+    deprecated_skills = deprecated_skill_names()
     # 中文：防止误把源码或安装包目录当成 CODEX_HOME 后发生自覆盖。
     # English: Prevent self-overwrite when the source or package directory is mistaken for CODEX_HOME.
     source_root = ROOT.absolute()
@@ -908,8 +949,15 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     reject_link_ancestors(ch); reject_link_ancestors(home / ".agents")
     targets: List[Tuple[str, Path]] = [("global", ch / "AGENTS.md"), ("install-state", state_path("user"))]
     targets.extend(("agent:" + p.name, ch / "agents" / p.name) for p in agent_files())
+    legacy_targets = [("deprecated-skill:" + n, sh / n) for n in deprecated_skills]
+    for _label, target in legacy_targets:
+        ensure_inside(target, sh)
+    targets.extend(legacy_targets)
     if mode == "standalone":
-        targets.extend(("skill:" + n, sh / n) for n in skill_names())
+        current_skill_targets = [("skill:" + n, sh / n) for n in current_skills]
+        for _label, target in current_skill_targets:
+            ensure_inside(target, sh)
+        targets.extend(current_skill_targets)
         targets.extend([("runtime", ch / "runtime" / "cp_runtime"), ("hook-script", ch / "cp-assistant-hooks" / "cp_hook.py"), ("hooks-json", ch / "hooks.json")])
     else:
         targets.extend([
@@ -979,8 +1027,13 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         # English: Install Reviewer Agent definitions.
         for src in agent_files():
             dst = ch / "agents" / src.name; copy_atomic(src, dst); _record_applied(journal, "agent:" + src.name, dst)
+        for name in deprecated_skills:
+            dst = sh / name
+            if _io_path(dst).exists() or _io_path(dst).is_symlink():
+                remove_path(dst)
+            _record_applied(journal, "deprecated-skill:" + name, dst)
         if mode == "standalone":
-            for name in skill_names():
+            for name in current_skills:
                 dst = sh / name; copy_atomic(ROOT / "skills" / name, dst); _record_applied(journal, "skill:" + name, dst)
             dst = ch / "runtime" / "cp_runtime"; copy_atomic(ROOT / "runtime" / "cp_runtime", dst); _record_applied(journal, "runtime", dst)
             dst = ch / "cp-assistant-hooks" / "cp_hook.py"; copy_atomic(ROOT / "hooks" / "cp_hook.py", dst); _record_applied(journal, "hook-script", dst)
@@ -1043,9 +1096,9 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                                          "marketplace_digest":marketplace_report["payload_digest"],
                                          "cache_digest":cache_report["payload_digest"] if cache_report else None,
                                          "file_count":source_report["file_count"]}
-            # 中文：V6.6 SessionEnd 仅入队签名任务；提交安装前初始化主机绑定密钥环，
+            # 中文：V7 SessionEnd 仅入队签名任务；提交安装前初始化主机绑定密钥环，
             # 中文：同时保留既有 V6.5 密钥和全部 RETIRED 验证历史。
-            # English: V6.6 SessionEnd only enqueues a signed job; initialize the host-bound
+            # English: V7 SessionEnd only enqueues a signed job; initialize the host-bound
             # English: keyring before commit while preserving V6.5 keys and RETIRED history.
             init_keyring()
             state["integrity_keyring"] = verify_keyring()
@@ -1108,7 +1161,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("安装失败且回滚不完整；请执行 doctor --recover：%s" % "; ".join(journal["rollback_errors"])) from exc
         raise
-    print("[OK] V6.6 账户级安装完成，mode=%s" % mode)
+    print("[OK] V7.0 账户级安装完成，mode=%s" % mode)
     if mode == "plugin":
         print("[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add")
 
@@ -1117,7 +1170,9 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
     repo = git_root(Path(repo_path))
     root = repo / ".agents" / "skills"
     reject_link_ancestors(root.parent, repo)
-    targets = [("skill:" + n, root / n) for n in skill_names()] + [("install-state", state_path("repo", repo))]
+    targets = ([("deprecated-skill:" + n, root / n) for n in deprecated_skill_names()] +
+               [("skill:" + n, root / n) for n in skill_names()] +
+               [("install-state", state_path("repo", repo))])
     for _label, target in targets:
         ensure_inside(target, repo); reject_link_ancestors(target.parent, repo)
     old_state = load_json(state_path("repo", repo), {}) or {}
@@ -1139,6 +1194,11 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         journal["records"] = records
         _journal_write(journal, "BACKED_UP")
         _journal_write(journal, "APPLYING")
+        for name in deprecated_skill_names():
+            dst = root / name
+            if _io_path(dst).exists() or _io_path(dst).is_symlink():
+                remove_path(dst)
+            _record_applied(journal, "deprecated-skill:" + name, dst)
         for name in skill_names():
             dst = root / name; copy_atomic(ROOT / "skills" / name, dst); _record_applied(journal, "skill:" + name, dst)
         write_json_atomic(backup / "backup-manifest.json", {"records":records,"scope":"repo"})
@@ -1173,13 +1233,15 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("仓库安装回滚不完整；请执行 doctor --recover") from exc
         raise
-    print("[OK] V6.6 仓库级 Skills 安装完成: %s" % repo)
+    print("[OK] V7.0 仓库级 Skills 安装完成: %s" % repo)
 
 
 def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     errors: List[str] = []
     if scope == "repo":
         repo = git_root(Path(repo_path or ".")); root = repo / ".agents" / "skills"
+        for name in deprecated_skill_names():
+            if _io_path(root / name).exists(): errors.append("遗留旧 Skill %s" % (root / name))
         for name in skill_names():
             dst=root/name; src=ROOT/"skills"/name
             if not _io_path(dst).is_dir(): errors.append("缺少 %s" % dst)
@@ -1187,6 +1249,8 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     else:
         ch=codex_home()
         if mode == "standalone":
+            for name in deprecated_skill_names():
+                if _io_path(user_skills_home()/name).exists(): errors.append("遗留旧 Skill %s" % name)
             for name in skill_names():
                 dst=user_skills_home()/name; src=ROOT/"skills"/name
                 if not _io_path(dst).is_dir(): errors.append("缺少 Skill %s" % name)
@@ -1195,6 +1259,8 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
         else:
             market = plugin_marketplace_root()
             plugin=market/"plugins"/PACKAGE
+            for name in deprecated_skill_names():
+                if _io_path(plugin/"skills"/name).exists(): errors.append("Plugin 遗留旧 Skill %s" % name)
             if not _io_path(market/".agents"/"plugins"/"marketplace.json").is_file(): errors.append("缺少 Codex Marketplace manifest")
             if not _io_path(plugin/".codex-plugin"/"plugin.json").is_file(): errors.append("缺少 Plugin")
             if not _io_path(plugin/"hooks"/"hooks.json").is_file(): errors.append("缺少 Plugin Hooks")
@@ -1229,7 +1295,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                 state = migrate_state_v1_to_v2(load_json(state_path("user"), {}) or {}, "user", mode)
                 identity = state.get("payload_identity") or {}
                 if state.get("version") != VERSION or state.get("schema_version") != 2:
-                    errors.append("安装状态不是 V6.6 schema 2")
+                    errors.append("安装状态不是 V7 schema 2")
                 if any(identity.get(key) != source_report["payload_digest"]
                        for key in ("manifest_digest", "marketplace_digest", "cache_digest")):
                     errors.append("安装状态 payload 身份读回不一致")
@@ -1247,7 +1313,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     if errors:
         for item in errors: print("[FAIL]",item)
         raise SystemExit(1)
-    print("[OK] V6.6 安装验证通过 scope=%s mode=%s" % (scope, mode))
+    print("[OK] V7.0 安装验证通过 scope=%s mode=%s" % (scope, mode))
 
 
 def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_run: bool) -> None:
@@ -1349,9 +1415,9 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
         _record_applied(journal, str(record.get("label") or "managed"), target)
     if installed_mode == "plugin" and not any(record.get("existed") for record in previous_market_records):
         _remove_empty_marketplace_dirs()
-    # 中文：V6.6 将自身状态文件记为事务目标；若旧 V6 状态存在，恢复循环已将其还原，
+    # 中文：V7 将自身状态文件记为事务目标；若旧 V6 状态存在，恢复循环已将其还原，
     # 中文：否则必须确保当前状态文件不存在。
-    # English: V6.6 records its state file as a transactional target; the restore loop reinstates
+    # English: V7 records its state file as a transactional target; the restore loop reinstates
     # English: an older V6 state when present, otherwise no current state file may remain.
     if not previous_state_record:
         _io_path(sp).unlink(missing_ok=True)
@@ -1367,7 +1433,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
-    print("[OK] V6.6 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
+    print("[OK] V7.0 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
 
 
 def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict[str, Any]]:
@@ -1504,7 +1570,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
 
 
 def main() -> None:
-    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V6.6 安装器")
+    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.0 安装器")
     sub=p.add_subparsers(dest="command",required=True)
     for name in ("install","verify","uninstall"):
         q=sub.add_parser(name)

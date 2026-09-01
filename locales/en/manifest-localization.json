@@ -1,11 +1,11 @@
 {
-  "release_name": "Independent bilingual distributions and Windows delayed-seal stability",
-  "generated_for": "Codex Plugin-first cross-project engineering assistance with trusted model-evidence separation, native process locks, delayed signed event sealing, non-destructive archives, reviewer calibration, controlled proposal governance, and a Terra High automatic ceiling",
+  "release_name": "General backend, frontend, AI, and data-infrastructure domain redesign",
+  "generated_for": "Codex Plugin-first cross-project engineering assistance with four general primary domains, progressive stack guidance, trusted model-evidence separation, deterministic lifecycle controls, and a Terra High automatic ceiling",
   "skills": {
-    "java-backend-engineering": {"display_name": "Java Backend Engineering", "description": "Use for Java backend, Spring, Struts2, MyBatis, JPA, Maven, JVM, transaction, concurrency, SSE, and Java review work. Identify Java and framework versions first."},
-    "python-backend-ai-engineering": {"display_name": "Python Backend and AI Engineering", "description": "Use for Python backend, FastAPI, Django, Flask, async I/O, multiprocessing, Celery, data pipelines, model calls, RAG, GPU workers, and Python reviews."},
+    "backend-engineering": {"display_name": "General Backend Engineering", "description": "Use for server applications, APIs, business logic, access, application transactions, concurrency, jobs, Workers, resources, and backend reviews across Java, Python, Node.js, Go, .NET, Rust, and other stacks."},
+    "ai-engineering": {"display_name": "General AI Engineering", "description": "Use for models and multimodal generation, structured output, prompt safety, RAG, agents, evaluation, routing, inference Workers, and generation recovery across languages and providers."},
     "frontend-engineering": {"display_name": "Frontend Engineering", "description": "Use for browser, WebView, desktop renderer, JavaScript or TypeScript, web frameworks, state, routing, forms, streaming, build, test, performance, security, SEO, and accessibility work."},
-    "data-middleware-ai-infrastructure": {"display_name": "Data, Middleware, AI, and Infrastructure", "description": "Use for SQL databases, Redis, messaging, search, vector retrieval, storage, GPU resources, containers, orchestration, networks, and infrastructure."},
+    "data-middleware-infrastructure": {"display_name": "Data, Middleware, and Infrastructure", "description": "Use for databases, locks, Redis, messaging, search and vector storage, files and object storage, GPU resources, containers, orchestration, networks, and infrastructure."},
     "log-observability-analysis": {"display_name": "Log and Observability Analysis", "description": "Use for logs, metrics, distributed traces, profiling, alerts, and change-event analysis across bounded local, non-production, and production-read-only contexts."},
     "engineering-quality-delivery": {"display_name": "Engineering Quality and Delivery", "description": "Use when behavior changes or work includes validation, Git, approval, release, rollback, restart, deployment, or production boundaries."},
     "multi-agent-independent-review": {"display_name": "Independent Multi-Agent Review", "description": "Use for risk-based design gates and independent functional, compatibility, security, performance, contract, concurrency, and delivery reviews."},
@@ -29,6 +29,9 @@
     "unknown": "Runtime evidence is insufficient."
   },
   "breaking_changes": [
-    "vue-frontend-engineering was renamed to frontend-engineering; no compatibility alias is installed."
+    "java-backend-engineering and python-backend-ai-engineering were replaced by backend-engineering.",
+    "AI application semantics moved to ai-engineering.",
+    "data-middleware-ai-infrastructure was replaced by data-middleware-infrastructure.",
+    "No compatibility alias is installed for replaced Skills."
   ]
 }

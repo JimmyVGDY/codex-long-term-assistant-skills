@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "description": "V5.0 路由回归：覆盖最小充分加载、执行档位、Luna/Terra 子 Agent 分级、独立上下文 Reviewer、证据有效性和跨框架/传统/混合前端识别。",
+  "description": "V7.0 路由回归：覆盖四个通用主领域、最小充分加载、执行档位、Luna/Terra 子 Agent 分级、独立上下文 Reviewer、证据有效性和跨技术栈识别。",
   "cases": [
     {
       "id": "java-concept-readonly",
       "prompt": "解释一下 Java CompletableFuture 的异常传播，不修改代码。",
       "required": [
-        "java-backend-engineering"
+        "backend-engineering"
       ],
       "optional": [],
       "forbidden": [
@@ -21,7 +21,7 @@
       "id": "java-local-fix",
       "prompt": "修复 Spring 事务自调用失效问题，执行相关后端定向测试，本地修改但不要提交。",
       "required": [
-        "java-backend-engineering",
+        "backend-engineering",
         "engineering-quality-delivery"
       ],
       "optional": [
@@ -38,10 +38,10 @@
       "prompt": "只读分析 Celery Worker 日志中的任务反复重试和 WorkerLost，不要修改任何文件。",
       "required": [
         "log-observability-analysis",
-        "python-backend-ai-engineering"
+        "backend-engineering"
       ],
       "optional": [
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "forbidden": [
         "engineering-quality-delivery",
@@ -54,7 +54,7 @@
       "prompt": "仅在生产只读分析 RabbitMQ Ready、Unacked 和消费者错误日志，限制时间窗口，禁止重启和数据写入。",
       "required": [
         "log-observability-analysis",
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "optional": [],
       "forbidden": [
@@ -68,7 +68,7 @@
       "id": "database-index-analysis",
       "prompt": "分析这条 MySQL SQL 的执行计划和联合索引设计，只给方案。",
       "required": [
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "optional": [],
       "forbidden": [
@@ -85,9 +85,9 @@
         "technical-document-writing"
       ],
       "optional": [
-        "java-backend-engineering",
-        "python-backend-ai-engineering",
-        "data-middleware-ai-infrastructure"
+        "backend-engineering",
+        "ai-engineering",
+        "data-middleware-infrastructure"
       ],
       "forbidden": [
         "engineering-quality-delivery",
@@ -103,10 +103,10 @@
         "engineering-quality-delivery"
       ],
       "optional": [
-        "java-backend-engineering",
-        "python-backend-ai-engineering",
+        "backend-engineering",
+        "ai-engineering",
         "frontend-engineering",
-        "data-middleware-ai-infrastructure",
+        "data-middleware-infrastructure",
         "multi-agent-independent-review"
       ],
       "forbidden": [],
@@ -117,7 +117,7 @@
       "prompt": "在开始写数据库迁移代码前，先从兼容、数据、安全和性能角度做实施前设计审查。",
       "required": [
         "multi-agent-independent-review",
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "optional": [
         "engineering-quality-delivery",
@@ -151,9 +151,9 @@
         "log-observability-analysis"
       ],
       "optional": [
-        "data-middleware-ai-infrastructure",
-        "java-backend-engineering",
-        "python-backend-ai-engineering"
+        "data-middleware-infrastructure",
+        "backend-engineering",
+        "ai-engineering"
       ],
       "forbidden": [
         "engineering-quality-delivery",
@@ -168,7 +168,7 @@
         "log-observability-analysis"
       ],
       "optional": [
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "forbidden": [
         "engineering-quality-delivery",
@@ -181,7 +181,7 @@
       "prompt": "分析现有 JFR 和线程 Dump，判断 CPU 飙高和锁竞争原因，不在线上重新采集。",
       "required": [
         "log-observability-analysis",
-        "java-backend-engineering"
+        "backend-engineering"
       ],
       "optional": [],
       "forbidden": [
@@ -213,9 +213,9 @@
         "technical-document-writing"
       ],
       "optional": [
-        "java-backend-engineering",
-        "python-backend-ai-engineering",
-        "data-middleware-ai-infrastructure"
+        "backend-engineering",
+        "ai-engineering",
+        "data-middleware-infrastructure"
       ],
       "forbidden": [
         "engineering-quality-delivery",
@@ -227,8 +227,8 @@
       "id": "java-rabbitmq-fix",
       "prompt": "修复 Java RabbitMQ 消费重复处理问题，补充幂等和定向测试，提交前独立复审。",
       "required": [
-        "java-backend-engineering",
-        "data-middleware-ai-infrastructure",
+        "backend-engineering",
+        "data-middleware-infrastructure",
         "engineering-quality-delivery",
         "multi-agent-independent-review"
       ],
@@ -295,7 +295,7 @@
         "engineering-quality-delivery"
       ],
       "optional": [
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "forbidden": [
         "log-observability-analysis",
@@ -325,7 +325,7 @@
         "frontend-engineering"
       ],
       "optional": [
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "forbidden": [
         "engineering-quality-delivery",
@@ -341,7 +341,7 @@
         "engineering-quality-delivery"
       ],
       "optional": [
-        "java-backend-engineering"
+        "backend-engineering"
       ],
       "forbidden": [
         "technical-document-writing",
@@ -372,7 +372,7 @@
         "frontend-engineering"
       ],
       "optional": [
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "forbidden": [
         "engineering-quality-delivery",
@@ -384,7 +384,8 @@
       "id": "node-backend-not-frontend",
       "prompt": "排查纯 Node.js Fastify 后端 API 的数据库事务和 RabbitMQ 消费问题，不涉及浏览器页面。",
       "required": [
-        "data-middleware-ai-infrastructure"
+        "backend-engineering",
+        "data-middleware-infrastructure"
       ],
       "optional": [
         "engineering-quality-delivery"
@@ -405,7 +406,7 @@
       "forbidden": [
         "engineering-quality-delivery",
         "multi-agent-independent-review",
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "max_active": 1
     },
@@ -417,7 +418,7 @@
         "engineering-quality-delivery"
       ],
       "optional": [
-        "java-backend-engineering"
+        "backend-engineering"
       ],
       "forbidden": [
         "long-running-task-memory",
@@ -458,7 +459,7 @@
       "prompt": "只读分析 Electron 主进程中的文件系统、自动更新、进程启动和 IPC 权限问题，不涉及 Renderer 页面。",
       "required": [],
       "optional": [
-        "data-middleware-ai-infrastructure"
+        "data-middleware-infrastructure"
       ],
       "forbidden": [
         "frontend-engineering",
@@ -485,7 +486,7 @@
       "id": "light-readonly-explanation",
       "prompt": "只解释这个 Java 异常含义，不改代码。",
       "required": [
-        "java-backend-engineering"
+        "backend-engineering"
       ],
       "optional": [],
       "forbidden": [
@@ -499,7 +500,7 @@
       "id": "standard-code-change",
       "prompt": "修复普通 Spring Service Bug，跑相关测试，不推送。",
       "required": [
-        "java-backend-engineering",
+        "backend-engineering",
         "engineering-quality-delivery"
       ],
       "optional": [
@@ -514,7 +515,7 @@
       "id": "strict-schema-migration",
       "prompt": "设计并实施生产数据库不可逆风险迁移，需要灰度、回滚和独立复审。",
       "required": [
-        "data-middleware-ai-infrastructure",
+        "data-middleware-infrastructure",
         "engineering-quality-delivery",
         "multi-agent-independent-review",
         "long-running-task-memory"
@@ -536,6 +537,158 @@
       ],
       "forbidden": [],
       "max_active": 2
+    },
+    {
+      "id": "go-gin-backend-readonly",
+      "prompt": "只读分析 Go Gin 服务中的 Context 生命周期、goroutine 泄漏和 HTTP 超时传播，不修改代码。",
+      "required": [
+        "backend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "ai-engineering",
+        "data-middleware-infrastructure",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "dotnet-aspnet-backend-fix",
+      "prompt": "修复 ASP.NET Core 服务中 scoped 依赖被 singleton 捕获的问题，补充定向测试但不要提交。",
+      "required": [
+        "backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "ai-engineering"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "rust-axum-backend-readonly",
+      "prompt": "只读审查 Rust Axum 服务的共享 State、异步锁、错误映射和 graceful shutdown。",
+      "required": [
+        "backend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "ai-engineering",
+        "data-middleware-infrastructure",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "mixed-language-backend-architecture",
+      "prompt": "分析 Java、Python、Node.js 和 Go 混合后端的服务职责、接口契约和失败隔离，只给架构建议。",
+      "required": [
+        "backend-engineering"
+      ],
+      "optional": [
+        "technical-document-writing",
+        "data-middleware-infrastructure"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "pure-ai-structured-output",
+      "prompt": "设计一个与语言无关的模型调用层，校验 JSON Schema、处理超时、降级和非法结构化输出，只给方案。",
+      "required": [
+        "ai-engineering"
+      ],
+      "optional": [
+        "backend-engineering"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "rag-permission-evaluation",
+      "prompt": "只读评估 RAG 的租户权限过滤、召回率、引用正确性和删除后索引一致性。",
+      "required": [
+        "ai-engineering"
+      ],
+      "optional": [
+        "data-middleware-infrastructure"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "agent-tool-security-readonly",
+      "prompt": "只读审查 Agent 工具调用的输入 Schema、权限、人工确认、幂等和审计边界。",
+      "required": [
+        "ai-engineering"
+      ],
+      "optional": [
+        "backend-engineering"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "ai-gpu-worker-boundary",
+      "prompt": "排查多模态 GPU Worker 的 OOM、队列并发、任务取消和失败恢复，不执行生产操作。",
+      "required": [
+        "ai-engineering",
+        "data-middleware-infrastructure"
+      ],
+      "optional": [
+        "backend-engineering",
+        "log-observability-analysis"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery"
+      ],
+      "max_active": 4
+    },
+    {
+      "id": "ordinary-python-backend-not-ai",
+      "prompt": "修复一个普通 Django 订单接口的权限校验和事务回滚，不涉及模型、RAG 或 GPU。",
+      "required": [
+        "backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "data-middleware-infrastructure"
+      ],
+      "forbidden": [
+        "ai-engineering",
+        "frontend-engineering"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "vector-database-operations-not-ai",
+      "prompt": "分析向量数据库分片、索引容量、备份恢复和集群资源，只讨论基础设施运维。",
+      "required": [
+        "data-middleware-infrastructure"
+      ],
+      "optional": [],
+      "forbidden": [
+        "ai-engineering",
+        "backend-engineering",
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 1
     }
   ]
 }

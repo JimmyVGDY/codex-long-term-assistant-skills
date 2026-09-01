@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：创建并验证隐私有界的 V6.6 发行证明。
+"""中文：创建并验证隐私有界的 V7.0 发行证明。
 
-English: Create and verify a privacy-bounded V6.6 release attestation.
+English: Create and verify a privacy-bounded V7.0 release attestation.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "6.6.1"
+VERSION = "7.0.0"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 
 
@@ -67,7 +67,7 @@ def _plugin_item(plugin_list: Mapping[str, Any]) -> Dict[str, Any]:
             continue
         if item.get("pluginId") == PLUGIN_ID:
             if not bool(item.get("installed")) or not bool(item.get("enabled")) or item.get("version") != VERSION:
-                raise AttestationError("Plugin readback does not prove installed/enabled/version=6.6.1")
+                raise AttestationError("Plugin readback does not prove installed/enabled/version=7.0.0")
             return item
     raise AttestationError("target Plugin was not found in Codex readback")
 
@@ -357,7 +357,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.6 release attestation")
+    parser = argparse.ArgumentParser(description="V7.0 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)

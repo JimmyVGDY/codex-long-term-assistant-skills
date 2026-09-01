@@ -46,17 +46,23 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - name: Read constrained release metadata
+        id: metadata
+        shell: pwsh
+        run: |
+          $lines = python scripts/release-workflow.py metadata --format github
+          $lines | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
       - name: Build zh-CN package
-        run: python scripts/build-release.py reproducible --locale zh-CN --output "${{ runner.temp }}\Codex-Skills-V6.6.1-zh-CN.zip" --witness "${{ runner.temp }}\witness-zh-CN.json"
+        run: python scripts/build-release.py reproducible --locale zh-CN --output "${{ runner.temp }}\${{ steps.metadata.outputs.archive_zh }}" --witness "${{ runner.temp }}\${{ steps.metadata.outputs.witness_zh }}"
       - name: Build English package
-        run: python scripts/build-release.py reproducible --locale en --output "${{ runner.temp }}\Codex-Skills-V6.6.1-en.zip" --witness "${{ runner.temp }}\witness-en.json"
+        run: python scripts/build-release.py reproducible --locale en --output "${{ runner.temp }}\${{ steps.metadata.outputs.archive_en }}" --witness "${{ runner.temp }}\${{ steps.metadata.outputs.witness_en }}"
       - name: Upload candidate artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: v6.6.1-bilingual-candidate
+          name: ${{ steps.metadata.outputs.tag }}-bilingual-candidate
           path: |
-            ${{ runner.temp }}\Codex-Skills-V6.6.1-zh-CN.zip
-            ${{ runner.temp }}\Codex-Skills-V6.6.1-en.zip
-            ${{ runner.temp }}\witness-zh-CN.json
-            ${{ runner.temp }}\witness-en.json
+            ${{ runner.temp }}\${{ steps.metadata.outputs.archive_zh }}
+            ${{ runner.temp }}\${{ steps.metadata.outputs.archive_en }}
+            ${{ runner.temp }}\${{ steps.metadata.outputs.witness_zh }}
+            ${{ runner.temp }}\${{ steps.metadata.outputs.witness_en }}
           retention-days: 7

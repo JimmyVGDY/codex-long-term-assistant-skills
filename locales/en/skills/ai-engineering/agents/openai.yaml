@@ -1,0 +1,6 @@
+interface:
+  display_name: "General AI Engineering"
+  short_description: "Models, RAG, agents, evaluation, multimodal, and inference-job guidance"
+  default_prompt: "Use $ai-engineering for the current AI task. Establish the model contract, data access, and success criteria before loading the minimum relevant specialization."
+policy:
+  allow_implicit_invocation: true

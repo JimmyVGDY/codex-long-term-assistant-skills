@@ -52,7 +52,7 @@ description: >-
 ## 组合关系
 
 - 修改、测试、复审、提交或交付：组合 `engineering-quality-delivery`。
-- 后端接口、数据库、缓存、消息、对象存储或全栈框架服务端逻辑：组合对应后端或 `data-middleware-ai-infrastructure`。
+- 服务端接口与业务逻辑：组合 `backend-engineering`；数据库、缓存、消息和对象存储：组合 `data-middleware-infrastructure`；模型、RAG、Agent 与 AI 生成语义：组合 `ai-engineering`。
 - 浏览器错误、Source Map、RUM、Trace、性能指标或生产只读排障：组合 `log-observability-analysis`。
 - 跨会话、多阶段或多 Agent 前端改造：组合 `long-running-task-memory`。
 - 正式前端架构、迁移、设计系统或审查报告：组合 `technical-document-writing`。

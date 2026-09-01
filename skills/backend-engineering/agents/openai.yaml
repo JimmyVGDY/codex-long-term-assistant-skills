@@ -1,0 +1,6 @@
+interface:
+  display_name: "通用后端工程"
+  short_description: "跨语言服务端、API、事务、并发、任务与安全工程规则"
+  default_prompt: "使用 $backend-engineering 处理当前服务端任务，先识别运行时、框架和调用链，再加载最少必要的技术栈专项。"
+policy:
+  allow_implicit_invocation: true

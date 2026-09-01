@@ -122,7 +122,7 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
         plugin = self.root / "plugin.json"
         plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "6.6.1", "installed": True, "enabled": True}]}), encoding="utf-8")
+            "version": "7.0.0", "installed": True, "enabled": True}]}), encoding="utf-8")
         event_file = self.root / "attestation-events.jsonl"
         append_event(event_file, self.event(99))
         seal_state = seal_event_chain(event_file, keyring_path=self.keyring)
@@ -140,7 +140,7 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
         witness = self.root / "witness.json"; witness.write_text(json.dumps({
             "ok": True, "reproducible": True, "artifact_sha256": digest}), encoding="utf-8")
         unified = self.root / "unified.json"; unified.write_text(json.dumps({
-            "ok": True, "version": "6.6.1", "artifact_sha256": digest,
+            "ok": True, "version": "7.0.0", "artifact_sha256": digest,
             "status": {name: "PASS" for name in ("package", "artifact", "host", "plugin", "lifecycle", "model_gate", "payload")}}), encoding="utf-8")
         model_gate = self.root / "model-gate.json"; model_gate.write_text(json.dumps({
             "ok": True, "automatic_ceiling": "gpt-5.6-terra + high", "cases": [

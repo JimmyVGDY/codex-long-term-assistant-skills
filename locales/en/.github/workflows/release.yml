@@ -22,9 +22,9 @@ jobs:
         os: [windows-latest, ubuntu-latest]
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.13"
       - name: Validate tag and package version
@@ -50,9 +50,9 @@ jobs:
       tag: ${{ steps.metadata.outputs.tag }}
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.13"
       - name: Read constrained release metadata
@@ -74,7 +74,7 @@ jobs:
         run: python scripts/build-release.py reproducible --locale en --output "dist\release\${{ steps.metadata.outputs.archive_en }}" --witness "dist\release\${{ steps.metadata.outputs.witness_en }}"
       - name: Generate GitHub build provenance
         id: attest
-        uses: actions/attest@v4
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           subject-path: |
             dist/release/${{ steps.metadata.outputs.archive_zh }}
@@ -85,7 +85,7 @@ jobs:
       - name: Generate final checksums
         run: python scripts/release-workflow.py checksums --directory dist\release --output dist\release\SHA256SUMS.txt
       - name: Upload attested release candidate
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ steps.metadata.outputs.tag }}-attested-bilingual-candidate
           path: dist/release/
@@ -99,12 +99,36 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      attestations: read
     steps:
       - name: Download attested release candidate
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: ${{ needs.build.outputs.tag }}-attested-bilingual-candidate
-          path: dist/release
+          path: candidate
+      - name: Check out trusted source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: source
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+      - name: Read and validate release metadata
+        env:
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+        shell: bash
+        run: python source/scripts/release-workflow.py metadata --tag "$RELEASE_TAG" --format github >> "$GITHUB_ENV"
+      - name: Re-verify downloaded artifacts and provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python source/scripts/release-workflow.py verify-candidate --directory candidate
+          python source/scripts/build-release.py verify --archive "candidate/$archive_zh" --locale zh-CN
+          python source/scripts/build-release.py verify --archive "candidate/$archive_en" --locale en
+          gh attestation verify "candidate/$archive_zh" --repo "$GITHUB_REPOSITORY" --bundle "candidate/$provenance"
+          gh attestation verify "candidate/$archive_en" --repo "$GITHUB_REPOSITORY" --bundle "candidate/$provenance"
       - name: Create draft without publishing
         env:
           GH_TOKEN: ${{ github.token }}
@@ -121,7 +145,10 @@ jobs:
             --verify-tag \
             --draft \
             --title "V${RELEASE_VERSION} | Bilingual release candidate" \
-            --notes-file dist/release/GITHUB_RELEASE_NOTES.md \
-            dist/release/*.zip \
-            dist/release/*.json \
-            dist/release/SHA256SUMS.txt
+            --notes-file "candidate/$release_notes" \
+            "candidate/$archive_zh" \
+            "candidate/$archive_en" \
+            "candidate/$witness_zh" \
+            "candidate/$witness_en" \
+            "candidate/$provenance" \
+            "candidate/$checksums"

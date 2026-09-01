@@ -11,7 +11,7 @@
 
 ### Java and JVM
 
-Combine with `$java-backend-engineering` and check:
+Combine with `$backend-engineering`, load the Java/JVM specialization, and check:
 
 - exception chains and wrapped root causes;
 - Spring transactions, proxies, self-invocation, and thread context;
@@ -21,7 +21,7 @@ Combine with `$java-backend-engineering` and check:
 
 ### Python and Workers
 
-Combine with `$python-backend-ai-engineering` and check:
+Combine with `$backend-engineering`, load the Python specialization, and check:
 
 - traceback chains, un-awaited coroutines, and event-loop blocking;
 - inconsistent state across workers;
@@ -29,9 +29,19 @@ Combine with `$python-backend-ai-engineering` and check:
 - long CPU, GPU, NAS, or FFmpeg tasks;
 - import-time side effects and resource leaks.
 
+### AI, RAG, and Inference Jobs
+
+Combine with `$ai-engineering` and check:
+
+- model, prompt, schema, retrieval, and tool versions;
+- provider response, persistence, business terminal state, and frontend polling timeline;
+- tokens, model latency, invalid structured output, fallback, and retry amplification;
+- RAG recall, citations, access, agent tool results, and generation recovery;
+- whether GPU OOM, queues, and resource signals align with AI task state.
+
 ### Data and Infrastructure
 
-Combine with `$data-middleware-ai-infrastructure` and check:
+Combine with `$data-middleware-infrastructure` and check:
 
 - slow SQL, lock waits, connection pools, and replica lag;
 - Redis hotspots, large keys, timeouts, and failover;

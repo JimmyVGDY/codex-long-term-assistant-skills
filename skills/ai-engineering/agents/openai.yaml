@@ -1,0 +1,6 @@
+interface:
+  display_name: "通用 AI 工程"
+  short_description: "模型、RAG、Agent、评测、多模态与推理任务工程规则"
+  default_prompt: "使用 $ai-engineering 处理当前 AI 任务，先确认模型契约、数据权限和成功标准，再加载最少必要的专项规则。"
+policy:
+  allow_implicit_invocation: true

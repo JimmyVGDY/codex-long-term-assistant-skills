@@ -1,0 +1,6 @@
+interface:
+  display_name: "数据、中间件与基础设施"
+  short_description: "数据库、中间件、存储、GPU 资源与 DevOps 规则"
+  default_prompt: "使用 $data-middleware-infrastructure 处理当前数据或基础设施任务，明确契约、资源上限、兼容、灰度和回滚边界。"
+policy:
+  allow_implicit_invocation: true

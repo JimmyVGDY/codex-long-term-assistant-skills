@@ -1,6 +1,0 @@
-interface:
-  display_name: "数据、中间件、AI 与基础设施"
-  short_description: "数据库、中间件、存储、GPU 资源与 DevOps 规则"
-  default_prompt: "使用数据、中间件与基础设施技能处理当前任务，明确数据契约、资源上限、兼容性、灰度和回滚；纯 Python 应用和模型调用代码由 Python Skill 主导。"
-policy:
-  allow_implicit_invocation: true

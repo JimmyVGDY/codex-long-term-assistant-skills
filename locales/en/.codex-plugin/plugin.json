@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "6.6.1",
-  "description": "Cross-project engineering assistance with ten Skills, independent reviewers, trusted model-evidence boundaries, delayed event sealing, and controlled evolution governance.",
+  "version": "7.0.0",
+  "description": "Cross-project engineering assistance with general backend, frontend, AI, and data/infrastructure domains, independent reviewers, trusted model-evidence boundaries, and controlled evolution governance.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

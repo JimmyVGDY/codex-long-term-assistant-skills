@@ -1,0 +1,6 @@
+interface:
+  display_name: "General Backend Engineering"
+  short_description: "Cross-language server, API, transaction, concurrency, job, and security guidance"
+  default_prompt: "Use $backend-engineering for the current server-side task. Identify the runtime, framework, and call chain before loading the minimum relevant stack guidance."
+policy:
+  allow_implicit_invocation: true

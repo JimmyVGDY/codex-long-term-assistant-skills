@@ -1,20 +1,150 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "6.6.1",
+  "version": "7.0.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 171,
-  "payload_digest": "6a6aeeb74b24185f1ee677f53e66644d0e356c92a952867c90c70cf78b957058",
+  "file_count": 182,
+  "payload_digest": "2e22dc1127d2305882e89a9f51c77dc97524963cab0954947a642e3b4158565e",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "34d78b4728b44e6c5c1bfe89fb34295cce1fd1b12df9d6aae8df3b44f8115dae",
-      "size": 302
+      "sha256": "cf6e19f7e888170f08a732534d58bf4745759841709a36215fa0578999eedac4",
+      "size": 321
+    },
+    {
+      "path": "skills/ai-engineering/SKILL.md",
+      "sha256": "8417a4d1fdb4d9ae3a858df019cb2264e8d1f3e627954e21ea9e97fae09c0f14",
+      "size": 3500
+    },
+    {
+      "path": "skills/ai-engineering/agents/openai.yaml",
+      "sha256": "df7dd91882d4f871ccbc0ae3b4c1b5b3a238be2d8110a749cf8845353adf9cde",
+      "size": 342
+    },
+    {
+      "path": "skills/ai-engineering/references/agent-tool-workflows.md",
+      "sha256": "2ed0c34e3611e246849ad32513f7d603f9782dc493f1463fb0f84faf60f5aca9",
+      "size": 1294
+    },
+    {
+      "path": "skills/ai-engineering/references/ai-core-rules.md",
+      "sha256": "b3bd88fe6bf526b982059f05fa636a2119dc33bf85fe0905ab9ce15834194593",
+      "size": 2659
+    },
+    {
+      "path": "skills/ai-engineering/references/ai-quality-security-observability.md",
+      "sha256": "ce5b18bec5967ff733836843f97bcb85ef10cd9b97b789def454a2b881de94a3",
+      "size": 1483
+    },
+    {
+      "path": "skills/ai-engineering/references/inference-gpu-multimodal.md",
+      "sha256": "1fd667d67b7ea5b8a72429299dcb167495e9fc7614912eaa19736cfa8ac3b279",
+      "size": 1415
+    },
+    {
+      "path": "skills/ai-engineering/references/model-integration-structured-output.md",
+      "sha256": "e7abd5c18882f88f049aa7bda22facd594b673816aa3cddd4cf90e958c6318c2",
+      "size": 1386
+    },
+    {
+      "path": "skills/ai-engineering/references/rag-retrieval-evaluation.md",
+      "sha256": "7d5317f1dbbd0485fd34dbd86f6eb7b728b31a5825b9f8491c51a457a2d5d960",
+      "size": 1264
+    },
+    {
+      "path": "skills/backend-engineering/SKILL.md",
+      "sha256": "703e733ae116c07a836f91572f356329c19a07b89bfa9631c64b79304dcb5422",
+      "size": 3431
+    },
+    {
+      "path": "skills/backend-engineering/agents/openai.yaml",
+      "sha256": "8d6e3d6184d4e7ba7fb36dc92b18b15408434cfc9a3280783a58ff718b1e2eef",
+      "size": 349
+    },
+    {
+      "path": "skills/backend-engineering/references/backend-core-rules.md",
+      "sha256": "8080a014ab5d11027658c420bb93664b180d98c5a6c6d9a7dd7180fc23d429c1",
+      "size": 4361
+    },
+    {
+      "path": "skills/backend-engineering/references/backend-stack-routing.md",
+      "sha256": "20393f5e3099dc67c6a6f68ea6fbdf722be4cb7976082d86aaf2b25a9b57f317",
+      "size": 1931
+    },
+    {
+      "path": "skills/backend-engineering/references/dotnet-backend-rules.md",
+      "sha256": "aa94dd77c9014dd9d0399d69a382fd062069e9181005c43d61ab29cb555c8a09",
+      "size": 1369
+    },
+    {
+      "path": "skills/backend-engineering/references/go-backend-rules.md",
+      "sha256": "55fcaad6b921a5463ae4ec067281dde429ba279fd3c97d384143877ce780edc4",
+      "size": 1390
+    },
+    {
+      "path": "skills/backend-engineering/references/java-architecture-framework.md",
+      "sha256": "eae8edd4f607456f0d2643114a052a5d942e8837c5ed738afa9d5efac2deb3f5",
+      "size": 3449
+    },
+    {
+      "path": "skills/backend-engineering/references/java-backend-rules.md",
+      "sha256": "5fc915dbe8be1fe03131f918440e01fd05f00c17dac72c34333de600db3ba408",
+      "size": 1304
+    },
+    {
+      "path": "skills/backend-engineering/references/java-concurrency-integration.md",
+      "sha256": "58f6d22f6e71c8a3b0f7199caab6fbc1c9ae8b480905876b38d38e8bc99944c9",
+      "size": 5142
+    },
+    {
+      "path": "skills/backend-engineering/references/java-core-version.md",
+      "sha256": "b45ff721617ca2e9c81ed886a21a2b0665361a0f17a89758cc4b3d404d597a08",
+      "size": 3389
+    },
+    {
+      "path": "skills/backend-engineering/references/java-security-performance-testing.md",
+      "sha256": "b30c9e58b5da219933cd199d2a79b4ff3ea94061937c06ed3a5e383fc45720d6",
+      "size": 4495
+    },
+    {
+      "path": "skills/backend-engineering/references/nodejs-backend-rules.md",
+      "sha256": "020230f5fcec46e2e9470f420da8b2cc9f35d4b9425fb527de1a7de590868798",
+      "size": 1868
+    },
+    {
+      "path": "skills/backend-engineering/references/python-backend-rules.md",
+      "sha256": "df2d83de3a2b96803185eb2fc058c3df03fc6d194181518d73335bf6ed7eb30f",
+      "size": 1291
+    },
+    {
+      "path": "skills/backend-engineering/references/python-concurrency-deployment.md",
+      "sha256": "37b4c3940d46b612610c2f9fdd3f620b4aac8815e723ccdc87c3601d8fcb51c8",
+      "size": 2404
+    },
+    {
+      "path": "skills/backend-engineering/references/python-core-web-frameworks.md",
+      "sha256": "6eaba2b91ef79590acad8d47d592496fed872a2be1c3ccaed52db9e96a71f694",
+      "size": 2854
+    },
+    {
+      "path": "skills/backend-engineering/references/python-data-contract-security.md",
+      "sha256": "ed56a5362abb3c7a1dffc53ffbb56f32b2cf37ab743e5780b8b31160b91f4db5",
+      "size": 2316
+    },
+    {
+      "path": "skills/backend-engineering/references/python-tasks-quality-testing.md",
+      "sha256": "bedab83b2181b70a94546ae4ee81fb633bfef01394d4536d465e32e6a6359128",
+      "size": 3258
+    },
+    {
+      "path": "skills/backend-engineering/references/rust-other-backend-rules.md",
+      "sha256": "d9056c0af671b793cb07bf17fa0db9b577644ccdc0cb8dac845c7591d4292c45",
+      "size": 1463
     },
     {
       "path": "skills/controlled-evolution-governance/SKILL.md",
@@ -37,42 +167,37 @@
       "size": 2702
     },
     {
-      "path": "skills/data-middleware-ai-infrastructure/SKILL.md",
-      "sha256": "0e931376cfee3783dbcb81db6abdf79ea7c2e5cea6c64a1e430f8f9f12f768f5",
-      "size": 1953
+      "path": "skills/data-middleware-infrastructure/SKILL.md",
+      "sha256": "7396b9872349ecdd9b2551a7819ebda7c4ec072b550b23113e433e35c0dadd86",
+      "size": 2215
     },
     {
-      "path": "skills/data-middleware-ai-infrastructure/agents/openai.yaml",
-      "sha256": "e17efc3f7479f16b56eb3f930d664190ee19a5d07ba46ee7c83da258cab13d81",
-      "size": 412
+      "path": "skills/data-middleware-infrastructure/agents/openai.yaml",
+      "sha256": "2c153185777f3ffcfa9de1cbd365c1d212871c5544c5aff1b21c2f7c10a3bd13",
+      "size": 354
     },
     {
-      "path": "skills/data-middleware-ai-infrastructure/references/ai-rag-gpu-services.md",
-      "sha256": "6a6b0d81ff987b0f6525e5091fd14fdbfc40b18e9fc8c15eec5ec96418702f95",
-      "size": 2311
-    },
-    {
-      "path": "skills/data-middleware-ai-infrastructure/references/data-contract-database.md",
+      "path": "skills/data-middleware-infrastructure/references/data-contract-database.md",
       "sha256": "3f60660773b6fd826d9f74ced217f10a575d437f35d8159d2066bdf23ae1d745",
       "size": 2483
     },
     {
-      "path": "skills/data-middleware-ai-infrastructure/references/data-middleware-ai-infrastructure-rules.md",
-      "sha256": "44604b68104ba2b9e20db7957ce2663ffa4c60ad81c237a8f1cc2745e54effb7",
-      "size": 1346
+      "path": "skills/data-middleware-infrastructure/references/data-middleware-infrastructure-rules.md",
+      "sha256": "c0e5e82c6e5889b81ddc9d6bbfc867e43f01367f2b145f1d72b7ba01b5e3042b",
+      "size": 1239
     },
     {
-      "path": "skills/data-middleware-ai-infrastructure/references/redis-messaging.md",
+      "path": "skills/data-middleware-infrastructure/references/redis-messaging.md",
       "sha256": "c873583c8fdfb6ea1dbac1ebbbb3163e16b6e873b92c2610b965e9b459037bac",
       "size": 2471
     },
     {
-      "path": "skills/data-middleware-ai-infrastructure/references/search-storage-streaming.md",
+      "path": "skills/data-middleware-infrastructure/references/search-storage-streaming.md",
       "sha256": "ace28ef16eaf5d28d20253e2ea8015dae9dab4fc024925d4aa9c1e48247378e1",
       "size": 2896
     },
     {
-      "path": "skills/data-middleware-ai-infrastructure/references/security-observability-runtime.md",
+      "path": "skills/data-middleware-infrastructure/references/security-observability-runtime.md",
       "sha256": "cb6334c7e5c7134093c9ff31cdd8315f874e5916ffbea9e4f476af8933dd1e40",
       "size": 3896
     },
@@ -158,8 +283,8 @@
     },
     {
       "path": "skills/frontend-engineering/SKILL.md",
-      "sha256": "8fa1ea2597d3407d62224b6b36ddaa060131687d7da541b3e58d19036bfb71b4",
-      "size": 5991
+      "sha256": "fa6cf1dede8ea724d8799b7203f5dbe28d1b81c62b9ca15e5685fb435faacab0",
+      "size": 6061
     },
     {
       "path": "skills/frontend-engineering/agents/openai.yaml",
@@ -247,41 +372,6 @@
       "size": 5119
     },
     {
-      "path": "skills/java-backend-engineering/SKILL.md",
-      "sha256": "a1236c9fe5935986abc790374804fe5c5cf81fd828a0e53b14b0e4483b1db647",
-      "size": 1888
-    },
-    {
-      "path": "skills/java-backend-engineering/agents/openai.yaml",
-      "sha256": "e545ed37f7a9f61eba2a1102e7b81898ae396ab14aac8a713548a2d044f8bf50",
-      "size": 340
-    },
-    {
-      "path": "skills/java-backend-engineering/references/java-architecture-framework.md",
-      "sha256": "eae8edd4f607456f0d2643114a052a5d942e8837c5ed738afa9d5efac2deb3f5",
-      "size": 3449
-    },
-    {
-      "path": "skills/java-backend-engineering/references/java-backend-rules.md",
-      "sha256": "44abc0a3abd36ef9c40a7d818229d6c08a079ac5bca7fb0ad6d6d9a4d01c2d5a",
-      "size": 1265
-    },
-    {
-      "path": "skills/java-backend-engineering/references/java-concurrency-integration.md",
-      "sha256": "58f6d22f6e71c8a3b0f7199caab6fbc1c9ae8b480905876b38d38e8bc99944c9",
-      "size": 5142
-    },
-    {
-      "path": "skills/java-backend-engineering/references/java-core-version.md",
-      "sha256": "b45ff721617ca2e9c81ed886a21a2b0665361a0f17a89758cc4b3d404d597a08",
-      "size": 3389
-    },
-    {
-      "path": "skills/java-backend-engineering/references/java-security-performance-testing.md",
-      "sha256": "b30c9e58b5da219933cd199d2a79b4ff3ea94061937c06ed3a5e383fc45720d6",
-      "size": 4495
-    },
-    {
       "path": "skills/log-observability-analysis/SKILL.md",
       "sha256": "348367c02d6ea386cb2200cefc23de1236372608c9427398b6b0f79827c10121",
       "size": 2001
@@ -333,8 +423,8 @@
     },
     {
       "path": "skills/log-observability-analysis/references/observability-domain-safety-output.md",
-      "sha256": "dc568de4b233f3ac9a99b66a62f55382a2ef09c5f8f5c52b927d37356608d6a9",
-      "size": 3448
+      "sha256": "523f750022b71d2bf6b61e2df17a3348d4cd2800c550b2b8e2ae003f1ad65794",
+      "size": 3894
     },
     {
       "path": "skills/log-observability-analysis/references/observability-scope-modes.md",
@@ -560,41 +650,6 @@
       "path": "skills/multi-agent-independent-review/tests/test_review_tools.py",
       "sha256": "838d8e3f0a45c149276e4b203ae3ca6d69a9485dd58fde5f561824fb7b7eb7af",
       "size": 9418
-    },
-    {
-      "path": "skills/python-backend-ai-engineering/SKILL.md",
-      "sha256": "fe3138ad857b6b642f5790b8ff94194859a298b890e6ecb728231cb3e6e034e1",
-      "size": 1841
-    },
-    {
-      "path": "skills/python-backend-ai-engineering/agents/openai.yaml",
-      "sha256": "b1b089f56d54bb192b47933c2bb211596d12cbdfbc1e4f09966a21242aa2c360",
-      "size": 360
-    },
-    {
-      "path": "skills/python-backend-ai-engineering/references/python-backend-ai-rules.md",
-      "sha256": "738713b3cb0ce94ff52c40ac7d669fc7e360e63628040d8891796e58902af667",
-      "size": 1236
-    },
-    {
-      "path": "skills/python-backend-ai-engineering/references/python-concurrency-deployment.md",
-      "sha256": "37b4c3940d46b612610c2f9fdd3f620b4aac8815e723ccdc87c3601d8fcb51c8",
-      "size": 2404
-    },
-    {
-      "path": "skills/python-backend-ai-engineering/references/python-core-web-frameworks.md",
-      "sha256": "6eaba2b91ef79590acad8d47d592496fed872a2be1c3ccaed52db9e96a71f694",
-      "size": 2854
-    },
-    {
-      "path": "skills/python-backend-ai-engineering/references/python-data-contract-security.md",
-      "sha256": "ed56a5362abb3c7a1dffc53ffbb56f32b2cf37ab743e5780b8b31160b91f4db5",
-      "size": 2316
-    },
-    {
-      "path": "skills/python-backend-ai-engineering/references/python-tasks-quality-testing.md",
-      "sha256": "bedab83b2181b70a94546ae4ee81fb633bfef01394d4536d465e32e6a6359128",
-      "size": 3258
     },
     {
       "path": "skills/technical-document-writing/SKILL.md",

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Data, Middleware, and Infrastructure"
+  short_description: "Databases, middleware, storage, GPU resources, and DevOps"
+  default_prompt: "Use $data-middleware-infrastructure for the current data or infrastructure task. Make contracts, resource limits, compatibility, staged rollout, and rollback explicit."
+policy:
+  allow_implicit_invocation: true

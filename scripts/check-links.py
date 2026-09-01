@@ -40,7 +40,8 @@ def tracked_markdown(root: Path = ROOT) -> list[Path]:
     """
     result = subprocess.run(
         ["git", "ls-files", "-z", "--", "*.md"], cwd=root, capture_output=True, check=True)
-    return [root / Path(item.decode("utf-8")) for item in result.stdout.split(b"\0") if item]
+    candidates = [root / Path(item.decode("utf-8")) for item in result.stdout.split(b"\0") if item]
+    return [path for path in candidates if path.is_file()]
 
 
 def visible_markdown(text: str) -> str:

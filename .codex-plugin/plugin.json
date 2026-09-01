@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "6.6.1",
-  "description": "跨项目长期技术助手 V6.6.1：中英文独立发行、十类工程 Skills、独立 Reviewer、可信模型证据边界与延迟封印。",
+  "version": "7.0.0",
+  "description": "跨项目长期技术助手 V7.0：通用后端、前端、AI 与数据基础设施四主领域，双语渐进加载、独立 Reviewer 与确定性交付边界。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

@@ -116,6 +116,65 @@ def write_checksums(directory: Path, output: Path, root: Path = ROOT) -> dict[st
             "checksums": output.name}
 
 
+def verify_candidate(directory: Path, root: Path = ROOT) -> dict[str, Any]:
+    """中文：在下载到发布之间重新绑定精确文件集、摘要与构建见证。
+
+    English: Re-bind the exact file set, checksums, and build witnesses after download.
+    """
+    metadata = release_metadata(root)
+    directory = directory.resolve()
+    if not directory.is_dir() or _is_link(directory):
+        raise ReleaseWorkflowError("release candidate directory is missing or unsafe")
+    subjects = {
+        metadata["archive_zh"], metadata["archive_en"],
+        metadata["witness_zh"], metadata["witness_en"], metadata["provenance"],
+    }
+    expected = subjects | {metadata["checksums"], metadata["release_notes"]}
+    children = list(directory.iterdir())
+    unsafe = sorted(path.name for path in children if not path.is_file() or _is_link(path))
+    observed = {path.name for path in children}
+    if unsafe or observed != expected:
+        raise ReleaseWorkflowError(
+            "release candidate file set mismatch: missing=%s unknown=%s unsafe=%s"
+            % (sorted(expected - observed), sorted(observed - expected), unsafe)
+        )
+
+    checksum_path = directory / metadata["checksums"]
+    checksums: dict[str, str] = {}
+    for line in checksum_path.read_text(encoding="utf-8-sig").splitlines():
+        match = re.fullmatch(r"([0-9a-f]{64})  ([A-Za-z0-9][A-Za-z0-9._-]{0,191})", line)
+        if not match or match.group(2) in checksums:
+            raise ReleaseWorkflowError("SHA256SUMS.txt contains an invalid or duplicate entry")
+        checksums[match.group(2)] = match.group(1)
+    if set(checksums) != subjects:
+        raise ReleaseWorkflowError("SHA256SUMS.txt does not cover the exact release subjects")
+    for name, expected_digest in checksums.items():
+        if _sha256(directory / name) != expected_digest:
+            raise ReleaseWorkflowError("release candidate checksum mismatch: %s" % name)
+
+    witness_pairs = (
+        (metadata["witness_zh"], metadata["archive_zh"], "zh-CN"),
+        (metadata["witness_en"], metadata["archive_en"], "en"),
+    )
+    for witness_name, archive_name, locale in witness_pairs:
+        witness = _read_object(directory / witness_name)
+        archive = directory / archive_name
+        digest = checksums[archive_name]
+        if witness.get("ok") is not True or witness.get("reproducible") is not True \
+                or witness.get("version") != metadata["version"] or witness.get("locale") != locale \
+                or witness.get("artifact_sha256") != digest \
+                or witness.get("first_sha256") != digest or witness.get("second_sha256") != digest \
+                or witness.get("artifact_size") != archive.stat().st_size:
+            raise ReleaseWorkflowError("build witness is not bound to the archive: %s" % witness_name)
+    _read_object(directory / metadata["provenance"])
+    return {
+        "ok": True,
+        "version": metadata["version"],
+        "files": sorted(expected),
+        "subjects": sorted(subjects),
+    }
+
+
 def write_release_notes(output: Path, root: Path = ROOT) -> dict[str, str]:
     metadata = release_metadata(root)
     notes_root = root.resolve() / "docs" / "releases" / metadata["tag"]
@@ -161,6 +220,8 @@ def main() -> None:
     checksum_parser = subparsers.add_parser("checksums")
     checksum_parser.add_argument("--directory", required=True)
     checksum_parser.add_argument("--output", required=True)
+    verify_parser = subparsers.add_parser("verify-candidate")
+    verify_parser.add_argument("--directory", required=True)
     notes_parser = subparsers.add_parser("notes")
     notes_parser.add_argument("--output", required=True)
     arguments = parser.parse_args()
@@ -168,6 +229,9 @@ def main() -> None:
         print(_render_metadata(release_metadata(tag=arguments.tag), arguments.format), end="")
     elif arguments.command == "checksums":
         result = write_checksums(Path(arguments.directory), Path(arguments.output))
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2))
+    elif arguments.command == "verify-candidate":
+        result = verify_candidate(Path(arguments.directory))
         print(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2))
     else:
         result = write_release_notes(Path(arguments.output))
