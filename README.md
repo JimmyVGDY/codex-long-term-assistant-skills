@@ -5,6 +5,10 @@
 # Codex 跨项目长期技术助手
 
 <p align="center">
+  <img src="docs/assets/social-preview.png" alt="Codex 跨项目长期技术助手双语项目预览" width="100%">
+</p>
+
+<p align="center">
   面向 Codex 的跨项目工程协作框架：Skill 路由、多 Agent 独立复审、可恢复任务记忆、生命周期事件与受控演进。
 </p>
 

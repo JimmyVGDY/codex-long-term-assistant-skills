@@ -5,6 +5,10 @@
 # Codex Cross-Project Engineering Assistant
 
 <p align="center">
+  <img src="docs/assets/social-preview.png" alt="Codex bilingual project preview" width="100%">
+</p>
+
+<p align="center">
   A cross-project engineering framework for Codex: Skill routing, independent multi-agent review, recoverable task memory, lifecycle events, and controlled evolution.
 </p>
 
