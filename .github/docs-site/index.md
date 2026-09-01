@@ -1,3 +1,3 @@
 # Codex Cross-Project Engineering Assistant
 
-[zh-CN](zh-CN/index.md) · [English](en/index.md)
+[zh-CN](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/) · [English](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/en/)
