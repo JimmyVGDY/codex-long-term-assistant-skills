@@ -36,10 +36,11 @@ The summary remains Chinese so repository history follows one consistent convent
 
 ```powershell
 python scripts\localization-audit.py --strict
+python scripts\check-links.py --strict
 python scripts\validate-package.py
 ```
 
-Changes that affect release construction should also build and verify both reproducible language archives. Mark every skipped check in the Pull Request and describe the remaining risk.
+The link check covers every tracked Markdown path, same-repository URL, and heading anchor; a scheduled workflow additionally probes external links. Changes that affect release construction should also build and verify both reproducible language archives. Mark every skipped check in the Pull Request and describe the remaining risk.
 
 ## Pull Request content
 

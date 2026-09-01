@@ -215,6 +215,7 @@ scripts/evolution.ps1
 scripts/restore-latest-backup.ps1
 scripts/restore-latest-backup.sh
 .github/workflows/ci.yml
+.github/workflows/links.yml
 .github/ISSUE_TEMPLATE/bug_report_zh.yml
 .github/ISSUE_TEMPLATE/feature_request_zh.yml
 .github/ISSUE_TEMPLATE/config.yml

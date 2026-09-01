@@ -41,10 +41,11 @@ test | 增加发行包路径边界验证
 
 ```powershell
 python scripts\localization-audit.py --strict
+python scripts\check-links.py --strict
 python scripts\validate-package.py
 ```
 
-涉及发行构建时，再执行两个语言包的可复现构建与校验。无法完成的检查应在 Pull Request 中明确标记，并说明剩余风险。
+链接检查覆盖所有受版本控制的 Markdown 路径、同仓库 URL 与标题锚点；外部链接由定时工作流补充探测。涉及发行构建时，再执行两个语言包的可复现构建与校验。无法完成的检查应在 Pull Request 中明确标记，并说明剩余风险。
 
 ## Pull Request
 

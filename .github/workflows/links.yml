@@ -1,0 +1,54 @@
+name: 链接检查 / Link Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.md"
+      - "scripts/check-links.py"
+      - "tests/test_repository_links.py"
+      - ".github/workflows/links.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "**.md"
+      - "scripts/check-links.py"
+      - "tests/test_repository_links.py"
+      - ".github/workflows/links.yml"
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: "1"
+
+jobs:
+  internal:
+    name: 仓库内链接 / Repository links
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出源码 / Check out source
+        uses: actions/checkout@v4
+      - name: 配置 Python / Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: 检查路径与锚点 / Check paths and anchors
+        run: python scripts/check-links.py --strict
+
+  external:
+    name: 外部链接 / External links
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出源码 / Check out source
+        uses: actions/checkout@v4
+      - name: 配置 Python / Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: 探测外部链接 / Probe external links
+        run: python scripts/check-links.py --external --strict

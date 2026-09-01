@@ -1,6 +1,11 @@
 {
   "schema_version": 1,
   "files": {
+    "scripts/check-links.py": {
+      "plain": {
+        "全仓库 Markdown 链接检查 / Repository-wide Markdown link check": "Repository-wide Markdown link check"
+      }
+    },
     "hooks/cp_hook.py": {
       "plain": {
         "自动子 Agent 模型不得超过 Terra High；显式 Sol 或更高模型被策略拒绝。": "Automatic subagent models cannot exceed Terra High; explicit Sol or stronger models are denied.",

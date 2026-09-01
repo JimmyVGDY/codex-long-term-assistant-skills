@@ -30,6 +30,8 @@ jobs:
           python-version: "3.13"
       - name: 审计双语覆盖 / Audit bilingual coverage
         run: python scripts/localization-audit.py --strict
+      - name: 检查全仓库链接 / Check repository-wide links
+        run: python scripts/check-links.py --strict
       - name: 验证完整包 / Validate complete package
         run: python scripts/validate-package.py
 
