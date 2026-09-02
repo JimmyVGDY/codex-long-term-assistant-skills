@@ -947,7 +947,12 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     except ValueError:
         pass
     reject_link_ancestors(ch); reject_link_ancestors(home / ".agents")
-    targets: List[Tuple[str, Path]] = [("global", ch / "AGENTS.md"), ("install-state", state_path("user"))]
+    targets: List[Tuple[str, Path]] = [
+        ("global", ch / "AGENTS.md"),
+        ("install-state", state_path("user")),
+        ("project-tool", ch / "tools" / "cp-runtime.py"),
+        ("evolution-tool", ch / "tools" / "evolution.py"),
+    ]
     targets.extend(("agent:" + p.name, ch / "agents" / p.name) for p in agent_files())
     legacy_targets = [("deprecated-skill:" + n, sh / n) for n in deprecated_skills]
     for _label, target in legacy_targets:
@@ -1032,6 +1037,10 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             if _io_path(dst).exists() or _io_path(dst).is_symlink():
                 remove_path(dst)
             _record_applied(journal, "deprecated-skill:" + name, dst)
+        for label, script_name in (("project-tool", "cp-runtime.py"), ("evolution-tool", "evolution.py")):
+            dst = ch / "tools" / script_name
+            copy_atomic(ROOT / "scripts" / script_name, dst)
+            _record_applied(journal, label, dst)
         if mode == "standalone":
             for name in current_skills:
                 dst = sh / name; copy_atomic(ROOT / "skills" / name, dst); _record_applied(journal, "skill:" + name, dst)
@@ -1305,6 +1314,13 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                 verify_keyring()
             except Exception as exc:
                 errors.append("完整性 keyring 不可用: %s" % exc)
+        for script_name in ("cp-runtime.py", "evolution.py"):
+            dst = ch / "tools" / script_name
+            src = ROOT / "scripts" / script_name
+            if not _io_path(dst).is_file():
+                errors.append("缺少账户工具 %s" % script_name)
+            elif tree_sha256(dst) != tree_sha256(src):
+                errors.append("账户工具漂移 %s" % script_name)
         for src in agent_files():
             if not _io_path(ch/"agents"/src.name).is_file(): errors.append("缺少 Reviewer %s" % src.name)
         io_agents = _io_path(ch/"AGENTS.md")

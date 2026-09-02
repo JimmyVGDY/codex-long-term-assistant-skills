@@ -512,6 +512,16 @@
         "V7.0 端到端发行验证": "V7.0 end-to-end release verification"
       }
     },
+    "scripts/cp-runtime.py": {
+      "plain": {
+        "找不到 cp_runtime；请重新运行当前版本 package_manager.py install/verify": "cp_runtime was not found; rerun package_manager.py install/verify from the current version"
+      }
+    },
+    "scripts/evolution.py": {
+      "plain": {
+        "找不到 cp_runtime.evolution；请重新运行当前版本 package_manager.py install/verify": "cp_runtime.evolution was not found; rerun package_manager.py install/verify from the current version"
+      }
+    },
     "scripts/package_manager.py": {
       "plain": {
         "另一个安装/卸载事务正在此 scope 执行": "Another installation or uninstallation transaction is running in this scope",
@@ -585,6 +595,8 @@
         "安装状态不是 V7 schema 2": "Installation state is not V7 schema 2",
         "安装状态 payload 身份读回不一致": "Installation-state payload identity readback mismatch",
         "完整性 keyring 不可用: %s": "Integrity keyring is unavailable: %s",
+        "缺少账户工具 %s": "Missing account tool %s",
+        "账户工具漂移 %s": "Account tool drift: %s",
         "缺少 Reviewer %s": "Missing Reviewer %s",
         "缺少全局 AGENTS 受管区块": "Missing managed global AGENTS block",
         "[OK] V7.0 安装验证通过 scope=%s mode=%s": "[OK] V7.0 installation verification passed scope=%s mode=%s",

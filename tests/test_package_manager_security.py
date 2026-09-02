@@ -25,7 +25,7 @@ def io_path(path: Path) -> Path:
 
 
 def run(args, env, expected=0):
-    r=subprocess.run([sys.executable,'-B',str(MANAGER),*args],env=env,text=True,capture_output=True,timeout=30)
+    r=subprocess.run([sys.executable,'-B',str(MANAGER),*args],env=env,text=True,encoding='utf-8',capture_output=True,timeout=30)
     if r.returncode!=expected:
         raise AssertionError(f'rc={r.returncode}, expected={expected}\nstdout={r.stdout}\nstderr={r.stderr}')
     return r
@@ -93,8 +93,19 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
             'USERPROFILE':str(self.home),
             'CODEX_HOME':str(self.codex),
             'PYTHONDONTWRITEBYTECODE':'1',
+            'PYTHONIOENCODING':'utf-8',
             'PATH':str(self.bin)+os.pathsep+os.environ.get('PATH','')
         }
+
+    def assert_installed_tools_run(self):
+        for name in ('cp-runtime.py','evolution.py'):
+            tool=self.codex/'tools'/name
+            self.assertTrue(tool.is_file(),name)
+            result=subprocess.run(
+                [sys.executable,'-B',str(tool),'--help'],
+                env=self.env,text=True,encoding='utf-8',capture_output=True,timeout=30,
+            )
+            self.assertEqual(0,result.returncode,result.stdout+result.stderr)
 
     def tearDown(self):
         try:
@@ -107,6 +118,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['install','--scope','user','--mode','standalone'],self.env)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         run(['verify','--scope','user','--mode','standalone'],self.env)
+        self.assert_installed_tools_run()
         self.assertTrue((self.home/'.agents'/'skills'/'controlled-evolution-governance'/'SKILL.md').is_file())
         hooks=json.loads((self.codex/'hooks.json').read_text(encoding='utf-8'))
         self.assertIn('PreToolUse',hooks['hooks'])
@@ -162,11 +174,14 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_install_verify_uninstall(self):
         run(['install','--scope','user','--mode','plugin'],self.env)
         run(['verify','--scope','user','--mode','plugin'],self.env)
+        self.assert_installed_tools_run()
         p=self.home/'.agents'/'plugins'/'cp-assistant-marketplace'/'plugins'/'codex-cross-project-engineering-assistant'
         self.assertTrue((p/'.codex-plugin'/'plugin.json').is_file())
         self.assertTrue((p/'hooks'/'hooks.json').is_file())
         self.assertTrue((self.codex/'fake-codex-plugin-state.json').is_file())
         run(['uninstall','--scope','user','--mode','plugin'],self.env)
+        self.assertFalse((self.codex/'tools'/'cp-runtime.py').exists())
+        self.assertFalse((self.codex/'tools'/'evolution.py').exists())
 
     def test_legacy_invalid_marketplace_is_canonicalized_before_activation(self):
         self.codex.mkdir(parents=True,exist_ok=True)

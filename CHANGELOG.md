@@ -4,7 +4,9 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 ## 未发布
 
-- 暂无。
+### Fixed
+
+- Plugin 模式现在事务化安装并校验账户级 `cp-runtime.py` 与 `evolution.py`；两个启动器在账户 runtime 不可读时，会按安装状态精确回退到当前版本 Plugin cache，避免受限任务误报 `cp_runtime` 模块缺失。
 
 ## 7.0.0 - 2026-09-01
 

@@ -4,7 +4,9 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Unreleased
 
-- None.
+### Fixed
+
+- Plugin mode now transactionally installs and verifies the account-level `cp-runtime.py` and `evolution.py` launchers. When the account runtime is unreadable, both launchers resolve the exact active Plugin-cache version from installation state instead of reporting a missing `cp_runtime` module.
 
 ## 7.0.0 - 2026-09-01
 
