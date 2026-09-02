@@ -14,3 +14,7 @@ description: Use for risk-based design gates and independent functional, compati
 7. Defaults: parallel <=3, cumulative <=6, post-implementation rounds <=2, repair rounds <=2, Terra High reviewers <=1.
 
 Independent context is not system read-only. A writable parent without sandbox-denial evidence supports only `logical-readonly`. Review evidence never authorizes modification, commit, push, deployment, restart, or production operation.
+
+## Controlled-Evolution Boundary
+
+This Skill produces independent-review evidence and attribution input; it does not maintain the cross-task evolution contract. Route long-window Reviewer yield, model-cost, or routing-deviation governance to `controlled-evolution-governance`. A single review must not load evolution rules automatically.

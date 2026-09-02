@@ -15,3 +15,7 @@ description: Use for cross-session, multi-stage, multi-module, multi-repository,
 8. Scan for credentials and maintain retention and access boundaries.
 
 Persist verified facts, evidence grade, authorization, state, blockers, risk, and next action—not hidden reasoning. This Skill normally uses Luna and does not create subagents by itself.
+
+## Controlled-Evolution Boundary
+
+This Skill supplies reviewed checkpoints and recovery evidence to cross-task analysis; it does not maintain the evolution contract. Route governance of repeated failures, model cost, Reviewer yield, or Skill-routing deviation to `controlled-evolution-governance`. Ordinary long-running work must not load evolution rules.
