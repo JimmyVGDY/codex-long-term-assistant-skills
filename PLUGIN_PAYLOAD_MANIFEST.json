@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.1.0",
+  "version": "7.2.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 182,
-  "payload_digest": "b9b4fa3d957dd4b58094c7aac50fac38ec484405ce28369583d094609750db4d",
+  "file_count": 180,
+  "payload_digest": "98587b33876c8cbd9cfe9e5918a5915d6ee6213b476aed463e631fc2beb71118",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "4bae74a19d848bf7464dc950adc81b0efff1caaa333d805812ac3c0b932c1944",
-      "size": 321
+      "sha256": "1051ac03c687c5da52df5d4fd3a521eb23dc2f42f41edaea5d4e22d6a72fc9df",
+      "size": 338
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -438,8 +438,8 @@
     },
     {
       "path": "skills/long-running-task-memory/SKILL.md",
-      "sha256": "fb4c1f95b4d9df05878250222b87017da675bc53210945a8a8d4b8ad6e86c9c5",
-      "size": 3430
+      "sha256": "d229c803127aeafbad5c2cffc8f5eb47745498fcfcde99c8d62005f6c8c0f205",
+      "size": 2888
     },
     {
       "path": "skills/long-running-task-memory/agents/openai.yaml",
@@ -497,11 +497,6 @@
       "size": 748
     },
     {
-      "path": "skills/long-running-task-memory/references/controlled-self-evolution.md",
-      "sha256": "df133822b427d0887e0241db8cb57bb7458cc32f0fbedcc58348991bf0717762",
-      "size": 621
-    },
-    {
       "path": "skills/long-running-task-memory/references/long-running-task-memory-rules.md",
       "sha256": "96b646c6960a4cc1497f68b28d7596c30f69b7ded122e9d4e4f20d7aaf42b51a",
       "size": 1543
@@ -548,8 +543,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/SKILL.md",
-      "sha256": "28fd0413c0a758e9358fc5f62dd29f8167b5a09d51999ea4c0e09d83947b551f",
-      "size": 3368
+      "sha256": "2f355521d86a6609bdd0c534d15c66ecd41b0414888cd4c73b785ac611e18d3a",
+      "size": 2809
     },
     {
       "path": "skills/multi-agent-independent-review/agents/openai.yaml",
@@ -590,11 +585,6 @@
       "path": "skills/multi-agent-independent-review/assets/templates/REVIEW_RESULT.template.md",
       "sha256": "1538bb68771e011c4a2fd4ba92ef9a14c364a7665cc9b08e1e2d7b8e0f02122a",
       "size": 1507
-    },
-    {
-      "path": "skills/multi-agent-independent-review/references/controlled-self-evolution.md",
-      "sha256": "df133822b427d0887e0241db8cb57bb7458cc32f0fbedcc58348991bf0717762",
-      "size": 621
     },
     {
       "path": "skills/multi-agent-independent-review/references/multi-agent-independent-review-workflow.md",
@@ -848,8 +838,8 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/observation.py",
-      "sha256": "1926f1d6b6db8ff7ee0d7b8d12681f63b30b41ef8ffd211969ae04a40ebe84d8",
-      "size": 52350
+      "sha256": "bd1eb26c29aa07b135554225f5e66ca16ec64028b847164588071f1d22dd33a8",
+      "size": 54978
     },
     {
       "path": "runtime/cp_runtime/evolution/proposal.py",

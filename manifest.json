@@ -1,13 +1,20 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.1.0",
-  "release_name": "Codex CLI 0.152.1 兼容与账户工具事务化安装",
-  "generated_for": "Codex Plugin-first cross-project engineering assistant compatible with Codex CLI 0.152.1, with transactional account tools, four general primary domains, deterministic lifecycle controls, and a Luna/Terra model ceiling",
+  "version": "7.2.0",
+  "release_name": "Python 3.11 双版本门禁、真实宿主路由验收与信号级演进证据",
+  "generated_for": "Codex Plugin-first cross-project engineering assistant with Python 3.11/3.13 CI gates, zero-side-effect validation, SHA-256-bound real-host routing acceptance, signal-specific controlled-evolution evidence, four general primary domains, and a Luna/Terra model ceiling",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
     "en"
   ],
+  "python_compatibility": {
+    "minimum": "3.11",
+    "ci_versions": [
+      "3.11",
+      "3.13"
+    ]
+  },
   "global_agents_target": "${CODEX_HOME:-$HOME/.codex}/AGENTS.md",
   "user_skills_target": "$HOME/.agents/skills",
   "custom_agents_target": "${CODEX_HOME:-$HOME/.codex}/agents",
@@ -225,7 +232,11 @@
   "routing_regression": {
     "cases": "tests/skill-routing-cases.json",
     "tool": "scripts/routing-eval.py",
-    "runtime_observation_required": true
+    "runtime_observation_required": true,
+    "host_acceptance_profile": "tests/host-routing-acceptance-profile.json",
+    "host_observation_schema_version": 2,
+    "host_acceptance_report_schema_version": 1,
+    "package_validation_is_host_acceptance": false
   },
   "review_isolation_levels": {
     "system-readonly": "父会话实际只读，或有效受控探针明确被沙箱拒绝；可用于严格只读复审",
@@ -437,6 +448,7 @@
     ]
   },
   "upgrade_from": [
+    "7.1.0",
     "7.0.0",
     "6.6.1",
     "6.6.0",

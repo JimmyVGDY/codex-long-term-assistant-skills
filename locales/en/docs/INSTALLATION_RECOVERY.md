@@ -1,16 +1,17 @@
-# V7.1 Installation, Validation, and Recovery
+# V7.2 Installation, Validation, and Recovery
+
+Chinese: [`INSTALLATION_RECOVERY.md`](INSTALLATION_RECOVERY.md)
 
 ## Preconditions
 
 - Native Windows Codex CLI 0.152.1.
-- The archive is extracted before any command runs.
-- Supported managed upgrades: 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
-- A Windows-native process must use a Windows-native `CODEX_HOME`. A value such as `/mnt/c/Users/HP/.codex` is converted to the equivalent drive path and is never used literally.
-- Unknown Skills, agents, Hooks, MCP configuration, Plugin files, and `config.toml` content remain outside the managed deletion scope.
+- Python 3.11 or later.
+- Extract the archive before running commands.
+- Supported managed upgrades: 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
+- A native Windows process uses a native Windows `CODEX_HOME`; WSL-style drive mappings are normalized before use.
+- Unknown Skills, agents, Hooks, MCP configuration, Plugin files, and `config.toml` content remain outside managed deletion scope.
 
 ## Upgrade sequence
-
-Run from the extracted language-package root:
 
 ```powershell
 codex --version
@@ -21,27 +22,20 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-Dry-run acceptance requires detection of the prior managed installation, a bounded backup, contained destination paths, rejection of link and reparse ancestors, preservation of unknown files, and a complete rollback plan.
+Dry-run acceptance requires prior-version detection, a bounded backup, contained destinations, rejected link and reparse ancestors, preserved unknown files, and a complete rollback plan.
 
-Plugin acceptance requires all three values:
+Codex 0.152.1 rejects the top-level `owner/interface` fields written by older local Marketplace installers. After backup, the upgrader removes those two known managed fields while preserving other unknown external fields, and proceeds only after `codex plugin list --json` recovers.
+
+Plugin acceptance requires:
 
 ```ini
 installed = true
 enabled = true
-version = 7.1.0
+version = 7.2.0
 ```
 
 ## Recovery boundary
 
-The installer journals managed changes and restores the pre-upgrade state when a managed installation step fails. It never removes an entire `.codex`, `.agents`, or plugins directory. Existing project context, TaskOutcomeEvent records, snapshots, assessments, and proposals remain preserved.
+The installer journals managed changes and restores the pre-upgrade state when a managed step fails. It never removes an entire `.codex`, `.agents`, or plugins directory. Existing project context, events, snapshots, assessments, and proposals remain preserved. Backup removal is a separate maintenance decision.
 
-Backup retention is intentional after successful validation. Removal is a separate maintenance decision.
-
-## Package validation
-
-```powershell
-python scripts\validate-v71.py
-python scripts\build-release.py verify --archive ..\Codex-Skills-V7.1.0-en.zip --locale en
-```
-
-Package-only validation does not prove host installation, Plugin registration, lifecycle execution, or effective state. Those states need separate readback evidence.
+`validate-package.py` invokes the current `validate-v72.py`, compares the Git index, tracked and untracked content, deletions, and link types before and after execution, and accepts `--output` only outside the repository. Package-only validation records `routing_host_observation=NOT_EVALUATED`; it does not prove host installation, Plugin registration, lifecycle execution, real-host routing, or effective state. Those states need separate readback evidence.

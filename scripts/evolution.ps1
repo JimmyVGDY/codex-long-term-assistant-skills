@@ -12,7 +12,7 @@ $Python = Get-Command python -ErrorAction SilentlyContinue
 if (-not $Python) {
     $Python = Get-Command py -ErrorAction SilentlyContinue
     if (-not $Python) {
-        throw "未找到 Python。请安装 Python 3.8+ 并加入 PATH。"
+        throw "未找到 Python。请安装 Python 3.11+ 并加入 PATH。"
     }
     & $Python.Source -3 -B $Entry @EvolutionArgs
 } else {

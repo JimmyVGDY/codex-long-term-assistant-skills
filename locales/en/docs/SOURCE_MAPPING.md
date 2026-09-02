@@ -1,4 +1,4 @@
-# Mapping Source Rules to Codex V7.1 Resources
+# Mapping Source Rules to Codex V7.2 Resources
 
 | Rule or Capability | Codex V5.0 Target |
 |---|---|

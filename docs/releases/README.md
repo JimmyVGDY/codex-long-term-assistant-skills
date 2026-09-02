@@ -8,6 +8,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.2.0 | [查看](v7.2.0/RELEASE_NOTES.md) | [查看](v7.2.0/AUDIT_REPORT.md) | [查看](v7.2.0/VALIDATION_REPORT.md) | 包内 `NOT_EVALUATED`；宿主证据独立保存 | [JSON](v7.2.0/BUILD_INFO.json) | [JSON](v7.2.0/PACKAGE_VALIDATION.json) |
 | 7.1.0 | [查看](v7.1.0/RELEASE_NOTES.md) | [查看](v7.1.0/AUDIT_REPORT.md) | [查看](v7.1.0/VALIDATION_REPORT.md) | — | [JSON](v7.1.0/BUILD_INFO.json) | [JSON](v7.1.0/PACKAGE_VALIDATION.json) |
 | 7.0.0 | [查看](v7.0.0/RELEASE_NOTES.md) | [查看](v7.0.0/AUDIT_REPORT.md) | [查看](v7.0.0/VALIDATION_REPORT.md) | [查看](v7.0.0/IMPLICIT_TRIGGER_OBSERVATION.md) | [JSON](v7.0.0/BUILD_INFO.json) | [JSON](v7.0.0/PACKAGE_VALIDATION.json) |
 | 6.6.1 | [查看](v6.6.1/RELEASE_NOTES.md) | [查看](v6.6.1/AUDIT_REPORT.md) | [查看](v6.6.1/VALIDATION_REPORT.md) | — | [JSON](v6.6.1/BUILD_INFO.json) | [JSON](v6.6.1/PACKAGE_VALIDATION.json) |

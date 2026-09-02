@@ -153,8 +153,8 @@ class ReleaseAutomationTests(unittest.TestCase):
             output = Path(temporary) / "notes.md"
             release_workflow.write_release_notes(output)
             value = output.read_text(encoding="utf-8")
-            self.assertIn("# V7.1.0 发行说明", value)
-            self.assertIn("# V7.1.0 Release Notes", value)
+            self.assertIn("# V7.2.0 发行说明", value)
+            self.assertIn("# V7.2.0 Release Notes", value)
             self.assertNotIn("English: [RELEASE_NOTES.en.md]", value)
             self.assertNotIn("Chinese: [RELEASE_NOTES.md]", value)
 

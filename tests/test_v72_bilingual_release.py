@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 def _load_builder():
-    spec = importlib.util.spec_from_file_location("build_release_v71", ROOT / "scripts" / "build-release.py")
+    spec = importlib.util.spec_from_file_location("build_release_v72", ROOT / "scripts" / "build-release.py")
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -35,30 +35,30 @@ def _load_localization_auditor():
     return module
 
 
-class V71BilingualReleaseTests(unittest.TestCase):
+class V72BilingualReleaseTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temporary = tempfile.TemporaryDirectory(prefix="cp-v71-bilingual-")
+        cls.temporary = tempfile.TemporaryDirectory(prefix="cp-v72-bilingual-")
         cls.root = Path(cls.temporary.name)
         cls.builder = _load_builder()
         cls.archives = {}
         cls.reports = {}
         for locale in ("zh-CN", "en"):
-            archive = cls.root / ("Codex-Skills-V7.1.0-%s.zip" % locale)
+            archive = cls.root / ("Codex-Skills-V7.2.0-%s.zip" % locale)
             witness = cls.root / ("witness-%s.json" % locale)
             cls.reports[locale] = cls.builder.reproducible_build(archive, witness, locale)
             cls.archives[locale] = archive
         cls.english_root = cls.root / "english-extracted"
         with zipfile.ZipFile(cls.archives["en"]) as archive:
             archive.extractall(cls.english_root)
-        cls.english_root = cls.english_root / "Codex-Skills-V7.1.0-en"
+        cls.english_root = cls.english_root / "Codex-Skills-V7.2.0-en"
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.temporary.cleanup()
 
     def _entries(self, locale: str):
-        root = "Codex-Skills-V7.1.0-%s/" % locale
+        root = "Codex-Skills-V7.2.0-%s/" % locale
         with zipfile.ZipFile(self.archives[locale]) as archive:
             return root, {name.removeprefix(root): archive.read(name) for name in archive.namelist()}
 
@@ -71,8 +71,8 @@ class V71BilingualReleaseTests(unittest.TestCase):
             self.assertEqual(locale, report["locale"])
             _, entries = self._entries(locale)
             self.assertEqual(locale, json.loads(entries["config/locale.json"])["locale"])
-            self.assertEqual("7.1.0", json.loads(entries["manifest.json"])["version"])
-            self.assertEqual("7.1.0", json.loads(entries[".codex-plugin/plugin.json"])["version"])
+            self.assertEqual("7.2.0", json.loads(entries["manifest.json"])["version"])
+            self.assertEqual("7.2.0", json.loads(entries[".codex-plugin/plugin.json"])["version"])
 
     def test_both_archives_contain_ten_skills_and_seven_model_neutral_reviewers(self) -> None:
         for locale in ("zh-CN", "en"):
@@ -91,10 +91,10 @@ class V71BilingualReleaseTests(unittest.TestCase):
     def test_english_primary_surfaces_are_english_and_overlay_sources_are_not_shipped(self) -> None:
         _, entries = self._entries("en")
         primary = ["README.md", "CHANGELOG.md", "global/AGENTS.md",
-                   "docs/releases/v7.1.0/RELEASE_NOTES.md",
-                   "docs/releases/v7.1.0/VALIDATION_REPORT.md",
-                   "docs/releases/v7.1.0/AUDIT_REPORT.md",
-                   "docs/USER_GUIDE_V7.1.md", "docs/INSTALLATION_RECOVERY.md",
+                   "docs/releases/v7.2.0/RELEASE_NOTES.md",
+                   "docs/releases/v7.2.0/VALIDATION_REPORT.md",
+                   "docs/releases/v7.2.0/AUDIT_REPORT.md",
+                   "docs/USER_GUIDE_V7.2.md", "docs/INSTALLATION_RECOVERY.md",
                    "docs/CODEX_CONFIG_GUIDE.md", ".codex-plugin/plugin.json"]
         primary.extend("skills/%s/SKILL.md" % item["name"] for item in json.loads(entries["manifest.json"])["skills"])
         primary.extend(item["file"] for item in json.loads(entries["manifest.json"])["custom_agents"])
@@ -180,7 +180,7 @@ class V71BilingualReleaseTests(unittest.TestCase):
                              for name in root_files))
         for name in ("CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md"):
             self.assertTrue((ROOT / ".github" / name).is_file(), name)
-        current = ROOT / "docs" / "releases" / "v7.1.0"
+        current = ROOT / "docs" / "releases" / "v7.2.0"
         for name in ("RELEASE_NOTES.md", "AUDIT_REPORT.md", "VALIDATION_REPORT.md",
                      "BUILD_INFO.json", "PACKAGE_VALIDATION.json"):
             self.assertTrue((current / name).is_file(), name)
@@ -193,10 +193,42 @@ class V71BilingualReleaseTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, output)
 
     def test_windows_ci_validation_timeout_allows_slow_full_suite(self) -> None:
-        source = (ROOT / "scripts" / "validate-v71.py").read_text(encoding="utf-8")
+        source = (ROOT / "scripts" / "validate-v72.py").read_text(encoding="utf-8")
         match = re.search(r"COMMAND_TIMEOUT_SECONDS\s*=\s*(\d+)", source)
         self.assertIsNotNone(match)
         self.assertGreaterEqual(int(match.group(1)), 600)
+
+    def test_python_minimum_and_ci_matrix_are_explicit(self) -> None:
+        manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual("3.11", manifest["python_compatibility"]["minimum"])
+        self.assertEqual(["3.11", "3.13"], manifest["python_compatibility"]["ci_versions"])
+        for relative in (
+            ".github/workflows/ci.yml",
+            ".github/workflows/release.yml",
+            "locales/en/.github/workflows/ci.yml",
+            "locales/en/.github/workflows/release.yml",
+        ):
+            workflow = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn('python: ["3.11", "3.13"]', workflow, relative)
+            self.assertIn('python-version: "${{ matrix.python }}"', workflow, relative)
+
+    def test_package_validation_does_not_claim_host_routing_acceptance(self) -> None:
+        source = (ROOT / "scripts" / "validate-v72.py").read_text(encoding="utf-8")
+        self.assertIn("'routing_case_schema':'PASS (45 cases)'", source)
+        self.assertIn("'routing_host_observation':'NOT_EVALUATED (package-only validation)'", source)
+        self.assertNotIn("routing_host_observation':'PASS", source)
+
+    def test_runtime_launchers_do_not_advertise_unsupported_python(self) -> None:
+        launchers = [
+            ROOT / "scripts" / "evolution.ps1",
+            ROOT / "scripts" / "evolution.cmd",
+            ROOT / "locales" / "en" / "scripts" / "evolution.ps1",
+            ROOT / "locales" / "en" / "scripts" / "evolution.cmd",
+        ]
+        for launcher in launchers:
+            text = launcher.read_text(encoding="utf-8-sig")
+            self.assertIn("3.11+", text, launcher)
+            self.assertNotIn("3.8+", text, launcher)
 
     def test_english_hook_returns_english_model_gate_reason(self) -> None:
         payload = {"hook_event_name": "PreToolUse", "tool_name": "Agent",
@@ -213,7 +245,7 @@ class V71BilingualReleaseTests(unittest.TestCase):
 
     def test_human_review_index_accepts_canonical_paths_with_chinese_filenames(self) -> None:
         auditor = _load_localization_auditor()
-        with tempfile.TemporaryDirectory(prefix="cp-v71-review-index-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="cp-v72-review-index-") as temporary:
             root = Path(temporary)
             reviewed = root / "locales" / "en" / "HUMAN_REVIEWED.txt"
             reviewed.parent.mkdir(parents=True)
@@ -227,7 +259,7 @@ class V71BilingualReleaseTests(unittest.TestCase):
         auditor = _load_localization_auditor()
         completed = subprocess.CompletedProcess(
             args=[], returncode=0,
-            stdout=b"README.md\0dist/package-validation-v7.1.0.json\0")
+            stdout=b"README.md\0dist/package-validation-v7.2.0.json\0")
         with mock.patch.object(auditor.subprocess, "run", return_value=completed):
             paths = auditor.tracked_files()
         self.assertEqual([auditor.ROOT / "README.md"], paths)

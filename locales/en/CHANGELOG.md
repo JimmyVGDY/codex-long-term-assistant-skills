@@ -1,5 +1,24 @@
 # Changelog
 
+## 7.2.0 - 2026-09-02
+
+### Added
+
+- Added eleven real Codex host-routing acceptance scenarios, schema-2 observations, and SHA-256-bound final-report evidence.
+- Added a persisted controlled-evolution end-to-end case from observation, snapshot, and assessment to an `execution_authorization=NONE` proposal registry.
+
+### Changed
+
+- Set Python 3.11 as the minimum and cover both 3.11 and 3.13 on Windows and Ubuntu CI.
+- Evaluate controlled-evolution evidence per signal and calculate coverage over unique `task_id` values.
+- Consolidated controlled-evolution guidance under `controlled-evolution-governance`.
+
+### Fixed
+
+- Complete validation binds the Git index and file contents, handles interrupts, and refuses repository-local output.
+- Host-routing acceptance validates unique tasks and reports, finite pass rates, report hashes, byte counts, and declared fields.
+- The installer repairs Marketplace manifests rejected by Codex CLI 0.152.1 while preserving unknown external metadata.
+
 ## 7.1.0 - 2026-09-02
 
 ### Changed

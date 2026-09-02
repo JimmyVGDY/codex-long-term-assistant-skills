@@ -6,6 +6,25 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 暂无。
 
+## 7.2.0 - 2026-09-02
+
+### Added
+
+- 新增 11 个真实 Codex 宿主路由验收场景、schema 2 观察格式和 SHA-256 绑定的最终报告证据。
+- 新增受控演进从 observation、snapshot、assessment 到 `execution_authorization=NONE` proposal registry 的持久化端到端用例。
+
+### Changed
+
+- Python 最低版本固定为 3.11，Windows 与 Ubuntu CI 同时覆盖 3.11 和 3.13。
+- 受控演进按信号分别判定证据充分性，并按唯一 `task_id` 计算覆盖率；模型升级和负面结果只读取各自必要证据。
+- `long-running-task-memory` 与 `multi-agent-independent-review` 移除重复受控演进正文，统一引用 `controlled-evolution-governance`。
+
+### Fixed
+
+- 完整验证现在绑定 Git index、受管与未跟踪内容摘要、删除与链接状态，即使被中断也执行后置快照；验证输出拒绝写入仓库。
+- 宿主路由验收拒绝未知 Skill、重复任务或报告、非有限通过率、哈希/字节数不一致及报告字段漂移，并明确区分宿主最终报告与内部路由 Trace。
+- 安装器移除 Codex CLI 0.152.1 不接受的本地 Marketplace 顶层 `owner/interface` 字段，同时保留未知外部元数据。
+
 ## 7.1.0 - 2026-09-02
 
 ### Changed

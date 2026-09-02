@@ -2,11 +2,11 @@
 
 Chinese: [README.md](README.md)
 
-This page organizes the V7.1.0 documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
+This page organizes the V7.2.0 documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
 
 ## Getting started
 
-- [V7.1 user guide](USER_GUIDE_V7.1.en.md)
+- [V7.2 user guide](USER_GUIDE_V7.2.en.md)
 - [Installation, upgrade, rollback, and recovery](INSTALLATION_RECOVERY.en.md)
 - [Codex configuration guide](CODEX_CONFIG_GUIDE.en.md)
 - [Project context and onboarding](PROJECT_CONTEXT_AND_ONBOARDING.md)
@@ -28,13 +28,13 @@ This page organizes the V7.1.0 documentation by adoption stage. Historical repor
 - [Controlled-evolution operations](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](VALIDATION_REPORT.md)
-- [V7.1.0 package validation report](releases/v7.1.0/VALIDATION_REPORT.en.md)
-- [V7.1.0 audit report](releases/v7.1.0/AUDIT_REPORT.en.md)
+- [V7.2.0 package validation report](releases/v7.2.0/VALIDATION_REPORT.en.md)
+- [V7.2.0 audit report](releases/v7.2.0/AUDIT_REPORT.en.md)
 
 ## Release and history
 
 - [Release evidence index](releases/README.en.md)
-- [V7.1.0 release notes](releases/v7.1.0/RELEASE_NOTES.en.md)
+- [V7.2.0 release notes](releases/v7.2.0/RELEASE_NOTES.en.md)
 - [Changelog](../CHANGELOG.en.md)
 - [Public reconstruction index](history/README.en.md)
 - [Public reconstruction release index](history/RELEASE_ARCHIVES.md)

@@ -55,6 +55,11 @@ docs/releases/v7.1.0/BUILD_INFO.json
 docs/releases/v7.1.0/PACKAGE_VALIDATION.json
 docs/releases/v7.1.0/RELEASE_NOTES.md
 docs/releases/v7.1.0/VALIDATION_REPORT.md
+docs/releases/v7.2.0/AUDIT_REPORT.md
+docs/releases/v7.2.0/BUILD_INFO.json
+docs/releases/v7.2.0/PACKAGE_VALIDATION.json
+docs/releases/v7.2.0/RELEASE_NOTES.md
+docs/releases/v7.2.0/VALIDATION_REPORT.md
 config/agents.example.toml
 custom-agents/cp-review-compatibility-regression.toml
 custom-agents/cp-review-data-contract.toml
@@ -85,6 +90,7 @@ docs/USER_GUIDE_V6.3.md
 docs/USER_GUIDE_V6.5.md
 docs/USER_GUIDE_V6.6.md
 docs/USER_GUIDE_V7.1.md
+docs/USER_GUIDE_V7.2.md
 docs/VALIDATION_REPORT.md
 docs/V3_1_LOG_ANALYSIS_DESIGN.md
 docs/V3_DESIGN_OVERVIEW.md
@@ -100,6 +106,7 @@ docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md
 examples/AGENTS.project.example.md
 examples/usage-prompts.md
 tests/skill-routing-cases.json
+tests/host-routing-acceptance-profile.json
 global/AGENTS.md
 manifest.json
 skills/controlled-evolution-governance/agents/openai.yaml
@@ -192,7 +199,6 @@ skills/long-running-task-memory/assets/templates/PLAN.template.md
 skills/long-running-task-memory/assets/templates/PROGRESS.template.md
 skills/long-running-task-memory/assets/templates/PROJECT_CONTEXT.template.md
 skills/long-running-task-memory/assets/templates/RECOVERY_CHECKLIST.template.md
-skills/long-running-task-memory/references/controlled-self-evolution.md
 skills/long-running-task-memory/references/long-running-task-memory-rules.md
 skills/long-running-task-memory/references/memory-checkpoints.md
 skills/long-running-task-memory/references/memory-multiagent-events.md
@@ -207,7 +213,6 @@ skills/multi-agent-independent-review/assets/templates/REVIEW_ISOLATION_EVIDENCE
 skills/multi-agent-independent-review/assets/templates/REVIEW_LEDGER.template.md
 skills/multi-agent-independent-review/assets/templates/REVIEW_PLAN.template.md
 skills/multi-agent-independent-review/assets/templates/REVIEW_RESULT.template.md
-skills/multi-agent-independent-review/references/controlled-self-evolution.md
 skills/multi-agent-independent-review/references/multi-agent-independent-review-workflow.md
 skills/multi-agent-independent-review/references/review-goals-limits-isolation.md
 skills/multi-agent-independent-review/references/review-postimplementation.md

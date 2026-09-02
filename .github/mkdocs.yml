@@ -72,7 +72,7 @@ nav:
       - 项目概览: zh-CN/index.md
       - 文档中心: zh-CN/docs/README.md
       - 开始使用:
-          - V7.1 使用指南: zh-CN/docs/USER_GUIDE_V7.1.md
+          - V7.2 使用指南: zh-CN/docs/USER_GUIDE_V7.2.md
           - 安装、升级与恢复: zh-CN/docs/INSTALLATION_RECOVERY.md
           - Codex 配置: zh-CN/docs/CODEX_CONFIG_GUIDE.md
           - 项目上下文与接入: zh-CN/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
@@ -85,9 +85,9 @@ nav:
           - 审批、证据与终结: zh-CN/docs/APPROVAL_EVIDENCE_FINALIZATION.md
           - 受控演进操作: zh-CN/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
       - 发行与历史:
-          - V7.1.0 发行说明: zh-CN/docs/releases/v7.1.0/RELEASE_NOTES.md
-          - V7.1.0 验证报告: zh-CN/docs/releases/v7.1.0/VALIDATION_REPORT.md
-          - V7.1.0 审计报告: zh-CN/docs/releases/v7.1.0/AUDIT_REPORT.md
+          - V7.2.0 发行说明: zh-CN/docs/releases/v7.2.0/RELEASE_NOTES.md
+          - V7.2.0 验证报告: zh-CN/docs/releases/v7.2.0/VALIDATION_REPORT.md
+          - V7.2.0 审计报告: zh-CN/docs/releases/v7.2.0/AUDIT_REPORT.md
           - 历版发行资料: zh-CN/docs/releases/README.md
           - 公开重建历史: zh-CN/docs/history/README.md
           - 版本记录: zh-CN/CHANGELOG.md
@@ -95,7 +95,7 @@ nav:
       - Overview: en/index.md
       - Documentation hub: en/docs/README.md
       - Getting started:
-          - V7.1 user guide: en/docs/USER_GUIDE_V7.1.md
+          - V7.2 user guide: en/docs/USER_GUIDE_V7.2.md
           - Installation and recovery: en/docs/INSTALLATION_RECOVERY.md
           - Codex configuration: en/docs/CODEX_CONFIG_GUIDE.md
           - Project context and onboarding: en/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
@@ -108,9 +108,9 @@ nav:
           - Approval, evidence, and finalization: en/docs/APPROVAL_EVIDENCE_FINALIZATION.md
           - Controlled-evolution operations: en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
       - Release and history:
-          - V7.1.0 release notes: en/docs/releases/v7.1.0/RELEASE_NOTES.md
-          - V7.1.0 validation report: en/docs/releases/v7.1.0/VALIDATION_REPORT.md
-          - V7.1.0 audit report: en/docs/releases/v7.1.0/AUDIT_REPORT.md
+          - V7.2.0 release notes: en/docs/releases/v7.2.0/RELEASE_NOTES.md
+          - V7.2.0 validation report: en/docs/releases/v7.2.0/VALIDATION_REPORT.md
+          - V7.2.0 audit report: en/docs/releases/v7.2.0/AUDIT_REPORT.md
           - Release evidence: en/docs/releases/README.md
           - Public reconstruction history: en/docs/history/README.md
           - Changelog: en/CHANGELOG.md
