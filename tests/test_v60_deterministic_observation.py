@@ -84,6 +84,100 @@ class V60DeterministicObservationTests(unittest.TestCase):
         self.assertEqual(1,life['cross_task_session_leakage_count'])
         self.assertFalse(snap.metrics['evidence_sufficient'])
         self.assertFalse(snap.signals)
+        self.assertTrue(all(not item['eligible'] for item in snap.metrics['signal_eligibility'].values()))
+
+    def test_signal_specific_gates_do_not_block_non_model_and_non_outcome_patterns(self):
+        event_path=self.project_dir/'feedback'/'task-outcome-v2.jsonl'; event_path.parent.mkdir(parents=True,exist_ok=True)
+        legacy=[]
+        for index,day in enumerate((1,3,5,7,9)):
+            task_id=f'TASK-{index}'
+            captured=datetime(2026,8,day,tzinfo=timezone.utc).isoformat()
+            append_event(event_path,self.event(event_id=f'OPEN-{index}',event_type='TURN_OPENED',
+                         task_id=task_id,turn_id=f'TURN-{index}',captured_at=captured,
+                         terminal_outcome='UNKNOWN'))
+            append_event(event_path,self.event(event_id=f'DONE-{index}',event_type='TASK_COMPLETED',
+                         task_id=task_id,turn_id=f'TURN-{index}',captured_at=captured,
+                         terminal_outcome='UNKNOWN'))
+            legacy.append({'record_id':f'LEGACY-{index}','task_id':task_id,'timestamp':captured,
+                           'terminal_outcome':'UNKNOWN','routing_deviation':'wrong-skill',
+                           'failure_code':'shared-contract-gap','repair_rounds':2})
+        append_event(event_path,self.event(event_id='SESSION-END',event_type='SESSION_ENDED',
+                     task_id='S1',turn_id='',captured_at=datetime(2026,8,9,tzinfo=timezone.utc).isoformat(),
+                     terminal_outcome='UNKNOWN'))
+        self.write_jsonl('audit/structured-feedback.jsonl',legacy)
+
+        snap=observe_project(self.project_id,self.project_dir)
+        eligibility=snap.metrics['signal_eligibility']
+        self.assertTrue(eligibility['REPEATED_FAILURE']['eligible'])
+        self.assertTrue(eligibility['ROUTING_DEVIATION']['eligible'])
+        self.assertTrue(eligibility['EXCESSIVE_REPAIR']['eligible'])
+        self.assertFalse(eligibility['MODEL_ESCALATION']['eligible'])
+        self.assertIn('actual_model_coverage=0.000<0.750',eligibility['MODEL_ESCALATION']['failures'])
+        self.assertFalse(eligibility['NEGATIVE_OUTCOME']['eligible'])
+        self.assertIn('known_terminal_outcome_coverage=0.000<0.800',eligibility['NEGATIVE_OUTCOME']['failures'])
+        self.assertTrue(snap.metrics['evidence_sufficient'])
+        self.assertEqual((),snap.metrics['insufficient_evidence'])
+        self.assertIn('actual_model_coverage=0.000<0.750',snap.metrics['partial_insufficient_evidence'])
+        self.assertIn('known_terminal_outcome_coverage=0.000<0.800',snap.metrics['partial_insufficient_evidence'])
+        signal_types={signal.signal_type.value for signal in snap.signals}
+        self.assertIn('REPEATED_FAILURE',signal_types)
+        self.assertIn('ROUTING_DEVIATION',signal_types)
+        self.assertIn('EXCESSIVE_REPAIR',signal_types)
+        self.assertNotIn('MODEL_ESCALATION',signal_types)
+        self.assertNotIn('NEGATIVE_OUTCOME',signal_types)
+
+        result=ControlledEvolutionService(self.root,self.project_id).run(
+            dry_run=False,observed_at='2026-09-10T00:00:00+00:00'
+        )
+        targets={proposal['target_resource'] for proposal in result['proposals']}
+        self.assertIn('failure_code:shared-contract-gap',targets)
+        self.assertIn('skill-routing',targets)
+        self.assertIn('review-repair-loop',targets)
+        self.assertNotIn('model-routing',targets)
+        self.assertNotIn('quality-outcome',targets)
+        self.assertTrue(all(proposal['execution_authorization']=='NONE' for proposal in result['proposals']))
+        self.assertFalse(result['automatic_execution'])
+        self.assertEqual(result['proposal_count'],result['registry']['proposal_count'])
+        persisted=list((self.project_dir/'evolution'/'snapshots').glob('*.json'))
+        self.assertEqual(1,len(persisted))
+        persisted_snapshot=json.loads(persisted[0].read_text(encoding='utf-8'))
+        self.assertFalse(persisted_snapshot['metrics']['signal_eligibility']['MODEL_ESCALATION']['eligible'])
+        self.assertTrue(persisted_snapshot['metrics']['signal_eligibility']['REPEATED_FAILURE']['eligible'])
+        self.assertTrue(persisted_snapshot['metrics']['partial_insufficient_evidence'])
+
+    def test_model_and_outcome_coverage_are_deduplicated_by_task(self):
+        rows=[]
+        event_path=self.project_dir/'feedback'/'task-outcome-v2.jsonl'; event_path.parent.mkdir(parents=True,exist_ok=True)
+        for index,day in enumerate((1,3,5,7)):
+            captured=datetime(2026,8,day,tzinfo=timezone.utc).isoformat()
+            append_event(event_path,self.event(event_id=f'OPEN-COVERAGE-{index}',event_type='TURN_OPENED',
+                         task_id=f'TASK-{index}',turn_id=f'TURN-{index}',captured_at=captured,
+                         terminal_outcome='UNKNOWN'))
+            append_event(event_path,self.event(event_id=f'DONE-COVERAGE-{index}',event_type='TASK_COMPLETED',
+                         task_id=f'TASK-{index}',turn_id=f'TURN-{index}',captured_at=captured,
+                         terminal_outcome='UNKNOWN'))
+        append_event(event_path,self.event(event_id='SESSION-END-COVERAGE',event_type='SESSION_ENDED',
+                     task_id='S1',turn_id='',captured_at=datetime(2026,8,9,tzinfo=timezone.utc).isoformat(),
+                     terminal_outcome='UNKNOWN'))
+        captured=datetime(2026,8,1,tzinfo=timezone.utc).isoformat()
+        for index in range(4):
+            rows.append({'record_id':f'KNOWN-{index}','task_id':'TASK-0','timestamp':captured,
+                         'actual_model':'gpt-5.6-luna','terminal_outcome':'PASS'})
+        for index,day in enumerate((3,5,7),start=1):
+            rows.append({'record_id':f'UNKNOWN-{index}','task_id':f'TASK-{index}',
+                         'timestamp':datetime(2026,8,day,tzinfo=timezone.utc).isoformat(),
+                         'terminal_outcome':'UNKNOWN'})
+        rows.append({'record_id':'NO-TASK','timestamp':datetime(2026,8,9,tzinfo=timezone.utc).isoformat(),
+                     'actual_model':'gpt-5.6-terra','terminal_outcome':'FAILED'})
+        self.write_jsonl('feedback/execution-feedback.jsonl',rows)
+
+        snap=observe_project(self.project_id,self.project_dir)
+        self.assertEqual(1,snap.metrics['actual_model_task_count'])
+        self.assertEqual(1,snap.metrics['known_terminal_outcome_task_count'])
+        self.assertEqual(0.25,snap.metrics['actual_model_coverage'])
+        self.assertEqual(0.25,snap.metrics['known_terminal_outcome_coverage'])
+        self.assertFalse(snap.metrics['signal_eligibility']['MODEL_ESCALATION']['eligible'])
+        self.assertFalse(snap.metrics['signal_eligibility']['NEGATIVE_OUTCOME']['eligible'])
 
     def test_v63_unknown_and_reviewer_attribution_metrics(self):
         rows=[]

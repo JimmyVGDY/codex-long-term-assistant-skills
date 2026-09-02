@@ -538,11 +538,13 @@ def observe_project(
     accepted_count = 0
     negative_count = 0
     known_outcome_count = 0
+    known_outcome_tasks: Set[str] = set()
     routing_deviation_count = 0
     routing_known_count = 0
     model_escalation_count = 0
     model_comparison_count = 0
     actual_model_count = 0
+    actual_model_tasks: Set[str] = set()
     repair_rounds: List[int] = []
     high_repair_count = 0
     failure_counter: Counter[str] = Counter()
@@ -577,6 +579,8 @@ def observe_project(
             normalized_outcome = outcome.lower()
             if normalized_outcome not in _UNKNOWN_OUTCOMES:
                 known_outcome_count += 1
+                if task_id:
+                    known_outcome_tasks.add(task_id)
                 if normalized_outcome in _SUCCESS_OUTCOMES:
                     accepted_count += 1
                 else:
@@ -602,6 +606,8 @@ def observe_project(
                     model_evidence.append(evidence)
         if actual_model:
             actual_model_count += 1
+            if task_id:
+                actual_model_tasks.add(task_id)
 
         repair = _to_int(payload.get("repair_rounds", payload.get("repairRounds", 0)), 0)
         if repair >= 0 and ("repair_rounds" in payload or "repairRounds" in payload):
@@ -830,8 +836,10 @@ def observe_project(
         "negative_outcome_rate": round(negative_rate, 6),
         "model_comparison_count": model_comparison_count,
         "actual_model_count": actual_model_count,
-        "actual_model_coverage": round(float(actual_model_count) / len(task_ids), 6) if task_ids else 0.0,
-        "known_terminal_outcome_coverage": round(float(known_outcome_count) / len(task_ids), 6) if task_ids else 0.0,
+        "actual_model_task_count": len(actual_model_tasks),
+        "known_terminal_outcome_task_count": len(known_outcome_tasks),
+        "actual_model_coverage": round(float(len(actual_model_tasks)) / len(task_ids), 6) if task_ids else 0.0,
+        "known_terminal_outcome_coverage": round(float(len(known_outcome_tasks)) / len(task_ids), 6) if task_ids else 0.0,
         "model_escalation_count": model_escalation_count,
         "model_escalation_rate": round(model_rate, 6),
         "routing_known_count": routing_known_count,
@@ -847,7 +855,7 @@ def observe_project(
         "lifecycle": v2_diagnostics,
     }
 
-    evidence_gate_failures = []
+    common_gate_failures: List[str] = []
     if raw_v2_event_count:
         for label, actual, threshold in (
             ("lifecycle_completeness", v2_diagnostics["lifecycle_completeness_rate"], policy.min_lifecycle_completeness_rate),
@@ -855,7 +863,7 @@ def observe_project(
             ("project_repo_binding_coverage", v2_diagnostics["project_repo_binding_coverage"], policy.min_project_repo_binding_coverage),
         ):
             if actual < threshold:
-                evidence_gate_failures.append("%s=%.3f<%.3f" % (label, actual, threshold))
+                common_gate_failures.append("%s=%.3f<%.3f" % (label, actual, threshold))
         anomaly_count = (
             duplicate_v2_event_count
             + int(v2_diagnostics["duplicate_event_count"])
@@ -864,20 +872,68 @@ def observe_project(
             + int(v2_diagnostics["missing_session_binding_count"])
         )
         if anomaly_count:
-            evidence_gate_failures.append("lifecycle_integrity_anomalies=%d" % anomaly_count)
+            common_gate_failures.append("lifecycle_integrity_anomalies=%d" % anomaly_count)
+    model_gate_failures: List[str] = []
+    outcome_gate_failures: List[str] = []
     if raw_v2_event_count:
-        for label, actual, threshold in (
-            ("actual_model_coverage", metrics["actual_model_coverage"], policy.min_actual_model_coverage),
-            ("known_terminal_outcome_coverage", metrics["known_terminal_outcome_coverage"], policy.min_known_terminal_outcome_coverage),
-        ):
-            if actual < threshold:
-                evidence_gate_failures.append("%s=%.3f<%.3f" % (label, actual, threshold))
+        if metrics["actual_model_coverage"] < policy.min_actual_model_coverage:
+            model_gate_failures.append(
+                "actual_model_coverage=%.3f<%.3f"
+                % (metrics["actual_model_coverage"], policy.min_actual_model_coverage)
+            )
+        if metrics["known_terminal_outcome_coverage"] < policy.min_known_terminal_outcome_coverage:
+            outcome_gate_failures.append(
+                "known_terminal_outcome_coverage=%.3f<%.3f"
+                % (metrics["known_terminal_outcome_coverage"], policy.min_known_terminal_outcome_coverage)
+            )
     if len(all_rows) < policy.min_records or len(task_ids) < policy.min_independent_tasks or window_days < policy.min_observation_window_days:
-        evidence_gate_failures.append("minimum_window_or_sample_not_met")
-    metrics["evidence_sufficient"] = not evidence_gate_failures
-    metrics["insufficient_evidence"] = tuple(evidence_gate_failures)
-    if evidence_gate_failures:
-        warnings.append("insufficient-evidence：%s；快照保留但不生成优化信号" % ", ".join(evidence_gate_failures))
+        common_gate_failures.append("minimum_window_or_sample_not_met")
+
+    requirements = {
+        SignalType.REPEATED_FAILURE: ("common_integrity", "explicit_failure_pattern"),
+        SignalType.MODEL_ESCALATION: ("common_integrity", "actual_model_coverage"),
+        SignalType.ROUTING_DEVIATION: ("common_integrity", "explicit_routing_observation"),
+        SignalType.EXCESSIVE_REPAIR: ("common_integrity", "explicit_repair_rounds"),
+        SignalType.LOW_REVIEWER_YIELD: ("common_integrity", "reviewer_attribution"),
+        SignalType.NEGATIVE_OUTCOME: ("common_integrity", "known_terminal_outcome_coverage"),
+        SignalType.UNUSED_CAPABILITY: ("common_integrity", "explicit_capability_usage"),
+    }
+    signal_eligibility: Dict[str, Dict[str, Any]] = {}
+    for signal_type in SignalType:
+        failures = list(common_gate_failures)
+        if signal_type is SignalType.MODEL_ESCALATION:
+            failures.extend(model_gate_failures)
+        elif signal_type is SignalType.NEGATIVE_OUTCOME:
+            failures.extend(outcome_gate_failures)
+        signal_eligibility[signal_type.value] = {
+            "eligible": not failures,
+            "failures": tuple(failures),
+            "requirements": requirements[signal_type],
+        }
+    metrics["signal_eligibility"] = signal_eligibility
+    metrics["evidence_sufficient"] = any(
+        item["eligible"] for item in signal_eligibility.values()
+    )
+    all_gate_failures = sorted({
+        failure
+        for item in signal_eligibility.values()
+        for failure in item["failures"]
+    })
+    metrics["insufficient_evidence"] = tuple(
+        all_gate_failures if not metrics["evidence_sufficient"] else ()
+    )
+    metrics["partial_insufficient_evidence"] = tuple(
+        all_gate_failures if metrics["evidence_sufficient"] else ()
+    )
+    ineligible = [
+        "%s[%s]" % (name, ",".join(item["failures"]))
+        for name, item in signal_eligibility.items()
+        if not item["eligible"]
+    ]
+    if not metrics["evidence_sufficient"]:
+        warnings.append("insufficient-evidence：%s；快照保留但不生成优化信号" % ", ".join(all_gate_failures))
+    elif ineligible:
+        warnings.append("部分信号证据不足，不影响其他合格信号：%s" % "; ".join(ineligible))
     signals: List[PatternSignal] = []
     for label, count in sorted(failure_counter.items(), key=lambda item: (-item[1], item[0])):
         independent = len(failure_tasks[label])
@@ -990,8 +1046,10 @@ def observe_project(
             metrics={"known_outcome_count": known_outcome_count, "window_days": window_days},
         ))
 
-    if evidence_gate_failures:
-        signals = []
+    signals = [
+        signal for signal in signals
+        if signal_eligibility[signal.signal_type.value]["eligible"]
+    ]
     if len(all_rows) < policy.min_records:
         warnings.append("有效记录少于 %d 条，只保留观察快照，不建议形成优化提案" % policy.min_records)
     if len(task_ids) < policy.min_independent_tasks:
