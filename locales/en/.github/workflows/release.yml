@@ -14,19 +14,20 @@ env:
 
 jobs:
   validate:
-    name: Pre-release validation (${{ matrix.os }})
+    name: Pre-release validation (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
+        python: ["3.11", "3.13"]
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
-          python-version: "3.13"
+          python-version: "${{ matrix.python }}"
       - name: Validate tag and package version
         run: python scripts/release-workflow.py metadata --tag "${{ github.ref_type == 'tag' && github.ref_name || '' }}"
       - name: Audit bilingual coverage

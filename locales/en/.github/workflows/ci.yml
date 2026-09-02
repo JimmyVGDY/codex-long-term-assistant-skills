@@ -15,19 +15,20 @@ env:
 
 jobs:
   validate:
-    name: Validate (${{ matrix.os }})
+    name: Validate (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
+        python: ["3.11", "3.13"]
     steps:
       - name: Check out source
         uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "${{ matrix.python }}"
       - name: Audit bilingual coverage
         run: python scripts/localization-audit.py --strict
       - name: Check repository-wide links
