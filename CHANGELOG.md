@@ -4,6 +4,10 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 ## 未发布
 
+暂无。
+
+## 7.3.0 - 2026-09-02
+
 ### Added
 
 - Reviewer 派发新增 `minimum_acceptable_profile`，并增加追加式 `INLINE/DELEGATE` 决策门；`INLINE` 不创建轮次或消耗 Reviewer 预算。
@@ -13,7 +17,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 - Reviewer 自报只可形成 `declared_match/fallback_acceptable/underpowered/unverified/mismatch`；低于最低可接受档位的结果只能记为 `incomplete`，且不能正常归并或关闭。
 - Evolution 将缺失成本保持为 unknown，按 Reviewer、模型档位和任务难度统计，并排除未最终归因的数据参与低收益判断；真实样本不足时保持默认路由不变。
-- 双语文档站把 V7.2 当前系统架构、领域路由、配置、受控演进和事实源注册表统一为现行口径；旧版本只保留为迁移或历史证据。
+- 双语文档站把 V7.3 当前系统架构、领域路由、配置、受控演进和事实源注册表统一为现行口径；旧版本只保留为迁移或历史证据。
 - 历史详情页在生成阶段增加中英文醒目标记并退出默认站内搜索，当前索引与历版发行索引继续可检索。
 
 ### Fixed

@@ -1,6 +1,6 @@
-# V7.2 当前系统架构与安全边界
+# V7.3 当前系统架构与安全边界
 
-> 状态：`active`。本页描述 V7.2.0 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
+> 状态：`active`。本页描述 V7.3.0 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
 
 ## 1. 分层
 
@@ -22,7 +22,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-包版本是 V7.2.0；`TaskOutcomeEvent V2`、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
+包版本是 V7.3.0；`TaskOutcomeEvent V2`、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
 
 ## 2. Skill 路由
 
@@ -33,7 +33,7 @@ Human Decision + Independent Implementation Task
 - `ai-engineering`：模型调用、RAG、Agent、评测、推理与多模态生成；
 - `data-middleware-infrastructure`：数据库、缓存、MQ、搜索、存储、GPU、容器与网络。
 
-日志、质量交付、独立复审、技术文档、长期记忆和受控演进作为支撑能力按阶段加载。详细边界见 [V7.2 领域 Skill 架构](V7_DOMAIN_SKILL_ARCHITECTURE.md) 和 [V7.2 Skill 触发矩阵](SKILL_TRIGGER_MATRIX.md)。
+日志、质量交付、独立复审、技术文档、长期记忆和受控演进作为支撑能力按阶段加载。详细边界见 [V7.3 领域 Skill 架构](V7_DOMAIN_SKILL_ARCHITECTURE.md) 和 [V7.3 Skill 触发矩阵](SKILL_TRIGGER_MATRIX.md)。
 
 ## 3. 项目与数据隔离
 
@@ -91,7 +91,7 @@ CLOSED
 
 ## 8. 当前与历史文档边界
 
-- 当前规范从[文档中心](README.md)进入，并明确标记 V7.2；
+- 当前规范从[文档中心](README.md)进入，并明确标记 V7.3；
 - 升级来源版本、迁移映射和组件合同版本可以在当前文档中出现，但必须说明其用途；
 - 历版发行说明、验证报告和设计文档保留用于追溯，不作为当前安装、运行或验收结论；
 - 历史详情页不进入默认站内搜索，避免旧命令与当前操作说明混淆。

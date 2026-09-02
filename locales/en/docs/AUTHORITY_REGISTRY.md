@@ -1,4 +1,4 @@
-# V7.2 Current Authoritative Source Registry
+# V7.3 Current Authoritative Source Registry
 
 > Status: `active`. The files below are the current fact owners; the version that first introduced them does not limit their current scope.
 

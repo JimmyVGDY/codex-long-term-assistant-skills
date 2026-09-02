@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.2.0",
-  "description": "Cross-project engineering assistance with Python 3.11+ gates, zero-side-effect validation, real-host routing acceptance, signal-specific evolution evidence, independent Reviewers, and controlled evolution governance.",
+  "version": "7.3.0",
+  "description": "Cross-project engineering assistance with minimum Reviewer profiles, INLINE/DELEGATE gates, finalized attribution and cost calibration, state-bound Plugin runtimes, independent review, and controlled evolution governance.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

@@ -1,6 +1,6 @@
 # Release evidence archive
 
-V7.2.0 is the current release. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
+V7.3.0 is the current release. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
 
 Chinese source: [README.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/releases/README.md)
 
@@ -8,6 +8,7 @@ Release evidence is grouped by semantic version. Each directory contains only th
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.3.0 | [Open](v7.3.0/RELEASE_NOTES.md) | [Open](v7.3.0/AUDIT_REPORT.md) | [Open](v7.3.0/VALIDATION_REPORT.md) | 3 finalized records, 1 task, `INSUFFICIENT_DATA`; defaults unchanged | [JSON](v7.3.0/BUILD_INFO.json) | [JSON](v7.3.0/PACKAGE_VALIDATION.json) |
 | 7.2.0 | [Open](v7.2.0/RELEASE_NOTES.md) | [Open](v7.2.0/AUDIT_REPORT.md) | [Open](v7.2.0/VALIDATION_REPORT.md) | Package `NOT_EVALUATED`; host evidence stored separately | [JSON](v7.2.0/BUILD_INFO.json) | [JSON](v7.2.0/PACKAGE_VALIDATION.json) |
 | 7.1.0 | [Open](v7.1.0/RELEASE_NOTES.md) | [Open](v7.1.0/AUDIT_REPORT.md) | [Open](v7.1.0/VALIDATION_REPORT.md) | — | [JSON](v7.1.0/BUILD_INFO.json) | [JSON](v7.1.0/PACKAGE_VALIDATION.json) |
 | 7.0.0 | [Open](v7.0.0/RELEASE_NOTES.md) | [Open](v7.0.0/AUDIT_REPORT.md) | [Open](v7.0.0/VALIDATION_REPORT.md) | [Open](v7.0.0/IMPLICIT_TRIGGER_OBSERVATION.md) | [JSON](v7.0.0/BUILD_INFO.json) | [JSON](v7.0.0/PACKAGE_VALIDATION.json) |

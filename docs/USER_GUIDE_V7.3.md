@@ -1,12 +1,13 @@
-# Codex 跨项目长期技术助手 V7.2 使用说明
+# Codex 跨项目长期技术助手 V7.3 使用说明
 
-## V7.2 强化项
+## V7.3 强化项
 
-- 使用 Python 3.11 或更高版本；公开 CI 在 Windows 与 Ubuntu 上验证 3.11 和 3.13。
-- `python scripts\validate-package.py` 仅生成包级证据，真实宿主路由状态保持 `NOT_EVALUATED`；完整验证期间仓库索引和文件内容不得变化，`--output` 必须指向仓库外。
-- 真实宿主路由使用 `python scripts\routing-eval.py make-host-template` 生成观察模板，再用 `evaluate-host` 校验 11 个全新独立任务及其原始最终报告摘要。预期 Skill 不能反填实际结果。
-- 受控演进按信号读取必要证据：模型升级看实际模型覆盖，负面结果看终态覆盖，其他信号不因无关字段缺失而被阻断。
-- 受控演进规范以 `$controlled-evolution-governance` 为唯一入口；长期任务记忆和独立复审只保留边界说明。
+- Reviewer 派发显式记录 `minimum_acceptable_profile`；实际档位不足时结果只能保持 `incomplete`。
+- 追加式 `INLINE/DELEGATE` 门禁在不需要独立 Reviewer 时避免创建轮次和消耗预算，后续改判不会覆盖历史决定。
+- Reviewer v3 结果记录任务难度、耗时、finding 处置、待最终化归因和 `profile-weight-v1` 估算成本；Reviewer 不能自行最终化归因。
+- 受控演进将缺失成本保持为 unknown，未最终化归因不参与低收益判断；样本不足时默认路由保持不变。
+- Plugin 模式只使用安装状态绑定的版本化缓存，不再被历史 standalone runtime 抢先覆盖；缓存缺失时失败关闭。
+- 使用 Python 3.11 或更高版本；完整包验证保持工作区零副作用，真实宿主证据与包级结果分层记录。
 
 ## 四个主领域
 
@@ -68,7 +69,7 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-只有 Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.2.0`，十个新 Skill 可发现、Manifest 声明的四个受管旧 Skill（含此前废弃的 Vue Skill）不再发现时，才可确认升级完成。
+只有 Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.3.0`，十个新 Skill 可发现、Manifest 声明的四个受管旧 Skill（含此前废弃的 Vue Skill）不再发现时，才可确认升级完成。
 
 ## Reviewer 与模型策略
 
@@ -79,6 +80,8 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 ```
 
 自动流程不得超过 Terra High，主 Agent 配置保持不变。Skill 数量、任务复杂度或文件数量不能自动提升模型。
+
+每次派发还必须给出最低可接受档位；结果的声明只可落入 `declared_match`、`fallback_acceptable`、`underpowered`、`unverified` 或 `mismatch`。`underpowered` 不能正常合并或关闭。
 
 ## 生命周期、授权与记录
 

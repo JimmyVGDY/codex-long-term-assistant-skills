@@ -507,11 +507,11 @@
     },
     "scripts/semantic-lint.py": {
       "plain": {
-        "manifest 版本不是 7.2.0": "manifest version is not 7.2.0",
+        "manifest 版本不是 7.3.0": "manifest version is not 7.3.0",
         "账户 Skill 目标不是 $HOME/.agents/skills": "Account Skill target is not $HOME/.agents/skills",
         "Plugin 版本不一致": "Plugin version mismatch",
         "双语发行声明无效": "Invalid bilingual release declaration",
-        "缺少 %s -> V7.2.0 升级声明": "Missing %s -> V7.2.0 upgrade declaration",
+        "缺少 %s -> V7.3.0 升级声明": "Missing %s -> V7.3.0 upgrade declaration",
         "生命周期 Hooks 不完整": "Lifecycle Hooks are incomplete",
         "缺少 Windows Hook 启动器": "Missing Windows Hook launcher",
         "Windows Hook 启动命令缺失: ": "Windows Hook startup command is missing: ",
@@ -526,14 +526,14 @@
         "全局规则缺少: ": "Global rules are missing: ",
         "安装器缺少: ": "Installer is missing: ",
         "源码残留旧 Skill: ": "Legacy Skill remains in the source tree: ",
-        "缺少 V7.2 发布证明脚本: ": "Missing V7.2 release-evidence script: ",
+        "缺少 V7.3 发布证明脚本: ": "Missing V7.3 release-evidence script: ",
         "Plugin payload manifest 无效": "Invalid Plugin payload manifest",
         "英文 Reviewer 缺失: ": "English Reviewer is missing: ",
         "英文 Reviewer 写死模型: ": "English Reviewer pins a model: ",
         "英文主界面缺失: ": "English primary surface is missing: ",
         "Codex 发行命中无关品牌: ": "Codex release contains an unrelated brand: ",
         "中性语言门禁命中 %s: %s": "Neutral-language gate matched %s: %s",
-        "[OK] V7.2.0 语义校验通过：Codex CLI 0.152.1、账户工具事务化安装、四主领域、双语发行、10 Skills、7 Reviewers、Plugin/Hooks、payload 身份、模型上限和受控演进边界一致": "[OK] V7.2.0 semantic validation passed: Codex CLI 0.152.1, transactional account tools, four primary domains, bilingual releases, 10 Skills, 7 Reviewers, Plugin/Hooks, payload identity, model ceiling, and controlled-evolution boundaries are consistent"
+        "[OK] V7.3.0 语义校验通过：Codex CLI 0.152.1、账户工具事务化安装、四主领域、双语发行、10 Skills、7 Reviewers、Plugin/Hooks、payload 身份、模型上限和受控演进边界一致": "[OK] V7.3.0 semantic validation passed: Codex CLI 0.152.1, transactional account tools, four primary domains, bilingual releases, 10 Skills, 7 Reviewers, Plugin/Hooks, payload identity, model ceiling, and controlled-evolution boundaries are consistent"
       },
       "preserve": [
         "用户",
@@ -569,7 +569,7 @@
         "Codex %s 或 Plugin capability 未证明": "Codex %s or Plugin capability was not proven",
         "安装 payload 报告不完整": "Installed payload report is incomplete",
         "ZIP/源/Marketplace/cache payload digest 不一致": "ZIP, source, Marketplace, and cache payload digests do not match",
-        "V7.2 端到端发行验证": "V7.2 end-to-end release verification"
+        "V7.3 端到端发行验证": "V7.3 end-to-end release verification"
       }
     },
     "scripts/cp-runtime.py": {
@@ -632,10 +632,10 @@
         "Plugin 注册读回未达到 installed=true、enabled=true、version=%s: %s": "Plugin registration readback did not reach installed=true, enabled=true, version=%s: %s",
         "目标已发生未知漂移，保留: %s": "Target has unknown drift and will be preserved: %s",
         "安装失败且回滚不完整；请执行 doctor --recover：%s": "Installation failed and rollback is incomplete; run doctor --recover: %s",
-        "[OK] V7.2 账户级安装完成，mode=%s": "[OK] V7.2 account-level installation completed, mode=%s",
+        "[OK] V7.3 账户级安装完成，mode=%s": "[OK] V7.3 account-level installation completed, mode=%s",
         "[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add": "[OK] Codex Marketplace is registered and codex plugin add was executed",
         "仓库安装回滚不完整；请执行 doctor --recover": "Repository installation rollback is incomplete; run doctor --recover",
-        "[OK] V7.2 仓库级 Skills 安装完成: %s": "[OK] V7.2 repository-level Skills installation completed: %s",
+        "[OK] V7.3 仓库级 Skills 安装完成: %s": "[OK] V7.3 repository-level Skills installation completed: %s",
         "缺少 %s": "Missing %s",
         "内容漂移 %s": "Content drift: %s",
         "缺少 Skill %s": "Missing Skill %s",
@@ -659,7 +659,7 @@
         "账户工具漂移 %s": "Account tool drift: %s",
         "缺少 Reviewer %s": "Missing Reviewer %s",
         "缺少全局 AGENTS 受管区块": "Missing managed global AGENTS block",
-        "[OK] V7.2 安装验证通过 scope=%s mode=%s": "[OK] V7.2 installation verification passed scope=%s mode=%s",
+        "[OK] V7.3 安装验证通过 scope=%s mode=%s": "[OK] V7.3 installation verification passed scope=%s mode=%s",
         "未找到 V6 安装状态文件；为避免误删未知资产，拒绝无状态卸载": "V6 installation-state file was not found; refusing stateless uninstall to avoid deleting unknown assets",
         "检测到外部修改，拒绝覆盖式卸载；确认后使用 --force：%s": "External modifications detected; refusing overwrite-style uninstall. Use --force after confirmation: %s",
         "测试 Plugin 注销后崩溃注入；请执行 doctor --recover": "Test crash injection after Plugin removal; run doctor --recover",
@@ -670,7 +670,7 @@
         "旧 Plugin 版本读回失败: %s": "Previous Plugin version readback failed: %s",
         "已恢复旧版文件，但旧 Plugin 重新激活失败: %s": "Previous files were restored, but reactivating the previous Plugin failed: %s",
         "[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活": "[WARN] --force: previous Plugin files were restored but could not be reactivated",
-        "[OK] V7.2 已卸载并恢复安装前状态；项目上下文/观测数据未删除": "[OK] V7.2 was uninstalled and the pre-installation state restored; project context and observation data were not deleted",
+        "[OK] V7.3 已卸载并恢复安装前状态；项目上下文/观测数据未删除": "[OK] V7.3 was uninstalled and the pre-installation state restored; project context and observation data were not deleted",
         "事务 journal 损坏，拒绝猜测恢复: %s": "Transaction journal is corrupt; refusing speculative recovery: %s",
         "事务 journal schema 未知，拒绝恢复: %s": "Unknown transaction journal schema; refusing recovery: %s",
         "事务 journal 内容未知或 scope 不匹配，拒绝恢复: %s": "Transaction journal content is unknown or its scope does not match; refusing recovery: %s",
@@ -682,13 +682,13 @@
         "Plugin 恢复: %s": "Plugin recovery: %s",
         "事务恢复未完成: %s": "Transaction recovery is incomplete: %s",
         "[OK] 事务恢复完成": "[OK] Transaction recovery completed",
-        "Codex 跨项目长期技术助手 V7.2 安装器": "Codex Cross-Project Long-Term Engineering Assistant V7.2 installer"
+        "Codex 跨项目长期技术助手 V7.3 安装器": "Codex Cross-Project Long-Term Engineering Assistant V7.3 installer"
       }
     },
-    "scripts/validate-v72.py": {
+    "scripts/validate-v73.py": {
       "plain": {
         "命令失败: %s\n%s\n%s": "Command failed: %s\n%s\n%s",
-        "V7.2 完整验证需要 Python 3.11+，当前为 %s": "V7.2 complete validation requires Python 3.11+; current runtime is %s",
+        "V7.3 完整验证需要 Python 3.11+，当前为 %s": "V7.3 complete validation requires Python 3.11+; current runtime is %s",
         "无法从 unittest 输出读取执行数量": "Unable to read the executed test count from unittest output"
       }
     },
@@ -814,6 +814,8 @@
     },
     "skills/multi-agent-independent-review/scripts/review_controller.py": {
       "plain": {
+        "Reviewer 校准结果包含禁止字段: {}.{}": "Reviewer calibration result contains a forbidden field: {}.{}",
+        "Reviewer result_file finding[{}].regression_evidence 必须是字符串数组": "Reviewer result_file finding[{}].regression_evidence must be an array of strings",
         "系统隔离复审": "System-isolated review",
         "系统隔离复审通过，无阻塞项": "System-isolated review passed with no blockers",
         "系统隔离复审有非阻塞问题": "System-isolated review completed with non-blocking findings",
@@ -1100,7 +1102,7 @@
         "finding[{}] 缺少校准字段: {}": "finding[{}] is missing calibration fields: {}",
         "finding[{}] 包含 schema 未允许字段: {}": "finding[{}] contains fields not allowed by the schema: {}",
         "finding repaired/regression_prevented 必须是布尔值": "finding repaired/regression_prevented must be Boolean values",
-        "finding regression_evidence 必须是数组": "finding regression_evidence must be an array",
+        "finding regression_evidence 必须是字符串数组": "finding regression_evidence must be an array of strings",
         "model_assignment.minimum_acceptable_profile 非法": "model_assignment.minimum_acceptable_profile is invalid",
         "model_assignment 包含 schema 未允许字段: ": "model_assignment contains fields not allowed by the schema: ",
         "minimum_acceptable_profile 不得高于 requested_profile": "minimum_acceptable_profile cannot exceed requested_profile",

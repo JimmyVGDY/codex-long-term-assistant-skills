@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.2.0",
-  "release_name": "Python 3.11 双版本门禁、真实宿主路由验收与信号级演进证据",
-  "generated_for": "Codex Plugin-first cross-project engineering assistant with Python 3.11/3.13 CI gates, zero-side-effect validation, SHA-256-bound real-host routing acceptance, signal-specific controlled-evolution evidence, four general primary domains, and a Luna/Terra model ceiling",
+  "version": "7.3.0",
+  "release_name": "Reviewer 最低档位、归因成本校准与 Plugin 运行时绑定",
+  "generated_for": "Codex Plugin-first cross-project engineering assistant with minimum acceptable Reviewer profiles, append-only INLINE/DELEGATE gates, finalized attribution and profile-weight cost calibration, state-bound Plugin runtime loading, four general primary domains, and a Luna/Terra model ceiling",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -480,6 +480,7 @@
     ]
   },
   "upgrade_from": [
+    "7.2.0",
     "7.1.0",
     "7.0.0",
     "6.6.1",

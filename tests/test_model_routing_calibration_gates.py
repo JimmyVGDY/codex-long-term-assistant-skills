@@ -147,6 +147,31 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         self.run_tool(CONTROLLER, "close", "--review-dir", str(self.review),
                       "--conclusion", "逻辑只读复审完成，无阻塞项", ok=False)
 
+    def test_nested_or_non_string_regression_evidence_is_rejected_without_side_effects(self) -> None:
+        self.init_and_dispatch()
+        result_path = self.write_result("terra-medium")
+        result = json.loads(result_path.read_text(encoding="utf-8"))
+        finding = {
+            "id": "F-1", "dimension": "data-contract", "severity": "BLOCKING",
+            "evidence_level": "LOGICAL", "blocking": True, "summary": "契约错误",
+            "location": "review_controller.py", "root_cause_group": "schema-validation",
+            "required_validation": ["targeted-test"], "disposition": "ACCEPTED",
+            "adoption_reason": "DATA_CONTRACT", "repaired": False,
+            "regression_prevented": False, "regression_evidence": [],
+        }
+        result["findings"] = [finding]
+        before = (self.review / "review-state.json").read_bytes()
+        for invalid_evidence in ([{"raw_prompt": "secret"}], [{"reference": "not-a-string"}]):
+            with self.subTest(evidence=invalid_evidence):
+                result["findings"][0]["regression_evidence"] = invalid_evidence
+                result_path.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+                self.run_tool(CONTROLLER, "result", "--review-dir", str(self.review),
+                              "--phase", "post", "--round", "1", "--reviewer", "reviewer-one",
+                              "--status", "pass", "--summary", "不应写入",
+                              "--result-file", str(result_path), ok=False)
+                self.assertEqual(before, (self.review / "review-state.json").read_bytes())
+                self.assertFalse((self.review / "review-results.jsonl").exists())
+
     def test_inline_decision_is_append_only_budget_free_and_requires_evidenced_redecision(self) -> None:
         self.run_tool(CONTROLLER, "init", "--review-dir", str(self.review), "--boundary-id", "inline-boundary")
         self.run_tool(CONTROLLER, "route", "--review-dir", str(self.review), "--phase", "pre",
@@ -343,6 +368,35 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         self.assertIsNone(stats["benefit_proxy"])
         self.assertEqual("INSUFFICIENT_DATA", stats["calibration_status"])
         self.assertEqual({"cost-basis:terra-medium|HIGH": 8}, stats["profile_difficulty_distribution"])
+
+    def test_observation_excludes_unfinalized_cost_from_benefit_denominator(self) -> None:
+        project = self.root / "mixed-finalization-project"
+        source = project / "review" / "review-results.jsonl"
+        source.parent.mkdir(parents=True)
+        rows = []
+        for index in range(10):
+            finalized = index < 8
+            result = {
+                "reviewer": "mixed-reviewer", "result_id": "MIXED-%d" % index,
+                "task_difficulty": "HIGH", "model_profile": "terra-medium",
+                "estimated_cost_units": 1 if finalized else 100,
+                "cost_formula_version": "profile-weight-v1",
+                "accepted": 1 if finalized else 0, "rejected": 0,
+                "repaired": 1 if finalized else 0,
+                "calibration_finalized": finalized,
+                "findings": [{"severity": "HIGH", "disposition": "ACCEPTED" if finalized else "PENDING",
+                              "adoption_reason": "CORRECTNESS"}],
+            }
+            rows.append({"record_id": "MIXED-R-%d" % index, "task_id": "MIXED-TASK-%d" % index,
+                         "timestamp": "2026-08-%02dT00:00:00+00:00" % (index + 1),
+                         "reviewer_results": [result]})
+        source.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+        stats = observe_project("mixed-finalization-project", project).metrics["reviewer_stats"]["mixed-reviewer"]
+        self.assertEqual(208.0, stats["estimated_cost_units"])
+        self.assertEqual(8.0, stats["finalized_estimated_cost_units"])
+        self.assertEqual(8, stats["finalized_known_cost_invocation_count"])
+        self.assertEqual(1.0, stats["benefit_proxy"])
+        self.assertEqual(1.0, stats["cost_per_repaired"])
 
 
 if __name__ == "__main__":

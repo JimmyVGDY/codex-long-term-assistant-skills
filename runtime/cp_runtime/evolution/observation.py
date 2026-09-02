@@ -652,6 +652,7 @@ def observe_project(
                 "regression_prevention_claim_count": 0, "regression_prevention_evidence_count": 0,
                 "duration_ms": 0, "cost_units": 0.0,
                 "known_cost_invocation_count": 0, "unknown_cost_invocation_count": 0,
+                "finalized_known_cost_invocation_count": 0, "finalized_cost_units": 0.0,
                 "cost_formula_versions": Counter(), "requested_model_profiles": Counter(),
                 "declared_runtime_profiles": Counter(), "cost_basis_profiles": Counter(),
                 "profile_difficulty": Counter(), "unfinalized_invocation_count": 0,
@@ -713,6 +714,9 @@ def observe_project(
             else:
                 stats["known_cost_invocation_count"] += 1
                 stats["cost_units"] += cost_value
+                if finalized:
+                    stats["finalized_known_cost_invocation_count"] += 1
+                    stats["finalized_cost_units"] += cost_value
                 formula = str(result.get("cost_formula_version") or (
                     "legacy-cost-units" if cost_source == "cost_units" else "UNKNOWN"
                 ))
@@ -809,8 +813,9 @@ def observe_project(
         clustered_duplicate_rate = float(duplicate_cluster_findings) / clustered_findings if clustered_findings else None
         effective_duplicate_rate = max(duplicate_rate, clustered_duplicate_rate or 0.0)
         benefit_proxy = (
-            float(stats["repaired"] + stats["regressions_prevented"]) / stats["cost_units"]
-            if stats["known_cost_invocation_count"] and stats["cost_units"] > 0 and stats["attribution_count"] else None
+            float(stats["repaired"] + stats["regressions_prevented"]) / stats["finalized_cost_units"]
+            if stats["finalized_known_cost_invocation_count"] and stats["finalized_cost_units"] > 0
+            and stats["attribution_count"] else None
         )
         sample_sufficient = (invocations >= policy.reviewer_min_invocations
                              and task_count >= policy.reviewer_min_independent_tasks
@@ -858,8 +863,10 @@ def observe_project(
             "adoption_reasons": dict(sorted(stats["adoption_reasons"].items())),
             "duration_ms": stats["duration_ms"], "estimated_cost_units": round(stats["cost_units"], 6),
             "cost_units": round(stats["cost_units"], 6),
+            "finalized_estimated_cost_units": round(stats["finalized_cost_units"], 6),
             "known_cost_invocation_count": stats["known_cost_invocation_count"],
             "unknown_cost_invocation_count": stats["unknown_cost_invocation_count"],
+            "finalized_known_cost_invocation_count": stats["finalized_known_cost_invocation_count"],
             "cost_coverage": round(cost_coverage, 6),
             "cost_formula_versions": dict(sorted(stats["cost_formula_versions"].items())),
             "unfinalized_invocation_count": stats["unfinalized_invocation_count"],
@@ -869,8 +876,8 @@ def observe_project(
             "repair_conversion_rate": round(float(stats["repaired"]) / stats["accepted"], 6) if stats["accepted"] else None,
             "duplicate_rate": round(duplicate_rate, 6) if total_findings else None,
             "duration_per_invocation_ms": round(float(stats["duration_ms"]) / invocations, 6) if invocations else None,
-            "cost_per_accepted": round(float(stats["cost_units"]) / stats["accepted"], 6) if stats["accepted"] else None,
-            "cost_per_repaired": round(float(stats["cost_units"]) / stats["repaired"], 6) if stats["repaired"] else None,
+            "cost_per_accepted": round(float(stats["finalized_cost_units"]) / stats["accepted"], 6) if stats["accepted"] else None,
+            "cost_per_repaired": round(float(stats["finalized_cost_units"]) / stats["repaired"], 6) if stats["repaired"] else None,
             "benefit_proxy": round(benefit_proxy, 6) if benefit_proxy is not None else None,
             "labeled_finding_count": stats["labeled_finding_count"],
             "sample_sufficient": sample_sufficient,

@@ -21,7 +21,7 @@
   <img alt="Codex CLI 0.152.1" src="https://img.shields.io/badge/Codex%20CLI-0.152.1-111827">
 </p>
 
-V7.2.0 强化 Python 兼容门禁、验证过程的工作区零副作用、按信号判定的演进证据充分性，以及绑定原始报告摘要的真实 Codex 宿主路由验收。四个通用主领域、主 Agent 模型边界和 Terra High 自动上限保持不变。
+V7.3.0 为 Reviewer 派发增加最低可接受模型档位和追加式 `INLINE/DELEGATE` 门禁，引入可最终化归因、finding 处置与 `profile-weight-v1` 成本校准，并修复 Plugin 模式被历史 standalone runtime 抢先加载的问题。四个通用主领域、主 Agent 模型边界和 Terra High 自动上限保持不变。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#五分钟升级) · [文档](#文档与协作)
 
@@ -29,8 +29,8 @@ V7.2.0 强化 Python 兼容门禁、验证过程的工作区零副作用、按�
 
 | 发行包 | 适用界面 | 下载 |
 | --- | --- | --- |
-| `Codex-Skills-V7.2.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.2.0/Codex-Skills-V7.2.0-zh-CN.zip) |
-| `Codex-Skills-V7.2.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.2.0/Codex-Skills-V7.2.0-en.zip) |
+| `Codex-Skills-V7.3.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.3.0/Codex-Skills-V7.3.0-zh-CN.zip) |
+| `Codex-Skills-V7.3.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.3.0/Codex-Skills-V7.3.0-en.zip) |
 
 [查看最新 Release、校验和与构建见证](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -95,10 +95,10 @@ diagnostic_model_observation = host diagnostic only
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Windows 原生 Codex CLI 0.152.1 + Plugin | 主要目标 | 7.1.0 → 7.2.0 完整安装、Plugin 状态、账户工具与 payload 读回 | 公开 ZIP 仍应在目标账户独立安装和读回 |
+| Windows 原生 Codex CLI 0.152.1 + Plugin | 主要目标 | 7.2.0 → 7.3.0 完整安装、Plugin 状态、账户工具与 payload 读回 | 公开 ZIP 仍应在目标账户独立安装和读回 |
 | Windows `windows-latest` + Python 3.11 / 3.13 | CI | 双语审计、完整包验证与发行构建 | CI 不替代真实 Codex 账户验收 |
 | Ubuntu `ubuntu-latest` + Python 3.11 / 3.13 | CI 包级兼容 | 双语审计与完整包验证 | 不代表 Plugin、Marketplace 或 Hook 的 Linux 宿主验收 |
-| standalone 模式 | 兼容模式 | 安装结构与回归测试覆盖 | 不是 V7.2.0 的主要发行验收路径 |
+| standalone 模式 | 兼容模式 | 安装结构与回归测试覆盖 | 不是 V7.3.0 的主要发行验收路径 |
 | macOS | 未验证 | 无当前 CI 或宿主验收证据 | 状态保持 `UNVERIFIED` |
 
 Python 最低版本为 3.11；公开 CI 在 Windows 与 Ubuntu 上同时验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
@@ -116,9 +116,9 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=7.2.0`，且旧领域 Skill 不再发现时，升级状态才成立。
+3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=7.3.0`，且旧领域 Skill 不再发现时，升级状态才成立。
 
-安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/INSTALLATION_RECOVERY.md) 和 [V7.2 使用指南](docs/USER_GUIDE_V7.2.md)。
+安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/INSTALLATION_RECOVERY.md) 和 [V7.3 使用指南](docs/USER_GUIDE_V7.3.md)。
 
 ## 模型证据边界
 
@@ -142,7 +142,7 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 - [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
 - [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
 - [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · [V7.2.0 发行说明](docs/releases/v7.2.0/RELEASE_NOTES.md)
+- [版本记录](CHANGELOG.md) · [V7.3.0 发行说明](docs/releases/v7.3.0/RELEASE_NOTES.md)
 
 ## 本地验证
 
@@ -158,7 +158,7 @@ python scripts\validate-package.py
 `Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。标签流程只创建草稿，不会自动公开发布或覆盖既有 Release。
 
 ```shell
-gh attestation verify Codex-Skills-V7.2.0-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.3.0-zh-CN.zip --repo OWNER/REPOSITORY
 ```
 
 完整门禁和新版本发布步骤见 [Release 自动化与制品来源证明](docs/releases/RELEASE_AUTOMATION.md)。

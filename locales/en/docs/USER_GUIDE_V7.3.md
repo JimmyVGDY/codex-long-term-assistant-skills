@@ -1,14 +1,15 @@
-# V7.2 Operating Guide
+# V7.3 Operating Guide
 
-Chinese: [`USER_GUIDE_V7.2.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.2/)
+Chinese: [`USER_GUIDE_V7.3.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.3/)
 
-## V7.2 hardening
+## V7.3 hardening
 
-- Use Python 3.11 or later. Public CI validates 3.11 and 3.13 on both Windows and Ubuntu.
-- `python scripts\validate-package.py` produces package-only evidence and leaves real-host routing as `NOT_EVALUATED`. Repository index and file content must remain unchanged during complete validation, and `--output` must point outside the repository.
-- Generate a real-host observation template with `python scripts\routing-eval.py make-host-template`, then use `evaluate-host` to validate eleven fresh independent tasks and their raw final-report digests. Expected Skills must never be copied into observed results.
-- Controlled evolution reads evidence required by each signal: model escalation uses actual-model coverage, negative outcomes use terminal-outcome coverage, and unrelated missing fields do not block other signals.
-- `$controlled-evolution-governance` is the sole authoritative entry point for controlled-evolution guidance; long-term memory and independent review retain only boundary pointers.
+- Reviewer dispatch records `minimum_acceptable_profile`; a result below that profile may only remain `incomplete`.
+- An append-only `INLINE/DELEGATE` gate avoids creating a round or consuming budget when independent review is not needed, without overwriting later redecisions.
+- Reviewer v3 results record task difficulty, duration, finding disposition, pending attribution, and `profile-weight-v1` estimated cost. Reviewers cannot finalize their own attribution.
+- Controlled evolution keeps missing cost unknown and excludes unfinalized attribution from low-yield decisions. Default routing remains unchanged when samples are insufficient.
+- Plugin mode uses only the versioned cache bound to installation state. A stale standalone runtime cannot override it, and a missing cache fails closed.
+- Use Python 3.11 or later. Complete package validation remains side-effect free, with package and real-host evidence recorded separately.
 
 ## Four primary domains
 
@@ -56,10 +57,12 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-Upgrade is proven only when the Plugin reports `installed=true`, `enabled=true`, and `version=7.2.0`, all ten new Skills are discoverable, and all four Manifest-declared legacy Skills—including the previously deprecated Vue Skill—are absent.
+Upgrade is proven only when the Plugin reports `installed=true`, `enabled=true`, and `version=7.3.0`, all ten new Skills are discoverable, and all four Manifest-declared legacy Skills—including the previously deprecated Vue Skill—are absent.
 
 ## Reviewer, lifecycle, and authorization
 
 Reviewer TOML files keep model and effort unset. Automatic selection remains bounded by `luna-low -> luna-medium -> terra-medium -> terra-high`; file count and Skill count do not justify escalation.
+
+Each dispatch also declares a minimum acceptable profile. Result declarations are limited to `declared_match`, `fallback_acceptable`, `underpowered`, `unverified`, or `mismatch`; an `underpowered` result cannot merge or close normally.
 
 V7 retains TaskOutcomeEvent 2.0, `project_id + repo_fingerprint` isolation, signed event chains, delayed SessionEnd sealing, and `execution_authorization=NONE` proposals. Evidence cannot authorize commit, push, deployment, restart, production operations, or data writes. Final delivery reports modified, validated, reviewed, committed, pushed, deployed, restarted, and effective separately.

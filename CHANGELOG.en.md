@@ -4,6 +4,10 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Unreleased
 
+None.
+
+## 7.3.0 - 2026-09-02
+
 ### Added
 
 - Added `minimum_acceptable_profile` to Reviewer dispatch and an append-only `INLINE/DELEGATE` decision gate; `INLINE` creates no round and consumes no Reviewer budget.
@@ -13,7 +17,7 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 - Reviewer declarations now produce only `declared_match/fallback_acceptable/underpowered/unverified/mismatch`. Results below the minimum acceptable tier may only be `incomplete` and cannot be merged or closed normally.
 - Evolution keeps missing cost unknown, segments metrics by Reviewer, model tier, and task difficulty, and excludes unfinalized attribution from low-yield classification; default routing stays unchanged when real evidence is insufficient.
-- Aligned the bilingual site's current V7.2 system architecture, domain routing, configuration, controlled-evolution, and authoritative-source documentation. Earlier versions now appear only for migration or historical evidence.
+- Aligned the bilingual site's current V7.3 system architecture, domain routing, configuration, controlled-evolution, and authoritative-source documentation. Earlier versions now appear only for migration or historical evidence.
 - Added prominent bilingual notices to historical detail pages during site generation and excluded those pages from default site search while keeping current and release-archive indexes searchable.
 
 ### Fixed

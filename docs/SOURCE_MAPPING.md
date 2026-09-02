@@ -1,6 +1,6 @@
-# 源规则到 Codex V7.2 资源的映射
+# 源规则到 Codex V7.3 资源的映射
 
-| 规则或能力 | Codex V7.2 资源 |
+| 规则或能力 | Codex V7.3 资源 |
 |---|---|
 | 全局跨项目边界、授权和模型路由 | `global/AGENTS.md` |
 | 通用后端（含 Java/Python/Node.js/Go/.NET/Rust 专项） | `skills/backend-engineering/` |

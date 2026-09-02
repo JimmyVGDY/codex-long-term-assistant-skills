@@ -2,21 +2,21 @@
 
 Chinese: [README.md](README.md)
 
-This page organizes the V7.2.0 documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
+This page organizes the V7.3.0 documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
 
-> Version scope: V7.2.0 is the current package version. TaskOutcomeEvent V2, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
+> Version scope: V7.3.0 is the current package version. TaskOutcomeEvent V2, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
 
 ## Getting started
 
-- [V7.2 user guide](USER_GUIDE_V7.2.en.md)
+- [V7.3 user guide](USER_GUIDE_V7.3.en.md)
 - [Installation, upgrade, rollback, and recovery](INSTALLATION_RECOVERY.en.md)
 - [Codex configuration guide](CODEX_CONFIG_GUIDE.en.md)
 - [Project context and onboarding](PROJECT_CONTEXT_AND_ONBOARDING.md)
 
 ## Architecture and policy
 
-- [V7.2 current system architecture](SYSTEM_ARCHITECTURE.en.md)
-- [V7.2 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md)
+- [V7.3 current system architecture](SYSTEM_ARCHITECTURE.en.md)
+- [V7.3 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md)
 - [Model routing and cost policy](MODEL_ROUTING_AND_COST_POLICY.md)
 - [Reviewer runtime isolation](REVIEWER_RUNTIME_ISOLATION.md)
 - [Independent sub-agent context](SUBAGENT_INDEPENDENT_CONTEXT.md)
@@ -30,13 +30,13 @@ This page organizes the V7.2.0 documentation by adoption stage. Historical repor
 - [Controlled-evolution operations](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](VALIDATION_REPORT.md)
-- [V7.2.0 package validation report](releases/v7.2.0/VALIDATION_REPORT.en.md)
-- [V7.2.0 audit report](releases/v7.2.0/AUDIT_REPORT.en.md)
+- [V7.3.0 package validation report](releases/v7.3.0/VALIDATION_REPORT.en.md)
+- [V7.3.0 audit report](releases/v7.3.0/AUDIT_REPORT.en.md)
 
 ## Release and history
 
 - [Release evidence index](releases/README.en.md)
-- [V7.2.0 release notes](releases/v7.2.0/RELEASE_NOTES.en.md)
+- [V7.3.0 release notes](releases/v7.3.0/RELEASE_NOTES.en.md)
 - [Changelog](../CHANGELOG.en.md)
 - [Public reconstruction index](history/README.en.md)
 - [Public reconstruction release index](history/RELEASE_ARCHIVES.md)

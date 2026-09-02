@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.2.0",
+  "version": "7.3.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,12 +9,12 @@
     "runtime"
   ],
   "file_count": 180,
-  "payload_digest": "5b66851624fe916e8c7d655cf8b6c2199a731c09c7e64b06fb613e88e692ba23",
+  "payload_digest": "4f0168e4014440185a958f207931d01e73e4ca73207ee318ed0fcbee2a85a6d0",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "1051ac03c687c5da52df5d4fd3a521eb23dc2f42f41edaea5d4e22d6a72fc9df",
-      "size": 338
+      "sha256": "c36551c03c42c535b6ab5d74b4f3b3092cd5cd63a6be8198b331b46566c9429d",
+      "size": 336
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -628,13 +628,13 @@
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_controller.py",
-      "sha256": "cc8238a3b7e388e489ca7a27d5f2f8f8bb15cc790afec35da52038f2f8b61169",
-      "size": 77691
+      "sha256": "53e5aa9462b6f2ce2f363a830a4735427231c776db07a46edd1c0bef444bb080",
+      "size": 78738
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
-      "sha256": "c102f7f3eaa1e1e58dfa21d05d6c394ba1ed6c8da42247a5cd9914a6eb2a4240",
-      "size": 31262
+      "sha256": "7bb199b7223fa4c36d48228fca79cccbadecd57b47e7749b3c90a650812a6d9c",
+      "size": 31358
     },
     {
       "path": "skills/multi-agent-independent-review/tests/test_review_tools.py",
@@ -838,8 +838,8 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/observation.py",
-      "sha256": "a315b82861ce532467b2a5656ba34f4fa1535ecddc2c1e6b09c8dfc6a7cc3512",
-      "size": 59769
+      "sha256": "e613ddd41c3db278daf443b14b0e2868542eb6ccfc645ed1f507b95cbb9134ae",
+      "size": 60274
     },
     {
       "path": "runtime/cp_runtime/evolution/proposal.py",

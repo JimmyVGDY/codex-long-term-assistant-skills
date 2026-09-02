@@ -6,7 +6,7 @@ English: [SECURITY.en.md](https://github.com/JimmyVGDY/codex-long-term-assistant
 
 | 版本 | 状态 |
 | --- | --- |
-| 7.2.0 | 当前维护 |
+| 7.3.0 | 当前维护 |
 | 7.1.0 及更早版本 | 仅保留历史证据，优先升级 |
 
 ## 漏洞报告

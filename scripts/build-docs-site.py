@@ -170,9 +170,9 @@ def normalized_document_path(relative: Path) -> str:
 
 
 def is_current_document(relative: Path) -> bool:
-    """中文：区分当前 V7.2 文档与只用于追溯的历史资料。
+    """中文：区分当前 V7.3 文档与只用于追溯的历史资料。
 
-    English: Separate current V7.2 documentation from historical reference material.
+    English: Separate current V7.3 documentation from historical reference material.
     """
     value = normalized_document_path(relative)
     return value in CURRENT_DOCUMENTS or value.startswith(

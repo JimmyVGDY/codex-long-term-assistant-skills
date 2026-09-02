@@ -111,6 +111,10 @@ V3_FINDING_FIELDS = {
     "root_cause_group", "required_validation", "disposition", "adoption_reason", "repaired",
     "regression_prevented", "regression_evidence",
 }
+FORBIDDEN_CALIBRATION_KEYS = {
+    "prompt", "raw_prompt", "response", "full_response", "diff", "patch",
+    "token", "tokens", "input_tokens", "output_tokens", "api_key", "cookie",
+}
 VALID_CONCLUSIONS = {
     "系统隔离复审通过，无阻塞项",
     "系统隔离复审有非阻塞问题",
@@ -200,7 +204,19 @@ def nonnegative_int(value: Any, field: str) -> int:
     return converted
 
 
+def reject_forbidden_calibration_fields(value: Any, path: str = "result") -> None:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if str(key).lower() in FORBIDDEN_CALIBRATION_KEYS:
+                die("Reviewer 校准结果包含禁止字段: {}.{}".format(path, key))
+            reject_forbidden_calibration_fields(child, path + "." + str(key))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            reject_forbidden_calibration_fields(child, "{}[{}]".format(path, index))
+
+
 def validate_v3_result_shape(result: Dict[str, Any]) -> None:
+    reject_forbidden_calibration_fields(result)
     missing = sorted(V3_RESULT_FIELDS - set(result))
     if missing:
         die("Reviewer result_file 缺少 schema 必需字段: {}".format(",".join(missing)))
@@ -232,6 +248,9 @@ def validate_v3_result_shape(result: Dict[str, Any]) -> None:
             die("Reviewer result_file finding[{}] 包含 schema 未允许字段: {}".format(
                 index, ",".join(unexpected_finding)
             ))
+        evidence = finding.get("regression_evidence")
+        if not isinstance(evidence, list) or any(not isinstance(item, str) for item in evidence):
+            die("Reviewer result_file finding[{}].regression_evidence 必须是字符串数组".format(index))
 
 
 @contextmanager

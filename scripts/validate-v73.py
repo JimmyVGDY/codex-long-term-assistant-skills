@@ -7,10 +7,10 @@ ROOT=Path(__file__).resolve().parents[1]
 COMMAND_TIMEOUT_SECONDS=600
 MINIMUM_PYTHON=(3,11)
 if sys.version_info < MINIMUM_PYTHON:
-    raise RuntimeError('V7.2 完整验证需要 Python 3.11+，当前为 %s' % platform.python_version())
+    raise RuntimeError('V7.3 完整验证需要 Python 3.11+，当前为 %s' % platform.python_version())
 import tomllib
 from validation_worktree import require_output_outside_worktree, run_with_worktree_guard
-parser=argparse.ArgumentParser(description='V7.2 package-only validation')
+parser=argparse.ArgumentParser(description='V7.3 package-only validation')
 parser.add_argument('--output')
 arguments=parser.parse_args()
 output_path=require_output_outside_worktree(ROOT,Path(arguments.output)) if arguments.output else None
@@ -34,7 +34,7 @@ def validate_package():
             tomllib.loads(path.read_text(encoding='utf-8-sig'))
         run([sys.executable,'-m','compileall','-q',str(ROOT/'runtime'),str(ROOT/'scripts'),str(ROOT/'hooks')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'payload-integrity.py'),'verify','--root',str(ROOT),
-             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.2.0'],validation_env)
+             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.3.0'],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'semantic-lint.py')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'routing-eval.py'),'validate'],validation_env)
         model_gate=run([sys.executable,str(ROOT/'scripts'/'model-gate-acceptance.py')],validation_env)
@@ -51,7 +51,7 @@ def test_count(output):
 
 package_test_count=test_count(tests); runtime_test_count=test_count(runtime_tests)
 result={
- 'ok':True,'evidence_scope':'package-only','version':'7.2.0','skill_count':10,'reviewer_count':7,
+ 'ok':True,'evidence_scope':'package-only','version':'7.3.0','skill_count':10,'reviewer_count':7,
  'hooks':['UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'],
  'task_outcome_event':'2.0','execution_authorization':'NONE','automatic_self_modification':False,
  'requested_model_policy':'PASS','runtime_model_evidence':'UNAVAILABLE',
@@ -61,7 +61,9 @@ result={
  'worktree_side_effect_gate':'PASS',
  'multiprocess_fault_injection':'PASS (tests/test_v66_runtime_deepening.py)',
  'delayed_session_end_seal':'PASS (tests/test_v66_runtime_deepening.py)',
- 'reviewer_calibration_v2':'PASS (tests/test_v66_runtime_deepening.py)',
+ 'reviewer_calibration_v3':'PASS (tests/test_model_routing_calibration_gates.py)',
+ 'minimum_profile_and_inline_delegate_gates':'PASS (tests/test_model_routing_calibration_gates.py)',
+ 'state_bound_plugin_runtime':'PASS (tests/test_package_manager_security.py)',
  'event_archive_capacity_health':'PASS (tests/test_v66_runtime_deepening.py)',
  'unit_regression_tests':'PASS (%d package + %d runtime)' % (package_test_count,runtime_test_count),
  'validation_evidence':{'package_test_count':package_test_count,'runtime_test_count':runtime_test_count,

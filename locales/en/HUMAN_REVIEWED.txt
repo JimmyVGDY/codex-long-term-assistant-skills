@@ -60,6 +60,11 @@ docs/releases/v7.2.0/BUILD_INFO.json
 docs/releases/v7.2.0/PACKAGE_VALIDATION.json
 docs/releases/v7.2.0/RELEASE_NOTES.md
 docs/releases/v7.2.0/VALIDATION_REPORT.md
+docs/releases/v7.3.0/AUDIT_REPORT.md
+docs/releases/v7.3.0/BUILD_INFO.json
+docs/releases/v7.3.0/PACKAGE_VALIDATION.json
+docs/releases/v7.3.0/RELEASE_NOTES.md
+docs/releases/v7.3.0/VALIDATION_REPORT.md
 config/agents.example.toml
 custom-agents/cp-review-compatibility-regression.toml
 custom-agents/cp-review-data-contract.toml
@@ -91,7 +96,7 @@ docs/USER_GUIDE_V6.3.md
 docs/USER_GUIDE_V6.5.md
 docs/USER_GUIDE_V6.6.md
 docs/USER_GUIDE_V7.1.md
-docs/USER_GUIDE_V7.2.md
+docs/USER_GUIDE_V7.3.md
 docs/VALIDATION_REPORT.md
 docs/V3_1_LOG_ANALYSIS_DESIGN.md
 docs/V3_DESIGN_OVERVIEW.md

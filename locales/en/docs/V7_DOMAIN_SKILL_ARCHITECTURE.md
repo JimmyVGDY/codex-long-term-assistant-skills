@@ -1,10 +1,10 @@
-# V7.2 Current Domain Skill Architecture and Routing Matrix
+# V7.3 Current Domain Skill Architecture and Routing Matrix
 
-> Status: `active`. V7 introduced responsibility-based primary domains; V7.2 retains and validates the current routing below.
+> Status: `active`. V7 introduced responsibility-based primary domains; V7.3 retains and validates the current routing below.
 
 ## Goal
 
-V7.2 classifies primary Skills by engineering responsibility rather than implementation language:
+V7.3 classifies primary Skills by engineering responsibility rather than implementation language:
 
 ```text
 backend-engineering

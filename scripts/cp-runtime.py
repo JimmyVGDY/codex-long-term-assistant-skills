@@ -21,10 +21,13 @@ def _runtime_candidates(package_home: Path):
     try:
         state = json.loads(state_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError):
+        if Path(__file__).resolve().parent.name == "scripts" and (package_home / "manifest.json").is_file():
+            yield package_home / "runtime"
+        return
+    if state.get("mode") == "standalone":
         yield package_home / "runtime"
         return
     if state.get("mode") != "plugin":
-        yield package_home / "runtime"
         return
     version = str(state.get("version") or "")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", version):

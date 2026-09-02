@@ -149,9 +149,9 @@ class DocumentationSiteTests(unittest.TestCase):
 
     def test_version_bound_site_sources_fail_closed_on_manifest_drift(self) -> None:
         self.builder.validate_version_bound_sources()
-        with mock.patch.object(self.builder, "PACKAGE_VERSION", "7.3.0"), \
-                mock.patch.object(self.builder, "CURRENT_VERSION_SERIES", "7.3"), \
-                mock.patch.object(self.builder, "CURRENT_RELEASE_DIRECTORY", "v7.3.0"):
+        with mock.patch.object(self.builder, "PACKAGE_VERSION", "7.4.0"), \
+                mock.patch.object(self.builder, "CURRENT_VERSION_SERIES", "7.4"), \
+                mock.patch.object(self.builder, "CURRENT_RELEASE_DIRECTORY", "v7.4.0"):
             with self.assertRaises(self.builder.DocumentationBuildError):
                 self.builder.validate_version_bound_sources()
 
@@ -165,7 +165,7 @@ class DocumentationSiteTests(unittest.TestCase):
             self.builder.prepare(output)
             pages = (
                 output / "en" / "docs" / "INSTALLATION_RECOVERY.md",
-                output / "en" / "docs" / "USER_GUIDE_V7.2.md",
+                output / "en" / "docs" / "USER_GUIDE_V7.3.md",
                 output / "en" / "docs" / "releases" / "v7.2.0" / "RELEASE_NOTES.md",
                 output / "en" / "docs" / "releases" / "v7.2.0" / "AUDIT_REPORT.md",
             )
@@ -185,7 +185,7 @@ class DocumentationSiteTests(unittest.TestCase):
                 output / "en" / "index.md",
                 output / "en" / "docs" / "README.md",
                 output / "en" / "docs" / "INSTALLATION_RECOVERY.md",
-                output / "en" / "docs" / "USER_GUIDE_V7.2.md",
+                output / "en" / "docs" / "USER_GUIDE_V7.3.md",
                 output / "en" / "docs" / "history" / "GITHUB_RELEASES.md",
                 output / "en" / "docs" / "releases" / "RELEASE_AUTOMATION.md",
             ]
@@ -210,14 +210,14 @@ class DocumentationSiteTests(unittest.TestCase):
         self.assertIn("10</strong><span>Skills", root)
         self.assertIn("2.0</strong><span>TaskOutcomeEvent", root)
         self.assertIn("social-preview.jpg", root)
-        self.assertIn("V7.2.0", root)
+        self.assertIn("V7.3.0", root)
         self.assertNotIn("V6.6.1", root)
-        self.assertIn("USER_GUIDE_V7.2", root)
+        self.assertIn("USER_GUIDE_V7.3", root)
         self.assertIn("/codex-long-term-assistant-skills/zh-CN/", root)
         self.assertIn("/codex-long-term-assistant-skills/en/", root)
-        self.assertIn("V7.2.0", english_pair)
+        self.assertIn("V7.3.0", english_pair)
         self.assertNotIn("V6.6.1", english_pair)
-        self.assertIn("USER_GUIDE_V7.2", english_pair)
+        self.assertIn("USER_GUIDE_V7.3", english_pair)
         self.assertIsNone(re.search(r"[\u4e00-\u9fff]", english_pair))
         self.assertIn("@media (max-width: 640px)", stylesheet)
         self.assertIn(":focus-visible", stylesheet)
@@ -251,10 +251,10 @@ class DocumentationSiteTests(unittest.TestCase):
             ROOT / "locales" / "en" / ".github" / "mkdocs.yml"
         ).read_text(encoding="utf-8")
         for text in (navigation, localized_navigation):
-            self.assertIn("USER_GUIDE_V7.2.md", text)
+            self.assertIn("USER_GUIDE_V7.3.md", text)
             self.assertIn("V7_DOMAIN_SKILL_ARCHITECTURE.md", text)
             self.assertIn("SYSTEM_ARCHITECTURE.md", text)
-            self.assertIn("releases/v7.2.0/RELEASE_NOTES.md", text)
+            self.assertIn("releases/v7.3.0/RELEASE_NOTES.md", text)
             self.assertNotIn("V6_ARCHITECTURE.md", text)
             self.assertIn("pymdownx.slugs.slugify", text)
 
@@ -290,7 +290,7 @@ class DocumentationSiteTests(unittest.TestCase):
             ROOT / ".github" / "SECURITY.en.md",
             ROOT / "locales" / "en" / ".github" / "SECURITY.md",
         ):
-            self.assertIn("7.2.0", path.read_text(encoding="utf-8"))
+            self.assertIn("7.3.0", path.read_text(encoding="utf-8"))
 
     def test_social_preview_is_reusable_1280_by_640_and_below_one_megabyte(self) -> None:
         image = (ROOT / "docs" / "assets" / "social-preview.jpg").read_bytes()

@@ -606,8 +606,9 @@ def command_validate_result(args: argparse.Namespace) -> None:
                 die("finding[{}] 包含 schema 未允许字段: {}".format(index, ",".join(unexpected_finding)))
             if not isinstance(finding["repaired"], bool) or not isinstance(finding["regression_prevented"], bool):
                 die("finding repaired/regression_prevented 必须是布尔值")
-            if not isinstance(finding["regression_evidence"], list):
-                die("finding regression_evidence 必须是数组")
+            evidence = finding["regression_evidence"]
+            if not isinstance(evidence, list) or any(not isinstance(item, str) for item in evidence):
+                die("finding regression_evidence 必须是字符串数组")
     assignment = result["model_assignment"]
     if not isinstance(assignment, dict):
         die("model_assignment 必须是对象")
