@@ -183,6 +183,22 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertFalse((self.codex/'tools'/'cp-runtime.py').exists())
         self.assertFalse((self.codex/'tools'/'evolution.py').exists())
 
+    def test_plugin_tools_prefer_versioned_cache_over_stale_standalone_runtime(self):
+        stale_runtime=self.codex/'runtime'/'cp_runtime'
+        (stale_runtime/'evolution').mkdir(parents=True)
+        (stale_runtime/'__init__.py').write_text('',encoding='utf-8')
+        (stale_runtime/'evolution'/'__init__.py').write_text('',encoding='utf-8')
+        (stale_runtime/'cli.py').write_text(
+            "raise RuntimeError('STALE_RUNTIME_SELECTED')\n",encoding='utf-8'
+        )
+        (stale_runtime/'evolution'/'cli.py').write_text(
+            "raise RuntimeError('STALE_RUNTIME_SELECTED')\n",encoding='utf-8'
+        )
+
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        run(['verify','--scope','user','--mode','plugin'],self.env)
+        self.assert_installed_tools_run()
+
     def test_legacy_invalid_marketplace_is_canonicalized_before_activation(self):
         self.codex.mkdir(parents=True,exist_ok=True)
         state={

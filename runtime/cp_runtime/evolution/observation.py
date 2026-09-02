@@ -82,6 +82,18 @@ def _to_float(value: Any, default: float = 0.0) -> float:
     return default
 
 
+def _optional_positive_float(value: Any) -> Optional[float]:
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number) or number <= 0:
+        return None
+    return number
+
+
 def _wilson(successes: int, total: int, z: float = 1.959963984540054) -> Tuple[Optional[float], Optional[float]]:
     if total <= 0:
         return None, None
@@ -639,6 +651,10 @@ def observe_project(
                 "regressions_prevented": 0, "reported_regressions_prevented": 0,
                 "regression_prevention_claim_count": 0, "regression_prevention_evidence_count": 0,
                 "duration_ms": 0, "cost_units": 0.0,
+                "known_cost_invocation_count": 0, "unknown_cost_invocation_count": 0,
+                "cost_formula_versions": Counter(), "requested_model_profiles": Counter(),
+                "declared_runtime_profiles": Counter(), "cost_basis_profiles": Counter(),
+                "profile_difficulty": Counter(), "unfinalized_invocation_count": 0,
                 "attribution_count": 0,
                 "labeled_finding_count": 0, "unattributed_result_count": 0,
                 "duplicate_result_count": 0, "conflicting_result_count": 0,
@@ -664,16 +680,44 @@ def observe_project(
                 continue
             reviewer_result_identities[identity] = result_hash
             stats["invocations"] += 1
-            for name in ("accepted", "rejected", "duplicate", "repaired"):
-                stats[name] += max(0, _to_int(result.get(name), 0))
-            stats["reported_regressions_prevented"] += max(0, _to_int(result.get("regressions_prevented"), 0))
+            finalized = "calibration_finalized" not in result or result.get("calibration_finalized") is True
+            if not finalized:
+                stats["unfinalized_invocation_count"] += 1
+            if finalized:
+                for name in ("accepted", "rejected", "duplicate", "repaired"):
+                    stats[name] += max(0, _to_int(result.get(name), 0))
+                stats["reported_regressions_prevented"] += max(0, _to_int(result.get("regressions_prevented"), 0))
             difficulty = str(result.get("task_difficulty") or "UNKNOWN").strip().upper()
             if difficulty not in {"LOW", "MEDIUM", "HIGH", "CRITICAL"}:
                 difficulty = "UNKNOWN"
             stats["difficulty_distribution"][difficulty] += 1
+            valid_profiles = {"luna-low", "luna-medium", "terra-medium", "terra-high"}
+            requested_profile = str(result.get("requested_model_profile") or result.get("model_profile") or "UNKNOWN").strip().lower()
+            if requested_profile not in valid_profiles:
+                requested_profile = "UNKNOWN"
+            declared_profile = str(result.get("declared_runtime_profile") or "UNKNOWN").strip().lower()
+            if declared_profile not in valid_profiles:
+                declared_profile = "UNKNOWN"
+            cost_basis_profile = str(result.get("cost_basis_profile") or requested_profile).strip().lower()
+            if cost_basis_profile not in valid_profiles:
+                cost_basis_profile = "UNKNOWN"
+            stats["requested_model_profiles"][requested_profile] += 1
+            stats["declared_runtime_profiles"][declared_profile] += 1
+            stats["cost_basis_profiles"][cost_basis_profile] += 1
+            stats["profile_difficulty"]["cost-basis:" + cost_basis_profile + "|" + difficulty] += 1
             stats["duration_ms"] += max(0, _to_int(result.get("duration_ms"), 0))
-            stats["cost_units"] += max(0.0, _to_float(result.get("cost_units"), 0.0))
-            if any(name in result for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented")):
+            cost_source = "estimated_cost_units" if "estimated_cost_units" in result else "cost_units"
+            cost_value = _optional_positive_float(result.get(cost_source)) if cost_source in result else None
+            if cost_value is None:
+                stats["unknown_cost_invocation_count"] += 1
+            else:
+                stats["known_cost_invocation_count"] += 1
+                stats["cost_units"] += cost_value
+                formula = str(result.get("cost_formula_version") or (
+                    "legacy-cost-units" if cost_source == "cost_units" else "UNKNOWN"
+                ))
+                stats["cost_formula_versions"][formula] += 1
+            if finalized and any(name in result for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented")):
                 stats["attribution_count"] += 1
                 stats["labeled_finding_count"] += sum(max(0, _to_int(result.get(name), 0))
                                                         for name in ("accepted", "rejected", "duplicate"))
@@ -689,7 +733,7 @@ def observe_project(
                         stats["blocking_findings"] += 1
                     else:
                         stats["nonblocking_findings"] += 1
-                    if any(str(finding.get(name) or "").strip() for name in ("status", "outcome", "disposition", "label")):
+                    if finalized and any(str(finding.get(name) or "").strip() for name in ("status", "outcome", "disposition", "label")):
                         stats["labeled_finding_count"] += 1
                     cluster = _first_text(finding, ("root_cause_group", "cluster_id", "finding_fingerprint"))
                     if cluster:
@@ -700,10 +744,10 @@ def observe_project(
                                       "REGRESSION_PREVENTION", "OUT_OF_SCOPE", "DUPLICATE", "INSUFFICIENT_EVIDENCE",
                                       "DEFERRED", "REJECTED", "UNSPECIFIED"}:
                         reason = "UNSPECIFIED"
-                    if disposition in {"ACCEPTED", "REPAIRED", "REGRESSION_PREVENTED", "REJECTED", "DEFERRED", "OUT_OF_SCOPE"}:
+                    if finalized and disposition in {"ACCEPTED", "REPAIRED", "REGRESSION_PREVENTED", "REJECTED", "DEFERRED", "OUT_OF_SCOPE"}:
                         stats["adoption_reasons"][reason] += 1
                     regression_claim = bool(finding.get("regression_prevented")) or disposition == "REGRESSION_PREVENTED"
-                    if regression_claim:
+                    if finalized and regression_claim:
                         stats["regression_prevention_claim_count"] += 1
                         references = finding.get("regression_evidence") or finding.get("regression_test_refs") or []
                         if isinstance(references, list) and any(isinstance(item, Mapping) or str(item).strip() for item in references):
@@ -756,6 +800,7 @@ def observe_project(
         invocations = stats["invocations"]
         task_count = len(stats["tasks"])
         attribution_coverage = float(stats["attribution_count"]) / invocations if invocations else 0.0
+        cost_coverage = float(stats["known_cost_invocation_count"]) / invocations if invocations else 0.0
         adoption_total = stats["accepted"] + stats["rejected"]
         adoption_low, adoption_high = _wilson(stats["accepted"], adoption_total)
         duplicate_rate = float(stats["duplicate"]) / max(1, total_findings)
@@ -763,10 +808,14 @@ def observe_project(
         duplicate_cluster_findings = sum(max(0, count - 1) for count in stats["finding_clusters"].values())
         clustered_duplicate_rate = float(duplicate_cluster_findings) / clustered_findings if clustered_findings else None
         effective_duplicate_rate = max(duplicate_rate, clustered_duplicate_rate or 0.0)
-        benefit_proxy = float(stats["repaired"] + stats["regressions_prevented"]) / max(1.0, stats["cost_units"])
+        benefit_proxy = (
+            float(stats["repaired"] + stats["regressions_prevented"]) / stats["cost_units"]
+            if stats["known_cost_invocation_count"] and stats["cost_units"] > 0 and stats["attribution_count"] else None
+        )
         sample_sufficient = (invocations >= policy.reviewer_min_invocations
                              and task_count >= policy.reviewer_min_independent_tasks
                              and attribution_coverage >= policy.reviewer_min_attribution_coverage
+                             and cost_coverage >= policy.reviewer_min_cost_coverage
                              and stats["labeled_finding_count"] >= policy.reviewer_min_labeled_findings)
         if stats["conflicting_result_count"]:
             calibration_status = "CONFLICT"
@@ -774,9 +823,9 @@ def observe_project(
             calibration_status = "INSUFFICIENT_DATA"
         elif effective_duplicate_rate >= policy.reviewer_high_duplicate_rate:
             calibration_status = "HIGH_DUPLICATION"
-        elif adoption_high is not None and adoption_high < 0.20 and benefit_proxy <= policy.reviewer_low_yield_rate:
+        elif adoption_high is not None and adoption_high < 0.20 and benefit_proxy is not None and benefit_proxy <= policy.reviewer_low_yield_rate:
             calibration_status = "LOW_YIELD_CANDIDATE"
-        elif (adoption_low is not None and adoption_low >= 0.20) or benefit_proxy > policy.reviewer_low_yield_rate:
+        elif (adoption_low is not None and adoption_low >= 0.20) or (benefit_proxy is not None and benefit_proxy > policy.reviewer_low_yield_rate):
             calibration_status = "EFFECTIVE"
         else:
             calibration_status = "OBSERVE"
@@ -795,6 +844,11 @@ def observe_project(
                                                          stats["regression_prevention_claim_count"], 6)
             if stats["regression_prevention_claim_count"] else None,
             "task_difficulty_distribution": dict(sorted(stats["difficulty_distribution"].items())),
+            "model_profile_distribution": dict(sorted(stats["requested_model_profiles"].items())),
+            "requested_model_profile_distribution": dict(sorted(stats["requested_model_profiles"].items())),
+            "declared_runtime_profile_distribution": dict(sorted(stats["declared_runtime_profiles"].items())),
+            "cost_basis_profile_distribution": dict(sorted(stats["cost_basis_profiles"].items())),
+            "profile_difficulty_distribution": dict(sorted(stats["profile_difficulty"].items())),
             "known_task_difficulty_coverage": round(float(invocations - stats["difficulty_distribution"]["UNKNOWN"]) / invocations, 6)
             if invocations else 0.0,
             "finding_cluster_count": len(stats["finding_clusters"]),
@@ -802,7 +856,13 @@ def observe_project(
             "duplicate_cluster_finding_count": duplicate_cluster_findings,
             "clustered_duplicate_rate": round(clustered_duplicate_rate, 6) if clustered_duplicate_rate is not None else None,
             "adoption_reasons": dict(sorted(stats["adoption_reasons"].items())),
-            "duration_ms": stats["duration_ms"], "cost_units": round(stats["cost_units"], 6),
+            "duration_ms": stats["duration_ms"], "estimated_cost_units": round(stats["cost_units"], 6),
+            "cost_units": round(stats["cost_units"], 6),
+            "known_cost_invocation_count": stats["known_cost_invocation_count"],
+            "unknown_cost_invocation_count": stats["unknown_cost_invocation_count"],
+            "cost_coverage": round(cost_coverage, 6),
+            "cost_formula_versions": dict(sorted(stats["cost_formula_versions"].items())),
+            "unfinalized_invocation_count": stats["unfinalized_invocation_count"],
             "attribution_coverage": round(attribution_coverage, 6),
             "adoption_rate": round(float(stats["accepted"]) / (stats["accepted"] + stats["rejected"]), 6) if stats["accepted"] + stats["rejected"] else None,
             "adoption_wilson_95": [round(adoption_low, 6), round(adoption_high, 6)] if adoption_low is not None else None,
@@ -811,7 +871,7 @@ def observe_project(
             "duration_per_invocation_ms": round(float(stats["duration_ms"]) / invocations, 6) if invocations else None,
             "cost_per_accepted": round(float(stats["cost_units"]) / stats["accepted"], 6) if stats["accepted"] else None,
             "cost_per_repaired": round(float(stats["cost_units"]) / stats["repaired"], 6) if stats["repaired"] else None,
-            "benefit_proxy": round(benefit_proxy, 6),
+            "benefit_proxy": round(benefit_proxy, 6) if benefit_proxy is not None else None,
             "labeled_finding_count": stats["labeled_finding_count"],
             "sample_sufficient": sample_sufficient,
             "calibration_status": calibration_status,
@@ -819,6 +879,13 @@ def observe_project(
             "duplicate_result_count": stats["duplicate_result_count"],
             "conflicting_result_count": stats["conflicting_result_count"],
         }
+
+    reviewer_cost_known = sum(int(stats["known_cost_invocation_count"]) for stats in reviewer_stats.values())
+    reviewer_cost_unknown = sum(int(stats["unknown_cost_invocation_count"]) for stats in reviewer_stats.values())
+    reviewer_cost_total = reviewer_cost_known + reviewer_cost_unknown
+    reviewer_cost_formulas: Counter[str] = Counter()
+    for stats in reviewer_stats.values():
+        reviewer_cost_formulas.update(stats["cost_formula_versions"])
 
     metrics: Dict[str, Any] = {
         "policy_version": policy.policy_version,
@@ -851,6 +918,11 @@ def observe_project(
         "high_repair_rate": round(high_repair_rate, 6),
         "failure_patterns": dict(sorted(failure_counter.items())),
         "reviewer_stats": normalized_reviewer_metrics,
+        "reviewer_cost_coverage": round(float(reviewer_cost_known) / reviewer_cost_total, 6)
+        if reviewer_cost_total else 0.0,
+        "reviewer_known_cost_invocation_count": reviewer_cost_known,
+        "reviewer_unknown_cost_invocation_count": reviewer_cost_unknown,
+        "reviewer_cost_formula_versions": dict(sorted(reviewer_cost_formulas.items())),
         "skill_usage": dict(sorted(skill_usage.items())),
         "lifecycle": v2_diagnostics,
     }
@@ -1004,11 +1076,13 @@ def observe_project(
         total_findings = stats["blocking_findings"] + stats["nonblocking_findings"]
         yield_rate = (float(total_findings) / invocations) if invocations else 0.0
         attribution_coverage = (float(stats["attribution_count"]) / invocations) if invocations else 0.0
-        benefit_proxy = float(stats["repaired"] + stats["regressions_prevented"]) / max(1.0, stats["cost_units"])
         # 中文：缺少因果归因时，禁止仅根据 finding 数量将 Reviewer 判定为低收益。
         # English: Without causal attribution, finding count alone must not classify a Reviewer as low value.
         calibration = normalized_reviewer_metrics[reviewer]
         if calibration["calibration_status"] != "LOW_YIELD_CANDIDATE":
+            continue
+        benefit_proxy = calibration["benefit_proxy"]
+        if benefit_proxy is None:
             continue
         independent = len(stats["tasks"])
         signals.append(PatternSignal(

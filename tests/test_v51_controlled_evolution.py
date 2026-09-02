@@ -189,6 +189,7 @@ class ControlledEvolutionTest(unittest.TestCase):
                     "blocking_findings": 0,
                     "nonblocking_findings": 0,
                     "rejected": 1,
+                    "cost_units": 1,
                 }],
             }
             (records_a if index % 2 == 0 else records_b).append(record)

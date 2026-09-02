@@ -19,6 +19,7 @@
   "min_project_repo_binding_coverage": 1.0,
   "min_observation_window_days": 7,
   "reviewer_min_attribution_coverage": 0.8,
+  "reviewer_min_cost_coverage": 0.8,
   "negative_outcome_rate": 0.25,
   "deprecation_min_invocations": 20,
   "deprecation_min_window_days": 30,

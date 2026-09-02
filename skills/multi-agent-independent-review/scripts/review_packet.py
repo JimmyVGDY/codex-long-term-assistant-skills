@@ -41,11 +41,33 @@ DEFAULT_PROFILE_BY_TIER = {
     "balanced": "luna-medium",
     "deep": "terra-medium",
 }
+MODEL_PROFILE_COST_UNITS = {
+    "luna-low": 1.0,
+    "luna-medium": 2.0,
+    "terra-medium": 4.0,
+    "terra-high": 8.0,
+}
+COST_FORMULA_VERSION = "profile-weight-v1"
+FORBIDDEN_CALIBRATION_KEYS = {
+    "prompt", "raw_prompt", "response", "full_response", "diff", "patch",
+    "token", "tokens", "input_tokens", "output_tokens", "api_key", "cookie",
+}
 
 
 def die(message: str, code: int = 1) -> None:
     print("[FAIL] " + message, file=sys.stderr)
     raise SystemExit(code)
+
+
+def reject_forbidden_calibration_fields(value: Any, path: str = "result") -> None:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if str(key).lower() in FORBIDDEN_CALIBRATION_KEYS:
+                die("Reviewer 校准结果包含禁止字段: {}.{}".format(path, key))
+            reject_forbidden_calibration_fields(child, path + "." + str(key))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            reject_forbidden_calibration_fields(child, "{}[{}]".format(path, index))
 
 
 def run(command: Iterable[str], cwd: Path) -> bytes:
@@ -438,14 +460,28 @@ def command_result_template(args: argparse.Namespace) -> None:
     )
     if profile not in MODEL_PROFILES:
         die("未知 model-profile")
+    minimum_profile = args.minimum_acceptable_profile or profile
+    if minimum_profile not in MODEL_PROFILES:
+        die("未知 minimum-acceptable-profile")
+    profile_order = {name: index for index, name in enumerate(MODEL_PROFILES)}
+    if profile_order[minimum_profile] > profile_order[profile]:
+        die("minimum-acceptable-profile 不得高于请求档位")
     config = MODEL_PROFILES[profile]
+    task_id = args.task_id or manifest["boundary_id"]
+    review_phase = args.review_phase or manifest.get("phase") or "post"
     result_id = "RVR_" + hashlib.sha256(
-        (manifest["boundary_id"] + "|" + args.reviewer + "|" + manifest["packet_sha256"]).encode("utf-8")
+        ("{}|{}|{}|{}|{}|{}".format(
+            manifest["boundary_id"], task_id, review_phase, args.review_round,
+            args.reviewer, manifest["packet_sha256"],
+        )).encode("utf-8")
     ).hexdigest()
     result = {
-        "schema_version": 2,
+        "schema_version": 3,
         "result_id": result_id,
         "reviewer": args.reviewer,
+        "task_id": task_id,
+        "review_phase": review_phase,
+        "review_round": args.review_round,
         "boundary_id": manifest["boundary_id"],
         "packet_sha256": manifest["packet_sha256"],
         "status": "incomplete",
@@ -454,10 +490,23 @@ def command_result_template(args: argparse.Namespace) -> None:
             "requested_profile": profile,
             "requested_model": config["model"],
             "requested_reasoning_effort": config["reasoning_effort"],
+            "minimum_acceptable_profile": minimum_profile,
             "runtime_model": "",
             "runtime_reasoning_effort": "",
             "status": "unverified",
+            "runtime_evidence_level": "unavailable",
+            "runtime_evidence_source": "none",
         },
+        "task_difficulty": args.task_difficulty,
+        "duration_ms": 0,
+        "estimated_cost_units": MODEL_PROFILE_COST_UNITS[profile],
+        "cost_formula_version": COST_FORMULA_VERSION,
+        "calibration_finalized": False,
+        "accepted": 0,
+        "rejected": 0,
+        "duplicate": 0,
+        "repaired": 0,
+        "regressions_prevented": 0,
         "checked_scope": [],
         "findings": [],
         "unverified_items": [],
@@ -489,11 +538,45 @@ def command_validate_result(args: argparse.Namespace) -> None:
     missing = sorted(required - set(result))
     if missing:
         die("Reviewer 结果缺少字段: " + ",".join(missing))
-    if result["schema_version"] != 2:
-        die("Reviewer 结果 schema_version 必须是 2")
-    expected_result_id = "RVR_" + hashlib.sha256(
-        (manifest["boundary_id"] + "|" + str(result["reviewer"]) + "|" + manifest["packet_sha256"]).encode("utf-8")
-    ).hexdigest()
+    schema_version = result["schema_version"]
+    if schema_version not in {2, 3}:
+        die("Reviewer 结果 schema_version 必须是 2 或 3")
+    allowed_root = set(required) | {"summary"}
+    if schema_version == 3:
+        required_v3 = {
+            "task_id", "review_phase", "review_round", "task_difficulty", "duration_ms",
+            "estimated_cost_units", "cost_formula_version", "calibration_finalized",
+            "accepted", "rejected", "duplicate", "repaired", "regressions_prevented",
+        }
+        missing_v3 = sorted(required_v3 - set(result))
+        if missing_v3:
+            die("Reviewer v3 结果缺少校准字段: " + ",".join(missing_v3))
+        allowed_root.update(required_v3)
+        reject_forbidden_calibration_fields(result)
+        if not str(result["task_id"]).strip():
+            die("task_id 不能为空")
+        if result["review_phase"] not in {"pre", "post"}:
+            die("review_phase 必须是 pre 或 post")
+        if not isinstance(result["review_round"], int) or result["review_round"] < 1:
+            die("review_round 必须是正整数")
+        if str(result["task_difficulty"]).upper() not in {"LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"}:
+            die("task_difficulty 非法")
+        for name in ("duration_ms", "accepted", "rejected", "duplicate", "repaired", "regressions_prevented"):
+            if not isinstance(result[name], int) or isinstance(result[name], bool) or result[name] < 0:
+                die("{} 必须是非负整数".format(name))
+        if result["calibration_finalized"] is not False:
+            die("Reviewer 结果的 calibration_finalized 必须为 false；由控制器单独最终化")
+    unexpected_root = sorted(set(result) - allowed_root)
+    if unexpected_root:
+        die("Reviewer 结果包含 schema 未允许字段: " + ",".join(unexpected_root))
+    if schema_version == 3:
+        identity = "{}|{}|{}|{}|{}|{}".format(
+            manifest["boundary_id"], result["task_id"], result["review_phase"],
+            result["review_round"], result["reviewer"], manifest["packet_sha256"],
+        )
+    else:
+        identity = manifest["boundary_id"] + "|" + str(result["reviewer"]) + "|" + manifest["packet_sha256"]
+    expected_result_id = "RVR_" + hashlib.sha256(identity.encode("utf-8")).hexdigest()
     if result["result_id"] != expected_result_id:
         die("Reviewer 结果 result_id 与审查包身份不匹配")
     if result["boundary_id"] != manifest["boundary_id"]:
@@ -506,9 +589,39 @@ def command_validate_result(args: argparse.Namespace) -> None:
         die("Reviewer 结果 status 非法")
     if not isinstance(result["findings"], list) or not isinstance(result["unverified_items"], list):
         die("Reviewer findings/unverified_items 必须是数组")
+    if schema_version == 3:
+        required_finding = {
+            "id", "dimension", "severity", "evidence_level", "blocking", "summary",
+            "location", "root_cause_group", "required_validation", "disposition",
+            "adoption_reason", "repaired", "regression_prevented", "regression_evidence",
+        }
+        for index, finding in enumerate(result["findings"]):
+            if not isinstance(finding, dict):
+                die("finding[{}] 必须是对象".format(index))
+            missing_finding = sorted(required_finding - set(finding))
+            if missing_finding:
+                die("finding[{}] 缺少校准字段: {}".format(index, ",".join(missing_finding)))
+            unexpected_finding = sorted(set(finding) - required_finding)
+            if unexpected_finding:
+                die("finding[{}] 包含 schema 未允许字段: {}".format(index, ",".join(unexpected_finding)))
+            if not isinstance(finding["repaired"], bool) or not isinstance(finding["regression_prevented"], bool):
+                die("finding repaired/regression_prevented 必须是布尔值")
+            if not isinstance(finding["regression_evidence"], list):
+                die("finding regression_evidence 必须是数组")
     assignment = result["model_assignment"]
     if not isinstance(assignment, dict):
         die("model_assignment 必须是对象")
+    allowed_assignment = {
+        "requested_profile", "requested_model", "requested_reasoning_effort",
+        "runtime_model", "runtime_reasoning_effort", "status",
+    }
+    if schema_version == 3:
+        allowed_assignment.update({
+            "minimum_acceptable_profile", "runtime_evidence_level", "runtime_evidence_source",
+        })
+    unexpected_assignment = sorted(set(assignment) - allowed_assignment)
+    if unexpected_assignment:
+        die("model_assignment 包含 schema 未允许字段: " + ",".join(unexpected_assignment))
     requested_profile = assignment.get("requested_profile")
     if requested_profile not in MODEL_PROFILES:
         die("model_assignment.requested_profile 非法")
@@ -517,10 +630,38 @@ def command_validate_result(args: argparse.Namespace) -> None:
         die("model_assignment.requested_model 与档位不一致")
     if assignment.get("requested_reasoning_effort") != expected["reasoning_effort"]:
         die("model_assignment.requested_reasoning_effort 与档位不一致")
+    if schema_version == 3:
+        minimum_profile = assignment.get("minimum_acceptable_profile")
+        if minimum_profile not in MODEL_PROFILES:
+            die("model_assignment.minimum_acceptable_profile 非法")
+        profile_order = {name: index for index, name in enumerate(MODEL_PROFILES)}
+        if profile_order[minimum_profile] > profile_order[requested_profile]:
+            die("minimum_acceptable_profile 不得高于 requested_profile")
+        if assignment.get("status") not in {
+            "unverified", "declared_match", "fallback_acceptable", "underpowered", "mismatch"
+        }:
+            die("Reviewer 自报 model_assignment.status 非法；不得声明 verified")
+        if assignment.get("runtime_evidence_level") not in {"unavailable", "declared"}:
+            die("runtime_evidence_level 非法")
+        if not isinstance(assignment.get("runtime_evidence_source"), str):
+            die("runtime_evidence_source 必须是字符串")
+        if result["cost_formula_version"] != COST_FORMULA_VERSION:
+            die("cost_formula_version 非法")
+        expected_cost = MODEL_PROFILE_COST_UNITS[requested_profile]
+        if isinstance(result["estimated_cost_units"], bool) or not isinstance(result["estimated_cost_units"], (int, float)):
+            die("estimated_cost_units 必须是数字")
+        if float(result["estimated_cost_units"]) != expected_cost:
+            die("estimated_cost_units 必须由 requested_profile 按 {} 计算".format(COST_FORMULA_VERSION))
     runtime_model = str(assignment.get("runtime_model", ""))
     runtime_effort = str(assignment.get("runtime_reasoning_effort", ""))
     if bool(runtime_model) != bool(runtime_effort):
         die("runtime_model 与 runtime_reasoning_effort 必须同时填写或同时留空")
+    if schema_version == 3:
+        evidence_level = assignment.get("runtime_evidence_level")
+        if runtime_model and evidence_level != "declared":
+            die("填写 Reviewer 自报运行档位时 runtime_evidence_level 必须是 declared")
+        if not runtime_model and evidence_level != "unavailable":
+            die("未填写运行档位时 runtime_evidence_level 必须是 unavailable")
     print("[OK] Reviewer 结构化结果有效", args.result_file)
 
 
@@ -555,7 +696,12 @@ def main() -> None:
     template = sub.add_parser("result-template")
     template.add_argument("--packet-dir", required=True)
     template.add_argument("--reviewer", required=True)
+    template.add_argument("--task-id", default="")
+    template.add_argument("--review-phase", choices=["pre", "post"], default="")
+    template.add_argument("--review-round", type=int, default=1)
+    template.add_argument("--task-difficulty", choices=["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"], default="UNKNOWN")
     template.add_argument("--model-profile", choices=list(MODEL_PROFILES), default="")
+    template.add_argument("--minimum-acceptable-profile", choices=list(MODEL_PROFILES), default="")
     template.add_argument("--output", required=True)
     template.set_defaults(func=command_result_template)
 

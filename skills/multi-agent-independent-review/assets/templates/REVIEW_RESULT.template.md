@@ -14,10 +14,16 @@
 - 审查文件：
 - 阅读的上游、下游和共享逻辑：
 - 请求模型档位：luna-low / luna-medium / terra-medium / terra-high
+- 最低可接受模型档位：luna-low / luna-medium / terra-medium / terra-high
 - 请求模型 / 推理强度：
 - 实际模型 / 推理强度：
-- 模型分配状态：confirmed / fallback / unverified / mismatch
+- 模型分配状态：declared_match / fallback_acceptable / underpowered / unverified / mismatch
+- 运行证据等级 / 来源：unavailable / declared；none / reviewer-result
 - 模型分配说明：
+- 任务难度：LOW / MEDIUM / HIGH / CRITICAL / UNKNOWN
+- 耗时（毫秒）：
+- 估算成本 / 公式版本：profile-weight-v1
+- 校准归因是否最终完成：固定为否；由主协调 Agent 在修复验证后通过控制器另行最终化
 - Reviewer 配置声明：
 - 父会话实际沙箱：
 - 运行时隔离等级：system-readonly / logical-readonly / self-review / unknown
@@ -40,6 +46,11 @@
 - 建议修复边界：
 - 修复后验证：
 - 可合并的问题：
+- 处置：PENDING / ACCEPTED / REPAIRED / REGRESSION_PREVENTED / REJECTED / DEFERRED / OUT_OF_SCOPE / DUPLICATE / INSUFFICIENT_EVIDENCE
+- 采纳原因：CORRECTNESS / SECURITY / COMPATIBILITY / PERFORMANCE / DATA_CONTRACT / REGRESSION_PREVENTION / 其他允许值
+- 已修复：是 / 否
+- 已防止回归：是 / 否
+- 回归证据：
 
 ## 未验证项
 

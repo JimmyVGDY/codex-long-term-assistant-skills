@@ -12,18 +12,19 @@ from pathlib import Path
 
 
 def _runtime_candidates(package_home: Path):
-    """中文：优先使用源码/standalone runtime，再回退到安装状态绑定的 Plugin cache。
+    """中文：Plugin 模式只使用状态绑定缓存；源码/standalone 使用本地 runtime。
 
-    English: Prefer the source or standalone runtime, then use the Plugin cache bound by
-    installation state.
+    English: Plugin mode uses only its state-bound cache; source and standalone modes use
+    the local runtime tree.
     """
-    yield package_home / "runtime"
     state_path = package_home / "cp-assistant-v6-state.json"
     try:
         state = json.loads(state_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError):
+        yield package_home / "runtime"
         return
     if state.get("mode") != "plugin":
+        yield package_home / "runtime"
         return
     version = str(state.get("version") or "")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", version):

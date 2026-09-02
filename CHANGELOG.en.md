@@ -4,16 +4,28 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Unreleased
 
+### Added
+
+- Added `minimum_acceptable_profile` to Reviewer dispatch and an append-only `INLINE/DELEGATE` decision gate; `INLINE` creates no round and consumes no Reviewer budget.
+- Added Reviewer result schema v3 with task difficulty, duration, pending attribution, finding disposition, and `profile-weight-v1` estimated cost, projected by the controller into a deduplicated calibration ledger; Reviewers cannot finalize attribution themselves.
+
 ### Changed
 
+- Reviewer declarations now produce only `declared_match/fallback_acceptable/underpowered/unverified/mismatch`. Results below the minimum acceptable tier may only be `incomplete` and cannot be merged or closed normally.
+- Evolution keeps missing cost unknown, segments metrics by Reviewer, model tier, and task difficulty, and excludes unfinalized attribution from low-yield classification; default routing stays unchanged when real evidence is insufficient.
 - Aligned the bilingual site's current V7.2 system architecture, domain routing, configuration, controlled-evolution, and authoritative-source documentation. Earlier versions now appear only for migration or historical evidence.
 - Added prominent bilingual notices to historical detail pages during site generation and excluded those pages from default site search while keeping current and release-archive indexes searchable.
 
 ### Fixed
 
+- Fixed Plugin-mode launchers selecting a stale standalone runtime ahead of the installed versioned cache; Plugin mode now uses only its state-bound cache and fails closed when that cache is missing.
 - Removed historical-version labels mixed into current navigation and specifications, and replaced a dead command that referenced a removed validator.
 - Reconciled the previously divergent Chinese and English Codex configuration guides and added regression gates for the current-document inventory, historical isolation, and referenced public scripts.
 - Fixed self-referential Chinese links on current English pages, Unicode heading anchors, and a stale table label; version changes now trigger Pages and fail closed when site entry points drift from the manifest.
+
+### Validation
+
+- Added regressions for minimum tiers, INLINE redecision, legacy v2 result compatibility, calibration projection, unknown cost, and unfinalized attribution. Local installation and real-data readback are reported separately at task delivery.
 
 ## 7.2.0 - 2026-09-02
 

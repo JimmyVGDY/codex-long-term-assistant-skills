@@ -581,6 +581,7 @@ class EvolutionPolicy:
     min_project_repo_binding_coverage: float = 1.00
     min_observation_window_days: int = 7
     reviewer_min_attribution_coverage: float = 0.80
+    reviewer_min_cost_coverage: float = 0.80
     negative_outcome_rate: float = 0.25
     deprecation_min_invocations: int = 20
     deprecation_min_window_days: int = 30
@@ -599,7 +600,7 @@ class EvolutionPolicy:
         for name in integer_fields:
             if int(getattr(self, name)) <= 0:
                 raise ContractError("%s 必须大于 0" % name)
-        for name in ("model_escalation_rate", "routing_deviation_rate", "reviewer_low_yield_rate", "reviewer_high_duplicate_rate", "negative_outcome_rate", "min_lifecycle_completeness_rate", "min_session_end_coverage", "min_actual_model_coverage", "min_known_terminal_outcome_coverage", "min_project_repo_binding_coverage", "reviewer_min_attribution_coverage"):
+        for name in ("model_escalation_rate", "routing_deviation_rate", "reviewer_low_yield_rate", "reviewer_high_duplicate_rate", "negative_outcome_rate", "min_lifecycle_completeness_rate", "min_session_end_coverage", "min_actual_model_coverage", "min_known_terminal_outcome_coverage", "min_project_repo_binding_coverage", "reviewer_min_attribution_coverage", "reviewer_min_cost_coverage"):
             value = float(getattr(self, name))
             if not 0.0 <= value <= 1.0:
                 raise ContractError("%s 必须在 0-1 之间" % name)

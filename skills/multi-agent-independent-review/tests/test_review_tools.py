@@ -50,7 +50,7 @@ def prepare_repo(path: Path) -> None:
     (path / ".env").write_text("TOKEN=secret\n", encoding="utf-8")
 
 
-def create_confirmed_result(packet_dir: Path, output: Path, reviewer: str, profile: str) -> None:
+def create_declared_result(packet_dir: Path, output: Path, reviewer: str, profile: str) -> None:
     run(
         PACKET,
         "result-template",
@@ -68,7 +68,9 @@ def create_confirmed_result(packet_dir: Path, output: Path, reviewer: str, profi
     requested = payload["model_assignment"]
     requested["runtime_model"] = requested["requested_model"]
     requested["runtime_reasoning_effort"] = requested["requested_reasoning_effort"]
-    requested["status"] = "confirmed"
+    requested["status"] = "declared_match"
+    requested["runtime_evidence_level"] = "declared"
+    requested["runtime_evidence_source"] = "reviewer-result"
     payload["summary"] = "no findings"
     output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -117,7 +119,7 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
 
     packet_hash = (packet / "PACKET_SHA256").read_text(encoding="utf-8").strip()
     result_file = work / "result.json"
-    create_confirmed_result(packet, result_file, "cp_review_functional_business", "luna-medium")
+    create_declared_result(packet, result_file, "cp_review_functional_business", "luna-medium")
     run(
         PACKET,
         "validate-result",
@@ -157,6 +159,20 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
 
     run(
         CONTROLLER,
+        "route",
+        "--review-dir",
+        str(review),
+        "--phase",
+        "post",
+        "--decision",
+        "DELEGATE",
+        "--reason-code",
+        "BEHAVIOR_CHANGE",
+        "--reason",
+        "行为改动需要独立复审",
+    )
+    run(
+        CONTROLLER,
         "plan",
         "--review-dir",
         str(review),
@@ -192,6 +208,7 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
     assert dispatch["model_profile"] == "luna-medium"
     assert dispatch["requested_model"] == "gpt-5.6-luna"
     assert dispatch["requested_reasoning_effort"] == "medium"
+    assert dispatch["minimum_acceptable_profile"] == "luna-medium"
 
     run(
         CONTROLLER,
@@ -215,6 +232,9 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
         "--result-file",
         str(result_file),
     )
+    projected = [json.loads(line) for line in (review / "review-results.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert len(projected) == 1
+    assert projected[0]["reviewer_results"][0]["estimated_cost_units"] == 2.0
     run(
         CONTROLLER,
         "merge",
@@ -261,6 +281,20 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
     # English: Terra High is allowed only for high or critical risk with an explicit reason.
     high_review = work / "high-review"
     run(CONTROLLER, "init", "--review-dir", str(high_review), "--boundary-id", "FB2", "--risk-level", "high")
+    run(
+        CONTROLLER,
+        "route",
+        "--review-dir",
+        str(high_review),
+        "--phase",
+        "post",
+        "--decision",
+        "DELEGATE",
+        "--reason-code",
+        "SECURITY_RISK",
+        "--reason",
+        "高风险权限边界需要独立复审",
+    )
     run(
         CONTROLLER,
         "plan",

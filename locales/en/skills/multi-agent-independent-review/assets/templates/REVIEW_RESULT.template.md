@@ -14,10 +14,16 @@
 - Reviewed files:
 - Upstream, downstream, and shared logic read:
 - Requested model tier: luna-low / luna-medium / terra-medium / terra-high
+- Minimum acceptable model tier: luna-low / luna-medium / terra-medium / terra-high
 - Requested model / reasoning effort:
 - Actual model / reasoning effort:
-- Model-assignment status: confirmed / fallback / unverified / mismatch
+- Model-assignment status: declared_match / fallback_acceptable / underpowered / unverified / mismatch
+- Runtime evidence level / source: unavailable / declared; none / reviewer-result
 - Model-assignment notes:
+- Task difficulty: LOW / MEDIUM / HIGH / CRITICAL / UNKNOWN
+- Duration (milliseconds):
+- Estimated cost / formula version: profile-weight-v1
+- Calibration attribution finalized: Always No; the coordinating agent finalizes it separately through the controller after repair validation
 - Reviewer configuration declaration:
 - Actual parent-session sandbox:
 - Runtime isolation level: system-readonly / logical-readonly / self-review / unknown
@@ -40,6 +46,11 @@
 - Recommended repair boundary:
 - Post-repair validation:
 - Mergeable findings:
+- Disposition: PENDING / ACCEPTED / REPAIRED / REGRESSION_PREVENTED / REJECTED / DEFERRED / OUT_OF_SCOPE / DUPLICATE / INSUFFICIENT_EVIDENCE
+- Adoption reason: CORRECTNESS / SECURITY / COMPATIBILITY / PERFORMANCE / DATA_CONTRACT / REGRESSION_PREVENTION / another allowed value
+- Repaired: Yes / No
+- Regression prevented: Yes / No
+- Regression evidence:
 
 ## Unverified Items
 

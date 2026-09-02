@@ -1,184 +1,87 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Cross Project Reviewer Result V2",
+  "title": "Cross Project Reviewer Result V3",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version",
-    "result_id",
-    "reviewer",
-    "boundary_id",
-    "packet_sha256",
-    "status",
-    "isolation_level",
-    "model_assignment",
-    "checked_scope",
-    "findings",
-    "unverified_items",
-    "summary"
+    "schema_version", "result_id", "reviewer", "task_id", "review_phase", "review_round",
+    "boundary_id", "packet_sha256", "status", "isolation_level",
+    "model_assignment", "task_difficulty", "duration_ms",
+    "estimated_cost_units", "cost_formula_version", "calibration_finalized",
+    "accepted", "rejected", "duplicate", "repaired", "regressions_prevented",
+    "checked_scope", "findings", "unverified_items", "summary"
   ],
   "properties": {
-    "schema_version": {
-      "const": 2
-    },
-    "result_id": {
-      "type": "string",
-      "pattern": "^RVR_[a-f0-9]{64}$"
-    },
-    "reviewer": {
-      "type": "string",
-      "minLength": 1
-    },
-    "boundary_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "packet_sha256": {
-      "type": "string",
-      "pattern": "^[a-f0-9]{64}$"
-    },
-    "status": {
-      "enum": [
-        "pass",
-        "nonblocking",
-        "blocking",
-        "incomplete"
-      ]
-    },
-    "isolation_level": {
-      "enum": [
-        "system-readonly",
-        "logical-readonly",
-        "tool-restricted",
-        "self-review",
-        "unknown"
-      ]
-    },
+    "schema_version": {"const": 3},
+    "result_id": {"type": "string", "pattern": "^RVR_[a-f0-9]{64}$"},
+    "reviewer": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "review_phase": {"enum": ["pre", "post"]},
+    "review_round": {"type": "integer", "minimum": 1},
+    "boundary_id": {"type": "string", "minLength": 1},
+    "packet_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "status": {"enum": ["pass", "nonblocking", "blocking", "incomplete"]},
+    "isolation_level": {"enum": ["system-readonly", "logical-readonly", "tool-restricted", "self-review", "unknown"]},
     "model_assignment": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "requested_profile",
-        "requested_model",
-        "requested_reasoning_effort",
-        "runtime_model",
-        "runtime_reasoning_effort",
-        "status"
+        "requested_profile", "requested_model", "requested_reasoning_effort",
+        "minimum_acceptable_profile", "runtime_model", "runtime_reasoning_effort",
+        "status", "runtime_evidence_level", "runtime_evidence_source"
       ],
       "properties": {
-        "requested_profile": {
-          "enum": [
-            "luna-low",
-            "luna-medium",
-            "terra-medium",
-            "terra-high"
-          ]
-        },
-        "requested_model": {
-          "enum": [
-            "gpt-5.6-luna",
-            "gpt-5.6-terra"
-          ]
-        },
-        "requested_reasoning_effort": {
-          "enum": [
-            "low",
-            "medium",
-            "high"
-          ]
-        },
-        "runtime_model": {
-          "type": "string"
-        },
-        "runtime_reasoning_effort": {
-          "type": "string"
-        },
-        "status": {
-          "enum": [
-            "confirmed",
-            "fallback",
-            "unverified",
-            "mismatch"
-          ]
-        }
+        "requested_profile": {"enum": ["luna-low", "luna-medium", "terra-medium", "terra-high"]},
+        "requested_model": {"enum": ["gpt-5.6-luna", "gpt-5.6-terra"]},
+        "requested_reasoning_effort": {"enum": ["low", "medium", "high"]},
+        "minimum_acceptable_profile": {"enum": ["luna-low", "luna-medium", "terra-medium", "terra-high"]},
+        "runtime_model": {"type": "string"},
+        "runtime_reasoning_effort": {"type": "string"},
+        "status": {"enum": ["declared_match", "fallback_acceptable", "underpowered", "unverified", "mismatch"]},
+        "runtime_evidence_level": {"enum": ["unavailable", "declared"]},
+        "runtime_evidence_source": {"type": "string"}
       }
     },
-    "checked_scope": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "uniqueItems": true
-    },
+    "task_difficulty": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"]},
+    "duration_ms": {"type": "integer", "minimum": 0},
+    "estimated_cost_units": {"type": "number", "exclusiveMinimum": 0},
+    "cost_formula_version": {"const": "profile-weight-v1"},
+    "calibration_finalized": {"const": false},
+    "accepted": {"type": "integer", "minimum": 0},
+    "rejected": {"type": "integer", "minimum": 0},
+    "duplicate": {"type": "integer", "minimum": 0},
+    "repaired": {"type": "integer", "minimum": 0},
+    "regressions_prevented": {"type": "integer", "minimum": 0},
+    "checked_scope": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
     "findings": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "id",
-          "dimension",
-          "severity",
-          "evidence_level",
-          "blocking",
-          "summary",
-          "location",
-          "root_cause_group",
-          "required_validation"
+          "id", "dimension", "severity", "evidence_level", "blocking", "summary",
+          "location", "root_cause_group", "required_validation", "disposition",
+          "adoption_reason", "repaired", "regression_prevented", "regression_evidence"
         ],
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "dimension": {
-            "type": "string"
-          },
-          "severity": {
-            "enum": [
-              "blocking",
-              "high",
-              "medium",
-              "low",
-              "suggestion"
-            ]
-          },
-          "evidence_level": {
-            "enum": [
-              "confirmed",
-              "high-probability",
-              "inference",
-              "unverified"
-            ]
-          },
-          "blocking": {
-            "type": "boolean"
-          },
-          "summary": {
-            "type": "string"
-          },
-          "location": {
-            "type": "string"
-          },
-          "root_cause_group": {
-            "type": "string"
-          },
-          "required_validation": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
+          "id": {"type": "string"},
+          "dimension": {"type": "string"},
+          "severity": {"enum": ["blocking", "high", "medium", "low", "suggestion"]},
+          "evidence_level": {"enum": ["confirmed", "high-probability", "inference", "unverified"]},
+          "blocking": {"type": "boolean"},
+          "summary": {"type": "string"},
+          "location": {"type": "string"},
+          "root_cause_group": {"type": "string"},
+          "required_validation": {"type": "array", "items": {"type": "string"}},
+          "disposition": {"enum": ["PENDING", "ACCEPTED", "REPAIRED", "REGRESSION_PREVENTED", "REJECTED", "DEFERRED", "OUT_OF_SCOPE", "DUPLICATE", "INSUFFICIENT_EVIDENCE"]},
+          "adoption_reason": {"enum": ["CORRECTNESS", "SECURITY", "COMPATIBILITY", "PERFORMANCE", "DATA_CONTRACT", "REGRESSION_PREVENTION", "OUT_OF_SCOPE", "DUPLICATE", "INSUFFICIENT_EVIDENCE", "DEFERRED", "REJECTED", "UNSPECIFIED"]},
+          "repaired": {"type": "boolean"},
+          "regression_prevented": {"type": "boolean"},
+          "regression_evidence": {"type": "array", "items": {"type": "string"}}
         }
       }
     },
-    "unverified_items": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "summary": {
-      "type": "string"
-    }
+    "unverified_items": {"type": "array", "items": {"type": "string"}},
+    "summary": {"type": "string"}
   }
 }

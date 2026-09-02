@@ -73,7 +73,18 @@ Prefer deescalation or stopping when:
 ## 6. Runtime Confirmation
 
 - Reviewer TOML deliberately does not fix `model` or `model_reasoning_effort`, preventing high-priority static configuration from blocking dynamic routing.
-- Before dispatch, `review_controller.py` records the requested tier. Reviewer results must return actual model and reasoning effort when trustworthy runtime evidence is available.
-- Record an actual tier below the request as `fallback`; record a tier above the request or outside the approved set as `mismatch`.
+- Before dispatch, `review_controller.py` records both the requested tier and `minimum_acceptable_profile`. The minimum defaults to the request, may be lowered explicitly, and may never exceed the request.
+- A Reviewer declaration matching the request is `declared_match`; a lower tier at or above the minimum is `fallback_acceptable`; a tier below the minimum is `underpowered`, which may only be recorded as `incomplete` and cannot be merged or closed normally.
+- A tier above the request or outside the approved set is `mismatch`. A Reviewer declaration can never produce `verified`; only a future trusted-host adapter may supply that evidence level.
 - The controller governs this Skill's dispatch ledger only; it does not replace the Codex platform allowlist. The coordinator must launch each subagent explicitly at the ledger tier.
 - A requested model is policy evidence, not proof of the actual runtime model. Without host-attested evidence bound to the dispatch, report runtime model evidence as unavailable and keep any diagnostic observation separate.
+
+## 7. INLINE Decision and Calibration
+
+- When no subagent is needed, append a phase decision with `route --decision INLINE`. It creates no round, increments no Reviewer counter, and consumes no model budget.
+- A newly initialized v5 ledger must record `INLINE` or `DELEGATE` before `plan`; ledgers migrated from v4 or earlier retain the decision-free compatibility path.
+- While the latest decision is `INLINE`, both `plan` and `dispatch` fail. Before the first round only, a `DELEGATE` redecision may be appended with the previous decision id, a change reason, and new evidence; history is never overwritten.
+- Reviewer v3 results contain task difficulty, duration, pending attribution, and versioned estimated cost, and reject fields outside the schema. `calibration_finalized` must be `false` in a Reviewer file. After repair and validation, the primary coordinator finalizes attribution separately with evidence through `finalize-calibration`.
+- The controller projects results to `review-results.jsonl` under `task_id + reviewer + result_id` and keeps requested profile, declared runtime profile, runtime evidence level, and cost-basis profile separate. Without trusted-host evidence, the approved requested profile remains the cost basis.
+- `validate` checks the projection ledger against `review-state`; after an interrupted write, use `sync-calibration` to rebuild it deterministically from authoritative state.
+- `profile-weight-v1` uses weights 1/2/4/8. Missing or invalid cost remains unknown; only controller-finalized records participate in low-yield classification.

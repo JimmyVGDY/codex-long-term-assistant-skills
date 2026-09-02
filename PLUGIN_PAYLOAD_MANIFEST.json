@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 180,
-  "payload_digest": "98587b33876c8cbd9cfe9e5918a5915d6ee6213b476aed463e631fc2beb71118",
+  "payload_digest": "5b66851624fe916e8c7d655cf8b6c2199a731c09c7e64b06fb613e88e692ba23",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -553,8 +553,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/assets/schemas/review-result.schema.json",
-      "sha256": "a8b32fe9cb432fc2c73a260b49508bf9001b784879bc1fc65a01f7bedb7422c0",
-      "size": 3820
+      "sha256": "8866a2f5119e40753fddba3b40d0eca40b0b7c94e646297bf7d77e036c44c864",
+      "size": 4688
     },
     {
       "path": "skills/multi-agent-independent-review/assets/templates/PRE_IMPLEMENTATION_REVIEW.template.md",
@@ -583,8 +583,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/assets/templates/REVIEW_RESULT.template.md",
-      "sha256": "1538bb68771e011c4a2fd4ba92ef9a14c364a7665cc9b08e1e2d7b8e0f02122a",
-      "size": 1507
+      "sha256": "fb85c42f52f678341418de6a227bc26b6564b4be33bf630540e73ebbaf760e23",
+      "size": 2288
     },
     {
       "path": "skills/multi-agent-independent-review/references/multi-agent-independent-review-workflow.md",
@@ -623,23 +623,23 @@
     },
     {
       "path": "skills/multi-agent-independent-review/references/reviewer-model-routing.md",
-      "sha256": "3131634e33ada3f2a365bb29078d2a1983b9d09ce7d285b3464859482a5d51d7",
-      "size": 3862
+      "sha256": "d587497391c6cae90fd9bcea4e88ecbe4ea97ff4fe9c0d0ca5c45a1782dd9257",
+      "size": 5591
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_controller.py",
-      "sha256": "b60249aefd4bc7bde31fe8738eddb2727673edab81d5364ceb105660a3132960",
-      "size": 50454
+      "sha256": "cc8238a3b7e388e489ca7a27d5f2f8f8bb15cc790afec35da52038f2f8b61169",
+      "size": 77691
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
-      "sha256": "d520d6385d367f0f497f6085c3011ee48a8d9784d77df0da5e58fbae6a7ba4f5",
-      "size": 22968
+      "sha256": "c102f7f3eaa1e1e58dfa21d05d6c394ba1ed6c8da42247a5cd9914a6eb2a4240",
+      "size": 31262
     },
     {
       "path": "skills/multi-agent-independent-review/tests/test_review_tools.py",
-      "sha256": "838d8e3f0a45c149276e4b203ae3ca6d69a9485dd58fde5f561824fb7b7eb7af",
-      "size": 9418
+      "sha256": "3517ecdf52f373c1a367e58ae3bb7cfd48e299c2b275756482f4a6452032c78e",
+      "size": 10421
     },
     {
       "path": "skills/technical-document-writing/SKILL.md",
@@ -823,8 +823,8 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/contracts.py",
-      "sha256": "7bb5019cc0e6c046770635b8dc986bde0472015db46a2f687eba39fd33534cc6",
-      "size": 25963
+      "sha256": "b0b723f937a6854d4c148399e224deb5499c28c96efa8d1d4c85fe0e0de01123",
+      "size": 26038
     },
     {
       "path": "runtime/cp_runtime/evolution/lifecycle.py",
@@ -838,8 +838,8 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/observation.py",
-      "sha256": "bd1eb26c29aa07b135554225f5e66ca16ec64028b847164588071f1d22dd33a8",
-      "size": 54978
+      "sha256": "a315b82861ce532467b2a5656ba34f4fa1535ecddc2c1e6b09c8dfc6a7cc3512",
+      "size": 59769
     },
     {
       "path": "runtime/cp_runtime/evolution/proposal.py",

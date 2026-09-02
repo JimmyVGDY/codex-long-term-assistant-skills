@@ -183,7 +183,10 @@
     "automatic_reviewer_model_ceiling": "gpt-5.6-terra",
     "automatic_reviewer_reasoning_ceiling": "high",
     "review_packet_schema_version": 3,
-    "review_result_schema_version": 2,
+    "review_result_schema_version": 3,
+    "review_state_schema_version": 5,
+    "minimum_acceptable_reviewer_profile_required": true,
+    "inline_delegation_decision_gate": true,
     "duplicate_review_dispatch_protection": true,
     "checkpoint_content_deduplication": true,
     "task_complexity_levels": [
@@ -385,6 +388,35 @@
     "recommended_default_subagent_model": "gpt-5.6-luna",
     "recommended_default_subagent_reasoning_effort": "medium",
     "recommended_max_concurrent_threads_per_session": 3,
+    "minimum_acceptable_profile_default": "requested-profile",
+    "model_assignment_statuses": [
+      "declared_match",
+      "fallback_acceptable",
+      "underpowered",
+      "unverified",
+      "mismatch"
+    ],
+    "reviewer_declaration_is_trusted_runtime_proof": false,
+    "reviewer_result_can_self_finalize_calibration": false,
+    "calibration_finalization_authority": "review-controller-finalize-calibration",
+    "calibration_profile_dimensions": [
+      "requested-profile",
+      "declared-runtime-profile",
+      "cost-basis-profile"
+    ],
+    "delegation_decisions": [
+      "INLINE",
+      "DELEGATE"
+    ],
+    "calibration_cost_formula": {
+      "version": "profile-weight-v1",
+      "weights": {
+        "luna-low": 1,
+        "luna-medium": 2,
+        "terra-medium": 4,
+        "terra-high": 8
+      }
+    },
     "config_example": "config/agents.example.toml",
     "policy_scope": "skill-and-controller-workflow; not a platform-level allowlist"
   },
@@ -576,6 +608,8 @@
       "terminal_outcome_coverage": true,
       "actual_model_coverage": true,
       "reviewer_attribution_coverage": true,
+      "reviewer_cost_coverage": true,
+      "unfinalized_calibration_excluded_from_yield": true,
       "insufficient_evidence_blocks_proposals": true
     },
     "lifecycle_registry": "project-context/<project-id>/evolution/lifecycle.jsonl"

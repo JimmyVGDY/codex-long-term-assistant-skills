@@ -56,7 +56,7 @@ luna-low → luna-medium → terra-medium → terra-high
 
 - 证据提取、测试输出归纳和状态核对优先 Luna；
 - 修复后定向复核范围比第一轮更窄时，应保持或降低档位；
-- 运行时实际使用更低批准档位时，结果记录为 `fallback`，不视为违规；
+- 运行时自报使用更低批准档位但不低于 `minimum_acceptable_profile` 时，结果记录为 `fallback_acceptable`；低于最低档位记为 `underpowered` 并阻止正常完成；
 - 运行时档位高于请求或落入四级之外，记录为 `mismatch`，关闭台账前必须显式确认。
 
 ## 五、各类 Reviewer 默认路由
@@ -104,15 +104,19 @@ default_subagent_reasoning_effort = "medium"
 `review_controller.py dispatch` 记录：
 
 - 请求档位、模型和推理强度；
+- 最低可接受档位，默认等于请求档位；
 - `terra-high` 升级理由；
 - 相同 packet 重复派发理由；
 - 当前隔离等级和 packet hash。
 
-Reviewer 结果记录运行时模型（能够确认时）和状态：
+Reviewer 结果记录自报运行时模型和状态；自报不等于可信宿主证明：
 
-- `confirmed`：与请求一致；
-- `fallback`：使用更低批准档位；
+- `declared_match`：自报与请求一致；
+- `fallback_acceptable`：自报档位低于请求但不低于最低可接受档位；
+- `underpowered`：自报档位低于最低可接受档位，只能登记为 `incomplete`；
 - `unverified`：运行时信息无法确认；
 - `mismatch`：高于请求、超出 Luna/Terra 或使用未批准组合。
+
+新建 v5 台账必须先记录 `INLINE` 或 `DELEGATE`。`route --decision INLINE` 是正式不派生门：不创建轮次、不占 Reviewer 预算；改判必须在首轮前追加 `DELEGATE`，并引用前一决策、记录新证据和改判原因。迁移自旧版本的台账保留无决策兼容路径。Reviewer v3 结果拒绝 schema 外字段，按 `profile-weight-v1`（1/2/4/8）产生估算成本并投影到校准台账；请求档位、声明运行档位和成本依据分别保存。Reviewer 不能自行最终化归因，主协调 Agent 必须在修复验证后通过 `finalize-calibration` 携带证据完成。缺失成本不按 0 处理，未最终化的数据不参与低收益判断。
 
 控制器能约束通过它登记的自动派发，但不能阻止工作流外手工启动更高模型。最终报告必须如实说明这一边界。
