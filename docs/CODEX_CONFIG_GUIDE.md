@@ -1,14 +1,16 @@
-# Codex 子 Agent 成本配置指南
+# V7.2 Codex 配置指南
 
-## 一、配置目标
+> 状态：`active`。本页只说明 V7.2 当前配置；安装、升级和恢复步骤以[安装与恢复](INSTALLATION_RECOVERY.md)为准。
 
-- 主 Agent 继续在 Codex 中选择 Terra 或其他模型；
-- 未显式指定的子 Agent 默认使用 Luna Medium；
-- 本 Skill 根据任务把少量子 Agent 升到 Terra Medium 或 Terra High；
-- 默认同时最多 3 个子 Agent；
-- 自动工作流最高不超过 Terra High。
+## 1. 配置边界
 
-## 二、找到配置文件
+- 主 Agent 继续使用请求方在 Codex 中选择的模型，本包不覆盖主模型；
+- 未显式指定的子 Agent 可以使用宿主默认值；
+- 本包自动派发只允许 Luna Low、Luna Medium、Terra Medium 和 Terra High；
+- Reviewer TOML 不写死模型或推理强度，由受控调度策略按任务选择；
+- 配置只表达请求意图，实际模型仍需可信宿主证据。
+
+## 2. 配置文件位置
 
 ### Windows PowerShell
 
@@ -16,45 +18,33 @@
 $env:USERPROFILE + "\.codex\config.toml"
 ```
 
-通常是：
-
-```text
-C:\Users\account-name\.codex\config.toml
-```
-
-### WSL / Linux / macOS
+### WSL、Linux 与 macOS
 
 ```bash
 ${CODEX_HOME:-$HOME/.codex}/config.toml
 ```
 
-通常是：
+Windows 和 WSL 可能使用不同账户目录。原生 Windows Codex 的 `CODEX_HOME` 必须解析为原生 Windows 路径，不能把 `/mnt/c/...` 字面值当作安装目标。
 
-```text
-~/.codex/config.toml
-```
+## 3. 修改前备份
 
-Codex 在 Windows 和 WSL 中运行时可能读取不同的账户目录。在哪个环境启动 Codex，就修改那个环境对应的配置文件。
-
-## 三、先备份
-
-### PowerShell
+PowerShell：
 
 ```powershell
 $path = "$env:USERPROFILE\.codex\config.toml"
-Copy-Item $path "$path.bak-$(Get-Date -Format yyyyMMdd-HHmmss)" -ErrorAction SilentlyContinue
+Copy-Item -LiteralPath $path -Destination "$path.bak-$(Get-Date -Format yyyyMMdd-HHmmss)" -ErrorAction SilentlyContinue
 ```
 
-### Bash
+Bash：
 
 ```bash
 path="${CODEX_HOME:-$HOME/.codex}/config.toml"
 [ -f "$path" ] && cp "$path" "$path.bak-$(date +%Y%m%d-%H%M%S)"
 ```
 
-## 四、合并 `[agents]` 配置
+## 4. 子 Agent 默认配置
 
-配置文件中只能保留一个 `[agents]` 表。已有 `[agents]` 时修改其中字段，不要再追加第二个同名表。
+配置文件中只能保留一个 `[agents]` 表。已有该表时合并字段，不要追加第二个同名表。
 
 ```toml
 [agents]
@@ -64,21 +54,14 @@ default_subagent_model = "gpt-5.6-luna"
 default_subagent_reasoning_effort = "medium"
 ```
 
-字段含义：
+这些值是宿主默认值，不会阻止显式派发选择其他允许档位。不要为了减少少量上下文而关闭中断消息；保留宿主默认行为有利于恢复和审计。
 
-- `enabled`：启用多 Agent；
-- `max_concurrent_threads_per_session`：限制并发子线程，不包含主 Agent；
-- `default_subagent_model`：未显式指定时使用 Luna；
-- `default_subagent_reasoning_effort`：未显式指定时使用 Medium。
+## 5. Reviewer 配置
 
-不建议为了节省极少量上下文而设置 `interrupt_message = false`。保留默认值 `true`，可让子 Agent 在模型上下文中感知任务被中断，有利于后续恢复和审计。
-
-## 五、不要在 Reviewer TOML 中写死模型
-
-保留以下文件中的动态行为：
+以下受管 Reviewer 文件应保持动态模型选择：
 
 ```text
-~/.codex/agents/cp-review-*.toml
+${CODEX_HOME:-$HOME/.codex}/agents/cp-review-*.toml
 ```
 
 不要统一加入：
@@ -88,53 +71,33 @@ model = "gpt-5.6-terra"
 model_reasoning_effort = "high"
 ```
 
-Agent 文件一旦写死模型或强度，会优先于 spawn 和 `[agents]` 默认值，导致 Luna 降级与四级路由失效。
+写死模型会覆盖受控调度和 `[agents]` 默认值，破坏 Luna 到 Terra High 的逐级路由。
 
-## 六、安装或更新本包
+## 6. Plugin 与 Hook
 
-在解压后的安装包根目录执行：
+V7.2 使用 Codex CLI 0.152.1 的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.2.0`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
 
-### PowerShell
+Plugin 通过 `hooks/hooks.json` 提供六个 Hook。Windows 入口 `hooks\cp_hook.cmd` 会选择可用的 Python 启动器，不需要额外创建 `python3.exe` 垫片。SessionEnd 的宿主预算保持三秒，只执行有界签名入队，并在 Hook 预算外启动延迟封印。
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-user.ps1
-powershell -ExecutionPolicy Bypass -File .\scripts\verify-user-install.ps1
-```
-
-### Bash
-
-```bash
-bash ./scripts/install-user.sh
-bash ./scripts/verify-user-install.sh
-```
-
-安装脚本会更新受管的 `AGENTS.md`、Skills 和自定义 Reviewer，但不会自动修改现有 `config.toml`。
-
-## 七、重启 Codex
-
-完全关闭并重新打开 Codex App、CLI 会话或 IDE 扩展。Skill 文件通常会自动检测，但全局配置和 Agent 文件建议重启后验证。
-
-## 八、验证配置
-
-1. 主会话通过 `/model` 确认仍使用当前选择的主模型，例如 Terra Medium。
-2. 让 Codex执行一个明确的小型只读任务，并需使用一个 Luna Reviewer。
-3. 查看子 Agent 线程或活动面板，确认没有无理由启动大量 Reviewer。
-4. 使用复审控制器的 `status` 查看请求档位分布。
-
-示例：
-
-```bash
-python3 ~/.codex/skills/multi-agent-independent-review/scripts/review_controller.py status \
-  --review-dir /path/to/external-memory/reviews/FB-001
-```
-
-状态中应看到类似：
+## 7. 自动模型上限
 
 ```text
-模型档位分布: {"luna-medium": 1, "terra-medium": 1}
-Terra High Reviewer: 0 / 1
+gpt-5.6-luna / low
+gpt-5.6-luna / medium
+gpt-5.6-terra / medium
+gpt-5.6-terra / high
 ```
 
-## 九、配置边界
+自动流程对显式 Sol、`xhigh`、`max`、`ultra`、未知模型和超过 Terra High 的配置失败关闭。未显式指定自动模型时可以使用宿主默认值，但不能把请求值或诊断字段当作实际运行模型证明。
 
-`[agents]` 中的模型和强度是默认值，显式 spawn 可以覆盖。V5.0 通过 Skill 规则和 `review_controller.py` 限制本工作流的自动派发，但它不是 Codex 平台级模型 allowlist；外部手工绕过控制器启动更高模型时，包无法从底层阻止，只能在流程审计中识别和报告。
+## 8. 重新加载与验证
+
+配置或 Reviewer 文件变化后，完全关闭并重新打开 Codex App、CLI 会话或 IDE 扩展，再检查：
+
+1. `/model` 仍显示请求方选择的主模型；
+2. `codex plugin list --json` 读回目标 Plugin 的安装、启用和版本；
+3. 新任务能够发现十个 V7.2 Skill 和七个 Reviewer；
+4. 小型只读复审没有无理由启动大量 Reviewer；
+5. 复审结果分别记录请求模型、实际模型证据与隔离等级。
+
+完整安装、`doctor`、dry-run、verify 和恢复流程见[安装与恢复](INSTALLATION_RECOVERY.md)。

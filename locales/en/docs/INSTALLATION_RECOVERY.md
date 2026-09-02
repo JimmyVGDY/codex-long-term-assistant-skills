@@ -1,6 +1,6 @@
 # V7.2 Installation, Validation, and Recovery
 
-Chinese: [`INSTALLATION_RECOVERY.md`](INSTALLATION_RECOVERY.md)
+Chinese: [`INSTALLATION_RECOVERY.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/INSTALLATION_RECOVERY/)
 
 ## Preconditions
 

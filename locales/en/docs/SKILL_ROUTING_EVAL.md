@@ -41,7 +41,7 @@ python3 scripts/routing-eval.py evaluate --results routing-observations.json
 
 Visibility of implicit Skill activation depends on the client. When it cannot be observed directly, ask the main agent in test mode to report only its activation plan without executing the task. This remains model output and does not replace sampling actual behavior.
 
-## V4.2 Isolation and Model-Routing Cases
+## Isolation and Model-Routing Cases
 
 The routing set adds:
 

@@ -46,6 +46,9 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.tabbed:
@@ -77,8 +80,8 @@ nav:
           - Codex 配置: zh-CN/docs/CODEX_CONFIG_GUIDE.md
           - 项目上下文与接入: zh-CN/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
       - 架构与治理:
-          - V7 通用领域 Skill 架构: zh-CN/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
-          - V6 架构: zh-CN/docs/V6_ARCHITECTURE.md
+          - V7.2 当前系统架构: zh-CN/docs/SYSTEM_ARCHITECTURE.md
+          - V7.2 领域 Skill 架构: zh-CN/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
           - 模型路由与成本: zh-CN/docs/MODEL_ROUTING_AND_COST_POLICY.md
           - Reviewer 隔离: zh-CN/docs/REVIEWER_RUNTIME_ISOLATION.md
           - Skill 触发矩阵: zh-CN/docs/SKILL_TRIGGER_MATRIX.md
@@ -100,8 +103,8 @@ nav:
           - Codex configuration: en/docs/CODEX_CONFIG_GUIDE.md
           - Project context and onboarding: en/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
       - Architecture and governance:
-          - V7 general-domain Skill architecture: en/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
-          - V6 architecture: en/docs/V6_ARCHITECTURE.md
+          - V7.2 current system architecture: en/docs/SYSTEM_ARCHITECTURE.md
+          - V7.2 domain Skill architecture: en/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
           - Model routing and cost: en/docs/MODEL_ROUTING_AND_COST_POLICY.md
           - Reviewer isolation: en/docs/REVIEWER_RUNTIME_ISOLATION.md
           - Skill trigger matrix: en/docs/SKILL_TRIGGER_MATRIX.md

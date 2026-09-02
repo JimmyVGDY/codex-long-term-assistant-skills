@@ -1,8 +1,10 @@
-# V5.1 自观察与受控自进化架构
+# V7.2 当前自观察与受控演进架构
+
+> 状态：`active`。本页描述 V7.2.0 当前行为；Evolution 组件 Manifest 的 `5.1.0` 和默认策略 `v6.5-default-1` 是内部合同版本。
 
 ## 1. 设计目标
 
-V5.1 的目标不是让 Agent 任意重写自身，而是建立一条可审计、可停止、可回滚的优化决策链：
+当前机制不允许 Agent 任意重写自身，而是建立一条可审计、可停止、可回滚的优化决策链：
 
 ```mermaid
 flowchart TD
@@ -71,7 +73,7 @@ runtime/cp_runtime/evolution/
 
 ## 4. 观察指标
 
-V5.1 当前能够确定性聚合：
+当前运行时能够确定性聚合：
 
 - 已知结果成功率与非成功率；
 - 推荐模型与实际模型的向上升级率；
@@ -83,6 +85,8 @@ V5.1 当前能够确定性聚合：
 - 数据源数量、观察窗口和缺少 Task ID 的记录。
 
 没有真实数据的字段不会被推断。无法确认“某能力本应被调用但未调用”时，不会仅凭 `usageCount=0` 自动生成退役提案。
+
+V7.2 按信号分别评估证据充足性：模型升级依赖实际模型覆盖，负面结果依赖已知终态覆盖，路由偏差依赖明确路由观察，Reviewer 收益依赖稳定身份与归因覆盖。某个信号证据不足时只阻断该信号，不无条件否决其他证据充分的候选。
 
 ## 5. 置信度
 
@@ -139,7 +143,7 @@ DEFER
 
 每个决策必须记录明确 Actor 和不少于 10 个字符的理由。
 
-`ACCEPT` 不会改变提案中的 `execution_authorization`，也不会调用任何修改函数。V5.1 CLI 没有 `execute`、`apply`、`autofix` 或 `auto-accept` 子命令。
+`ACCEPT` 不会改变提案中的 `execution_authorization`，也不会调用任何修改函数。当前 CLI 没有 `execute`、`apply`、`autofix` 或 `auto-accept` 子命令。
 
 ## 8. 完整性
 
@@ -174,9 +178,9 @@ record_hash
 - 所有策略字段采用白名单，未知字段失败；
 - 系统没有网络调用、模型调用和业务仓库写入接口。
 
-## 10. 与 V5.0 的关系
+## 10. 组件合同与包版本
 
-V5.0 提供：
+当前包版本 V7.2.0 继续使用以下基础执行合同：
 
 ```text
 Project Profile / Project State
@@ -188,7 +192,7 @@ Checkpoint / Memory Projection
 Finalization Integrity
 ```
 
-V5.1 在此基础上增加：
+Evolution 组件在此基础上提供：
 
 ```text
 Observation
@@ -197,4 +201,4 @@ Proposal
 Human Decision Registry
 ```
 
-真正实施被接受的提案时，必须重新进入 V5.0 的任务执行链，而不是由 Evolution Runtime 越权执行。
+真正实施被接受的提案时，必须重新进入当前任务执行链，而不是由 Evolution Runtime 越权执行。组件合同版本用于兼容已有状态和数据，不代表网站或安装包仍停留在旧版本。

@@ -1,4 +1,6 @@
-# Skill Automatic Trigger and Composition Matrix (v3.3)
+# V7.2 Skill Automatic Trigger and Composition Matrix
+
+> Status: `active`. This page describes current V7.2 routing only. Earlier source versions and migration mappings do not define current behavior.
 
 ## 0. Minimum Sufficient Loading
 
@@ -180,18 +182,7 @@ Package validation proves the cases and tool are valid, not that local Codex act
 - High-risk, production, and strict read-only tasks require an entirely read-only parent or valid system-isolation evidence.
 - Self-review is not an independent Reviewer; logical read-only is not system isolation.
 
-## V4.1 General Frontend Routing
-
-| Scenario | Primary Skill | Supporting Skill |
-|---|---|---|
-| Vue/Nuxt, React/Next/Remix, Preact, Angular, Svelte, Astro/Ember, or legacy/static pages | `frontend-engineering` | Quality delivery when modifying |
-| Server logic in SSR/full-stack frontend | `frontend-engineering` | Relevant backend and data infrastructure |
-| Microfrontend/monorepo | `frontend-engineering` | Quality/documentation according to the change |
-| Hybrid Web, WebView, or renderer | `frontend-engineering` | Review native bridge, main process, and system capability separately |
-| Electron/Tauri main process or native mobile | Do not use `frontend-engineering` | Choose system/backend/security capabilities |
-| Pure Node.js backend API/worker | Do not use `frontend-engineering` | `backend-engineering`; add data infrastructure for databases or messaging |
-
-## V7 Four Primary Domains
+## 8. V7.2 Four Primary Domains
 
 | Scenario | Primary Skill | Optional support |
 |---|---|---|
@@ -201,3 +192,14 @@ Package validation proves the cases and tool are valid, not that local Codex act
 | Databases, caches, messaging, search/vector storage, files, GPU resources, containers, and networks | `data-middleware-infrastructure` | Backend for application callers; AI for AI semantics |
 
 Choose one primary domain per phase. Python does not imply AI, an AI project name does not imply the current task is AI work, and `package.json` does not imply frontend. A pure Node.js server routes to general backend.
+
+### Detailed frontend-domain routing
+
+| Scenario | Primary Skill | Supporting Skill |
+|---|---|---|
+| Vue/Nuxt, React/Next/Remix, Preact, Angular, Svelte, Astro/Ember, or legacy/static pages | `frontend-engineering` | Quality delivery when modifying |
+| Server logic in SSR/full-stack frontend | `frontend-engineering` | Relevant backend and data infrastructure |
+| Microfrontend/monorepo | `frontend-engineering` | Quality/documentation according to the change |
+| Hybrid Web, WebView, or renderer | `frontend-engineering` | Review native bridge, main process, and system capability separately |
+| Electron/Tauri main process or native mobile | Do not use `frontend-engineering` | Choose system/backend/security capabilities |
+| Pure Node.js backend API/worker | Do not use `frontend-engineering` | `backend-engineering`; add data infrastructure for databases or messaging |

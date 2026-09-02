@@ -4,7 +4,16 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Unreleased
 
-None.
+### Changed
+
+- Aligned the bilingual site's current V7.2 system architecture, domain routing, configuration, controlled-evolution, and authoritative-source documentation. Earlier versions now appear only for migration or historical evidence.
+- Added prominent bilingual notices to historical detail pages during site generation and excluded those pages from default site search while keeping current and release-archive indexes searchable.
+
+### Fixed
+
+- Removed historical-version labels mixed into current navigation and specifications, and replaced a dead command that referenced a removed validator.
+- Reconciled the previously divergent Chinese and English Codex configuration guides and added regression gates for the current-document inventory, historical isolation, and referenced public scripts.
+- Fixed self-referential Chinese links on current English pages, Unicode heading anchors, and a stale table label; version changes now trigger Pages and fail closed when site entry points drift from the manifest.
 
 ## 7.2.0 - 2026-09-02
 

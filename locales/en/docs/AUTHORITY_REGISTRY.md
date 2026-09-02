@@ -1,4 +1,6 @@
-# V5.0 Authoritative Source Registry
+# V7.2 Current Authoritative Source Registry
+
+> Status: `active`. The files below are the current fact owners; the version that first introduced them does not limit their current scope.
 
 ## 1. Principle
 

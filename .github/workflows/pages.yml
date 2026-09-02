@@ -8,6 +8,7 @@ on:
       - "README.en.md"
       - "CHANGELOG.md"
       - "CHANGELOG.en.md"
+      - "manifest.json"
       - "docs/**"
       - "locales/en/docs/**"
       - ".github/docs-site/**"

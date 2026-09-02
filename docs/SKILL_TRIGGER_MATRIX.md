@@ -1,4 +1,6 @@
-# Skill 自动触发与组合矩阵（v3.3）
+# V7.2 Skill 自动触发与组合矩阵
+
+> 状态：`active`。本页只描述 V7.2 当前路由；旧版本来源与迁移映射不作为现行规则。
 
 ## 零、最小充分加载策略
 
@@ -183,18 +185,7 @@ python3 scripts/routing-eval.py evaluate --results routing-observations.json
 - 高风险、生产和严格只读任务必须使用整体只读父会话或有效系统隔离证据；
 - 自查不能冒充独立 Reviewer，逻辑只读不能冒充系统隔离。
 
-## V4.1 通用前端路由
-
-| 场景 | 主 Skill | 辅助 Skill |
-|---|---|---|
-| Vue/Nuxt、React/Next/Remix、Preact、Angular、Svelte、Astro/Ember、传统/静态页面 | `frontend-engineering` | 修改时质量交付 |
-| SSR/全栈前端服务端逻辑 | `frontend-engineering` | 对应后端与数据基础设施 |
-| 微前端/Monorepo | `frontend-engineering` | 按修改组合质量/文档 |
-| Hybrid Web / WebView / Renderer | `frontend-engineering` | 原生桥、主进程和系统能力另行审查 |
-| Electron/Tauri 主进程、原生移动端 | 不使用 `frontend-engineering` | 按系统/后端/安全边界选择能力 |
-| 纯 Node.js 后端 API/Worker | 不使用 `frontend-engineering` | `backend-engineering`；涉及数据库/MQ 时组合数据基础设施 |
-
-## V7 四主领域路由
+## 八、V7.2 四主领域路由
 
 | 场景 | 主 Skill | 可选支撑 Skill |
 |---|---|---|
@@ -204,3 +195,14 @@ python3 scripts/routing-eval.py evaluate --results routing-observations.json
 | 数据库、缓存、MQ、搜索/向量存储、文件、GPU 资源、容器和网络 | `data-middleware-infrastructure` | 应用调用方组合后端；AI 语义组合 AI |
 
 同一阶段只选一个主领域。项目使用 Python 不等于 AI，项目名称包含 AI 也不等于当前任务应触发 AI；`package.json` 不等于前端，纯 Node.js 服务端必须路由通用后端。
+
+### 前端领域细化路由
+
+| 场景 | 主 Skill | 辅助 Skill |
+|---|---|---|
+| Vue/Nuxt、React/Next/Remix、Preact、Angular、Svelte、Astro/Ember、传统/静态页面 | `frontend-engineering` | 修改时质量交付 |
+| SSR/全栈前端服务端逻辑 | `frontend-engineering` | 对应后端与数据基础设施 |
+| 微前端/Monorepo | `frontend-engineering` | 按修改组合质量/文档 |
+| Hybrid Web / WebView / Renderer | `frontend-engineering` | 原生桥、主进程和系统能力另行审查 |
+| Electron/Tauri 主进程、原生移动端 | 不使用 `frontend-engineering` | 按系统/后端/安全边界选择能力 |
+| 纯 Node.js 后端 API/Worker | 不使用 `frontend-engineering` | `backend-engineering`；涉及数据库/MQ 时组合数据基础设施 |

@@ -1,8 +1,10 @@
-# V5.1 Self-Observation and Controlled Evolution Architecture
+# V7.2 Current Self-Observation and Controlled Evolution Architecture
+
+> Status: `active`. This page describes current V7.2.0 behavior. `5.1.0` in the Evolution component manifest and the default policy `v6.5-default-1` are internal contract versions.
 
 ## 1. Design Objective
 
-V5.1 does not allow an agent to rewrite itself at will. It establishes an optimization decision chain that is auditable, stoppable, and reversible:
+The current mechanism does not allow an agent to rewrite itself at will. It establishes an optimization decision chain that is auditable, stoppable, and reversible:
 
 ```mermaid
 flowchart TD
@@ -71,7 +73,7 @@ Any malformed line causes fail-closed behavior. The runtime never skips a bad li
 
 ## 4. Observation Metrics
 
-V5.1 can currently aggregate these metrics deterministically:
+The current runtime can aggregate these metrics deterministically:
 
 - success and non-success rates among known outcomes;
 - escalation rate from recommended to actual model;
@@ -83,6 +85,8 @@ V5.1 can currently aggregate these metrics deterministically:
 - source count, observation window, and records without task IDs.
 
 Fields without real data are not inferred. If the runtime cannot establish that a capability should have been invoked, it does not generate a deprecation proposal from `usageCount=0` alone.
+
+V7.2 evaluates evidence sufficiency per signal: model escalation depends on actual-model coverage, negative outcomes depend on known terminal outcomes, routing deviation depends on explicit routing observations, and Reviewer yield depends on stable identity and attribution coverage. Insufficient evidence for one signal blocks only that signal rather than unconditionally rejecting other well-supported candidates.
 
 ## 5. Confidence Levels
 
@@ -139,7 +143,7 @@ DEFER
 
 Every decision must identify an actor and include a reason of at least ten characters.
 
-`ACCEPT` does not change the proposal's `execution_authorization` and does not call any mutation function. The V5.1 CLI has no `execute`, `apply`, `autofix`, or `auto-accept` command.
+`ACCEPT` does not change the proposal's `execution_authorization` and does not call any mutation function. The current CLI has no `execute`, `apply`, `autofix`, or `auto-accept` command.
 
 ## 8. Integrity
 
@@ -174,9 +178,9 @@ The runtime stops immediately after detecting tampering or corruption and does n
 - Allowlist every policy field and fail on unknown fields.
 - The system exposes no network call, model call, or business-repository write interface.
 
-## 10. Relationship to V5.0
+## 10. Component contracts and package version
 
-V5.0 provides:
+The current V7.2.0 package continues to use these foundational execution contracts:
 
 ```text
 Project Profile / Project State
@@ -188,7 +192,7 @@ Checkpoint / Memory Projection
 Finalization Integrity
 ```
 
-V5.1 adds:
+The Evolution component adds:
 
 ```text
 Observation
@@ -197,4 +201,4 @@ Proposal
 Human Decision Registry
 ```
 
-Implementing an accepted proposal must re-enter the V5.0 task execution chain. Evolution Runtime is never authorized to execute it directly.
+Implementing an accepted proposal must re-enter the current task execution chain. Evolution Runtime is never authorized to execute it directly. Component contract versions preserve compatibility with existing state and data; they do not mean the website or installed package remains on an earlier release.

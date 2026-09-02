@@ -3,6 +3,8 @@
 *.tar.gz
 _source_archives/
 .reconstruction-work/
+dist/
+.venv-docs/
 __pycache__/
 *.py[cod]
 .env

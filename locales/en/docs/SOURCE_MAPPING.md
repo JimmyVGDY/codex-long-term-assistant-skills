@@ -1,6 +1,6 @@
 # Mapping Source Rules to Codex V7.2 Resources
 
-| Rule or Capability | Codex V5.0 Target |
+| Rule or Capability | Codex V7.2 Resource |
 |---|---|
 | Global cross-project boundaries, authorization, and model routing | `global/AGENTS.md` |
 | General backend, including Java/Python/Node.js/Go/.NET/Rust guidance | `skills/backend-engineering/` |

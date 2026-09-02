@@ -6,6 +6,7 @@ English: Prepare isolated Chinese and English MkDocs sources for GitHub Pages.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -20,10 +21,78 @@ SITE_TEMPLATE = ROOT / ".github" / "docs-site"
 REPOSITORY_BLOB = "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/"
 MARKDOWN_LINK = re.compile(r"(!?\[[^\]\n]*\]\()([^)\n]+)(\))")
 HTML_LINK = re.compile(r"((?:href|src)=[\"'])([^\"']+)([\"'])", re.IGNORECASE)
+PACKAGE_VERSION = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"]
+CURRENT_RELEASE_DIRECTORY = f"v{PACKAGE_VERSION}"
+CURRENT_VERSION_SERIES = ".".join(PACKAGE_VERSION.split(".")[:2])
+CURRENT_DOCUMENTS = frozenset({
+    "README.md",
+    f"USER_GUIDE_V{CURRENT_VERSION_SERIES}.md",
+    "INSTALLATION_RECOVERY.md",
+    "CODEX_CONFIG_GUIDE.md",
+    "PROJECT_CONTEXT_AND_ONBOARDING.md",
+    "SYSTEM_ARCHITECTURE.md",
+    "V7_DOMAIN_SKILL_ARCHITECTURE.md",
+    "MODEL_ROUTING_AND_COST_POLICY.md",
+    "REVIEWER_RUNTIME_ISOLATION.md",
+    "SUBAGENT_INDEPENDENT_CONTEXT.md",
+    "SKILL_TRIGGER_MATRIX.md",
+    "SKILL_ROUTING_EVAL.md",
+    "SOURCE_MAPPING.md",
+    "APPROVAL_EVIDENCE_FINALIZATION.md",
+    "AUTHORITY_REGISTRY.md",
+    "evolution/CONTROLLED_EVOLUTION_OPERATIONS.md",
+    "evolution/SELF_EVOLUTION_ARCHITECTURE.md",
+    "VALIDATION_REPORT.md",
+    "releases/README.md",
+    "releases/RELEASE_AUTOMATION.md",
+    "history/README.md",
+    "history/RELEASE_ARCHIVES.md",
+    "history/GITHUB_RELEASES.md",
+})
 
 
 class DocumentationBuildError(RuntimeError):
     pass
+
+
+def validate_version_bound_sources() -> None:
+    """中文：确保当前站点入口与 manifest 版本一致，版本漂移时失败关闭。
+
+    English: Fail closed when a current site entry point drifts from the manifest version.
+    """
+    expected = {
+        ROOT / ".github" / "mkdocs.yml": (
+            f"USER_GUIDE_V{CURRENT_VERSION_SERIES}.md",
+            f"releases/{CURRENT_RELEASE_DIRECTORY}/RELEASE_NOTES.md",
+            f"V{CURRENT_VERSION_SERIES} current system architecture",
+        ),
+        ROOT / "locales" / "en" / ".github" / "mkdocs.yml": (
+            f"USER_GUIDE_V{CURRENT_VERSION_SERIES}.md",
+            f"releases/{CURRENT_RELEASE_DIRECTORY}/RELEASE_NOTES.md",
+            f"V{CURRENT_VERSION_SERIES} current system architecture",
+        ),
+        SITE_TEMPLATE / "index.md": (
+            f"V{PACKAGE_VERSION}",
+            f"USER_GUIDE_V{CURRENT_VERSION_SERIES}/",
+        ),
+        SITE_TEMPLATE / "index.en.md": (
+            f"V{PACKAGE_VERSION}",
+            f"USER_GUIDE_V{CURRENT_VERSION_SERIES}/",
+        ),
+        SITE_TEMPLATE / "javascripts" / "repository-facts.js": (
+            f'const RELEASE_VERSION = "v{PACKAGE_VERSION}";',
+        ),
+    }
+    missing: list[str] = []
+    for path, markers in expected.items():
+        text = path.read_text(encoding="utf-8-sig")
+        for marker in markers:
+            if marker not in text:
+                missing.append(f"{path.relative_to(ROOT).as_posix()}: {marker}")
+    if missing:
+        raise DocumentationBuildError(
+            "Version-bound documentation sources are inconsistent with manifest.json: "
+            + "; ".join(missing))
 
 
 def is_link(path: Path) -> bool:
@@ -87,6 +156,58 @@ def copy_english_pairs(source: Path, destination: Path) -> None:
         target = destination / normalized
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(path, target)
+
+
+def normalized_document_path(relative: Path) -> str:
+    """中文：把同级英文文件名归一为站点内的规范文档路径。
+
+    English: Normalize sibling English filenames to canonical site document paths.
+    """
+    value = relative.as_posix()
+    if value.endswith(".en.md"):
+        return value[:-6] + ".md"
+    return value
+
+
+def is_current_document(relative: Path) -> bool:
+    """中文：区分当前 V7.2 文档与只用于追溯的历史资料。
+
+    English: Separate current V7.2 documentation from historical reference material.
+    """
+    value = normalized_document_path(relative)
+    return value in CURRENT_DOCUMENTS or value.startswith(
+        f"releases/{CURRENT_RELEASE_DIRECTORY}/")
+
+
+def mark_historical_pages(output: Path) -> int:
+    """中文：为历史页增加醒目标记，并将其排除在默认站内搜索之外。
+
+    English: Mark historical pages prominently and exclude them from default site search.
+    """
+    notices = {
+        "zh-CN": (
+            '!!! warning "历史版本资料"\n'
+            f"    本页记录旧版本当时的设计、操作或验证事实，不是 V{PACKAGE_VERSION} 当前使用说明。"
+            "请从文档中心进入当前规范。\n\n"
+        ),
+        "en": (
+            '!!! warning "Historical version"\n'
+            f"    This page records design, operation, or validation facts from an earlier release. "
+            f"It is not current V{PACKAGE_VERSION} guidance. Start from the documentation hub for current instructions.\n\n"
+        ),
+    }
+    metadata = "---\nsearch:\n  exclude: true\n---\n\n"
+    marked = 0
+    for language, notice in notices.items():
+        docs_root = output / language / "docs"
+        for path in sorted(docs_root.rglob("*.md")):
+            relative = path.relative_to(docs_root)
+            if is_current_document(relative):
+                continue
+            original = path.read_text(encoding="utf-8-sig")
+            path.write_text(metadata + notice + original, encoding="utf-8", newline="\n")
+            marked += 1
+    return marked
 
 
 def rewrite_target(path: Path, output: Path, target: str) -> str:
@@ -163,6 +284,7 @@ def prepare(output: Path = DEFAULT_OUTPUT) -> dict[str, object]:
 
     English: Generate Chinese and English site sources containing only formal documentation.
     """
+    validate_version_bound_sources()
     output = output.resolve()
     reset_output(output)
     shutil.copyfile(SITE_TEMPLATE / "index.md", output / "index.md")
@@ -191,6 +313,7 @@ def prepare(output: Path = DEFAULT_OUTPUT) -> dict[str, object]:
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(reconstructed, target)
 
+    historical_markdown = mark_historical_pages(output)
     rewrite_site_links(output)
     markdown_files = list(output.rglob("*.md"))
     return {
@@ -199,6 +322,7 @@ def prepare(output: Path = DEFAULT_OUTPUT) -> dict[str, object]:
         "markdown_files": len(markdown_files),
         "chinese_markdown": len(list(chinese.rglob("*.md"))),
         "english_markdown": len(list(english.rglob("*.md"))),
+        "historical_markdown": historical_markdown,
     }
 
 

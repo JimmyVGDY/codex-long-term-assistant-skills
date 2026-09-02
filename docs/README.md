@@ -4,6 +4,8 @@ English: [README.en.md](README.en.md)
 
 本页按使用阶段组织 V7.2.0 的规范文档。历版报告与构建信息按版本集中保存，历史校验路径、引用关系与可复现证据继续保留。
 
+> 版本口径：V7.2.0 是当前包版本；TaskOutcomeEvent V2、组件 Manifest 和策略版本是协议或数据格式标识。旧包版本只在迁移说明和“发行与历史”中出现，不代表当前规则仍按旧版本运行。
+
 ## 开始使用
 
 - [V7.2 使用指南](USER_GUIDE_V7.2.md)
@@ -13,8 +15,8 @@ English: [README.en.md](README.en.md)
 
 ## 架构与策略
 
-- [V6 架构](V6_ARCHITECTURE.md)
-- [V7 领域 Skill 架构](V7_DOMAIN_SKILL_ARCHITECTURE.md)
+- [V7.2 当前系统架构](SYSTEM_ARCHITECTURE.md)
+- [V7.2 领域 Skill 架构](V7_DOMAIN_SKILL_ARCHITECTURE.md)
 - [模型路由与成本策略](MODEL_ROUTING_AND_COST_POLICY.md)
 - [Reviewer 运行时隔离](REVIEWER_RUNTIME_ISOLATION.md)
 - [子 Agent 独立上下文](SUBAGENT_INDEPENDENT_CONTEXT.md)

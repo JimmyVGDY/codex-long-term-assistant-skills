@@ -1,4 +1,6 @@
-# V5.1 Controlled Evolution Operations Manual
+# V7.2 Controlled Evolution Operations Manual
+
+> Status: `active`. This page applies to V7.2.0. The Evolution component manifest still uses contract version `5.1.0`, and the default policy is `v6.5-default-1`; neither value is the current package version.
 
 ## 1. When to Use It
 
@@ -34,6 +36,8 @@ Check:
 - whether unrelated historical records were included; and
 - whether each signal has enough independent evidence.
 
+Evidence sufficiency is evaluated per signal: model escalation requires actual-model coverage, negative outcomes require known terminal outcomes, routing deviation requires explicit routing observations, and Reviewer yield requires attributable results. Missing evidence for one signal does not unconditionally block another signal with sufficient evidence.
+
 ### Step 3: Persist Proposals
 
 ```bash
@@ -58,7 +62,17 @@ For every proposal, check whether:
 
 ### Step 5: Record the Decision
 
-Use `decide` to record `ACCEPT`, `REJECT`, or `DEFER`.
+Use `decide` to record `ACCEPT`, `REJECT`, or `DEFER`:
+
+```bash
+python scripts/evolution.py decide \
+  --project-id <project-id> \
+  --context-root <context-root> \
+  --proposal-id <proposal-id> \
+  --decision <accept|reject|defer> \
+  --actor <human-actor> \
+  --rationale "<human rationale of at least ten characters>"
+```
 
 ### Step 6: Create a Separate Implementation Task
 
@@ -117,17 +131,11 @@ Increase the limit only through controlled policy, or create a redacted aggregat
 ## 6. Validation Commands
 
 ```bash
-python3 -B scripts/validate-v51-evolution.py
-```
-
-Validate a project registry with:
-
-```bash
-python3 -B scripts/evolution.py validate \
+python scripts/evolution.py validate \
   --project-id <project-id> \
-  --context-root ~/.codex/project-context
+  --context-root <context-root>
 ```
 
 ## 7. Explicit Limitation
 
-V5.1 uses deterministic heuristics, not causal inference. It can identify stable patterns worth investigating or optimizing, but it cannot replace human understanding of business context, implementation details, production risk, and organizational constraints.
+The current analysis uses deterministic heuristics, not causal inference. It can identify stable patterns worth investigating or optimizing, but it cannot replace human understanding of business context, implementation details, production risk, and organizational constraints.

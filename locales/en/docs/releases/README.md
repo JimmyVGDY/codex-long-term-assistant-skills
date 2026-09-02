@@ -1,5 +1,7 @@
 # Release evidence archive
 
+V7.2.0 is the current release. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
+
 Chinese source: [README.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/releases/README.md)
 
 Release evidence is grouped by semantic version. Each directory contains only the notes, build metadata, audit, and validation material that actually exists for that release; absent evidence is not replaced with empty placeholders.

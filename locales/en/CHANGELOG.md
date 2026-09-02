@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Aligned the bilingual site's current V7.2 architecture, routing, configuration, and controlled-evolution documentation.
+- Marked historical detail pages and excluded them from default site search while retaining archive indexes.
+
+### Fixed
+
+- Removed historical-version labels mixed into current documentation and replaced a dead command that referenced a removed validator.
+- Reconciled the Chinese and English Codex configuration guides and added documentation regression gates.
+- Fixed current-page language links, Unicode anchors, and version-source drift checks for Pages.
+
 ## 7.2.0 - 2026-09-02
 
 ### Added

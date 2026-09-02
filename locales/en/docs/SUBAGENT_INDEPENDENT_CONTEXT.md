@@ -40,4 +40,4 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 
 ## Harness Principle
 
-V5.0 continues to use “a map, not a thousand-page manual”: global rules define boundaries and routing; Skills provide on-demand capability; scripts maintain state, evidence, idempotency, and gates; repositories and external memory retain verifiable facts.
+V7.2 follows “a map, not a thousand-page manual”: global rules define boundaries and routing; Skills provide on-demand capability; scripts maintain state, evidence, idempotency, and gates; repositories and external memory retain verifiable facts.

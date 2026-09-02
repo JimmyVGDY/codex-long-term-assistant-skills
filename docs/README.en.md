@@ -4,6 +4,8 @@ Chinese: [README.md](README.md)
 
 This page organizes the V7.2.0 documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
 
+> Version scope: V7.2.0 is the current package version. TaskOutcomeEvent V2, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
+
 ## Getting started
 
 - [V7.2 user guide](USER_GUIDE_V7.2.en.md)
@@ -13,8 +15,8 @@ This page organizes the V7.2.0 documentation by adoption stage. Historical repor
 
 ## Architecture and policy
 
-- [V6 architecture](V6_ARCHITECTURE.md)
-- [V7 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md)
+- [V7.2 current system architecture](SYSTEM_ARCHITECTURE.en.md)
+- [V7.2 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md)
 - [Model routing and cost policy](MODEL_ROUTING_AND_COST_POLICY.md)
 - [Reviewer runtime isolation](REVIEWER_RUNTIME_ISOLATION.md)
 - [Independent sub-agent context](SUBAGENT_INDEPENDENT_CONTEXT.md)

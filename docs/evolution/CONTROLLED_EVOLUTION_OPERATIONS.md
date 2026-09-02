@@ -1,4 +1,6 @@
-# V5.1 受控自进化操作手册
+# V7.2 受控演进操作手册
+
+> 状态：`active`。本页适用于 V7.2.0；Evolution 组件 Manifest 仍使用 `5.1.0` 合同版本，默认策略为 `v6.5-default-1`，两者都不是当前包版本。
 
 ## 1. 适用场景
 
@@ -34,6 +36,8 @@ python3 -B scripts/evolution.py run \
 - 是否出现不应纳入的历史记录；
 - 信号是否有足够独立 Evidence。
 
+证据充足性按信号分别判断：模型升级需要实际模型覆盖，负面结果需要已知终态覆盖，路由偏差需要明确路由观察，Reviewer 收益需要可归因结果。一个信号缺少证据不会无条件阻断其他证据充分的信号。
+
 ### 步骤三：持久化提案
 
 ```bash
@@ -58,7 +62,17 @@ python3 -B scripts/evolution.py run \
 
 ### 步骤五：记录决定
 
-使用 `decide` 记录 ACCEPT、REJECT 或 DEFER。
+使用 `decide` 记录 ACCEPT、REJECT 或 DEFER：
+
+```bash
+python scripts/evolution.py decide \
+  --project-id <project-id> \
+  --context-root <context-root> \
+  --proposal-id <proposal-id> \
+  --decision <accept|reject|defer> \
+  --actor <human-actor> \
+  --rationale "<至少十个字符的人工理由>"
+```
 
 ### 步骤六：另建实施任务
 
@@ -117,17 +131,11 @@ python3 -B scripts/evolution.py run \
 ## 6. 验证命令
 
 ```bash
-python3 -B scripts/validate-v51-evolution.py
-```
-
-项目注册表验证：
-
-```bash
-python3 -B scripts/evolution.py validate \
+python scripts/evolution.py validate \
   --project-id <project-id> \
-  --context-root ~/.codex/project-context
+  --context-root <context-root>
 ```
 
 ## 7. 明确限制
 
-V5.1 的分析规则是确定性启发式，不等同于因果推断。它可以指出值得调查或优化的稳定模式，但不能替代人工理解业务背景、代码实现、生产风险和组织约束。
+当前分析规则是确定性启发式，不等同于因果推断。它可以指出值得调查或优化的稳定模式，但不能替代人工理解业务背景、代码实现、生产风险和组织约束。

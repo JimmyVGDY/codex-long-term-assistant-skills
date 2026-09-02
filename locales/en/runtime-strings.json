@@ -9,6 +9,9 @@
     "scripts/build-docs-site.py": {
       "plain": {
         "准备 GitHub Pages 文档源 / Prepare GitHub Pages documentation source": "Prepare GitHub Pages documentation source"
+      },
+      "fstring": {
+        "'!!! warning \"历史版本资料\"\\n'\n            f\"    本页记录旧版本当时的设计、操作或验证事实，不是 V{PACKAGE_VERSION} 当前使用说明。\"\n            \"请从文档中心进入当前规范。\\n\\n\"": "'!!! warning \\\"Historical version\\\"\\n'\n            f\"    This page records design, operation, or validation facts from an earlier release. \"\n            f\"It is not current V{PACKAGE_VERSION} guidance. Start from the documentation hub for current instructions.\\n\\n\""
       }
     },
     "hooks/cp_hook.py": {
