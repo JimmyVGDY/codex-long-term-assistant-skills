@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "profile_id": "v72-representative-host-routing",
+  "description": "真实 Codex 宿主代表性路由验收：覆盖四个主领域、四个支撑能力、跨领域组合、负向前端边界和最小充分加载。",
+  "required_case_ids": [
+    "java-concept-readonly",
+    "database-index-analysis",
+    "pure-ai-structured-output",
+    "vue-fix-build-generic-frontend",
+    "metrics-only-analysis",
+    "architecture-document",
+    "long-running-refactor",
+    "strict-readonly-review-gate",
+    "node-backend-not-frontend",
+    "ai-gpu-worker-boundary",
+    "readme-punctuation"
+  ],
+  "minimum_pass_rate": 1.0,
+  "minimum_independent_tasks": 11,
+  "required_evidence_level": "host_final_report"
+}

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "V7.1 路由回归：覆盖四个通用主领域、最小充分加载、执行档位、Luna/Terra 子 Agent 分级、独立上下文 Reviewer、证据有效性和跨技术栈识别。",
+  "description": "V7.2 路由回归：覆盖四个通用主领域、最小充分加载、执行档位、Luna/Terra 子 Agent 分级、独立上下文 Reviewer、证据有效性和跨技术栈识别。",
   "cases": [
     {
       "id": "java-concept-readonly",

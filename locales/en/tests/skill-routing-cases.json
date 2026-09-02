@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "V7.1 routing regression for four general primary domains, minimum sufficient loading, execution profiles, Luna/Terra subagent tiers, independent Reviewer context, evidence validity, and cross-stack detection.",
+  "description": "V7.2 routing regression for four general primary domains, minimum sufficient loading, execution profiles, Luna/Terra subagent tiers, independent Reviewer context, evidence validity, and cross-stack detection.",
   "cases": [
     {
       "id": "java-concept-readonly",

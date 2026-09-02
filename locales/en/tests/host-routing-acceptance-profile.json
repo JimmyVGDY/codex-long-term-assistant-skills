@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "profile_id": "v72-representative-host-routing",
+  "description": "Representative real Codex host routing acceptance covering four primary domains, four supporting capabilities, cross-domain combinations, a negative frontend boundary, and minimal sufficient activation.",
+  "required_case_ids": [
+    "java-concept-readonly",
+    "database-index-analysis",
+    "pure-ai-structured-output",
+    "vue-fix-build-generic-frontend",
+    "metrics-only-analysis",
+    "architecture-document",
+    "long-running-refactor",
+    "strict-readonly-review-gate",
+    "node-backend-not-frontend",
+    "ai-gpu-worker-boundary",
+    "readme-punctuation"
+  ],
+  "minimum_pass_rate": 1.0,
+  "minimum_independent_tasks": 11,
+  "required_evidence_level": "host_final_report"
+}
