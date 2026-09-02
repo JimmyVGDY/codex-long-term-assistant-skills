@@ -17,6 +17,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 - Plugin 模式现在事务化安装并校验账户级 `cp-runtime.py` 与 `evolution.py`；两个启动器在账户 runtime 不可读时，会按安装状态精确回退到当前版本 Plugin cache，避免受限任务误报 `cp_runtime` 模块缺失。
 - 在 Windows 原生 Codex CLI 0.152.1 上保留 Marketplace/Plugin 命令和 `plugin list --json` 核心契约校验。
+- 将完整包验证的单命令超时从 300 秒提高到 600 秒，避免 GitHub Windows Runner 在测试通过前被固定时限中断。
 
 ## 7.0.0 - 2026-09-01
 

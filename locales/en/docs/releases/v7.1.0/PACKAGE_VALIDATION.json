@@ -24,9 +24,9 @@
   "delayed_session_end_seal": "PASS (tests/test_v66_runtime_deepening.py)",
   "reviewer_calibration_v2": "PASS (tests/test_v66_runtime_deepening.py)",
   "event_archive_capacity_health": "PASS (tests/test_v66_runtime_deepening.py)",
-  "unit_regression_tests": "PASS (129 package + 6 runtime)",
+  "unit_regression_tests": "PASS (130 package + 6 runtime)",
   "validation_evidence": {
-    "package_test_count": 129,
+    "package_test_count": 130,
     "runtime_test_count": 6,
     "package_test_command": "python -m unittest discover -s tests -p test_*.py",
     "runtime_test_command": "python -m unittest discover -s runtime/tests -p test_*.py",

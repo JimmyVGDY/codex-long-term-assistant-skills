@@ -10,7 +10,7 @@ Validation date: 2026-09-02
 
 Package validation and the complete local installation both passed:
 
-- All 129 package tests, 6 runtime tests, and 45 Skill-routing cases passed, together with semantic lint, strict localization, Markdown-link, and payload-manifest checks.
+- All 130 package tests, 6 runtime tests, and 45 Skill-routing cases passed, together with semantic lint, strict localization, Markdown-link, and payload-manifest checks.
 - Chinese and English release archives each completed two clean builds with byte-identical results per locale.
 - Native Codex CLI `0.152.1` upgraded the account Plugin from `7.0.0` to `7.1.0`; both `install` and `verify` succeeded and no upgrade transaction remains active.
 - `codex plugin list --json` read back the target Plugin with `installed=true`, `enabled=true`, and `version=7.1.0`.
@@ -27,4 +27,4 @@ Package validation and the complete local installation both passed:
 - `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.1.0`
 - Account-level `cp-runtime.py` and `evolution.py` run, while all six Hooks and managed global rules load consistently
 
-At the time of this report, commit, push, tag, GitHub Release, and public artifacts have not yet been performed; each state requires its own action and readback.
+Commit, push, tag, GitHub Release, and public artifacts are outside package-validation scope; each state requires its own Git or GitHub readback after the corresponding action.

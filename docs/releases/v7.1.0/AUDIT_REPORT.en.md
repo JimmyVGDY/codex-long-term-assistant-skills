@@ -8,7 +8,7 @@ The local pre-release audit passed with no high-risk issue blocking commit. The 
 
 The stable-diff review covered version contracts, installation transactions and rollback boundaries, account-tool source resolution, payload identity, bilingual release surfaces, and historical-evidence isolation. Unknown Codex versions still fail closed, while Proposal `execution_authorization=NONE` and the automatic model ceiling remain unchanged.
 
-This conclusion is an isolated second review by the primary agent, not an independent Reviewer. It confirms code, tests, and local installation only; commit, push, tag, public release, and downloaded-artifact verification still require separate execution and readback.
+This conclusion is an isolated second review by the primary agent, not an independent Reviewer. It confirms code, tests, and local installation only; commit, push, tag, public release, and downloaded-artifact verification remain independent states that require separate readback.
 
 ## Audit scope
 

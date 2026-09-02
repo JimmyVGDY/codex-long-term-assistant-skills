@@ -192,6 +192,12 @@ class V71BilingualReleaseTests(unittest.TestCase):
         output = (result.stdout + result.stderr).decode("utf-8", errors="replace")
         self.assertEqual(0, result.returncode, output)
 
+    def test_windows_ci_validation_timeout_allows_slow_full_suite(self) -> None:
+        source = (ROOT / "scripts" / "validate-v71.py").read_text(encoding="utf-8")
+        match = re.search(r"COMMAND_TIMEOUT_SECONDS\s*=\s*(\d+)", source)
+        self.assertIsNotNone(match)
+        self.assertGreaterEqual(int(match.group(1)), 600)
+
     def test_english_hook_returns_english_model_gate_reason(self) -> None:
         payload = {"hook_event_name": "PreToolUse", "tool_name": "Agent",
                    "tool_input": {"model": "gpt-5.6-sol", "reasoning_effort": "high"}}

@@ -4,12 +4,14 @@ import argparse, json, re, subprocess, sys, tomllib
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
+COMMAND_TIMEOUT_SECONDS=600
 parser=argparse.ArgumentParser(description='V7.1 package-only validation')
 parser.add_argument('--output')
 arguments=parser.parse_args()
 
 def run(cmd):
-    result=subprocess.run(cmd,cwd=ROOT,text=True,encoding='utf-8',errors='replace',capture_output=True,timeout=300)
+    result=subprocess.run(cmd,cwd=ROOT,text=True,encoding='utf-8',errors='replace',capture_output=True,
+                          timeout=COMMAND_TIMEOUT_SECONDS)
     if result.returncode:
         raise RuntimeError('命令失败: %s\n%s\n%s' % (' '.join(cmd),result.stdout,result.stderr))
     return (result.stdout+result.stderr).strip()

@@ -10,7 +10,7 @@ English: [VALIDATION_REPORT.en.md](VALIDATION_REPORT.en.md)
 
 包内验证与本机完整安装均已通过：
 
-- package 测试 129 项、runtime 测试 6 项、Skill 路由 45 项全部通过；语义检查、严格本地化检查、Markdown 链接检查和 payload manifest 检查通过。
+- package 测试 130 项、runtime 测试 6 项、Skill 路由 45 项全部通过；语义检查、严格本地化检查、Markdown 链接检查和 payload manifest 检查通过。
 - 中文和英文发行包分别完成两次全新构建，同语言归档逐字节一致。
 - 本机 Codex CLI `0.152.1` 完成账户级 Plugin 从 `7.0.0` 升级到 `7.1.0`，`install` 与 `verify` 均返回成功，升级事务已清空。
 - `codex plugin list --json` 精确读回目标 Plugin `installed=true`、`enabled=true`、`version=7.1.0`。
@@ -27,4 +27,4 @@ English: [VALIDATION_REPORT.en.md](VALIDATION_REPORT.en.md)
 - `codex plugin list --json` 精确读回 `installed=true`、`enabled=true`、`version=7.1.0`
 - 账户级 `cp-runtime.py`、`evolution.py` 可运行，六类 Hook 与受管全局规则加载一致
 
-截至本报告形成时，提交、推送、标签、GitHub Release 与公开制品尚未执行；这些状态必须在各自动作后单独读回。
+提交、推送、标签、GitHub Release 与公开制品不属于包内验证范围；这些状态必须在各自动作后从 Git 或 GitHub 单独读回。

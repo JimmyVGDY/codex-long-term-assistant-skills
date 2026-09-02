@@ -17,6 +17,7 @@ None.
 
 - Plugin mode now transactionally installs and verifies the account-level `cp-runtime.py` and `evolution.py` launchers. When the account runtime is unreadable, both launchers resolve the exact active Plugin-cache version from installation state instead of reporting a missing `cp_runtime` module.
 - Retained Marketplace/Plugin command and core `plugin list --json` contract checks on native Windows Codex CLI 0.152.1.
+- Increased the complete-package command timeout from 300 to 600 seconds so slower GitHub Windows runners are not terminated before the test suite finishes.
 
 ## 7.0.0 - 2026-09-01
 

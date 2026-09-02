@@ -11,6 +11,7 @@
 
 - Plugin and standalone modes transactionally install, verify, and remove the account-level `cp-runtime.py` and `evolution.py` launchers.
 - Restricted tasks resolve the exact active Plugin-cache runtime from installation state.
+- Increased the complete-package command timeout from 300 to 600 seconds so slower GitHub Windows runners can finish the test suite.
 
 ## 7.0.0 - 2026-09-01
 

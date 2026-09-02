@@ -4,6 +4,6 @@ The local pre-release audit passed with no high-risk issue blocking commit. The 
 
 The stable-diff review covered the Codex CLI 0.152.1 Plugin contract, fail-closed unknown versions, account-tool lifecycle, current 7.1.0 metadata, historical-evidence isolation, and independent delivery states. Proposal `execution_authorization=NONE` and the automatic model ceiling remain unchanged.
 
-This is an isolated second review by the primary agent, not an independent Reviewer. Commit, push, tag, public release, and downloaded-artifact verification still require separate execution and readback.
+This is an isolated second review by the primary agent, not an independent Reviewer. Commit, push, tag, public release, and downloaded-artifact verification remain independent states that require separate readback.
 
 Historical `docs/releases/v7.0.0` content remains unchanged and does not serve as current 7.1.0 acceptance evidence.
