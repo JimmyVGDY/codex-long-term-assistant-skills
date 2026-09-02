@@ -4,7 +4,7 @@ import argparse, json, re, subprocess, sys, tomllib
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-parser=argparse.ArgumentParser(description='V7.0 package-only validation')
+parser=argparse.ArgumentParser(description='V7.1 package-only validation')
 parser.add_argument('--output')
 arguments=parser.parse_args()
 
@@ -21,7 +21,7 @@ for path in ROOT.rglob('*.toml'):
     tomllib.loads(path.read_text(encoding='utf-8-sig'))
 run([sys.executable,'-m','compileall','-q',str(ROOT/'runtime'),str(ROOT/'scripts'),str(ROOT/'hooks')])
 run([sys.executable,str(ROOT/'scripts'/'payload-integrity.py'),'verify','--root',str(ROOT),
-     '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.0.0'])
+     '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.1.0'])
 run([sys.executable,str(ROOT/'scripts'/'semantic-lint.py')])
 run([sys.executable,str(ROOT/'scripts'/'routing-eval.py'),'validate'])
 model_gate=run([sys.executable,str(ROOT/'scripts'/'model-gate-acceptance.py')])
@@ -35,7 +35,7 @@ def test_count(output):
 
 package_test_count=test_count(tests); runtime_test_count=test_count(runtime_tests)
 result={
- 'ok':True,'evidence_scope':'package-only','version':'7.0.0','skill_count':10,'reviewer_count':7,
+ 'ok':True,'evidence_scope':'package-only','version':'7.1.0','skill_count':10,'reviewer_count':7,
  'hooks':['UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'],
  'task_outcome_event':'2.0','execution_authorization':'NONE','automatic_self_modification':False,
  'requested_model_policy':'PASS','runtime_model_evidence':'UNAVAILABLE',
@@ -53,5 +53,5 @@ result={
 serialized=json.dumps(result,ensure_ascii=False,indent=2)
 if arguments.output:
     output=Path(arguments.output); output.parent.mkdir(parents=True,exist_ok=True)
-    output.write_text(serialized+'\n',encoding='utf-8')
+    output.write_text(serialized+'\n',encoding='utf-8',newline='\n')
 print(serialized)

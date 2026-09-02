@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 def _load_builder():
-    spec = importlib.util.spec_from_file_location("build_release_v70", ROOT / "scripts" / "build-release.py")
+    spec = importlib.util.spec_from_file_location("build_release_v71", ROOT / "scripts" / "build-release.py")
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -35,30 +35,30 @@ def _load_localization_auditor():
     return module
 
 
-class V70BilingualReleaseTests(unittest.TestCase):
+class V71BilingualReleaseTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.temporary = tempfile.TemporaryDirectory(prefix="cp-v70-bilingual-")
+        cls.temporary = tempfile.TemporaryDirectory(prefix="cp-v71-bilingual-")
         cls.root = Path(cls.temporary.name)
         cls.builder = _load_builder()
         cls.archives = {}
         cls.reports = {}
         for locale in ("zh-CN", "en"):
-            archive = cls.root / ("Codex-Skills-V7.0.0-%s.zip" % locale)
+            archive = cls.root / ("Codex-Skills-V7.1.0-%s.zip" % locale)
             witness = cls.root / ("witness-%s.json" % locale)
             cls.reports[locale] = cls.builder.reproducible_build(archive, witness, locale)
             cls.archives[locale] = archive
         cls.english_root = cls.root / "english-extracted"
         with zipfile.ZipFile(cls.archives["en"]) as archive:
             archive.extractall(cls.english_root)
-        cls.english_root = cls.english_root / "Codex-Skills-V7.0.0-en"
+        cls.english_root = cls.english_root / "Codex-Skills-V7.1.0-en"
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.temporary.cleanup()
 
     def _entries(self, locale: str):
-        root = "Codex-Skills-V7.0.0-%s/" % locale
+        root = "Codex-Skills-V7.1.0-%s/" % locale
         with zipfile.ZipFile(self.archives[locale]) as archive:
             return root, {name.removeprefix(root): archive.read(name) for name in archive.namelist()}
 
@@ -71,8 +71,8 @@ class V70BilingualReleaseTests(unittest.TestCase):
             self.assertEqual(locale, report["locale"])
             _, entries = self._entries(locale)
             self.assertEqual(locale, json.loads(entries["config/locale.json"])["locale"])
-            self.assertEqual("7.0.0", json.loads(entries["manifest.json"])["version"])
-            self.assertEqual("7.0.0", json.loads(entries[".codex-plugin/plugin.json"])["version"])
+            self.assertEqual("7.1.0", json.loads(entries["manifest.json"])["version"])
+            self.assertEqual("7.1.0", json.loads(entries[".codex-plugin/plugin.json"])["version"])
 
     def test_both_archives_contain_ten_skills_and_seven_model_neutral_reviewers(self) -> None:
         for locale in ("zh-CN", "en"):
@@ -91,10 +91,10 @@ class V70BilingualReleaseTests(unittest.TestCase):
     def test_english_primary_surfaces_are_english_and_overlay_sources_are_not_shipped(self) -> None:
         _, entries = self._entries("en")
         primary = ["README.md", "CHANGELOG.md", "global/AGENTS.md",
-                   "docs/releases/v7.0.0/RELEASE_NOTES.md",
-                   "docs/releases/v7.0.0/VALIDATION_REPORT.md",
-                   "docs/releases/v7.0.0/AUDIT_REPORT.md",
-                   "docs/USER_GUIDE_V7.0.md", "docs/INSTALLATION_RECOVERY.md",
+                   "docs/releases/v7.1.0/RELEASE_NOTES.md",
+                   "docs/releases/v7.1.0/VALIDATION_REPORT.md",
+                   "docs/releases/v7.1.0/AUDIT_REPORT.md",
+                   "docs/USER_GUIDE_V7.1.md", "docs/INSTALLATION_RECOVERY.md",
                    "docs/CODEX_CONFIG_GUIDE.md", ".codex-plugin/plugin.json"]
         primary.extend("skills/%s/SKILL.md" % item["name"] for item in json.loads(entries["manifest.json"])["skills"])
         primary.extend(item["file"] for item in json.loads(entries["manifest.json"])["custom_agents"])
@@ -180,7 +180,7 @@ class V70BilingualReleaseTests(unittest.TestCase):
                              for name in root_files))
         for name in ("CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md"):
             self.assertTrue((ROOT / ".github" / name).is_file(), name)
-        current = ROOT / "docs" / "releases" / "v7.0.0"
+        current = ROOT / "docs" / "releases" / "v7.1.0"
         for name in ("RELEASE_NOTES.md", "AUDIT_REPORT.md", "VALIDATION_REPORT.md",
                      "BUILD_INFO.json", "PACKAGE_VALIDATION.json"):
             self.assertTrue((current / name).is_file(), name)
@@ -207,7 +207,7 @@ class V70BilingualReleaseTests(unittest.TestCase):
 
     def test_human_review_index_accepts_canonical_paths_with_chinese_filenames(self) -> None:
         auditor = _load_localization_auditor()
-        with tempfile.TemporaryDirectory(prefix="cp-v70-review-index-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="cp-v71-review-index-") as temporary:
             root = Path(temporary)
             reviewed = root / "locales" / "en" / "HUMAN_REVIEWED.txt"
             reviewed.parent.mkdir(parents=True)
@@ -221,7 +221,7 @@ class V70BilingualReleaseTests(unittest.TestCase):
         auditor = _load_localization_auditor()
         completed = subprocess.CompletedProcess(
             args=[], returncode=0,
-            stdout=b"README.md\0dist/package-validation-v7.0.0.json\0")
+            stdout=b"README.md\0dist/package-validation-v7.1.0.json\0")
         with mock.patch.object(auditor.subprocess, "run", return_value=completed):
             paths = auditor.tracked_files()
         self.assertEqual([auditor.ROOT / "README.md"], paths)

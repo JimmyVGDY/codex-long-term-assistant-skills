@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "version": "7.1.0",
+  "build_kind": "deterministic-bilingual-plugin-package",
+  "supported_locales": ["zh-CN", "en"],
+  "target_codex": "0.152.1",
+  "verified_codex_versions": ["0.150.1", "0.152.1"],
+  "task_outcome_event_schema": "2.0",
+  "skill_count": 10,
+  "reviewer_count": 7,
+  "hook_count": 6,
+  "execution_authorization": "NONE",
+  "requested_model_policy": "PASS",
+  "runtime_model_evidence_codex_0_152_1": "UNAVAILABLE"
+}

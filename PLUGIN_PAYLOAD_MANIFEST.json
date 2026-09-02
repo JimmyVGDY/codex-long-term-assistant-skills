@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,11 +9,11 @@
     "runtime"
   ],
   "file_count": 182,
-  "payload_digest": "2e22dc1127d2305882e89a9f51c77dc97524963cab0954947a642e3b4158565e",
+  "payload_digest": "b9b4fa3d957dd4b58094c7aac50fac38ec484405ce28369583d094609750db4d",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "cf6e19f7e888170f08a732534d58bf4745759841709a36215fa0578999eedac4",
+      "sha256": "4bae74a19d848bf7464dc950adc81b0efff1caaa333d805812ac3c0b932c1944",
       "size": 321
     },
     {
@@ -753,12 +753,12 @@
     },
     {
       "path": "hooks/cp_hook.cmd",
-      "sha256": "a025fba3212f84783862939408d30fd256cf23f0d8731bda726b6b117eb9d3dd",
+      "sha256": "1f03533fa50b2426d37d38c33e3dc0ee0d3b8c8e58601e8c66c9d9a77a089c99",
       "size": 1389
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "0ae2a385b439638c01d62341736c0a6c550d837a76631d9b6640dc0192940662",
+      "sha256": "85d4bfa80201fb99174a0145600046dbc762a07ffcdda345fb998ede5e699b74",
       "size": 16061
     },
     {
@@ -903,7 +903,7 @@
     },
     {
       "path": "runtime/cp_runtime/model_evidence.py",
-      "sha256": "8492c75510d6f8fa3a9cbb63e9748480e7a56a47f56fefc5aa6a82376267c27a",
+      "sha256": "f95956a725f301f8a39cf089051adbc2b4d23e2ba8497d873c95f0d8dbb4fa84",
       "size": 4288
     },
     {

@@ -68,8 +68,8 @@ def _read() -> Dict[str, Any]:
         data = json.loads(raw) if raw.strip() else {}
         return data
     except Exception:
-        # 中文：Windows 原生 Codex CLI 0.150.1 构造 Stop stdin 时可能截断非 ASCII 的 last_assistant_message；生命周期身份字段位于该自由文本字段之前，因此只丢弃损坏尾部并恢复有效 JSON 前缀。
-        # English: Native Windows Codex CLI 0.150.1 can truncate a non-ASCII last_assistant_message while constructing Stop stdin; lifecycle identity fields precede it, so discard only the damaged suffix and recover the valid JSON prefix.
+        # 中文：Windows 原生 Codex CLI 0.152.1 构造 Stop stdin 时可能截断非 ASCII 的 last_assistant_message；生命周期身份字段位于该自由文本字段之前，因此只丢弃损坏尾部并恢复有效 JSON 前缀。
+        # English: Native Windows Codex CLI 0.152.1 can truncate a non-ASCII last_assistant_message while constructing Stop stdin; lifecycle identity fields precede it, so discard only the damaged suffix and recover the valid JSON prefix.
         damaged = re.search(rb',\s*"last_assistant_message"\s*:', raw)
         if damaged is not None:
             try:
@@ -135,8 +135,8 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     session_id = str(_lookup(data, "session_id", "sessionId", "thread_id") or "")
     turn_id = str(_lookup(data, "turn_id", "turnId") or "")
     task_id = str(_lookup(data, "task_id", "taskId") or turn_id or session_id)
-    # 中文：实际运行值需要外部配置的宿主信任锚；Codex 0.150.1 未提供此证明，因此状态保持不可用。
-    # English: Actual runtime values require an externally configured host trust anchor; Codex 0.150.1 provides no such attestation, so the values remain unavailable.
+    # 中文：实际运行值需要外部配置的宿主信任锚；Codex 0.152.1 未提供此证明，因此状态保持不可用。
+    # English: Actual runtime values require an externally configured host trust anchor; Codex 0.152.1 provides no such attestation, so the values remain unavailable.
     runtime_evidence = verify_hook_runtime_evidence(data, hook)
     model = runtime_evidence["model"] if runtime_evidence["status"] == "VERIFIED" else ""
     effort = runtime_evidence["reasoning_effort"] if runtime_evidence["status"] == "VERIFIED" else ""

@@ -31,7 +31,7 @@ Skill activation does not expand file, Git, environment, production, or data aut
 - Automatic subagents use Luna or Terra profiles in this order: `luna-low -> luna-medium -> terra-medium -> terra-high`.
 - The automatic ceiling is `gpt-5.6-terra + high`. Sol, `xhigh`, `max`, and `ultra` are forbidden for automatic dispatch.
 - PreToolUse fails closed for explicit policy violations. SubagentStart records only evidence available from the host.
-- Codex 0.150.1 diagnostic observations do not verify the actual runtime model.
+- Codex 0.152.1 diagnostic observations do not verify the actual runtime model.
 - Reviewer defaults: parallel <=3, cumulative <=6, post-implementation rounds <=2. An unchanged packet must not trigger mechanical repeat review.
 
 ## 5. Change, validation, and review

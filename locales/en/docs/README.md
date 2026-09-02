@@ -2,11 +2,11 @@
 
 Chinese source: [README.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/README.md)
 
-This page organizes the V7.0.0 documentation by adoption stage. Historical reports and build metadata are grouped by version to preserve validation paths, historical references, and reproducibility.
+This page organizes the V7.1.0 documentation by adoption stage. Historical reports and build metadata are grouped by version to preserve validation paths, historical references, and reproducibility.
 
 ## Getting started
 
-- [V7.0 user guide](USER_GUIDE_V7.0.md)
+- [V7.1 user guide](USER_GUIDE_V7.1.md)
 - [Installation, upgrade, rollback, and recovery](INSTALLATION_RECOVERY.md)
 - [Codex configuration guide](CODEX_CONFIG_GUIDE.md)
 - [Project context and onboarding](PROJECT_CONTEXT_AND_ONBOARDING.md)
@@ -28,13 +28,13 @@ This page organizes the V7.0.0 documentation by adoption stage. Historical repor
 - [Controlled-evolution operations](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](VALIDATION_REPORT.md)
-- [V7.0.0 package validation report](releases/v7.0.0/VALIDATION_REPORT.md)
-- [V7.0.0 audit report](releases/v7.0.0/AUDIT_REPORT.md)
+- [V7.1.0 package validation report](releases/v7.1.0/VALIDATION_REPORT.md)
+- [V7.1.0 audit report](releases/v7.1.0/AUDIT_REPORT.md)
 
 ## Release and history
 
 - [Release evidence index](releases/README.md)
-- [V7.0.0 release notes](releases/v7.0.0/RELEASE_NOTES.md)
+- [V7.1.0 release notes](releases/v7.1.0/RELEASE_NOTES.md)
 - [Changelog](../CHANGELOG.md)
 - [Public reconstruction index](history/README.md)
 - [Public reconstruction release index](history/RELEASE_ARCHIVES.md)

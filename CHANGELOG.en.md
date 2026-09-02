@@ -4,9 +4,19 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Unreleased
 
+None.
+
+## 7.1.0 - 2026-09-02
+
+### Changed
+
+- Updated the current Codex CLI release baseline to 0.152.1, retained verified 0.150.1 compatibility, and kept fail-closed behavior for other versions.
+- Synchronized Manifest, Plugin, bilingual builds, release verification, attestations, documentation site, and current operating guides to 7.1.0, with a declared 7.0.0 upgrade path.
+
 ### Fixed
 
 - Plugin mode now transactionally installs and verifies the account-level `cp-runtime.py` and `evolution.py` launchers. When the account runtime is unreadable, both launchers resolve the exact active Plugin-cache version from installation state instead of reporting a missing `cp_runtime` module.
+- Retained Marketplace/Plugin command and core `plugin list --json` contract checks on native Windows Codex CLI 0.152.1.
 
 ## 7.0.0 - 2026-09-01
 

@@ -1,6 +1,6 @@
-# V7.0 Operating Guide
+# V7.1 Operating Guide
 
-Chinese: [`USER_GUIDE_V7.0.md`](USER_GUIDE_V7.0.md)
+Chinese: [`USER_GUIDE_V7.1.md`](USER_GUIDE_V7.1.md)
 
 ## Four primary domains
 
@@ -48,7 +48,7 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-Upgrade is proven only when the Plugin reports `installed=true`, `enabled=true`, and `version=7.0.0`, all ten new Skills are discoverable, and all four Manifest-declared legacy Skills—including the previously deprecated Vue Skill—are absent.
+Upgrade is proven only when the Plugin reports `installed=true`, `enabled=true`, and `version=7.1.0`, all ten new Skills are discoverable, and all four Manifest-declared legacy Skills—including the previously deprecated Vue Skill—are absent.
 
 ## Reviewer, lifecycle, and authorization
 

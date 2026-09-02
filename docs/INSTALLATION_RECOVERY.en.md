@@ -1,12 +1,12 @@
-# V7.0 Installation, Validation, and Recovery
+# V7.1 Installation, Validation, and Recovery
 
 Chinese: [`INSTALLATION_RECOVERY.md`](INSTALLATION_RECOVERY.md)
 
 ## Preconditions
 
-- Native Windows Codex CLI 0.150.1.
+- Native Windows Codex CLI 0.152.1.
 - Extract the archive before running commands.
-- Supported managed upgrades: 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
+- Supported managed upgrades: 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
 - A native Windows process uses a native Windows `CODEX_HOME`; WSL-style drive mappings are normalized before use.
 - Unknown Skills, agents, Hooks, MCP configuration, Plugin files, and `config.toml` content remain outside managed deletion scope.
 
@@ -28,7 +28,7 @@ Plugin acceptance requires:
 ```ini
 installed = true
 enabled = true
-version = 7.0.0
+version = 7.1.0
 ```
 
 ## Recovery boundary

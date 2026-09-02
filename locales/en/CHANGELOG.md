@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.1.0 - 2026-09-02
+
+### Changed
+
+- Updated the current Codex CLI release baseline to 0.152.1, retained verified 0.150.1 compatibility, and kept fail-closed behavior for other versions.
+- Synchronized current metadata, builds, release verification, documentation, and the 7.0.0 upgrade path to 7.1.0.
+
+### Fixed
+
+- Plugin and standalone modes transactionally install, verify, and remove the account-level `cp-runtime.py` and `evolution.py` launchers.
+- Restricted tasks resolve the exact active Plugin-cache runtime from installation state.
+
 ## 7.0.0 - 2026-09-01
 
 ### Added

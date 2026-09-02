@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：构建并验证字节级可复现的 V7.0.0 语言发行包。
+"""中文：构建并验证字节级可复现的 V7.1.0 语言发行包。
 
-English: Build and verify byte-reproducible V7.0.0 locale-specific archives.
+English: Build and verify byte-reproducible V7.1.0 locale-specific archives.
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from payload_integrity import write_manifest as write_payload_manifest
 from runtime_localization import RuntimeLocalizationError, load_mapping, localize_tree
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "7.0.0"
+VERSION = "7.1.0"
 PACKAGE = "codex-cross-project-engineering-assistant"
 SUPPORTED_LOCALES = ("zh-CN", "en")
 FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)
@@ -144,7 +144,7 @@ def _apply_overlay(staging: Path, locale: str) -> None:
 def _prepare_staging(locale: str, parent: Path) -> Path:
     if locale not in SUPPORTED_LOCALES:
         raise BuildError("unsupported locale: %s" % locale)
-    staging = parent / ("Codex-Skills-V7.0.0-" + locale)
+    staging = parent / ("Codex-Skills-V%s-%s" % (VERSION, locale))
     _copy_source(ROOT, staging)
     _apply_overlay(staging, locale)
     manifest = json.loads((staging / "manifest.json").read_text(encoding="utf-8-sig"))
@@ -165,7 +165,7 @@ def build_release(output: Path, locale: str) -> Dict[str, Any]:
     if output == ROOT or ROOT in output.parents:
         raise BuildError("release output must stay outside the package source")
     output.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="cp-v661-build-") as temporary_dir:
+    with tempfile.TemporaryDirectory(prefix="cp-v710-build-") as temporary_dir:
         staging = _prepare_staging(locale, Path(temporary_dir))
         files = release_files(staging)
         fd, temporary_name = tempfile.mkstemp(prefix=output.name + ".tmp-", dir=str(output.parent))
@@ -203,7 +203,7 @@ def verify_release(archive_path: Path, locale: str | None = None) -> Dict[str, A
         if len(roots) != 1:
             raise BuildError("ZIP must contain exactly one package root")
         root = next(iter(roots))
-        observed_locale = root.removeprefix("Codex-Skills-V7.0.0-")
+        observed_locale = root.removeprefix("Codex-Skills-V%s-" % VERSION)
         if observed_locale not in SUPPORTED_LOCALES or (locale and observed_locale != locale):
             raise BuildError("ZIP locale root is inconsistent")
         if names != sorted(names):
@@ -225,7 +225,7 @@ def verify_release(archive_path: Path, locale: str | None = None) -> Dict[str, A
 
 
 def reproducible_build(output: Path, witness: Path, locale: str) -> Dict[str, Any]:
-    with tempfile.TemporaryDirectory(prefix="cp-v661-repro-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="cp-v710-repro-") as temporary:
         first = Path(temporary) / "first.zip"
         second = Path(temporary) / "second.zip"
         a = build_release(first, locale)
@@ -245,7 +245,7 @@ def reproducible_build(output: Path, witness: Path, locale: str) -> Dict[str, An
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.0.0 deterministic bilingual release builder")
+    parser = argparse.ArgumentParser(description="V7.1.0 deterministic bilingual release builder")
     subparsers = parser.add_subparsers(dest="command", required=True)
     build_parser = subparsers.add_parser("build")
     build_parser.add_argument("--output", required=True)

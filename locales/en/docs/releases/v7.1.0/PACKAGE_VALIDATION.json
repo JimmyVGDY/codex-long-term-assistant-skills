@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "evidence_scope": "package-only",
+  "version": "7.1.0",
+  "skill_count": 10,
+  "reviewer_count": 7,
+  "hooks": [
+    "UserPromptSubmit",
+    "PreToolUse",
+    "SubagentStart",
+    "SubagentStop",
+    "Stop",
+    "SessionEnd"
+  ],
+  "task_outcome_event": "2.0",
+  "execution_authorization": "NONE",
+  "automatic_self_modification": false,
+  "requested_model_policy": "PASS",
+  "runtime_model_evidence": "UNAVAILABLE",
+  "semantic_lint": "PASS",
+  "routing_case_schema": "PASS (45 cases)",
+  "plugin_payload_manifest": "PASS",
+  "multiprocess_fault_injection": "PASS (tests/test_v66_runtime_deepening.py)",
+  "delayed_session_end_seal": "PASS (tests/test_v66_runtime_deepening.py)",
+  "reviewer_calibration_v2": "PASS (tests/test_v66_runtime_deepening.py)",
+  "event_archive_capacity_health": "PASS (tests/test_v66_runtime_deepening.py)",
+  "unit_regression_tests": "PASS (129 package + 6 runtime)",
+  "validation_evidence": {
+    "package_test_count": 129,
+    "runtime_test_count": 6,
+    "package_test_command": "python -m unittest discover -s tests -p test_*.py",
+    "runtime_test_command": "python -m unittest discover -s runtime/tests -p test_*.py",
+    "model_gate_command": "python scripts/model-gate-acceptance.py"
+  }
+}

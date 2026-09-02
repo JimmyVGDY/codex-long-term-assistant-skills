@@ -1,10 +1,10 @@
-# V7.0 安装、验证与事务恢复
+# V7.1 安装、验证与事务恢复
 
 ## 适用范围
 
-- 目标宿主：Windows 原生 Codex CLI 0.150.1。
+- 目标宿主：Windows 原生 Codex CLI 0.152.1。
 - 推荐形态：账户级 Plugin。
-- 可升级版本：6.6.1、6.6.0、6.5.0、6.4.0、6.3.0、6.2.0、6.1.0、6.0.0、5.1.0、5.0.0、4.2.0、4.1.0、4.0.0。
+- 可升级版本：7.0.0、6.6.1、6.6.0、6.5.0、6.4.0、6.3.0、6.2.0、6.1.0、6.0.0、5.1.0、5.0.0、4.2.0、4.1.0、4.0.0。
 - 受管对象：本包 Marketplace payload、manifest 条目、Plugin cache、Reviewer、全局规则和安装状态。
 
 安装器不改写 `config.toml`，不删除未知 Skill、Agent、Hook、MCP、项目上下文、Event、Snapshot、Assessment、Proposal 或历史备份。
@@ -21,7 +21,7 @@ Windows 原生进程若继承 `/mnt/c/.../.codex`，必须转换为盘符路径�
 
 ## 标准升级
 
-在解压后的 V7.0.0 语言包根目录依次执行：
+在解压后的 V7.1.0 语言包根目录依次执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -33,7 +33,7 @@ codex plugin list --json
 
 dry-run 应明确显示：
 
-- 当前升级应读回已安装版本与 `to_version=7.0.0`；V6.6.1 升级路径必须被识别；
+- 当前升级应读回已安装版本与 `to_version=7.1.0`；V7.0.0 升级路径必须被识别；
 - schema 1 到 2 迁移；
 - 新升级备份路径；
 - Marketplace payload、manifest 和 Plugin cache 分离目标；
@@ -41,13 +41,13 @@ dry-run 应明确显示：
 - 完整回滚动作；
 - 无路径越界或链接型路径风险。
 
-完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.0.0`，并且 10 个 Skill、7 个 Reviewer、6 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。`java-backend-engineering`、`python-backend-ai-engineering`、`data-middleware-ai-infrastructure` 和此前废弃的 `vue-frontend-engineering` 不得残留；文件复制完成不构成 Plugin 成功状态。
+完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.1.0`，并且 10 个 Skill、7 个 Reviewer、6 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。`java-backend-engineering`、`python-backend-ai-engineering`、`data-middleware-ai-infrastructure` 和此前废弃的 `vue-frontend-engineering` 不得残留；文件复制完成不构成 Plugin 成功状态。
 
 ## 事务与能力探测
 
 安装前 `doctor` 检查：
 
-- Codex 版本精确为 0.150.1；
+- Codex 版本精确为 0.152.1；
 - `plugin list --json` 可执行；
 - Marketplace add/remove 与 Plugin add/remove 命令存在；
 - state schema 可识别；
@@ -106,8 +106,8 @@ python scripts\package_manager.py uninstall --scope user --mode plugin
 
 ```powershell
 python scripts\validate-package.py
-python scripts\build-release.py verify --archive ..\Codex-Skills-V7.0.0-zh-CN.zip --locale zh-CN
-python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.0.0.json --artifact ..\Codex-Skills-V7.0.0-zh-CN.zip
+python scripts\build-release.py verify --archive ..\Codex-Skills-V7.1.0-zh-CN.zip --locale zh-CN
+python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.1.0.json --artifact ..\Codex-Skills-V7.1.0-zh-CN.zip
 ```
 
 机器证明应绑定正式 ZIP SHA-256、确定性构建见证、Codex 版本、Plugin list、生命周期报告、已安装 PreToolUse 模型门禁报告、统一验证报告和安装后的 payload digest。任一证据缺失或哈希不一致时，正式发行结论失败关闭。宿主会话 JSONL 只作诊断旁证，不能替代模型门禁报告。

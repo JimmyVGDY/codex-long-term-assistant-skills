@@ -83,7 +83,7 @@ class DocumentationSiteTests(unittest.TestCase):
                 output / "en" / "index.md",
                 output / "en" / "docs" / "README.md",
                 output / "en" / "docs" / "INSTALLATION_RECOVERY.md",
-                output / "en" / "docs" / "USER_GUIDE_V7.0.md",
+                output / "en" / "docs" / "USER_GUIDE_V7.1.md",
                 output / "en" / "docs" / "history" / "GITHUB_RELEASES.md",
                 output / "en" / "docs" / "releases" / "RELEASE_AUTOMATION.md",
             ]
@@ -108,14 +108,14 @@ class DocumentationSiteTests(unittest.TestCase):
         self.assertIn("10</strong><span>Skills", root)
         self.assertIn("2.0</strong><span>TaskOutcomeEvent", root)
         self.assertIn("social-preview.jpg", root)
-        self.assertIn("V7.0.0", root)
+        self.assertIn("V7.1.0", root)
         self.assertNotIn("V6.6.1", root)
-        self.assertIn("USER_GUIDE_V7.0", root)
+        self.assertIn("USER_GUIDE_V7.1", root)
         self.assertIn("/codex-long-term-assistant-skills/zh-CN/", root)
         self.assertIn("/codex-long-term-assistant-skills/en/", root)
-        self.assertIn("V7.0.0", english_pair)
+        self.assertIn("V7.1.0", english_pair)
         self.assertNotIn("V6.6.1", english_pair)
-        self.assertIn("USER_GUIDE_V7.0", english_pair)
+        self.assertIn("USER_GUIDE_V7.1", english_pair)
         self.assertIsNone(re.search(r"[\u4e00-\u9fff]", english_pair))
         self.assertIn("@media (max-width: 640px)", stylesheet)
         self.assertIn(":focus-visible", stylesheet)
@@ -149,9 +149,9 @@ class DocumentationSiteTests(unittest.TestCase):
             ROOT / "locales" / "en" / ".github" / "mkdocs.yml"
         ).read_text(encoding="utf-8")
         for text in (navigation, localized_navigation):
-            self.assertIn("USER_GUIDE_V7.0.md", text)
+            self.assertIn("USER_GUIDE_V7.1.md", text)
             self.assertIn("V7_DOMAIN_SKILL_ARCHITECTURE.md", text)
-            self.assertIn("releases/v7.0.0/RELEASE_NOTES.md", text)
+            self.assertIn("releases/v7.1.0/RELEASE_NOTES.md", text)
 
         for path in (
             ROOT / ".github" / "workflows" / "ci.yml",
@@ -167,7 +167,7 @@ class DocumentationSiteTests(unittest.TestCase):
             ROOT / ".github" / "SECURITY.en.md",
             ROOT / "locales" / "en" / ".github" / "SECURITY.md",
         ):
-            self.assertIn("7.0.0", path.read_text(encoding="utf-8"))
+            self.assertIn("7.1.0", path.read_text(encoding="utf-8"))
 
     def test_social_preview_is_reusable_1280_by_640_and_below_one_megabyte(self) -> None:
         image = (ROOT / "docs" / "assets" / "social-preview.jpg").read_bytes()

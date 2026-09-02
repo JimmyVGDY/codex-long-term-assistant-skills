@@ -30,8 +30,10 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.0.0"
+VERSION = "7.1.0"
 MARKETPLACE = "cp-assistant-local"
+TARGET_CODEX_VERSION = "0.152.1"
+SUPPORTED_CODEX_VERSIONS = ("0.150.1", TARGET_CODEX_VERSION)
 SKILL_DIR_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
 END = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:END -->"
@@ -770,7 +772,7 @@ def plugin_payload_source(tmp: Path) -> Path:
 def _codex_executable() -> str:
     exe = shutil.which("codex")
     if not exe:
-        raise InstallError("未找到 codex CLI；Plugin 模式需要 Codex 0.150.1 或兼容版本。可改用 --mode standalone")
+        raise InstallError("未找到 codex CLI；Plugin 模式需要已验证的 Codex CLI 版本。可改用 --mode standalone")
     return exe
 
 
@@ -866,12 +868,16 @@ def _verify_restored_plugin(previous: Mapping[str, Any]) -> None:
 
 
 def _probe_plugin_host() -> Dict[str, Any]:
-    """中文：读取支持的 Codex 0.150.1 Plugin 宿主能力，不修改状态。
+    """中文：读取已验证 Codex CLI 版本的 Plugin 宿主能力，不修改状态。
 
-    English: Read the supported Codex 0.150.1 Plugin host capability profile without changing state.
+    English: Read the Plugin host capability profile for verified Codex CLI versions without
+    changing state.
     """
     version = _codex_version_text()
-    version_ok = bool(re.search(r"(?:^|\s)0\.150\.1(?:\s|$)", version))
+    version_ok = any(
+        re.search(r"(?:^|\s)%s(?:\s|$)" % re.escape(candidate), version)
+        for candidate in SUPPORTED_CODEX_VERSIONS
+    )
     result = _run_codex(["plugin", "list", "--json"], check=False)
     try:
         data = json.loads(result.stdout or "")
@@ -922,8 +928,9 @@ def _require_plugin_host() -> Dict[str, Any]:
     """
     profile = _probe_plugin_host()
     if not profile["version_ok"]:
-        raise InstallError("Plugin 模式仅支持 Codex CLI 0.150.1；当前: %s" %
-                           (profile["codex_version"] or "未知"))
+        raise InstallError("Plugin 模式仅支持已验证的 Codex CLI %s；当前: %s" %
+                           (", ".join(SUPPORTED_CODEX_VERSIONS),
+                            profile["codex_version"] or "未知"))
     if not profile["plugin_list_json"]:
         if not _legacy_marketplace_repairable():
             raise InstallError("codex plugin list --json schema 未知，拒绝 Plugin 安装")
@@ -1170,7 +1177,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("安装失败且回滚不完整；请执行 doctor --recover：%s" % "; ".join(journal["rollback_errors"])) from exc
         raise
-    print("[OK] V7.0 账户级安装完成，mode=%s" % mode)
+    print("[OK] V7.1 账户级安装完成，mode=%s" % mode)
     if mode == "plugin":
         print("[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add")
 
@@ -1242,7 +1249,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("仓库安装回滚不完整；请执行 doctor --recover") from exc
         raise
-    print("[OK] V7.0 仓库级 Skills 安装完成: %s" % repo)
+    print("[OK] V7.1 仓库级 Skills 安装完成: %s" % repo)
 
 
 def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
@@ -1329,7 +1336,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     if errors:
         for item in errors: print("[FAIL]",item)
         raise SystemExit(1)
-    print("[OK] V7.0 安装验证通过 scope=%s mode=%s" % (scope, mode))
+    print("[OK] V7.1 安装验证通过 scope=%s mode=%s" % (scope, mode))
 
 
 def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_run: bool) -> None:
@@ -1449,7 +1456,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
-    print("[OK] V7.0 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
+    print("[OK] V7.1 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
 
 
 def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict[str, Any]]:
@@ -1571,7 +1578,8 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
         except Exception as exc:
             capability = {"ok": False, "error": str(exc)}
     print(json.dumps({
-        "package":PACKAGE,"version":VERSION,"target_codex":"0.150.1","python":sys.executable,
+        "package":PACKAGE,"version":VERSION,"target_codex":TARGET_CODEX_VERSION,
+        "supported_codex_versions":list(SUPPORTED_CODEX_VERSIONS),"python":sys.executable,
         "home":str(Path.home()),"codex_home":str(codex_home()),
         "user_skills_home":str(user_skills_home()),
         "plugin_marketplace_root":str(plugin_marketplace_root()),
@@ -1586,7 +1594,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
 
 
 def main() -> None:
-    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.0 安装器")
+    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.1 安装器")
     sub=p.add_subparsers(dest="command",required=True)
     for name in ("install","verify","uninstall"):
         q=sub.add_parser(name)

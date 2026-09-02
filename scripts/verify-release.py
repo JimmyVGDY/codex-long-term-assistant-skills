@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：失败关闭的 V7.0.0 端到端发行验证器。
+"""中文：失败关闭的 V7.1.0 端到端发行验证器。
 
-English: Fail-closed V7.0.0 end-to-end release verifier.
+English: Fail-closed V7.1.0 end-to-end release verifier.
 """
 from __future__ import annotations
 
@@ -17,7 +17,8 @@ from typing import Any, Dict, Mapping
 
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
 
-VERSION = "7.0.0"
+VERSION = "7.1.0"
+TARGET_CODEX_VERSION = "0.152.1"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
@@ -57,14 +58,14 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
         except (OSError, zipfile.BadZipFile) as exc:
             raise VerificationError("artifact 不是有效 ZIP") from exc
         children = [item for item in root.iterdir() if item.is_dir()]
-        valid_roots = {"Codex-Skills-V7.0.0-zh-CN", "Codex-Skills-V7.0.0-en"}
+        valid_roots = {"Codex-Skills-V%s-zh-CN" % VERSION, "Codex-Skills-V%s-en" % VERSION}
         if len(children) != 1 or children[0].name not in valid_roots:
-            raise VerificationError("artifact 根目录不是受支持的 V7.0.0 语言包")
+            raise VerificationError("artifact 根目录不是受支持的 V%s 语言包" % VERSION)
         package_root = children[0]
         try:
             manifest = load_manifest(package_root / MANIFEST_NAME)
             report = verify_payload(package_root, manifest, package=PACKAGE, version=VERSION)
-            report["locale"] = package_root.name.removeprefix("Codex-Skills-V7.0.0-")
+            report["locale"] = package_root.name.removeprefix("Codex-Skills-V%s-" % VERSION)
             return report
         except PayloadIntegrityError as exc:
             raise VerificationError("artifact payload 身份失败: %s" % exc) from exc
@@ -132,7 +133,7 @@ def verify_release(artifact: Path, package_validation: Mapping[str, Any], witnes
     artifact_payload = _artifact_payload(artifact)
     package_ok = package_validation.get("ok") is True and package_validation.get("version") == VERSION
     if not package_ok:
-        raise VerificationError("包内验证未证明 V7.0 PASS")
+        raise VerificationError("包内验证未证明 V%s PASS" % VERSION)
     artifact_ok = (witness.get("ok") is True and witness.get("reproducible") is True
                    and witness.get("version") == VERSION and witness.get("artifact_sha256") == artifact_hash)
     if not artifact_ok:
@@ -146,7 +147,7 @@ def verify_release(artifact: Path, package_validation: Mapping[str, Any], witnes
     plugin_ok = len(matches) == 1 and matches[0].get("installed") is True and matches[0].get("enabled") is True \
         and str(matches[0].get("version") or "") == VERSION
     if not plugin_ok:
-        raise VerificationError("Plugin 未精确证明 installed/enabled/version=7.0.0")
+        raise VerificationError("Plugin 未精确证明 installed/enabled/version=%s" % VERSION)
     lifecycle_ok = lifecycle.get("ok") is True and (lifecycle.get("event_chain") or {}).get("valid") is True
     project_id = str(lifecycle.get("project_id") or "")
     repo_fingerprint = str(lifecycle.get("repo_fingerprint") or "")
@@ -168,9 +169,10 @@ def verify_release(artifact: Path, package_validation: Mapping[str, Any], witnes
         raise VerificationError("缺少已安装模型门禁报告，且生命周期没有可信 Hook 模型事实")
     version_text = str(codex_evidence.get("codex_version") or "")
     capability = codex_evidence.get("capability_profile") or {}
-    host_ok = bool(re.search(r"(?:^|\s)0\.150\.1(?:\s|$)", version_text)) and capability.get("ok") is True
+    host_ok = bool(re.search(r"(?:^|\s)%s(?:\s|$)" % re.escape(TARGET_CODEX_VERSION),
+                             version_text)) and capability.get("ok") is True
     if not host_ok:
-        raise VerificationError("Codex 0.150.1 或 Plugin capability 未证明")
+        raise VerificationError("Codex %s 或 Plugin capability 未证明" % TARGET_CODEX_VERSION)
     reports = [payload_report.get(name) for name in ("source", "marketplace", "cache")]
     if not all(isinstance(item, dict) and item.get("ok") is True for item in reports):
         raise VerificationError("安装 payload 报告不完整")
@@ -202,7 +204,7 @@ def verify_release(artifact: Path, package_validation: Mapping[str, Any], witnes
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.0 端到端发行验证")
+    parser = argparse.ArgumentParser(description="V7.1 端到端发行验证")
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--package-validation", required=True)
     parser.add_argument("--build-witness", required=True)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：创建并验证隐私有界的 V7.0 发行证明。
+"""中文：创建并验证隐私有界的 V7.1 发行证明。
 
-English: Create and verify a privacy-bounded V7.0 release attestation.
+English: Create and verify a privacy-bounded V7.1 release attestation.
 """
 from __future__ import annotations
 
@@ -26,7 +26,8 @@ from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "7.0.0"
+VERSION = "7.1.0"
+TARGET_CODEX_VERSION = "0.152.1"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 
 
@@ -67,7 +68,7 @@ def _plugin_item(plugin_list: Mapping[str, Any]) -> Dict[str, Any]:
             continue
         if item.get("pluginId") == PLUGIN_ID:
             if not bool(item.get("installed")) or not bool(item.get("enabled")) or item.get("version") != VERSION:
-                raise AttestationError("Plugin readback does not prove installed/enabled/version=7.0.0")
+                raise AttestationError("Plugin readback does not prove installed/enabled/version=%s" % VERSION)
             return item
     raise AttestationError("target Plugin was not found in Codex readback")
 
@@ -121,15 +122,15 @@ def _legacy_luna_model_proven(lifecycle: Mapping[str, Any]) -> bool:
 def _codex_version(version_evidence: Path | None = None) -> str:
     if version_evidence is not None:
         value = version_evidence.read_text(encoding="utf-8-sig").strip()
-        if not re.search(r"(?:^|\s)0\.150\.1(?:\s|$)", value):
-            raise AttestationError("observed Codex version is not 0.150.1")
+        if not re.search(r"(?:^|\s)%s(?:\s|$)" % re.escape(TARGET_CODEX_VERSION), value):
+            raise AttestationError("observed Codex version is not %s" % TARGET_CODEX_VERSION)
         return value
     result = subprocess.run(["codex", "--version"], text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=30)
     if result.returncode != 0:
         raise AttestationError("codex --version failed")
     value = (result.stdout or result.stderr or "").strip()
-    if not re.search(r"(?:^|\s)0\.150\.1(?:\s|$)", value):
-        raise AttestationError("observed Codex version is not 0.150.1")
+    if not re.search(r"(?:^|\s)%s(?:\s|$)" % re.escape(TARGET_CODEX_VERSION), value):
+        raise AttestationError("observed Codex version is not %s" % TARGET_CODEX_VERSION)
     return value
 
 
@@ -357,7 +358,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.0 release attestation")
+    parser = argparse.ArgumentParser(description="V7.1 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)

@@ -4,9 +4,19 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 ## 未发布
 
+暂无。
+
+## 7.1.0 - 2026-09-02
+
+### Changed
+
+- 当前 Codex CLI 发行基线升级到 0.152.1；安装器保留 0.150.1 已验证兼容，对其他版本继续失败关闭。
+- Manifest、Plugin、双语构建、发行验证、证明、文档站与当前操作指南统一升级到 7.1.0，并加入 7.0.0 升级路径。
+
 ### Fixed
 
 - Plugin 模式现在事务化安装并校验账户级 `cp-runtime.py` 与 `evolution.py`；两个启动器在账户 runtime 不可读时，会按安装状态精确回退到当前版本 Plugin cache，避免受限任务误报 `cp_runtime` 模块缺失。
+- 在 Windows 原生 Codex CLI 0.152.1 上保留 Marketplace/Plugin 命令和 `plugin list --json` 核心契约校验。
 
 ## 7.0.0 - 2026-09-01
 

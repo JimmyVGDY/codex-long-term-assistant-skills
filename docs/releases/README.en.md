@@ -8,6 +8,7 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.en.md) for v
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.1.0 | [Open](v7.1.0/RELEASE_NOTES.en.md) | [Open](v7.1.0/AUDIT_REPORT.en.md) | [Open](v7.1.0/VALIDATION_REPORT.en.md) | — | [JSON](v7.1.0/BUILD_INFO.json) | [JSON](v7.1.0/PACKAGE_VALIDATION.json) |
 | 7.0.0 | [Open](v7.0.0/RELEASE_NOTES.en.md) | [Open](v7.0.0/AUDIT_REPORT.en.md) | [Open](v7.0.0/VALIDATION_REPORT.en.md) | [Open](v7.0.0/IMPLICIT_TRIGGER_OBSERVATION.en.md) | [JSON](v7.0.0/BUILD_INFO.json) | [JSON](v7.0.0/PACKAGE_VALIDATION.json) |
 | 6.6.1 | [Open](v6.6.1/RELEASE_NOTES.en.md) | [Open](v6.6.1/AUDIT_REPORT.en.md) | [Open](v6.6.1/VALIDATION_REPORT.en.md) | — | [JSON](v6.6.1/BUILD_INFO.json) | [JSON](v6.6.1/PACKAGE_VALIDATION.json) |
 | 6.6.0 | [Open](v6.6.0/RELEASE_NOTES.en.md) | [Open](v6.6.0/AUDIT_REPORT.en.md) | [Open](v6.6.0/VALIDATION_REPORT.en.md) | — | [JSON](v6.6.0/BUILD_INFO.json) | [JSON](v6.6.0/PACKAGE_VALIDATION.json) |

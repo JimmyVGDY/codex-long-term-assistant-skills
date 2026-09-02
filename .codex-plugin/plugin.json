@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.0.0",
-  "description": "跨项目长期技术助手 V7.0：通用后端、前端、AI 与数据基础设施四主领域，双语渐进加载、独立 Reviewer 与确定性交付边界。",
+  "version": "7.1.0",
+  "description": "跨项目长期技术助手 V7.1：适配 Codex CLI 0.152.1，提供账户工具事务化安装、双语渐进加载、独立 Reviewer 与确定性交付边界。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

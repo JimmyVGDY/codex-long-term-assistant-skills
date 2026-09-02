@@ -12,7 +12,11 @@ from pathlib import Path
 
 
 def _runtime_candidates(package_home: Path):
-    """优先使用源码/standalone runtime，再回退到安装状态绑定的 Plugin cache。"""
+    """中文：优先使用源码/standalone runtime，再回退到安装状态绑定的 Plugin cache。
+
+    English: Prefer the source or standalone runtime, then use the Plugin cache bound by
+    installation state.
+    """
     yield package_home / "runtime"
     state_path = package_home / "cp-assistant-v6-state.json"
     try:

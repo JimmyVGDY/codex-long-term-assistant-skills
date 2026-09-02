@@ -447,11 +447,11 @@
     },
     "scripts/semantic-lint.py": {
       "plain": {
-        "manifest 版本不是 7.0.0": "manifest version is not 7.0.0",
+        "manifest 版本不是 7.1.0": "manifest version is not 7.1.0",
         "账户 Skill 目标不是 $HOME/.agents/skills": "Account Skill target is not $HOME/.agents/skills",
         "Plugin 版本不一致": "Plugin version mismatch",
         "双语发行声明无效": "Invalid bilingual release declaration",
-        "缺少 %s -> V7.0.0 升级声明": "Missing %s -> V7.0.0 upgrade declaration",
+        "缺少 %s -> V7.1.0 升级声明": "Missing %s -> V7.1.0 upgrade declaration",
         "生命周期 Hooks 不完整": "Lifecycle Hooks are incomplete",
         "缺少 Windows Hook 启动器": "Missing Windows Hook launcher",
         "Windows Hook 启动命令缺失: ": "Windows Hook startup command is missing: ",
@@ -466,14 +466,14 @@
         "全局规则缺少: ": "Global rules are missing: ",
         "安装器缺少: ": "Installer is missing: ",
         "源码残留旧 Skill: ": "Legacy Skill remains in the source tree: ",
-        "缺少 V7.0 发布证明脚本: ": "Missing V7.0 release-evidence script: ",
+        "缺少 V7.1 发布证明脚本: ": "Missing V7.1 release-evidence script: ",
         "Plugin payload manifest 无效": "Invalid Plugin payload manifest",
         "英文 Reviewer 缺失: ": "English Reviewer is missing: ",
         "英文 Reviewer 写死模型: ": "English Reviewer pins a model: ",
         "英文主界面缺失: ": "English primary surface is missing: ",
         "Codex 发行命中无关品牌: ": "Codex release contains an unrelated brand: ",
         "中性语言门禁命中 %s: %s": "Neutral-language gate matched %s: %s",
-        "[OK] V7.0.0 语义校验通过：四主领域、双语发行、10 Skills、7 Reviewers、旧 Skill 清理、Plugin/Hooks、payload 身份、延迟封印、模型上限和受控演进边界一致": "[OK] V7.0.0 semantic validation passed: four primary domains, bilingual releases, 10 Skills, 7 Reviewers, legacy-Skill cleanup, Plugin/Hooks, payload identity, deferred sealing, model ceiling, and controlled-evolution boundaries are consistent"
+        "[OK] V7.1.0 语义校验通过：Codex CLI 0.152.1、账户工具事务化安装、四主领域、双语发行、10 Skills、7 Reviewers、Plugin/Hooks、payload 身份、模型上限和受控演进边界一致": "[OK] V7.1.0 semantic validation passed: Codex CLI 0.152.1, transactional account tools, four primary domains, bilingual releases, 10 Skills, 7 Reviewers, Plugin/Hooks, payload identity, model ceiling, and controlled-evolution boundaries are consistent"
       },
       "preserve": [
         "用户",
@@ -489,7 +489,7 @@
         "%s 证据必须为 JSON 对象": "%s evidence must be a JSON object",
         "artifact ZIP 路径不安全": "Artifact ZIP path is unsafe",
         "artifact 不是有效 ZIP": "Artifact is not a valid ZIP",
-        "artifact 根目录不是受支持的 V7.0.0 语言包": "Artifact root is not a supported V7.0.0 locale package",
+        "artifact 根目录不是受支持的 V%s 语言包": "Artifact root is not a supported V%s locale package",
         "artifact payload 身份失败: %s": "Artifact payload identity failed: %s",
         "自动模型门禁报告无效": "Invalid automatic model-gate report",
         "自动模型门禁未证明默认成本路线与 Terra High 上限": "Automatic model gate did not prove the default cost route and Terra High ceiling",
@@ -497,19 +497,19 @@
         "自动模型门禁存在失败用例": "Automatic model gate contains a failed case",
         "自动模型门禁用例冲突": "Automatic model-gate cases conflict",
         "artifact 不存在": "Artifact does not exist",
-        "包内验证未证明 V7.0 PASS": "Package validation did not prove V7.0 PASS",
+        "包内验证未证明 V%s PASS": "Package validation did not prove V%s PASS",
         "确定性构建证明与 artifact 不一致": "Deterministic build evidence does not match the artifact",
         "Plugin list schema 无效": "Invalid Plugin list schema",
-        "Plugin 未精确证明 installed/enabled/version=7.0.0": "Plugin did not prove installed/enabled/version=7.0.0 exactly",
+        "Plugin 未精确证明 installed/enabled/version=%s": "Plugin did not prove installed/enabled/version=%s exactly",
         "生命周期或项目双重绑定证据无效": "Invalid lifecycle or dual project-binding evidence",
         "生命周期未绑定 requested_model_policy=PASS": "Lifecycle evidence is not bound to requested_model_policy=PASS",
         "runtime_model_evidence 口径无效": "Invalid runtime_model_evidence definition",
         "diagnostic_model_observation 缺失": "diagnostic_model_observation is missing",
         "缺少已安装模型门禁报告，且生命周期没有可信 Hook 模型事实": "Installed model-gate report is missing and lifecycle evidence has no trusted Hook model facts",
-        "Codex 0.150.1 或 Plugin capability 未证明": "Codex 0.150.1 or Plugin capability was not proven",
+        "Codex %s 或 Plugin capability 未证明": "Codex %s or Plugin capability was not proven",
         "安装 payload 报告不完整": "Installed payload report is incomplete",
         "ZIP/源/Marketplace/cache payload digest 不一致": "ZIP, source, Marketplace, and cache payload digests do not match",
-        "V7.0 端到端发行验证": "V7.0 end-to-end release verification"
+        "V7.1 端到端发行验证": "V7.1 end-to-end release verification"
       }
     },
     "scripts/cp-runtime.py": {
@@ -553,7 +553,7 @@
         "安装状态 mode 无效，拒绝迁移": "Installation-state mode is invalid; refusing migration",
         "账户安装状态 managed_hashes 无效": "Account installation-state managed_hashes is invalid",
         "安装状态 backup 无效": "Installation-state backup is invalid",
-        "未找到 codex CLI；Plugin 模式需要 Codex 0.150.1 或兼容版本。可改用 --mode standalone": "codex CLI was not found; Plugin mode requires Codex 0.150.1 or a compatible version. Use --mode standalone as an alternative",
+        "未找到 codex CLI；Plugin 模式需要已验证的 Codex CLI 版本。可改用 --mode standalone": "codex CLI was not found; Plugin mode requires a verified Codex CLI version. Use --mode standalone as an alternative",
         "Codex CLI 执行失败: %s；%s": "Codex CLI execution failed: %s; %s",
         "Codex Plugin 卸载失败: %s": "Codex Plugin removal failed: %s",
         "Codex Marketplace 注销失败: %s": "Codex Marketplace removal failed: %s",
@@ -561,7 +561,7 @@
         "未在 Codex installed 列表中发现 %s@%s": "%s@%s was not found in the Codex installed list",
         "旧 Plugin 重新激活读回失败: %s": "Readback failed after reactivating the previous Plugin: %s",
         "旧 Plugin cache 恢复后 digest 不匹配: %s": "Digest mismatch after restoring the previous Plugin cache: %s",
-        "Plugin 模式仅支持 Codex CLI 0.150.1；当前: %s": "Plugin mode supports only Codex CLI 0.150.1; current: %s",
+        "Plugin 模式仅支持已验证的 Codex CLI %s；当前: %s": "Plugin mode supports only verified Codex CLI versions %s; current: %s",
         "未知": "unknown",
         "codex plugin list --json schema 未知，拒绝 Plugin 安装": "Unknown codex plugin list --json schema; refusing Plugin installation",
         "Codex Plugin 子命令能力不完整，拒绝安装: %s": "Codex Plugin subcommand capability is incomplete; refusing installation: %s",
@@ -572,10 +572,10 @@
         "Plugin 注册读回未达到 installed=true、enabled=true、version=%s: %s": "Plugin registration readback did not reach installed=true, enabled=true, version=%s: %s",
         "目标已发生未知漂移，保留: %s": "Target has unknown drift and will be preserved: %s",
         "安装失败且回滚不完整；请执行 doctor --recover：%s": "Installation failed and rollback is incomplete; run doctor --recover: %s",
-        "[OK] V7.0 账户级安装完成，mode=%s": "[OK] V7.0 account-level installation completed, mode=%s",
+        "[OK] V7.1 账户级安装完成，mode=%s": "[OK] V7.1 account-level installation completed, mode=%s",
         "[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add": "[OK] Codex Marketplace is registered and codex plugin add was executed",
         "仓库安装回滚不完整；请执行 doctor --recover": "Repository installation rollback is incomplete; run doctor --recover",
-        "[OK] V7.0 仓库级 Skills 安装完成: %s": "[OK] V7.0 repository-level Skills installation completed: %s",
+        "[OK] V7.1 仓库级 Skills 安装完成: %s": "[OK] V7.1 repository-level Skills installation completed: %s",
         "缺少 %s": "Missing %s",
         "内容漂移 %s": "Content drift: %s",
         "缺少 Skill %s": "Missing Skill %s",
@@ -599,7 +599,7 @@
         "账户工具漂移 %s": "Account tool drift: %s",
         "缺少 Reviewer %s": "Missing Reviewer %s",
         "缺少全局 AGENTS 受管区块": "Missing managed global AGENTS block",
-        "[OK] V7.0 安装验证通过 scope=%s mode=%s": "[OK] V7.0 installation verification passed scope=%s mode=%s",
+        "[OK] V7.1 安装验证通过 scope=%s mode=%s": "[OK] V7.1 installation verification passed scope=%s mode=%s",
         "未找到 V6 安装状态文件；为避免误删未知资产，拒绝无状态卸载": "V6 installation-state file was not found; refusing stateless uninstall to avoid deleting unknown assets",
         "检测到外部修改，拒绝覆盖式卸载；确认后使用 --force：%s": "External modifications detected; refusing overwrite-style uninstall. Use --force after confirmation: %s",
         "测试 Plugin 注销后崩溃注入；请执行 doctor --recover": "Test crash injection after Plugin removal; run doctor --recover",
@@ -610,7 +610,7 @@
         "旧 Plugin 版本读回失败: %s": "Previous Plugin version readback failed: %s",
         "已恢复旧版文件，但旧 Plugin 重新激活失败: %s": "Previous files were restored, but reactivating the previous Plugin failed: %s",
         "[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活": "[WARN] --force: previous Plugin files were restored but could not be reactivated",
-        "[OK] V7.0 已卸载并恢复安装前状态；项目上下文/观测数据未删除": "[OK] V7.0 was uninstalled and the pre-installation state restored; project context and observation data were not deleted",
+        "[OK] V7.1 已卸载并恢复安装前状态；项目上下文/观测数据未删除": "[OK] V7.1 was uninstalled and the pre-installation state restored; project context and observation data were not deleted",
         "事务 journal 损坏，拒绝猜测恢复: %s": "Transaction journal is corrupt; refusing speculative recovery: %s",
         "事务 journal schema 未知，拒绝恢复: %s": "Unknown transaction journal schema; refusing recovery: %s",
         "事务 journal 内容未知或 scope 不匹配，拒绝恢复: %s": "Transaction journal content is unknown or its scope does not match; refusing recovery: %s",
@@ -622,10 +622,10 @@
         "Plugin 恢复: %s": "Plugin recovery: %s",
         "事务恢复未完成: %s": "Transaction recovery is incomplete: %s",
         "[OK] 事务恢复完成": "[OK] Transaction recovery completed",
-        "Codex 跨项目长期技术助手 V7.0 安装器": "Codex Cross-Project Long-Term Engineering Assistant V7.0 installer"
+        "Codex 跨项目长期技术助手 V7.1 安装器": "Codex Cross-Project Long-Term Engineering Assistant V7.1 installer"
       }
     },
-    "scripts/validate-v70.py": {
+    "scripts/validate-v71.py": {
       "plain": {
         "命令失败: %s\n%s\n%s": "Command failed: %s\n%s\n%s",
         "无法从 unittest 输出读取执行数量": "Unable to read the executed test count from unittest output"

@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.0.0",
-  "description": "Cross-project engineering assistance with general backend, frontend, AI, and data/infrastructure domains, independent reviewers, trusted model-evidence boundaries, and controlled evolution governance.",
+  "version": "7.1.0",
+  "description": "Cross-project engineering assistance for Codex CLI 0.152.1 with transactional account tools, general backend, frontend, AI, and data/infrastructure domains, independent reviewers, and controlled evolution governance.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

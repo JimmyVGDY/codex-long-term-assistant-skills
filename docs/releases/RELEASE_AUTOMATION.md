@@ -19,8 +19,8 @@ English: [RELEASE_AUTOMATION.en.md](RELEASE_AUTOMATION.en.md)
 下载 ZIP 后，使用 GitHub CLI 按仓库身份验证实际文件摘要及其来源证明：
 
 ```shell
-gh attestation verify Codex-Skills-V7.0.0-zh-CN.zip --repo OWNER/REPOSITORY
-gh attestation verify Codex-Skills-V7.0.0-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.1.0-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.1.0-en.zip --repo OWNER/REPOSITORY
 ```
 
 将 `OWNER/REPOSITORY` 替换为下载页面显示的仓库身份。`SHA256SUMS.txt` 用于摘要核对，`witness-*.json` 证明同一提交的两次干净构建字节一致，GitHub attestation 则把 ZIP 摘要关联到产生它的工作流身份。三者用途不同，不能互相冒充。

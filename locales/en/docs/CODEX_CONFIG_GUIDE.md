@@ -2,7 +2,7 @@
 
 ## Scope
 
-V7.0 does not override the main-agent model. Reviewer TOML files omit model settings so the bounded coordinator policy can select Luna or Terra profiles dynamically.
+V7.1 does not override the main-agent model. Reviewer TOML files omit model settings so the bounded coordinator policy can select Luna or Terra profiles dynamically.
 
 ## Windows path normalization
 
@@ -10,7 +10,7 @@ For native Windows Codex, `CODEX_HOME` must resolve to a native Windows path. WS
 
 ## Plugin registration
 
-The installer uses Codex 0.150.1 Plugin and Marketplace commands. Registration is verified through:
+The installer uses Codex 0.152.1 Plugin and Marketplace commands. Registration is verified through:
 
 ```powershell
 codex plugin list --json

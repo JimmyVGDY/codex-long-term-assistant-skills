@@ -7,7 +7,7 @@ hide:
 <div class="landing-page">
   <section class="landing-hero" aria-labelledby="landing-title">
     <div class="landing-hero__copy">
-      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.0.0</p>
+      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.1.0</p>
       <h1 id="landing-title">
         <span lang="zh-CN">Codex 跨项目长期技术助手</span>
         <span lang="en">Cross-Project Engineering Assistant</span>
@@ -24,7 +24,7 @@ hide:
       </div>
       <ul class="landing-meta" aria-label="项目元数据 / Project metadata">
         <li>Apache-2.0</li>
-        <li>Codex CLI 0.150.1</li>
+        <li>Codex CLI 0.152.1</li>
         <li>Windows</li>
       </ul>
     </div>
@@ -89,7 +89,7 @@ hide:
         <strong><span lang="zh-CN">源码仓库</span> <span aria-hidden="true">/</span> <span lang="en">Source repository</span></strong>
         <small><span lang="zh-CN">浏览源码与公开历史</span> <span aria-hidden="true">·</span> <span lang="en">Source and public history</span></small>
       </a>
-      <a class="landing-resource-card" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.0/">
+      <a class="landing-resource-card" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.1/">
         <span aria-hidden="true">◇</span>
         <strong><span lang="zh-CN">快速开始</span> <span aria-hidden="true">/</span> <span lang="en">Quick start</span></strong>
         <small><span lang="zh-CN">从安装到首次验证</span> <span aria-hidden="true">·</span> <span lang="en">Installation through first verification</span></small>

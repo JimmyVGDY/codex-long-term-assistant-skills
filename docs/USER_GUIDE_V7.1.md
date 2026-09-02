@@ -1,4 +1,4 @@
-# Codex 跨项目长期技术助手 V7.0 使用说明
+# Codex 跨项目长期技术助手 V7.1 使用说明
 
 ## 四个主领域
 
@@ -60,7 +60,7 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-只有 Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.0.0`，十个新 Skill 可发现、Manifest 声明的四个受管旧 Skill（含此前废弃的 Vue Skill）不再发现时，才可确认升级完成。
+只有 Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.1.0`，十个新 Skill 可发现、Manifest 声明的四个受管旧 Skill（含此前废弃的 Vue Skill）不再发现时，才可确认升级完成。
 
 ## Reviewer 与模型策略
 
