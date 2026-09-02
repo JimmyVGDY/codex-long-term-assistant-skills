@@ -59,7 +59,7 @@ if args[:2] == ['plugin','add']:
     if len(args) > 2 and args[2] == '--help': print('plugin add help'); raise SystemExit(0)
     home.mkdir(parents=True,exist_ok=True)
     state.write_text(json.dumps({'installed':True}),encoding='utf-8')
-    version=os.environ.get('FAKE_PLUGIN_VERSION','7.1.0')
+    version=os.environ.get('FAKE_PLUGIN_VERSION','7.2.0')
     source=Path(market_file.read_text(encoding='utf-8'))/'plugins'/'codex-cross-project-engineering-assistant'
     cache=home/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/version
     if io_path(cache).exists(): shutil.rmtree(io_path(cache))
@@ -74,7 +74,7 @@ if args == ['plugin','list','--json']:
         print('configured marketplace manifest is invalid',file=sys.stderr); raise SystemExit(2)
     installed=[]
     if state.exists():
-        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','7.1.0'),'installed':True,'enabled':True}]
+        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','7.2.0'),'installed':True,'enabled':True}]
     print(json.dumps({'installed':installed,'available':[]})); raise SystemExit(0)
 print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemExit(2)
 """,encoding='utf-8')
@@ -200,6 +200,8 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         manifest.write_text(json.dumps({
             'name':'cp-assistant-local',
             'owner':{'name':'local-user'},
+            'interface':{'displayName':'Codex Cross Project Assistant Local'},
+            'external_metadata':{'preserve':True},
             'plugins':[{
                 'name':'codex-cross-project-engineering-assistant',
                 'source':{'source':'local','path':'./plugins/codex-cross-project-engineering-assistant'},
@@ -211,7 +213,8 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['install','--scope','user','--mode','plugin'],env)
         current=json.loads(manifest.read_text(encoding='utf-8'))
         self.assertNotIn('owner',current)
-        self.assertEqual('Codex Cross Project Assistant Local',current['interface']['displayName'])
+        self.assertNotIn('interface',current)
+        self.assertEqual({'preserve':True},current['external_metadata'])
         entry=next(item for item in current['plugins'] if item['name']=='codex-cross-project-engineering-assistant')
         self.assertEqual('AVAILABLE',entry['policy']['installation'])
         self.assertEqual('ON_INSTALL',entry['policy']['authentication'])
@@ -221,7 +224,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_install_rejects_wrong_registered_version(self):
         env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
         result=run(['install','--scope','user','--mode','plugin'],env,2)
-        self.assertIn('version=7.1.0',result.stderr)
+        self.assertIn('version=7.2.0',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
@@ -303,7 +306,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['doctor','--recover'],self.env)
         self.assertFalse(journal.exists())
         status=json.loads(run(['status','--json'],self.env).stdout)
-        self.assertEqual('7.1.0',status['version'])
+        self.assertEqual('7.2.0',status['version'])
         self.assertIn('live_transaction',status)
 
     def test_mode_switch_is_refused_without_force(self):
@@ -392,6 +395,8 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         bad={**self.env,'CODEX_HOME':str(ROOT)}
         r=run(['install','--scope','user','--mode','standalone','--dry-run'],bad,2)
         self.assertIn('危险目录',r.stderr)
+        self.assertFalse((ROOT/'cp-assistant-v6.lock').exists())
+        self.assertFalse((ROOT/'cp-assistant-v6-transaction.json').exists())
         self.codex.mkdir(parents=True,exist_ok=True)
         outside=self.home/'outside'; outside.mkdir()
         if os.name == 'nt':

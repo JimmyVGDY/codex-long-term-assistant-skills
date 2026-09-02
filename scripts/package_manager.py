@@ -30,7 +30,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.1.0"
+VERSION = "7.2.0"
 MARKETPLACE = "cp-assistant-local"
 TARGET_CODEX_VERSION = "0.152.1"
 SUPPORTED_CODEX_VERSIONS = ("0.150.1", TARGET_CODEX_VERSION)
@@ -744,16 +744,13 @@ def _merged_marketplace_manifest(existing: Any) -> Dict[str, Any]:
                     "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
                     "category": "Productivity"})
     data["name"] = MARKETPLACE
-    interface = data.get("interface")
-    if not isinstance(interface, dict):
-        interface = {}
-    interface.setdefault("displayName", "Codex Cross Project Assistant Local")
-    data["interface"] = interface
-    # 中文：V6.1-V6.3 写入的旧版 `owner` 区块已不被 Codex 0.150.1 本地市场清单接受；
-    # 中文：它是已知受管字段，不属于未知外部条目。
-    # English: V6.1-V6.3 wrote a legacy `owner` block rejected by Codex 0.150.1 local
-    # English: marketplace manifests; it is a known managed field, not an external entry.
+    # 中文：旧安装器写入的顶层 `owner`/`interface` 区块已不被 Codex 0.152.1
+    # 中文：本地市场清单接受；它们是已知受管字段，不属于未知外部条目。
+    # English: Top-level `owner`/`interface` blocks written by older installers are rejected
+    # English: by Codex 0.152.1 local marketplace manifests. They are known managed fields,
+    # English: not unknown external entries.
     data.pop("owner", None)
+    data.pop("interface", None)
     data["plugins"] = plugins
     return data
 
@@ -941,10 +938,8 @@ def _require_plugin_host() -> Dict[str, Any]:
     return profile
 
 
-def install_user(mode: str, dry_run: bool, force: bool) -> None:
-    ch = codex_home(); sh = user_skills_home(); home = Path.home().absolute()
-    current_skills = skill_names()
-    deprecated_skills = deprecated_skill_names()
+def validate_user_install_target() -> None:
+    ch = codex_home()
     # 中文：防止误把源码或安装包目录当成 CODEX_HOME 后发生自覆盖。
     # English: Prevent self-overwrite when the source or package directory is mistaken for CODEX_HOME.
     source_root = ROOT.absolute()
@@ -953,6 +948,13 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         raise InstallError("危险目录：CODEX_HOME 位于 V6 源码/安装包目录内，拒绝自覆盖")
     except ValueError:
         pass
+
+
+def install_user(mode: str, dry_run: bool, force: bool) -> None:
+    validate_user_install_target()
+    ch = codex_home(); sh = user_skills_home(); home = Path.home().absolute()
+    current_skills = skill_names()
+    deprecated_skills = deprecated_skill_names()
     reject_link_ancestors(ch); reject_link_ancestors(home / ".agents")
     targets: List[Tuple[str, Path]] = [
         ("global", ch / "AGENTS.md"),
@@ -1177,7 +1179,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("安装失败且回滚不完整；请执行 doctor --recover：%s" % "; ".join(journal["rollback_errors"])) from exc
         raise
-    print("[OK] V7.1 账户级安装完成，mode=%s" % mode)
+    print("[OK] V7.2 账户级安装完成，mode=%s" % mode)
     if mode == "plugin":
         print("[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add")
 
@@ -1249,7 +1251,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("仓库安装回滚不完整；请执行 doctor --recover") from exc
         raise
-    print("[OK] V7.1 仓库级 Skills 安装完成: %s" % repo)
+    print("[OK] V7.2 仓库级 Skills 安装完成: %s" % repo)
 
 
 def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
@@ -1336,7 +1338,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     if errors:
         for item in errors: print("[FAIL]",item)
         raise SystemExit(1)
-    print("[OK] V7.1 安装验证通过 scope=%s mode=%s" % (scope, mode))
+    print("[OK] V7.2 安装验证通过 scope=%s mode=%s" % (scope, mode))
 
 
 def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_run: bool) -> None:
@@ -1456,7 +1458,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
-    print("[OK] V7.1 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
+    print("[OK] V7.2 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
 
 
 def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict[str, Any]]:
@@ -1594,7 +1596,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
 
 
 def main() -> None:
-    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.1 安装器")
+    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.2 安装器")
     sub=p.add_subparsers(dest="command",required=True)
     for name in ("install","verify","uninstall"):
         q=sub.add_parser(name)
@@ -1626,6 +1628,10 @@ def main() -> None:
         with scope_lock(args.scope, repo): recover_transaction(args.scope, str(repo) if repo else None)
         return
     repo = git_root(Path(args.repo_path or ".")) if args.scope == "repo" else None
+    if args.command == "install" and args.scope == "user":
+        # 中文：危险目标必须在锁文件或事务文件出现之前失败关闭。
+        # English: Dangerous targets must fail closed before any lock or journal is created.
+        validate_user_install_target()
     with scope_lock(args.scope, repo):
         if args.command=="install":
             if args.scope=="repo": install_repo(str(repo),args.dry_run)
