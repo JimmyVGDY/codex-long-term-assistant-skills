@@ -167,7 +167,7 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
         "--decision",
         "DELEGATE",
         "--reason-code",
-        "BEHAVIOR_CHANGE",
+        "INDEPENDENT_EVIDENCE_GAIN",
         "--reason",
         "行为改动需要独立复审",
     )
@@ -291,7 +291,7 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
         "--decision",
         "DELEGATE",
         "--reason-code",
-        "SECURITY_RISK",
+        "SECURITY_OR_CONCURRENCY_RISK",
         "--reason",
         "高风险权限边界需要独立复审",
     )

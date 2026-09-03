@@ -30,10 +30,14 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.3.0"
+VERSION = "7.4.0"
 MARKETPLACE = "cp-assistant-local"
-TARGET_CODEX_VERSION = "0.152.1"
-SUPPORTED_CODEX_VERSIONS = ("0.150.1", TARGET_CODEX_VERSION)
+TARGET_CODEX_VERSION = "0.153.0"
+# V7.4.0 只承诺当前稳定宿主；“当前版 + 前十个稳定版”兼容窗口延后到 V7.4.1。
+SUPPORTED_CODEX_VERSIONS = (TARGET_CODEX_VERSION,)
+REPAIRABLE_MARKETPLACE_STATE_VERSIONS = frozenset({
+    "6.1.0", "6.2.0", "6.3.0", "7.2.0", "7.3.0", "7.4.0",
+})
 SKILL_DIR_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
 END = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:END -->"
@@ -744,13 +748,11 @@ def _merged_marketplace_manifest(existing: Any) -> Dict[str, Any]:
                     "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
                     "category": "Productivity"})
     data["name"] = MARKETPLACE
-    # 中文：旧安装器写入的顶层 `owner`/`interface` 区块已不被 Codex 0.152.1
-    # 中文：本地市场清单接受；它们是已知受管字段，不属于未知外部条目。
-    # English: Top-level `owner`/`interface` blocks written by older installers are rejected
-    # English: by Codex 0.152.1 local marketplace manifests. They are known managed fields,
-    # English: not unknown external entries.
+    # 中文：Codex 0.153.0 需要本地市场声明 interface.displayName；owner 仍不是受管字段。
+    # English: Codex 0.153.0 requires interface.displayName in local marketplace manifests;
+    # owner remains outside the managed contract.
     data.pop("owner", None)
-    data.pop("interface", None)
+    data["interface"] = {"displayName": "Codex Cross Project Assistant Local Package"}
     data["plugins"] = plugins
     return data
 
@@ -897,9 +899,9 @@ def _probe_plugin_host() -> Dict[str, Any]:
 
 
 def _legacy_marketplace_repairable() -> bool:
-    """中文：变更前只识别 V6.1 到 V6.3 的确切受管 Marketplace 清单漂移。
+    """中文：变更前只识别已知受管版本的确切 Marketplace 清单漂移。
 
-    English: Recognize only the exact managed V6.1-to-V6.3 Marketplace manifest drift before mutation.
+    English: Recognize only exact Marketplace manifest drift from known managed versions before mutation.
     """
     try:
         state = load_json(state_path("user"), {})
@@ -910,7 +912,7 @@ def _legacy_marketplace_repairable() -> bool:
         return False
     if state.get("package") != PACKAGE or state.get("mode") != "plugin":
         return False
-    if str(state.get("version") or "") not in {"6.1.0", "6.2.0", "6.3.0"}:
+    if str(state.get("version") or "") not in REPAIRABLE_MARKETPLACE_STATE_VERSIONS:
         return False
     if state.get("schema_version") not in {1, 2} or manifest.get("name") != MARKETPLACE:
         return False
@@ -1179,7 +1181,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("安装失败且回滚不完整；请执行 doctor --recover：%s" % "; ".join(journal["rollback_errors"])) from exc
         raise
-    print("[OK] V7.3 账户级安装完成，mode=%s" % mode)
+    print("[OK] V7.4 账户级安装完成，mode=%s" % mode)
     if mode == "plugin":
         print("[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add")
 
@@ -1251,7 +1253,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("仓库安装回滚不完整；请执行 doctor --recover") from exc
         raise
-    print("[OK] V7.3 仓库级 Skills 安装完成: %s" % repo)
+    print("[OK] V7.4 仓库级 Skills 安装完成: %s" % repo)
 
 
 def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
@@ -1338,7 +1340,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     if errors:
         for item in errors: print("[FAIL]",item)
         raise SystemExit(1)
-    print("[OK] V7.3 安装验证通过 scope=%s mode=%s" % (scope, mode))
+    print("[OK] V7.4 安装验证通过 scope=%s mode=%s" % (scope, mode))
 
 
 def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_run: bool) -> None:
@@ -1458,7 +1460,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
-    print("[OK] V7.3 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
+    print("[OK] V7.4 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
 
 
 def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict[str, Any]]:
@@ -1596,7 +1598,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
 
 
 def main() -> None:
-    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.3 安装器")
+    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.4 安装器")
     sub=p.add_subparsers(dest="command",required=True)
     for name in ("install","verify","uninstall"):
         q=sub.add_parser(name)

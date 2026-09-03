@@ -42,7 +42,7 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
                       "--boundary-id", "boundary-one", "--task-id", "task-one")
         self.run_tool(CONTROLLER, "route", "--review-dir", str(self.review),
                       "--phase", "post", "--decision", "DELEGATE",
-                      "--reason-code", "RISK_REVIEW", "--reason", "需要独立复审")
+                      "--reason-code", "INDEPENDENT_EVIDENCE_GAIN", "--reason", "需要独立复审")
         self.run_tool(CONTROLLER, "plan", "--review-dir", str(self.review),
                       "--phase", "post", "--depth", "1", "--reviewers", "reviewer-one",
                       "--purpose", "校准契约复审", "--effort-tier", "deep")
@@ -175,7 +175,7 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
     def test_inline_decision_is_append_only_budget_free_and_requires_evidenced_redecision(self) -> None:
         self.run_tool(CONTROLLER, "init", "--review-dir", str(self.review), "--boundary-id", "inline-boundary")
         self.run_tool(CONTROLLER, "route", "--review-dir", str(self.review), "--phase", "pre",
-                      "--decision", "INLINE", "--reason-code", "TRIVIAL", "--reason", "简单本地检查")
+                      "--decision", "INLINE", "--reason-code", "INLINE_SUFFICIENT", "--reason", "简单本地检查")
         inline_state = self.state()
         self.assertEqual(0, inline_state["counters"]["total_reviewers"])
         before = (self.review / "review-state.json").read_bytes()
@@ -184,17 +184,17 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         self.assertEqual(before, (self.review / "review-state.json").read_bytes())
         decision_id = inline_state["routing_decisions"]["pre"][-1]["decision_id"]
         self.run_tool(CONTROLLER, "route", "--review-dir", str(self.review), "--phase", "pre",
-                      "--decision", "DELEGATE", "--reason-code", "NEW_RISK", "--reason", "发现新风险",
+                      "--decision", "DELEGATE", "--reason-code", "EVIDENCE_CONFLICT", "--reason", "发现新风险",
                       "--supersedes", decision_id, "--change-reason", "风险边界变化", ok=False)
         self.run_tool(CONTROLLER, "route", "--review-dir", str(self.review), "--phase", "pre",
-                      "--decision", "DELEGATE", "--reason-code", "NEW_RISK", "--reason", "发现新风险",
+                      "--decision", "DELEGATE", "--reason-code", "EVIDENCE_CONFLICT", "--reason", "发现新风险",
                       "--supersedes", decision_id, "--change-reason", "风险边界变化",
                       "--evidence", "tests/new-risk")
         self.run_tool(CONTROLLER, "plan", "--review-dir", str(self.review), "--phase", "pre",
                       "--depth", "1", "--reviewers", "r1", "--purpose", "风险复审")
         latest = self.state()["routing_decisions"]["pre"][-1]["decision_id"]
         self.run_tool(CONTROLLER, "route", "--review-dir", str(self.review), "--phase", "pre",
-                      "--decision", "INLINE", "--reason-code", "REVERT", "--reason", "不再需要",
+                      "--decision", "INLINE", "--reason-code", "INLINE_SUFFICIENT", "--reason", "不再需要",
                       "--supersedes", latest, "--change-reason", "尝试改判", "--evidence", "x", ok=False)
 
     def test_new_state_requires_route_but_migrated_v4_keeps_legacy_plan_path(self) -> None:
@@ -241,9 +241,10 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
     def test_route_plan_dispatch_concurrency_preserves_one_valid_transition(self) -> None:
         self.run_tool(CONTROLLER, "init", "--review-dir", str(self.review), "--boundary-id", "concurrent")
         first_commands = [
-            ("route", "--review-dir", str(self.review), "--phase", "post", "--decision", decision,
-             "--reason-code", "FIRST", "--reason", "并发首决策")
-            for decision in ("INLINE", "DELEGATE")
+            ("route", "--review-dir", str(self.review), "--phase", "post", "--decision", "INLINE",
+             "--reason-code", "INLINE_SUFFICIENT", "--reason", "并发首决策"),
+            ("route", "--review-dir", str(self.review), "--phase", "post", "--decision", "DELEGATE",
+             "--reason-code", "INDEPENDENT_EVIDENCE_GAIN", "--reason", "并发首决策"),
         ]
         with ThreadPoolExecutor(max_workers=2) as pool:
             first = list(pool.map(lambda command: self.raw_controller(*command), first_commands))
@@ -253,14 +254,14 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         latest = self.state()["routing_decisions"]["post"][-1]
         if latest["decision"] == "INLINE":
             self.run_tool(CONTROLLER, "route", "--review-dir", str(self.review), "--phase", "post",
-                          "--decision", "DELEGATE", "--reason-code", "READY", "--reason", "准备复审",
+                          "--decision", "DELEGATE", "--reason-code", "INDEPENDENT_EVIDENCE_GAIN", "--reason", "准备复审",
                           "--supersedes", latest["decision_id"], "--change-reason", "增加行为改动",
                           "--evidence", "tests/concurrency")
         delegate = self.state()["routing_decisions"]["post"][-1]["decision_id"]
         plan_command = ("plan", "--review-dir", str(self.review), "--phase", "post", "--depth", "1",
                         "--reviewers", "r1", "--purpose", "并发计划")
         route_command = ("route", "--review-dir", str(self.review), "--phase", "post", "--decision", "INLINE",
-                         "--reason-code", "NO_LONGER", "--reason", "并发改判", "--supersedes", delegate,
+                         "--reason-code", "INLINE_SUFFICIENT", "--reason", "并发改判", "--supersedes", delegate,
                          "--change-reason", "新证据", "--evidence", "tests/new-evidence")
         with ThreadPoolExecutor(max_workers=2) as pool:
             second = list(pool.map(lambda command: self.raw_controller(*command), (plan_command, route_command)))
@@ -271,7 +272,7 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         if not state["phases"]["post"]["rounds"]:
             latest = state["routing_decisions"]["post"][-1]
             self.run_tool(CONTROLLER, "route", "--review-dir", str(self.review), "--phase", "post",
-                          "--decision", "DELEGATE", "--reason-code", "RESTORE", "--reason", "恢复复审",
+                          "--decision", "DELEGATE", "--reason-code", "INDEPENDENT_EVIDENCE_GAIN", "--reason", "恢复复审",
                           "--supersedes", latest["decision_id"], "--change-reason", "执行并发派发验证",
                           "--evidence", "tests/dispatch-race")
             self.run_tool(CONTROLLER, *plan_command)
@@ -279,7 +280,7 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         dispatch_command = ("dispatch", "--review-dir", str(self.review), "--phase", "post", "--round", "1",
                             "--reviewer", "r1", "--scope", "并发门禁")
         late_route_command = ("route", "--review-dir", str(self.review), "--phase", "post", "--decision", "INLINE",
-                              "--reason-code", "TOO_LATE", "--reason", "轮次后改判", "--supersedes", latest,
+                              "--reason-code", "INLINE_SUFFICIENT", "--reason", "轮次后改判", "--supersedes", latest,
                               "--change-reason", "不应成功", "--evidence", "tests/late")
         with ThreadPoolExecutor(max_workers=2) as pool:
             third = list(pool.map(lambda command: self.raw_controller(*command), (dispatch_command, late_route_command)))

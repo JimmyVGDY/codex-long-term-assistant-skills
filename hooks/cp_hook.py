@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""中文：Codex V6 生命周期 Hook：模型上限防护与本地最小元数据观测。
+"""中文：Codex V7.4 生命周期 Hook：模型上限、统一委派预算与最小元数据观测。
 
 English: Codex V6 lifecycle Hook for model-ceiling enforcement and minimal local metadata observation.
 """
@@ -26,6 +26,10 @@ if hasattr(sys.stderr, "reconfigure"):
 ROOT = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v2 import append_event, project_id_for, stable_repo_fingerprint  # noqa: E402
+from cp_runtime.delegation_budget import (  # noqa: E402
+    DelegationBudgetError, mark_completed, mark_started, profile_for, read_budget,
+    reserve_budget,
+)
 from cp_runtime.model_evidence import verify_hook_runtime_evidence  # noqa: E402
 from cp_runtime.seal_queue import enqueue_session_end, launch_worker  # noqa: E402
 
@@ -39,6 +43,9 @@ POLICY_MESSAGES = {
         "unknown_model": "显式模型无法证明不超过 Terra High，按 fail-closed 策略拒绝；可使用 gpt-5.6-luna、gpt-5.6-terra 或省略显式模型。",
         "invalid_input": "PreToolUse 输入无法解析，按 fail-closed 策略拒绝自动子 Agent。",
         "hook_failure": "PreToolUse Hook 异常，按 fail-closed 策略拒绝自动子 Agent。",
+        "budget_denied": "统一委派预算拒绝此次子 Agent 派发；请先创建匹配的显式 dispatch permit，并检查余额、角色、并行数和深度。",
+        "budget_input": "受控任务缺少稳定的派发关联字段或角色，按 fail-closed 策略拒绝。",
+        "budget_unconfigured": "任务已启用统一委派预算，但未配置 CP_DELEGATION_BUDGET_PATH，按 fail-closed 策略拒绝。",
     },
     "en": {
         "model_ceiling": "Automatic subagent models cannot exceed Terra High; explicit Sol or stronger models are denied.",
@@ -46,6 +53,9 @@ POLICY_MESSAGES = {
         "unknown_model": "The explicit model cannot be proven within the Terra High ceiling and is denied fail-closed; use gpt-5.6-luna, gpt-5.6-terra, or omit the explicit model.",
         "invalid_input": "PreToolUse input could not be parsed; automatic subagent dispatch is denied fail-closed.",
         "hook_failure": "PreToolUse Hook failed; automatic subagent dispatch is denied fail-closed.",
+        "budget_denied": "The unified delegation budget denied this subagent dispatch. Create a matching explicit dispatch permit and check remaining units, role, parallelism, and depth.",
+        "budget_input": "The controlled task lacks a stable dispatch correlation field or role and is denied fail-closed.",
+        "budget_unconfigured": "The task has enabled the unified delegation budget, but CP_DELEGATION_BUDGET_PATH is not configured; the request is denied fail-closed.",
     },
 }
 
@@ -113,8 +123,59 @@ def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     elif model and model not in ALLOWED_AUTOMATIC_MODELS:
         reason = _policy_message("unknown_model")
     if not reason:
-        return None
+        ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
+        if not ledger_text:
+            if os.environ.get("CP_DELEGATION_BUDGET_REQUIRED", "").strip() == "1":
+                reason = _policy_message("budget_unconfigured")
+            else:
+                return None
+        if not reason:
+            dispatch_key = str(_lookup(args, "task_name", "taskName", "dispatch_key", "delegation_key") or "").strip()
+            host_dispatch_id = str(_lookup(data, "tool_use_id", "toolUseId", "tool_call_id", "toolCallId") or "").strip()
+            role = str(_lookup(args, "agent_type", "agentType", "role") or "").strip()
+            if not dispatch_key or not host_dispatch_id or not role:
+                reason = _policy_message("budget_input")
+            else:
+                try:
+                    state = read_budget(Path(ledger_text).expanduser().resolve())
+                    profile, basis = profile_for(model, effort, state["default_model_profile"])
+                    reservation = reserve_budget(
+                        Path(ledger_text).expanduser().resolve(), dispatch_key=dispatch_key,
+                        host_dispatch_id=host_dispatch_id, requested_profile=profile,
+                        request_basis=basis, role=role,
+                    )
+                    # 中文：仅把受控 reservation 标识留在本次内存 payload，绝不写回原始任务正文。
+                    # English: Keep only the controlled reservation identifier in this in-memory payload.
+                    if isinstance(data, dict):
+                        data["_cp_reservation_id"] = reservation["reservation_id"]
+                    return None
+                except (DelegationBudgetError, OSError, TimeoutError):
+                    reason = _policy_message("budget_denied")
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason}}
+
+
+def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
+    """只在宿主显式传播 reservation_id 时对账；0.153.0 缺失时保留 RESERVED。"""
+    ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
+    if not ledger_text or hook_name not in {"SubagentStart", "SubagentStop"}:
+        return
+    reservation_id = str(_lookup(data, "delegation_id", "delegationId", "reservation_id", "reservationId") or "").strip()
+    agent_id = str(_lookup(data, "agent_id", "agentId") or "").strip()
+    if not reservation_id or not agent_id:
+        return
+    ledger = Path(ledger_text).expanduser().resolve()
+    if hook_name == "SubagentStart":
+        runtime = verify_hook_runtime_evidence(data, hook_name)
+        actual_profile = ""
+        evidence = "unavailable"
+        if runtime["status"] == "VERIFIED":
+            actual_profile, _basis = profile_for(runtime["model"], runtime["reasoning_effort"], "luna-low")
+            evidence = "host-attested-hook-payload"
+        mark_started(ledger, reservation_id=reservation_id, agent_id=agent_id,
+                     actual_profile=actual_profile, runtime_evidence=evidence)
+    else:
+        outcome = str(_lookup(data, "terminal_outcome", "outcome") or "UNKNOWN").upper()
+        mark_completed(ledger, reservation_id=reservation_id, outcome=outcome)
 
 
 def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
@@ -135,8 +196,8 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     session_id = str(_lookup(data, "session_id", "sessionId", "thread_id") or "")
     turn_id = str(_lookup(data, "turn_id", "turnId") or "")
     task_id = str(_lookup(data, "task_id", "taskId") or turn_id or session_id)
-    # 中文：实际运行值需要外部配置的宿主信任锚；Codex 0.152.1 未提供此证明，因此状态保持不可用。
-    # English: Actual runtime values require an externally configured host trust anchor; Codex 0.152.1 provides no such attestation, so the values remain unavailable.
+    # 中文：实际运行值需要外部配置的宿主信任锚；Codex 0.153.0 的普通 Hook 字段不构成此证明。
+    # English: Actual runtime values require an external host trust anchor; ordinary Codex 0.153.0 Hook fields do not provide that attestation.
     runtime_evidence = verify_hook_runtime_evidence(data, hook)
     model = runtime_evidence["model"] if runtime_evidence["status"] == "VERIFIED" else ""
     effort = runtime_evidence["reasoning_effort"] if runtime_evidence["status"] == "VERIFIED" else ""
@@ -247,6 +308,14 @@ def main() -> int:
     if guard is not None:
         print(json.dumps(guard, ensure_ascii=False))
         return 0
+    try:
+        _budget_lifecycle(data, hook_name)
+    except (DelegationBudgetError, OSError, TimeoutError) as exc:
+        # 启停 Hook 无权回滚已发生的宿主动作；保留预占并输出无正文诊断。
+        diagnostic = {"schema_version": "1.0", "component": "delegation-budget",
+                      "status": "RECONCILIATION_FAILED", "hook": hook_name,
+                      "error_ref": "sha256:" + hashlib.sha256(str(exc).encode("utf-8")).hexdigest()}
+        print(json.dumps(diagnostic, ensure_ascii=False, sort_keys=True), file=sys.stderr)
     try:
         event = _event(data)
     except Exception:

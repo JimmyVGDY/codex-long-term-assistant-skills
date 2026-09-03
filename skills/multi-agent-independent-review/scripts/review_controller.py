@@ -17,10 +17,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
+_RUNTIME_ROOT = Path(__file__).resolve().parents[3] / "runtime"
+if str(_RUNTIME_ROOT) not in sys.path:
+    sys.path.insert(0, str(_RUNTIME_ROOT))
+from cp_runtime.delegation_budget import read_budget, sha256_ref  # noqa: E402
+
 STATE_FILE = "review-state.json"
 CALIBRATION_LEDGER_FILE = "review-results.jsonl"
 LOCK_FILE = ".review-controller.lock"
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 # 中文：默认值以成本为先；可显式提高，但绝不能超过 HARD_LIMITS。
 # English: Defaults are cost-conscious; they may be raised explicitly but never beyond HARD_LIMITS.
@@ -94,6 +99,11 @@ VALID_MODEL_ASSIGNMENT_STATUSES = {
 }
 VALID_RUNTIME_EVIDENCE_LEVELS = {"unavailable", "declared"}
 VALID_ROUTE_DECISIONS = {"INLINE", "DELEGATE"}
+VALID_ROUTE_REASONS = {
+    "INDEPENDENT_EVIDENCE_GAIN", "SEMANTIC_COMPLEXITY", "EVIDENCE_CONFLICT",
+    "SECURITY_OR_CONCURRENCY_RISK", "LOWER_TIER_INCONCLUSIVE", "MISSING_EVIDENCE",
+    "INLINE_SUFFICIENT",
+}
 V3_RESULT_FIELDS = {
     "schema_version", "result_id", "reviewer", "task_id", "review_phase", "review_round",
     "boundary_id", "packet_sha256", "status", "isolation_level", "model_assignment",
@@ -335,12 +345,14 @@ def normalize_dispatch_record(record: Dict[str, Any], effort_tier: str) -> Dict[
     record.setdefault("minimum_acceptable_profile", profile)
     record.setdefault("escalation_reason", "")
     record.setdefault("repeat_reason", "")
+    record.setdefault("delegation_dispatch_ref", "")
+    record.setdefault("budget_accounting_owner", "legacy-review-controller")
     return record
 
 
 def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
     version = state.get("schema_version")
-    if version not in {1, 2, 3, 4, SCHEMA_VERSION}:
+    if version not in {1, 2, 3, 4, 5, SCHEMA_VERSION}:
         return state
 
     if version in {1, 2}:
@@ -367,6 +379,10 @@ def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
         state.setdefault("notes", []).append(
             "升级到 schema v5：启用最低可接受模型档位、校准投影与追加式 INLINE/DELEGATE 决策。"
         )
+    if version in {1, 2, 3, 4, 5}:
+        state.setdefault("notes", []).append(
+            "升级到 schema v6：Reviewer 轮次继续独立管理，总成本由 DelegationBudget V1 统一计费。"
+        )
 
     state["schema_version"] = SCHEMA_VERSION
     state.setdefault("risk_level", "unknown")
@@ -376,6 +392,9 @@ def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
     state.setdefault("task_id", str(state.get("boundary_id", "")))
     state.setdefault("routing_decision_required", False)
     state.setdefault("routing_decisions", {"pre": [], "post": []})
+    state.setdefault("delegation_budget", {
+        "ledger_path": "", "budget_id": "", "accounting_owner": "delegation-budget-v1",
+    })
     for phase_name in VALID_PHASES:
         state["routing_decisions"].setdefault(phase_name, [])
 
@@ -536,6 +555,11 @@ def validate_dispatch_model(record: Dict[str, Any]) -> None:
 def validate_state_data(state: Dict[str, Any]) -> None:
     if state.get("schema_version") != SCHEMA_VERSION:
         die("不支持的 review-state schema_version")
+    delegation = state.get("delegation_budget")
+    if not isinstance(delegation, dict) or set(delegation) != {"ledger_path", "budget_id", "accounting_owner"}:
+        die("delegation_budget 绑定字段非法")
+    if delegation.get("accounting_owner") != "delegation-budget-v1":
+        die("Reviewer 不得成为总预算计费所有者")
     if not str(state.get("task_id", "")).strip():
         die("task_id 不能为空")
     if not isinstance(state.get("routing_decision_required"), bool):
@@ -693,6 +717,11 @@ def command_init(args: argparse.Namespace) -> None:
             "post": {"current_round": 0, "rounds": {}},
         },
         "routing_decisions": {"pre": [], "post": []},
+        "delegation_budget": {
+            "ledger_path": str(Path(args.delegation_ledger).expanduser().resolve()) if args.delegation_ledger else "",
+            "budget_id": args.delegation_budget_id,
+            "accounting_owner": "delegation-budget-v1",
+        },
         "isolation": default_isolation(),
         "conclusion": "",
         "notes": [],
@@ -770,6 +799,12 @@ def command_route(args: argparse.Namespace) -> None:
         validate_state_data(state)
         if state.get("status") != "open":
             die("复审台账已关闭")
+        if args.reason_code not in VALID_ROUTE_REASONS:
+            die("路由原因码不属于 V7.4 受控集合")
+        if args.decision == "INLINE" and args.reason_code != "INLINE_SUFFICIENT":
+            die("INLINE 必须使用 INLINE_SUFFICIENT")
+        if args.decision == "DELEGATE" and args.reason_code == "INLINE_SUFFICIENT":
+            die("DELEGATE 不得使用 INLINE_SUFFICIENT")
         phase = phase_state(state, args.phase)
         if phase.get("rounds"):
             die("已创建复审轮次，禁止改写该阶段路由决策")
@@ -943,6 +978,20 @@ def command_dispatch(args: argparse.Namespace) -> None:
                 die("相同 Reviewer 已审过相同 packet；如确需第二意见，使用 --allow-repeat 并说明 --repeat-reason")
 
         config = MODEL_PROFILES[profile]
+        delegation_binding = state.get("delegation_budget", {})
+        delegation_ref = ""
+        if delegation_binding.get("ledger_path"):
+            if not args.delegation_dispatch_key:
+                die("已绑定统一预算账本，Reviewer 派发必须提供 --delegation-dispatch-key")
+            budget = read_budget(Path(delegation_binding["ledger_path"]))
+            if delegation_binding.get("budget_id") and budget["identity"]["budget_id"] != delegation_binding["budget_id"]:
+                die("Reviewer 绑定的 budget_id 与账本不一致")
+            delegation_ref = sha256_ref(args.delegation_dispatch_key)
+            permit = budget["decisions"].get(delegation_ref)
+            if not permit or permit.get("decision") != "DELEGATE":
+                die("统一预算账本缺少匹配的 DELEGATE permit")
+            if permit.get("role") != "reviewer" or permit.get("requested_profile") != profile:
+                die("Reviewer 派发与统一预算 permit 的角色或模型档位不一致")
         round_data["active"].append(args.reviewer)
         round_data.setdefault("dispatch", {})[args.reviewer] = {
             "scope": args.scope,
@@ -956,6 +1005,8 @@ def command_dispatch(args: argparse.Namespace) -> None:
             "escalation_reason": args.escalation_reason,
             "repeat_reason": args.repeat_reason if args.allow_repeat else "",
             "dispatched_at": now_iso(),
+            "delegation_dispatch_ref": delegation_ref,
+            "budget_accounting_owner": "delegation-budget-v1" if delegation_ref else "legacy-review-controller",
         }
         state["counters"]["total_reviewers"] += 1
         if profile == "terra-high":
@@ -1116,6 +1167,22 @@ def command_result(args: argparse.Namespace) -> None:
         dispatch_record = round_data.get("dispatch", {}).get(args.reviewer)
         if not isinstance(dispatch_record, dict):
             die("Reviewer 尚未记录派发")
+        binding = state.get("delegation_budget", {})
+        if binding.get("ledger_path") and not args.delegation_reservation_id:
+            die("已绑定统一预算账本，Reviewer 结果必须提供 --delegation-reservation-id")
+        delegation_attribution = "unavailable"
+        if args.delegation_reservation_id:
+            if not binding.get("ledger_path"):
+                die("未绑定统一预算账本，不能归因 reservation")
+            budget = read_budget(Path(binding["ledger_path"]))
+            reservation = budget["reservations"].get(args.delegation_reservation_id)
+            if not reservation or reservation.get("role") != "reviewer":
+                die("Reviewer reservation 归因非法")
+            if reservation.get("dispatch_ref") != dispatch_record.get("delegation_dispatch_ref"):
+                die("Reviewer reservation 与派发 permit 不匹配")
+            if reservation.get("state") not in {"STARTED", "COMPLETED"}:
+                die("Reviewer reservation 必须已启动或完成，不能使用仅预占或已释放记录")
+            delegation_attribution = "parent-verified"
 
         result_payload: Dict[str, Any] = {}
         if expected_packet and not args.result_file:
@@ -1205,6 +1272,8 @@ def command_result(args: argparse.Namespace) -> None:
             },
             "calibration_record": calibration_record,
             "completed_at": now_iso(),
+            "delegation_reservation_id": args.delegation_reservation_id,
+            "delegation_attribution": delegation_attribution,
         }
         if assignment_status == "mismatch":
             state["counters"]["model_policy_violations"] += 1
@@ -1467,6 +1536,8 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--title", default="")
     init.add_argument("--risk-level", choices=["low", "medium", "high", "critical", "unknown"], default="unknown")
     init.add_argument("--strict-readonly-required", action="store_true")
+    init.add_argument("--delegation-ledger", default="")
+    init.add_argument("--delegation-budget-id", default="")
     init.add_argument("--force", action="store_true")
     init.add_argument("--force-unlock", action="store_true")
     for key, ceiling in HARD_LIMITS.items():
@@ -1493,7 +1564,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_common(route)
     route.add_argument("--phase", choices=sorted(VALID_PHASES), required=True)
     route.add_argument("--decision", choices=sorted(VALID_ROUTE_DECISIONS), required=True)
-    route.add_argument("--reason-code", required=True)
+    route.add_argument("--reason-code", choices=sorted(VALID_ROUTE_REASONS), required=True)
     route.add_argument("--reason", required=True)
     route.add_argument("--evidence", action="append", default=[])
     route.add_argument("--supersedes", default="")
@@ -1523,6 +1594,7 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.add_argument("--escalation-reason", default="")
     dispatch.add_argument("--allow-repeat", action="store_true")
     dispatch.add_argument("--repeat-reason", default="")
+    dispatch.add_argument("--delegation-dispatch-key", default="")
     dispatch.set_defaults(func=command_dispatch)
 
     result = sub.add_parser("result")
@@ -1535,6 +1607,7 @@ def build_parser() -> argparse.ArgumentParser:
     result.add_argument("--nonblocking-count", type=int, default=0)
     result.add_argument("--summary", required=True)
     result.add_argument("--result-file", default="")
+    result.add_argument("--delegation-reservation-id", default="")
     result.set_defaults(func=command_result)
 
     merge = sub.add_parser("merge")
