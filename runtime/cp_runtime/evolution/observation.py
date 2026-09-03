@@ -27,6 +27,7 @@ from .contracts import (
 )
 from .storage import JsonLineRecord, StorageError, read_jsonl, safe_child
 from ..event_v2 import read_event_chain, EventContractError
+from ..integrity import IntegrityError, verify_event_seals
 
 _ALLOWED_SOURCE_WORDS = (
     "feedback", "execution", "review", "evidence", "checkpoint", "audit", "outcome", "result"
@@ -502,6 +503,17 @@ def observe_project(
                 chain_data = read_event_chain(source, os.environ.get("CP_ASSISTANT_HMAC_KEY"), allow_duplicate_ids=True)
             except EventContractError as exc:
                 raise ObservationError("TaskOutcomeEvent V2 完整性校验失败: %s" % exc) from exc
+            requires_seal = any(
+                bool((event.get("metadata") or {}).get("seal_required"))
+                for event in chain_data["events"]
+            )
+            if requires_seal:
+                try:
+                    seal = verify_event_seals(source)
+                except IntegrityError as exc:
+                    raise ObservationError("TaskOutcomeEvent V2 封印校验失败: %s" % exc) from exc
+                if seal["seal_status"] != "SEALED_CURRENT":
+                    raise ObservationError("TaskOutcomeEvent V2 存在 seal_required 的未封印尾部")
             total_bytes = sum(Path(item).stat().st_size for item in chain_data["files"])
             if total_bytes > policy.max_source_file_bytes:
                 raise ObservationError("TaskOutcomeEvent V2 分段总大小超过策略上限")

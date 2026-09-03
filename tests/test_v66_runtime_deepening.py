@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import importlib.util
@@ -20,11 +21,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
 
 from cp_runtime.event_archive import archive_closed_segments, capacity_report, health_overview, verify_archive
-from cp_runtime.event_v2 import OwnerTokenLock, append_event, event_segment_paths, make_event, verify_event_chain
-from cp_runtime.evolution.observation import observe_project
-from cp_runtime.integrity import init_keyring, rotate_key, seal_event_chain, verify_event_seals, verify_keyring
+from cp_runtime.event_v2 import OwnerTokenLock, append_event, event_segment_paths, make_event, read_event_chain, verify_event_chain
+from cp_runtime.evolution.observation import ObservationError, observe_project
+from cp_runtime.integrity import IntegrityError, init_keyring, rotate_key, seal_event_chain, verify_event_seals, verify_keyring
 from cp_runtime.model_evidence import verify_hook_runtime_evidence
-from cp_runtime.seal_queue import enqueue_session_end, process_queue
+from cp_runtime.seal_queue import SealQueueError, enqueue_session_end, launch_worker, prepare_session_end, process_queue
 from cp_runtime import seal_queue as seal_queue_module
 from cp_runtime.atomic_io import replace_with_retry
 
@@ -68,6 +69,12 @@ def _crash_seal(event_file: str, keyring: str, point: str) -> None:
 
 def _load_script(name: str, filename: str):
     spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / filename)
+    module = importlib.util.module_from_spec(spec); assert spec.loader
+    spec.loader.exec_module(module); return module
+
+
+def _load_hook(name: str):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "hooks" / "cp_hook.py")
     module = importlib.util.module_from_spec(spec); assert spec.loader
     spec.loader.exec_module(module); return module
 
@@ -250,6 +257,158 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         self.assertEqual(20, verify_event_chain(self.event_file)["record_count"])
         self.assertTrue(process_queue(self.queue, self.keyring)["ok"])
         self.assertEqual(21, verify_event_chain(self.event_file)["record_count"])
+
+    def test_session_end_hook_only_dispatches_and_worker_deduplicates_terminal_identity(self) -> None:
+        hook = _load_hook("cp_hook_session_end_v741")
+        event = self.base_event("SESSION_ENDED", "RANDOM-SOURCE-ID", task_id="S1")
+        event.pop("event_id")
+        with mock.patch.object(hook, "append_event", side_effect=AssertionError("Hook must not persist SessionEnd")) as append, \
+             mock.patch.object(hook, "launch_worker") as launch:
+            hook._enqueue_and_launch(self.event_file, event)
+            hook._enqueue_and_launch(self.event_file, event)
+        append.assert_not_called()
+        self.assertFalse(self.event_file.exists())
+        self.assertEqual(2, launch.call_count)
+        dispatched = launch.call_args.kwargs["bootstrap_event"]
+        self.assertRegex(dispatched["event_id"], r"^EVT_[0-9a-f]{32}$")
+        self.assertEqual(dispatched["event_id"], launch.call_args_list[0].kwargs["bootstrap_event"]["event_id"])
+
+        prepared = prepare_session_end(self.queue, dispatched, self.keyring)
+        replay = prepare_session_end(self.queue, dispatched, self.keyring)
+        self.assertTrue(prepared["enqueued"])
+        self.assertFalse(replay["enqueued"])
+        self.assertEqual(1, verify_event_chain(self.event_file)["record_count"])
+
+        legacy = self.base_event("SESSION_ENDED", "LEGACY-RANDOM-ID", task_id="LEGACY")
+        append_event(self.event_file, legacy)
+        replay = dict(legacy); replay.pop("event_id")
+        identity = {key: str(replay.get(key) or "") for key in (
+            "event_type", "session_id", "turn_id", "task_id", "project_id", "repo_fingerprint")}
+        replay["event_id"] = "EVT_" + hashlib.sha256(json.dumps(
+            identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")).hexdigest()[:32]
+        prepared_legacy = prepare_session_end(self.queue, replay, self.keyring)
+        self.assertEqual(2, verify_event_chain(self.event_file)["record_count"])
+        legacy_job = next(path for path in (self.queue / "pending").glob("job-*.json")
+                          if json.loads(path.read_text(encoding="utf-8"))["event"]["task_id"] == "LEGACY")
+        self.assertEqual("LEGACY-RANDOM-ID", json.loads(legacy_job.read_text(encoding="utf-8"))["event"]["event_id"])
+        self.assertTrue(prepared_legacy["enqueued"])
+
+        failed = self.base_event("SESSION_ENDED", "LAUNCH-FAIL", task_id="FAIL")
+        with mock.patch.object(hook, "launch_worker", side_effect=OSError("launch failed")), \
+             mock.patch.object(hook, "_session_end_diagnostic") as diagnostic:
+            hook._enqueue_and_launch(self.event_file, failed)
+        diagnostic.assert_called_once_with(failed, "SEAL_WORKER_LAUNCH_FAILED")
+
+    def test_session_end_rejects_missing_stable_identity_and_unsealed_chain_is_not_observed(self) -> None:
+        hook = _load_hook("cp_hook_session_end_identity")
+        with mock.patch.object(hook, "_session_end_diagnostic") as diagnostic:
+            self.assertIsNone(hook._event({"hook_event_name": "SessionEnd", "cwd": str(self.root)}))
+        self.assertEqual("SESSION_END_IDENTITY_UNAVAILABLE", diagnostic.call_args.args[1])
+
+        append_event(self.event_file, self.base_event("TURN_OPENED", "OPEN"))
+        terminal = self.base_event("SESSION_ENDED", "SEALED-END")
+        terminal["metadata"] = {"seal_required": True}
+        append_event(self.event_file, terminal)
+        with mock.patch.dict(os.environ, {"CP_ASSISTANT_KEYRING_PATH": str(self.keyring)}):
+            with self.assertRaisesRegex(ObservationError, "未封印尾部"):
+                observe_project(self.project_id, self.project)
+            seal_event_chain(self.event_file, keyring_path=self.keyring)
+            self.assertEqual(self.project_id, observe_project(self.project_id, self.project).project_id)
+
+    def test_all_session_end_queue_and_worker_entries_reject_empty_stable_identity(self) -> None:
+        empty = self.base_event("SESSION_ENDED", "EMPTY-IDENTITY", session_id="", turn_id="", task_id="")
+        for operation in (
+            lambda: enqueue_session_end(self.queue, empty, self.keyring),
+            lambda: prepare_session_end(self.queue, empty, self.keyring),
+            lambda: launch_worker(ROOT, self.queue, self.keyring, bootstrap_event=empty),
+        ):
+            with self.assertRaisesRegex(SealQueueError, "SESSION_END_IDENTITY_UNAVAILABLE"):
+                operation()
+        encoded = base64.urlsafe_b64encode(json.dumps(
+            empty, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")).decode("ascii")
+        result = subprocess.run([
+            sys.executable, str(ROOT / "hooks" / "seal_worker.py"), "--queue", str(self.queue),
+            "--keyring", str(self.keyring), "--max-jobs", "1", "--bootstrap-event-b64", encoded,
+        ], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)
+        self.assertEqual(2, result.returncode)
+        self.assertEqual("SESSION_END_IDENTITY_UNAVAILABLE", json.loads(result.stderr.strip())["error_code"])
+        self.assertFalse(self.event_file.exists())
+        self.assertFalse(any(self.queue.rglob("job-*.json")))
+
+    def test_detached_worker_bootstrap_requeues_v2_identity_and_seals_existing_event(self) -> None:
+        terminal = self.base_event("SESSION_ENDED", "BOOTSTRAP-END")
+        terminal["metadata"] = {"seal_required": True}
+        stored = append_event(self.event_file, terminal)
+        old_wait = os.environ.get("CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS")
+        os.environ["CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS"] = "2500"
+        try:
+            launched = launch_worker(ROOT, self.queue, self.keyring, bootstrap_event=stored)
+        finally:
+            if old_wait is None: os.environ.pop("CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS", None)
+            else: os.environ["CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS"] = old_wait
+        self.assertEqual("EXITED", launched["test_wait_status"])
+        self.assertEqual(0, launched["worker_exit_code"])
+        self.assertEqual(1, verify_event_chain(self.event_file)["record_count"])
+        self.assertEqual("SEALED_CURRENT", verify_event_seals(self.event_file, keyring_path=self.keyring)["seal_status"])
+        done = next((self.queue / "done").glob("job-*.json"))
+        self.assertEqual(2, json.loads(done.read_text(encoding="utf-8"))["identity_version"])
+
+    def test_worker_bootstrap_uses_bounded_argument_without_synchronous_pipe_io(self) -> None:
+        terminal = self.base_event("SESSION_ENDED", "BOOTSTRAP-ARG")
+        process = mock.Mock(pid=4321)
+        with mock.patch.object(seal_queue_module.subprocess, "Popen", return_value=process) as popen, \
+             mock.patch.dict(os.environ, {"CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS": "0"}):
+            result = launch_worker(ROOT, self.queue, self.keyring, bootstrap_event=terminal)
+        self.assertEqual(4321, result["worker_pid"])
+        command = popen.call_args.args[0]
+        self.assertNotIn("--bootstrap-stdin", command)
+        marker = command.index("--bootstrap-event-b64")
+        decoded = base64.b64decode(command[marker + 1].encode("ascii"), altchars=b"-_", validate=True)
+        self.assertEqual(terminal, json.loads(decoded.decode("utf-8")))
+        self.assertIs(seal_queue_module.subprocess.DEVNULL, popen.call_args.kwargs["stdin"])
+
+    def test_v2_job_identity_recovers_a_preupgrade_done_job_without_duplicate_terminal_event(self) -> None:
+        legacy = self.base_event("SESSION_ENDED", "LEGACY-UPGRADE-END")
+        digest = seal_queue_module._job_digest(legacy, 1)
+        _ring, secret, key_id = seal_queue_module.active_secret("event-hmac", self.keyring)
+        for state in seal_queue_module.JOB_STATES:
+            (self.queue / state).mkdir(parents=True, exist_ok=True)
+        job = {
+            "schema_version": seal_queue_module.JOB_SCHEMA,
+            "job_id": digest, "idempotency_key": digest, "state": "pending",
+            "attempt": 0, "lease_epoch": 0, "lease_pid": 0, "lease_process_identity": "",
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+            "project_id": self.project_id, "repo_fingerprint": self.repo,
+            "event_file": self.event_file.name, "event": legacy, "error_code": "NONE",
+        }
+        pending = self.queue / "pending" / ("job-" + digest + ".json")
+        seal_queue_module._atomic_json(pending, seal_queue_module._sign(job, secret, key_id))
+        self.assertTrue(process_queue(self.queue, self.keyring)["ok"])
+        self.assertEqual(1, verify_event_chain(self.event_file)["record_count"])
+
+        hook = _load_hook("cp_hook_session_end_upgrade")
+        replay = dict(legacy); replay.pop("event_id")
+        with mock.patch.object(hook, "launch_worker") as dispatch:
+            hook._enqueue_and_launch(self.event_file, replay)
+        stored = dispatch.call_args.kwargs["bootstrap_event"]
+        self.assertRegex(stored["event_id"], r"^EVT_[0-9a-f]{32}$")
+        self.assertEqual(1, verify_event_chain(self.event_file)["record_count"])
+
+        old_wait = os.environ.get("CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS")
+        os.environ["CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS"] = "2500"
+        try:
+            launched = launch_worker(ROOT, self.queue, self.keyring, bootstrap_event=stored)
+        finally:
+            if old_wait is None: os.environ.pop("CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS", None)
+            else: os.environ["CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS"] = old_wait
+        self.assertEqual(0, launched["worker_exit_code"])
+        self.assertEqual(1, verify_event_chain(self.event_file)["record_count"])
+        self.assertEqual("LEGACY-UPGRADE-END", read_event_chain(self.event_file)["events"][0]["event_id"])
+        jobs = [json.loads(path.read_text(encoding="utf-8")) for path in (self.queue / "done").glob("job-*.json")]
+        self.assertEqual({1, 2}, {int(job.get("identity_version", 1)) for job in jobs})
+        self.assertEqual("SEALED_CURRENT", verify_event_seals(self.event_file, keyring_path=self.keyring)["seal_status"])
 
     def test_windows_atomic_replace_retries_only_transient_sharing_failures(self) -> None:
         source = self.root / "atomic.tmp"; target = self.root / "atomic.json"

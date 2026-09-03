@@ -251,6 +251,7 @@
         "%s 第 %d 行 HMAC 不一致": "%s line %d has a mismatched HMAC",
         "事件分段阈值过小": "The event segment threshold is too small",
         "事件分段目标已存在: %s": "The event segment target already exists: %s",
+        "事件去重身份字段非法": "Event deduplication identity fields are invalid",
         "检测到跨项目或跨仓库事件": "Detected a cross-project or cross-repository event"
       }
     },
@@ -472,6 +473,8 @@
         "检测到跨仓库事件：%s != %s": "Detected a cross-repository event: %s != %s",
         "没有发现允许的 JSONL 执行数据源；当前快照不会生成优化提案": "No permitted JSONL execution data source was found; the current snapshot will not generate an optimization proposal",
         "TaskOutcomeEvent V2 完整性校验失败: %s": "TaskOutcomeEvent V2 integrity validation failed: %s",
+        "TaskOutcomeEvent V2 封印校验失败: %s": "TaskOutcomeEvent V2 seal validation failed: %s",
+        "TaskOutcomeEvent V2 存在 seal_required 的未封印尾部": "TaskOutcomeEvent V2 has an unsealed seal_required tail",
         "TaskOutcomeEvent V2 分段总大小超过策略上限": "Total TaskOutcomeEvent V2 segment size exceeds the policy limit",
         "TaskOutcomeEvent V2 记录数超过策略上限": "TaskOutcomeEvent V2 record count exceeds the policy limit",
         "TaskOutcomeEvent V2 检测到重复 event_id，完整链验证后按 event_id 去重": "TaskOutcomeEvent V2 contains duplicate event_id values; deduplicate by event_id after full-chain validation",

@@ -68,7 +68,7 @@ Reviewer TOML 中的 `read-only` 只表示配置意图。父会话可写且没�
 
 生命周期数据只保留治理所需的最小结构化元数据。疑似 Prompt、完整回答、代码正文、Patch、Diff、Token、Secret、Authorization、Cookie、API Key 和 Private Key 默认不得持久化。
 
-事件链采用前向 SHA-256 完整性校验，可按配置增加 HMAC 和 detached seal。活动事件、只读分段、归档清单与延迟 SessionEnd 封印保持项目身份和链头连续性；损坏、串线或引用不一致时失败关闭。
+事件链采用前向 SHA-256 完整性校验，可按配置增加 HMAC 和 detached seal。SessionEnd Hook 只构造有上限且不含正文的净化事件并无等待派发，不执行事件链 I/O 或同步管道写入；detached worker 统一校验稳定生命周期身份，完成语义去重、持久化，并使用绑定 `event_id` 的 v2 签名任务封印事件链。带 `seal_required` 的未封印尾部不得进入 Evolution。活动事件、只读分段和归档清单继续保持项目身份与链头连续性；损坏、串线或引用不一致时失败关闭。
 
 ## 7. Proposal 权限模型
 

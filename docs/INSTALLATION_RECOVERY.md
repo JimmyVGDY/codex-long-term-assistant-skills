@@ -119,6 +119,6 @@ python scripts\release-attestation.py verify --attestation ..\release-attestatio
 
 ## Windows Hook
 
-六个 Hook 通过 `cp_hook.cmd` 启动，优先使用可用的账户 CPython，再回退 `python.exe` 或 `py.exe -3`。无需额外创建 `python3.exe`。SessionEnd timeout 为 3 秒；该 Hook 只签名入列并启动 detached worker，不在三秒预算内扫描事件链或执行封印。
+六个 Hook 通过 `cp_hook.cmd` 启动，优先使用可用的账户 CPython，再回退 `python.exe` 或 `py.exe -3`。无需额外创建 `python3.exe`。SessionEnd timeout 为 3 秒；Hook 只构造有上限且不含正文的净化事件，并以命令参数无等待派发 detached worker，不扫描或写入事件链，也不做同步管道写入。Worker 在 Hook 预算外完成稳定身份校验、语义去重、持久化、DPAPI 解密、v2 签名入列和封印；未封印的 `seal_required` 链不会被 Evolution 消费。
 
 升级前已打开的任务可能继续使用旧 Plugin 快照；升级后新建任务完成最终发现验证。不自动重启 Codex。

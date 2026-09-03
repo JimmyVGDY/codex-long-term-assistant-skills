@@ -10,6 +10,7 @@ Host window: Codex CLI 0.153.0 and the ten preceding stable releases
 - Stores schema-3 host bindings for the CLI, registry, capabilities, and payload; drift requires reinstall.
 - Preserves unknown Marketplace metadata while managing only this package's fields.
 - Handles registered Hook aliases consistently, failing security conflicts closed and returning neutral JSON for Stop variants.
+- The SessionEnd Hook only constructs a capped, body-free sanitized event and dispatches a detached worker without waiting through a command argument. It no longer scans or writes the event chain and does not synchronously write a pipe. Outside the Hook budget, the worker validates stable lifecycle identity at every queue entry point, semantically deduplicates and persists the event, decrypts DPAPI material, creates the v2 signed job bound to `event_id`, and seals the chain. Missing stable IDs are rejected, and Evolution cannot consume an unsealed `seal_required` chain.
 - Gates release on all eleven versions on Windows and Ubuntu.
 
 ## Boundaries

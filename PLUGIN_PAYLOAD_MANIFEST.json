@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 182,
-  "payload_digest": "229afcf53ddf6362667631e60ab1a2ff4d16518ab94ea6799ff619c63250f383",
+  "payload_digest": "7fe0aeba4d5d675b2c80ac384a8bd58025c9965fba2a64cafedd047b56ca3b39",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -748,8 +748,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "3b7853ef40dfe53f451e2774bd85f4279988047813c77c85d438a91c7c14cc58",
-      "size": 22908
+      "sha256": "62e3da5740db0e13f288812097556cddc33a7d8293bc66d5a58c1f8d0533f770",
+      "size": 24511
     },
     {
       "path": "hooks/hooks.json",
@@ -758,8 +758,8 @@
     },
     {
       "path": "hooks/seal_worker.py",
-      "sha256": "9d17ed272148c0acb9f86f6fc74ad0bc9b709824efbde4cd78ab09bdf4b9d5f4",
-      "size": 1152
+      "sha256": "3d60ee5240a4f3f455b5ccfc26ebf1913807be049c6c04bf2fcae804bbfe8aff",
+      "size": 2031
     },
     {
       "path": "runtime/cp_runtime/__init__.py",
@@ -808,8 +808,8 @@
     },
     {
       "path": "runtime/cp_runtime/event_v2.py",
-      "sha256": "8c979a05898987ddcd1008b4db604b6bb755ed148281997ecbe5e16254230a5c",
-      "size": 23889
+      "sha256": "58a972a433b8a1c9f66e286180960598cb004edbd11affc96d5d7119f5c47ce8",
+      "size": 24543
     },
     {
       "path": "runtime/cp_runtime/evidence.py",
@@ -848,8 +848,8 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/observation.py",
-      "sha256": "e613ddd41c3db278daf443b14b0e2868542eb6ccfc645ed1f507b95cbb9134ae",
-      "size": 60274
+      "sha256": "72fdb268f2a39c7de7c3de8ca2705c59cee3dfd09c95621118fe8a86ca1fab1e",
+      "size": 60924
     },
     {
       "path": "runtime/cp_runtime/evolution/proposal.py",
@@ -913,8 +913,8 @@
     },
     {
       "path": "runtime/cp_runtime/seal_queue.py",
-      "sha256": "79bac5d94ced8680970979f2f5db4a9be8b500e3f776689aaf895cd89890442b",
-      "size": 16380
+      "sha256": "844435c4bd266a8a9d7ba6099100b35b5970dcca7f4e76c67ecca5a17cff99b9",
+      "size": 19163
     },
     {
       "path": "runtime/tests/test_cp_runtime.py",

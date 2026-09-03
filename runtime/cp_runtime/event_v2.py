@@ -13,7 +13,7 @@ import secrets
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 SCHEMA_VERSION = "2.0"
 ZERO_HASH = "0" * 64
@@ -400,11 +400,13 @@ def read_event_chain(path: Path, hmac_key: Optional[str] = None, allow_duplicate
 
 
 def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] = None,
-                 *, deduplicate_event_id: bool = False) -> Dict[str, Any]:
+                 *, deduplicate_event_id: bool = False,
+                 deduplicate_identity_fields: Optional[Sequence[str]] = None,
+                 lock_timeout: float = 2.0) -> Dict[str, Any]:
     validated = make_event(event)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with OwnerTokenLock(path):
+    with OwnerTokenLock(path, timeout=lock_timeout):
         _files, existing, _quarantine = _read_event_files_unlocked(path, recover_active_tail=True)
         # 中文：重复 ID 保持可观察并由聚合策略处理；追加操作仍需扩展其他部分有效的旧事件链。
         # English: Duplicate IDs remain observable and are handled by aggregation policy; append must still extend an otherwise valid legacy chain.
@@ -412,6 +414,13 @@ def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] =
         if deduplicate_event_id:
             for stored in existing:
                 if stored.get("event_id") == validated["event_id"]:
+                    return {key: value for key, value in stored.items() if not key.startswith("__event_source_")}
+        if deduplicate_identity_fields:
+            fields = tuple(deduplicate_identity_fields)
+            if not fields or any(field not in _STORED_REQUIRED_FIELDS for field in fields):
+                raise EventContractError("事件去重身份字段非法")
+            for stored in existing:
+                if all(stored.get(field) == validated.get(field) for field in fields):
                     return {key: value for key, value in stored.items() if not key.startswith("__event_source_")}
         threshold = int(os.environ.get("CP_ASSISTANT_EVENT_SEGMENT_BYTES", str(8 * 1024 * 1024)))
         if threshold < 256:

@@ -31,7 +31,7 @@ from cp_runtime.delegation_budget import (  # noqa: E402
     reserve_budget,
 )
 from cp_runtime.model_evidence import verify_hook_runtime_evidence  # noqa: E402
-from cp_runtime.seal_queue import enqueue_session_end, launch_worker  # noqa: E402
+from cp_runtime.seal_queue import launch_worker  # noqa: E402
 
 ALLOWED_REASONING = {"", "none", "minimal", "low", "medium", "high"}
 ALLOWED_AUTOMATIC_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra"}
@@ -241,6 +241,12 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     session_id = str(_lookup(data, *HOOK_ALIASES["session_id"]) or "")
     turn_id = str(_lookup(data, *HOOK_ALIASES["turn_id"]) or "")
     task_id = str(_lookup(data, *HOOK_ALIASES["task_id"]) or turn_id or session_id)
+    if event_type == "SESSION_ENDED" and not (session_id or turn_id or task_id):
+        _session_end_diagnostic({
+            "session_id": "", "turn_id": "", "task_id": "",
+            "project_id": project_id_for(fingerprint, cwd), "repo_fingerprint": fingerprint,
+        }, "SESSION_END_IDENTITY_UNAVAILABLE")
+        return None
     # 中文：实际运行值需要外部配置的宿主信任锚；Codex 0.153.0 的普通 Hook 字段不构成此证明。
     # English: Actual runtime values require an external host trust anchor; ordinary Codex 0.153.0 Hook fields do not provide that attestation.
     runtime_evidence = verify_hook_runtime_evidence(data, hook)
@@ -255,6 +261,8 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
             metadata[key] = value
     metadata["runtime_model_evidence"] = runtime_evidence["status"]
     metadata["runtime_model_evidence_reason"] = runtime_evidence["reason_code"]
+    if event_type == "SESSION_ENDED":
+        metadata["seal_required"] = True
     if runtime_evidence.get("attestation_id"):
         metadata["host_attestation_ref"] = "sha256:" + hashlib.sha256(
             runtime_evidence["attestation_id"].encode("utf-8")).hexdigest()
@@ -328,12 +336,26 @@ def _session_end_diagnostic(event: Mapping[str, Any], code: str) -> None:
 
 def _enqueue_and_launch(event_path: Path, event: Mapping[str, Any]) -> None:
     queue = event_path.parent / "seal-queue"
-    enqueue_session_end(queue, event)
+    if not any(str(event.get(key) or "") for key in ("session_id", "turn_id", "task_id")):
+        _session_end_diagnostic(event, "SESSION_END_IDENTITY_UNAVAILABLE")
+        return
+    identity = {
+        key: str(event.get(key) or "")
+        for key in ("event_type", "session_id", "turn_id", "task_id", "project_id", "repo_fingerprint")
+    }
+    queued_event = dict(event)
+    queued_event["event_id"] = "EVT_" + hashlib.sha256(
+        json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:32]
+    # 中文：SessionEnd Hook 只构造有上限、已净化的事件并启动 detached worker；事件链扫描、语义去重、追加、DPAPI、签名与封印全部移出宿主 3 秒预算。
+    # English: The SessionEnd Hook only builds a capped, sanitized event and starts a detached worker. Chain scanning, semantic deduplication, append, DPAPI, signing, and sealing all run outside the host's three-second budget.
     try:
-        launch_worker(ROOT, queue)
+        worker = launch_worker(ROOT, queue, bootstrap_event=queued_event)
+        if worker.get("test_wait_status") == "EXITED" and int(worker.get("worker_exit_code", 0)) != 0:
+            _session_end_diagnostic(event, "SEAL_WORKER_EXITED_FAILED")
     except Exception:
-        # 中文：已签名 pending 任务保持持久，可由后续 worker 恢复；启动失败需显式报告。
-        # English: The signed pending job remains durable and recoverable by a later worker; report launch failure explicitly.
+        # 中文：派发失败不会在 Hook 内回退到事件链 I/O；输出无正文诊断并失败关闭本次终态观测。
+        # English: Dispatch failure does not fall back to event-chain I/O in the Hook; emit a body-free diagnostic and fail closed for this terminal observation.
         _session_end_diagnostic(event, "SEAL_WORKER_LAUNCH_FAILED")
 
 

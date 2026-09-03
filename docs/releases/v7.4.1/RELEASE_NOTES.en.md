@@ -11,6 +11,7 @@ Host window: Codex CLI 0.153.0 and the ten preceding stable releases
 - Makes `verify`, `status`, and `doctor` report `HOST_DRIFT_REINSTALL_REQUIRED` on version, executable, registry, or capability drift.
 - Limits Marketplace ownership to the package name, display name, and target Plugin item while preserving unknown top-level data, nested `interface` data, `owner`, and other Plugins.
 - Registers snake_case, camelCase, and compatibility Hook aliases. Security conflicts fail closed, observation conflicts become unavailable, and Stop/SubagentStop always return neutral JSON.
+- The SessionEnd Hook only constructs a capped, body-free sanitized event and dispatches a detached worker without waiting through a command argument. It no longer scans or writes the event chain and does not synchronously write a pipe. Outside the Hook budget, the worker validates stable lifecycle identity at every queue entry point, semantically deduplicates and persists the event, decrypts DPAPI material, creates the v2 signed job bound to `event_id`, and seals the chain. Missing stable IDs are rejected, and Evolution cannot consume an unsealed `seal_required` chain.
 - Adds a Windows and Ubuntu release gate that replays every one of the eleven stable versions.
 
 ## Unchanged boundaries

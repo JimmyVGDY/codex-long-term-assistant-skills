@@ -68,7 +68,7 @@ Requesting Luna or Terra does not prove which model actually ran. Without a trus
 
 Lifecycle data retains only minimal structured metadata required for governance. Raw prompts, complete responses, source bodies, patches, diffs, tokens, secrets, authorization data, cookies, API keys, and private keys must not be persisted by default.
 
-The event chain uses forward SHA-256 integrity and can add HMAC and detached seals when configured. Active events, read-only segments, archive manifests, and delayed SessionEnd sealing preserve project identity and chain-head continuity. Corruption, cross-project leakage, or inconsistent references fail closed.
+The event chain uses forward SHA-256 integrity and can add HMAC and detached seals when configured. The SessionEnd Hook only constructs a capped, body-free sanitized event and dispatches without waiting; it performs no event-chain I/O or synchronous pipe write. A detached worker validates stable lifecycle identity at the shared queue boundary, semantically deduplicates and persists the event, then seals the chain through a v2 signed job bound to `event_id`. Evolution rejects an unsealed `seal_required` tail. Active events, read-only segments, and archive manifests preserve project identity and chain-head continuity; corruption, cross-project leakage, or inconsistent references fail closed.
 
 ## 7. Proposal authorization model
 

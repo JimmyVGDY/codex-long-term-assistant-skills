@@ -4,6 +4,7 @@ English: Durable, signed SessionEnd append-and-seal queue.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
@@ -22,12 +23,27 @@ from .integrity import active_secret, seal_event_chain, secret_by_id
 from .atomic_io import replace_with_retry
 
 JOB_SCHEMA = "1.0"
+JOB_IDENTITY_VERSION = 2
 JOB_STATES = ("pending", "running", "done", "dead-letter")
 JOB_NAME = re.compile(r"^job-[0-9a-f]{64}\.json$")
+BOOTSTRAP_EVENT_MAX_BYTES = 8192
 
 
 class SealQueueError(RuntimeError):
     pass
+
+
+def _validate_session_end_event(event: Mapping[str, Any], *, bootstrap: bool = False) -> Dict[str, Any]:
+    """中文：在每个队列入口校验终态事件及其稳定生命周期身份。
+
+    English: Validate the terminal event and its stable lifecycle identity at every queue entry point.
+    """
+    validated = make_event(event)
+    if validated["event_type"] != "SESSION_ENDED":
+        raise SealQueueError("BOOTSTRAP_EVENT_TYPE_INVALID" if bootstrap else "JOB_EVENT_TYPE_INVALID")
+    if not any(validated[key] for key in ("session_id", "turn_id", "task_id")):
+        raise SealQueueError("SESSION_END_IDENTITY_UNAVAILABLE")
+    return validated
 
 
 def _codex_home() -> Path:
@@ -107,9 +123,27 @@ def _sign(job: Dict[str, Any], key: bytes, key_id: str) -> Dict[str, Any]:
     return signed
 
 
+def _job_digest(event: Mapping[str, Any], identity_version: int) -> str:
+    keys = ("event_type", "session_id", "turn_id", "task_id", "project_id", "repo_fingerprint")
+    identity = {key: event[key] for key in keys}
+    if identity_version == 2:
+        identity = {"identity_version": 2, "event_id": event["event_id"], **identity}
+    elif identity_version != 1:
+        raise SealQueueError("JOB_IDENTITY_VERSION_INVALID")
+    return hashlib.sha256(canonical_json(identity).encode("utf-8")).hexdigest()
+
+
 def _verify(job: Mapping[str, Any], keyring_path: Optional[Path]) -> Dict[str, Any]:
     if job.get("schema_version") != JOB_SCHEMA or str(job.get("state")) not in JOB_STATES:
         raise SealQueueError("JOB_SCHEMA_INVALID")
+    identity_version = int(job.get("identity_version", 1))
+    try:
+        event = make_event(job.get("event") or {})
+        digest = _job_digest(event, identity_version)
+    except (TypeError, ValueError) as exc:
+        raise SealQueueError("JOB_IDENTITY_INVALID") from exc
+    if job.get("job_id") != digest or job.get("idempotency_key") != digest:
+        raise SealQueueError("JOB_IDENTITY_INVALID")
     key_id = str(job.get("key_id") or "")
     _ring, secret = secret_by_id("event-hmac", key_id, keyring_path)
     unsigned = {key: value for key, value in job.items() if key != "job_hmac_sha256"}
@@ -151,13 +185,9 @@ def _job_file(queue: Path, state: str, job_name: str) -> Path:
 
 
 def enqueue_session_end(queue: Path, event: Mapping[str, Any], keyring_path: Optional[Path] = None) -> Dict[str, Any]:
-    validated = make_event(event)
-    if validated["event_type"] != "SESSION_ENDED":
-        raise SealQueueError("JOB_EVENT_TYPE_INVALID")
+    validated = _validate_session_end_event(event)
     event_path = _validate_queue(Path(queue), validated["project_id"])
-    identity = canonical_json({key: validated[key] for key in (
-        "event_type", "session_id", "turn_id", "task_id", "project_id", "repo_fingerprint")})
-    digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+    digest = _job_digest(validated, JOB_IDENTITY_VERSION)
     job_name = "job-" + digest + ".json"
     queue = Path(queue)
     queue.mkdir(parents=True, exist_ok=True)
@@ -173,7 +203,8 @@ def enqueue_session_end(queue: Path, event: Mapping[str, Any], keyring_path: Opt
             raise SealQueueError("QUEUE_CAPACITY_EXCEEDED")
         _ring, secret, key_id = active_secret("event-hmac", keyring_path)
         job = {
-            "schema_version": JOB_SCHEMA, "job_id": digest, "idempotency_key": digest,
+            "schema_version": JOB_SCHEMA, "identity_version": JOB_IDENTITY_VERSION,
+            "job_id": digest, "idempotency_key": digest,
             "state": "pending", "attempt": 0, "lease_epoch": 0, "lease_pid": 0,
             "lease_process_identity": "",
             "created_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
@@ -182,6 +213,26 @@ def enqueue_session_end(queue: Path, event: Mapping[str, Any], keyring_path: Opt
         }
         _atomic_json(_job_file(queue, "pending", job_name), _sign(job, secret, key_id))
     return {"ok": True, "enqueued": True, "state": "pending", "job_ref": "sha256:" + digest}
+
+
+def prepare_session_end(queue: Path, event: Mapping[str, Any], keyring_path: Optional[Path] = None,
+                        lock_timeout: float = 10.0) -> Dict[str, Any]:
+    """中文：在 Hook 外原子复核/补写终态，再创建 v2 签名任务。
+
+    English: Atomically recheck/backfill the terminal event outside the Hook, then create a v2 signed job.
+    """
+    validated = _validate_session_end_event(event)
+    event_path = _validate_queue(Path(queue), validated["project_id"])
+    stored = append_event(
+        event_path,
+        validated,
+        deduplicate_event_id=True,
+        deduplicate_identity_fields=(
+            "event_type", "session_id", "turn_id", "task_id", "project_id", "repo_fingerprint",
+        ),
+        lock_timeout=lock_timeout,
+    )
+    return enqueue_session_end(queue, stored, keyring_path)
 
 
 def _pid_alive(pid: int) -> bool:
@@ -335,11 +386,19 @@ def process_queue(queue: Path, keyring_path: Optional[Path] = None, max_jobs: in
             "retried": retried, "dead_letter": dead}
 
 
-def launch_worker(plugin_root: Path, queue: Path, keyring_path: Optional[Path] = None) -> Dict[str, Any]:
+def launch_worker(plugin_root: Path, queue: Path, keyring_path: Optional[Path] = None,
+                  bootstrap_event: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     script = Path(plugin_root) / "hooks" / "seal_worker.py"
     command = [sys.executable, str(script), "--queue", str(queue), "--max-jobs", "100"]
     if keyring_path is not None:
         command.extend(["--keyring", str(keyring_path)])
+    if bootstrap_event is not None:
+        validated = _validate_session_end_event(bootstrap_event, bootstrap=True)
+        payload = canonical_json(validated).encode("utf-8")
+        if len(payload) > BOOTSTRAP_EVENT_MAX_BYTES:
+            raise SealQueueError("BOOTSTRAP_EVENT_TOO_LARGE")
+        encoded = base64.urlsafe_b64encode(payload).decode("ascii")
+        command.extend(["--bootstrap-event-b64", encoded])
     kwargs: Dict[str, Any] = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL,
                               "stderr": subprocess.DEVNULL, "close_fds": True}
     if os.name == "nt":
