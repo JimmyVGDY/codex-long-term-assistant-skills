@@ -83,7 +83,7 @@ def mapping_findings(root: Path, mapping: dict[str, Any]) -> list[dict[str, Any]
     findings: list[dict[str, Any]] = []
     for path in sorted(root.rglob("*.py")):
         relative = path.relative_to(root).as_posix()
-        if any(part in {".git", "dist", "locales", "__pycache__", "tests"} for part in path.parts) \
+        if any(part in {".git", "dist", "locales", "__pycache__", "tests", "project-context"} for part in path.parts) \
                 or path.name.startswith("test_"):
             continue
         configured = mapping["files"].get(relative, {})

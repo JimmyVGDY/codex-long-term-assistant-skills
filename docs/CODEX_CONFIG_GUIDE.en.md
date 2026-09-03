@@ -75,7 +75,7 @@ A hard-coded model overrides bounded scheduling and `[agents]` defaults, breakin
 
 ## 6. Plugin and Hooks
 
-V7.4 uses the Plugin and Marketplace interfaces in Codex CLI 0.153.0. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.4.0`. Files present on disk do not establish installation or enablement.
+V7.4.1 uses a frozen registry for the Plugin and Marketplace interfaces in Codex CLI 0.153.0 and the ten preceding stable releases. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.4.1`, and the schema-3 host snapshot is `HOST_COMPATIBLE`. Files present on disk do not establish installation or enablement.
 
 The Plugin supplies six Hooks through `hooks/hooks.json`. On Windows, `hooks\cp_hook.cmd` selects an available Python launcher without an extra `python3.exe` shim. SessionEnd keeps a three-second host budget, performs only bounded signed enqueue work, and launches delayed sealing outside the Hook budget.
 

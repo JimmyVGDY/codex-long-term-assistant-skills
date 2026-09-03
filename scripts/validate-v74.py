@@ -28,13 +28,16 @@ def validate_package():
         validation_env['PYTHONDONTWRITEBYTECODE']='1'
         validation_env['PYTHONPYCACHEPREFIX']=str(Path(temporary)/'pycache')
         for path in ROOT.rglob('*.json'):
-            if '__pycache__' not in path.parts:
+            relative=path.relative_to(ROOT)
+            if '__pycache__' not in path.parts and (not relative.parts or relative.parts[0] not in {'project-context','.git'}):
                 json.loads(path.read_text(encoding='utf-8-sig'))
         for path in ROOT.rglob('*.toml'):
-            tomllib.loads(path.read_text(encoding='utf-8-sig'))
+            relative=path.relative_to(ROOT)
+            if not relative.parts or relative.parts[0] not in {'project-context','.git'}:
+                tomllib.loads(path.read_text(encoding='utf-8-sig'))
         run([sys.executable,'-m','compileall','-q',str(ROOT/'runtime'),str(ROOT/'scripts'),str(ROOT/'hooks')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'payload-integrity.py'),'verify','--root',str(ROOT),
-             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.4.0'],validation_env)
+             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.4.1'],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'semantic-lint.py')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'routing-eval.py'),'validate'],validation_env)
         model_gate=run([sys.executable,str(ROOT/'scripts'/'model-gate-acceptance.py')],validation_env)
@@ -51,12 +54,14 @@ def test_count(output):
 
 package_test_count=test_count(tests); runtime_test_count=test_count(runtime_tests)
 result={
- 'ok':True,'evidence_scope':'package-only','version':'7.4.0','skill_count':10,'reviewer_count':7,
+ 'ok':True,'evidence_scope':'package-only','version':'7.4.1','skill_count':10,'reviewer_count':7,
  'hooks':['UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'],
  'task_outcome_event':'2.0','execution_authorization':'NONE','automatic_self_modification':False,
  'requested_model_policy':'PASS','runtime_model_evidence':'UNAVAILABLE',
  'python_compatibility':{'minimum':'3.11','validated_runtime':platform.python_version()},
  'semantic_lint':'PASS','routing_case_schema':'PASS (45 cases)','plugin_payload_manifest':'PASS',
+ 'codex_compatibility_registry':'PASS (11 frozen stable releases)',
+ 'codex_compatibility_matrix':'NOT_EVALUATED (separate Windows/Ubuntu workflow)',
  'routing_host_observation':'NOT_EVALUATED (package-only validation)',
  'worktree_side_effect_gate':'PASS',
  'multiprocess_fault_injection':'PASS (tests/test_v66_runtime_deepening.py)',

@@ -13,6 +13,10 @@ env:
   PYTHONUTF8: "1"
 
 jobs:
+  compatibility:
+    name: 稳定版兼容发布门禁 / Stable compatibility release gate
+    uses: ./.github/workflows/codex-compatibility.yml
+
   validate:
     name: 发布前验证 / Pre-release validation (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
@@ -39,7 +43,7 @@ jobs:
 
   build:
     name: 构建并签署中英文产物 / Build and attest bilingual artifacts
-    needs: validate
+    needs: [validate, compatibility]
     runs-on: windows-latest
     permissions:
       contents: read

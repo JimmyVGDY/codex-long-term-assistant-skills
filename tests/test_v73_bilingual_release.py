@@ -44,21 +44,21 @@ class V73BilingualReleaseTests(unittest.TestCase):
         cls.archives = {}
         cls.reports = {}
         for locale in ("zh-CN", "en"):
-            archive = cls.root / ("Codex-Skills-V7.4.0-%s.zip" % locale)
+            archive = cls.root / ("Codex-Skills-V7.4.1-%s.zip" % locale)
             witness = cls.root / ("witness-%s.json" % locale)
             cls.reports[locale] = cls.builder.reproducible_build(archive, witness, locale)
             cls.archives[locale] = archive
         cls.english_root = cls.root / "english-extracted"
         with zipfile.ZipFile(cls.archives["en"]) as archive:
             archive.extractall(cls.english_root)
-        cls.english_root = cls.english_root / "Codex-Skills-V7.4.0-en"
+        cls.english_root = cls.english_root / "Codex-Skills-V7.4.1-en"
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.temporary.cleanup()
 
     def _entries(self, locale: str):
-        root = "Codex-Skills-V7.4.0-%s/" % locale
+        root = "Codex-Skills-V7.4.1-%s/" % locale
         with zipfile.ZipFile(self.archives[locale]) as archive:
             return root, {name.removeprefix(root): archive.read(name) for name in archive.namelist()}
 
@@ -71,8 +71,8 @@ class V73BilingualReleaseTests(unittest.TestCase):
             self.assertEqual(locale, report["locale"])
             _, entries = self._entries(locale)
             self.assertEqual(locale, json.loads(entries["config/locale.json"])["locale"])
-            self.assertEqual("7.4.0", json.loads(entries["manifest.json"])["version"])
-            self.assertEqual("7.4.0", json.loads(entries[".codex-plugin/plugin.json"])["version"])
+            self.assertEqual("7.4.1", json.loads(entries["manifest.json"])["version"])
+            self.assertEqual("7.4.1", json.loads(entries[".codex-plugin/plugin.json"])["version"])
 
     def test_v72_upgrade_path_is_declared_in_manifest_and_bilingual_guides(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
@@ -104,9 +104,9 @@ class V73BilingualReleaseTests(unittest.TestCase):
     def test_english_primary_surfaces_are_english_and_overlay_sources_are_not_shipped(self) -> None:
         _, entries = self._entries("en")
         primary = ["README.md", "CHANGELOG.md", "global/AGENTS.md",
-                   "docs/releases/v7.4.0/RELEASE_NOTES.md",
-                   "docs/releases/v7.4.0/VALIDATION_REPORT.md",
-                   "docs/releases/v7.4.0/AUDIT_REPORT.md",
+                   "docs/releases/v7.4.1/RELEASE_NOTES.md",
+                   "docs/releases/v7.4.1/VALIDATION_REPORT.md",
+                   "docs/releases/v7.4.1/AUDIT_REPORT.md",
                    "docs/USER_GUIDE_V7.4.md", "docs/INSTALLATION_RECOVERY.md",
                    "docs/CODEX_CONFIG_GUIDE.md", ".codex-plugin/plugin.json"]
         primary.extend("skills/%s/SKILL.md" % item["name"] for item in json.loads(entries["manifest.json"])["skills"])
@@ -193,7 +193,7 @@ class V73BilingualReleaseTests(unittest.TestCase):
                              for name in root_files))
         for name in ("CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md"):
             self.assertTrue((ROOT / ".github" / name).is_file(), name)
-        current = ROOT / "docs" / "releases" / "v7.4.0"
+        current = ROOT / "docs" / "releases" / "v7.4.1"
         for name in ("RELEASE_NOTES.md", "AUDIT_REPORT.md", "VALIDATION_REPORT.md",
                      "BUILD_INFO.json", "PACKAGE_VALIDATION.json"):
             self.assertTrue((current / name).is_file(), name)
@@ -272,7 +272,7 @@ class V73BilingualReleaseTests(unittest.TestCase):
         auditor = _load_localization_auditor()
         completed = subprocess.CompletedProcess(
             args=[], returncode=0,
-            stdout=b"README.md\0dist/package-validation-v7.4.0.json\0")
+            stdout=b"README.md\0dist/package-validation-v7.4.1.json\0")
         with mock.patch.object(auditor.subprocess, "run", return_value=completed):
             paths = auditor.tracked_files()
         self.assertEqual([auditor.ROOT / "README.md"], paths)

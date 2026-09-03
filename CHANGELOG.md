@@ -6,6 +6,29 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 暂无。
 
+## 7.4.1 - 2026-09-03
+
+### Added
+
+- 新增闭合 Codex 兼容注册表，按稳定发行版计数固定 0.153.0 与此前十个稳定版本，并绑定官方 npm 制品、能力 profile 和逐层证据状态。
+- 新增 Windows/Ubuntu 22 单元发布矩阵、隔离 `CODEX_HOME` Plugin 预演，以及 schema 3 CLI/注册表/能力/payload 宿主快照。
+
+### Changed
+
+- Plugin 模式从单一 0.153.0 扩展到 11 个固定稳定版本；未来版、预发布版和窗口外版本仍失败关闭。
+- Marketplace 合并改为最小字段所有权，保留未知顶层、嵌套 `interface`、`owner` 和其他 Plugin 条目。
+- Hook snake_case/camelCase/兼容别名统一登记；安全字段冲突拒绝派发，观察字段冲突保持不可用，Stop 与 SubagentStop 返回中性 JSON。
+
+### Fixed
+
+- `verify/status/doctor` 不再只比较版本，而是检测 CLI 文件、注册表、profile 与能力摘要漂移并进入必须重装状态。
+- Windows 兼容矩阵可显式绑定目标 Codex 可执行文件，避免 PATH 解析误用全局版本。
+- 发行构建与运行文本审计排除仓库外 `project-context` 证据目录，防止临时官方 CLI 被误打包。
+
+### Validation
+
+- 11 个官方 Windows CLI 在注册表摘要 `1c204bd34cc355d5771376278c6251a5e133b7db09a7613b5c35d5c7bcdcbdd8` 下逐版通过 CLI、隔离 Plugin 与合成 Hook 单元；GitHub Ubuntu、真实账户和公开发布状态继续单独记录。
+
 ## 7.4.0 - 2026-09-03
 
 ### Added

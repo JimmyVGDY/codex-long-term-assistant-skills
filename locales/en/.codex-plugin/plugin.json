@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.4.0",
-  "description": "Cross-project engineering assistance with one weighted root-task budget for Reviewer, Explorer, and Worker, explicit dispatch permits, parent-finalized calibration, Codex CLI 0.153.0 adaptation, independent review, and controlled evolution governance.",
+  "version": "7.4.1",
+  "description": "Cross-project engineering assistance for Codex 0.153.0 and ten preceding stable releases, with isolated preflight, host binding, drift detection, one weighted root-task budget, and controlled evolution governance.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

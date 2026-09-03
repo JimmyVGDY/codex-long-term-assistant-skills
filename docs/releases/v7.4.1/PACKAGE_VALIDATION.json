@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "status": "PASS",
+  "evidence_scope": "package-only",
+  "version": "7.4.1",
+  "compatibility_registry_digest": "1c204bd34cc355d5771376278c6251a5e133b7db09a7613b5c35d5c7bcdcbdd8",
+  "windows_local_compatibility_cells": 11,
+  "windows_local_compatibility_status": "PASS",
+  "package_test_count": 218,
+  "runtime_test_count": 6,
+  "deterministic_bilingual_build": "PASS",
+  "repository_link_audit": "PASS (483 Markdown files, 525 links)",
+  "postimplementation_independent_review": "PASS (2 reviewers, final round, no findings)",
+  "user_level_force_reinstall": "PASS (Codex 0.153.0, schema 3, Plugin active)",
+  "installed_payload_digest": "42a98e08ed82928384b9973c5cdf5b0ada1a8cbd2b25346696aad63d33a0431b",
+  "github_windows_ubuntu_matrix": "NOT_EVALUATED",
+  "real_host": "NOT_EVALUATED",
+  "execution_authorization": "NONE"
+}

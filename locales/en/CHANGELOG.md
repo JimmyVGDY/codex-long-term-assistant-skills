@@ -4,6 +4,24 @@
 
 None.
 
+## 7.4.1 - 2026-09-03
+
+### Added
+
+- Added a closed eleven-stable-release Codex registry, isolated Plugin preflight, schema-3 host binding, and a 22-cell Windows/Ubuntu release matrix.
+
+### Changed
+
+- Plugin mode now supports 0.153.0 through 0.146.1 exactly as registered, preserves unknown Marketplace metadata, and handles Hook aliases consistently without relaxing security or budget policy.
+
+### Fixed
+
+- Host drift now requires reinstall, explicit executable binding prevents Windows PATH ambiguity, and repository-external evidence is excluded from release archives.
+
+### Validation
+
+- All eleven official Windows CLIs passed local CLI, isolated Plugin, and synthetic Hook cells. CI, real-host, and publication evidence remain separate.
+
 ## 7.4.0 - 2026-09-03
 
 ### Added

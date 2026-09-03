@@ -36,6 +36,23 @@ from cp_runtime.seal_queue import enqueue_session_end, launch_worker  # noqa: E4
 ALLOWED_REASONING = {"", "none", "minimal", "low", "medium", "high"}
 ALLOWED_AUTOMATIC_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra"}
 DENY_MARKERS = ("sol", "gpt-5.6-sol", "xhigh", "extra-high", "extra_high", "ultra", "max")
+HOOK_ALIASES = {
+    "hook_event_name": ("hook_event_name", "hookEventName", "event_name", "event"),
+    "tool_name": ("tool_name", "toolName", "tool"),
+    "tool_input": ("tool_input", "toolInput", "input", "arguments"),
+    "tool_use_id": ("tool_use_id", "toolUseId", "tool_call_id", "toolCallId"),
+    "task_name": ("task_name", "taskName", "dispatch_key", "delegation_key"),
+    "agent_type": ("agent_type", "agentType", "role"),
+    "model": ("model", "model_name", "modelName"),
+    "reasoning_effort": ("reasoning_effort", "reasoningEffort", "reasoning", "effort"),
+    "reservation_id": ("reservation_id", "reservationId", "delegation_id", "delegationId"),
+    "agent_id": ("agent_id", "agentId"),
+    "session_id": ("session_id", "sessionId", "thread_id", "threadId"),
+    "turn_id": ("turn_id", "turnId"),
+    "task_id": ("task_id", "taskId"),
+    "cwd": ("cwd", "working_directory", "workingDirectory"),
+    "terminal_outcome": ("terminal_outcome", "terminalOutcome", "outcome"),
+}
 POLICY_MESSAGES = {
     "zh-CN": {
         "model_ceiling": "自动子 Agent 模型不得超过 Terra High；显式 Sol 或更高模型被策略拒绝。",
@@ -96,25 +113,44 @@ def _read() -> Dict[str, Any]:
         return {}
 
 
+class AliasConflictError(ValueError):
+    pass
+
+
 def _lookup(data: Mapping[str, Any], *names: str) -> Any:
-    for name in names:
-        if name in data and data.get(name) is not None:
-            return data.get(name)
-    return None
+    """Observation lookup: a conflicting alias pair becomes unavailable."""
+    values = [data.get(name) for name in names if name in data and data.get(name) is not None]
+    if not values:
+        return None
+    first = values[0]
+    if any(value != first for value in values[1:]):
+        return None
+    return first
+
+
+def _lookup_strict(data: Mapping[str, Any], *names: str) -> Any:
+    """Security lookup: conflicting aliases fail closed."""
+    values = [data.get(name) for name in names if name in data and data.get(name) is not None]
+    if not values:
+        return None
+    first = values[0]
+    if any(value != first for value in values[1:]):
+        raise AliasConflictError("conflicting hook aliases")
+    return first
 
 
 def _tool_input(data: Mapping[str, Any]) -> Mapping[str, Any]:
-    candidate = _lookup(data, "tool_input", "input", "arguments")
+    candidate = _lookup_strict(data, *HOOK_ALIASES["tool_input"])
     return candidate if isinstance(candidate, Mapping) else {}
 
 
 def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
-    tool = str(_lookup(data, "tool_name", "tool") or "").lower()
+    tool = str(_lookup_strict(data, *HOOK_ALIASES["tool_name"]) or "").lower()
     if tool not in {"agent", "spawn_agent"}:
         return None
     args = _tool_input(data)
-    model = str(_lookup(args, "model", "model_name") or "").strip().lower()
-    effort = str(_lookup(args, "reasoning_effort", "reasoning", "effort") or "").strip().lower()
+    model = str(_lookup_strict(args, *HOOK_ALIASES["model"]) or "").strip().lower()
+    effort = str(_lookup_strict(args, *HOOK_ALIASES["reasoning_effort"]) or "").strip().lower()
     reason = ""
     if any(marker in model for marker in DENY_MARKERS):
         reason = _policy_message("model_ceiling")
@@ -130,9 +166,9 @@ def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
             else:
                 return None
         if not reason:
-            dispatch_key = str(_lookup(args, "task_name", "taskName", "dispatch_key", "delegation_key") or "").strip()
-            host_dispatch_id = str(_lookup(data, "tool_use_id", "toolUseId", "tool_call_id", "toolCallId") or "").strip()
-            role = str(_lookup(args, "agent_type", "agentType", "role") or "").strip()
+            dispatch_key = str(_lookup_strict(args, *HOOK_ALIASES["task_name"]) or "").strip()
+            host_dispatch_id = str(_lookup_strict(data, *HOOK_ALIASES["tool_use_id"]) or "").strip()
+            role = str(_lookup_strict(args, *HOOK_ALIASES["agent_type"]) or "").strip()
             if not dispatch_key or not host_dispatch_id or not role:
                 reason = _policy_message("budget_input")
             else:
@@ -162,8 +198,8 @@ def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
     ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
     if not ledger_text or hook_name not in {"SubagentStart", "SubagentStop"}:
         return
-    reservation_id = str(_lookup(data, "delegation_id", "delegationId", "reservation_id", "reservationId") or "").strip()
-    agent_id = str(_lookup(data, "agent_id", "agentId") or "").strip()
+    reservation_id = str(_lookup(data, *HOOK_ALIASES["reservation_id"]) or "").strip()
+    agent_id = str(_lookup(data, *HOOK_ALIASES["agent_id"]) or "").strip()
     if not reservation_id or not agent_id:
         return
     ledger = Path(ledger_text).expanduser().resolve()
@@ -177,12 +213,12 @@ def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
         mark_started(ledger, reservation_id=reservation_id, agent_id=agent_id,
                      actual_profile=actual_profile, runtime_evidence=evidence)
     else:
-        outcome = str(_lookup(data, "terminal_outcome", "outcome") or "UNKNOWN").upper()
+        outcome = str(_lookup(data, *HOOK_ALIASES["terminal_outcome"]) or "UNKNOWN").upper()
         mark_completed(ledger, reservation_id=reservation_id, outcome=outcome)
 
 
 def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
-    hook = str(_lookup(data, "hook_event_name", "hookEventName", "event_name", "event") or "")
+    hook = str(_lookup(data, *HOOK_ALIASES["hook_event_name"]) or "")
     event_map = {
         "UserPromptSubmit": "TURN_OPENED",
         "PreToolUse": "PRE_TOOL_GUARD",
@@ -194,17 +230,17 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     event_type = event_map.get(hook)
     if not event_type:
         return None
-    cwd = str(_lookup(data, "cwd", "working_directory") or os.getcwd())
+    cwd = str(_lookup(data, *HOOK_ALIASES["cwd"]) or os.getcwd())
     fingerprint = stable_repo_fingerprint(cwd)
-    session_id = str(_lookup(data, "session_id", "sessionId", "thread_id") or "")
-    turn_id = str(_lookup(data, "turn_id", "turnId") or "")
-    task_id = str(_lookup(data, "task_id", "taskId") or turn_id or session_id)
+    session_id = str(_lookup(data, *HOOK_ALIASES["session_id"]) or "")
+    turn_id = str(_lookup(data, *HOOK_ALIASES["turn_id"]) or "")
+    task_id = str(_lookup(data, *HOOK_ALIASES["task_id"]) or turn_id or session_id)
     # 中文：实际运行值需要外部配置的宿主信任锚；Codex 0.153.0 的普通 Hook 字段不构成此证明。
     # English: Actual runtime values require an external host trust anchor; ordinary Codex 0.153.0 Hook fields do not provide that attestation.
     runtime_evidence = verify_hook_runtime_evidence(data, hook)
     model = runtime_evidence["model"] if runtime_evidence["status"] == "VERIFIED" else ""
     effort = runtime_evidence["reasoning_effort"] if runtime_evidence["status"] == "VERIFIED" else ""
-    terminal_value = data.get("terminal_outcome") if event_type == "TASK_COMPLETED" else None
+    terminal_value = _lookup(data, *HOOK_ALIASES["terminal_outcome"]) if event_type == "TASK_COMPLETED" else None
     terminal = str(terminal_value or "UNKNOWN").upper()
     metadata: Dict[str, Any] = {}
     for key in ("agent_id", "agent_type", "permission_mode", "tool_name", "stop_hook_active"):
@@ -301,10 +337,10 @@ def main() -> int:
     allowed_hooks = {"UserPromptSubmit", "PreToolUse", "SubagentStart", "SubagentStop", "Stop", "SessionEnd"}
     if expected_hook not in allowed_hooks:
         expected_hook = ""
-    hook_name = str(_lookup(data, "hook_event_name", "hookEventName", "event_name", "event") or expected_hook)
+    hook_name = str(_lookup(data, *HOOK_ALIASES["hook_event_name"]) or expected_hook)
     if hook_name and "hook_event_name" not in data:
         data["hook_event_name"] = hook_name
-    if expected_hook == "PreToolUse" and not str(_lookup(data, "tool_name", "tool") or ""):
+    if expected_hook == "PreToolUse" and not str(_lookup(data, *HOOK_ALIASES["tool_name"]) or ""):
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("invalid_input")}}, ensure_ascii=False))
         return 0
     guard = _guard(data)
@@ -352,7 +388,7 @@ def main() -> int:
                 _session_end_diagnostic(event, "SESSION_END_ENQUEUE_FAILED")
     # 中文：正常 Stop 处理返回宿主规定的中性响应；上方恢复逻辑确保 Windows 截断非 ASCII last_assistant_message 时仍能进入该分支。
     # English: Normal Stop handling returns the host-defined neutral response; the recovery above preserves this branch when Windows truncates a non-ASCII last_assistant_message.
-    if hook_name == "Stop":
+    if hook_name in {"Stop", "SubagentStop"}:
         print("{}")
     return 0
 
@@ -368,6 +404,6 @@ if __name__ == "__main__":
         expected = sys.argv[1] if len(sys.argv) > 1 else ""
         if expected == "PreToolUse":
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("hook_failure")}}, ensure_ascii=False))
-        elif expected == "Stop":
+        elif expected in {"Stop", "SubagentStop"}:
             print("{}")
         raise SystemExit(0)

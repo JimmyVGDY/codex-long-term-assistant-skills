@@ -26,7 +26,7 @@ from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "7.4.0"
+VERSION = "7.4.1"
 TARGET_CODEX_VERSION = "0.153.0"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 

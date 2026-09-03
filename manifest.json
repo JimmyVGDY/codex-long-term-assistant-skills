@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.4.0",
-  "release_name": "Reviewer Explorer Worker 统一加权预算与 Codex 0.153.0 适配",
-  "generated_for": "Codex Plugin-first cross-project engineering assistant with one root-task weighted delegation budget for Reviewer, Explorer, and Worker roles, explicit dispatch permits, parent-finalized calibration, offline proposal-only replay, state-bound Plugin runtime loading, and a Luna/Terra High automatic ceiling",
+  "version": "7.4.1",
+  "release_name": "Codex 当前稳定版与前十个稳定发行版兼容",
+  "generated_for": "Codex Plugin-first cross-project engineering assistant with an immutable eleven-stable-release host registry, isolated Plugin preflight, schema-3 host binding and drift detection, explicit Hook aliases, one root-task weighted delegation budget, and a Luna/Terra High automatic ceiling",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -513,6 +513,7 @@
     ]
   },
   "upgrade_from": [
+    "7.4.0",
     "7.3.0",
     "7.2.0",
     "7.1.0",
@@ -654,11 +655,22 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "tested_target": "0.153.0",
+    "anchor": "0.153.0",
     "verified_versions": [
-      "0.153.0"
+      "0.153.0",
+      "0.152.1",
+      "0.152.0",
+      "0.151.0",
+      "0.150.1",
+      "0.150.0",
+      "0.149.1",
+      "0.149.0",
+      "0.148.0",
+      "0.147.0",
+      "0.146.1"
     ],
-    "forward_compatibility_window": "deferred-to-v7.4.1",
+    "window_policy": "current-plus-ten-preceding-stable-releases-patch-counts",
+    "registry": "config/codex-compatibility-v1.json",
     "unknown_version_policy": "fail-closed-for-plugin-install",
     "capability_probe": [
       "plugin-marketplace-add",

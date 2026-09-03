@@ -2,9 +2,9 @@
 
 Chinese source: [README.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/README.md)
 
-This page organizes the V7.4.0 documentation by adoption stage. Historical reports and build metadata are grouped by version to preserve validation paths, historical references, and reproducibility.
+This page organizes the V7.4.1 documentation by adoption stage. Historical reports and build metadata are grouped by version to preserve validation paths, historical references, and reproducibility.
 
-> Version scope: V7.4.0 is the current package version. TaskOutcomeEvent V2, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
+> Version scope: V7.4.1 is the current package version. TaskOutcomeEvent V2, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
 
 ## Getting started
 
@@ -30,13 +30,13 @@ This page organizes the V7.4.0 documentation by adoption stage. Historical repor
 - [Controlled-evolution operations](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](VALIDATION_REPORT.md)
-- [V7.4.0 package validation report](releases/v7.4.0/VALIDATION_REPORT.md)
-- [V7.4.0 audit report](releases/v7.4.0/AUDIT_REPORT.md)
+- [V7.4.1 package validation report](releases/v7.4.1/VALIDATION_REPORT.md)
+- [V7.4.1 audit report](releases/v7.4.1/AUDIT_REPORT.md)
 
 ## Release and history
 
 - [Release evidence index](releases/README.md)
-- [V7.4.0 release notes](releases/v7.4.0/RELEASE_NOTES.md)
+- [V7.4.1 release notes](releases/v7.4.1/RELEASE_NOTES.md)
 - [Changelog](../CHANGELOG.md)
 - [Public reconstruction index](history/README.md)
 - [Public reconstruction release index](history/RELEASE_ARCHIVES.md)

@@ -1,0 +1,59 @@
+name: Codex 稳定版兼容矩阵 / Codex Stable Compatibility Matrix
+
+on:
+  workflow_call:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: "1"
+
+jobs:
+  compatibility:
+    name: Codex ${{ matrix.codex }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        codex:
+          - "0.153.0"
+          - "0.152.1"
+          - "0.152.0"
+          - "0.151.0"
+          - "0.150.1"
+          - "0.150.0"
+          - "0.149.1"
+          - "0.149.0"
+          - "0.148.0"
+          - "0.147.0"
+          - "0.146.1"
+    steps:
+      - name: 检出源码 / Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: 配置 Python / Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+      - name: 下载、校验并安装固定 Codex CLI / Download, verify, and install pinned Codex CLI
+        shell: pwsh
+        run: |
+          $prefix = Join-Path '${{ runner.temp }}' 'codex-${{ matrix.codex }}'
+          $tarball = Join-Path '${{ runner.temp }}' 'codex-${{ matrix.codex }}.tgz'
+          python scripts/codex-compatibility-artifact.py --version '${{ matrix.codex }}' --output $tarball
+          if ($LASTEXITCODE -ne 0) { throw 'Codex artifact verification failed' }
+          npm install --prefix $prefix $tarball
+          if ($LASTEXITCODE -ne 0) { throw 'npm install failed' }
+          $bin = Join-Path $prefix 'node_modules/.bin'
+          $executable = if ($IsWindows) { Join-Path $bin 'codex.cmd' } else { Join-Path $bin 'codex' }
+          "CP_ASSISTANT_CODEX_EXECUTABLE=$executable" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CP_ASSISTANT_CODEX_ARTIFACT=$tarball" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: 重放隔离兼容单元 / Replay isolated compatibility cell
+        shell: pwsh
+        run: python scripts/codex-compatibility-matrix.py --expected-version "${{ matrix.codex }}" --artifact "$env:CP_ASSISTANT_CODEX_ARTIFACT"

@@ -89,6 +89,39 @@ class DelegationHookTests(unittest.TestCase):
             self.env["CP_DELEGATION_BUDGET_PATH"] = ledger
             self.env.pop("CP_DELEGATION_BUDGET_REQUIRED", None)
 
+    def test_pretool_alias_conflicts_fail_closed_with_registered_envelope(self) -> None:
+        top_level = {
+            "hook_event_name": "PreToolUse", "tool_name": "spawn_agent",
+            "toolName": "shell", "tool_input": {},
+        }
+        result = self.invoke("PreToolUse", top_level)
+        denial = json.loads(result.stdout)
+        self.assertEqual("PreToolUse", denial["hookSpecificOutput"]["hookEventName"])
+        self.assertEqual("deny", denial["hookSpecificOutput"]["permissionDecision"])
+
+        nested = {
+            "hook_event_name": "PreToolUse", "tool_name": "spawn_agent",
+            "tool_use_id": "alias-conflict", "tool_input": {
+                "task_name": "alias-conflict", "agent_type": "worker",
+                "model": "gpt-5.6-luna", "modelName": "gpt-5.6-sol",
+                "reasoning_effort": "low",
+            },
+        }
+        result = self.invoke("PreToolUse", nested)
+        self.assertEqual("deny", json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"])
+
+    def test_stop_variants_always_emit_neutral_json_on_observation_conflict(self) -> None:
+        for hook in ("Stop", "SubagentStop"):
+            with self.subTest(hook=hook):
+                payload = {
+                    "hook_event_name": hook,
+                    "session_id": "one", "sessionId": "two",
+                    "cwd": str(ROOT),
+                }
+                result = self.invoke(hook, payload)
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual({}, json.loads(result.stdout))
+
     def test_lifecycle_reconciles_only_explicit_reservation(self) -> None:
         record_decision(self.ledger, dispatch_key="lifecycle", decision="DELEGATE", role="explorer",
                         requested_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")

@@ -21,6 +21,9 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
+from codex_compatibility import (CompatibilityError, canonical_digest,
+                                 load_registry, normalize_plugin_list,
+                                 parse_codex_version_output, profile_for_version)
 from payload_integrity import (MANIFEST_NAME as PAYLOAD_MANIFEST_NAME,
                                PayloadIntegrityError, load_manifest as load_payload_manifest,
                                verify_payload)
@@ -30,12 +33,14 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.4.0"
+VERSION = "7.4.1"
 MARKETPLACE = "cp-assistant-local"
-TARGET_CODEX_VERSION = "0.153.0"
-# 中文：V7.4.0 只承诺当前稳定宿主；“当前版 + 前十个稳定版”兼容窗口延后到 V7.4.1。
-# English: V7.4.0 supports only the current stable host; current plus ten prior stable versions is deferred to V7.4.1.
-SUPPORTED_CODEX_VERSIONS = (TARGET_CODEX_VERSION,)
+COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
+COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, "7.4.1")
+TARGET_CODEX_VERSION = str(COMPATIBILITY_REGISTRY["window_policy"]["anchor"])
+# 中文：V7.4.1 按冻结的稳定发行序列支持当前版和前十个稳定发行版。
+# English: V7.4.1 supports the frozen current stable release and ten preceding stable releases.
+SUPPORTED_CODEX_VERSIONS = tuple(item["version"] for item in COMPATIBILITY_REGISTRY["versions"])
 REPAIRABLE_MARKETPLACE_STATE_VERSIONS = frozenset({
     "6.1.0", "6.2.0", "6.3.0", "7.2.0", "7.3.0", "7.4.0",
 })
@@ -740,20 +745,55 @@ def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> D
     return migrated
 
 
-def _merged_marketplace_manifest(existing: Any) -> Dict[str, Any]:
-    data = dict(existing) if isinstance(existing, dict) else {}
-    plugins = [dict(item) for item in data.get("plugins", []) if isinstance(item, dict)
-               and item.get("name") != PACKAGE]
+def migrate_state_to_v3(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
+    """Read legacy state conservatively; it cannot claim host compatibility."""
+    if not value:
+        return {}
+    schema = value.get("schema_version")
+    if schema in {1, 2}:
+        migrated = migrate_state_v1_to_v2(value, scope, mode)
+        migrated["schema_version"] = 3
+        migrated["migrated_from_schema"] = schema
+        migrated["compatibility_status"] = "LEGACY_HOST_PROFILE_UNKNOWN"
+        return migrated
+    if schema != 3:
+        raise InstallError("安装状态 schema 未知，拒绝覆盖: %s" % schema)
+    migrated = dict(value)
+    if value.get("scope") not in {None, scope}:
+        raise InstallError("安装状态 scope 不匹配，拒绝迁移")
+    old_mode = str(value.get("mode") or mode)
+    if old_mode not in {"plugin", "standalone"}:
+        raise InstallError("安装状态 mode 无效，拒绝迁移")
+    migrated["scope"] = scope
+    migrated["mode"] = old_mode
+    return migrated
+
+
+def _merged_marketplace_manifest(existing: Any, marketplace_profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
+    """Merge only fields owned by this package and preserve unknown metadata."""
+    if existing is not None and not isinstance(existing, dict):
+        raise InstallError("Marketplace manifest 顶层必须是 JSON object")
+    data = dict(existing or {})
+    raw_plugins = data.get("plugins", [])
+    if not isinstance(raw_plugins, list) or any(not isinstance(item, dict) for item in raw_plugins):
+        raise InstallError("Marketplace plugins 必须是 object array")
+    target_items = [item for item in raw_plugins if item.get("name") == PACKAGE]
+    if len(target_items) > 1:
+        raise InstallError("Marketplace 中存在重复的目标 Plugin 条目")
+    plugins = [dict(item) for item in raw_plugins if item.get("name") != PACKAGE]
     plugins.append({"name": PACKAGE,
                     "source": {"source": "local", "path": "./plugins/%s" % PACKAGE},
                     "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
                     "category": "Productivity"})
     data["name"] = MARKETPLACE
-    # 中文：Codex 0.153.0 需要本地市场声明 interface.displayName；owner 仍不是受管字段。
-    # English: Codex 0.153.0 requires interface.displayName in local marketplace manifests;
-    # owner remains outside the managed contract.
-    data.pop("owner", None)
-    data["interface"] = {"displayName": "Codex Cross Project Assistant Local Package"}
+    profile = marketplace_profile or COMPATIBILITY_REGISTRY["profiles"]["marketplace"]["local-interface-v2"]
+    interface = data.get("interface", {})
+    if interface is not None and not isinstance(interface, dict):
+        raise InstallError("Marketplace interface 必须是 JSON object")
+    merged_interface = dict(interface or {})
+    merged_interface["displayName"] = str(profile["display_name"])
+    data["interface"] = merged_interface
+    # owner 不是本包受管字段；即使旧值未知也必须保留。
     data["plugins"] = plugins
     return data
 
@@ -770,16 +810,34 @@ def plugin_payload_source(tmp: Path) -> Path:
 
 
 def _codex_executable() -> str:
+    configured = os.environ.get("CP_ASSISTANT_CODEX_EXECUTABLE", "").strip()
+    if configured:
+        candidate = Path(configured).expanduser().resolve(strict=True)
+        if not candidate.is_file():
+            raise InstallError("CP_ASSISTANT_CODEX_EXECUTABLE 不是文件")
+        return str(candidate)
     exe = shutil.which("codex")
     if not exe:
         raise InstallError("未找到 codex CLI；Plugin 模式需要已验证的 Codex CLI 版本。可改用 --mode standalone")
     return exe
 
 
-def _run_codex(args: List[str], timeout: int = 60, check: bool = True) -> subprocess.CompletedProcess[str]:
+def _codex_available() -> bool:
+    """Return whether a configured or PATH-discovered Codex executable is available."""
+    configured = os.environ.get("CP_ASSISTANT_CODEX_EXECUTABLE", "").strip()
+    if configured:
+        try:
+            return Path(configured).expanduser().resolve(strict=True).is_file()
+        except OSError:
+            return False
+    return shutil.which("codex") is not None
+
+
+def _run_codex(args: List[str], timeout: int = 60, check: bool = True,
+               home_override: Optional[Path] = None) -> subprocess.CompletedProcess[str]:
     cmd = [_codex_executable()] + args
     env = os.environ.copy()
-    env["CODEX_HOME"] = str(codex_home())
+    env["CODEX_HOME"] = str(home_override if home_override is not None else codex_home())
     result = subprocess.run(cmd, text=True, encoding="utf-8", errors="replace", capture_output=True, env=env, timeout=timeout)
     if check and result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
@@ -829,7 +887,7 @@ def _remove_empty_marketplace_dirs() -> None:
 
 def _codex_version_text() -> str:
     result = _run_codex(["--version"], check=False)
-    return (result.stdout or result.stderr or "").strip()
+    return (result.stdout or result.stderr or "").rstrip("\r\n")
 
 
 def _plugin_activation_status(expected_version: Optional[str] = None) -> Tuple[bool, str]:
@@ -840,16 +898,18 @@ def _plugin_activation_status(expected_version: Optional[str] = None) -> Tuple[b
         data = json.loads(result.stdout or "{}")
     except json.JSONDecodeError:
         return False, "codex plugin list --json 返回了非 JSON 数据"
-    for item in data.get("installed", []) if isinstance(data, dict) else []:
-        if not isinstance(item, dict):
-            continue
-        name = item.get("name") or str(item.get("pluginId") or "").split("@", 1)[0]
-        marketplace = item.get("marketplaceName") or (str(item.get("pluginId") or "").split("@", 1)[1] if "@" in str(item.get("pluginId") or "") else "")
-        if name == PACKAGE and marketplace == MARKETPLACE:
-            version_matches = expected_version is None or str(item.get("version") or "") == expected_version
-            ok = item.get("installed") is True and item.get("enabled") is True and version_matches
-            return ok, json.dumps(item, ensure_ascii=False)
-    return False, "未在 Codex installed 列表中发现 %s@%s" % (PACKAGE, MARKETPLACE)
+    try:
+        host_version = parse_codex_version_output(_codex_version_text())
+        host_profile = profile_for_version(COMPATIBILITY_REGISTRY, host_version)
+        json_profile = COMPATIBILITY_REGISTRY["profiles"]["plugin_json"][host_profile["plugin_json_profile"]]
+        normalized = normalize_plugin_list(
+            data, PACKAGE, MARKETPLACE, expected_version, json_profile,
+        )
+    except CompatibilityError as exc:
+        return False, "codex plugin list --json 契约不兼容: %s" % exc
+    if normalized is None:
+        return False, "未在 Codex installed 列表中发现 %s@%s" % (PACKAGE, MARKETPLACE)
+    return True, json.dumps(normalized, ensure_ascii=False, sort_keys=True)
 
 
 def _verify_restored_plugin(previous: Mapping[str, Any]) -> None:
@@ -873,18 +933,42 @@ def _probe_plugin_host() -> Dict[str, Any]:
     English: Read the Plugin host capability profile for verified Codex CLI versions without
     changing state.
     """
-    version = _codex_version_text()
-    version_ok = any(
-        re.search(r"(?:^|\s)%s(?:\s|$)" % re.escape(candidate), version)
-        for candidate in SUPPORTED_CODEX_VERSIONS
+    version_text = _codex_version_text()
+    try:
+        version = parse_codex_version_output(version_text)
+        version_profile = profile_for_version(COMPATIBILITY_REGISTRY, version)
+        version_ok = True
+        version_error = ""
+    except CompatibilityError as exc:
+        version = ""
+        version_profile = None
+        version_ok = False
+        version_error = str(exc)
+    expected_evidence = version_profile["probe_evidence"] if version_profile else {}
+    version_output_digest = hashlib.sha256(version_text.encode("utf-8")).hexdigest()
+    version_contract_ok = bool(
+        version_profile
+        and version_output_digest == expected_evidence.get("version_output_sha256")
     )
     result = _run_codex(["plugin", "list", "--json"], check=False)
     try:
         data = json.loads(result.stdout or "")
     except json.JSONDecodeError:
         data = None
-    list_ok = result.returncode == 0 and isinstance(data, dict) and isinstance(data.get("installed", []), list)
-    commands: Dict[str, bool] = {}
+    normalized_target = None
+    list_error = ""
+    list_ok = False
+    if result.returncode == 0 and version_profile is not None:
+        try:
+            json_profile = COMPATIBILITY_REGISTRY["profiles"]["plugin_json"][version_profile["plugin_json_profile"]]
+            normalized_target = normalize_plugin_list(data, PACKAGE, MARKETPLACE, None, json_profile)
+            list_ok = True
+        except CompatibilityError as exc:
+            list_error = str(exc)
+    elif result.returncode != 0:
+        list_error = (result.stderr or result.stdout or "codex plugin list failed").strip()
+    commands: Dict[str, Dict[str, Any]] = {}
+    command_contract_errors: List[str] = []
     for name, args in {
         "marketplace_add": ["plugin", "marketplace", "add", "--help"],
         "marketplace_remove": ["plugin", "marketplace", "remove", "--help"],
@@ -892,11 +976,43 @@ def _probe_plugin_host() -> Dict[str, Any]:
         "plugin_remove": ["plugin", "remove", "--help"],
     }.items():
         probe = _run_codex(args, check=False)
-        commands[name] = probe.returncode == 0
-    list_error = "" if list_ok else (result.stderr or result.stdout or "codex plugin list failed").strip()
-    return {"codex_version": version, "version_ok": version_ok,
-            "plugin_list_json": list_ok, "plugin_list_error": list_error[-2000:], "commands": commands,
-            "ok": version_ok and list_ok and all(commands.values())}
+        output = (probe.stdout or probe.stderr or "").rstrip("\r\n")
+        output_digest = hashlib.sha256(output.encode("utf-8")).hexdigest()
+        expected_digest = expected_evidence.get(f"{name}_help_sha256")
+        contract_ok = probe.returncode == 0 and output_digest == expected_digest
+        commands[name] = {"ok": probe.returncode == 0, "sha256": output_digest}
+        if not contract_ok:
+            command_contract_errors.append(name)
+    executable = Path(_codex_executable()).resolve(strict=True)
+    binding = {
+        "codex_version": version,
+        "executable_path": str(executable),
+        "executable_sha256": sha256_file(executable),
+        "registry_schema": COMPATIBILITY_REGISTRY["schema_version"],
+        "registry_digest": canonical_digest(COMPATIBILITY_REGISTRY),
+        "marketplace_profile": version_profile["marketplace_profile"] if version_profile else None,
+        "plugin_cli_profile": version_profile["plugin_cli_profile"] if version_profile else None,
+        "plugin_json_profile": version_profile["plugin_json_profile"] if version_profile else None,
+        "hook_profile": version_profile["hook_profile"] if version_profile else None,
+        "commands": commands,
+        "plugin_list_contract": list_ok,
+    }
+    binding["capability_digest"] = canonical_digest(binding)
+    return {
+        **binding,
+        "codex_version_output": version_text,
+        "version_ok": version_ok,
+        "version_error": version_error,
+        "version_contract_ok": version_contract_ok,
+        "version_output_sha256": version_output_digest,
+        "plugin_list_json": list_ok,
+        "plugin_list_error": list_error[-2000:],
+        "command_contract_errors": command_contract_errors,
+        "normalized_target": normalized_target,
+        "ok": version_ok and version_contract_ok and list_ok
+              and all(item["ok"] for item in commands.values())
+              and not command_contract_errors,
+    }
 
 
 def _legacy_marketplace_repairable() -> bool:
@@ -915,10 +1031,192 @@ def _legacy_marketplace_repairable() -> bool:
         return False
     if str(state.get("version") or "") not in REPAIRABLE_MARKETPLACE_STATE_VERSIONS:
         return False
-    if state.get("schema_version") not in {1, 2} or manifest.get("name") != MARKETPLACE:
+    if state.get("schema_version") not in {1, 2, 3} or manifest.get("name") != MARKETPLACE:
         return False
     return any(isinstance(item, dict) and item.get("name") == PACKAGE
                for item in manifest.get("plugins", []))
+
+
+def _host_binding(profile: Mapping[str, Any]) -> Dict[str, Any]:
+    keys = (
+        "codex_version", "executable_path", "executable_sha256", "registry_schema",
+        "registry_digest", "marketplace_profile", "plugin_cli_profile",
+        "plugin_json_profile", "hook_profile", "commands", "plugin_list_contract",
+        "capability_digest",
+    )
+    return {key: profile.get(key) for key in keys}
+
+
+_HOST_BINDING_KEYS = {
+    "codex_version", "executable_path", "executable_sha256", "registry_schema",
+    "registry_digest", "marketplace_profile", "plugin_cli_profile",
+    "plugin_json_profile", "hook_profile", "commands", "plugin_list_contract",
+    "capability_digest",
+}
+_HOST_COMMAND_KEYS = {
+    "marketplace_add", "marketplace_remove", "plugin_add", "plugin_remove",
+}
+
+
+def _valid_sha256(value: Any) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def _validate_host_binding(binding: Any) -> bool:
+    """Validate a stored host binding independently of its outer digest."""
+    if not isinstance(binding, dict) or set(binding) != _HOST_BINDING_KEYS:
+        return False
+    version = binding.get("codex_version")
+    try:
+        version_profile = profile_for_version(COMPATIBILITY_REGISTRY, version)
+    except CompatibilityError:
+        return False
+    if not isinstance(binding.get("executable_path"), str) or not binding["executable_path"]:
+        return False
+    if not _valid_sha256(binding.get("executable_sha256")) or not _valid_sha256(binding.get("registry_digest")):
+        return False
+    if binding.get("registry_schema") != COMPATIBILITY_REGISTRY["schema_version"]:
+        return False
+    if binding.get("registry_digest") != canonical_digest(COMPATIBILITY_REGISTRY):
+        return False
+    for key in ("marketplace_profile", "plugin_cli_profile", "plugin_json_profile", "hook_profile"):
+        if binding.get(key) != version_profile[key]:
+            return False
+    commands = binding.get("commands")
+    if not isinstance(commands, dict) or set(commands) != _HOST_COMMAND_KEYS:
+        return False
+    for command in commands.values():
+        if not isinstance(command, dict) or set(command) != {"ok", "sha256"}:
+            return False
+        if command.get("ok") is not True or not _valid_sha256(command.get("sha256")):
+            return False
+    if binding.get("plugin_list_contract") is not True:
+        return False
+    expected_capability = dict(binding)
+    capability_digest = expected_capability.pop("capability_digest", None)
+    return _valid_sha256(capability_digest) and capability_digest == canonical_digest(expected_capability)
+
+
+def _host_identity_without_plugin_list(profile: Mapping[str, Any]) -> Dict[str, Any]:
+    binding = _host_binding(profile)
+    binding.pop("plugin_list_contract", None)
+    binding.pop("capability_digest", None)
+    return binding
+
+
+def _compatibility_snapshot(profile: Mapping[str, Any], payload_digest: str,
+                            readback_detail: str) -> Dict[str, Any]:
+    try:
+        normalized = json.loads(readback_detail)
+    except json.JSONDecodeError as exc:
+        raise InstallError("Plugin 规范化读回无法写入兼容快照") from exc
+    if not isinstance(normalized, dict):
+        raise InstallError("Plugin 规范化读回不是 object")
+    binding = _host_binding(profile)
+    return {
+        "schema_version": 1,
+        "host_binding": binding,
+        "host_binding_digest": canonical_digest(binding),
+        "plugin_readback_digest": canonical_digest(normalized),
+        "payload_digest": payload_digest,
+        "captured_at": time.time(),
+    }
+
+
+def _host_compatibility_status(state: Mapping[str, Any]) -> Dict[str, Any]:
+    if state.get("schema_version") != 3:
+        return {"status": "LEGACY_HOST_PROFILE_UNKNOWN", "compatible": False}
+    snapshot = state.get("compatibility_snapshot")
+    required = {
+        "schema_version", "host_binding", "host_binding_digest",
+        "plugin_readback_digest", "payload_digest", "captured_at",
+    }
+    if not isinstance(snapshot, dict) or set(snapshot) != required or snapshot.get("schema_version") != 1:
+        return {"status": "COMPATIBILITY_SNAPSHOT_INVALID", "compatible": False}
+    stored_binding = snapshot.get("host_binding")
+    payload_identity = state.get("payload_identity")
+    if (not _validate_host_binding(stored_binding)
+            or not _valid_sha256(snapshot.get("host_binding_digest"))
+            or canonical_digest(stored_binding) != snapshot.get("host_binding_digest")
+            or not _valid_sha256(snapshot.get("plugin_readback_digest"))
+            or not _valid_sha256(snapshot.get("payload_digest"))
+            or not isinstance(snapshot.get("captured_at"), (int, float))
+            or isinstance(snapshot.get("captured_at"), bool)
+            or not isinstance(payload_identity, dict)
+            or snapshot.get("payload_digest") != payload_identity.get("manifest_digest")):
+        return {"status": "COMPATIBILITY_SNAPSHOT_INVALID", "compatible": False}
+    try:
+        current = _probe_plugin_host()
+    except Exception as exc:
+        return {"status": "HOST_PROBE_FAILED", "compatible": False, "detail": str(exc)}
+    if not current.get("ok"):
+        return {
+            "status": "HOST_DRIFT_REINSTALL_REQUIRED", "compatible": False,
+            "detail": current.get("version_error") or current.get("plugin_list_error") or "capability probe failed",
+        }
+    current_binding = _host_binding(current)
+    current_digest = canonical_digest(current_binding)
+    if current_digest != snapshot["host_binding_digest"]:
+        return {
+            "status": "HOST_DRIFT_REINSTALL_REQUIRED", "compatible": False,
+            "stored_host_binding_digest": snapshot["host_binding_digest"],
+            "current_host_binding_digest": current_digest,
+        }
+    return {
+        "status": "HOST_COMPATIBLE", "compatible": True,
+        "host_binding_digest": current_digest,
+    }
+
+
+def _isolated_plugin_preflight(profile: Mapping[str, Any]) -> Dict[str, Any]:
+    """Exercise add/list/remove against an isolated CODEX_HOME before account writes."""
+    version_profile = profile_for_version(COMPATIBILITY_REGISTRY, str(profile["codex_version"]))
+    marketplace_profile = COMPATIBILITY_REGISTRY["profiles"]["marketplace"][
+        version_profile["marketplace_profile"]
+    ]
+    json_profile = COMPATIBILITY_REGISTRY["profiles"]["plugin_json"][
+        version_profile["plugin_json_profile"]
+    ]
+    with tempfile.TemporaryDirectory(prefix="cp-v741-preflight-") as td:
+        root = Path(td)
+        isolated_home = root / "codex-home"
+        market = root / "marketplace"
+        isolated_home.mkdir(parents=True)
+        plugin_payload_source(market / "plugins")
+        manifest_path = market / ".agents" / "plugins" / "marketplace.json"
+        write_json_atomic(manifest_path, _merged_marketplace_manifest({}, marketplace_profile))
+        added_market = False
+        added_plugin = False
+        try:
+            _run_codex(["plugin", "marketplace", "add", str(market)], home_override=isolated_home)
+            added_market = True
+            _run_codex(["plugin", "add", "%s@%s" % (PACKAGE, MARKETPLACE)], home_override=isolated_home)
+            added_plugin = True
+            result = _run_codex(["plugin", "list", "--json"], home_override=isolated_home)
+            try:
+                payload = json.loads(result.stdout or "")
+                normalized = normalize_plugin_list(
+                    payload, PACKAGE, MARKETPLACE, VERSION, json_profile,
+                )
+            except (json.JSONDecodeError, CompatibilityError) as exc:
+                raise InstallError("隔离 Plugin 读回契约失败（期望 version=%s）: %s" % (VERSION, exc)) from exc
+            if normalized is None:
+                raise InstallError("隔离 Plugin 读回未发现目标 Plugin")
+            return {
+                "status": "ISOLATED_PLUGIN_PASS",
+                "normalized_digest": canonical_digest(normalized),
+            }
+        finally:
+            if added_plugin:
+                _run_codex(
+                    ["plugin", "remove", "%s@%s" % (PACKAGE, MARKETPLACE)],
+                    check=False, home_override=isolated_home,
+                )
+            if added_market:
+                _run_codex(
+                    ["plugin", "marketplace", "remove", MARKETPLACE],
+                    check=False, home_override=isolated_home,
+                )
 
 
 def _require_plugin_host() -> Dict[str, Any]:
@@ -930,14 +1228,22 @@ def _require_plugin_host() -> Dict[str, Any]:
     if not profile["version_ok"]:
         raise InstallError("Plugin 模式仅支持已验证的 Codex CLI %s；当前: %s" %
                            (", ".join(SUPPORTED_CODEX_VERSIONS),
-                            profile["codex_version"] or "未知"))
+                            profile["codex_version_output"] or "未知"))
+    if not profile["version_contract_ok"] or profile["command_contract_errors"]:
+        raise InstallError(
+            "Codex CLI 版本或 Plugin 子命令摘要与冻结兼容注册表不一致，拒绝安装: %s" %
+            (profile["command_contract_errors"] or ["version_output"]),
+        )
     if not profile["plugin_list_json"]:
         if not _legacy_marketplace_repairable():
             raise InstallError("codex plugin list --json schema 未知，拒绝 Plugin 安装")
         profile["legacy_marketplace_repair"] = True
-        profile["ok"] = profile["version_ok"] and all(profile["commands"].values())
-    if not all(profile["commands"].values()):
+        profile["ok"] = profile["version_ok"] and profile["version_contract_ok"] and not profile["command_contract_errors"] and all(
+            item["ok"] for item in profile["commands"].values()
+        )
+    if not all(item["ok"] for item in profile["commands"].values()):
         raise InstallError("Codex Plugin 子命令能力不完整，拒绝安装: %s" % profile["commands"])
+    profile["isolated_preflight"] = _isolated_plugin_preflight(profile)
     return profile
 
 
@@ -985,11 +1291,11 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     for _label, target in targets:
         reject_link_ancestors(target.parent)
     old_state = load_json(state_path("user"), {}) or {}
-    migrated_old_state = migrate_state_v1_to_v2(old_state, "user", mode)
+    migrated_old_state = migrate_state_to_v3(old_state, "user", mode)
     if dry_run:
         print(json.dumps({"scope":"user","mode":mode,"from_version":old_state.get("version"),
                           "to_version":VERSION,"state_schema":old_state.get("schema_version"),
-                          "state_migration":"v1-to-v2" if old_state.get("schema_version") == 1 else "none",
+                          "state_migration":"legacy-to-v3" if old_state.get("schema_version") in {1, 2} else "none",
                           "backup_required":True,"targets":[str(x[1]) for x in targets],
                           "unknown_marketplace_entries_preserved":mode == "plugin"}, ensure_ascii=False, indent=2)); return
     _require_no_live_transaction("user")
@@ -1007,7 +1313,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     previous_plugin_active = False
     previous_plugin_detail = ""
     previous_market_exists = _io_path(plugin_marketplace_root()).exists() if mode == "plugin" else False
-    if mode == "plugin" and shutil.which("codex"):
+    if mode == "plugin" and _codex_available():
         try:
             previous_plugin_active, previous_plugin_detail = _plugin_activation_status()
         except Exception:
@@ -1076,7 +1382,15 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                 payload_report(payload_target)
                 _record_applied(journal, "plugin-payload", payload_target)
                 marketplace_path = plugin_marketplace_manifest()
-                marketplace = _merged_marketplace_manifest(load_json(marketplace_path, {}))
+                host_version_profile = profile_for_version(
+                    COMPATIBILITY_REGISTRY, str(capability_profile["codex_version"]),
+                )
+                marketplace_profile = COMPATIBILITY_REGISTRY["profiles"]["marketplace"][
+                    host_version_profile["marketplace_profile"]
+                ]
+                marketplace = _merged_marketplace_manifest(
+                    load_json(marketplace_path, {}), marketplace_profile,
+                )
                 with tempfile.TemporaryDirectory(prefix="cp-v6-manifest-") as md:
                     prepared_manifest = Path(md) / "marketplace.json"
                     write_json_atomic(prepared_manifest, marketplace)
@@ -1091,6 +1405,23 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                 _hard_crash("MARKETPLACE:AFTER_REPLACE")
         if mode == "plugin":
             _journal_write(journal, "ACTIVATING")
+            pre_activation_profile = _probe_plugin_host()
+            same_host = (
+                _host_identity_without_plugin_list(pre_activation_profile)
+                == _host_identity_without_plugin_list(capability_profile)
+                if capability_profile.get("legacy_marketplace_repair")
+                else _host_binding(pre_activation_profile) == _host_binding(capability_profile)
+            )
+            pre_activation_ok = (
+                pre_activation_profile.get("version_ok")
+                and all(item["ok"] for item in pre_activation_profile["commands"].values())
+                and (
+                    pre_activation_profile.get("plugin_list_json")
+                    or capability_profile.get("legacy_marketplace_repair")
+                )
+            )
+            if not pre_activation_ok or not same_host:
+                raise InstallError("安装事务期间 Codex 宿主发生变化，拒绝激活")
             _record_mutation_intent(journal, "plugin-cache", plugin_cache_root(),
                                     tree_sha256(plugin_marketplace_payload()))
             _activate_plugin(plugin_marketplace_root())
@@ -1098,6 +1429,12 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             active, detail = _plugin_activation_status(VERSION)
             if not active:
                 raise InstallError("Plugin 注册读回未达到 installed=true、enabled=true、version=%s: %s" % (VERSION, detail))
+            post_activation_profile = _probe_plugin_host()
+            if not post_activation_profile.get("ok") or (
+                _host_identity_without_plugin_list(post_activation_profile)
+                != _host_identity_without_plugin_list(pre_activation_profile)
+            ):
+                raise InstallError("Plugin 激活后宿主能力读回发生变化")
             cache_report = payload_report(plugin_cache_root())
             journal["cache_payload"] = cache_report
             _record_applied(journal, "plugin-cache", plugin_cache_root())
@@ -1107,9 +1444,10 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         managed = {str(path): tree_sha256(path) for _label, path in targets if _io_path(path).exists() and _label not in {"global", "hooks-json", "install-state"}}
         managed[str(gp)] = hashlib.sha256((ROOT / "global" / "AGENTS.md").read_bytes()).hexdigest()
         state = dict(migrated_old_state)
-        state.update({"schema_version":2,"package":PACKAGE,"version":VERSION,"scope":"user","mode":mode,
+        state.update({"schema_version":3,"package":PACKAGE,"version":VERSION,"scope":"user","mode":mode,
                       "installed_at":time.time(),"backup":str(backup),"managed_hashes":managed,
-                      "previous_backup":old_state.get("backup"),"capability_profile":capability_profile})
+                      "previous_backup":old_state.get("backup"),
+                      "capability_profile":_host_binding(capability_profile) if mode == "plugin" else {}})
         if mode == "plugin":
             source_report = payload_report(ROOT)
             marketplace_report = payload_report(plugin_marketplace_payload())
@@ -1117,12 +1455,19 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                                          "marketplace_digest":marketplace_report["payload_digest"],
                                          "cache_digest":cache_report["payload_digest"] if cache_report else None,
                                          "file_count":source_report["file_count"]}
+            state["compatibility_status"] = "HOST_COMPATIBLE"
+            state["compatibility_snapshot"] = _compatibility_snapshot(
+                post_activation_profile, source_report["payload_digest"], detail,
+            )
             # 中文：V7 SessionEnd 仅入队签名任务；提交安装前初始化主机绑定密钥环，
             # 中文：同时保留既有 V6.5 密钥和全部 RETIRED 验证历史。
             # English: V7 SessionEnd only enqueues a signed job; initialize the host-bound
             # English: keyring before commit while preserving V6.5 keys and RETIRED history.
             init_keyring()
             state["integrity_keyring"] = verify_keyring()
+        else:
+            state["compatibility_status"] = "STANDALONE_NOT_APPLICABLE"
+            state.pop("compatibility_snapshot", None)
         write_json_atomic(state_path("user"), state)
         _record_applied(journal, "install-state", state_path("user"))
         _hard_crash("PLUGIN:AFTER_STATE_WRITE")
@@ -1138,7 +1483,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         # 中文：安装事务失败时，撤销本次 Plugin 注册并恢复文件与旧状态，再尽力恢复升级前 Plugin。
         # English: On transaction failure, undo Plugin registration, restore files/state, then restore the prior Plugin.
         _journal_write(journal, "ROLLBACK_STARTED")
-        if mode == "plugin" and shutil.which("codex"):
+        if mode == "plugin" and _codex_available():
             try:
                 _deactivate_plugin(check=False)
             except Exception as rollback_exc:
@@ -1161,7 +1506,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                     copy_atomic(src, target)
             except Exception as rollback_exc:
                 journal["rollback_errors"].append("restore %s: %s" % (target, rollback_exc))
-        if mode == "plugin" and shutil.which("codex"):
+        if mode == "plugin" and _codex_available():
             if not previous_market_exists:
                 try:
                     _remove_marketplace(check=False)
@@ -1182,7 +1527,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("安装失败且回滚不完整；请执行 doctor --recover：%s" % "; ".join(journal["rollback_errors"])) from exc
         raise
-    print("[OK] V7.4 账户级安装完成，mode=%s" % mode)
+    print("[OK] V7.4.1 账户级安装完成，mode=%s" % mode)
     if mode == "plugin":
         print("[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add")
 
@@ -1197,10 +1542,10 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
     for _label, target in targets:
         ensure_inside(target, repo); reject_link_ancestors(target.parent, repo)
     old_state = load_json(state_path("repo", repo), {}) or {}
-    migrated_old_state = migrate_state_v1_to_v2(old_state, "repo", "standalone")
+    migrated_old_state = migrate_state_to_v3(old_state, "repo", "standalone")
     if dry_run:
         print(json.dumps({"scope":"repo","repo":str(repo),"from_version":old_state.get("version"),
-                          "to_version":VERSION,"state_migration":"v1-to-v2" if old_state.get("schema_version") == 1 else "none",
+                          "to_version":VERSION,"state_migration":"legacy-to-v3" if old_state.get("schema_version") in {1, 2} else "none",
                           "targets":[str(t) for _,t in targets]}, ensure_ascii=False, indent=2)); return
     _require_no_live_transaction("repo", repo)
     journal = _new_journal("repo", "standalone", repo, targets)
@@ -1225,9 +1570,10 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         write_json_atomic(backup / "backup-manifest.json", {"records":records,"scope":"repo"})
         managed = {str(t):tree_sha256(t) for label,t in targets if label != "install-state"}
         state = dict(migrated_old_state)
-        state.update({"schema_version":2,"package":PACKAGE,"version":VERSION,"scope":"repo","mode":"standalone",
+        state.update({"schema_version":3,"package":PACKAGE,"version":VERSION,"scope":"repo","mode":"standalone",
                       "repo":str(repo),"backup":str(backup),"previous_backup":old_state.get("backup"),
-                      "managed_hashes":managed})
+                      "managed_hashes":managed,"compatibility_status":"STANDALONE_NOT_APPLICABLE"})
+        state.pop("compatibility_snapshot", None)
         write_json_atomic(state_path("repo", repo), state)
         _record_applied(journal, "install-state", state_path("repo", repo))
         journal["applied_hashes"].update(managed)
@@ -1254,7 +1600,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("仓库安装回滚不完整；请执行 doctor --recover") from exc
         raise
-    print("[OK] V7.4 仓库级 Skills 安装完成: %s" % repo)
+    print("[OK] V7.4.1 仓库级 Skills 安装完成: %s" % repo)
 
 
 def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
@@ -1313,13 +1659,16 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                 digests = {source_report["payload_digest"], market_report["payload_digest"], cache_report["payload_digest"]}
                 if len(digests) != 1:
                     errors.append("ZIP 源/Marketplace/cache payload digest 不一致")
-                state = migrate_state_v1_to_v2(load_json(state_path("user"), {}) or {}, "user", mode)
+                state = migrate_state_to_v3(load_json(state_path("user"), {}) or {}, "user", mode)
                 identity = state.get("payload_identity") or {}
-                if state.get("version") != VERSION or state.get("schema_version") != 2:
-                    errors.append("安装状态不是 V7 schema 2")
+                if state.get("version") != VERSION or state.get("schema_version") != 3:
+                    errors.append("安装状态不是 V7.4.1 schema 3")
                 if any(identity.get(key) != source_report["payload_digest"]
                        for key in ("manifest_digest", "marketplace_digest", "cache_digest")):
                     errors.append("安装状态 payload 身份读回不一致")
+                host_status = _host_compatibility_status(state)
+                if not host_status.get("compatible"):
+                    errors.append("Codex 宿主兼容状态: %s" % host_status.get("status"))
             except InstallError as exc:
                 errors.append(str(exc))
             try:
@@ -1341,7 +1690,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     if errors:
         for item in errors: print("[FAIL]",item)
         raise SystemExit(1)
-    print("[OK] V7.4 安装验证通过 scope=%s mode=%s" % (scope, mode))
+    print("[OK] V7.4.1 安装验证通过 scope=%s mode=%s" % (scope, mode))
 
 
 def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_run: bool) -> None:
@@ -1388,7 +1737,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
     if installed_mode == "plugin":
         active = False
         active_detail = ""
-        if shutil.which("codex"):
+        if _codex_available():
             active, active_detail = _plugin_activation_status(VERSION)
         active_version = ""
         if active_detail.startswith("{"):
@@ -1405,7 +1754,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
     _journal_write(journal, "BACKED_UP")
     _journal_write(journal, "APPLYING")
     if installed_mode == "plugin":
-        if shutil.which("codex"):
+        if _codex_available():
             try:
                 _deactivate_plugin(check=not force)
                 if not any(record.get("existed") for record in previous_market_records):
@@ -1449,7 +1798,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
     # English: an older V6 state when present, otherwise no current state file may remain.
     if not previous_state_record:
         _io_path(sp).unlink(missing_ok=True)
-    if installed_mode == "plugin" and previous_state.get("mode") == "plugin" and shutil.which("codex") and _io_path(plugin_marketplace_root()).exists():
+    if installed_mode == "plugin" and previous_state.get("mode") == "plugin" and _codex_available() and _io_path(plugin_marketplace_root()).exists():
         try:
             _activate_plugin(plugin_marketplace_root())
             restored, detail = _plugin_activation_status(str(previous_state.get("version") or "") or None)
@@ -1461,7 +1810,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
-    print("[OK] V7.4 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
+    print("[OK] V7.4.1 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
 
 
 def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict[str, Any]]:
@@ -1523,7 +1872,7 @@ def recover_transaction(scope: str, repo_path: Optional[str] = None) -> None:
                 copy_atomic(src, target)
         except Exception as exc:
             journal["rollback_errors"].append("%s: %s" % (record.get("target"), exc))
-    if scope == "user" and journal.get("mode") == "plugin" and shutil.which("codex"):
+    if scope == "user" and journal.get("mode") == "plugin" and _codex_available():
         previous_plugin = journal.get("previous_plugin_state") or {}
         try:
             _deactivate_plugin(check=False)
@@ -1548,7 +1897,10 @@ def status(scope: str, mode: str, repo_path: Optional[str]) -> None:
     repo = git_root(Path(repo_path or ".")) if scope == "repo" else None
     state = load_json(state_path(scope, repo), {}) or {}
     live = _load_live_journal(scope, repo)
-    active, detail = _plugin_activation_status() if scope == "user" and shutil.which("codex") else (False, "not checked")
+    active, detail = _plugin_activation_status() if scope == "user" and _codex_available() else (False, "not checked")
+    host_compatibility = None
+    if scope == "user" and mode == "plugin":
+        host_compatibility = _host_compatibility_status(state)
     ch = codex_home()
     payload = None
     if scope == "user" and mode == "plugin" and plugin_cache_root().is_dir():
@@ -1559,6 +1911,7 @@ def status(scope: str, mode: str, repo_path: Optional[str]) -> None:
             payload = {"ok": False, "error": str(exc)}
     data = {"package": PACKAGE, "version": VERSION, "scope": scope, "state": state,
             "live_transaction": live, "plugin_activation": {"active": active, "detail": detail},
+            "host_compatibility": host_compatibility,
             "payload_identity": payload,
             "skills": skill_names(), "reviewers": [p.name for p in agent_files()],
             "hooks": str(ch / "hooks.json") if scope == "user" else None}
@@ -1569,7 +1922,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
     if recover:
         recover_transaction(scope, repo_path)
         return
-    codex_exe = shutil.which("codex")
+    codex_exe = _codex_executable() if _codex_available() else None
     codex_version = None
     if codex_exe:
         try:
@@ -1582,6 +1935,12 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
             capability = _probe_plugin_host()
         except Exception as exc:
             capability = {"ok": False, "error": str(exc)}
+    state = load_json(state_path(scope, git_root(Path(repo_path or ".")) if scope == "repo" else None), {}) or {}
+    host_compatibility = (
+        _host_compatibility_status(state)
+        if scope == "user" and state.get("mode") == "plugin"
+        else None
+    )
     print(json.dumps({
         "package":PACKAGE,"version":VERSION,"target_codex":TARGET_CODEX_VERSION,
         "supported_codex_versions":list(SUPPORTED_CODEX_VERSIONS),"python":sys.executable,
@@ -1594,12 +1953,12 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
         "payload_manifest":str(ROOT/PAYLOAD_MANIFEST_NAME),
         "plugin_cache_root":str(plugin_cache_root()),
         "git":shutil.which("git"),"codex":codex_exe,"codex_version":codex_version,
-        "capability_profile":capability
+        "capability_profile":capability,"host_compatibility":host_compatibility
     },ensure_ascii=False,indent=2))
 
 
 def main() -> None:
-    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.4 安装器")
+    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.4.1 安装器")
     sub=p.add_subparsers(dest="command",required=True)
     for name in ("install","verify","uninstall"):
         q=sub.add_parser(name)

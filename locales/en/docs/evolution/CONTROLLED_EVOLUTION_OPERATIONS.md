@@ -1,6 +1,6 @@
 # V7.4 Controlled Evolution Operations Manual
 
-> Status: `active`. This page applies to V7.4.0. The Evolution component manifest still uses contract version `5.1.0`, and the default policy is `v6.5-default-1`; neither value is the current package version.
+> Status: `active`. This page applies to V7.4.1. The Evolution component manifest still uses contract version `5.1.0`, and the default policy is `v6.5-default-1`; neither value is the current package version.
 
 ## 1. When to Use It
 

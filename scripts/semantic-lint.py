@@ -2,17 +2,22 @@
 from __future__ import annotations
 import json, re, sys, tomllib
 from pathlib import Path
+from codex_compatibility import load_registry
 ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
-if manifest.get('version')!='7.4.0': errors.append('manifest 版本不是 7.4.0')
+if manifest.get('version')!='7.4.1': errors.append('manifest 版本不是 7.4.1')
 if manifest.get('user_skills_target')!='$HOME/.agents/skills': errors.append('账户 Skill 目标不是 $HOME/.agents/skills')
 plugin=json.loads((ROOT/'.codex-plugin'/'plugin.json').read_text(encoding='utf-8'))
-if plugin.get('version')!='7.4.0': errors.append('Plugin 版本不一致')
+if plugin.get('version')!='7.4.1': errors.append('Plugin 版本不一致')
 if manifest.get('default_locale')!='zh-CN' or manifest.get('supported_locales')!=['zh-CN','en']:
     errors.append('双语发行声明无效')
-for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','6.6.1','7.0.0','7.1.0','7.2.0','7.3.0'):
-    if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V7.4.0 升级声明' % previous)
+for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','6.6.1','7.0.0','7.1.0','7.2.0','7.3.0','7.4.0'):
+    if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V7.4.1 升级声明' % previous)
+registry=load_registry(ROOT/'config'/'codex-compatibility-v1.json','7.4.1')
+registered=[item['version'] for item in registry['versions']]
+if manifest.get('codex_compatibility',{}).get('verified_versions')!=registered:
+    errors.append('Manifest Codex 兼容窗口与注册表不一致')
 hooks=json.loads((ROOT/'hooks'/'hooks.json').read_text(encoding='utf-8')).get('hooks',{})
 required={'UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'}
 if not required.issubset(hooks): errors.append('生命周期 Hooks 不完整')
@@ -49,7 +54,7 @@ for phrase in ('user_skills_home','plugin_marketplace_root','reject_link_ancesto
 for release_script in ('build-release.py','lifecycle-acceptance.py','model-gate-acceptance.py','seal-worker.py','event-archive.py','release-attestation.py','verify-release.py','payload-integrity.py','validate-v74.py','delegation-budget.py','delegation-calibration.py'):
     if not (ROOT/'scripts'/release_script).is_file(): errors.append('缺少 V7.4 发布证明脚本: '+release_script)
 payload=json.loads((ROOT/'PLUGIN_PAYLOAD_MANIFEST.json').read_text(encoding='utf-8'))
-if payload.get('version')!='7.4.0' or payload.get('file_count',0)<1: errors.append('Plugin payload manifest 无效')
+if payload.get('version')!='7.4.1' or payload.get('file_count',0)<1: errors.append('Plugin payload manifest 无效')
 english_reviewers=ROOT/'locales'/'en'/'custom-agents'
 for reviewer in manifest.get('custom_agents',[]):
     candidate=english_reviewers/Path(reviewer['file']).name
@@ -60,9 +65,9 @@ for reviewer in manifest.get('custom_agents',[]):
         errors.append('英文 Reviewer 写死模型: '+reviewer['name'])
 for primary in ('README.md','CHANGELOG.md','global/AGENTS.md','docs/USER_GUIDE_V7.4.md',
                 'docs/INSTALLATION_RECOVERY.md','docs/CODEX_CONFIG_GUIDE.md',
-                'docs/releases/v7.4.0/RELEASE_NOTES.md',
-                'docs/releases/v7.4.0/VALIDATION_REPORT.md',
-                'docs/releases/v7.4.0/AUDIT_REPORT.md'):
+                'docs/releases/v7.4.1/RELEASE_NOTES.md',
+                'docs/releases/v7.4.1/VALIDATION_REPORT.md',
+                'docs/releases/v7.4.1/AUDIT_REPORT.md'):
     if not (ROOT/'locales'/'en'/primary).is_file(): errors.append('英文主界面缺失: '+primary)
 text_extensions={'.md','.json','.toml','.yaml','.py','.ps1','.sh','.cmd'}
 banned_natural_language={
@@ -80,10 +85,12 @@ url_pattern=re.compile(r'https?://[^\s\)\]\}>"\']+',re.IGNORECASE)
 for path in ROOT.rglob('*'):
     if not path.is_file() or path.suffix not in text_extensions:
         continue
+    relative=path.relative_to(ROOT)
+    if relative.parts and relative.parts[0] in {'project-context','.git'}:
+        continue
     text=path.read_text(encoding='utf-8')
     if excluded_brand in path.as_posix().lower() or excluded_brand in text.lower():
         errors.append('Codex 发行命中无关品牌: '+str(path.relative_to(ROOT)))
-    relative=path.relative_to(ROOT)
     if relative not in neutral_language_exclusions:
         neutral_text=url_pattern.sub('',text)
         for phrase in banned_natural_language:
@@ -92,4 +99,4 @@ for path in ROOT.rglob('*'):
 if errors:
     for e in errors: print('[FAIL]',e)
     raise SystemExit(1)
-print('[OK] V7.4.0 语义校验通过：Codex CLI 0.153.0、统一委派预算、显式 permit、父级校准、双语发行、Plugin/Hooks、payload 身份、模型上限和受控演进边界一致')
+print('[OK] V7.4.1 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、宿主漂移检测、统一委派预算、双语发行、模型上限和受控演进边界一致')

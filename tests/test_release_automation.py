@@ -133,7 +133,11 @@ class ReleaseAutomationTests(unittest.TestCase):
         workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
         uses = re.findall(r"^\s*uses:\s*([^\s#]+)", workflow, re.MULTILINE)
         self.assertTrue(uses)
-        self.assertTrue(all(re.fullmatch(r"actions/[A-Za-z0-9._-]+@[0-9a-f]{40}", item) for item in uses))
+        self.assertTrue(all(
+            re.fullmatch(r"actions/[A-Za-z0-9._-]+@[0-9a-f]{40}", item)
+            or item == "./.github/workflows/codex-compatibility.yml"
+            for item in uses
+        ))
         self.assertIn("id-token: write", workflow)
         self.assertIn("attestations: write", workflow)
         self.assertIn("artifact-metadata: write", workflow)
@@ -153,8 +157,8 @@ class ReleaseAutomationTests(unittest.TestCase):
             output = Path(temporary) / "notes.md"
             release_workflow.write_release_notes(output)
             value = output.read_text(encoding="utf-8")
-            self.assertIn("# V7.4.0 发行说明", value)
-            self.assertIn("# V7.4.0 Release Notes", value)
+            self.assertIn("# V7.4.1 发行说明", value)
+            self.assertIn("# V7.4.1 Release Notes", value)
             self.assertNotIn("English: [RELEASE_NOTES.en.md]", value)
             self.assertNotIn("Chinese: [RELEASE_NOTES.md]", value)
 

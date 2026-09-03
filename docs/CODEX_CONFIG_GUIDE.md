@@ -75,7 +75,7 @@ model_reasoning_effort = "high"
 
 ## 6. Plugin 与 Hook
 
-V7.4 使用 Codex CLI 0.153.0 的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.4.0`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
+V7.4.1 使用冻结注册表适配 Codex CLI 0.153.0 与此前十个稳定发行版的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.4.1`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
 
 Plugin 通过 `hooks/hooks.json` 提供六个 Hook。Windows 入口 `hooks\cp_hook.cmd` 会选择可用的 Python 启动器，不需要额外创建 `python3.exe` 垫片。SessionEnd 的宿主预算保持三秒，只执行有界签名入队，并在 Hook 预算外启动延迟封印。
 

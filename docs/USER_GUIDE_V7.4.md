@@ -2,7 +2,7 @@
 
 ## 1. 本版重点
 
-V7.4.0 将 Reviewer、Explorer、Worker 纳入同一个根任务加权预算。Task Envelope 声明预算档位，`delegation-budget.py` 维护仓库外追加式账本，PreToolUse Hook 在派发前原子预占，Reviewer 控制器只维护复审轮次与 Finding，不再重复计费。
+V7.4.1 保留 Reviewer、Explorer、Worker 的同一个根任务加权预算。Task Envelope 声明预算档位，`delegation-budget.py` 维护仓库外追加式账本，PreToolUse Hook 在派发前原子预占，Reviewer 控制器只维护复审轮次与 Finding，不再重复计费。
 
 模型权重固定为：`luna-low=1`、`luna-medium=2`、`terra-medium=4`、`terra-high=8`。初始预算为：
 
@@ -28,7 +28,7 @@ python scripts\delegation-budget.py init --ledger C:\safe-state\budget.jsonl --b
 python scripts\delegation-budget.py decide --ledger C:\safe-state\budget.jsonl --dispatch-key review-data-1 --decision DELEGATE --role reviewer --requested-profile luna-medium --reason-code INDEPENDENT_EVIDENCE_GAIN
 ```
 
-V7.4.0 不会自动为每个根任务创建账本。统一预算采用任务级显式激活；未设置上述两个环境变量时，Hook 仍执行自动模型上限，但不得把该任务记录为“统一预算门禁已通过”。
+V7.4.1 不会自动为每个根任务创建账本。统一预算采用任务级显式激活；未设置上述两个环境变量时，Hook 仍执行自动模型上限，但不得把该任务记录为“统一预算门禁已通过”。
 
 ## 3. 路由原因
 
@@ -47,6 +47,6 @@ Reviewer、Explorer、Worker 使用不同收益指标。子 Agent 自报只能�
 
 ## 5. Codex 0.153.0 边界
 
-V7.4.0 的 Plugin 安装目标是 Codex CLI 0.153.0。本地 Marketplace manifest 必须包含 `interface.displayName`。当前版不声明“前十个稳定版”兼容窗口；该工作明确延后到 V7.4.1。
+V7.4.1 的 Plugin 窗口是 Codex CLI 0.153.0 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。
 
-安装完成必须读回 `installed=true`、`enabled=true`、`version=7.4.0`。磁盘已有文件不等于 Plugin 已注册或已启用。
+安装完成必须读回 `installed=true`、`enabled=true`、`version=7.4.1`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`。磁盘已有文件不等于 Plugin 已注册或已启用。

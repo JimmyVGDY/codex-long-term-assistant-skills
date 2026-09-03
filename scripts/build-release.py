@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：构建并验证字节级可复现的 V7.4.0 语言发行包。
+"""中文：构建并验证字节级可复现的 V7.4.1 语言发行包。
 
-English: Build and verify byte-reproducible V7.4.0 locale-specific archives.
+English: Build and verify byte-reproducible V7.4.1 locale-specific archives.
 """
 from __future__ import annotations
 
@@ -20,12 +20,13 @@ from payload_integrity import write_manifest as write_payload_manifest
 from runtime_localization import RuntimeLocalizationError, load_mapping, localize_tree
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "7.4.0"
+VERSION = "7.4.1"
 PACKAGE = "codex-cross-project-engineering-assistant"
 SUPPORTED_LOCALES = ("zh-CN", "en")
 FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)
 EXCLUDED_DIRS = {
-    "__pycache__", ".git", ".github", ".pytest_cache", ".mypy_cache", "locales", "dist"
+    "__pycache__", ".git", ".github", ".pytest_cache", ".mypy_cache", "locales", "dist",
+    "project-context",
 }
 EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".zip"}
 EXCLUDED_NAMES = {"cp-assistant-v6.lock"}
@@ -245,7 +246,7 @@ def reproducible_build(output: Path, witness: Path, locale: str) -> Dict[str, An
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.4.0 deterministic bilingual release builder")
+    parser = argparse.ArgumentParser(description="V7.4.1 deterministic bilingual release builder")
     subparsers = parser.add_subparsers(dest="command", required=True)
     build_parser = subparsers.add_parser("build")
     build_parser.add_argument("--output", required=True)

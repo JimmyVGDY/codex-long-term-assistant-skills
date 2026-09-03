@@ -6,6 +6,29 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 None.
 
+## 7.4.1 - 2026-09-03
+
+### Added
+
+- Added a closed Codex compatibility registry for 0.153.0 and the ten preceding stable releases, binding official npm artifacts, capability profiles, and layered evidence states.
+- Added a 22-cell Windows/Ubuntu release matrix, isolated `CODEX_HOME` Plugin preflight, and schema-3 CLI/registry/capability/payload host snapshots.
+
+### Changed
+
+- Expanded Plugin mode from only 0.153.0 to eleven pinned stable releases while keeping future, prerelease, and out-of-window versions fail-closed.
+- Reduced Marketplace ownership to managed fields while preserving unknown top-level data, nested `interface` data, `owner`, and other Plugin entries.
+- Registered Hook snake_case, camelCase, and compatibility aliases consistently. Security conflicts deny dispatch, observation conflicts remain unavailable, and Stop/SubagentStop return neutral JSON.
+
+### Fixed
+
+- `verify`, `status`, and `doctor` now detect CLI file, registry, profile, and capability drift instead of comparing version alone.
+- The Windows matrix can bind an explicit Codex executable so PATH resolution cannot select the global version accidentally.
+- Release builds and runtime-text audits exclude repository-external `project-context` evidence so temporary official CLIs cannot enter an archive.
+
+### Validation
+
+- All eleven official Windows CLIs passed CLI, isolated Plugin, and synthetic Hook cells under registry digest `1c204bd34cc355d5771376278c6251a5e133b7db09a7613b5c35d5c7bcdcbdd8`. GitHub Ubuntu, real-account, and public-release states remain separate evidence.
+
 ## 7.4.0 - 2026-09-03
 
 ### Added
