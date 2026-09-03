@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Offline replay for parent-finalized DelegationBudget calibration samples."""
+"""中文：对父级最终化的 DelegationBudget 校准样本执行离线回放。
+
+English: Offline replay for parent-finalized DelegationBudget calibration samples.
+"""
 from __future__ import annotations
 
 import argparse

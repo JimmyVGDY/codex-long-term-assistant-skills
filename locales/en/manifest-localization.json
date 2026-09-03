@@ -1,6 +1,6 @@
 {
-  "release_name": "Codex CLI 0.152.1 compatibility and transactional account tools",
-  "generated_for": "Codex Plugin-first cross-project engineering assistance compatible with Codex CLI 0.152.1, with transactional account tools, four general primary domains, deterministic lifecycle controls, and a Terra High automatic ceiling",
+  "release_name": "Unified delegation budgets, calibrated routing, and Codex CLI 0.153.0 compatibility",
+  "generated_for": "Codex Plugin-first cross-project engineering assistance for Codex CLI 0.153.0, with one weighted root-task budget across Reviewer, Explorer, and Worker, parent-finalized calibration, four general primary domains, deterministic lifecycle controls, and a Terra High automatic ceiling",
   "skills": {
     "backend-engineering": {"display_name": "General Backend Engineering", "description": "Use for server applications, APIs, business logic, access, application transactions, concurrency, jobs, Workers, resources, and backend reviews across Java, Python, Node.js, Go, .NET, Rust, and other stacks."},
     "ai-engineering": {"display_name": "General AI Engineering", "description": "Use for models and multimodal generation, structured output, prompt safety, RAG, agents, evaluation, routing, inference Workers, and generation recovery across languages and providers."},

@@ -1,6 +1,6 @@
-# V7.3 Current Self-Observation and Controlled Evolution Architecture
+# V7.4 Current Self-Observation and Controlled Evolution Architecture
 
-> Status: `active`. This page describes current V7.3.0 behavior. `5.1.0` in the Evolution component manifest and the default policy `v6.5-default-1` are internal contract versions.
+> Status: `active`. This page describes current V7.4.0 behavior. `5.1.0` in the Evolution component manifest and the default policy `v6.5-default-1` are internal contract versions.
 
 ## 1. Design Objective
 
@@ -86,7 +86,7 @@ The current runtime can aggregate these metrics deterministically:
 
 Fields without real data are not inferred. If the runtime cannot establish that a capability should have been invoked, it does not generate a deprecation proposal from `usageCount=0` alone.
 
-V7.3 evaluates evidence sufficiency per signal: model escalation depends on actual-model coverage, negative outcomes depend on known terminal outcomes, routing deviation depends on explicit routing observations, and Reviewer yield depends on stable identity and attribution coverage. Insufficient evidence for one signal blocks only that signal rather than unconditionally rejecting other well-supported candidates.
+V7.4 evaluates evidence sufficiency per signal: model escalation depends on actual-model coverage, negative outcomes depend on known terminal outcomes, routing deviation depends on explicit routing observations, and Reviewer yield depends on stable identity and attribution coverage. Insufficient evidence for one signal blocks only that signal rather than unconditionally rejecting other well-supported candidates.
 
 ## 5. Confidence Levels
 
@@ -180,7 +180,7 @@ The runtime stops immediately after detecting tampering or corruption and does n
 
 ## 10. Component contracts and package version
 
-The current V7.3.0 package continues to use these foundational execution contracts:
+The current V7.4.0 package continues to use these foundational execution contracts:
 
 ```text
 Project Profile / Project State

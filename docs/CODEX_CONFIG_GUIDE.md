@@ -1,6 +1,6 @@
-# V7.3 Codex 配置指南
+# V7.4 Codex 配置指南
 
-> 状态：`active`。本页只说明 V7.3 当前配置；安装、升级和恢复步骤以[安装与恢复](INSTALLATION_RECOVERY.md)为准。
+> 状态：`active`。本页只说明 V7.4 当前配置；安装、升级和恢复步骤以[安装与恢复](INSTALLATION_RECOVERY.md)为准。
 
 ## 1. 配置边界
 
@@ -75,7 +75,7 @@ model_reasoning_effort = "high"
 
 ## 6. Plugin 与 Hook
 
-V7.3 使用 Codex CLI 0.152.1 的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.3.0`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
+V7.4 使用 Codex CLI 0.153.0 的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.4.0`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
 
 Plugin 通过 `hooks/hooks.json` 提供六个 Hook。Windows 入口 `hooks\cp_hook.cmd` 会选择可用的 Python 启动器，不需要额外创建 `python3.exe` 垫片。SessionEnd 的宿主预算保持三秒，只执行有界签名入队，并在 Hook 预算外启动延迟封印。
 
@@ -96,7 +96,7 @@ gpt-5.6-terra / high
 
 1. `/model` 仍显示请求方选择的主模型；
 2. `codex plugin list --json` 读回目标 Plugin 的安装、启用和版本；
-3. 新任务能够发现十个 V7.3 Skill 和七个 Reviewer；
+3. 新任务能够发现十个 V7.4 Skill 和七个 Reviewer；
 4. 小型只读复审没有无理由启动大量 Reviewer；
 5. 复审结果分别记录请求模型、实际模型证据与隔离等级。
 

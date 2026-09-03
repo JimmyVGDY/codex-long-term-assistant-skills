@@ -1,4 +1,4 @@
-# Cross-Project Engineering Assistant Core Rules (V7)
+# Cross-Project Engineering Assistant Core Rules (V7.4)
 
 Global context retains only non-bypassable cross-project boundaries. Domain procedures load progressively from the matching Skill.
 
@@ -30,9 +30,12 @@ Skill activation does not expand file, Git, environment, production, or data aut
 - The main agent keeps the currently selected model and effort.
 - Automatic subagents use Luna or Terra profiles in this order: `luna-low -> luna-medium -> terra-medium -> terra-high`.
 - The automatic ceiling is `gpt-5.6-terra + high`. Sol, `xhigh`, `max`, and `ultra` are forbidden for automatic dispatch.
-- PreToolUse fails closed for explicit policy violations. SubagentStart records only evidence available from the host.
-- Codex 0.152.1 diagnostic observations do not verify the actual runtime model.
-- Reviewer defaults: parallel <=3, cumulative <=6, post-implementation rounds <=2. An unchanged packet must not trigger mechanical repeat review.
+- Reviewer, Explorer, and Worker share one root-task DelegationBudget. LIGHT/STANDARD/STRICT provide `4/16/32` weighted units, using fixed weights `1/2/4/8`.
+- For a controlled budgeted task, the primary agent must initialize the ledger and set both `CP_DELEGATION_BUDGET_PATH` and `CP_DELEGATION_BUDGET_REQUIRED=1` in the host launch environment. Without explicit activation, only the model ceiling is active and the budget gate must not be reported as passed.
+- PreToolUse atomically reserves only when the explicit dispatch permit, stable host dispatch ID, role, and profile agree. Exhaustion, unknown roles, invalid reasons, or ledger corruption fail closed.
+- Started subagents are never refunded. A reservation is released only with a host proof reference that the agent did not start. Nested agents charge the same root budget.
+- An omitted model charges the Task Envelope default as `policy-default`; ordinary Hook fields do not verify the runtime model. A trusted higher actual profile causes a top-up, and insufficient balance records a violation that blocks later dispatches.
+- Reviewer keeps rounds, findings, and review state but no longer owns the total budget. An unchanged packet must not trigger mechanical repeat review.
 
 ## 5. Change, validation, and review
 

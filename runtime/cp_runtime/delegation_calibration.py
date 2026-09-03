@@ -1,4 +1,6 @@
-"""Delegation role-value calibration and adjacent-tier offline replay.
+"""中文：委派角色收益校准与相邻档位离线回放。
+
+English: Delegation role-value calibration and adjacent-tier offline replay.
 
 Only the parent coordinator can finalize a sample. Child self-reports remain
 pending and never enter route recommendations. Replay emits proposals with
@@ -70,7 +72,10 @@ def _score(role: str, metrics: Mapping[str, int]) -> int:
 
 def build_pending_sample(ledger_path: Path, reservation_id: str,
                          metrics: Mapping[str, Any], *, source: str = "child-self-report") -> Dict[str, Any]:
-    """Build a bounded pending sample; this is never calibration-eligible."""
+    """中文：构建有界 pending 样本；该状态永远不能参与校准。
+
+    English: Build a bounded pending sample; this is never calibration-eligible.
+    """
     budget = read_budget(Path(ledger_path))
     reservation = budget["reservations"].get(str(reservation_id))
     if not reservation:
@@ -117,7 +122,10 @@ def build_pending_sample(ledger_path: Path, reservation_id: str,
 def finalize_sample(sample: Mapping[str, Any], *, finalized_by: str,
                     evidence_refs: Iterable[str], duration_ms: int = 0,
                     retry_count: int = 0) -> Dict[str, Any]:
-    """Parent-finalize a sample. A child report cannot finalize itself."""
+    """中文：由父协调者最终化样本；子 Agent 报告不能自行最终化。
+
+    English: Parent-finalize a sample. A child report cannot finalize itself.
+    """
     value = dict(sample)
     if value.get("schema_version") != SAMPLE_SCHEMA or value.get("calibration_finalized") is not False:
         raise DelegationBudgetError("只能 finalise 合法的 pending 校准样本")

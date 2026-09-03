@@ -1,4 +1,4 @@
-# 跨项目长期技术助手全局核心规则（V7）
+# 跨项目长期技术助手全局核心规则（V7.4）
 
 > 全局上下文只保留不可绕过的跨项目边界。领域流程、检查清单和受控演进细节由对应 Skill 渐进加载。
 
@@ -42,9 +42,12 @@ Skill 激活不扩大文件、Git、环境、生产或数据权限，也不自�
 - 主 Agent 采用当前选择的模型和强度，本包不强制覆盖。
 - 自动子 Agent 只使用 Luna / Terra 系列，推荐逐级：`luna-low -> luna-medium -> terra-medium -> terra-high`。
 - 自动硬上限：`gpt-5.6-terra + high`；禁止自动 Sol、`xhigh`、`max`、`ultra`。
-- PreToolUse Hook 对显式越界派发采用 fail-closed；SubagentStart 仍记录实际模型以发现宿主覆盖或配置漂移。
-- 未显式指定模型时允许宿主默认，但必须以实际运行证据为准；复杂度高、文件多或任务久都不是自动升级理由。
-- Reviewer 默认并行 <=3、累计 <=6、实施后 <=2 轮；相同 packet 无变化时不得机械重复。
+- Reviewer、Explorer、Worker 共用根任务 DelegationBudget；LIGHT/STANDARD/STRICT 分别为 `4/16/32` 加权单位，权重固定为 `1/2/4/8`。
+- 受控预算任务必须由主 Agent 先初始化账本，并在宿主启动环境同时设置 `CP_DELEGATION_BUDGET_PATH` 与 `CP_DELEGATION_BUDGET_REQUIRED=1`；未显式激活时只有模型上限生效，不得宣称预算门禁已通过。
+- PreToolUse 仅在显式 dispatch permit、稳定宿主派发 ID、角色和模型档位一致时原子预占；超额、未知角色、非法原因码或损坏账本失败关闭。
+- 子 Agent 启动后不退款；只有宿主提供“未启动”的 SHA-256 证据引用才释放预占。嵌套派发继续扣根预算。
+- 未显式指定模型时按 Task Envelope 默认档位计费并标记 `policy-default`；普通 Hook 字段不能证明实际模型。可信实际档位更高时补扣，余额不足则标记违规并阻断后续派发。
+- Reviewer 仍管理轮次、Finding 和复审状态，但不拥有总预算；相同 packet 无变化时不得机械重复。
 
 ## 5. 修改、验证与复审
 

@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.3.0",
-  "description": "跨项目长期技术助手 V7.3：提供 Reviewer 最低档位与 INLINE/DELEGATE 门禁、归因成本校准、Plugin 运行时绑定、独立复审与确定性交付边界。",
+  "version": "7.4.0",
+  "description": "跨项目长期技术助手 V7.4：提供 Reviewer、Explorer、Worker 根任务统一加权预算、显式派发许可、父级校准与 Codex 0.153.0 适配。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

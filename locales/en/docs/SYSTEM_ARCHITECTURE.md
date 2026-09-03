@@ -1,6 +1,6 @@
-# V7.3 Current System Architecture and Security Boundaries
+# V7.4 Current System Architecture and Security Boundaries
 
-> Status: `active`. This page describes the current V7.3.0 package architecture. Earlier design and release evidence is retained only for historical traceability.
+> Status: `active`. This page describes the current V7.4.0 package architecture. Earlier design and release evidence is retained only for historical traceability.
 
 ## 1. Layers
 
@@ -22,7 +22,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-The package version is V7.3.0. Names such as `TaskOutcomeEvent V2` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
+The package version is V7.4.0. Names such as `TaskOutcomeEvent V2` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
 
 ## 2. Skill routing
 
@@ -33,7 +33,7 @@ Choose one primary domain Skill per phase:
 - `ai-engineering`: model calls, RAG, agents, evaluation, inference, and multimodal generation;
 - `data-middleware-infrastructure`: databases, caches, messaging, search, storage, GPU resources, containers, and networks.
 
-Logging, quality delivery, independent review, technical documentation, long-running memory, and controlled evolution are supporting capabilities loaded by phase. See the [V7.3 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md) and [V7.3 Skill trigger matrix](SKILL_TRIGGER_MATRIX.md) for detailed boundaries.
+Logging, quality delivery, independent review, technical documentation, long-running memory, and controlled evolution are supporting capabilities loaded by phase. See the [V7.4 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md) and [V7.4 Skill trigger matrix](SKILL_TRIGGER_MATRIX.md) for detailed boundaries.
 
 ## 3. Project and data isolation
 
@@ -91,7 +91,7 @@ A proposal superseded by newer evidence may become `SUPERSEDED`. No state change
 
 ## 8. Current and historical documentation
 
-- Enter current guidance through the [documentation hub](README.md), where it is marked V7.3.
+- Enter current guidance through the [documentation hub](README.md), where it is marked V7.4.
 - Upgrade-source versions, migration mappings, and component-contract versions may appear in current guidance only when their purpose is explicit.
 - Earlier release notes, validation reports, and design documents remain available for traceability but do not establish current installation, runtime, or acceptance state.
 - Historical detail pages are excluded from default site search so outdated commands cannot be confused with current operating instructions.

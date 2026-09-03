@@ -33,7 +33,8 @@ PACKAGE = "codex-cross-project-engineering-assistant"
 VERSION = "7.4.0"
 MARKETPLACE = "cp-assistant-local"
 TARGET_CODEX_VERSION = "0.153.0"
-# V7.4.0 只承诺当前稳定宿主；“当前版 + 前十个稳定版”兼容窗口延后到 V7.4.1。
+# 中文：V7.4.0 只承诺当前稳定宿主；“当前版 + 前十个稳定版”兼容窗口延后到 V7.4.1。
+# English: V7.4.0 supports only the current stable host; current plus ten prior stable versions is deferred to V7.4.1.
 SUPPORTED_CODEX_VERSIONS = (TARGET_CODEX_VERSION,)
 REPAIRABLE_MARKETPLACE_STATE_VERSIONS = frozenset({
     "6.1.0", "6.2.0", "6.3.0", "7.2.0", "7.3.0", "7.4.0",

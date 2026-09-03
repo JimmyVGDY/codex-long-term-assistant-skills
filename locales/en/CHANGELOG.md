@@ -4,6 +4,20 @@
 
 None.
 
+## 7.4.0 - 2026-09-03
+
+### Added
+
+- Added one repository-external weighted DelegationBudget for Reviewer, Explorer, and Worker, with explicit permits, idempotent reservations, parent-finalized calibration, and proposal-only replay.
+
+### Changed
+
+- Updated Task Envelope, review-state, Plugin metadata, and the Codex CLI target to 0.153.0. The current-plus-ten stable compatibility window is deferred to V7.4.1.
+
+### Fixed
+
+- Budget exhaustion, unknown roles, permit mismatch, and corrupt ledgers fail closed. Missing lifecycle correlation and runtime-model proof remain explicitly unavailable.
+
 ## 7.3.0 - 2026-09-02
 
 ### Added

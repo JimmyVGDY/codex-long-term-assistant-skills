@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""DelegationBudget V1 command-line adapter."""
+"""中文：DelegationBudget V1 命令行适配器。
+
+English: DelegationBudget V1 command-line adapter.
+"""
 from __future__ import annotations
 
 import argparse

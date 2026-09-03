@@ -1,6 +1,6 @@
-# V7.3 Codex Configuration Guide
+# V7.4 Codex Configuration Guide
 
-> Status: `active`. This page covers current V7.3 configuration only. Follow [installation and recovery](INSTALLATION_RECOVERY.md) for installation, upgrade, and recovery procedures.
+> Status: `active`. This page covers current V7.4 configuration only. Follow [installation and recovery](INSTALLATION_RECOVERY.md) for installation, upgrade, and recovery procedures.
 
 ## 1. Configuration boundaries
 
@@ -75,7 +75,7 @@ A hard-coded model overrides bounded scheduling and `[agents]` defaults, breakin
 
 ## 6. Plugin and Hooks
 
-V7.3 uses the Plugin and Marketplace interfaces in Codex CLI 0.152.1. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.3.0`. Files present on disk do not establish installation or enablement.
+V7.4 uses the Plugin and Marketplace interfaces in Codex CLI 0.153.0. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.4.0`. Files present on disk do not establish installation or enablement.
 
 The Plugin supplies six Hooks through `hooks/hooks.json`. On Windows, `hooks\cp_hook.cmd` selects an available Python launcher without an extra `python3.exe` shim. SessionEnd keeps a three-second host budget, performs only bounded signed enqueue work, and launches delayed sealing outside the Hook budget.
 
@@ -96,7 +96,7 @@ After changing the configuration or Reviewer files, fully close and reopen the C
 
 1. `/model` still shows the user's selected main model.
 2. `codex plugin list --json` reads back the target Plugin's installation, enabled state, and version.
-3. A new task can discover ten V7.3 Skills and seven Reviewers.
+3. A new task can discover ten V7.4 Skills and seven Reviewers.
 4. A small read-only review does not start many Reviewers without justification.
 5. Review results keep requested model, actual-model evidence, and isolation level separate.
 

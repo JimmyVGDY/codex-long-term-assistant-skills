@@ -1,6 +1,6 @@
-# V7.3 Skill Automatic Trigger and Composition Matrix
+# V7.4 Skill Automatic Trigger and Composition Matrix
 
-> Status: `active`. This page describes current V7.3 routing only. Earlier source versions and migration mappings do not define current behavior.
+> Status: `active`. This page describes current V7.4 routing only. Earlier source versions and migration mappings do not define current behavior.
 
 ## 0. Minimum Sufficient Loading
 
@@ -182,7 +182,7 @@ Package validation proves the cases and tool are valid, not that local Codex act
 - High-risk, production, and strict read-only tasks require an entirely read-only parent or valid system-isolation evidence.
 - Self-review is not an independent Reviewer; logical read-only is not system isolation.
 
-## 8. V7.3 Four Primary Domains
+## 8. V7.4 Four Primary Domains
 
 | Scenario | Primary Skill | Optional support |
 |---|---|---|

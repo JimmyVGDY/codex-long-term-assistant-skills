@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.3.0",
-  "release_name": "Reviewer 最低档位、归因成本校准与 Plugin 运行时绑定",
-  "generated_for": "Codex Plugin-first cross-project engineering assistant with minimum acceptable Reviewer profiles, append-only INLINE/DELEGATE gates, finalized attribution and profile-weight cost calibration, state-bound Plugin runtime loading, four general primary domains, and a Luna/Terra model ceiling",
+  "version": "7.4.0",
+  "release_name": "Reviewer Explorer Worker 统一加权预算与 Codex 0.153.0 适配",
+  "generated_for": "Codex Plugin-first cross-project engineering assistant with one root-task weighted delegation budget for Reviewer, Explorer, and Worker roles, explicit dispatch permits, parent-finalized calibration, offline proposal-only replay, state-bound Plugin runtime loading, and a Luna/Terra High automatic ceiling",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -184,7 +184,7 @@
     "automatic_reviewer_reasoning_ceiling": "high",
     "review_packet_schema_version": 3,
     "review_result_schema_version": 3,
-    "review_state_schema_version": 5,
+    "review_state_schema_version": 6,
     "minimum_acceptable_reviewer_profile_required": true,
     "inline_delegation_decision_gate": true,
     "duplicate_review_dispatch_protection": true,
@@ -215,8 +215,10 @@
     "checkpoint_to_project_memory_requires_promotion": true,
     "project_memory_to_knowledge_requires_candidate_review": true,
     "finalization_readback_required_for_external_action_claims": true,
-    "task_execution_envelope_schema_version": 2,
-    "execution_state_schema_version": 3
+    "task_execution_envelope_schema_version": 3,
+    "execution_state_schema_version": 4,
+    "delegation_budget_schema_version": "1.0",
+    "delegation_calibration_schema_version": "1.0"
   },
   "log_analysis_modes": [
     "static-file-analysis",
@@ -417,6 +419,35 @@
         "terra-high": 8
       }
     },
+    "delegation_budget": {
+      "roles": [
+        "reviewer",
+        "explorer",
+        "worker"
+      ],
+      "reason_codes": [
+        "INDEPENDENT_EVIDENCE_GAIN",
+        "SEMANTIC_COMPLEXITY",
+        "EVIDENCE_CONFLICT",
+        "SECURITY_OR_CONCURRENCY_RISK",
+        "LOWER_TIER_INCONCLUSIVE",
+        "MISSING_EVIDENCE",
+        "INLINE_SUFFICIENT"
+      ],
+      "accounting_owner": "delegation-budget-v1",
+      "association_mode": "explicit-dispatch-permit",
+      "activation_mode": "task-scoped-explicit-ledger",
+      "required_mode_environment": "CP_DELEGATION_BUDGET_REQUIRED=1",
+      "unconfigured_hook_behavior": "model-ceiling-only; delegation-budget-not-active",
+      "start_refund_policy": "no-refund-after-start",
+      "runtime_unverified_policy": "requested-profile-cost-only",
+      "hard_profiles": {
+        "LIGHT": {"max_units": 4, "max_dispatches": 2, "max_parallel": 1, "max_depth": 1, "max_terra_high": 0},
+        "STANDARD": {"max_units": 16, "max_dispatches": 6, "max_parallel": 3, "max_depth": 2, "max_terra_high": 1},
+        "STRICT": {"max_units": 32, "max_dispatches": 10, "max_parallel": 3, "max_depth": 2, "max_terra_high": 1}
+      },
+      "proposal_execution_authorization": "NONE"
+    },
     "config_example": "config/agents.example.toml",
     "policy_scope": "skill-and-controller-workflow; not a platform-level allowlist"
   },
@@ -437,6 +468,8 @@
     "project_runtime_state": "project-state.json",
     "task_execution_state": "execution-state.json via execution_guard.py",
     "review_dispatch_state": "review-state.json via review_controller.py",
+    "delegation_budget": "repository-external DelegationBudget V1 JSONL via delegation-budget.py",
+    "delegation_calibration": "parent-finalized samples and offline proposals via delegation-calibration.py",
     "review_input_baseline": "review packet manifest via review_packet.py",
     "task_recovery_state": "CURRENT_TASK.md + PROGRESS.md via checkpoint.py",
     "project_memory": "project-memory.md after reviewed projection promotion",
@@ -480,6 +513,7 @@
     ]
   },
   "upgrade_from": [
+    "7.3.0",
     "7.2.0",
     "7.1.0",
     "7.0.0",
@@ -591,7 +625,7 @@
     "requested_model_policy_field": "requested_model_policy",
     "runtime_model_evidence_field": "runtime_model_evidence",
     "diagnostic_model_observation_field": "diagnostic_model_observation",
-    "runtime_model_evidence_codex_0_150_1": "UNAVAILABLE",
+    "runtime_model_evidence_codex_0_153_0": "UNAVAILABLE_WITHOUT_HOST_ATTESTATION",
     "event_integrity_seal": "detached-keyring-hmac",
     "session_end_seal_mode": "signed-deferred-worker",
     "event_archive_mode": "non-destructive-immutable-copy",
@@ -620,11 +654,11 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "tested_target": "0.152.1",
+    "tested_target": "0.153.0",
     "verified_versions": [
-      "0.150.1",
-      "0.152.1"
+      "0.153.0"
     ],
+    "forward_compatibility_window": "deferred-to-v7.4.1",
     "unknown_version_policy": "fail-closed-for-plugin-install",
     "capability_probe": [
       "plugin-marketplace-add",

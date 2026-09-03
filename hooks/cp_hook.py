@@ -155,7 +155,10 @@ def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
 
 
 def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
-    """只在宿主显式传播 reservation_id 时对账；0.153.0 缺失时保留 RESERVED。"""
+    """中文：只在宿主显式传播 reservation_id 时对账；0.153.0 缺失时保留 RESERVED。
+
+    English: Reconcile only when the host explicitly propagates reservation_id; keep RESERVED when Codex 0.153.0 omits it.
+    """
     ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
     if not ledger_text or hook_name not in {"SubagentStart", "SubagentStop"}:
         return
@@ -311,7 +314,8 @@ def main() -> int:
     try:
         _budget_lifecycle(data, hook_name)
     except (DelegationBudgetError, OSError, TimeoutError) as exc:
-        # 启停 Hook 无权回滚已发生的宿主动作；保留预占并输出无正文诊断。
+        # 中文：启停 Hook 无权回滚已发生的宿主动作；保留预占并输出无正文诊断。
+        # English: Lifecycle hooks cannot roll back a host action that already occurred; retain the reservation and emit a body-free diagnostic.
         diagnostic = {"schema_version": "1.0", "component": "delegation-budget",
                       "status": "RECONCILIATION_FAILED", "hook": hook_name,
                       "error_ref": "sha256:" + hashlib.sha256(str(exc).encode("utf-8")).hexdigest()}

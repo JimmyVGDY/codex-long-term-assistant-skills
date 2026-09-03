@@ -18,10 +18,10 @@
   <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/github/license/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
-  <img alt="Codex CLI 0.152.1" src="https://img.shields.io/badge/Codex%20CLI-0.152.1-111827">
+  <img alt="Codex CLI 0.153.0" src="https://img.shields.io/badge/Codex%20CLI-0.153.0-111827">
 </p>
 
-V7.3.0 adds minimum acceptable model profiles and an append-only `INLINE/DELEGATE` gate to Reviewer dispatch, introduces finalizable attribution, finding disposition, and `profile-weight-v1` cost calibration, and fixes Plugin mode selecting a stale standalone runtime first. The four general primary domains, main-Agent model boundary, and Terra High automatic ceiling remain unchanged.
+V7.4.0 places Reviewer, Explorer, and Worker under one root-task weighted budget. A controlled task sets both `CP_DELEGATION_BUDGET_PATH` and `CP_DELEGATION_BUDGET_REQUIRED=1`; without explicit activation, only the model ceiling runs and no budget-gate PASS is claimed. PreToolUse atomically reserves against an explicit permit, nested calls charge the same root, started agents are never refunded, the parent finalizes role value, and Evolution emits only proposals with `execution_authorization=NONE`. It also adapts the local Marketplace manifest for Codex CLI 0.153.0.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Usage example](#reproducible-usage-example) · [Compatibility](#compatibility-matrix) · [Installation](#five-minute-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -29,8 +29,8 @@ V7.3.0 adds minimum acceptable model profiles and an append-only `INLINE/DELEGAT
 
 | Distribution | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V7.3.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.3.0/Codex-Skills-V7.3.0-zh-CN.zip) |
-| `Codex-Skills-V7.3.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.3.0/Codex-Skills-V7.3.0-en.zip) |
+| `Codex-Skills-V7.4.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.4.0/Codex-Skills-V7.4.0-zh-CN.zip) |
+| `Codex-Skills-V7.4.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.4.0/Codex-Skills-V7.4.0-en.zip) |
 
 [Open the latest Release, checksums, and build witnesses](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -95,13 +95,15 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Native Windows Codex CLI 0.152.1 + Plugin | Primary target | Complete 7.2.0 to 7.3.0 installation, Plugin state, account tools, and payload readback | The public ZIP should still be installed and read back independently in the target account |
+| Native Windows Codex CLI 0.153.0 + Plugin | Primary target | Complete 7.3.0 to 7.4.0 installation, Plugin state, account tools, and payload readback | The public ZIP should still be installed and read back independently in the target account |
 | Windows `windows-latest` + Python 3.11 / 3.13 | CI | Bilingual audit, complete-package validation, and release build | CI does not replace acceptance in a real Codex account |
 | Ubuntu `ubuntu-latest` + Python 3.11 / 3.13 | CI package compatibility | Bilingual audit and complete-package validation | This is not Linux host acceptance for Plugin, Marketplace, or Hooks |
-| standalone mode | Compatibility mode | Installation structure and regression coverage | Not the primary V7.3.0 release-acceptance path |
+| standalone mode | Compatibility mode | Installation structure and regression coverage | Not the primary V7.4.0 release-acceptance path |
 | macOS | Unverified | No current CI or host-acceptance evidence | Status remains `UNVERIFIED` |
 
 The minimum Python version is 3.11; public CI validates both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
+
+V7.4.0 declares host compatibility only with Codex CLI 0.153.0. The current stable plus ten preceding stable versions window is deferred to V7.4.1.
 
 ## Five-minute upgrade
 
@@ -116,9 +118,9 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. The upgrade is established only when the Plugin readback reports `installed=true`, `enabled=true`, and `version=7.3.0`, and every legacy Skill directory declared by the Manifest is absent.
+3. The upgrade is established only when the Plugin readback reports `installed=true`, `enabled=true`, and `version=7.4.0`, and every legacy Skill directory declared by the Manifest is absent.
 
-The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, preserves unknown files, and removes only Manifest-declared legacy Skill directories: the three V7 domain replacements plus the previously deprecated Vue Skill. See [Installation and recovery](docs/INSTALLATION_RECOVERY.en.md) and the [User guide](docs/USER_GUIDE_V7.3.en.md).
+The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, preserves unknown files, and removes only Manifest-declared legacy Skill directories: the three V7 domain replacements plus the previously deprecated Vue Skill. See [Installation and recovery](docs/INSTALLATION_RECOVERY.en.md) and the [User guide](docs/USER_GUIDE_V7.4.en.md).
 
 ## Model evidence boundary
 
@@ -128,7 +130,7 @@ runtime_model_evidence = UNAVAILABLE
 diagnostic_model_observation = host diagnostic only
 ```
 
-Codex 0.152.1 does not provide Hooks with a trusted, correlatable runtime model attestation. A requested Luna or Terra profile is not proof of the model that actually ran. The automatic cost ladder is:
+Codex 0.153.0 does not provide Hooks with a trusted, correlatable runtime model attestation. A requested Luna or Terra profile is not proof of the model that actually ran. The automatic cost ladder is:
 
 ```text
 luna-low -> luna-medium -> terra-medium -> terra-high
@@ -142,7 +144,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V7.3.0 release notes](docs/releases/v7.3.0/RELEASE_NOTES.en.md)
+- [Changelog](CHANGELOG.en.md) · [V7.4.0 release notes](docs/releases/v7.4.0/RELEASE_NOTES.en.md)
 
 ## Local validation
 
@@ -158,7 +160,7 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. Tag runs create drafts only; they never publish automatically or overwrite an existing Release.
 
 ```shell
-gh attestation verify Codex-Skills-V7.3.0-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.4.0-en.zip --repo OWNER/REPOSITORY
 ```
 
 See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.en.md) for the complete gates and new-version procedure.

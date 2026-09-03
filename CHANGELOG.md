@@ -6,6 +6,30 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 暂无。
 
+## 7.4.0 - 2026-09-03
+
+### Added
+
+- 新增仓库外 DelegationBudget V1 追加式哈希账本，统一管理 Reviewer、Explorer、Worker 的根任务加权单位、派发数、并行数、嵌套深度、角色上限和 Terra High 上限。
+- 新增七个受控路由原因、显式 dispatch permit、幂等 reservation、可信实际档位补扣、宿主未启动证明释放和任务预算关闭合同。
+- 新增三角色场景化收益样本与相邻档位离线回放；只有主协调 Agent 可最终化，所有优化建议保持 `execution_authorization=NONE`。
+
+### Changed
+
+- Task Envelope 升级到 schema 3、execution-state 升级到 schema 4；V7.3 字段自动映射到统一预算对象。
+- review-state 升级到 schema 6；Reviewer 控制器只维护复审轮次、Finding 和统一预算引用，不再拥有总成本。
+- Plugin 与本地 Marketplace 目标切换到 Codex CLI 0.153.0；安装清单生成必需的 `interface.displayName`。当前版加前十个稳定版的兼容窗口延后到 V7.4.1。
+
+### Fixed
+
+- PreToolUse 在账本启用时对缺少稳定派发 ID、未知角色、permit 不匹配、预算耗尽和损坏链失败关闭；重复 Hook 不重复扣费。
+- SubagentStart/Stop 缺少 reservation 关联时不再按时间或顺序猜测；状态保持未关联，普通 Hook 模型字段不会冒充可信实际模型证据。
+- 启动后的完成、失败或取消均不退款；只有宿主明确证明未启动时才释放预占。
+
+### Validation
+
+- 新增统一预算、并发竞态、嵌套根预算、Hook permit、Reviewer 单一计费、隐私、哈希篡改、父级校准和不足样本不调整回归。完整包、账户级 0.153.0 安装、独立复审与公开产物证据在发行报告中分别记录。
+
 ## 7.3.0 - 2026-09-02
 
 ### Added

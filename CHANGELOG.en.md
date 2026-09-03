@@ -6,6 +6,30 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 None.
 
+## 7.4.0 - 2026-09-03
+
+### Added
+
+- Added repository-external DelegationBudget V1, one append-only hashed root-task budget for Reviewer, Explorer, and Worker.
+- Added controlled route reasons, explicit dispatch permits, idempotent reservations, trusted actual-profile top-ups, host-proven not-started release, and budget closure.
+- Added role-specific scenario calibration and adjacent-tier offline replay. Only the parent coordinator can finalize samples, and proposals retain `execution_authorization=NONE`.
+
+### Changed
+
+- Upgraded Task Envelope to schema 3, execution state to schema 4, and review state to schema 6 while keeping V7.3 state readable.
+- The Reviewer controller now owns rounds and findings only; DelegationBudget exclusively owns total charging.
+- Updated the Plugin target to Codex CLI 0.153.0 and generate its required Marketplace `interface.displayName`. The ten-preceding-stable compatibility window is deferred to V7.4.1.
+
+### Fixed
+
+- PreToolUse fails closed on missing stable dispatch identity, unknown roles, permit mismatch, exhaustion, or chain corruption, while Hook replay remains idempotent.
+- Start/Stop without a reservation correlation remains unavailable instead of being guessed; ordinary Hook model fields are never reported as trusted runtime evidence.
+- Started agents are never refunded. Only explicit host proof of not starting releases a reservation.
+
+### Validation
+
+- Added regressions for unified accounting, concurrency, nesting, Hook permits, single-owner Reviewer charging, privacy, tamper detection, parent finalization, and insufficient-data no-change behavior. Full package, real 0.153.0 installation, independent review, and public artifact evidence are reported separately.
+
 ## 7.3.0 - 2026-09-02
 
 ### Added

@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.3.0",
+  "version": "7.4.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 180,
-  "payload_digest": "4f0168e4014440185a958f207931d01e73e4ca73207ee318ed0fcbee2a85a6d0",
+  "file_count": 182,
+  "payload_digest": "60f5dbb6fd81f58367353628bf6d26f87de49137f0ec28227f9af0c41f355496",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "c36551c03c42c535b6ab5d74b4f3b3092cd5cd63a6be8198b331b46566c9429d",
-      "size": 336
+      "sha256": "57d6bdd925316a9783029f24f6b0d92a6ad7f5302a515e59f0bd87f7bfd5de92",
+      "size": 320
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -148,8 +148,8 @@
     },
     {
       "path": "skills/controlled-evolution-governance/SKILL.md",
-      "sha256": "cac1377a0c802536fe74cfc8dbe34df52830cd8ed577fbc5983b9a5cf6d442da",
-      "size": 2207
+      "sha256": "ffb9b6bcac91db3bd18af1e5d0dff1c5dc3e26c28568cc76115460f0fb914c98",
+      "size": 2530
     },
     {
       "path": "skills/controlled-evolution-governance/agents/openai.yaml",
@@ -213,8 +213,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml",
-      "sha256": "9f8472e2887f2841d9728130b701c0ae5a3d59fc7f5277507e95a076da4c7c6d",
-      "size": 1631
+      "sha256": "008fa5b91bdfd634bfa867ed4e9f77ced3c1c52730d85a5fec7a6dc443a6d711",
+      "size": 1983
     },
     {
       "path": "skills/engineering-quality-delivery/references/engineering-quality-delivery-workflow.md",
@@ -268,13 +268,13 @@
     },
     {
       "path": "skills/engineering-quality-delivery/scripts/execution_guard.py",
-      "sha256": "57b6806b5d1385ed84d9a884f00ea6aca4af0b598ce45ef769cb40822eba564e",
-      "size": 22694
+      "sha256": "daef535dbfc118d87c1709ff9fab699a72e650abb2d1b17e23c5e25f0ef1796c",
+      "size": 25695
     },
     {
       "path": "skills/engineering-quality-delivery/tests/test_execution_guard.py",
-      "sha256": "72e7f2df6c2b17fb787cf079ed1b74d537f2c06372819d95fe2afa9faf1bfb1e",
-      "size": 2139
+      "sha256": "0470162bd5f158ae07cae28e60ac91cadafe51e79c39b83cca7aa6c8b540da84",
+      "size": 2423
     },
     {
       "path": "skills/engineering-quality-delivery/tests/test_execution_guard_v5.py",
@@ -543,8 +543,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/SKILL.md",
-      "sha256": "2f355521d86a6609bdd0c534d15c66ecd41b0414888cd4c73b785ac611e18d3a",
-      "size": 2809
+      "sha256": "613e8b4a5f4a0c48f0f5c9bf2d0beccac08992d93f5dd188a6091b7ea9c0f4a8",
+      "size": 2978
     },
     {
       "path": "skills/multi-agent-independent-review/agents/openai.yaml",
@@ -628,8 +628,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_controller.py",
-      "sha256": "53e5aa9462b6f2ce2f363a830a4735427231c776db07a46edd1c0bef444bb080",
-      "size": 78738
+      "sha256": "2b0eb9680f8fa4e56e11cc08c7125b649ecbc777fb17a6f47392cf863df94bfc",
+      "size": 83425
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
@@ -638,8 +638,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/tests/test_review_tools.py",
-      "sha256": "3517ecdf52f373c1a367e58ae3bb7cfd48e299c2b275756482f4a6452032c78e",
-      "size": 10421
+      "sha256": "287bd007eca3f5b603272fa208059fb76a7c9c2b635d83f9e3c21eabcbbc9985",
+      "size": 10446
     },
     {
       "path": "skills/technical-document-writing/SKILL.md",
@@ -748,8 +748,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "85d4bfa80201fb99174a0145600046dbc762a07ffcdda345fb998ede5e699b74",
-      "size": 16061
+      "sha256": "f5b713eed0a9b7f55d529626a98a0a9aee3e50b02d015c67046e427ddd218b6f",
+      "size": 21128
     },
     {
       "path": "hooks/hooks.json",
@@ -788,8 +788,18 @@
     },
     {
       "path": "runtime/cp_runtime/contracts.py",
-      "sha256": "d4d882c5310edffda58df26faa9788c769957790ae9994c9e131f14f74494672",
-      "size": 1972
+      "sha256": "86829fb07087b03ad3f8ceb52b43eba2ab1ff45e82660b684812a36dab3d3bc2",
+      "size": 2478
+    },
+    {
+      "path": "runtime/cp_runtime/delegation_budget.py",
+      "sha256": "0f5f44f1070458de19a13d2b17ee9bff61246a6d067f26141d2abf8c21ebb60a",
+      "size": 40202
+    },
+    {
+      "path": "runtime/cp_runtime/delegation_calibration.py",
+      "sha256": "ebc4b099a7e842e783574cdc4d7d710a203fa871ee91b07f0031024b652d00e8",
+      "size": 16630
     },
     {
       "path": "runtime/cp_runtime/event_archive.py",

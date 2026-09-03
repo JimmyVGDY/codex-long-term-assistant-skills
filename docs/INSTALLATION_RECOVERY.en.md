@@ -1,13 +1,13 @@
-# V7.3 Installation, Validation, and Recovery
+# V7.4 Installation, Validation, and Recovery
 
 Chinese: [`INSTALLATION_RECOVERY.md`](INSTALLATION_RECOVERY.md)
 
 ## Preconditions
 
-- Native Windows Codex CLI 0.152.1.
+- Native Windows Codex CLI 0.153.0.
 - Python 3.11 or later.
 - Extract the archive before running commands.
-- Supported managed upgrades: 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
+- Supported managed upgrades: 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
 - A native Windows process uses a native Windows `CODEX_HOME`; WSL-style drive mappings are normalized before use.
 - Unknown Skills, agents, Hooks, MCP configuration, Plugin files, and `config.toml` content remain outside managed deletion scope.
 
@@ -24,14 +24,14 @@ codex plugin list --json
 
 Dry-run acceptance requires prior-version detection, a bounded backup, contained destinations, rejected link and reparse ancestors, preserved unknown files, and a complete rollback plan.
 
-Codex 0.152.1 rejects the top-level `owner/interface` fields written by older local Marketplace installers. After backup, the upgrader removes those two known managed fields while preserving other unknown external fields, and proceeds only after `codex plugin list --json` recovers.
+Codex 0.153.0 requires top-level `interface.displayName` in a local Marketplace manifest. After backup, the upgrader removes the legacy `owner`, writes a controlled `interface.displayName`, preserves other unknown external fields, and proceeds only after `codex plugin list --json` recovers.
 
 Plugin acceptance requires:
 
 ```ini
 installed = true
 enabled = true
-version = 7.3.0
+version = 7.4.0
 ```
 
 ## Recovery boundary

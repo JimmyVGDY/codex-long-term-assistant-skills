@@ -73,7 +73,10 @@ CONTEXT_SIZES = {"SMALL", "MEDIUM", "LARGE", "UNKNOWN"}
 
 
 class DelegationBudgetError(ValueError):
-    """预算契约、完整性或容量错误。"""
+    """中文：预算契约、完整性或容量错误。
+
+    English: Budget contract, integrity, or capacity error.
+    """
 
 
 def utc_now() -> str:
