@@ -10,6 +10,8 @@ def run(*a,cwd=None,ok=True):
 with tempfile.TemporaryDirectory() as td:
  repo=Path(td)/'repo';state=Path(td)/'state';repo.mkdir();subprocess.run(['git','init','-q'],cwd=repo,check=True);subprocess.run(['git','config','user.email','a@b.c'],cwd=repo,check=True);subprocess.run(['git','config','user.name','t'],cwd=repo,check=True);(repo/'a.txt').write_text('a\n');subprocess.run(['git','add','.'],cwd=repo,check=True);subprocess.run(['git','commit','-qm','init'],cwd=repo,check=True)
  run('init','--state-dir',str(state),'--task-id','T1','--profile','STANDARD','--repo-path',str(repo))
+ data=json.loads((state/'execution-state.json').read_text());assert data['schema_version']==4
+ budget=data['routing']['delegation_budget'];assert budget['budget_class']=='STANDARD';assert budget['limits']['max_units']==16;assert budget['association_mode']=='explicit-dispatch-permit'
  run('transition','--state-dir',str(state),'--to','PLAN');run('transition','--state-dir',str(state),'--to','IMPLEMENT');(repo/'a.txt').write_text('b\n');run('transition','--state-dir',str(state),'--to','VALIDATE')
  run('record-validation','--state-dir',str(state),'--name','unit','--status','valid','--command-or-packet','test')
  run('gate','--state-dir',str(state),'--name','targeted_validation');run('gate','--state-dir',str(state),'--name','git_diff_review')

@@ -28,12 +28,18 @@ from cp_runtime.finalization import build_finalization_report  # noqa: E402
 from cp_runtime.project import validate_binding  # noqa: E402
 
 STATE = "execution-state.json"
-SCHEMA = 3
+SCHEMA = 4
 PROFILES = {"LIGHT", "STANDARD", "STRICT"}
 COMPLEXITIES = {"L0", "L1", "L2", "L3", "L4"}
 PROJECT_STAGES = {"UNPROFILED", "ONBOARDING", "ACTIVE", "PAUSED", "ARCHIVED"}
 REVIEWER_BUDGETS = {"economy", "balanced", "deep"}
 MODEL_PROFILES = {"luna-low", "luna-medium", "terra-medium", "terra-high"}
+DELEGATION_BUDGET_CLASSES = {"LIGHT", "STANDARD", "STRICT"}
+DELEGATION_BUDGET_LIMITS = {
+    "LIGHT": {"max_units": 4, "max_dispatches": 2, "max_parallel": 1, "max_depth": 1, "max_terra_high": 0},
+    "STANDARD": {"max_units": 16, "max_dispatches": 6, "max_parallel": 3, "max_depth": 2, "max_terra_high": 1},
+    "STRICT": {"max_units": 32, "max_dispatches": 10, "max_parallel": 3, "max_depth": 2, "max_terra_high": 1},
+}
 HOST_SURFACES = {"main-session", "subagent", "direct-workspace", "worktree", "mcp", "long-running-task"}
 ENVIRONMENTS = {"local", "nonproduction", "production"}
 PHASES = {
@@ -123,6 +129,21 @@ def migrate_state(state: Dict[str, Any]) -> Dict[str, Any]:
         state.setdefault("environment", "local")
         state.setdefault("authorized_actions", {})
         state.setdefault("actions", {})
+    if version < 4:
+        routing = state.setdefault("routing", {})
+        execution_profile = str(routing.get("execution_profile") or state.get("profile") or "STANDARD")
+        if execution_profile not in DELEGATION_BUDGET_CLASSES:
+            execution_profile = "STANDARD"
+        routing.setdefault("legacy_reviewer_budget", routing.get("reviewer_budget", "balanced"))
+        routing.setdefault("delegation_budget", {
+            "schema_version": 1,
+            "budget_class": execution_profile,
+            "default_model_profile": routing.get("model_profile", "terra-medium"),
+            "limits": dict(DELEGATION_BUDGET_LIMITS[execution_profile]),
+            "ledger_path": "",
+            "association_mode": "explicit-dispatch-permit",
+        })
+        state["schema_version"] = 4
         state.setdefault("history", []).append({
             "at": utc_now(), "event": "migrate", "from": version, "to": SCHEMA,
         })
@@ -212,6 +233,15 @@ def command_init(args: argparse.Namespace) -> None:
             "reviewer_budget": args.reviewer_budget,
             "model_profile": args.model_profile,
             "host_surface": args.host_surface,
+            "legacy_reviewer_budget": args.reviewer_budget,
+            "delegation_budget": {
+                "schema_version": 1,
+                "budget_class": args.delegation_budget,
+                "default_model_profile": args.default_model_profile,
+                "limits": dict(DELEGATION_BUDGET_LIMITS[args.delegation_budget]),
+                "ledger_path": args.delegation_ledger,
+                "association_mode": "explicit-dispatch-permit",
+            },
         },
         "authorization": {},
         "authorized_actions": {},
@@ -276,6 +306,17 @@ def command_set_envelope(args: argparse.Namespace) -> None:
     for key, value in routing_updates.items():
         if value:
             state["routing"][key] = value
+    if args.delegation_budget or args.default_model_profile or args.delegation_ledger is not None:
+        current = state["routing"].setdefault("delegation_budget", {})
+        budget_class = args.delegation_budget or current.get("budget_class") or state.get("profile", "STANDARD")
+        current.update({
+            "schema_version": 1,
+            "budget_class": budget_class,
+            "default_model_profile": args.default_model_profile or current.get("default_model_profile") or state["routing"].get("model_profile", "terra-medium"),
+            "limits": dict(DELEGATION_BUDGET_LIMITS[budget_class]),
+            "ledger_path": args.delegation_ledger if args.delegation_ledger is not None else current.get("ledger_path", ""),
+            "association_mode": "explicit-dispatch-permit",
+        })
     if args.environment:
         state["environment"] = args.environment
     save_state(directory, state)
@@ -467,6 +508,9 @@ def main() -> None:
     init.add_argument("--project-stage", choices=sorted(PROJECT_STAGES), default="UNPROFILED")
     init.add_argument("--reviewer-budget", choices=sorted(REVIEWER_BUDGETS), default="balanced")
     init.add_argument("--model-profile", choices=sorted(MODEL_PROFILES), default="terra-medium")
+    init.add_argument("--delegation-budget", choices=sorted(DELEGATION_BUDGET_CLASSES), default="STANDARD")
+    init.add_argument("--default-model-profile", choices=sorted(MODEL_PROFILES), default="terra-medium")
+    init.add_argument("--delegation-ledger", default="")
     init.add_argument("--host-surface", choices=sorted(HOST_SURFACES), default="direct-workspace")
     init.add_argument("--environment", choices=sorted(ENVIRONMENTS), default="local")
     init.add_argument("--force", action="store_true")
@@ -489,6 +533,9 @@ def main() -> None:
     envelope.add_argument("--project-stage", choices=sorted(PROJECT_STAGES))
     envelope.add_argument("--reviewer-budget", choices=sorted(REVIEWER_BUDGETS))
     envelope.add_argument("--model-profile", choices=sorted(MODEL_PROFILES))
+    envelope.add_argument("--delegation-budget", choices=sorted(DELEGATION_BUDGET_CLASSES))
+    envelope.add_argument("--default-model-profile", choices=sorted(MODEL_PROFILES))
+    envelope.add_argument("--delegation-ledger")
     envelope.add_argument("--host-surface", choices=sorted(HOST_SURFACES))
     envelope.add_argument("--environment", choices=sorted(ENVIRONMENTS))
     envelope.set_defaults(func=command_set_envelope)

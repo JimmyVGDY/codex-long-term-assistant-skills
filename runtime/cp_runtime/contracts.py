@@ -38,6 +38,22 @@ class ReviewerBudget(str, Enum):
     DEEP = "deep"
 
 
+class DelegationRole(str, Enum):
+    REVIEWER = "reviewer"
+    EXPLORER = "explorer"
+    WORKER = "worker"
+
+
+class DelegationReason(str, Enum):
+    INDEPENDENT_EVIDENCE_GAIN = "INDEPENDENT_EVIDENCE_GAIN"
+    SEMANTIC_COMPLEXITY = "SEMANTIC_COMPLEXITY"
+    EVIDENCE_CONFLICT = "EVIDENCE_CONFLICT"
+    SECURITY_OR_CONCURRENCY_RISK = "SECURITY_OR_CONCURRENCY_RISK"
+    LOWER_TIER_INCONCLUSIVE = "LOWER_TIER_INCONCLUSIVE"
+    MISSING_EVIDENCE = "MISSING_EVIDENCE"
+    INLINE_SUFFICIENT = "INLINE_SUFFICIENT"
+
+
 class ModelProfile(str, Enum):
     LUNA_LOW = "luna-low"
     LUNA_MEDIUM = "luna-medium"

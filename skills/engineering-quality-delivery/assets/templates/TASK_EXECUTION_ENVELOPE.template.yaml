@@ -1,4 +1,4 @@
-schema_version: 2
+schema_version: 3
 task_id: TASK-YYYYMMDD-001
 title: ""
 project:
@@ -15,6 +15,13 @@ routing:
   execution_profile: STANDARD  # LIGHT | STANDARD | STRICT
   reviewer_budget: balanced  # economy | balanced | deep
   model_profile: terra-medium  # luna-low | luna-medium | terra-medium | terra-high
+  delegation_budget:
+    schema_version: 1
+    budget_class: STANDARD  # LIGHT | STANDARD | STRICT
+    default_model_profile: terra-medium
+    limits: {max_units: 16, max_dispatches: 6, max_parallel: 3, max_depth: 2, max_terra_high: 1}
+    ledger_path: ""  # repository-external DelegationBudget V1 JSONL
+    association_mode: explicit-dispatch-permit
   host_surface: direct-workspace  # main-session | subagent | direct-workspace | worktree | mcp | long-running-task
 execution:
   mode: local-modification
