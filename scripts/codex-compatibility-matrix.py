@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Replay one official Codex stable-release compatibility cell in isolation."""
+"""中文：隔离重放一个官方 Codex 稳定版兼容单元。
+
+English: Replay one official Codex stable-release compatibility cell in isolation.
+"""
 from __future__ import annotations
 
 import argparse

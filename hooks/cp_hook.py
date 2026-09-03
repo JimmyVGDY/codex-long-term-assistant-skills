@@ -118,7 +118,10 @@ class AliasConflictError(ValueError):
 
 
 def _lookup(data: Mapping[str, Any], *names: str) -> Any:
-    """Observation lookup: a conflicting alias pair becomes unavailable."""
+    """中文：观察字段遇到互相冲突的别名时返回不可用。
+
+    English: Observation lookup returns unavailable for conflicting aliases.
+    """
     values = [data.get(name) for name in names if name in data and data.get(name) is not None]
     if not values:
         return None
@@ -129,7 +132,10 @@ def _lookup(data: Mapping[str, Any], *names: str) -> Any:
 
 
 def _lookup_strict(data: Mapping[str, Any], *names: str) -> Any:
-    """Security lookup: conflicting aliases fail closed."""
+    """中文：安全字段遇到互相冲突的别名时失败关闭。
+
+    English: Security lookup fails closed for conflicting aliases.
+    """
     values = [data.get(name) for name in names if name in data and data.get(name) is not None]
     if not values:
         return None

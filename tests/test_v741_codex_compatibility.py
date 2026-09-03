@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""V7.4.1 stable-release compatibility registry contract tests."""
+"""中文：V7.4.1 稳定版兼容注册表契约测试。
+
+English: V7.4.1 stable-release compatibility registry contract tests.
+"""
 from __future__ import annotations
 
 import ast

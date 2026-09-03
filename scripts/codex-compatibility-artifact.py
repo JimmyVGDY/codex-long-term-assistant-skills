@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Download one frozen official Codex tarball and verify both registered digests."""
+"""中文：下载固定的官方 Codex 包并校验两种登记摘要。
+
+English: Download one frozen official Codex tarball and verify both registered digests.
+"""
 from __future__ import annotations
 
 import argparse

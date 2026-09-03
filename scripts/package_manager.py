@@ -746,7 +746,10 @@ def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> D
 
 
 def migrate_state_to_v3(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
-    """Read legacy state conservatively; it cannot claim host compatibility."""
+    """中文：保守读取旧状态，禁止其声明宿主兼容。
+
+    English: Read legacy state conservatively; it cannot claim host compatibility.
+    """
     if not value:
         return {}
     schema = value.get("schema_version")
@@ -770,7 +773,10 @@ def migrate_state_to_v3(value: Mapping[str, Any], scope: str, mode: str) -> Dict
 
 
 def _merged_marketplace_manifest(existing: Any, marketplace_profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
-    """Merge only fields owned by this package and preserve unknown metadata."""
+    """中文：只合并本包拥有的字段并保留未知元数据。
+
+    English: Merge only fields owned by this package and preserve unknown metadata.
+    """
     if existing is not None and not isinstance(existing, dict):
         raise InstallError("Marketplace manifest 顶层必须是 JSON object")
     data = dict(existing or {})
@@ -793,7 +799,8 @@ def _merged_marketplace_manifest(existing: Any, marketplace_profile: Optional[Ma
     merged_interface = dict(interface or {})
     merged_interface["displayName"] = str(profile["display_name"])
     data["interface"] = merged_interface
-    # owner 不是本包受管字段；即使旧值未知也必须保留。
+    # 中文：owner 不是本包受管字段；即使旧值未知也必须保留。
+    # English: owner is not managed by this package and must be preserved even when unknown.
     data["plugins"] = plugins
     return data
 
@@ -823,7 +830,10 @@ def _codex_executable() -> str:
 
 
 def _codex_available() -> bool:
-    """Return whether a configured or PATH-discovered Codex executable is available."""
+    """中文：返回已配置或通过 PATH 发现的 Codex 是否可用。
+
+    English: Return whether a configured or PATH-discovered Codex executable is available.
+    """
     configured = os.environ.get("CP_ASSISTANT_CODEX_EXECUTABLE", "").strip()
     if configured:
         try:
@@ -1063,7 +1073,10 @@ def _valid_sha256(value: Any) -> bool:
 
 
 def _validate_host_binding(binding: Any) -> bool:
-    """Validate a stored host binding independently of its outer digest."""
+    """中文：独立于外层摘要验证已保存的宿主绑定。
+
+    English: Validate a stored host binding independently of its outer digest.
+    """
     if not isinstance(binding, dict) or set(binding) != _HOST_BINDING_KEYS:
         return False
     version = binding.get("codex_version")
@@ -1169,7 +1182,10 @@ def _host_compatibility_status(state: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 def _isolated_plugin_preflight(profile: Mapping[str, Any]) -> Dict[str, Any]:
-    """Exercise add/list/remove against an isolated CODEX_HOME before account writes."""
+    """中文：账户写入前在隔离 CODEX_HOME 中验证添加、列出与移除。
+
+    English: Exercise add/list/remove against an isolated CODEX_HOME before account writes.
+    """
     version_profile = profile_for_version(COMPATIBILITY_REGISTRY, str(profile["codex_version"]))
     marketplace_profile = COMPATIBILITY_REGISTRY["profiles"]["marketplace"][
         version_profile["marketplace_profile"]

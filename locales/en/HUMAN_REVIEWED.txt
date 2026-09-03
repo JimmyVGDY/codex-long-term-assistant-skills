@@ -14,6 +14,9 @@ docs/history/RELEASE_ARCHIVES.md
 docs/history/RELEASE_ARCHIVES.en.md
 docs/releases/RELEASE_AUTOMATION.md
 docs/releases/README.md
+docs/V7_4_1_CODEX_COMPATIBILITY_DESIGN.en.md
+docs/V7_4_1_CODEX_COMPATIBILITY_DESIGN.md
+.github/workflows/codex-compatibility.yml
 docs/releases/v6.0.0/BUILD_INFO.json
 docs/releases/v6.0.0/RELEASE_NOTES.md
 docs/releases/v6.1.0/AUDIT_REPORT.md

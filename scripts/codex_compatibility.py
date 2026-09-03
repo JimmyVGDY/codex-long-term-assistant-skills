@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Codex stable-release compatibility registry and wire-contract adapters."""
+"""中文：Codex 稳定版兼容注册表与线协议适配器。
+
+English: Codex stable-release compatibility registry and wire-contract adapters.
+"""
 from __future__ import annotations
 
 import base64
@@ -11,7 +14,10 @@ from typing import Any, Dict, Mapping, Optional
 
 
 class CompatibilityError(ValueError):
-    """Raised when compatibility evidence or host output is not trustworthy."""
+    """中文：兼容证据或宿主输出不可信时抛出。
+
+    English: Raised when compatibility evidence or host output is not trustworthy.
+    """
 
 
 _SEMVER = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
@@ -85,7 +91,10 @@ def canonical_digest(value: Any) -> str:
 
 
 def parse_codex_version_output(output: str) -> str:
-    """Accept only the exact stable Codex CLI version wire format."""
+    """中文：仅接受精确的 Codex CLI 稳定版输出格式。
+
+    English: Accept only the exact stable Codex CLI version wire format.
+    """
     if not isinstance(output, str):
         raise CompatibilityError("Codex 版本输出必须是字符串")
     match = _VERSION_OUTPUT.fullmatch(output)
@@ -312,7 +321,10 @@ def profile_for_version(registry: Mapping[str, Any], version: str) -> Dict[str, 
 
 
 def verify_artifact_file(registry: Mapping[str, Any], version: str, path: Path) -> Dict[str, Any]:
-    """Verify an official Codex tarball against both frozen SHA-256 and npm SRI."""
+    """中文：使用固定 SHA-256 与 npm SRI 双重校验官方 Codex 包。
+
+    English: Verify an official Codex tarball against both frozen SHA-256 and npm SRI.
+    """
     profile = profile_for_version(registry, version)
     artifact = profile["artifact"]
     try:
@@ -340,7 +352,10 @@ def normalize_plugin_list(
     expected_version: Optional[str],
     profile: Mapping[str, Any],
 ) -> Optional[Dict[str, Any]]:
-    """Normalize one exact target item; return ``None`` when it is absent."""
+    """中文：规范化唯一目标条目；不存在时返回 ``None``。
+
+    English: Normalize one exact target item; return ``None`` when it is absent.
+    """
     root = _require_object(payload, "plugin list")
     allowed_top = set(profile["top_level_fields"])
     _require_exact_keys(root, allowed_top, "plugin list")
