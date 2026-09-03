@@ -10,7 +10,7 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.en.md) for v
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
-| 7.4.1 | [Open](v7.4.1/RELEASE_NOTES.en.md) | [Open](v7.4.1/AUDIT_REPORT.en.md) | [Open](v7.4.1/VALIDATION_REPORT.en.md) | Local Windows eleven-version isolated matrix passed; real host pending | [JSON](v7.4.1/BUILD_INFO.json) | [JSON](v7.4.1/PACKAGE_VALIDATION.json) |
+| 7.4.1 | [Open](v7.4.1/RELEASE_NOTES.en.md) | [Open](v7.4.1/AUDIT_REPORT.en.md) | [Open](v7.4.1/VALIDATION_REPORT.en.md) | Windows/Ubuntu eleven-version matrix and Codex 0.153.0 native parent/child Agent acceptance passed | [JSON](v7.4.1/BUILD_INFO.json) | [JSON](v7.4.1/PACKAGE_VALIDATION.json) |
 | 7.4.0 | [Open](v7.4.0/RELEASE_NOTES.en.md) | [Open](v7.4.0/AUDIT_REPORT.en.md) | [Open](v7.4.0/VALIDATION_REPORT.en.md) | User-level Plugin verified on Codex 0.153.0 | [JSON](v7.4.0/BUILD_INFO.json) | [JSON](v7.4.0/PACKAGE_VALIDATION.json) |
 | 7.3.0 | [Open](v7.3.0/RELEASE_NOTES.en.md) | [Open](v7.3.0/AUDIT_REPORT.en.md) | [Open](v7.3.0/VALIDATION_REPORT.en.md) | 3 finalized records, 1 task, `INSUFFICIENT_DATA`; defaults unchanged | [JSON](v7.3.0/BUILD_INFO.json) | [JSON](v7.3.0/PACKAGE_VALIDATION.json) |
 | 7.2.0 | [Open](v7.2.0/RELEASE_NOTES.en.md) | [Open](v7.2.0/AUDIT_REPORT.en.md) | [Open](v7.2.0/VALIDATION_REPORT.en.md) | Package `NOT_EVALUATED`; host evidence stored separately | [JSON](v7.2.0/BUILD_INFO.json) | [JSON](v7.2.0/PACKAGE_VALIDATION.json) |

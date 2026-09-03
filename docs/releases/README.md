@@ -10,7 +10,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 7.4.1 | [查看](v7.4.1/RELEASE_NOTES.md) | [查看](v7.4.1/AUDIT_REPORT.md) | [查看](v7.4.1/VALIDATION_REPORT.md) | Windows 本地 11 版本隔离矩阵通过；实机待验证 | [JSON](v7.4.1/BUILD_INFO.json) | [JSON](v7.4.1/PACKAGE_VALIDATION.json) |
+| 7.4.1 | [查看](v7.4.1/RELEASE_NOTES.md) | [查看](v7.4.1/AUDIT_REPORT.md) | [查看](v7.4.1/VALIDATION_REPORT.md) | Windows/Ubuntu 11 版本矩阵与 Codex 0.153.0 真实父子 Agent 验收通过 | [JSON](v7.4.1/BUILD_INFO.json) | [JSON](v7.4.1/PACKAGE_VALIDATION.json) |
 | 7.4.0 | [查看](v7.4.0/RELEASE_NOTES.md) | [查看](v7.4.0/AUDIT_REPORT.md) | [查看](v7.4.0/VALIDATION_REPORT.md) | Codex 0.153.0 账户级 Plugin 已验证 | [JSON](v7.4.0/BUILD_INFO.json) | [JSON](v7.4.0/PACKAGE_VALIDATION.json) |
 | 7.3.0 | [查看](v7.3.0/RELEASE_NOTES.md) | [查看](v7.3.0/AUDIT_REPORT.md) | [查看](v7.3.0/VALIDATION_REPORT.md) | 3 条最终化记录、1 个任务，`INSUFFICIENT_DATA`，默认路由不变 | [JSON](v7.3.0/BUILD_INFO.json) | [JSON](v7.3.0/PACKAGE_VALIDATION.json) |
 | 7.2.0 | [查看](v7.2.0/RELEASE_NOTES.md) | [查看](v7.2.0/AUDIT_REPORT.md) | [查看](v7.2.0/VALIDATION_REPORT.md) | 包内 `NOT_EVALUATED`；宿主证据独立保存 | [JSON](v7.2.0/BUILD_INFO.json) | [JSON](v7.2.0/PACKAGE_VALIDATION.json) |
