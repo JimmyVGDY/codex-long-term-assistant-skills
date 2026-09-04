@@ -8,7 +8,7 @@ Release evidence is grouped by semantic version. Each directory contains only th
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
-| 7.4.2 | [Open](v7.4.2/RELEASE_NOTES.md) | [Open](v7.4.2/AUDIT_REPORT.md) | [Open](v7.4.2/VALIDATION_REPORT.md) | Windows 11 cells, package validation, and account install pass; lifecycle/CI/publication pending | [JSON](v7.4.2/BUILD_INFO.json) | [JSON](v7.4.2/PACKAGE_VALIDATION.json) |
+| 7.4.2 | [Open](v7.4.2/RELEASE_NOTES.md) | [Open](v7.4.2/AUDIT_REPORT.md) | [Open](v7.4.2/VALIDATION_REPORT.md) | Windows/Ubuntu eleven-version matrix, package validation, account install, and Codex 0.153.2 native parent/child Agent acceptance pass | [JSON](v7.4.2/BUILD_INFO.json) | [JSON](v7.4.2/PACKAGE_VALIDATION.json) |
 | 7.4.1 | [Open](v7.4.1/RELEASE_NOTES.md) | [Open](v7.4.1/AUDIT_REPORT.md) | [Open](v7.4.1/VALIDATION_REPORT.md) | Windows/Ubuntu eleven-version matrix and Codex 0.153.0 native parent/child Agent acceptance passed | [JSON](v7.4.1/BUILD_INFO.json) | [JSON](v7.4.1/PACKAGE_VALIDATION.json) |
 | 7.4.0 | [Open](v7.4.0/RELEASE_NOTES.md) | [Open](v7.4.0/AUDIT_REPORT.md) | [Open](v7.4.0/VALIDATION_REPORT.md) | User-level Plugin verified on Codex 0.153.0 | [JSON](v7.4.0/BUILD_INFO.json) | [JSON](v7.4.0/PACKAGE_VALIDATION.json) |
 | 7.3.0 | [Open](v7.3.0/RELEASE_NOTES.md) | [Open](v7.3.0/AUDIT_REPORT.md) | [Open](v7.3.0/VALIDATION_REPORT.md) | 3 finalized records, 1 task, `INSUFFICIENT_DATA`; defaults unchanged | [JSON](v7.3.0/BUILD_INFO.json) | [JSON](v7.3.0/PACKAGE_VALIDATION.json) |

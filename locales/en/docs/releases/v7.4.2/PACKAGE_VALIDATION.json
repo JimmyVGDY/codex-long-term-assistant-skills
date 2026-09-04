@@ -1,7 +1,7 @@
 {
-  "ok": false,
-  "status": "IN_PROGRESS",
-  "evidence_scope": "package-and-authorized-install-partial",
+  "ok": true,
+  "status": "PASS",
+  "evidence_scope": "package-and-authorized-host",
   "version": "7.4.2",
   "compatibility_registry_digest": "e2a5e4a19040174c18bbcb66d39e6d349e33fe3c53f7996434a4939b94b0c8f1",
   "windows_local_compatibility_cells": 11,
@@ -9,10 +9,11 @@
   "package_test_count": 226,
   "runtime_test_count": 6,
   "deterministic_bilingual_build": "PASS",
-  "repository_link_audit": "PASS (494 Markdown files, 551 links)",
+  "repository_link_audit": "PASS (503 Markdown files, 557 links)",
   "postimplementation_independent_review": "PASS (logical-readonly, 3 reviewers, 0 blocking, 1 expected nonblocking delivery gate; runtime model evidence UNAVAILABLE)",
   "user_level_force_reinstall": "PASS (Codex 0.153.2, schema 3, Plugin active, three-way payload match)",
-  "github_windows_ubuntu_matrix": "NOT_EVALUATED",
+  "installed_payload_digest": "4b9bf790d8f8392b4f191dbf8c7de3748d8d4b2d984d7bfffbdd27a85cd97679",
+  "github_windows_ubuntu_matrix": "PASS (compatibility run 33831782447: 22/22; candidate CI run 33831782428: 5/5; candidate b997edcf5384ae86720fabb53abb03bb02f66a37)",
   "real_host": "PASS (Codex 0.153.2 read-only parent/child journey and 7-event lifecycle; actual model and DPAPI seal UNAVAILABLE)",
   "execution_authorization": "NONE"
 }
