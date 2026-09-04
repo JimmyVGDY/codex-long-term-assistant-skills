@@ -14,7 +14,7 @@
   "bilingual_reproducible_build": "PASS (local candidate)",
   "remote_ci": "NOT_RUN",
   "user_level_install": "PASS (Codex CLI 0.153.2, plugin installed and enabled)",
-  "installed_payload_readback": "PASS (182 files, source/marketplace/cache digest a6d083a6bef6a83beacf1d9c27882fe70a0e0b2682fc76e7dc0390f5328d72af)",
+  "installed_payload_readback": "PASS (182 files, source/marketplace/cache digest 48cda73843f7b7feb7093f752374291630a2431b66f97aef699e64ae377f9904)",
   "installed_lifecycle": "PASS (5 records, SEALED_CURRENT, 5 sealed)",
   "managed_cache_immutability": "PASS (0 pyc after installed Hook lifecycle)",
   "user_level_uninstall_dry_run": "PASS (managed hashes and backup manifest)",

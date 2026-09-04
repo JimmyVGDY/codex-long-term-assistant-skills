@@ -7,7 +7,7 @@ from __future__ import annotations
 import os
 import sys
 import time
-from pathlib import Path
+from pathlib import Path, PosixPath, WindowsPath
 
 
 WINDOWS_TRANSIENT_FILE_ERRORS = {5, 32, 33}
@@ -19,9 +19,11 @@ def native_path(path: str | Path) -> Path:
     English: Return an absolute, long-path-safe path for Windows atomic file operations.
     """
     absolute = os.path.abspath(os.fspath(path))
-    if sys.platform == "win32" and not absolute.startswith("\\\\?\\"):
-        absolute = "\\\\?\\" + absolute
-    return Path(absolute)
+    if sys.platform == "win32":
+        if not absolute.startswith("\\\\?\\"):
+            absolute = "\\\\?\\" + absolute
+        return WindowsPath(absolute)
+    return PosixPath(absolute)
 
 
 def replace_with_retry(source: str | Path, target: str | Path, timeout: float = 0.75) -> None:

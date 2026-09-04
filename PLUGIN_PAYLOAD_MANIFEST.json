@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 182,
-  "payload_digest": "a6d083a6bef6a83beacf1d9c27882fe70a0e0b2682fc76e7dc0390f5328d72af",
+  "payload_digest": "48cda73843f7b7feb7093f752374291630a2431b66f97aef699e64ae377f9904",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -778,8 +778,8 @@
     },
     {
       "path": "runtime/cp_runtime/atomic_io.py",
-      "sha256": "bc1b2d08312d1119edc7ece17ef1111deae1f18f9d23112dbbc7011da8c107d3",
-      "size": 1402
+      "sha256": "f6a30e5b4209d4eda8f441450b0a3e1435d7c9ee385eb63c88d753151afbe579",
+      "size": 1480
     },
     {
       "path": "runtime/cp_runtime/cli.py",

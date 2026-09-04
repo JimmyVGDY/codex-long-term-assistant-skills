@@ -11,7 +11,7 @@ Status: local release-candidate validation and Windows account-level reinstallat
 - Privacy-boundary lint covers active code, configuration, current documentation, and release scripts.
 - Package gates passed 233 repository tests and 6 runtime tests; strict localization, semantic checks, and payload integrity passed.
 - A Windows account completed a transactional V7.4.2-to-V7.4.3 reinstall on Codex CLI 0.153.2. Plugin readback reports installed/enabled, with ten Skills, seven Reviewers, six Hooks, and no live transaction.
-- The source, account Marketplace, and versioned cache each contain 182 managed payload files with the same digest: `a6d083a6bef6a83beacf1d9c27882fe70a0e0b2682fc76e7dc0390f5328d72af`.
+- The source, account Marketplace, and versioned cache each contain 182 managed payload files with the same digest: `48cda73843f7b7feb7093f752374291630a2431b66f97aef699e64ae377f9904`.
 - The installed `cp_hook.cmd` completed a five-event parent/child lifecycle. SessionEnd reached `SEALED_CURRENT` over all five records, and the report read or exported no host model information, raw session/task IDs, prompts, or responses.
 - Account validation found and repaired stale Python-bytecode copying and a Windows long-path signed-job failure. After the final reinstall and Hook run, neither the Marketplace nor the cache contained `.pyc` files.
 - Account uninstall dry-run passed managed-hash and backup-manifest checks; no real uninstall or rollback was performed.
