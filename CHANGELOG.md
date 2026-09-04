@@ -6,6 +6,17 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 暂无。
 
+## 7.4.4 - 2026-09-04
+
+### Added
+
+- 新增版本化 GitHub Release 标题：中文来自 `manifest.json.release_name`，英文来自 `locales/en/manifest-localization.json.release_name`；标题约束失败关闭，工作流通过 job output 与环境变量传递标题。
+- 新增 Draft-only、既有 Release 不覆盖、双语资产/provenance 说明，以及历史标题回填的独立线上元数据边界。
+
+### Validation
+
+- V7.4.4 本地 package-only 验证与逻辑只读复审通过；远端 CI、标签、Draft 与公开 Release 保持待读回。v7.3.0 至 v7.4.3 历史标题回填已完成并逐个线上读回，v7.2.0 及更早未改；Codex CLI 0.153.2 兼容边界不变。
+
 ## 7.4.3 - 2026-09-04
 
 ### Changed

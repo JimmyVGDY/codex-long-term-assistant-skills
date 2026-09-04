@@ -75,7 +75,7 @@ class HostRoutingAcceptanceTests(unittest.TestCase):
         host_readback = (
             "CODEX_VERSION=0.153.2\n"
             "PLUGIN_ID=codex-cross-project-engineering-assistant\n"
-            "PLUGIN_VERSION=7.4.3\n"
+            "PLUGIN_VERSION=7.4.4\n"
             "INSTALLED=true\nENABLED=true\n"
         )
         results = {
@@ -84,7 +84,7 @@ class HostRoutingAcceptanceTests(unittest.TestCase):
             "host": {
                 "codex_version": "0.153.2",
                 "plugin_id": "codex-cross-project-engineering-assistant",
-                "plugin_version": "7.4.3",
+                "plugin_version": "7.4.4",
                 "installed": True,
                 "enabled": True,
                 "observed_at": "2026-09-02T12:00:00+08:00",

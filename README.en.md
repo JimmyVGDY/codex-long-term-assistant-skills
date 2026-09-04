@@ -21,7 +21,7 @@
   <img alt="Codex CLI 0.153.2" src="https://img.shields.io/badge/Codex%20CLI-0.153.2-111827">
 </p>
 
-V7.4.3 tightens the model-identity privacy boundary on the stable Codex CLI 0.153.2 compatibility window. Reviewer, Explorer, and Worker governance now uses only the pre-dispatch approved profile and reserved units; post-dispatch host runtime model identity is never read, inferred, or stored. Legacy Event V2 and Budget V1 chains remain verifiable in read-only mode and reach new aggregation only through a safe projection.
+V7.4.4 continues the stable Codex CLI 0.153.2 compatibility window and requires every Release title to be generated from a constrained bilingual `release_name`; generic candidate titles are rejected. Publishing remains draft-only and never becomes public automatically.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Usage example](#reproducible-usage-example) · [Compatibility](#compatibility-matrix) · [Installation](#five-minute-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -29,8 +29,8 @@ V7.4.3 tightens the model-identity privacy boundary on the stable Codex CLI 0.15
 
 | Distribution | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V7.4.3-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.4.3/Codex-Skills-V7.4.3-zh-CN.zip) |
-| `Codex-Skills-V7.4.3-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.4.3/Codex-Skills-V7.4.3-en.zip) |
+| `Codex-Skills-V7.4.4-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.4.4/Codex-Skills-V7.4.4-zh-CN.zip) |
+| `Codex-Skills-V7.4.4-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.4.4/Codex-Skills-V7.4.4-en.zip) |
 
 [Open the latest Release, checksums, and build witnesses](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -94,7 +94,7 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Native Windows Codex CLI 0.153.2 + Plugin | Real-host anchor | V7.4.3 account-level transactional reinstall, Plugin readback, and parent/child lifecycle sealing passed | Host model identity is outside the acceptance contract; real uninstall/rollback still has isolated-test evidence only |
+| Native Windows Codex CLI 0.153.2 + Plugin | Latest real-host anchor | V7.4.3 account-level transactional reinstall, Plugin readback, and parent/child lifecycle sealing passed; V7.4.4 does not inherit that real-host conclusion | Host model identity is outside the acceptance contract; V7.4.4 real-account installation and actual uninstall/rollback are not exercised by this release |
 | Windows + eleven pinned stable Codex releases | Local isolated matrix | CLI, Plugin round-trip, synthetic Hook, and official artifact checks pass per version | Not a real account session |
 | Windows / Ubuntu GitHub matrix | Release gate | Replay every stable release in the window | Must be read back on the candidate commit |
 | standalone mode | Explicit fallback | Installation structure and regression coverage | Does not claim Plugin host compatibility |
@@ -102,7 +102,7 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 
 The minimum Python version is 3.11; public CI validates both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
 
-The V7.4.3 window is `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, `0.150.0`, `0.149.1`, `0.149.0`, and `0.148.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
+The V7.4.4 window is `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, `0.150.0`, `0.149.1`, `0.149.0`, and `0.148.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
 ## Five-minute upgrade
 
@@ -117,7 +117,7 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. The upgrade is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.4.3`, schema-3 host state is `HOST_COMPATIBLE`, and every Manifest-declared legacy Skill directory is absent.
+3. The upgrade is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.4.4`, schema-3 host state is `HOST_COMPATIBLE`, and every Manifest-declared legacy Skill directory is absent.
 
 The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, preserves unknown files, and removes only Manifest-declared legacy Skill directories: the three V7 domain replacements plus the previously deprecated Vue Skill. See [Installation and recovery](docs/INSTALLATION_RECOVERY.en.md) and the [User guide](docs/USER_GUIDE_V7.4.en.md).
 
@@ -142,7 +142,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V7.4.3 release notes](docs/releases/v7.4.3/RELEASE_NOTES.en.md)
+- [Changelog](CHANGELOG.en.md) · [V7.4.4 release notes](docs/releases/v7.4.4/RELEASE_NOTES.en.md)
 
 ## Local validation
 
@@ -158,7 +158,7 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. Tag runs create drafts only; they never publish automatically or overwrite an existing Release.
 
 ```shell
-gh attestation verify Codex-Skills-V7.4.3-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.4.4-en.zip --repo OWNER/REPOSITORY
 ```
 
 See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.en.md) for the complete gates and new-version procedure.

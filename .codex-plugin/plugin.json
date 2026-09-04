@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.4.3",
-  "description": "跨项目长期技术助手 V7.4.3：以批准派发档位和结果归因治理预算，不采集宿主实际模型身份。",
+  "version": "7.4.4",
+  "description": "跨项目长期技术助手 V7.4.4：以批准派发档位和结果归因治理预算，不采集宿主实际模型身份。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

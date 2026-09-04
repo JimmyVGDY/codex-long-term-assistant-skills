@@ -11,6 +11,7 @@ import json
 import os
 import re
 import stat
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,14 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY_PLACEHOLDER = "OWNER/REPOSITORY"
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+HAN_PATTERN = re.compile(r"[\u3400-\u9fff]")
+RELEASE_NAME_MAX_CODEPOINTS = {"zh-CN": 30, "en": 80}
+RELEASE_TITLE_MAX_CODEPOINTS = 125
+RELEASE_TITLE_MAX_UTF8_BYTES = 200
+GENERIC_RELEASE_NAMES = {
+    "zh-CN": {"发行候选", "中英文发行候选"},
+    "en": {"release candidate", "bilingual release candidate"},
+}
 
 
 class ReleaseWorkflowError(RuntimeError):
@@ -45,10 +54,41 @@ def _is_link(path: Path) -> bool:
         return False
 
 
+def _release_name(value: Any, locale: str) -> str:
+    if not isinstance(value, str) or not value or value != value.strip():
+        raise ReleaseWorkflowError("%s release_name must be a non-empty trimmed string" % locale)
+    if len(value) > RELEASE_NAME_MAX_CODEPOINTS[locale]:
+        raise ReleaseWorkflowError("%s release_name is too long" % locale)
+    if any(unicodedata.category(character) in {"Cc", "Cf", "Cs"} for character in value):
+        raise ReleaseWorkflowError("%s release_name contains control characters" % locale)
+    if value.casefold() in GENERIC_RELEASE_NAMES[locale]:
+        raise ReleaseWorkflowError("%s release_name must describe this release" % locale)
+    if locale == "zh-CN" and not HAN_PATTERN.search(value):
+        raise ReleaseWorkflowError("zh-CN release_name must contain Chinese text")
+    if locale == "en" and HAN_PATTERN.search(value):
+        raise ReleaseWorkflowError("en release_name must not contain Chinese text")
+    return value
+
+
+def _release_title(version: str, chinese: str, english: str) -> str:
+    value = "V%s | %s / %s" % (version, chinese, english)
+    if len(value) > RELEASE_TITLE_MAX_CODEPOINTS \
+            or len(value.encode("utf-8")) > RELEASE_TITLE_MAX_UTF8_BYTES:
+        raise ReleaseWorkflowError("combined release title is too long")
+    return value
+
+
 def release_metadata(root: Path = ROOT, tag: str = "") -> dict[str, str]:
     root = root.resolve()
-    manifest = _read_object(root / "manifest.json")
-    plugin = _read_object(root / ".codex-plugin" / "plugin.json")
+    manifest_path = root / "manifest.json"
+    plugin_path = root / ".codex-plugin" / "plugin.json"
+    localization_path = root / "locales" / "en" / "manifest-localization.json"
+    for path in (manifest_path, plugin_path, localization_path):
+        if not path.is_file() or _is_link(path):
+            raise ReleaseWorkflowError("release metadata is missing or unsafe: %s" % path)
+    manifest = _read_object(manifest_path)
+    plugin = _read_object(plugin_path)
+    localization = _read_object(localization_path)
     version = manifest.get("version")
     plugin_version = plugin.get("version")
     if not isinstance(version, str) or not VERSION_PATTERN.fullmatch(version):
@@ -65,9 +105,12 @@ def release_metadata(root: Path = ROOT, tag: str = "") -> dict[str, str]:
     for path in (notes_zh, notes_en):
         if not path.is_file() or _is_link(path):
             raise ReleaseWorkflowError("release notes are missing or unsafe: %s" % path)
+    release_name_zh = _release_name(manifest.get("release_name"), "zh-CN")
+    release_name_en = _release_name(localization.get("release_name"), "en")
     return {
         "version": version,
         "tag": expected_tag,
+        "release_title": _release_title(version, release_name_zh, release_name_en),
         "archive_zh": "Codex-Skills-V%s-zh-CN.zip" % version,
         "archive_en": "Codex-Skills-V%s-en.zip" % version,
         "witness_zh": "witness-zh-CN.json",

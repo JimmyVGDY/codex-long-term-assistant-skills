@@ -4,7 +4,7 @@ Chinese: [`USER_GUIDE_V7.4.md`](USER_GUIDE_V7.4.md)
 
 ## 1. What changed
 
-V7.4.3 preserves one root-task weighted budget for Reviewer, Explorer, and Worker while tightening model-identity privacy to the pre-dispatch boundary. The Task Envelope declares the class, `delegation-budget.py` owns the repository-external append-only Budget V2 ledger, the PreToolUse Hook reserves the approved profile atomically before dispatch, and the Reviewer controller keeps rounds and findings without charging twice or receiving host runtime model identity.
+V7.4.4 preserves one root-task weighted budget for Reviewer, Explorer, and Worker while tightening model-identity privacy to the pre-dispatch boundary. The Task Envelope declares the class, `delegation-budget.py` owns the repository-external append-only Budget V2 ledger, the PreToolUse Hook reserves the approved profile atomically before dispatch, and the Reviewer controller keeps rounds and findings without charging twice or receiving host runtime model identity.
 
 Weights are fixed at `luna-low=1`, `luna-medium=2`, `terra-medium=4`, and `terra-high=8`.
 
@@ -23,7 +23,7 @@ Weights are fixed at `luna-low=1`, `luna-medium=2`, `terra-medium=4`, and `terra
 5. Start/Stop reconciliation occurs only when the host propagates `reservation_id`. Codex 0.153.2 omits it in the observed path, so the reservation remains `RESERVED`; time-order guessing is forbidden.
 6. Only host proof that an agent did not start can release a reservation. A started agent is never refunded.
 
-V7.4.3 does not create a root-task ledger automatically. The unified budget is activated explicitly per task. Without both environment variables, the Hook still enforces the automatic dispatch-profile ceiling, but that task must not be reported as having passed the unified budget gate.
+V7.4.4 does not create a root-task ledger automatically. The unified budget is activated explicitly per task. Without both environment variables, the Hook still enforces the automatic dispatch-profile ceiling, but that task must not be reported as having passed the unified budget gate.
 
 ## 3. Routing contract
 
@@ -41,6 +41,6 @@ Event V2 and Budget V1 chains from V7.4.2 and earlier remain byte-for-byte verif
 
 ## 5. Codex 0.153.2 scope
 
-V7.4.3 supports Codex CLI 0.153.2 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
+V7.4.4 supports Codex CLI 0.153.2 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
-Installation is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.4.3`, and the schema-3 host snapshot is `HOST_COMPATIBLE`.
+Installation is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.4.4`, and the schema-3 host snapshot is `HOST_COMPATIBLE`.

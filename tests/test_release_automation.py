@@ -24,14 +24,25 @@ SPEC.loader.exec_module(release_workflow)
 
 
 class ReleaseAutomationTests(unittest.TestCase):
-    def _fixture(self, root: Path, version: str = "6.6.1", plugin_version: str = "6.6.1") -> None:
+    def _fixture(
+        self,
+        root: Path,
+        version: str = "6.6.1",
+        plugin_version: str = "6.6.1",
+        release_name_zh: object = "根任务预算治理",
+        release_name_en: object = "Root-task budget governance",
+    ) -> None:
         (root / ".codex-plugin").mkdir(parents=True)
         (root / "docs" / "releases" / ("v" + version)).mkdir(parents=True)
+        (root / "locales" / "en").mkdir(parents=True)
         (root / "manifest.json").write_text(
-            json.dumps({"version": version}), encoding="utf-8"
+            json.dumps({"version": version, "release_name": release_name_zh}), encoding="utf-8"
         )
         (root / ".codex-plugin" / "plugin.json").write_text(
             json.dumps({"version": plugin_version}), encoding="utf-8"
+        )
+        (root / "locales" / "en" / "manifest-localization.json").write_text(
+            json.dumps({"release_name": release_name_en}), encoding="utf-8"
         )
         release_root = root / "docs" / "releases" / ("v" + version)
         (release_root / "RELEASE_NOTES.md").write_text("zh\n", encoding="utf-8")
@@ -44,6 +55,10 @@ class ReleaseAutomationTests(unittest.TestCase):
             metadata = release_workflow.release_metadata(root, "v6.6.1")
             self.assertEqual("6.6.1", metadata["version"])
             self.assertEqual("Codex-Skills-V6.6.1-en.zip", metadata["archive_en"])
+            self.assertEqual(
+                "V6.6.1 | 根任务预算治理 / Root-task budget governance",
+                metadata["release_title"],
+            )
             with self.assertRaises(release_workflow.ReleaseWorkflowError):
                 release_workflow.release_metadata(root, "v6.6.0")
         with tempfile.TemporaryDirectory() as temporary:
@@ -51,6 +66,73 @@ class ReleaseAutomationTests(unittest.TestCase):
             self._fixture(root, plugin_version="6.6.0")
             with self.assertRaises(release_workflow.ReleaseWorkflowError):
                 release_workflow.release_metadata(root)
+
+    def test_metadata_rejects_unsafe_or_generic_release_names(self) -> None:
+        cases = (
+            ("", "Root-task budget governance"),
+            (" 根任务预算治理", "Root-task budget governance"),
+            ("根任务\n预算治理", "Root-task budget governance"),
+            ("根任务\u200b预算治理", "Root-task budget governance"),
+            ("中英文发行候选", "Root-task budget governance"),
+            ("发" * 31, "Root-task budget governance"),
+            ("根任务预算治理", ""),
+            ("根任务预算治理", "Root-task budget governance\rrelease"),
+            ("根任务预算治理", "Bilingual release candidate"),
+            ("根任务预算治理", "中文标题"),
+            ("根任务预算治理", "x" * 81),
+            ("根任务预算治理", "🚀" * 60),
+        )
+        for release_name_zh, release_name_en in cases:
+            with self.subTest(zh=release_name_zh, en=release_name_en):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    self._fixture(
+                        root,
+                        release_name_zh=release_name_zh,
+                        release_name_en=release_name_en,
+                    )
+                    with self.assertRaises(release_workflow.ReleaseWorkflowError):
+                        release_workflow.release_metadata(root)
+
+    def test_metadata_accepts_release_name_length_boundaries(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(
+                root,
+                release_name_zh="发" * 30,
+                release_name_en="x" * 80,
+            )
+            metadata = release_workflow.release_metadata(root)
+            self.assertEqual(
+                "V6.6.1 | %s / %s" % ("发" * 30, "x" * 80),
+                metadata["release_title"],
+            )
+
+    def test_github_metadata_keeps_shell_metacharacters_as_single_line_data(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._fixture(
+                root,
+                release_name_zh='标题=百分比%引号"反引号`美元$()',
+                release_name_en='Title = 100% "quoted" `tick` $HOME $(noop)',
+            )
+            metadata = release_workflow.release_metadata(root)
+            rendered = release_workflow._render_metadata(metadata, "github")
+            self.assertEqual(
+                "release_title=%s" % metadata["release_title"],
+                next(
+                    line for line in rendered.splitlines()
+                    if line.startswith("release_title=")
+                ),
+            )
+            self.assertEqual(len(metadata), len(rendered.splitlines()))
+
+    def test_github_metadata_renders_release_title_as_one_line(self) -> None:
+        metadata = release_workflow.release_metadata(ROOT, "v7.4.4")
+        rendered = release_workflow._render_metadata(metadata, "github")
+        expected = "release_title=%s" % metadata["release_title"]
+        self.assertEqual(1, rendered.splitlines().count(expected))
+        self.assertNotIn("\r", rendered)
 
     def test_checksums_are_bounded_complete_and_sorted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -150,15 +232,30 @@ class ReleaseAutomationTests(unittest.TestCase):
         self.assertIn("gh attestation verify", workflow)
         self.assertNotIn("candidate/*.zip", workflow)
         self.assertNotIn("candidate/*.json", workflow)
-        self.assertTrue((ROOT / "locales" / "en" / ".github" / "workflows" / "release.yml").is_file())
+        for relative in (
+            ".github/workflows/release.yml",
+            "locales/en/.github/workflows/release.yml",
+        ):
+            localized_workflow = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertIn(
+                "release_title: ${{ steps.metadata.outputs.release_title }}",
+                localized_workflow,
+            )
+            self.assertIn(
+                "RELEASE_TITLE: ${{ needs.build.outputs.release_title }}",
+                localized_workflow,
+            )
+            self.assertIn('--title "$RELEASE_TITLE"', localized_workflow)
+            self.assertNotIn("Bilingual release candidate", localized_workflow)
+            self.assertNotIn('--title "${{', localized_workflow)
 
     def test_generated_release_body_contains_both_languages_without_relative_selector(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "notes.md"
             release_workflow.write_release_notes(output)
             value = output.read_text(encoding="utf-8")
-            self.assertIn("# V7.4.3 发行说明", value)
-            self.assertIn("# V7.4.3 Release Notes", value)
+            self.assertIn("# V7.4.4 发行说明", value)
+            self.assertIn("# V7.4.4 Release Notes", value)
             self.assertNotIn("English: [RELEASE_NOTES.en.md]", value)
             self.assertNotIn("Chinese: [RELEASE_NOTES.md]", value)
 

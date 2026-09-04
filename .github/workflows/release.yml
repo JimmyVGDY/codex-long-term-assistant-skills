@@ -53,6 +53,7 @@ jobs:
     outputs:
       version: ${{ steps.metadata.outputs.version }}
       tag: ${{ steps.metadata.outputs.tag }}
+      release_title: ${{ steps.metadata.outputs.release_title }}
     steps:
       - name: 检出源码 / Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -138,7 +139,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.build.outputs.tag }}
-          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+          RELEASE_TITLE: ${{ needs.build.outputs.release_title }}
         shell: bash
         run: |
           if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
@@ -149,7 +150,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --draft \
-            --title "V${RELEASE_VERSION} | 中英文发行候选 / Bilingual release candidate" \
+            --title "$RELEASE_TITLE" \
             --notes-file "candidate/$release_notes" \
             "candidate/$archive_zh" \
             "candidate/$archive_en" \

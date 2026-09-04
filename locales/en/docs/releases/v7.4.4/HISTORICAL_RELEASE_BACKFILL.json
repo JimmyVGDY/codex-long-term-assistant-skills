@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "evidence_scope": "GitHub Release metadata only",
+  "authorization": "Explicit user authorization in the V7.4.4 release task",
+  "operation": {
+    "method": "GET before, PATCH with the name field only, GET after",
+    "allowed_changed_fields": ["name"],
+    "preserved_fields": ["body_sha256", "assets_sha256", "draft", "prerelease", "published_at"],
+    "unexpected_changed_fields": [],
+    "before_after_verification": "PASS"
+  },
+  "current_readback_at_utc": "2026-09-04T09:54:52Z",
+  "assets_sha256_definition": "SHA-256 of canonical JSON for assets sorted by name and id, retaining id, name, size, digest, state, and content_type",
+  "releases": [
+    {"release_id": 381667043, "tag": "v7.3.0", "before_name": "V7.3.0 | \u4e2d\u82f1\u6587\u53d1\u884c\u5019\u9009 / Bilingual release candidate", "after_name": "V7.3.0 | Reviewer \u6700\u4f4e\u6863\u4f4d\u4e0e\u6210\u672c\u5f52\u56e0 / Reviewer minimum profiles and cost attribution", "body_sha256": "4df0406bb8d2050c5d7fb8308c7c6419557ccd38cfd731925453a609658f6cfa", "assets_sha256": "da316a0693013510e710cc0807bd480823ff201d9c2ad4ccd58d8d9b661481af", "asset_count": 6, "draft": false, "prerelease": false, "published_at": "2026-09-03T01:32:06Z", "preserved_fields_match": true},
+    {"release_id": 381731196, "tag": "v7.4.0", "before_name": "V7.4.0 | \u4e2d\u82f1\u6587\u53d1\u884c\u5019\u9009 / Bilingual release candidate", "after_name": "V7.4.0 | \u7edf\u4e00\u6d3e\u53d1\u9884\u7b97\u4e0e\u6210\u672c\u6cbb\u7406 / Unified delegation budgets and cost governance", "body_sha256": "f2743f6822ef226eed16e17ab148f7eb3dce7adee66ac233aea6fdf3ebaccaad", "assets_sha256": "c3c20d1242235659533dbe7a43920e12cdbb5b25d694f5eb59c4b1d96f200637", "asset_count": 6, "draft": false, "prerelease": false, "published_at": "2026-09-03T04:43:57Z", "preserved_fields_match": true},
+    {"release_id": 381927840, "tag": "v7.4.1", "before_name": "V7.4.1 | \u4e2d\u82f1\u6587\u53d1\u884c\u5019\u9009 / Bilingual release candidate", "after_name": "V7.4.1 | \u5341\u4e00\u7248\u672c\u517c\u5bb9\u4e0e\u5bbf\u4e3b\u6f02\u79fb\u68c0\u6d4b / Eleven-version compatibility and host-drift detection", "body_sha256": "315c4049ca0aa0d09212920e77321012f8ab68afbed38e8e4218d25dd089d983", "assets_sha256": "834b2af059760c85b912923ba2398ce10c8ad47dc52216e691f7ceb4110b6476", "asset_count": 6, "draft": false, "prerelease": false, "published_at": "2026-09-03T10:28:26Z", "preserved_fields_match": true},
+    {"release_id": 382462454, "tag": "v7.4.2", "before_name": "V7.4.2 | \u4e2d\u82f1\u6587\u53d1\u884c\u5019\u9009 / Bilingual release candidate", "after_name": "V7.4.2 | Codex 0.153.2 \u9002\u914d\u4e0e\u8bc1\u636e\u8fb9\u754c\u66f4\u65b0 / Codex 0.153.2 adaptation and evidence-boundary updates", "body_sha256": "7b74da282e39a0c29d3154bd6799cf6b26114fca38ae338195878755332097d8", "assets_sha256": "51a5523ed485bb56e87edf16322eefdd4c9de7eec379668667df009a68b54b6c", "asset_count": 6, "draft": false, "prerelease": false, "published_at": "2026-09-04T03:42:30Z", "preserved_fields_match": true},
+    {"release_id": 382583213, "tag": "v7.4.3", "before_name": "V7.4.3 | \u4e2d\u82f1\u6587\u53d1\u884c\u5019\u9009 / Bilingual release candidate", "after_name": "V7.4.3 | \u6a21\u578b\u8eab\u4efd\u9694\u79bb\u4e0e\u9690\u79c1\u8fb9\u754c\u52a0\u56fa / Model-identity isolation and privacy-boundary hardening", "body_sha256": "387affb0db821a48aa196d5743415004a2c7db62d94233c8947cd142b8695fa7", "assets_sha256": "5fe0179ed3b6ac70e2e0c99b2f18e4f7ff8e0bc04c822b7c5081f9fd9b2b9ee9", "asset_count": 6, "draft": false, "prerelease": false, "published_at": "2026-09-04T08:43:02Z", "preserved_fields_match": true}
+  ],
+  "untouched_boundary": {"tag": "v7.2.0", "release_id": 381016145, "name": "V7.2.0 | Python 3.11\u3001\u5bbf\u4e3b\u8def\u7531\u4e0e\u4fe1\u53f7\u7ea7\u6f14\u8fdb / Python 3.11, Host Routing, and Signal-Level Evolution", "body_sha256": "83faced49c95ca03a154256e158e92338aaf30a56f82371301f792a2d20f938b", "assets_sha256": "72e0309d84dfca91d7270277351fb5575864f9682d4900da78768bc16b40ca40", "asset_count": 6, "operation": "not modified; v7.2.0 and earlier were outside the approved mapping"},
+  "limitations": [
+    "This record contains hashes and bounded metadata, not credentials or raw authenticated API payloads.",
+    "It proves the release-metadata operation and readback boundary; it does not attest package contents beyond the recorded asset snapshot hash."
+  ]
+}

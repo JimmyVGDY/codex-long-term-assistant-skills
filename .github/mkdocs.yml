@@ -88,9 +88,9 @@ nav:
           - 审批、证据与终结: zh-CN/docs/APPROVAL_EVIDENCE_FINALIZATION.md
           - 受控演进操作: zh-CN/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
       - 发行与历史:
-          - V7.4.3 发行说明: zh-CN/docs/releases/v7.4.3/RELEASE_NOTES.md
-          - V7.4.3 验证报告: zh-CN/docs/releases/v7.4.3/VALIDATION_REPORT.md
-          - V7.4.3 审计报告: zh-CN/docs/releases/v7.4.3/AUDIT_REPORT.md
+          - V7.4.4 发行说明: zh-CN/docs/releases/v7.4.4/RELEASE_NOTES.md
+          - V7.4.4 验证报告: zh-CN/docs/releases/v7.4.4/VALIDATION_REPORT.md
+          - V7.4.4 审计报告: zh-CN/docs/releases/v7.4.4/AUDIT_REPORT.md
           - 历版发行资料: zh-CN/docs/releases/README.md
           - 公开重建历史: zh-CN/docs/history/README.md
           - 版本记录: zh-CN/CHANGELOG.md
@@ -111,9 +111,9 @@ nav:
           - Approval, evidence, and finalization: en/docs/APPROVAL_EVIDENCE_FINALIZATION.md
           - Controlled-evolution operations: en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
       - Release and history:
-          - V7.4.3 release notes: en/docs/releases/v7.4.3/RELEASE_NOTES.md
-          - V7.4.3 validation report: en/docs/releases/v7.4.3/VALIDATION_REPORT.md
-          - V7.4.3 audit report: en/docs/releases/v7.4.3/AUDIT_REPORT.md
+          - V7.4.4 release notes: en/docs/releases/v7.4.4/RELEASE_NOTES.md
+          - V7.4.4 validation report: en/docs/releases/v7.4.4/VALIDATION_REPORT.md
+          - V7.4.4 audit report: en/docs/releases/v7.4.4/AUDIT_REPORT.md
           - Release evidence: en/docs/releases/README.md
           - Public reconstruction history: en/docs/history/README.md
           - Changelog: en/CHANGELOG.md

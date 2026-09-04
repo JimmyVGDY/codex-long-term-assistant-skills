@@ -4,6 +4,17 @@
 
 None.
 
+## 7.4.4 - 2026-09-04
+
+### Added
+
+- Added versioned Release-title sourcing from the Chinese and English manifest localization fields, fail-closed title constraints, and job-output/environment-variable transport.
+- Added Draft-only/no-overwrite, bilingual asset/provenance, and independent historical-title-backfill boundary documentation.
+
+### Validation
+
+- V7.4.4 local package-only validation and logical-readonly review passed; remote CI, tag, Draft, and public Release readback remain pending. Historical title backfill for v7.3.0 through v7.4.3 is complete with individual online readback, while v7.2.0 and earlier were unchanged. The Codex CLI 0.153.2 compatibility boundary is unchanged.
+
 ## 7.4.3 - 2026-09-04
 
 ### Changed

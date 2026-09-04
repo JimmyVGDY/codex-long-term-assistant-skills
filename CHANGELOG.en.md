@@ -6,6 +6,17 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 None.
 
+## 7.4.4 - 2026-09-04
+
+### Added
+
+- Added versioned GitHub Release titles: Chinese comes from `manifest.json.release_name` and English from `locales/en/manifest-localization.json.release_name`; invalid titles fail closed, and the workflow transports the title through a job output and environment variable.
+- Added documentation for Draft-only creation, existing-Release no-overwrite, bilingual assets/provenance, and the independent online metadata boundary for historical title backfill.
+
+### Validation
+
+- V7.4.4 local package-only validation and logical-readonly review passed; remote CI, tag, Draft, and public Release readback remain pending. Historical title backfill for v7.3.0 through v7.4.3 is complete with individual online readback, while v7.2.0 and earlier were unchanged. The Codex CLI 0.153.2 compatibility boundary is unchanged.
+
 ## 7.4.3 - 2026-09-04
 
 ### Changed

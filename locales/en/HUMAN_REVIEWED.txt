@@ -283,4 +283,10 @@ scripts/restore-latest-backup.sh
 docs/releases/v7.4.3/AUDIT_REPORT.md
 docs/releases/v7.4.3/RELEASE_NOTES.md
 docs/releases/v7.4.3/VALIDATION_REPORT.md
+docs/releases/v7.4.4/AUDIT_REPORT.md
+docs/releases/v7.4.4/HISTORICAL_RELEASE_BACKFILL.json
+docs/releases/v7.4.4/RELEASE_NOTES.en.md
+docs/releases/v7.4.4/RELEASE_NOTES.md
+docs/releases/v7.4.4/VALIDATION_REPORT.md
+docs/releases/RELEASE_AUTOMATION.en.md
 skills/controlled-evolution-governance/references/task-outcome-event-v3.md

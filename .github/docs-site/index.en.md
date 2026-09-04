@@ -7,7 +7,7 @@ hide:
 <div class="landing-page">
   <section class="landing-hero" aria-labelledby="landing-title">
     <div class="landing-hero__copy">
-      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.4.3</p>
+      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.4.4</p>
       <h1 id="landing-title">Codex Cross-Project Engineering Assistant</h1>
       <p class="landing-lead">A verifiable, recoverable engineering workflow built around language-neutral backend, frontend, AI, and data-infrastructure Skills.</p>
       <div class="landing-actions" aria-label="Language selection">

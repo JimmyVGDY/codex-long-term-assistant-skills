@@ -1,6 +1,6 @@
 # V7.4 Current System Architecture and Security Boundaries
 
-> Status: `active`. This page describes the current V7.4.3 package architecture. Earlier design and release evidence is retained only for historical traceability.
+> Status: `active`. This page describes the current V7.4.4 package architecture. Earlier design and release evidence is retained only for historical traceability.
 
 ## 1. Layers
 
@@ -22,7 +22,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-The package version is V7.4.3. Names such as `TaskOutcomeEvent V3` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
+The package version is V7.4.4. Names such as `TaskOutcomeEvent V3` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
 
 ## 2. Skill routing
 
