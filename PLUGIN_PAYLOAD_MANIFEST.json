@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 182,
-  "payload_digest": "080e7122074bf51e6f8d56332f0e270c8373988f63f49c4a432d5ff8ff470f69",
+  "payload_digest": "42e441aedc157a94332ba8d99434d0caa3cdc2a01e6ad192eb77de8aca364dec",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -748,8 +748,8 @@
     },
     {
       "path": "hooks/cp_hook.cmd",
-      "sha256": "a2cbbcd30ca84028b8fce0a2de3205a89a7b3335b260cfdb1be836d3a68a91e9",
-      "size": 1395
+      "sha256": "db370fdf2b0309e06ca9cf66517d7d40f672a7c52d67a9ee0e4379c880c2c16d",
+      "size": 1398
     },
     {
       "path": "hooks/cp_hook.py",

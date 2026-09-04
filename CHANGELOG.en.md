@@ -17,7 +17,7 @@ None.
 
 - Legacy Event V2 and Budget V1 chains are verified against their original contracts before recursive safe projection. Legacy and current schemas use separate chains and cannot be mixed.
 - Reviewer state migration no longer reserializes historical runtime model fields, and release tooling adds privacy-boundary and abstract dispatch-policy gates.
-- Account reinstall no longer copies Python bytecode; Hooks, the worker, and account tools no longer mutate the managed Plugin cache, and SessionEnd signed-job creation, scanning, and movement support Windows long paths.
+- Account reinstall no longer copies Python bytecode; Hooks, the worker, and account tools no longer mutate the managed Plugin cache; SessionEnd signed-job creation, scanning, and movement support Windows long paths; and the Windows Hook is normalized to CRLF so checkout conversion cannot change the payload digest.
 
 ### Validation
 

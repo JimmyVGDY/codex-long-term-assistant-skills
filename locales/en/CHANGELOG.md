@@ -15,6 +15,7 @@ None.
 
 - Legacy Event V2 and Budget V1 chains remain verifiable read-only and are exposed only through safe projections; current and legacy schemas cannot share a chain.
 - Reviewer migration strips legacy runtime identity before persisting current state, and release tooling enforces the privacy boundary.
+- Account reinstall excludes Python bytecode, SessionEnd queue I/O supports Windows long paths, and the Windows Hook is normalized to CRLF so checkout conversion cannot change the payload digest.
 
 ### Validation
 

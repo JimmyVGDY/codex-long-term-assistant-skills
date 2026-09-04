@@ -17,7 +17,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 - 旧 Event V2 与 Budget V1 链先按原始合同验证，再执行递归安全投影；新旧 schema 使用独立链并拒绝混写。
 - Reviewer 旧状态迁移不再重新序列化历史运行时模型字段；发布脚本新增隐私边界和抽象派发策略门禁。
-- 账户重装不再复制 Python 字节码，Hook、worker 与账户工具不再污染受管 Plugin cache；SessionEnd 签名队列的原子创建、扫描与移动支持 Windows 长路径。
+- 账户重装不再复制 Python 字节码，Hook、worker 与账户工具不再污染受管 Plugin cache；SessionEnd 签名队列的原子创建、扫描与移动支持 Windows 长路径；Windows Hook 统一为 CRLF，载荷摘要不再受 checkout 换行归一化影响。
 
 ### Validation
 

@@ -11,11 +11,11 @@
 - 隐私边界静态检查覆盖活动代码、配置、当前文档和发布脚本。
 - 包级门禁通过 232 项仓库测试与 6 项运行时测试；严格本地化、语义检查和 payload 完整性通过。
 - Windows 账户在 Codex CLI 0.153.2 上完成 V7.4.2 到 V7.4.3 事务重装；Plugin 读回为 installed/enabled，10 个 Skill、7 个 Reviewer、6 个 Hook 均可用，无活动事务。
-- 源目录、账户 Marketplace 与版本化 cache 各有 182 个受管 payload 文件，三方摘要均为 `080e7122074bf51e6f8d56332f0e270c8373988f63f49c4a432d5ff8ff470f69`。
+- 源目录、账户 Marketplace 与版本化 cache 各有 182 个受管 payload 文件，三方摘要均为 `42e441aedc157a94332ba8d99434d0caa3cdc2a01e6ad192eb77de8aca364dec`。
 - 已安装 `cp_hook.cmd` 完成 5 条父子生命周期实测，SessionEnd 形成 `SEALED_CURRENT`，封印覆盖 5/5 记录；报告未读取或导出宿主模型信息、原始会话/任务 ID 或正文。
 - 实装发现并修复 payload 复制旧 Python 字节码与 Windows 长路径签名 job 失败；最终重装及 Hook 运行后 Marketplace/cache 均无 `.pyc` 残留。
 - 账户卸载 dry-run 通过受管哈希与备份清单检查；未执行实际卸载或回滚。
-- 内部链接审计覆盖 503 个 Markdown 文件、572 个链接，0 Finding、0 Warning。
+- 内部链接审计覆盖 514 个 Markdown 文件、572 个链接，0 Finding、0 Warning。
 - 中英文候选 ZIP 均完成两次构建摘要一致性验证，并分别通过归一化元数据和包内版本检查。
 - 实施后独立复审的阻塞根因已集中修复并由原 Finding Reviewer 复核关闭；最终结论为逻辑只读复审完成、无阻塞项。
 

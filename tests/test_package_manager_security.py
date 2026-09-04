@@ -215,6 +215,11 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertFalse((target/'legacy.pyc').exists())
         self.assertFalse((target/'legacy.pyo').exists())
 
+    def test_windows_hook_uses_consistent_crlf_bytes(self):
+        launcher=(ROOT/'hooks'/'cp_hook.cmd').read_bytes()
+        self.assertGreater(launcher.count(b'\r\n'),0)
+        self.assertNotIn(b'\n',launcher.replace(b'\r\n',b''))
+
     def test_plugin_tools_prefer_versioned_cache_over_stale_standalone_runtime(self):
         stale_runtime=self.codex/'runtime'/'cp_runtime'
         (stale_runtime/'evolution').mkdir(parents=True)
