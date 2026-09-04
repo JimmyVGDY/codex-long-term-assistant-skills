@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "version": "7.4.2",
+  "build_kind": "deterministic-bilingual-plugin-package",
+  "supported_locales": ["zh-CN", "en"],
+  "python_minimum": "3.11",
+  "ci_python_versions": ["3.11", "3.13"],
+  "codex_anchor": "0.153.2",
+  "stable_release_window_size": 11,
+  "compatibility_registry": "config/codex-compatibility-v1.json",
+  "compatibility_registry_digest": "e2a5e4a19040174c18bbcb66d39e6d349e33fe3c53f7996434a4939b94b0c8f1",
+  "install_state_schema_version": 3,
+  "task_outcome_event_schema": "2.0",
+  "review_state_schema_version": 6,
+  "delegation_budget_schema_version": "1.0",
+  "skill_count": 10,
+  "reviewer_count": 7,
+  "hook_count": 6,
+  "execution_authorization": "NONE",
+  "package_validation_is_host_acceptance": false
+}

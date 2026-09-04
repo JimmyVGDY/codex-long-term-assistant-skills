@@ -78,6 +78,11 @@ docs/releases/v7.4.1/BUILD_INFO.json
 docs/releases/v7.4.1/PACKAGE_VALIDATION.json
 docs/releases/v7.4.1/RELEASE_NOTES.md
 docs/releases/v7.4.1/VALIDATION_REPORT.md
+docs/releases/v7.4.2/AUDIT_REPORT.md
+docs/releases/v7.4.2/BUILD_INFO.json
+docs/releases/v7.4.2/PACKAGE_VALIDATION.json
+docs/releases/v7.4.2/RELEASE_NOTES.md
+docs/releases/v7.4.2/VALIDATION_REPORT.md
 config/agents.example.toml
 custom-agents/cp-review-compatibility-regression.toml
 custom-agents/cp-review-data-contract.toml

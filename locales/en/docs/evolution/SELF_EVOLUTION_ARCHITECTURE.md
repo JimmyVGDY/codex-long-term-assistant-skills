@@ -1,6 +1,6 @@
 # V7.4 Current Self-Observation and Controlled Evolution Architecture
 
-> Status: `active`. This page describes current V7.4.1 behavior. `5.1.0` in the Evolution component manifest and the default policy `v6.5-default-1` are internal contract versions.
+> Status: `active`. This page describes current V7.4.2 behavior. `5.1.0` in the Evolution component manifest and the default policy `v6.5-default-1` are internal contract versions.
 
 ## 1. Design Objective
 
@@ -180,7 +180,7 @@ The runtime stops immediately after detecting tampering or corruption and does n
 
 ## 10. Component contracts and package version
 
-The current V7.4.1 package continues to use these foundational execution contracts:
+The current V7.4.2 package continues to use these foundational execution contracts:
 
 ```text
 Project Profile / Project State

@@ -4,7 +4,7 @@ Chinese: [`INSTALLATION_RECOVERY.md`](https://jimmyvgdy.github.io/codex-long-ter
 
 ## Preconditions
 
-- Native Windows Codex CLI 0.153.0.
+- Native Windows Codex CLI 0.153.2.
 - Python 3.11 or later.
 - Extract the archive before running commands.
 - Supported managed upgrades: 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
@@ -24,14 +24,14 @@ codex plugin list --json
 
 Dry-run acceptance requires prior-version detection, a bounded backup, contained destinations, rejected link and reparse ancestors, preserved unknown files, and a complete rollback plan.
 
-Codex 0.153.0 requires top-level `interface.displayName` in a local Marketplace manifest. After backup, the upgrader removes the legacy `owner`, writes a controlled `interface.displayName`, preserves other unknown external fields, and proceeds only after `codex plugin list --json` recovers.
+Codex 0.153.2 requires top-level `interface.displayName` in a local Marketplace manifest. After backup, the upgrader removes the legacy `owner`, writes a controlled `interface.displayName`, preserves other unknown external fields, and proceeds only after `codex plugin list --json` recovers.
 
 Plugin acceptance requires:
 
 ```ini
 installed = true
 enabled = true
-version = 7.4.1
+version = 7.4.2
 ```
 
 SessionEnd keeps a three-second host timeout. The Hook only constructs a capped, body-free sanitized event and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe; it does not scan or write the event chain. Stable-identity validation, semantic deduplication, persistence, DPAPI decryption, v2 signed enqueue, and sealing run in the worker outside the Hook budget. Evolution rejects an unsealed `seal_required` chain.

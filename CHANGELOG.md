@@ -6,6 +6,22 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 暂无。
 
+## 7.4.2 - 2026-09-04
+
+### Changed
+
+- 将闭合兼容注册表锚点推进到 Codex CLI 0.153.2，活动窗口更新为 0.153.2 至 0.148.0 的 11 个稳定发行版。
+- 同步升级 Plugin 清单、安装器、双语构建、验证脚本、文档站和 Windows/Ubuntu 兼容矩阵；V7.4.1 历史证据保持不变。
+
+### Fixed
+
+- 固定 0.153.1/0.153.2 官方制品与规范化 CLI/Plugin 摘要，继续对未来版、预发布版和退出窗口版本失败关闭。
+- 增加模型切换后不复用无可信证明的运行证据，以及 `unified_exec` 不消费子 Agent 派发许可或预算的回归。
+
+### Validation
+
+- 0.153.1/0.153.2 Windows 隔离 CLI、Plugin 往返、合成 Hook 与制品校验通过；全窗口、真实账户、CI、复审和公开发布证据在 V7.4.2 报告中分层记录。
+
 ## 7.4.1 - 2026-09-03
 
 ### Added

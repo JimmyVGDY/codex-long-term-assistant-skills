@@ -6,6 +6,22 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 None.
 
+## 7.4.2 - 2026-09-04
+
+### Changed
+
+- Advanced the closed registry anchor to Codex CLI 0.153.2 and updated the eleven-stable-release window to 0.153.2 through 0.148.0.
+- Updated Plugin metadata, installer, bilingual builds, validators, documentation site, and the Windows/Ubuntu compatibility matrix while preserving V7.4.1 historical evidence.
+
+### Fixed
+
+- Pinned official 0.153.1/0.153.2 artifacts and normalized CLI/Plugin digests while retaining fail-closed behavior for future, prerelease, and exited versions.
+- Added regressions preventing stale untrusted runtime evidence after a model switch and preventing `unified_exec` from consuming sub-agent dispatch permits or budget.
+
+### Validation
+
+- Windows isolated CLI, Plugin round-trip, synthetic Hook, and artifact checks pass for 0.153.1/0.153.2. Full-window, real-account, CI, review, and public-release evidence is reported separately in the V7.4.2 reports.
+
 ## 7.4.1 - 2026-09-03
 
 ### Added

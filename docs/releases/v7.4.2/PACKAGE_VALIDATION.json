@@ -1,0 +1,18 @@
+{
+  "ok": false,
+  "status": "IN_PROGRESS",
+  "evidence_scope": "package-and-authorized-install-partial",
+  "version": "7.4.2",
+  "compatibility_registry_digest": "e2a5e4a19040174c18bbcb66d39e6d349e33fe3c53f7996434a4939b94b0c8f1",
+  "windows_local_compatibility_cells": 11,
+  "windows_local_compatibility_status": "PASS",
+  "package_test_count": 226,
+  "runtime_test_count": 6,
+  "deterministic_bilingual_build": "PASS",
+  "repository_link_audit": "PASS (494 Markdown files, 551 links)",
+  "postimplementation_independent_review": "PASS (logical-readonly, 3 reviewers, 0 blocking, 1 expected nonblocking delivery gate; runtime model evidence UNAVAILABLE)",
+  "user_level_force_reinstall": "PASS (Codex 0.153.2, schema 3, Plugin active, three-way payload match)",
+  "github_windows_ubuntu_matrix": "NOT_EVALUATED",
+  "real_host": "PASS (Codex 0.153.2 read-only parent/child journey and 7-event lifecycle; actual model and DPAPI seal UNAVAILABLE)",
+  "execution_authorization": "NONE"
+}
