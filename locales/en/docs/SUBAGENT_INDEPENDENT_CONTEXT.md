@@ -1,4 +1,4 @@
-# Codex Subagent Independent Context, Models, and Delegation Protocol
+# Codex Subagent Independent Context and Delegation Protocol
 
 ## Core Capabilities
 
@@ -15,19 +15,19 @@
 4. Unique responsibility, file/symbol/call-chain scope, and exclusions.
 5. Existing validation, failures, unverified items, and evidence index.
 6. Permitted/prohibited operations and isolation level.
-7. Requested model tier and result schema.
+7. Approved dispatch profile, permit reference, reserved units, and result schema.
 
 ## Return to the Main Session
 
 - Checked scope.
 - Consolidated root-cause findings.
 - Evidence levels, unverified items, and necessary validation.
-- Actual model, reasoning effort, and isolation state when available from trustworthy evidence.
+- Approved dispatch profile, reserved units, and isolation state.
 - Brief conclusion.
 
 Do not return the full parent session, complete diff, long raw logs, every file, or internal reasoning.
 
-## Model Routing
+## Dispatch Profiles
 
 ```text
 luna-low -> luna-medium -> terra-medium -> terra-high
@@ -37,6 +37,7 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 - Terra Medium: business semantics, multi-file logic, and ordinary specialist judgment.
 - Terra High: transactions, concurrency, security, irreversible migration, core state machines, and blocking conflicts.
 - Automatic flows never exceed Terra High and never use Sol, `xhigh`, `max`, or `ultra`.
+- Exact model requests are validated only transiently before dispatch; Agents do not read, infer, or report host runtime model identity.
 
 ## Harness Principle
 

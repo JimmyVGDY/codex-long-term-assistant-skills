@@ -1,6 +1,6 @@
 # Release evidence archive
 
-V7.4.2 is the current release. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
+V7.4.3 is the current release. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
 
 Chinese: [README.md](README.md)
 
@@ -10,6 +10,7 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.en.md) for v
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.4.3 | [Open](v7.4.3/RELEASE_NOTES.en.md) | [Open](v7.4.3/AUDIT_REPORT.en.md) | [Open](v7.4.3/VALIDATION_REPORT.en.md) | Local package validation, logically read-only independent review, and Windows account reinstall/lifecycle passed; remote CI, tag, and public Release not run | [JSON](v7.4.3/BUILD_INFO.json) | [JSON](v7.4.3/PACKAGE_VALIDATION.json) |
 | 7.4.2 | [Open](v7.4.2/RELEASE_NOTES.en.md) | [Open](v7.4.2/AUDIT_REPORT.en.md) | [Open](v7.4.2/VALIDATION_REPORT.en.md) | Windows/Ubuntu eleven-version matrix, package validation, account install, and Codex 0.153.2 native parent/child Agent acceptance pass | [JSON](v7.4.2/BUILD_INFO.json) | [JSON](v7.4.2/PACKAGE_VALIDATION.json) |
 | 7.4.1 | [Open](v7.4.1/RELEASE_NOTES.en.md) | [Open](v7.4.1/AUDIT_REPORT.en.md) | [Open](v7.4.1/VALIDATION_REPORT.en.md) | Windows/Ubuntu eleven-version matrix and Codex 0.153.0 native parent/child Agent acceptance passed | [JSON](v7.4.1/BUILD_INFO.json) | [JSON](v7.4.1/PACKAGE_VALIDATION.json) |
 | 7.4.0 | [Open](v7.4.0/RELEASE_NOTES.en.md) | [Open](v7.4.0/AUDIT_REPORT.en.md) | [Open](v7.4.0/VALIDATION_REPORT.en.md) | User-level Plugin verified on Codex 0.153.0 | [JSON](v7.4.0/BUILD_INFO.json) | [JSON](v7.4.0/PACKAGE_VALIDATION.json) |

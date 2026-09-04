@@ -6,6 +6,23 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 None.
 
+## 7.4.3 - 2026-09-04
+
+### Changed
+
+- Model governance now uses only the pre-dispatch approved profile, permit reference, reserved units, and outcome attribution. Host runtime model identity and reasoning effort are no longer read, inferred, stored, attested, billed, or used by release gates.
+- TaskOutcomeEvent advances to V3, DelegationBudget to V2, and Reviewer results to V4. Calibration and Evolution now compare outcome value per reserved unit between approved profiles.
+
+### Fixed
+
+- Legacy Event V2 and Budget V1 chains are verified against their original contracts before recursive safe projection. Legacy and current schemas use separate chains and cannot be mixed.
+- Reviewer state migration no longer reserializes historical runtime model fields, and release tooling adds privacy-boundary and abstract dispatch-policy gates.
+- Account reinstall no longer copies Python bytecode; Hooks, the worker, and account tools no longer mutate the managed Plugin cache, and SessionEnd signed-job creation, scanning, and movement support Windows long paths.
+
+### Validation
+
+- V7.4.3 reports local unit, bilingual, privacy, lifecycle, compatibility-chain, reproducible-build, independent-review, and Windows account-reinstall evidence separately. Remote CI, push, tag, and public Release still require explicit readback.
+
 ## 7.4.2 - 2026-09-04
 
 ### Changed

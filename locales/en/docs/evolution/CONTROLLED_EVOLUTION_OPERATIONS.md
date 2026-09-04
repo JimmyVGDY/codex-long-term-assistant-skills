@@ -1,6 +1,6 @@
 # V7.4 Controlled Evolution Operations Manual
 
-> Status: `active`. This page applies to V7.4.2. The Evolution component manifest still uses contract version `5.1.0`, and the default policy is `v6.5-default-1`; neither value is the current package version.
+> Status: `active`. This page applies to V7.4.3. The Evolution component manifest still uses contract version `5.1.0`, and the default policy is `v6.5-default-1`; neither value is the current package version.
 
 ## 1. When to Use It
 
@@ -36,7 +36,7 @@ Check:
 - whether unrelated historical records were included; and
 - whether each signal has enough independent evidence.
 
-Evidence sufficiency is evaluated per signal: model escalation requires actual-model coverage, negative outcomes require known terminal outcomes, routing deviation requires explicit routing observations, and Reviewer yield requires attributable results. Missing evidence for one signal does not unconditionally block another signal with sufficient evidence.
+Evidence sufficiency is evaluated per signal: dispatch-profile value regression requires outcome and unit-cost samples for adjacent approved profiles, negative outcomes require known terminal outcomes, routing deviation requires explicit routing observations, and Reviewer yield requires attributable results. Missing evidence for one signal does not unconditionally block another signal with sufficient evidence.
 
 ### Step 3: Persist Proposals
 

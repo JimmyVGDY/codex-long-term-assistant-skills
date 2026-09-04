@@ -1,6 +1,6 @@
 # 历版发行资料
 
-V7.4.2 是当前版本。下表中的其他版本仅用于发行追溯；其详情页会显示历史资料提示并从默认站内搜索排除，不能作为当前安装或操作说明。
+V7.4.3 是当前版本。下表中的其他版本仅用于发行追溯；其详情页会显示历史资料提示并从默认站内搜索排除，不能作为当前安装或操作说明。
 
 English: [README.en.md](README.en.md)
 
@@ -10,6 +10,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.4.3 | [查看](v7.4.3/RELEASE_NOTES.md) | [查看](v7.4.3/AUDIT_REPORT.md) | [查看](v7.4.3/VALIDATION_REPORT.md) | 本地包级验证、逻辑只读独立复审与 Windows 账户重装/生命周期通过；远程 CI、标签和公开 Release 尚未执行 | [JSON](v7.4.3/BUILD_INFO.json) | [JSON](v7.4.3/PACKAGE_VALIDATION.json) |
 | 7.4.2 | [查看](v7.4.2/RELEASE_NOTES.md) | [查看](v7.4.2/AUDIT_REPORT.md) | [查看](v7.4.2/VALIDATION_REPORT.md) | Windows/Ubuntu 11 版本矩阵、包级验证、账户安装与 Codex 0.153.2 真实父子 Agent 验收通过 | [JSON](v7.4.2/BUILD_INFO.json) | [JSON](v7.4.2/PACKAGE_VALIDATION.json) |
 | 7.4.1 | [查看](v7.4.1/RELEASE_NOTES.md) | [查看](v7.4.1/AUDIT_REPORT.md) | [查看](v7.4.1/VALIDATION_REPORT.md) | Windows/Ubuntu 11 版本矩阵与 Codex 0.153.0 真实父子 Agent 验收通过 | [JSON](v7.4.1/BUILD_INFO.json) | [JSON](v7.4.1/PACKAGE_VALIDATION.json) |
 | 7.4.0 | [查看](v7.4.0/RELEASE_NOTES.md) | [查看](v7.4.0/AUDIT_REPORT.md) | [查看](v7.4.0/VALIDATION_REPORT.md) | Codex 0.153.0 账户级 Plugin 已验证 | [JSON](v7.4.0/BUILD_INFO.json) | [JSON](v7.4.0/PACKAGE_VALIDATION.json) |

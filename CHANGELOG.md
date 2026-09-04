@@ -6,6 +6,23 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 暂无。
 
+## 7.4.3 - 2026-09-04
+
+### Changed
+
+- 模型治理改为只使用派发前批准档位、permit 引用、预留单位与结果归因；宿主实际模型身份和推理强度不再被读取、推断、保存、证明或用于计费与发布门禁。
+- TaskOutcomeEvent 升级为 V3、DelegationBudget 升级为 V2、Reviewer 结果升级为 V4；校准与 Evolution 改为比较批准档位的结果价值和单位成本。
+
+### Fixed
+
+- 旧 Event V2 与 Budget V1 链先按原始合同验证，再执行递归安全投影；新旧 schema 使用独立链并拒绝混写。
+- Reviewer 旧状态迁移不再重新序列化历史运行时模型字段；发布脚本新增隐私边界和抽象派发策略门禁。
+- 账户重装不再复制 Python 字节码，Hook、worker 与账户工具不再污染受管 Plugin cache；SessionEnd 签名队列的原子创建、扫描与移动支持 Windows 长路径。
+
+### Validation
+
+- 本地单元、双语、隐私、生命周期、兼容链、可复现构建、独立复审与 Windows 账户级重装证据在 V7.4.3 报告中分层记录；远程 CI、推送、标签和公开 Release 必须另行读回。
+
 ## 7.4.2 - 2026-09-04
 
 ### Changed

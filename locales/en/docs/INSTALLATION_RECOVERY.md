@@ -31,7 +31,7 @@ Plugin acceptance requires:
 ```ini
 installed = true
 enabled = true
-version = 7.4.2
+version = 7.4.3
 ```
 
 SessionEnd keeps a three-second host timeout. The Hook only constructs a capped, body-free sanitized event and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe; it does not scan or write the event chain. Stable-identity validation, semantic deduplication, persistence, DPAPI decryption, v2 signed enqueue, and sealing run in the worker outside the Hook budget. Evolution rejects an unsealed `seal_required` chain.

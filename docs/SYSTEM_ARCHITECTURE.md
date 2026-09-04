@@ -1,6 +1,6 @@
 # V7.4 当前系统架构与安全边界
 
-> 状态：`active`。本页描述 V7.4.2 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
+> 状态：`active`。本页描述 V7.4.3 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
 
 ## 1. 分层
 
@@ -13,7 +13,7 @@ Main Agent / 7 Reviewers
         ↓
 6 Lifecycle Hooks
         ↓
-TaskOutcomeEvent V2
+TaskOutcomeEvent V3
         ↓
 Project Context Runtime
         ↓
@@ -22,7 +22,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-包版本是 V7.4.2；`TaskOutcomeEvent V2`、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
+包版本是 V7.4.3；`TaskOutcomeEvent V3`、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
 
 ## 2. Skill 路由
 
@@ -37,7 +37,7 @@ Human Decision + Independent Implementation Task
 
 ## 3. 项目与数据隔离
 
-每条 TaskOutcomeEvent V2 至少绑定：
+每条 TaskOutcomeEvent V3 至少绑定：
 
 - `project_id`；
 - `repo_fingerprint`；
@@ -50,15 +50,7 @@ Human Decision + Independent Implementation Task
 
 `PreToolUse` 对自动子 Agent 的模型上限做前置检查；`SubagentStart` 和 `SubagentStop` 记录最小运行事实，其余 Hook 形成生命周期事件。Hook Guard 是工作流保护，不是平台级不可绕过安全边界。
 
-模型证据必须区分：
-
-```ini
-requested_model_policy = 请求配置是否符合上限
-runtime_model_evidence = 宿主是否提供可信实际模型证明
-diagnostic_model_observation = 仅用于诊断的旁证
-```
-
-请求 Luna 或 Terra 不等于实际运行模型已经得到宿主证明。没有可信宿主锚点时，`runtime_model_evidence` 保持 `UNAVAILABLE`。
+系统只验证派发前的批准档位、permit 和预算预占。宿主实际模型身份与推理强度不读取、不推断，也不进入生命周期、Reviewer、演进或发布证明。
 
 ## 5. Reviewer 隔离
 

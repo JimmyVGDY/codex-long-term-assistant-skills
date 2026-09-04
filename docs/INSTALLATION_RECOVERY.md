@@ -22,7 +22,7 @@ Windows 原生进程若继承 `/mnt/c/.../.codex`，必须转换为盘符路径�
 
 ## 标准升级
 
-在解压后的 V7.4.2 语言包根目录依次执行：
+在解压后的 V7.4.3 语言包根目录依次执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -34,7 +34,7 @@ codex plugin list --json
 
 dry-run 应明确显示：
 
-- 当前升级应读回已安装版本与 `to_version=7.4.2`；V7.4.1 升级路径必须被识别；
+- 当前升级应读回已安装版本与 `to_version=7.4.3`；V7.4.2 升级路径必须被识别；
 - schema 2 保持不变，旧 schema 1 才迁移到 2；
 - 新升级备份路径；
 - Marketplace payload、manifest 和 Plugin cache 分离目标；
@@ -44,7 +44,7 @@ dry-run 应明确显示：
 
 Codex 0.153.2 的本地 Marketplace manifest 必须包含顶层 `interface.displayName`。升级器会在备份后移除旧 `owner`、生成受控的 `interface.displayName`，并保留其他未知外部字段；`codex plugin list --json` 恢复正常后才继续激活。
 
-完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.4.2`，schema 3 宿主状态为 `HOST_COMPATIBLE`，并且 10 个 Skill、7 个 Reviewer、6 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。`java-backend-engineering`、`python-backend-ai-engineering`、`data-middleware-ai-infrastructure` 和此前废弃的 `vue-frontend-engineering` 不得残留；文件复制完成不构成 Plugin 成功状态。
+完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.4.3`，schema 3 宿主状态为 `HOST_COMPATIBLE`，并且 10 个 Skill、7 个 Reviewer、6 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。`java-backend-engineering`、`python-backend-ai-engineering`、`data-middleware-ai-infrastructure` 和此前废弃的 `vue-frontend-engineering` 不得残留；文件复制完成不构成 Plugin 成功状态。
 
 ## 事务与能力探测
 
@@ -109,8 +109,8 @@ python scripts\package_manager.py uninstall --scope user --mode plugin
 
 ```powershell
 python scripts\validate-package.py
-python scripts\build-release.py verify --archive ..\Codex-Skills-V7.4.2-zh-CN.zip --locale zh-CN
-python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.4.2.json --artifact ..\Codex-Skills-V7.4.2-zh-CN.zip
+python scripts\build-release.py verify --archive ..\Codex-Skills-V7.4.3-zh-CN.zip --locale zh-CN
+python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.4.3.json --artifact ..\Codex-Skills-V7.4.3-zh-CN.zip
 ```
 
 `validate-package.py` 调用当前 `validate-v73.py`，检查执行前后的 Git index、受管与未跟踪文件内容、删除状态和链接类型；`--output` 只能写到仓库外。其 `routing_host_observation` 固定为 `NOT_EVALUATED`，不能替代真实宿主路由验收。

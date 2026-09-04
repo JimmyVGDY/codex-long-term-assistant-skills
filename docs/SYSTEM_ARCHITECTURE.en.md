@@ -1,6 +1,6 @@
 # V7.4 Current System Architecture and Security Boundaries
 
-> Status: `active`. This page describes the current V7.4.2 package architecture. Earlier design and release evidence is retained only for historical traceability.
+> Status: `active`. This page describes the current V7.4.3 package architecture. Earlier design and release evidence is retained only for historical traceability.
 
 ## 1. Layers
 
@@ -13,7 +13,7 @@ Main Agent / 7 Reviewers
         ↓
 6 Lifecycle Hooks
         ↓
-TaskOutcomeEvent V2
+TaskOutcomeEvent V3
         ↓
 Project Context Runtime
         ↓
@@ -22,7 +22,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-The package version is V7.4.2. Names such as `TaskOutcomeEvent V2` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
+The package version is V7.4.3. Names such as `TaskOutcomeEvent V3` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
 
 ## 2. Skill routing
 
@@ -37,7 +37,7 @@ Logging, quality delivery, independent review, technical documentation, long-run
 
 ## 3. Project and data isolation
 
-Every TaskOutcomeEvent V2 binds at least:
+Every TaskOutcomeEvent V3 binds at least:
 
 - `project_id`;
 - `repo_fingerprint`;
@@ -53,12 +53,11 @@ Observation first verifies the hash chain or HMAC, checks `project_id + repo_fin
 Model evidence keeps three meanings separate:
 
 ```ini
-requested_model_policy = whether the requested configuration obeyed the ceiling
-runtime_model_evidence = whether the host supplied trusted actual-model evidence
-diagnostic_model_observation = diagnostic context only
+dispatch_policy_status = whether the pre-dispatch request obeyed the approved ceiling
+host_model_identity = not collected, inferred, persisted, or exported
 ```
 
-Requesting Luna or Terra does not prove which model actually ran. Without a trusted host anchor, `runtime_model_evidence` remains `UNAVAILABLE`.
+Only the approved dispatch profile, permit, and reserved cost participate in governance. Host runtime model identity and reasoning effort are outside the data contract.
 
 ## 5. Reviewer isolation
 

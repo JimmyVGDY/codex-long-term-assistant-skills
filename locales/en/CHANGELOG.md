@@ -4,6 +4,22 @@
 
 None.
 
+## 7.4.3 - 2026-09-04
+
+### Changed
+
+- Governance now stores only the approved dispatch profile, permit reference, reserved units, and outcome attribution. Host runtime model identity and reasoning effort are excluded from runtime, review, calibration, Evolution, and release gates.
+- TaskOutcomeEvent advances to V3, DelegationBudget to V2, and Reviewer results to V4.
+
+### Fixed
+
+- Legacy Event V2 and Budget V1 chains remain verifiable read-only and are exposed only through safe projections; current and legacy schemas cannot share a chain.
+- Reviewer migration strips legacy runtime identity before persisting current state, and release tooling enforces the privacy boundary.
+
+### Validation
+
+- Local and remote evidence is reported separately in the V7.4.3 validation and audit reports.
+
 ## 7.4.2 - 2026-09-04
 
 ### Changed

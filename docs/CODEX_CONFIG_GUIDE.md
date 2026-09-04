@@ -8,7 +8,7 @@
 - 未显式指定的子 Agent 可以使用宿主默认值；
 - 本包自动派发只允许 Luna Low、Luna Medium、Terra Medium 和 Terra High；
 - Reviewer TOML 不写死模型或推理强度，由受控调度策略按任务选择；
-- 配置只表达请求意图，实际模型仍需可信宿主证据。
+- 精确模型配置只在宿主派发适配器中短暂用于请求校验，不进入本包的持久状态或治理结论。
 
 ## 2. 配置文件位置
 
@@ -75,9 +75,9 @@ model_reasoning_effort = "high"
 
 ## 6. Plugin 与 Hook
 
-V7.4.2 使用冻结注册表适配 Codex CLI 0.153.2 与此前十个稳定发行版的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.4.2`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
+V7.4.3 使用冻结注册表适配 Codex CLI 0.153.2 与此前十个稳定发行版的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.4.3`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
 
-Plugin 通过 `hooks/hooks.json` 提供六个 Hook。Windows 入口 `hooks\cp_hook.cmd` 会选择可用的 Python 启动器，不需要额外创建 `python3.exe` 垫片。SessionEnd 的宿主预算保持三秒：Hook 只构造有上限且不含正文的净化事件，并以命令参数无等待派发 detached worker；不再扫描或写入事件链，也不再同步写管道。Worker 在 Hook 预算外完成稳定生命周期身份校验、语义去重、终态持久化、DPAPI 解密、v2 签名入队和封印。所有入口都会拒绝缺失稳定生命周期 ID 的事件，带 `seal_required` 的未封印链不得进入 Evolution。
+Plugin 通过 `hooks/hooks.json` 提供六个 Hook。Windows 入口 `hooks\cp_hook.cmd` 会选择可用的 Python 启动器，不需要额外创建 `python3.exe` 垫片。SessionEnd 的宿主预算保持三秒：Hook 只构造有上限且不含正文的净化 Event V3，并以命令参数无等待派发 detached worker；不再扫描或写入事件链，也不再同步写管道。Worker 在 Hook 预算外完成稳定生命周期身份校验、语义去重、终态持久化、签名入队和封印。所有入口都会拒绝缺失稳定生命周期 ID 的事件，带 `seal_required` 的未封印链不得进入 Evolution。
 
 ## 7. 自动模型上限
 
@@ -88,7 +88,7 @@ gpt-5.6-terra / medium
 gpt-5.6-terra / high
 ```
 
-自动流程对显式 Sol、`xhigh`、`max`、`ultra`、未知模型和超过 Terra High 的配置失败关闭。未显式指定自动模型时可以使用宿主默认值，但不能把请求值或诊断字段当作实际运行模型证明。
+自动流程对显式 Sol、`xhigh`、`max`、`ultra`、未知模型和超过 Terra High 的配置失败关闭。未显式指定自动模型时使用 Task Envelope 的默认批准档位计费；派发后不读取或推断宿主实际模型信息。
 
 ## 8. 重新加载与验证
 
@@ -98,6 +98,6 @@ gpt-5.6-terra / high
 2. `codex plugin list --json` 读回目标 Plugin 的安装、启用和版本；
 3. 新任务能够发现十个 V7.4 Skill 和七个 Reviewer；
 4. 小型只读复审没有无理由启动大量 Reviewer；
-5. 复审结果分别记录请求模型、实际模型证据与隔离等级。
+5. 复审结果只记录批准派发档位、permit 引用、预留单位、结果指标与隔离等级。
 
 完整安装、`doctor`、dry-run、verify 和恢复流程见[安装与恢复](INSTALLATION_RECOVERY.md)。

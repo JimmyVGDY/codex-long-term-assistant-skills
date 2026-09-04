@@ -56,8 +56,8 @@ Automatic flows prohibit `gpt-5.6-sol`, `xhigh`, `max`, and `ultra`. The automat
 
 - Use Luna for evidence extraction, test-output summaries, and state checks.
 - When a postrepair rereview is narrower than round one, keep or lower the tier.
-- A declared lower approved tier at or above `minimum_acceptable_profile` is `fallback_acceptable`; a tier below the minimum is `underpowered` and blocks normal completion.
-- An actual tier above the request or outside the four approved tiers is `mismatch` and must be acknowledged before closure.
+- Select the approved profile for a narrower post-repair review from its current risk; do not reuse host runtime information from the previous round.
+- When result quality is insufficient, redispatch through a controlled reason code rather than explaining the result from host runtime model identity.
 
 ## 5. Default Reviewer Routing
 
@@ -103,20 +103,17 @@ Specialist Reviewer TOML deliberately omits `model` and `model_reasoning_effort`
 
 `review_controller.py dispatch` records:
 
-- requested tier, model, and reasoning effort;
-- minimum acceptable tier, which defaults to the requested tier;
+- abstract approved profile, permit reference, and reserved units;
 - reason for `terra-high` escalation;
 - reason for redispatch against the same packet;
 - current isolation level and packet hash.
 
-Reviewer results record the declared runtime model and one state; a declaration is not trusted-host proof:
+Reviewer V4 results reject host model identity and reasoning-effort fields. They record only:
 
-- `declared_match`: the declaration matches the request;
-- `fallback_acceptable`: the declared tier is below the request but at or above the minimum;
-- `underpowered`: the declared tier is below the minimum and may only be recorded as `incomplete`;
-- `unverified`: runtime information cannot be confirmed;
-- `mismatch`: above the request, outside Luna/Terra, or an unapproved combination.
+- `dispatch_assignment`: approved profile, permit reference, reserved units, and approval basis;
+- outcome, findings, repair rounds, and isolation level;
+- SHA-256 evidence references finalized by the primary coordinator.
 
-A new v5 ledger must record `INLINE` or `DELEGATE` first. `route --decision INLINE` is the formal no-delegation gate: it creates no round and consumes no Reviewer budget. A redecision must append `DELEGATE` before the first round and cite the prior decision, new evidence, and a change reason. Migrated older ledgers retain the decision-free compatibility path. Reviewer v3 rejects fields outside its schema and uses `profile-weight-v1` (1/2/4/8) estimated cost; requested, declared-runtime, and cost-basis profiles remain separate. A Reviewer cannot finalize attribution; after repair validation, the primary coordinator must provide evidence through `finalize-calibration`. Missing cost is never treated as zero, and unfinalized attribution cannot drive low-yield classification.
+A new V7 ledger must record `INLINE` or `DELEGATE` first. `route --decision INLINE` is the formal no-delegation gate: it creates no round and consumes no Reviewer budget. A redecision must append `DELEGATE` before the first round and cite the prior decision, new evidence, and a change reason. Reviewer V4 rejects fields outside its schema and uses `profile-weight-v1` (1/2/4/8) to project the approved profile and reserved cost into calibration. A Reviewer cannot finalize attribution; after repair validation, the primary coordinator must provide evidence through `finalize-calibration`. Missing cost is never treated as zero, and unfinalized attribution cannot drive low-yield classification.
 
-The controller governs registered automatic dispatches only. It cannot stop a manually launched higher model outside the workflow. Final reports must state this boundary accurately.
+The controller governs registered automatic dispatches only. It does not read host model information outside the workflow or include that information in final reports.
