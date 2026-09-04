@@ -18,9 +18,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
-from .event_v2 import OwnerTokenLock, append_event, canonical_json, make_event
+from .event_v3 import OwnerTokenLock, append_event, canonical_json, make_event
 from .integrity import active_secret, seal_event_chain, secret_by_id
-from .atomic_io import replace_with_retry
+from .atomic_io import native_path, replace_with_retry
 
 JOB_SCHEMA = "1.0"
 JOB_IDENTITY_VERSION = 2
@@ -89,7 +89,7 @@ def _lexical_relative(path: Path, root: Path) -> Optional[Path]:
 
 def _validate_queue(queue: Path, project_id: str) -> Path:
     queue = Path(queue)
-    if queue.name != "seal-queue" or queue.parent.name != "feedback" or queue.parent.parent.name != project_id:
+    if queue.name != "seal-queue-v3" or queue.parent.name != "feedback" or queue.parent.parent.name != project_id:
         raise SealQueueError("QUEUE_PATH_INVALID")
     root = next((candidate for candidate in _managed_roots()
                  if _lexical_relative(queue, candidate) is not None), None)
@@ -109,7 +109,7 @@ def _validate_queue(queue: Path, project_id: str) -> Path:
             raise SealQueueError("QUEUE_REPARSE_REJECTED")
     if not _inside(queue, root):
         raise SealQueueError("QUEUE_ROOT_UNMANAGED")
-    event_path = queue.parent / "task-outcome-v2.jsonl"
+    event_path = queue.parent / "task-outcome-v3.jsonl"
     if event_path.exists() and _is_reparse(event_path):
         raise SealQueueError("EVENT_REPARSE_REJECTED")
     return event_path
@@ -154,13 +154,14 @@ def _verify(job: Mapping[str, Any], keyring_path: Optional[Path]) -> Dict[str, A
 
 
 def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(path.parent))
+    native = native_path(path)
+    native.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(native.parent))
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
             handle.flush(); os.fsync(handle.fileno())
-        replace_with_retry(temporary, path)
+        replace_with_retry(temporary, native)
     finally:
         try:
             os.unlink(temporary)
@@ -170,7 +171,7 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
 
 def _load(path: Path) -> Dict[str, Any]:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        value = json.loads(native_path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         raise SealQueueError("JOB_READ_INVALID") from exc
     if not isinstance(value, dict):
@@ -181,7 +182,13 @@ def _load(path: Path) -> Dict[str, Any]:
 def _job_file(queue: Path, state: str, job_name: str) -> Path:
     if state not in JOB_STATES or not JOB_NAME.fullmatch(job_name):
         raise SealQueueError("JOB_NAME_INVALID")
-    return queue / state / job_name
+    return native_path(queue / state / job_name)
+
+
+def _job_paths(queue: Path, state: str) -> list[Path]:
+    if state not in JOB_STATES:
+        raise SealQueueError("JOB_STATE_INVALID")
+    return [item for item in native_path(queue / state).glob("job-*.json") if JOB_NAME.fullmatch(item.name)]
 
 
 def enqueue_session_end(queue: Path, event: Mapping[str, Any], keyring_path: Optional[Path] = None) -> Dict[str, Any]:
@@ -190,15 +197,15 @@ def enqueue_session_end(queue: Path, event: Mapping[str, Any], keyring_path: Opt
     digest = _job_digest(validated, JOB_IDENTITY_VERSION)
     job_name = "job-" + digest + ".json"
     queue = Path(queue)
-    queue.mkdir(parents=True, exist_ok=True)
+    native_path(queue).mkdir(parents=True, exist_ok=True)
     for state in JOB_STATES:
-        (queue / state).mkdir(exist_ok=True)
+        native_path(queue / state).mkdir(exist_ok=True)
     with OwnerTokenLock(queue / "queue-state", timeout=0.35):
         existing = next((state for state in JOB_STATES if _job_file(queue, state, job_name).exists()), None)
         if existing:
             return {"ok": True, "enqueued": False, "state": existing, "job_ref": "sha256:" + digest}
         maximum = int(os.environ.get("CP_ASSISTANT_SEAL_QUEUE_MAX_JOBS", "10000"))
-        count = sum(1 for state in JOB_STATES for item in (queue / state).glob("job-*.json") if JOB_NAME.fullmatch(item.name))
+        count = sum(len(_job_paths(queue, state)) for state in JOB_STATES)
         if count >= maximum:
             raise SealQueueError("QUEUE_CAPACITY_EXCEEDED")
         _ring, secret, key_id = active_secret("event-hmac", keyring_path)
@@ -298,7 +305,7 @@ def _resign(job: Dict[str, Any], keyring_path: Optional[Path]) -> Dict[str, Any]
 
 
 def _recover_running(queue: Path, keyring_path: Optional[Path]) -> None:
-    for path in sorted((queue / "running").glob("job-*.json")):
+    for path in sorted(_job_paths(queue, "running")):
         if not JOB_NAME.fullmatch(path.name):
             continue
         try:
@@ -328,7 +335,7 @@ def process_queue(queue: Path, keyring_path: Optional[Path] = None, max_jobs: in
     for _ in range(max_jobs):
         with OwnerTokenLock(queue / "queue-state", timeout=2.0):
             _recover_running(queue, keyring_path)
-            pending = next(iter(sorted((queue / "pending").glob("job-*.json"))), None)
+            pending = next(iter(sorted(_job_paths(queue, "pending"))), None)
             if pending is None:
                 break
             if not JOB_NAME.fullmatch(pending.name):
@@ -389,7 +396,7 @@ def process_queue(queue: Path, keyring_path: Optional[Path] = None, max_jobs: in
 def launch_worker(plugin_root: Path, queue: Path, keyring_path: Optional[Path] = None,
                   bootstrap_event: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     script = Path(plugin_root) / "hooks" / "seal_worker.py"
-    command = [sys.executable, str(script), "--queue", str(queue), "--max-jobs", "100"]
+    command = [sys.executable, "-B", str(script), "--queue", str(queue), "--max-jobs", "100"]
     if keyring_path is not None:
         command.extend(["--keyring", str(keyring_path)])
     if bootstrap_event is not None:

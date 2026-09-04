@@ -37,15 +37,16 @@ def validate_package():
                 tomllib.loads(path.read_text(encoding='utf-8-sig'))
         run([sys.executable,'-m','compileall','-q',str(ROOT/'runtime'),str(ROOT/'scripts'),str(ROOT/'hooks')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'payload-integrity.py'),'verify','--root',str(ROOT),
-             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.4.2'],validation_env)
+             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.4.3'],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'semantic-lint.py')],validation_env)
+        run([sys.executable,str(ROOT/'scripts'/'privacy-boundary-lint.py')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'routing-eval.py'),'validate'],validation_env)
-        model_gate=run([sys.executable,str(ROOT/'scripts'/'model-gate-acceptance.py')],validation_env)
+        dispatch_policy=run([sys.executable,str(ROOT/'scripts'/'dispatch-policy-acceptance.py')],validation_env)
         tests=run([sys.executable,'-m','unittest','discover','-s','tests','-p','test_*.py'],validation_env)
         runtime_tests=run([sys.executable,'-m','unittest','discover','-s','runtime/tests','-p','test_*.py'],validation_env)
-        return model_gate,tests,runtime_tests
+        return dispatch_policy,tests,runtime_tests
 
-model_gate,tests,runtime_tests=run_with_worktree_guard(ROOT,validate_package)
+dispatch_policy,tests,runtime_tests=run_with_worktree_guard(ROOT,validate_package)
 
 def test_count(output):
     match=re.search(r'Ran\s+(\d+)\s+tests?',output)
@@ -54,10 +55,10 @@ def test_count(output):
 
 package_test_count=test_count(tests); runtime_test_count=test_count(runtime_tests)
 result={
- 'ok':True,'evidence_scope':'package-only','version':'7.4.2','skill_count':10,'reviewer_count':7,
+ 'ok':True,'evidence_scope':'package-only','version':'7.4.3','skill_count':10,'reviewer_count':7,
  'hooks':['UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'],
- 'task_outcome_event':'2.0','execution_authorization':'NONE','automatic_self_modification':False,
- 'requested_model_policy':'PASS','runtime_model_evidence':'UNAVAILABLE',
+ 'task_outcome_event':'3.0','execution_authorization':'NONE','automatic_self_modification':False,
+ 'dispatch_policy':'PASS','privacy_boundary':'PASS',
  'python_compatibility':{'minimum':'3.11','validated_runtime':platform.python_version()},
  'semantic_lint':'PASS','routing_case_schema':'PASS (45 cases)','plugin_payload_manifest':'PASS',
  'codex_compatibility_registry':'PASS (11 frozen stable releases)',
@@ -66,10 +67,10 @@ result={
  'worktree_side_effect_gate':'PASS',
  'multiprocess_fault_injection':'PASS (tests/test_v66_runtime_deepening.py)',
  'delayed_session_end_seal':'PASS (tests/test_v66_runtime_deepening.py)',
- 'reviewer_calibration_v3':'PASS (tests/test_model_routing_calibration_gates.py)',
+ 'reviewer_result_v4':'PASS (tests/test_model_routing_calibration_gates.py)',
  'minimum_profile_and_inline_delegate_gates':'PASS (tests/test_model_routing_calibration_gates.py)',
  'state_bound_plugin_runtime':'PASS (tests/test_package_manager_security.py)',
- 'delegation_budget_v1':'PASS (tests/test_v74_delegation_budget.py)',
+ 'delegation_budget_v2':'PASS (tests/test_v74_delegation_budget.py)',
  'delegation_hook_gate':'PASS (tests/test_v74_delegation_hook.py)',
  'delegation_calibration_replay':'PASS (tests/test_v74_delegation_calibration.py)',
  'event_archive_capacity_health':'PASS (tests/test_v66_runtime_deepening.py)',
@@ -77,7 +78,7 @@ result={
  'validation_evidence':{'package_test_count':package_test_count,'runtime_test_count':runtime_test_count,
    'package_test_command':'python -m unittest discover -s tests -p test_*.py',
    'runtime_test_command':'python -m unittest discover -s runtime/tests -p test_*.py',
-   'model_gate_command':'python scripts/model-gate-acceptance.py'}
+   'dispatch_policy_command':'python scripts/dispatch-policy-acceptance.py'}
 }
 serialized=json.dumps(result,ensure_ascii=False,indent=2)
 if output_path:

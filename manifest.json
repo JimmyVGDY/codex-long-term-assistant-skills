@@ -1,6 +1,6 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.4.2",
+  "version": "7.4.3",
   "release_name": "Codex 当前稳定版与前十个稳定发行版兼容",
   "generated_for": "Codex Plugin-first cross-project engineering assistant with an immutable eleven-stable-release host registry, isolated Plugin preflight, schema-3 host binding and drift detection, explicit Hook aliases, one root-task weighted delegation budget, and a Luna/Terra High automatic ceiling",
   "default_locale": "zh-CN",
@@ -317,7 +317,6 @@
     "controlled_evolution_cli": "scripts/evolution.py"
     ,"integrity_key_cli": "scripts/integrity-key.py"
     ,"event_seal_cli": "scripts/event-seal.py"
-    ,"host_fact_adapter": "runtime/cp_runtime/host_facts.py"
   },
   "subagent_context_model": {
     "independent_context": true,
@@ -513,6 +512,7 @@
     ]
   },
   "upgrade_from": [
+    "7.4.2",
     "7.4.1",
     "7.4.0",
     "7.3.0",
@@ -549,7 +549,7 @@
     "append_only_hash_chain_tamper_test": true,
     "proposal_hash_chain_tamper_test": true,
     "installed_evolution_tool_test": true,
-    "task_outcome_event_v2_tests": true,
+    "task_outcome_event_v3_tests": true,
     "hook_model_ceiling_tests": true,
     "project_repo_isolation_tests": true,
     "immutable_snapshot_tests": true,
@@ -569,15 +569,15 @@
     "release_attestation_tamper_test": true,
     "real_lifecycle_attestation": true,
     "neutral_language_gate": true
-    ,"host_fact_diagnostic_trust_tests": true
+    ,"host_model_identity_privacy_tests": true
     ,"detached_event_seal_rotation_tests": true
     ,"reviewer_calibration_identity_tests": true
-    ,"trusted_runtime_model_attestation_contract": true
+    ,"dispatch_policy_acceptance_contract": true
     ,"windows_spawn_multiprocess_fault_tests": true
     ,"forced_termination_lock_recovery_tests": true
     ,"power_loss_key_rotation_tests": true
     ,"delayed_session_end_signed_seal_queue": true
-    ,"reviewer_calibration_v2_tests": true
+    ,"reviewer_calibration_v4_tests": true
     ,"non_destructive_event_archive_tests": true
     ,"capacity_budget_and_cross_project_health_tests": true
   },
@@ -612,7 +612,7 @@
     ],
     "automatic_acceptance": false,
     "implementation_requires_new_task": true,
-    "task_outcome_event_schema": "2.0",
+    "task_outcome_event_schema": "3.0",
     "deterministic_hooks": [
       "UserPromptSubmit",
       "PreToolUse",
@@ -623,11 +623,8 @@
     ],
     "event_deduplication": "event_id",
     "reviewer_result_deduplication": "task_id + reviewer + result_id",
-    "host_session_evidence_trust": "DIAGNOSTIC_ONLY",
-    "requested_model_policy_field": "requested_model_policy",
-    "runtime_model_evidence_field": "runtime_model_evidence",
-    "diagnostic_model_observation_field": "diagnostic_model_observation",
-    "runtime_model_evidence_codex_0_153_0": "UNAVAILABLE_WITHOUT_HOST_ATTESTATION",
+    "host_model_identity_policy": "NOT_COLLECTED_NOT_INFERRED_NOT_EXPORTED",
+    "dispatch_policy_evidence": "PRE_DISPATCH_ONLY",
     "event_integrity_seal": "detached-keyring-hmac",
     "session_end_seal_mode": "signed-deferred-worker",
     "event_archive_mode": "non-destructive-immutable-copy",
@@ -643,7 +640,7 @@
       "lifecycle_completeness": true,
       "session_end_coverage": true,
       "terminal_outcome_coverage": true,
-      "actual_model_coverage": true,
+      "dispatch_profile_value_regression": true,
       "reviewer_attribution_coverage": true,
       "reviewer_cost_coverage": true,
       "unfinalized_calibration_excluded_from_yield": true,

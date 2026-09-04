@@ -6,15 +6,15 @@ from codex_compatibility import load_registry
 ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
-if manifest.get('version')!='7.4.2': errors.append('manifest 版本不是 7.4.2')
+if manifest.get('version')!='7.4.3': errors.append('manifest 版本不是 7.4.3')
 if manifest.get('user_skills_target')!='$HOME/.agents/skills': errors.append('账户 Skill 目标不是 $HOME/.agents/skills')
 plugin=json.loads((ROOT/'.codex-plugin'/'plugin.json').read_text(encoding='utf-8'))
-if plugin.get('version')!='7.4.2': errors.append('Plugin 版本不一致')
+if plugin.get('version')!='7.4.3': errors.append('Plugin 版本不一致')
 if manifest.get('default_locale')!='zh-CN' or manifest.get('supported_locales')!=['zh-CN','en']:
     errors.append('双语发行声明无效')
-for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','6.6.1','7.0.0','7.1.0','7.2.0','7.3.0','7.4.0','7.4.1'):
-    if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V7.4.2 升级声明' % previous)
-registry=load_registry(ROOT/'config'/'codex-compatibility-v1.json','7.4.2')
+for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','6.6.1','7.0.0','7.1.0','7.2.0','7.3.0','7.4.0','7.4.1','7.4.2'):
+    if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V7.4.3 升级声明' % previous)
+registry=load_registry(ROOT/'config'/'codex-compatibility-v1.json','7.4.3')
 registered=[item['version'] for item in registry['versions']]
 if manifest.get('codex_compatibility',{}).get('verified_versions')!=registered:
     errors.append('Manifest Codex 兼容窗口与注册表不一致')
@@ -46,15 +46,15 @@ for name in legacy:
         errors.append('源码残留旧 Skill: '+name)
 if not (ROOT/'skills'/'controlled-evolution-governance'/'SKILL.md').is_file(): errors.append('缺少受控演进治理 Skill')
 global_text=(ROOT/'global'/'AGENTS.md').read_text(encoding='utf-8')
-for phrase in ('project_id + repo_fingerprint','execution_authorization=NONE','gpt-5.6-terra + high','TaskOutcomeEvent V2'):
+for phrase in ('project_id + repo_fingerprint','execution_authorization=NONE','gpt-5.6-terra + high','TaskOutcomeEvent V3'):
     if phrase not in global_text: errors.append('全局规则缺少: '+phrase)
 manager=(ROOT/'scripts'/'package_manager.py').read_text(encoding='utf-8')
 for phrase in ('user_skills_home','plugin_marketplace_root','reject_link_ancestors','--scope','standalone','recover','transaction'):
     if phrase not in manager: errors.append('安装器缺少: '+phrase)
-for release_script in ('build-release.py','lifecycle-acceptance.py','model-gate-acceptance.py','seal-worker.py','event-archive.py','release-attestation.py','verify-release.py','payload-integrity.py','validate-v74.py','delegation-budget.py','delegation-calibration.py'):
+for release_script in ('build-release.py','lifecycle-acceptance.py','dispatch-policy-acceptance.py','privacy-boundary-lint.py','seal-worker.py','event-archive.py','release-attestation.py','verify-release.py','payload-integrity.py','validate-v74.py','delegation-budget.py','delegation-calibration.py'):
     if not (ROOT/'scripts'/release_script).is_file(): errors.append('缺少 V7.4 发布证明脚本: '+release_script)
 payload=json.loads((ROOT/'PLUGIN_PAYLOAD_MANIFEST.json').read_text(encoding='utf-8'))
-if payload.get('version')!='7.4.2' or payload.get('file_count',0)<1: errors.append('Plugin payload manifest 无效')
+if payload.get('version')!='7.4.3' or payload.get('file_count',0)<1: errors.append('Plugin payload manifest 无效')
 english_reviewers=ROOT/'locales'/'en'/'custom-agents'
 for reviewer in manifest.get('custom_agents',[]):
     candidate=english_reviewers/Path(reviewer['file']).name
@@ -65,9 +65,9 @@ for reviewer in manifest.get('custom_agents',[]):
         errors.append('英文 Reviewer 写死模型: '+reviewer['name'])
 for primary in ('README.md','CHANGELOG.md','global/AGENTS.md','docs/USER_GUIDE_V7.4.md',
                 'docs/INSTALLATION_RECOVERY.md','docs/CODEX_CONFIG_GUIDE.md',
-                'docs/releases/v7.4.2/RELEASE_NOTES.md',
-                'docs/releases/v7.4.2/VALIDATION_REPORT.md',
-                'docs/releases/v7.4.2/AUDIT_REPORT.md'):
+                'docs/releases/v7.4.3/RELEASE_NOTES.md',
+                'docs/releases/v7.4.3/VALIDATION_REPORT.md',
+                'docs/releases/v7.4.3/AUDIT_REPORT.md'):
     if not (ROOT/'locales'/'en'/primary).is_file(): errors.append('英文主界面缺失: '+primary)
 text_extensions={'.md','.json','.toml','.yaml','.py','.ps1','.sh','.cmd'}
 banned_natural_language={
@@ -99,4 +99,4 @@ for path in ROOT.rglob('*'):
 if errors:
     for e in errors: print('[FAIL]',e)
     raise SystemExit(1)
-print('[OK] V7.4.2 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、宿主漂移检测、统一委派预算、双语发行、模型上限和受控演进边界一致')
+print('[OK] V7.4.3 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致')

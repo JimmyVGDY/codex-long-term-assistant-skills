@@ -21,12 +21,12 @@ for %%P in (python.exe) do if not "%%~$PATH:P"=="" (
 )
 
 if defined LOCALAPPDATA if exist "%LOCALAPPDATA%\Programs\Python\Launcher\py.exe" (
-  "%LOCALAPPDATA%\Programs\Python\Launcher\py.exe" -3 "%CP_HOOK_SCRIPT%" "%~1"
+  "%LOCALAPPDATA%\Programs\Python\Launcher\py.exe" -3 -B "%CP_HOOK_SCRIPT%" "%~1"
   goto finish_python
 )
 
 for %%P in (py.exe) do if not "%%~$PATH:P"=="" (
-  "%%~$PATH:P" -3 "%CP_HOOK_SCRIPT%" "%~1"
+  "%%~$PATH:P" -3 -B "%CP_HOOK_SCRIPT%" "%~1"
   goto finish_python
 )
 
@@ -34,7 +34,7 @@ for %%P in (py.exe) do if not "%%~$PATH:P"=="" (
 exit /b 127
 
 :run_python
-"%CP_PYTHON_EXE%" "%CP_HOOK_SCRIPT%" "%~1"
+"%CP_PYTHON_EXE%" -B "%CP_HOOK_SCRIPT%" "%~1"
 
 :finish_python
 set "CP_HOOK_EXIT=%ERRORLEVEL%"

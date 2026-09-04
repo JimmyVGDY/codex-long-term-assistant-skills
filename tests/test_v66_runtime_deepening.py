@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import hmac
 import importlib.util
 import json
 import multiprocessing
@@ -14,7 +13,7 @@ import tempfile
 import time
 import unittest
 from unittest import mock
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,10 +23,9 @@ from cp_runtime.event_archive import archive_closed_segments, capacity_report, h
 from cp_runtime.event_v2 import OwnerTokenLock, append_event, event_segment_paths, make_event, read_event_chain, verify_event_chain
 from cp_runtime.evolution.observation import ObservationError, observe_project
 from cp_runtime.integrity import IntegrityError, init_keyring, rotate_key, seal_event_chain, verify_event_seals, verify_keyring
-from cp_runtime.model_evidence import verify_hook_runtime_evidence
 from cp_runtime.seal_queue import SealQueueError, enqueue_session_end, launch_worker, prepare_session_end, process_queue
 from cp_runtime import seal_queue as seal_queue_module
-from cp_runtime.atomic_io import replace_with_retry
+from cp_runtime.atomic_io import native_path, replace_with_retry
 
 
 def _event(path: str, index: int, project: str, repo: str) -> None:
@@ -87,8 +85,8 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         self.repo = "sha256:" + "6" * 64
         self.data = self.root / "data"
         self.project = self.data / self.project_id
-        self.event_file = self.project / "feedback" / "task-outcome-v2.jsonl"
-        self.queue = self.project / "feedback" / "seal-queue"
+        self.event_file = self.project / "feedback" / "task-outcome-v3.jsonl"
+        self.queue = self.project / "feedback" / "seal-queue-v3"
         self.keyring = self.root / "keyring.json"
         init_keyring(self.keyring)
         self.original_data = os.environ.get("CP_ASSISTANT_DATA")
@@ -108,46 +106,25 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         value.update(extra)
         return make_event(value)
 
-    def test_host_attestation_requires_trust_anchor_binding_and_freshness(self) -> None:
-        now = datetime.now(timezone.utc)
-        data = {"hook_event_name": "SubagentStart", "session_id": "S", "turn_id": "T",
-                "agent_id": "A", "actual_model": "gpt-5.6-luna", "actual_reasoning_effort": "low"}
-        unsigned = {"schema_version": "1.0", "issuer": "codex-host", "attestation_id": "A" * 32,
-                    "issued_at": (now - timedelta(seconds=1)).isoformat(),
-                    "expires_at": (now + timedelta(seconds=30)).isoformat(),
-                    "hook_event_name": "SubagentStart", "session_id": "S", "turn_id": "T",
-                    "agent_id": "A", "actual_model": "gpt-5.6-luna", "actual_reasoning_effort": "low"}
-        old = os.environ.pop("CP_ASSISTANT_HOST_ATTESTATION_KEY", None)
-        try:
-            data["host_runtime_attestation"] = dict(unsigned, signature="invalid")
-            self.assertEqual("UNAVAILABLE", verify_hook_runtime_evidence(data, "SubagentStart", now)["status"])
-            os.environ["CP_ASSISTANT_HOST_ATTESTATION_KEY"] = "host-test-anchor"
-            signature = hmac.new(b"host-test-anchor", json.dumps(unsigned, ensure_ascii=False, sort_keys=True,
-                                 separators=(",", ":")).encode("utf-8"), hashlib.sha256).hexdigest()
-            data["host_runtime_attestation"] = dict(unsigned, signature=signature)
-            self.assertEqual("VERIFIED", verify_hook_runtime_evidence(data, "SubagentStart", now)["status"])
-            changed = dict(data, actual_model="gpt-5.6-terra")
-            self.assertEqual("UNAVAILABLE", verify_hook_runtime_evidence(changed, "SubagentStart", now)["status"])
-            expired = dict(unsigned, issued_at=(now - timedelta(minutes=10)).isoformat(),
-                           expires_at=(now - timedelta(minutes=9)).isoformat())
-            expired["signature"] = hmac.new(b"host-test-anchor", json.dumps(expired, ensure_ascii=False,
-                sort_keys=True, separators=(",", ":")).encode("utf-8"), hashlib.sha256).hexdigest()
-            data["host_runtime_attestation"] = expired
-            self.assertEqual("UNAVAILABLE", verify_hook_runtime_evidence(data, "SubagentStart", now)["status"])
-        finally:
-            if old is None: os.environ.pop("CP_ASSISTANT_HOST_ATTESTATION_KEY", None)
-            else: os.environ["CP_ASSISTANT_HOST_ATTESTATION_KEY"] = old
+    def test_host_attestation_is_not_a_runtime_dependency(self) -> None:
+        hook = _load_hook("hook_privacy")
+        data = {"hook_event_name": "SubagentStart", "cwd": str(self.root),
+                "session_id": "S", "turn_id": "T", "agent_id": "A",
+                "host_runtime_attestation": {"model": "untrusted", "reasoning_effort": "high"}}
+        event = hook._event(data)
+        self.assertIsNotNone(event)
+        encoded = json.dumps(event, sort_keys=True)
+        self.assertNotIn("host_runtime_attestation", encoded)
+        self.assertNotIn("untrusted", encoded)
 
-    def test_model_switch_without_fresh_attestation_never_reuses_prior_runtime_evidence(self) -> None:
-        now = datetime.now(timezone.utc)
-        previous = {"hook_event_name": "SubagentStart", "session_id": "S", "turn_id": "T1",
-                    "agent_id": "A", "actual_model": "gpt-5.6-luna",
-                    "actual_reasoning_effort": "low"}
-        switched = dict(previous, turn_id="T2", actual_model="gpt-6-astra")
-        self.assertEqual("UNAVAILABLE", verify_hook_runtime_evidence(previous, "SubagentStart", now)["status"])
-        result = verify_hook_runtime_evidence(switched, "SubagentStart", now)
-        self.assertEqual("UNAVAILABLE", result["status"])
-        self.assertNotEqual("VERIFIED", result["status"])
+    def test_model_identity_input_never_changes_v3_event_contract(self) -> None:
+        baseline = self.base_event("SUBAGENT_STARTED", "PRIVACY-BASE")
+        injected = make_event({**self.base_event("SUBAGENT_STARTED", "PRIVACY-INJECT"),
+                               "actual_model": "gpt-invented",
+                               "actual_reasoning_effort": "ultra"})
+        self.assertNotIn("actual_model", injected)
+        self.assertNotIn("actual_reasoning_effort", injected)
+        self.assertEqual(set(baseline), set(injected))
 
     def test_true_spawn_multiprocess_append_and_rotate(self) -> None:
         context = multiprocessing.get_context("spawn")
@@ -219,8 +196,8 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         try:
             for index, point in enumerate(("AFTER_CLAIM", "AFTER_SEAL", "BEFORE_ACK")):
                 data = self.root / ("fault-data-%d" % index); project_id = "fault-project-%d" % index
-                project = data / project_id; event_file = project / "feedback" / "task-outcome-v2.jsonl"
-                queue = project / "feedback" / "seal-queue"; keyring = self.root / ("fault-keyring-%d.json" % index)
+                project = data / project_id; event_file = project / "feedback" / "task-outcome-v3.jsonl"
+                queue = project / "feedback" / "seal-queue-v3"; keyring = self.root / ("fault-keyring-%d.json" % index)
                 init_keyring(keyring); os.environ["CP_ASSISTANT_DATA"] = str(data)
                 append_event(event_file, make_event({"event_id": "OPEN-%d" % index, "event_type": "TURN_OPENED",
                     "session_id": "S", "turn_id": "T", "task_id": "T", "project_id": project_id,
@@ -447,6 +424,30 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 replace_with_retry(denied, target, timeout=0.2)
 
+    def test_windows_long_path_session_end_queue_is_persisted_and_sealed(self) -> None:
+        if os.name != "nt":
+            self.skipTest("Windows long-path contract")
+        # 中文：目录本身保持可创建，但完整 job 临时文件路径超过传统 MAX_PATH。
+        # English: Keep the directory creatable while the complete temporary job path exceeds legacy MAX_PATH.
+        long_data = self.root / ("account-evidence-" + "a" * 40) / ("lifecycle-" + "b" * 40)
+        project = long_data / self.project_id
+        event_file = project / "feedback" / "task-outcome-v3.jsonl"
+        queue = project / "feedback" / "seal-queue-v3"
+        previous = os.environ.get("CP_ASSISTANT_DATA")
+        os.environ["CP_ASSISTANT_DATA"] = str(long_data)
+        try:
+            prepare_session_end(queue, self.base_event("SESSION_ENDED", "LONG-PATH-END"), self.keyring)
+            report = process_queue(queue, self.keyring, 1)
+            self.assertTrue(report["ok"])
+            self.assertEqual(1, report["completed"])
+            self.assertEqual("SEALED_CURRENT", verify_event_seals(event_file, keyring_path=self.keyring)["seal_status"])
+        finally:
+            if previous is None:
+                os.environ.pop("CP_ASSISTANT_DATA", None)
+            else:
+                os.environ["CP_ASSISTANT_DATA"] = previous
+            shutil.rmtree(native_path(long_data), ignore_errors=True)
+
     def test_non_destructive_archive_capacity_and_privacy_health(self) -> None:
         previous = os.environ.get("CP_ASSISTANT_EVENT_SEGMENT_BYTES")
         os.environ["CP_ASSISTANT_EVENT_SEGMENT_BYTES"] = "256"
@@ -471,7 +472,7 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
 
     def test_queue_and_health_reject_lexical_reparse_boundaries(self) -> None:
         real_project = self.data / "real-project"
-        real_queue = real_project / "feedback" / "seal-queue"
+        real_queue = real_project / "feedback" / "seal-queue-v3"
         real_queue.mkdir(parents=True)
         self.queue.parent.mkdir(parents=True, exist_ok=True)
         try:
@@ -496,7 +497,7 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         append_event(self.event_file, self.base_event("TURN_OPENED", "HEALTH-GOOD"))
         malformed = self.data / "malformed-project" / "feedback"
         malformed.mkdir(parents=True)
-        (malformed / "task-outcome-v2.segment-000002.jsonl").write_text("{}\n", encoding="utf-8")
+        (malformed / "task-outcome-v3.segment-000002.jsonl").write_text("{}\n", encoding="utf-8")
         report = health_overview(self.data, self.keyring)
         self.assertEqual(2, report["project_count"])
         by_ref = {item["project_ref"]: item for item in report["projects"]}
@@ -509,8 +510,9 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         if os.name != "nt":
             self.skipTest("Windows command contract")
         plugin = self.root / "plugin root with spaces"
-        shutil.copytree(ROOT / "hooks", plugin / "hooks")
-        shutil.copytree(ROOT / "runtime", plugin / "runtime")
+        ignore_bytecode = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
+        shutil.copytree(ROOT / "hooks", plugin / "hooks", ignore=ignore_bytecode)
+        shutil.copytree(ROOT / "runtime", plugin / "runtime", ignore=ignore_bytecode)
         hooks = json.loads((ROOT / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
         env = dict(os.environ, PLUGIN_ROOT=str(plugin), CP_ASSISTANT_DATA=str(self.data),
                    CP_ASSISTANT_KEYRING_PATH=str(self.keyring),
@@ -540,6 +542,7 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         diagnostic = json.loads(failed.stderr.strip().splitlines()[-1])
         self.assertEqual("DEFERRED_OBSERVATION_FAILED", diagnostic["status"])
         self.assertFalse(diagnostic["contains_event_body"])
+        self.assertEqual([], list(plugin.rglob("*.pyc")))
 
     def test_archive_serializes_with_a_spawn_writer_and_preserves_canonical_chain(self) -> None:
         previous = os.environ.get("CP_ASSISTANT_EVENT_SEGMENT_BYTES")
@@ -589,11 +592,13 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         self.assertEqual(5, stats["adoption_reasons"]["REGRESSION_PREVENTION"])
         self.assertEqual(1.0, stats["regression_prevention_evidence_rate"])
 
-    def test_requested_model_policy_report_is_separate_from_runtime_evidence(self) -> None:
-        module = _load_script("model_gate_v66", "model-gate-acceptance.py")
+    def test_dispatch_policy_report_contains_no_runtime_identity(self) -> None:
+        module = _load_script("dispatch_policy_v743", "dispatch-policy-acceptance.py")
         report = module.evaluate()
-        self.assertEqual("PASS", report["requested_model_policy"])
-        self.assertEqual("NOT_EVALUATED", report["runtime_model_evidence"])
+        self.assertEqual("PASS", report["dispatch_policy_status"])
+        self.assertFalse(report["privacy"]["host_model_information_collected"])
+        self.assertFalse(report["privacy"]["host_model_information_exported"])
+        self.assertNotIn("runtime_model_evidence", report)
 
 
 if __name__ == "__main__":

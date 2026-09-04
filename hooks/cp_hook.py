@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：Codex V7.4 生命周期 Hook：模型上限、统一委派预算与最小元数据观测。
+"""中文：Codex V7.4.3 生命周期 Hook：派发策略、统一委派预算与最小元数据观测。
 
-English: Codex V6 lifecycle Hook for model-ceiling enforcement and minimal local metadata observation.
+English: Codex V7.4.3 lifecycle Hook for dispatch policy, delegation budget, and minimal metadata observation.
 """
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, Mapping
 
+sys.dont_write_bytecode = True
+
 # 中文：Codex 以 UTF-8 写入 Hook payload；Windows 原生 Python 默认使用活动 ANSI 代码页解码重定向 stdin，会破坏含中文 last_assistant_message 的 Stop payload。
 # English: Codex writes Hook payloads as UTF-8; native Windows Python otherwise decodes redirected stdin with the active ANSI code page and can corrupt Stop payloads containing Chinese text.
 if hasattr(sys.stdin, "reconfigure"):
@@ -25,12 +27,11 @@ if hasattr(sys.stderr, "reconfigure"):
 
 ROOT = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(ROOT / "runtime"))
-from cp_runtime.event_v2 import append_event, project_id_for, stable_repo_fingerprint  # noqa: E402
+from cp_runtime.event_v3 import append_event, project_id_for, stable_repo_fingerprint  # noqa: E402
 from cp_runtime.delegation_budget import (  # noqa: E402
     DelegationBudgetError, mark_completed, mark_started, profile_for, read_budget,
     reserve_budget,
 )
-from cp_runtime.model_evidence import verify_hook_runtime_evidence  # noqa: E402
 from cp_runtime.seal_queue import launch_worker  # noqa: E402
 
 ALLOWED_REASONING = {"", "none", "minimal", "low", "medium", "high"}
@@ -180,11 +181,11 @@ def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
             else:
                 try:
                     state = read_budget(Path(ledger_text).expanduser().resolve())
-                    profile, basis = profile_for(model, effort, state["default_model_profile"])
+                    profile, basis = profile_for(model, effort, state["default_dispatch_profile"])
                     reservation = reserve_budget(
                         Path(ledger_text).expanduser().resolve(), dispatch_key=dispatch_key,
-                        host_dispatch_id=host_dispatch_id, requested_profile=profile,
-                        request_basis=basis, role=role,
+                        host_dispatch_id=host_dispatch_id, approved_profile=profile,
+                        approval_basis=basis, role=role,
                     )
                     # 中文：仅把受控 reservation 标识留在本次内存 payload，绝不写回原始任务正文。
                     # English: Keep only the controlled reservation identifier in this in-memory payload.
@@ -210,14 +211,7 @@ def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
         return
     ledger = Path(ledger_text).expanduser().resolve()
     if hook_name == "SubagentStart":
-        runtime = verify_hook_runtime_evidence(data, hook_name)
-        actual_profile = ""
-        evidence = "unavailable"
-        if runtime["status"] == "VERIFIED":
-            actual_profile, _basis = profile_for(runtime["model"], runtime["reasoning_effort"], "luna-low")
-            evidence = "host-attested-hook-payload"
-        mark_started(ledger, reservation_id=reservation_id, agent_id=agent_id,
-                     actual_profile=actual_profile, runtime_evidence=evidence)
+        mark_started(ledger, reservation_id=reservation_id, agent_id=agent_id)
     else:
         outcome = str(_lookup(data, *HOOK_ALIASES["terminal_outcome"]) or "UNKNOWN").upper()
         mark_completed(ledger, reservation_id=reservation_id, outcome=outcome)
@@ -247,11 +241,6 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
             "project_id": project_id_for(fingerprint, cwd), "repo_fingerprint": fingerprint,
         }, "SESSION_END_IDENTITY_UNAVAILABLE")
         return None
-    # 中文：实际运行值需要外部配置的宿主信任锚；当前 Codex 的普通 Hook 字段不构成此证明。
-    # English: Actual runtime values require an external host trust anchor; ordinary current-Codex Hook fields do not provide that attestation.
-    runtime_evidence = verify_hook_runtime_evidence(data, hook)
-    model = runtime_evidence["model"] if runtime_evidence["status"] == "VERIFIED" else ""
-    effort = runtime_evidence["reasoning_effort"] if runtime_evidence["status"] == "VERIFIED" else ""
     terminal_value = _lookup(data, *HOOK_ALIASES["terminal_outcome"]) if event_type == "TASK_COMPLETED" else None
     terminal = str(terminal_value or "UNKNOWN").upper()
     metadata: Dict[str, Any] = {}
@@ -259,13 +248,24 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
         value = data.get(key)
         if value is not None:
             metadata[key] = value
-    metadata["runtime_model_evidence"] = runtime_evidence["status"]
-    metadata["runtime_model_evidence_reason"] = runtime_evidence["reason_code"]
     if event_type == "SESSION_ENDED":
         metadata["seal_required"] = True
-    if runtime_evidence.get("attestation_id"):
-        metadata["host_attestation_ref"] = "sha256:" + hashlib.sha256(
-            runtime_evidence["attestation_id"].encode("utf-8")).hexdigest()
+    approved_profile = ""
+    permit_ref = ""
+    reserved_units = 0
+    reservation_id = str(_lookup(data, *HOOK_ALIASES["reservation_id"]) or data.get("_cp_reservation_id") or "").strip()
+    ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
+    if reservation_id and ledger_text:
+        try:
+            budget = read_budget(Path(ledger_text).expanduser().resolve())
+            reservation = budget.get("reservations", {}).get(reservation_id) or {}
+            approved_profile = str(reservation.get("approved_profile") or reservation.get("requested_profile") or "")
+            reserved_units = int(reservation.get("charged_units") or reservation.get("units") or 0)
+            permit_ref = "sha256:" + hashlib.sha256(reservation_id.encode("utf-8")).hexdigest()
+        except (DelegationBudgetError, OSError, TimeoutError, TypeError, ValueError):
+            approved_profile = ""
+            permit_ref = ""
+            reserved_units = 0
     return {
         "event_type": event_type,
         "session_id": session_id,
@@ -275,10 +275,9 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
         "repo_fingerprint": fingerprint,
         "terminal_outcome": terminal,
         "terminal_outcome_source": "hook-payload" if terminal_value is not None and terminal != "UNKNOWN" else "unavailable",
-        "actual_model": model,
-        "actual_model_source": "host-attested-hook-payload" if model else "unavailable",
-        "actual_reasoning_effort": effort,
-        "actual_reasoning_effort_source": "host-attested-hook-payload" if effort else "unavailable",
+        "approved_dispatch_profile": approved_profile,
+        "dispatch_permit_ref": permit_ref,
+        "reserved_units": reserved_units,
         "metadata": metadata,
     }
 
@@ -297,7 +296,7 @@ def _data_path(event: Mapping[str, Any]) -> Path:
                 configured = drive + ":\\" + rest if rest else drive + ":\\"
         codex_home = Path(configured) if configured else (Path.home() / ".codex")
         root = codex_home / "project-context" / event["project_id"]
-    return root / "feedback" / "task-outcome-v2.jsonl"
+    return root / "feedback" / "task-outcome-v3.jsonl"
 
 
 def _sandbox_fallback_path(event: Mapping[str, Any]) -> Path:
@@ -308,11 +307,11 @@ def _sandbox_fallback_path(event: Mapping[str, Any]) -> Path:
     temp_root = Path(os.environ.get("TEMP") or os.environ.get("TMP") or tempfile.gettempdir())
     return (
         temp_root
-        / "codex-cp-assistant-v6"
+        / "codex-cp-assistant-v7"
         / "project-context"
         / str(event["project_id"])
         / "feedback"
-        / "task-outcome-v2.jsonl"
+        / "task-outcome-v3.jsonl"
     )
 
 
@@ -335,7 +334,7 @@ def _session_end_diagnostic(event: Mapping[str, Any], code: str) -> None:
 
 
 def _enqueue_and_launch(event_path: Path, event: Mapping[str, Any]) -> None:
-    queue = event_path.parent / "seal-queue"
+    queue = event_path.parent / "seal-queue-v3"
     if not any(str(event.get(key) or "") for key in ("session_id", "turn_id", "task_id")):
         _session_end_diagnostic(event, "SESSION_END_IDENTITY_UNAVAILABLE")
         return

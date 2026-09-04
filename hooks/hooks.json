@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" UserPromptSubmit\"",
             "timeout": 5
           }
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" PreToolUse\"",
             "timeout": 5
           }
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" SubagentStart\"",
             "timeout": 5
           }
@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" SubagentStop\"",
             "timeout": 5
           }
@@ -54,7 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" Stop\"",
             "timeout": 5
           }
@@ -66,7 +66,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" SessionEnd\"",
             "timeout": 3
           }

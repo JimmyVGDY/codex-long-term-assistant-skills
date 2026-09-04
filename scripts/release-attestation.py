@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""中文：创建并验证隐私有界的 V7.4 发行证明。
+"""中文：创建并验证隐私有界的 V7.4.3 发行证明。
 
 English: Create and verify a privacy-bounded V7.4 release attestation.
 """
@@ -26,7 +26,7 @@ from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "7.4.2"
+VERSION = "7.4.3"
 TARGET_CODEX_VERSION = "0.153.2"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 
@@ -73,50 +73,27 @@ def _plugin_item(plugin_list: Mapping[str, Any]) -> Dict[str, Any]:
     raise AttestationError("target Plugin was not found in Codex readback")
 
 
-def _model_gate_valid(report: Mapping[str, Any]) -> bool:
-    if report.get("ok") is not True or report.get("automatic_ceiling") not in {
-        "gpt-5.6-terra + high", "gpt-5.6-terra / high"
-    }:
+def _dispatch_policy_valid(report: Mapping[str, Any]) -> bool:
+    if report.get("ok") is not True or report.get("schema_version") != "2.0" \
+            or report.get("dispatch_policy_status") != "PASS" \
+            or report.get("automatic_ceiling_profile") != "terra-high":
         return False
-    allow_rows = report.get("allow_cases")
-    deny_rows = report.get("deny_cases")
-    if isinstance(allow_rows, list) and isinstance(deny_rows, list):
-        allowed = {(str(row.get("model") or ""), str(row.get("reasoning_effort") or "")): not bool(row.get("denied"))
-                   for row in allow_rows if isinstance(row, dict) and row.get("exit_code") == 0}
-        denied = {(str(row.get("model") or ""), str(row.get("reasoning_effort") or "")): bool(row.get("denied"))
-                  for row in deny_rows if isinstance(row, dict) and row.get("exit_code") == 0}
-        required_allow = {("gpt-5.6-luna", "low"), ("gpt-5.6-luna", "medium"),
-                          ("gpt-5.6-terra", "medium"), ("gpt-5.6-terra", "high")}
-        required_deny = {("gpt-5.6-terra", "xhigh"), ("gpt-5.6-sol", "high")}
-        return all(allowed.get(key) is True for key in required_allow) \
-            and all(denied.get(key) is True for key in required_deny)
     rows = report.get("cases")
-    if not isinstance(rows, list):
+    if not isinstance(rows, list) or not rows:
         return False
-    observed = {}
+    case_ids = set()
     for row in rows:
-        if not isinstance(row, dict) or row.get("pass") is not True or row.get("returncode") != 0:
+        if not isinstance(row, dict) or row.get("pass") is not True or row.get("exit_code") != 0:
             return False
-        observed[(str(row.get("model") or ""), str(row.get("reasoning_effort") or ""))] = str(row.get("actual") or "")
-    required = {
-        ("gpt-5.6-luna", "low"): "allow",
-        ("gpt-5.6-luna", "medium"): "allow",
-        ("gpt-5.6-terra", "medium"): "allow",
-        ("gpt-5.6-terra", "high"): "allow",
-        ("gpt-5.6-terra", "xhigh"): "deny",
-        ("gpt-5.6-sol", "low"): "deny",
-    }
-    return all(observed.get(key) == decision for key, decision in required.items())
-
-
-def _legacy_luna_model_proven(lifecycle: Mapping[str, Any]) -> bool:
-    if "gpt-5.6-luna" in lifecycle.get("actual_subagent_models", []):
-        return True
-    evidence = lifecycle.get("subagent_model_evidence") or {}
-    return isinstance(evidence, dict) and evidence.get("status") == "PASS" \
-        and evidence.get("expected_model") == "gpt-5.6-luna" \
-        and evidence.get("actual_model_fact_preserved") is True \
-        and evidence.get("hook_payload_match") is True
+        case_id = str(row.get("case_id") or "")
+        if not case_id or case_id in case_ids or row.get("observed") != row.get("expected"):
+            return False
+        if {"model", "reasoning_effort", "actual" + "_model", "runtime" + "_model"}.intersection(row):
+            return False
+        case_ids.add(case_id)
+    privacy = report.get("privacy") or {}
+    return privacy.get("host_model_information_collected") is False \
+        and privacy.get("host_model_information_exported") is False
 
 
 def _codex_version(version_evidence: Path | None = None) -> str:
@@ -145,14 +122,16 @@ def create_attestation(
     keyring_path: Path | None = None,
     event_file_path: Path | None = None,
     seal_file_path: Path | None = None,
-    model_gate_report_path: Path | None = None,
+    dispatch_policy_report_path: Path | None = None,
 ) -> Dict[str, Any]:
     plugin_item = _plugin_item(_load_object(plugin_list_path))
     lifecycle = _load_object(lifecycle_report_path)
     validation = _load_object(package_validation_path)
     reproducibility = _load_object(deterministic_witness_path)
     unified = _load_object(unified_verification_path)
-    model_gate = _load_object(model_gate_report_path) if model_gate_report_path is not None else None
+    if dispatch_policy_report_path is None:
+        raise AttestationError("dispatch-policy report is required")
+    dispatch_policy = _load_object(dispatch_policy_report_path)
     if lifecycle.get("ok") is not True or lifecycle.get("event_chain", {}).get("valid") is not True:
         raise AttestationError("lifecycle evidence is not valid")
     if validation.get("ok") is not True:
@@ -172,11 +151,13 @@ def create_attestation(
         raise AttestationError("lifecycle evidence does not contain the complete required sequence")
     if not lifecycle.get("project_id") or not lifecycle.get("repo_fingerprint"):
         raise AttestationError("lifecycle evidence lacks project/repository binding")
-    if model_gate is not None:
-        if unified.get("status", {}).get("model_gate") != "PASS" or not _model_gate_valid(model_gate):
-            raise AttestationError("installed PreToolUse model gate evidence is not valid")
-    elif not _legacy_luna_model_proven(lifecycle):
-        raise AttestationError("missing model gate report and trusted legacy lifecycle model evidence")
+    if unified.get("status", {}).get("dispatch_policy") != "PASS" \
+            or not _dispatch_policy_valid(dispatch_policy):
+        raise AttestationError("installed PreToolUse dispatch-policy evidence is not valid")
+    privacy = lifecycle.get("privacy") or {}
+    if privacy.get("host_model_information_read") is not False \
+            or privacy.get("host_model_information_exported") is not False:
+        raise AttestationError("lifecycle model-identity privacy boundary is not proven")
     if lifecycle.get("event_chain", {}).get("seal_status") != "SEALED_CURRENT":
         raise AttestationError("lifecycle event chain head is not sealed")
     evidence_paths = {
@@ -186,12 +167,11 @@ def create_attestation(
         "deterministic_build": deterministic_witness_path,
         "unified_verification": unified_verification_path,
     }
-    if model_gate_report_path is not None:
-        evidence_paths["model_gate"] = model_gate_report_path
+    evidence_paths["dispatch_policy"] = dispatch_policy_report_path
     if codex_version_evidence_path is not None:
         evidence_paths["codex_version"] = codex_version_evidence_path
     attestation: Dict[str, Any] = {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
         "package": PACKAGE,
         "version": VERSION,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -219,8 +199,8 @@ def create_attestation(
             "event_chain_valid": True,
             "event_chain_head": lifecycle.get("event_chain", {}).get("head"),
             "event_seal_status": lifecycle.get("event_chain", {}).get("seal_status"),
-            "actual_subagent_models": lifecycle.get("actual_subagent_models", []),
-            "subagent_model_evidence": lifecycle.get("subagent_model_evidence", {}),
+            "host_model_information_read": False,
+            "host_model_information_exported": False,
             "raw_identifiers_exported": False,
         },
         "validation": {
@@ -228,13 +208,13 @@ def create_attestation(
             "deterministic_build": "PASS",
             "plugin_host_end_to_end": "PASS",
             "real_lifecycle": "PASS",
-            "model_gate": "PASS" if model_gate is not None else "LEGACY_PASS",
+            "dispatch_policy": "PASS",
             "unified_release_verification": "PASS",
             "payload_identity": "PASS",
         },
         "security": {
             "execution_authorization": "NONE",
-            "automatic_agent_ceiling": "gpt-5.6-terra + high",
+            "automatic_dispatch_ceiling_profile": "terra-high",
             "prompt_or_response_exported": False,
             "absolute_evidence_paths_exported": False,
         },
@@ -358,7 +338,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.4 release attestation")
+    parser = argparse.ArgumentParser(description="V7.4.3 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)
@@ -367,7 +347,7 @@ def main() -> None:
     create_parser.add_argument("--package-validation", required=True)
     create_parser.add_argument("--deterministic-witness", required=True)
     create_parser.add_argument("--unified-verification", required=True)
-    create_parser.add_argument("--model-gate-report")
+    create_parser.add_argument("--dispatch-policy-report", required=True)
     create_parser.add_argument("--codex-version-evidence")
     create_parser.add_argument("--keyring")
     create_parser.add_argument("--event-file")
@@ -392,7 +372,7 @@ def main() -> None:
             Path(arguments.keyring) if arguments.keyring else None,
             Path(arguments.event_file) if arguments.event_file else None,
             Path(arguments.seal_file) if arguments.seal_file else None,
-            Path(arguments.model_gate_report) if arguments.model_gate_report else None,
+            Path(arguments.dispatch_policy_report),
         )
         output = Path(arguments.output)
         output.parent.mkdir(parents=True, exist_ok=True)

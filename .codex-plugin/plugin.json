@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.4.2",
-  "description": "跨项目长期技术助手 V7.4.2：兼容 Codex 0.153.2 与此前十个稳定发行版，并提供隔离预演、宿主绑定、漂移检测和统一加权预算。",
+  "version": "7.4.3",
+  "description": "跨项目长期技术助手 V7.4.3：以批准派发档位和结果归因治理预算，不采集宿主实际模型身份。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

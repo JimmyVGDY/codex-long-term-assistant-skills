@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.4.2"
+VERSION = "7.4.3"
 MARKETPLACE = "cp-assistant-local"
 COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, VERSION)
@@ -805,12 +805,20 @@ def _merged_marketplace_manifest(existing: Any, marketplace_profile: Optional[Ma
     return data
 
 
+def _copy_plugin_payload_tree(src: Path, dst: Path) -> None:
+    shutil.copytree(
+        _io_path(src),
+        _io_path(dst),
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+    )
+
+
 def plugin_payload_source(tmp: Path) -> Path:
     name = PACKAGE
     out = tmp / name
     out.mkdir(parents=True)
     for rel in (".codex-plugin", "skills", "hooks", "runtime"):
-        shutil.copytree(_io_path(ROOT / rel), _io_path(out / rel))
+        _copy_plugin_payload_tree(ROOT / rel, out / rel)
     shutil.copy2(_io_path(ROOT / PAYLOAD_MANIFEST_NAME), _io_path(out / PAYLOAD_MANIFEST_NAME))
     payload_report(out)
     return out
