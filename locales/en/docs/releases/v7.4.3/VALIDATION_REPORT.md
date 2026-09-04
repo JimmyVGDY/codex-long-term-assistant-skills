@@ -9,9 +9,9 @@ Status: local release-candidate validation and Windows account-level reinstallat
 - Lifecycle Acceptance V2 checks event order, correlation, project isolation, chain and seal status, plus the absence of host model identity in its output.
 - Dispatch-policy acceptance covers allowed profiles, the Terra High automatic ceiling, and fail-closed rejection above the ceiling while emitting only abstract policy conclusions.
 - Privacy-boundary lint covers active code, configuration, current documentation, and release scripts.
-- Package gates passed 232 repository tests and 6 runtime tests; strict localization, semantic checks, and payload integrity passed.
+- Package gates passed 233 repository tests and 6 runtime tests; strict localization, semantic checks, and payload integrity passed.
 - A Windows account completed a transactional V7.4.2-to-V7.4.3 reinstall on Codex CLI 0.153.2. Plugin readback reports installed/enabled, with ten Skills, seven Reviewers, six Hooks, and no live transaction.
-- The source, account Marketplace, and versioned cache each contain 182 managed payload files with the same digest: `42e441aedc157a94332ba8d99434d0caa3cdc2a01e6ad192eb77de8aca364dec`.
+- The source, account Marketplace, and versioned cache each contain 182 managed payload files with the same digest: `a6d083a6bef6a83beacf1d9c27882fe70a0e0b2682fc76e7dc0390f5328d72af`.
 - The installed `cp_hook.cmd` completed a five-event parent/child lifecycle. SessionEnd reached `SEALED_CURRENT` over all five records, and the report read or exported no host model information, raw session/task IDs, prompts, or responses.
 - Account validation found and repaired stale Python-bytecode copying and a Windows long-path signed-job failure. After the final reinstall and Hook run, neither the Marketplace nor the cache contained `.pyc` files.
 - Account uninstall dry-run passed managed-hash and backup-manifest checks; no real uninstall or rollback was performed.

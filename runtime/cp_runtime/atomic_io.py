@@ -5,6 +5,7 @@ English: Bounded atomic file publication helpers.
 from __future__ import annotations
 
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -18,7 +19,7 @@ def native_path(path: str | Path) -> Path:
     English: Return an absolute, long-path-safe path for Windows atomic file operations.
     """
     absolute = os.path.abspath(os.fspath(path))
-    if os.name == "nt" and not absolute.startswith("\\\\?\\"):
+    if sys.platform == "win32" and not absolute.startswith("\\\\?\\"):
         absolute = "\\\\?\\" + absolute
     return Path(absolute)
 

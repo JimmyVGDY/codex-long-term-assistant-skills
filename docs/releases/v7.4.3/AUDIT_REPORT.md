@@ -13,6 +13,6 @@
 
 修复后增加了显式 legacy-reader 范围扫描、V1 完整状态机验证、旧绑定写入前失败关闭、V2/V3 分链健康与归档汇总，以及对应回归测试。第二轮冻结包 `14e00a87e1fb509b411ccba8866ad351c52e8b3b054f94f2e430ca8c0a8f3d63` 关闭前三项；兼容 Reviewer 随后发现旧封印队列健康统计遗漏，修复包 `152e3d1d7cd5c671257e9d5d5795e3fd67ad9a5b2e0ae83e6bca827e0c312d34` 由原 Finding Reviewer 复核通过。
 
-账户级重装随后发现两个冻结包外根因：源码测试字节码会进入 Plugin payload，以及 Windows 深目录下签名 job 的临时路径超过传统 MAX_PATH。修复后，独立交付 Reviewer 对 payload 排除规则、Hook/worker/账户工具不写 bytecode、队列长路径创建/读写/枚举/原子替换和回归覆盖做逻辑只读增量复审，结论为 PASS、无阻塞或非阻塞发现。Reviewer 未重复运行测试或账户实装；这些证据由主流程的 232+6 测试、Windows 长路径回归、账户生命周期 5/5 封印和卸载 dry-run 分别提供。
+账户级重装随后发现两个冻结包外根因：源码测试字节码会进入 Plugin payload，以及 Windows 深目录下签名 job 的临时路径超过传统 MAX_PATH。修复后，独立交付 Reviewer 对 payload 排除规则、Hook/worker/账户工具不写 bytecode、队列长路径创建/读写/枚举/原子替换和回归覆盖做逻辑只读增量复审，结论为 PASS、无阻塞或非阻塞发现。Reviewer 未重复运行测试或账户实装；这些证据由主流程的 233+6 测试、Windows 长路径回归、账户生命周期 5/5 封印和卸载 dry-run 分别提供。
 
 最终结论为“逻辑只读复审完成，无阻塞项”。不宣称系统级隔离；审查不读取或报告宿主具体模型信息。
