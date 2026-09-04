@@ -136,8 +136,8 @@ def cmd_feedback(args: argparse.Namespace) -> None:
         "task_id": args.task_id,
         "project_id": args.project_id,
         "complexity": args.complexity,
-        "recommended_model": args.recommended_model,
-        "actual_model": args.actual_model,
+        "approved_dispatch_profile": args.approved_dispatch_profile,
+        "reserved_units": args.reserved_units,
         "recommended_reviewers": args.recommended_reviewers,
         "actual_reviewers": args.actual_reviewers,
         "blocking_findings": args.blocking_findings,
@@ -280,8 +280,8 @@ def main() -> None:
     item.add_argument("--task-id", required=True)
     item.add_argument("--project-id", required=True)
     item.add_argument("--complexity", default="L1")
-    item.add_argument("--recommended-model", default="")
-    item.add_argument("--actual-model", default="")
+    item.add_argument("--approved-dispatch-profile", default="")
+    item.add_argument("--reserved-units", type=int, default=0)
     item.add_argument("--recommended-reviewers", type=int, default=0)
     item.add_argument("--actual-reviewers", type=int, default=0)
     item.add_argument("--blocking-findings", type=int, default=0)

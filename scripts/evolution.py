@@ -10,6 +10,8 @@ import re
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
+
 
 def _runtime_candidates(package_home: Path):
     """中文：Plugin 模式只使用状态绑定缓存；源码/standalone 使用本地 runtime。

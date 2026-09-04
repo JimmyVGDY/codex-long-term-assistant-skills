@@ -14,11 +14,11 @@ description: Use only for cross-task retrospectives, observation governance, mod
 7. Reviewer, Explorer, and Worker share one root-task budget and automatic routing stops at Terra High. Runtime model status remains `UNAVAILABLE` unless a trusted host attestation is correlated to the Hook event.
 
 ```text
-Lifecycle Hooks -> TaskOutcomeEvent V2 -> task aggregation
+Lifecycle Hooks -> TaskOutcomeEvent V3 -> task aggregation
 -> project isolation -> Snapshot -> Assessment -> Proposal
 -> human decision -> separate implementation task -> normal validation and delivery gates
 ```
 
 Use Luna for mechanical aggregation and Terra only for material cross-task conflicts or high-risk policy decisions. Higher model effort cannot repair poor evidence quality.
 
-DelegationBudget calibration consumes only parent-finalized, project-bound samples with trusted runtime-profile evidence. Insufficient adjacent-tier samples require no change, and every proposal retains `execution_authorization=NONE`.
+DelegationBudget calibration consumes only parent-finalized, project-bound samples with approved-profile attribution and cost-basis units. Insufficient adjacent-tier samples require no change, and every proposal retains `execution_authorization=NONE`.

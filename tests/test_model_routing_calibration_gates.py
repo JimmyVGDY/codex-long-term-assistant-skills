@@ -51,32 +51,28 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
                       "--scope", "契约", "--model-profile", "terra-medium",
                       "--minimum-acceptable-profile", minimum)
 
-    def write_result(self, runtime_profile: str) -> Path:
-        runtime = {
-            "luna-low": ("gpt-5.6-luna", "low"),
-            "luna-medium": ("gpt-5.6-luna", "medium"),
-            "terra-medium": ("gpt-5.6-terra", "medium"),
-        }[runtime_profile]
+    def write_result(self, approved_profile: str = "terra-medium") -> Path:
         result = {
-            "schema_version": 3,
+            "schema_version": 4,
             "result_id": "RVR_" + hashlib.sha256(b"boundary-one|task-one|post|1|reviewer-one|").hexdigest(),
             "reviewer": "reviewer-one", "task_id": "task-one", "review_phase": "post", "review_round": 1,
             "boundary_id": "boundary-one", "packet_sha256": "", "status": "pass",
             "isolation_level": "logical-readonly",
-            "model_assignment": {
-                "requested_profile": "terra-medium", "requested_model": "gpt-5.6-terra",
-                "requested_reasoning_effort": "medium", "minimum_acceptable_profile": "luna-medium",
-                "runtime_model": runtime[0], "runtime_reasoning_effort": runtime[1],
-                "status": "unverified", "runtime_evidence_level": "declared",
-                "runtime_evidence_source": "reviewer-result",
+            "dispatch_assignment": {
+                "approved_profile": approved_profile,
+                "minimum_acceptable_profile": "luna-medium",
+                "dispatch_permit_ref": "",
+                "policy_status": "legacy-unbound",
+                "cost_basis_units": {"luna-low": 1, "luna-medium": 2, "terra-medium": 4}[approved_profile],
             },
-            "task_difficulty": "HIGH", "duration_ms": 12, "estimated_cost_units": 4,
+            "task_difficulty": "HIGH", "duration_ms": 12,
+            "estimated_cost_units": {"luna-low": 1, "luna-medium": 2, "terra-medium": 4}[approved_profile],
             "cost_formula_version": "profile-weight-v1", "calibration_finalized": False,
             "accepted": 0, "rejected": 0, "duplicate": 0, "repaired": 0,
             "regressions_prevented": 0, "checked_scope": [], "findings": [],
             "unverified_items": [], "summary": "完成",
         }
-        path = self.root / (runtime_profile + ".json")
+        path = self.root / (approved_profile + ".json")
         path.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
         return path
 
@@ -89,21 +85,20 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
             encoding="utf-8", errors="replace", capture_output=True,
         )
 
-    def test_minimum_profile_allows_declared_acceptable_fallback_and_projects_cost(self) -> None:
+    def test_approved_profile_projects_cost_without_runtime_identity(self) -> None:
         self.init_and_dispatch()
-        result_path = self.write_result("luna-medium")
+        result_path = self.write_result("terra-medium")
         self.run_tool(CONTROLLER, "result", "--review-dir", str(self.review),
                       "--phase", "post", "--round", "1", "--reviewer", "reviewer-one",
                       "--status", "pass", "--summary", "通过", "--result-file", str(result_path))
         recorded = self.state()["phases"]["post"]["rounds"]["1"]["results"]["reviewer-one"]
-        self.assertEqual("fallback_acceptable", recorded["model_assignment"]["status"])
-        self.assertEqual("declared", recorded["model_assignment"]["runtime_evidence_level"])
+        self.assertEqual("terra-medium", recorded["dispatch_assignment"]["approved_profile"])
+        self.assertNotIn("runtime_model", json.dumps(recorded))
         ledger = [json.loads(line) for line in (self.review / "review-results.jsonl").read_text(encoding="utf-8").splitlines()]
         self.assertEqual(1, len(ledger))
         projected = ledger[0]["reviewer_results"][0]
         self.assertEqual(4.0, projected["estimated_cost_units"])
-        self.assertEqual("terra-medium", projected["requested_model_profile"])
-        self.assertEqual("luna-medium", projected["declared_runtime_profile"])
+        self.assertEqual("terra-medium", projected["approved_dispatch_profile"])
         self.assertEqual("terra-medium", projected["cost_basis_profile"])
         self.assertFalse(projected["calibration_finalized"])
         self.run_tool(CONTROLLER, "finalize-calibration", "--review-dir", str(self.review),
@@ -126,7 +121,7 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         self.run_tool(CONTROLLER, "sync-calibration", "--review-dir", str(self.review))
         self.run_tool(CONTROLLER, "validate", "--review-dir", str(self.review))
 
-    def test_underpowered_pass_is_rejected_without_state_or_ledger_side_effects(self) -> None:
+    def test_forged_approved_profile_is_rejected_without_side_effects(self) -> None:
         self.init_and_dispatch()
         result_path = self.write_result("luna-low")
         before = (self.review / "review-state.json").read_bytes()
@@ -135,17 +130,7 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
                       "--status", "pass", "--summary", "错误通过", "--result-file", str(result_path), ok=False)
         self.assertEqual(before, (self.review / "review-state.json").read_bytes())
         self.assertFalse((self.review / "review-results.jsonl").exists())
-        incomplete = json.loads(result_path.read_text(encoding="utf-8"))
-        incomplete["status"] = "incomplete"
-        result_path.write_text(json.dumps(incomplete, ensure_ascii=False), encoding="utf-8")
-        self.run_tool(CONTROLLER, "result", "--review-dir", str(self.review),
-                      "--phase", "post", "--round", "1", "--reviewer", "reviewer-one",
-                      "--status", "incomplete", "--summary", "档位不足", "--result-file", str(result_path))
-        self.assertEqual(1, self.state()["counters"]["underpowered_results"])
-        self.run_tool(CONTROLLER, "merge", "--review-dir", str(self.review),
-                      "--phase", "post", "--round", "1", "--summary", "不应归并", ok=False)
-        self.run_tool(CONTROLLER, "close", "--review-dir", str(self.review),
-                      "--conclusion", "逻辑只读复审完成，无阻塞项", ok=False)
+        self.assertNotIn("underpowered_results", self.state()["counters"])
 
     def test_nested_or_non_string_regression_evidence_is_rejected_without_side_effects(self) -> None:
         self.init_and_dispatch()
@@ -209,9 +194,9 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         self.run_tool(CONTROLLER, "plan", "--review-dir", str(self.review), "--phase", "post",
                       "--depth", "1", "--reviewers", "r1", "--purpose", "legacy path")
 
-    def test_v4_fallback_migrates_conservatively_to_underpowered(self) -> None:
+    def test_legacy_v4_state_migration_drops_runtime_assignment(self) -> None:
         self.init_and_dispatch()
-        result_path = self.write_result("luna-medium")
+        result_path = self.write_result("terra-medium")
         self.run_tool(CONTROLLER, "result", "--review-dir", str(self.review),
                       "--phase", "post", "--round", "1", "--reviewer", "reviewer-one",
                       "--status", "pass", "--summary", "legacy result", "--result-file", str(result_path))
@@ -220,23 +205,25 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         legacy.pop("task_id", None)
         legacy.pop("routing_decision_required", None)
         legacy.pop("routing_decisions", None)
-        legacy["counters"].pop("underpowered_results", None)
         round_data = legacy["phases"]["post"]["rounds"]["1"]
-        round_data["dispatch"]["reviewer-one"].pop("minimum_acceptable_profile", None)
-        assignment = round_data["results"]["reviewer-one"]["model_assignment"]
-        assignment.pop("minimum_acceptable_profile", None)
-        assignment.pop("runtime_evidence_level", None)
-        assignment.pop("runtime_evidence_source", None)
-        assignment["status"] = "fallback"
+        round_data["dispatch"]["reviewer-one"]["model_profile"] = "terra-medium"
+        round_data["dispatch"]["reviewer-one"]["requested_model"] = "legacy-value"
+        round_data["results"]["reviewer-one"]["model_assignment"] = {
+            "requested_profile": "terra-medium",
+            "runtime_model": "legacy-value",
+            "status": "fallback",
+        }
         round_data["results"]["reviewer-one"]["status"] = "pass"
         (self.review / "review-state.json").write_text(json.dumps(legacy, ensure_ascii=False), encoding="utf-8")
+        self.run_tool(CONTROLLER, "sync-calibration", "--review-dir", str(self.review))
         self.run_tool(CONTROLLER, "close", "--review-dir", str(self.review),
                       "--conclusion", "有阻塞问题")
         migrated = self.state()
         result = migrated["phases"]["post"]["rounds"]["1"]["results"]["reviewer-one"]
-        self.assertEqual("underpowered", result["model_assignment"]["status"])
-        self.assertEqual("incomplete", result["status"])
-        self.assertEqual("terra-medium", result["model_assignment"]["minimum_acceptable_profile"])
+        self.assertEqual("pass", result["status"])
+        self.assertIn("dispatch_assignment", result)
+        self.assertNotIn("model_assignment", result)
+        self.assertNotIn("runtime_model", json.dumps(migrated))
 
     def test_route_plan_dispatch_concurrency_preserves_one_valid_transition(self) -> None:
         self.run_tool(CONTROLLER, "init", "--review-dir", str(self.review), "--boundary-id", "concurrent")
@@ -291,22 +278,22 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
             self.run_tool(CONTROLLER, *dispatch_command)
         self.assertEqual(["r1"], self.state()["phases"]["post"]["rounds"]["1"]["active"])
 
-    def test_result_template_v3_and_v2_validation_compatibility(self) -> None:
+    def test_result_template_v4_and_legacy_results_are_read_only(self) -> None:
         packet_dir = self.root / "packet"
         packet_dir.mkdir()
         manifest = {"schema_version": 3, "boundary_id": "packet-boundary",
                     "packet_sha256": "b" * 64, "default_model_profile": "luna-medium"}
         (packet_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-        output = self.root / "result-v3.json"
+        output = self.root / "result-v4.json"
         self.run_tool(PACKET, "result-template", "--packet-dir", str(packet_dir),
                       "--reviewer", "r1", "--task-id", "task-v3", "--review-round", "2",
                       "--task-difficulty", "MEDIUM", "--model-profile", "terra-medium",
                       "--minimum-acceptable-profile", "luna-medium", "--output", str(output))
         value = json.loads(output.read_text(encoding="utf-8"))
-        self.assertEqual(3, value["schema_version"])
+        self.assertEqual(4, value["schema_version"])
         self.assertEqual("post", value["review_phase"])
         self.assertEqual(4.0, value["estimated_cost_units"])
-        self.assertEqual("luna-medium", value["model_assignment"]["minimum_acceptable_profile"])
+        self.assertEqual("luna-medium", value["dispatch_assignment"]["minimum_acceptable_profile"])
         self.run_tool(PACKET, "validate-result", "--packet-dir", str(packet_dir),
                       "--result-file", str(output), "--reviewer", "r1")
         invalid_finalized = dict(value)
@@ -338,7 +325,7 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         legacy_path = self.root / "legacy-v2.json"
         legacy_path.write_text(json.dumps(legacy), encoding="utf-8")
         self.run_tool(PACKET, "validate-result", "--packet-dir", str(packet_dir),
-                      "--result-file", str(legacy_path), "--reviewer", "r1")
+                      "--result-file", str(legacy_path), "--reviewer", "r1", ok=False)
 
     def test_observation_keeps_unknown_cost_and_unfinalized_attribution_out_of_yield(self) -> None:
         project = self.root / "project"
@@ -348,7 +335,7 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         for index in range(8):
             result = {
                 "reviewer": "calibration-reviewer", "result_id": "RR-%d" % index,
-                "task_difficulty": "HIGH", "model_profile": "terra-medium",
+                "task_difficulty": "HIGH", "approved_dispatch_profile": "terra-medium",
                 "accepted": 3, "rejected": 0, "repaired": 2,
                 "calibration_finalized": False,
                 "findings": [{"severity": "HIGH", "disposition": "REPAIRED",
@@ -379,7 +366,7 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
             finalized = index < 8
             result = {
                 "reviewer": "mixed-reviewer", "result_id": "MIXED-%d" % index,
-                "task_difficulty": "HIGH", "model_profile": "terra-medium",
+                "task_difficulty": "HIGH", "approved_dispatch_profile": "terra-medium",
                 "estimated_cost_units": 1 if finalized else 100,
                 "cost_formula_version": "profile-weight-v1",
                 "accepted": 1 if finalized else 0, "rejected": 0,

@@ -26,20 +26,18 @@ class DelegationCalibrationTests(unittest.TestCase):
         self.ledger = self.root / "budget.jsonl"
         self.samples = self.root / "samples.jsonl"
         initialize_budget(self.ledger, budget_id="CAL-BUDGET", task_id="CAL-TASK", project_id="cal-project",
-                          repo_fingerprint=FINGERPRINT, budget_class="STRICT", default_model_profile="luna-low")
+                          repo_fingerprint=FINGERPRINT, budget_class="STRICT", default_dispatch_profile="luna-low")
 
     def tearDown(self) -> None:
         self.temp.cleanup()
 
-    def completed(self, key: str, role: str, profile: str, actual: str | None = None) -> str:
+    def completed(self, key: str, role: str, profile: str) -> str:
         record_decision(self.ledger, dispatch_key=key, decision="DELEGATE", role=role,
-                        requested_profile=profile, reason_code="SEMANTIC_COMPLEXITY",
+                        approved_profile=profile, reason_code="SEMANTIC_COMPLEXITY",
                         responsibility="schema", difficulty="HIGH", risk_domain="DATA", context_size="MEDIUM")
         reservation = reserve_budget(self.ledger, dispatch_key=key, host_dispatch_id="tool-" + key,
-                                     requested_profile=profile, request_basis="explicit-request", role=role)
-        mark_started(self.ledger, reservation_id=reservation["reservation_id"], agent_id="agent-" + key,
-                     actual_profile=actual or "",
-                     runtime_evidence="host-attested-hook-payload" if actual else "unavailable")
+                                     approved_profile=profile, approval_basis="explicit-request", role=role)
+        mark_started(self.ledger, reservation_id=reservation["reservation_id"], agent_id="agent-" + key)
         mark_completed(self.ledger, reservation_id=reservation["reservation_id"], outcome="PASS")
         return reservation["reservation_id"]
 
@@ -99,7 +97,7 @@ class DelegationCalibrationTests(unittest.TestCase):
         with self.assertRaises(DelegationBudgetError):
             append_sample(self.samples, final, ledger_path=self.ledger)
 
-    def test_unverified_runtime_and_insufficient_data_cannot_change_route(self) -> None:
+    def test_approved_profile_sample_never_changes_route_automatically(self) -> None:
         reservation_id = self.completed("worker-one", "worker", "luna-low")
         pending = build_pending_sample(self.ledger, reservation_id,
                                        {"deliveries_accepted": 1, "validations_passed": 1, "rework_rounds": 0, "rollbacks": 0})
@@ -107,13 +105,13 @@ class DelegationCalibrationTests(unittest.TestCase):
                                 evidence_refs=[pending["reservation_completion_ref"], EVIDENCE])
         proposal = offline_replay([final], ledger_path=self.ledger, minimum_samples_per_profile=1)
         self.assertEqual("NONE", proposal["execution_authorization"])
-        self.assertEqual(0, proposal["sample_count"])
+        self.assertEqual(1, proposal["sample_count"])
         self.assertFalse(proposal["automatic_changes_applied"])
 
     def test_adjacent_tier_replay_requires_minimum_samples_and_never_executes(self) -> None:
         records = []
         for index, profile in enumerate(("luna-low", "luna-medium"), 1):
-            reservation_id = self.completed("review-%d" % index, "reviewer", profile, actual=profile)
+            reservation_id = self.completed("review-%d" % index, "reviewer", profile)
             pending = build_pending_sample(self.ledger, reservation_id,
                                            {"accepted_findings": index, "repaired_findings": index,
                                             "duplicate_findings": 0, "missed_findings": 0,

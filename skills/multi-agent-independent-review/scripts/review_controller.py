@@ -25,7 +25,7 @@ from cp_runtime.delegation_budget import read_budget, sha256_ref  # noqa: E402
 STATE_FILE = "review-state.json"
 CALIBRATION_LEDGER_FILE = "review-results.jsonl"
 LOCK_FILE = ".review-controller.lock"
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 # 中文：默认值以成本为先；可显式提高，但绝不能超过 HARD_LIMITS。
 # English: Defaults are cost-conscious; they may be raised explicitly but never beyond HARD_LIMITS.
@@ -55,10 +55,10 @@ HARD_LIMITS = {
 }
 
 MODEL_PROFILES: Dict[str, Dict[str, str]] = {
-    "luna-low": {"model": "gpt-5.6-luna", "reasoning_effort": "low"},
-    "luna-medium": {"model": "gpt-5.6-luna", "reasoning_effort": "medium"},
-    "terra-medium": {"model": "gpt-5.6-terra", "reasoning_effort": "medium"},
-    "terra-high": {"model": "gpt-5.6-terra", "reasoning_effort": "high"},
+    "luna-low": {},
+    "luna-medium": {},
+    "terra-medium": {},
+    "terra-high": {},
 }
 MODEL_PROFILE_ORDER = {
     "luna-low": 1,
@@ -78,8 +78,6 @@ DEFAULT_PROFILE_BY_TIER = {
     "balanced": "luna-medium",
     "deep": "terra-medium",
 }
-VALID_AUTOMATIC_MODELS = {item["model"] for item in MODEL_PROFILES.values()}
-VALID_AUTOMATIC_REASONING = {"low", "medium", "high"}
 VALID_PHASES = {"pre", "post"}
 VALID_EFFORT_TIERS = {"economy", "balanced", "deep"}
 VALID_RESULT_STATUSES = {"pass", "nonblocking", "blocking", "incomplete"}
@@ -94,27 +92,22 @@ VALID_PROBE_RESULTS = {
 }
 VALID_REVIEW_MODES = {"independent-agent", "self-review", "unknown"}
 VALID_ISOLATION_LEVELS = {"system-readonly", "logical-readonly", "self-review", "unknown"}
-VALID_MODEL_ASSIGNMENT_STATUSES = {
-    "declared_match", "fallback_acceptable", "underpowered", "unverified", "mismatch"
-}
-VALID_RUNTIME_EVIDENCE_LEVELS = {"unavailable", "declared"}
 VALID_ROUTE_DECISIONS = {"INLINE", "DELEGATE"}
 VALID_ROUTE_REASONS = {
     "INDEPENDENT_EVIDENCE_GAIN", "SEMANTIC_COMPLEXITY", "EVIDENCE_CONFLICT",
     "SECURITY_OR_CONCURRENCY_RISK", "LOWER_TIER_INCONCLUSIVE", "MISSING_EVIDENCE",
     "INLINE_SUFFICIENT",
 }
-V3_RESULT_FIELDS = {
+V4_RESULT_FIELDS = {
     "schema_version", "result_id", "reviewer", "task_id", "review_phase", "review_round",
-    "boundary_id", "packet_sha256", "status", "isolation_level", "model_assignment",
+    "boundary_id", "packet_sha256", "status", "isolation_level", "dispatch_assignment",
     "task_difficulty", "duration_ms", "estimated_cost_units", "cost_formula_version",
     "calibration_finalized", "accepted", "rejected", "duplicate", "repaired",
     "regressions_prevented", "checked_scope", "findings", "unverified_items", "summary",
 }
-V3_ASSIGNMENT_FIELDS = {
-    "requested_profile", "requested_model", "requested_reasoning_effort",
-    "minimum_acceptable_profile", "runtime_model", "runtime_reasoning_effort", "status",
-    "runtime_evidence_level", "runtime_evidence_source",
+V4_ASSIGNMENT_FIELDS = {
+    "approved_profile", "minimum_acceptable_profile", "dispatch_permit_ref",
+    "policy_status", "cost_basis_units",
 }
 V3_FINDING_FIELDS = {
     "id", "dimension", "severity", "evidence_level", "blocking", "summary", "location",
@@ -124,6 +117,10 @@ V3_FINDING_FIELDS = {
 FORBIDDEN_CALIBRATION_KEYS = {
     "prompt", "raw_prompt", "response", "full_response", "diff", "patch",
     "token", "tokens", "input_tokens", "output_tokens", "api_key", "cookie",
+    "actual" + "_model", "actual" + "_reasoning_effort",
+    "runtime" + "_model", "runtime" + "_reasoning_effort",
+    "runtime" + "_model_evidence", "host" + "_runtime_attestation",
+    "diagnostic" + "_model_observation",
 }
 VALID_CONCLUSIONS = {
     "系统隔离复审通过，无阻塞项",
@@ -225,23 +222,23 @@ def reject_forbidden_calibration_fields(value: Any, path: str = "result") -> Non
             reject_forbidden_calibration_fields(child, "{}[{}]".format(path, index))
 
 
-def validate_v3_result_shape(result: Dict[str, Any]) -> None:
+def validate_v4_result_shape(result: Dict[str, Any]) -> None:
     reject_forbidden_calibration_fields(result)
-    missing = sorted(V3_RESULT_FIELDS - set(result))
+    missing = sorted(V4_RESULT_FIELDS - set(result))
     if missing:
         die("Reviewer result_file 缺少 schema 必需字段: {}".format(",".join(missing)))
-    unexpected = sorted(set(result) - V3_RESULT_FIELDS)
+    unexpected = sorted(set(result) - V4_RESULT_FIELDS)
     if unexpected:
         die("Reviewer result_file 包含 schema 未允许字段: {}".format(",".join(unexpected)))
-    assignment = result.get("model_assignment")
+    assignment = result.get("dispatch_assignment")
     if not isinstance(assignment, dict):
-        die("Reviewer result_file model_assignment 必须是对象")
-    missing_assignment = sorted(V3_ASSIGNMENT_FIELDS - set(assignment))
+        die("Reviewer result_file dispatch_assignment 必须是对象")
+    missing_assignment = sorted(V4_ASSIGNMENT_FIELDS - set(assignment))
     if missing_assignment:
-        die("Reviewer result_file model_assignment 缺少 schema 必需字段: {}".format(",".join(missing_assignment)))
-    unexpected_assignment = sorted(set(assignment) - V3_ASSIGNMENT_FIELDS)
+        die("Reviewer result_file dispatch_assignment 缺少 schema 必需字段: {}".format(",".join(missing_assignment)))
+    unexpected_assignment = sorted(set(assignment) - V4_ASSIGNMENT_FIELDS)
     if unexpected_assignment:
-        die("Reviewer result_file model_assignment 包含 schema 未允许字段: {}".format(",".join(unexpected_assignment)))
+        die("Reviewer result_file dispatch_assignment 包含 schema 未允许字段: {}".format(",".join(unexpected_assignment)))
     findings = result.get("findings")
     if not isinstance(findings, list):
         die("Reviewer result_file findings 必须是数组")
@@ -303,12 +300,11 @@ def default_isolation() -> Dict[str, Any]:
     }
 
 
-def default_model_policy() -> Dict[str, Any]:
+def default_dispatch_policy() -> Dict[str, Any]:
     return {
         "allowed_profiles": list(MODEL_PROFILES.keys()),
-        "automatic_model_ceiling": "gpt-5.6-terra",
-        "automatic_reasoning_ceiling": "high",
-        "forbidden_automatic_profiles": ["gpt-5.6-sol", "xhigh", "max", "ultra"],
+        "automatic_dispatch_ceiling_profile": "terra-high",
+        "forbidden_request_classes": ["sol-or-stronger", "xhigh-or-stronger"],
         "upgrade_chain": list(MODEL_PROFILES.keys()),
         "enforcement_scope": "review-controller-dispatch",
     }
@@ -335,13 +331,13 @@ def derive_isolation_level(data: Dict[str, Any]) -> Tuple[str, bool]:
 
 
 def normalize_dispatch_record(record: Dict[str, Any], effort_tier: str) -> Dict[str, Any]:
-    profile = str(record.get("model_profile") or DEFAULT_PROFILE_BY_TIER.get(effort_tier, "luna-medium"))
+    legacy_profile = record.pop("model_profile", "")
+    profile = str(record.get("approved_profile") or legacy_profile or DEFAULT_PROFILE_BY_TIER.get(effort_tier, "luna-medium"))
     if profile not in MODEL_PROFILES:
         profile = "luna-medium"
-    config = MODEL_PROFILES[profile]
-    record.setdefault("model_profile", profile)
-    record.setdefault("requested_model", config["model"])
-    record.setdefault("requested_reasoning_effort", config["reasoning_effort"])
+    record["approved_profile"] = profile
+    record.pop("requested_model", None)
+    record.pop("requested_reasoning_effort", None)
     record.setdefault("minimum_acceptable_profile", profile)
     record.setdefault("escalation_reason", "")
     record.setdefault("repeat_reason", "")
@@ -352,7 +348,7 @@ def normalize_dispatch_record(record: Dict[str, Any], effort_tier: str) -> Dict[
 
 def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
     version = state.get("schema_version")
-    if version not in {1, 2, 3, 4, 5, SCHEMA_VERSION}:
+    if version not in {1, 2, 3, 4, 5, 6, SCHEMA_VERSION}:
         return state
 
     if version in {1, 2}:
@@ -383,18 +379,26 @@ def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
         state.setdefault("notes", []).append(
             "升级到 schema v6：Reviewer 轮次继续独立管理，总成本由 DelegationBudget V1 统一计费。"
         )
+    if version in {1, 2, 3, 4, 5, 6}:
+        state.setdefault("notes", []).append(
+            "升级到 schema v7：删除运行模型自报和实际模型判断，仅保留批准派发档位与结果归因。"
+        )
 
+    migrating = version != SCHEMA_VERSION
     state["schema_version"] = SCHEMA_VERSION
     state.setdefault("risk_level", "unknown")
     state.setdefault("strict_readonly_required", False)
     state.setdefault("isolation", default_isolation())
-    state.setdefault("model_policy", default_model_policy())
+    state.pop("model_policy", None)
+    state.setdefault("dispatch_policy", default_dispatch_policy())
     state.setdefault("task_id", str(state.get("boundary_id", "")))
     state.setdefault("routing_decision_required", False)
     state.setdefault("routing_decisions", {"pre": [], "post": []})
     state.setdefault("delegation_budget", {
-        "ledger_path": "", "budget_id": "", "accounting_owner": "delegation-budget-v1",
+        "ledger_path": "", "budget_id": "", "accounting_owner": "delegation-budget-v2",
     })
+    if state["delegation_budget"].get("accounting_owner") == "delegation-budget-v1":
+        state["delegation_budget"]["accounting_owner"] = "delegation-budget-v1-readonly"
     for phase_name in VALID_PHASES:
         state["routing_decisions"].setdefault(phase_name, [])
 
@@ -406,56 +410,39 @@ def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
     counters.setdefault("total_reviewers", 0)
     counters.setdefault("repair_rounds", 0)
     counters.setdefault("terra_high_reviewers", 0)
-    counters.setdefault("model_policy_violations", 0)
-    counters.setdefault("underpowered_results", 0)
+    counters.pop("model_policy_violations", None)
+    counters.pop("underpowered_results", None)
 
     phases = state.setdefault("phases", {})
     for phase_name in VALID_PHASES:
         phase = phases.setdefault(phase_name, {"current_round": 0, "rounds": {}})
         phase.setdefault("current_round", 0)
         phase.setdefault("rounds", {})
-        for round_data in phase["rounds"].values():
+        for round_key, round_data in phase["rounds"].items():
             tier = str(round_data.get("effort_tier", "balanced"))
             round_data.setdefault("effort_tier", tier)
-            round_data.setdefault("default_model_profile", DEFAULT_PROFILE_BY_TIER.get(tier, "luna-medium"))
+            default_profile = round_data.pop("default_model_profile", None) or round_data.get("default_dispatch_profile")
+            round_data["default_dispatch_profile"] = default_profile or DEFAULT_PROFILE_BY_TIER.get(tier, "luna-medium")
             dispatch = round_data.setdefault("dispatch", {})
             for record in dispatch.values():
                 normalize_dispatch_record(record, tier)
             for reviewer, result in round_data.setdefault("results", {}).items():
                 requested = dispatch.get(reviewer, {})
-                result.setdefault(
-                    "model_assignment",
-                    {
-                        "requested_profile": requested.get("model_profile", "luna-medium"),
-                        "requested_model": requested.get("requested_model", "gpt-5.6-luna"),
-                        "requested_reasoning_effort": requested.get("requested_reasoning_effort", "medium"),
-                        "minimum_acceptable_profile": requested.get("minimum_acceptable_profile", requested.get("model_profile", "luna-medium")),
-                        "runtime_model": "",
-                        "runtime_reasoning_effort": "",
-                        "status": "unverified",
-                        "runtime_evidence_level": "unavailable",
-                        "runtime_evidence_source": "none",
-                    },
-                )
-                assignment = result.get("model_assignment", {})
-                assignment.setdefault("minimum_acceptable_profile", requested.get("minimum_acceptable_profile", requested.get("model_profile", "luna-medium")))
-                assignment.setdefault("runtime_evidence_level", "unavailable")
-                assignment.setdefault("runtime_evidence_source", "none")
-                if assignment.get("status") == "confirmed":
-                    assignment["status"] = "declared_match"
-                    assignment["runtime_evidence_level"] = "declared"
-                    assignment["runtime_evidence_source"] = "legacy-reviewer-result"
-                elif assignment.get("status") == "fallback":
-                    assignment["status"] = "underpowered"
-                    assignment["runtime_evidence_level"] = "declared"
-                    assignment["runtime_evidence_source"] = "legacy-reviewer-result"
-                    result["status"] = "incomplete"
-    counters["underpowered_results"] = sum(
-        1
-        for _, _, round_data in iter_rounds(state)
-        for result in round_data.get("results", {}).values()
-        if result.get("model_assignment", {}).get("status") == "underpowered"
-    )
+                result.pop("model_assignment", None)
+                profile = requested.get("approved_profile", "luna-medium")
+                if migrating or "dispatch_assignment" not in result:
+                    result["dispatch_assignment"] = {
+                        "approved_profile": profile,
+                        "minimum_acceptable_profile": requested.get("minimum_acceptable_profile", profile),
+                        "dispatch_permit_ref": requested.get("delegation_dispatch_ref", ""),
+                        "policy_status": "approved" if requested.get("delegation_dispatch_ref") else "legacy-unbound",
+                        "cost_basis_units": MODEL_PROFILE_COST_UNITS[profile],
+                    }
+                if migrating or "calibration_record" not in result:
+                    result.pop("calibration_record", None)
+                    result["calibration_record"] = calibration_projection(
+                        state, phase_name, int(round_key), reviewer, result, requested
+                    )
     return state
 
 
@@ -469,7 +456,20 @@ def load_state(review_dir: Path) -> Dict[str, Any]:
         die("复审状态文件不是有效 JSON: {}".format(exc))
     if not isinstance(data, dict):
         die("复审状态根节点必须是对象")
-    return normalize_state_data(data)
+    state = normalize_state_data(data)
+    binding = state.get("delegation_budget", {})
+    ledger_path = str(binding.get("ledger_path") or "").strip()
+    if ledger_path:
+        budget = read_budget(Path(ledger_path))
+        binding["accounting_owner"] = (
+            "delegation-budget-v1-readonly" if budget.get("read_only") else "delegation-budget-v2"
+        )
+    return state
+
+
+def ensure_state_mutable(state: Dict[str, Any]) -> None:
+    if state.get("delegation_budget", {}).get("accounting_owner") == "delegation-budget-v1-readonly":
+        die("旧 DelegationBudget V1 绑定的 Reviewer 状态只读；请创建独立 V2 预算和新复审边界")
 
 
 def save_state(review_dir: Path, state: Dict[str, Any]) -> None:
@@ -534,15 +534,10 @@ def validate_isolation_data(state: Dict[str, Any]) -> None:
         die("strict_readonly_eligible 与运行时证据不一致")
 
 
-def validate_dispatch_model(record: Dict[str, Any]) -> None:
-    profile = record.get("model_profile")
+def validate_dispatch_profile(record: Dict[str, Any]) -> None:
+    profile = record.get("approved_profile")
     if profile not in MODEL_PROFILES:
-        die("未知 Reviewer model_profile: {}".format(profile))
-    expected = MODEL_PROFILES[str(profile)]
-    if record.get("requested_model") != expected["model"]:
-        die("requested_model 与 model_profile 不一致")
-    if record.get("requested_reasoning_effort") != expected["reasoning_effort"]:
-        die("requested_reasoning_effort 与 model_profile 不一致")
+        die("未知 Reviewer approved_profile: {}".format(profile))
     minimum = record.get("minimum_acceptable_profile")
     if minimum not in MODEL_PROFILES:
         die("minimum_acceptable_profile 非法")
@@ -558,7 +553,7 @@ def validate_state_data(state: Dict[str, Any]) -> None:
     delegation = state.get("delegation_budget")
     if not isinstance(delegation, dict) or set(delegation) != {"ledger_path", "budget_id", "accounting_owner"}:
         die("delegation_budget 绑定字段非法")
-    if delegation.get("accounting_owner") != "delegation-budget-v1":
+    if delegation.get("accounting_owner") not in {"delegation-budget-v2", "delegation-budget-v1-readonly"}:
         die("Reviewer 不得成为总预算计费所有者")
     if not str(state.get("task_id", "")).strip():
         die("task_id 不能为空")
@@ -586,8 +581,6 @@ def validate_state_data(state: Dict[str, Any]) -> None:
 
     counted_dispatches = 0
     counted_terra_high = 0
-    counted_policy_violations = 0
-    counted_underpowered = 0
     routing_decisions = state.get("routing_decisions", {})
     if not isinstance(routing_decisions, dict):
         die("routing_decisions 必须是对象")
@@ -633,8 +626,8 @@ def validate_state_data(state: Dict[str, Any]) -> None:
                 die("{} / {} 深度超过上限".format(phase_name, round_key))
             if round_data.get("effort_tier") not in VALID_EFFORT_TIERS:
                 die("{} / {} effort_tier 非法".format(phase_name, round_key))
-            if round_data.get("default_model_profile") not in MODEL_PROFILES:
-                die("{} / {} default_model_profile 非法".format(phase_name, round_key))
+            if round_data.get("default_dispatch_profile") not in MODEL_PROFILES:
+                die("{} / {} default_dispatch_profile 非法".format(phase_name, round_key))
             if phase_name == "pre" and len(reviewers) > limits["max_preimplementation_reviewers"]:
                 die("实施前 Reviewer 超过上限")
             if len(reviewers) > limits["max_parallel_reviewers"]:
@@ -650,34 +643,26 @@ def validate_state_data(state: Dict[str, Any]) -> None:
             if not set(dispatch).issubset(planned):
                 die("{} / {} 存在未计划派发".format(phase_name, round_key))
             for reviewer, record in dispatch.items():
-                validate_dispatch_model(record)
+                validate_dispatch_profile(record)
                 counted_dispatches += 1
-                if record.get("model_profile") == "terra-high":
+                if record.get("approved_profile") == "terra-high":
                     counted_terra_high += 1
                 result = round_data.get("results", {}).get(reviewer)
                 if result:
-                    assignment = result.get("model_assignment", {})
-                    if assignment.get("status") not in VALID_MODEL_ASSIGNMENT_STATUSES:
-                        die("Reviewer model_assignment.status 非法")
+                    assignment = result.get("dispatch_assignment", {})
+                    if assignment.get("approved_profile") != record.get("approved_profile"):
+                        die("Reviewer approved_profile 与派发记录不一致")
                     if assignment.get("minimum_acceptable_profile") != record.get("minimum_acceptable_profile"):
                         die("Reviewer minimum_acceptable_profile 与派发记录不一致")
-                    if assignment.get("runtime_evidence_level") not in VALID_RUNTIME_EVIDENCE_LEVELS:
-                        die("Reviewer runtime_evidence_level 非法")
-                    if assignment.get("status") == "mismatch":
-                        counted_policy_violations += 1
-                    if assignment.get("status") == "underpowered":
-                        counted_underpowered += 1
-                        if result.get("status") != "incomplete":
-                            die("underpowered Reviewer 结果必须标记为 incomplete")
+                    if assignment.get("dispatch_permit_ref") != record.get("delegation_dispatch_ref", ""):
+                        die("Reviewer dispatch_permit_ref 与派发记录不一致")
+                    if float(assignment.get("cost_basis_units") or 0) != MODEL_PROFILE_COST_UNITS[record["approved_profile"]]:
+                        die("Reviewer cost_basis_units 与批准档位不一致")
 
     if int(counters.get("total_reviewers", 0)) != counted_dispatches:
         die("total_reviewers 与实际派发记录不一致")
     if int(counters.get("terra_high_reviewers", 0)) != counted_terra_high:
         die("terra_high_reviewers 与实际派发记录不一致")
-    if int(counters.get("model_policy_violations", 0)) != counted_policy_violations:
-        die("model_policy_violations 与结果记录不一致")
-    if int(counters.get("underpowered_results", 0)) != counted_underpowered:
-        die("underpowered_results 与结果记录不一致")
 
 
 def command_init(args: argparse.Namespace) -> None:
@@ -708,10 +693,8 @@ def command_init(args: argparse.Namespace) -> None:
             "total_reviewers": 0,
             "repair_rounds": 0,
             "terra_high_reviewers": 0,
-            "model_policy_violations": 0,
-            "underpowered_results": 0,
         },
-        "model_policy": default_model_policy(),
+        "dispatch_policy": default_dispatch_policy(),
         "phases": {
             "pre": {"current_round": 0, "rounds": {}},
             "post": {"current_round": 0, "rounds": {}},
@@ -720,12 +703,16 @@ def command_init(args: argparse.Namespace) -> None:
         "delegation_budget": {
             "ledger_path": str(Path(args.delegation_ledger).expanduser().resolve()) if args.delegation_ledger else "",
             "budget_id": args.delegation_budget_id,
-            "accounting_owner": "delegation-budget-v1",
+            "accounting_owner": "delegation-budget-v2",
         },
         "isolation": default_isolation(),
         "conclusion": "",
         "notes": [],
     }
+    if state["delegation_budget"]["ledger_path"]:
+        bound_budget = read_budget(Path(state["delegation_budget"]["ledger_path"]))
+        if bound_budget.get("read_only"):
+            die("新 Reviewer 边界不能绑定只读 DelegationBudget V1；请先创建独立 V2 预算")
     validate_state_data(state)
     with review_lock(review_dir, args.force_unlock):
         save_state(review_dir, state)
@@ -743,6 +730,7 @@ def command_isolation(args: argparse.Namespace) -> None:
     review_dir = Path(args.review_dir).expanduser().resolve()
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         isolation = {
             "review_mode": args.review_mode,
             "parent_sandbox": args.parent_sandbox,
@@ -796,6 +784,7 @@ def command_route(args: argparse.Namespace) -> None:
     review_dir = Path(args.review_dir).expanduser().resolve()
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         validate_state_data(state)
         if state.get("status") != "open":
             die("复审台账已关闭")
@@ -847,6 +836,7 @@ def command_plan(args: argparse.Namespace) -> None:
     reviewers = parse_reviewers(args.reviewers)
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         validate_state_data(state)
         if state.get("status") != "open":
             die("复审台账已关闭")
@@ -888,7 +878,7 @@ def command_plan(args: argparse.Namespace) -> None:
             "depth": args.depth,
             "purpose": args.purpose,
             "effort_tier": args.effort_tier,
-            "default_model_profile": DEFAULT_PROFILE_BY_TIER[args.effort_tier],
+            "default_dispatch_profile": DEFAULT_PROFILE_BY_TIER[args.effort_tier],
             "packet_sha256": args.packet_sha256,
             "same_packet_reason": args.same_packet_reason if args.allow_same_packet else "",
             "planned_reviewers": reviewers,
@@ -905,7 +895,7 @@ def command_plan(args: argparse.Namespace) -> None:
         }
         validate_state_data(state)
         save_state(review_dir, state)
-    print("[OK] 已创建 {} 第 {} 轮计划: {}；默认模型档位={}".format(
+    print("[OK] 已创建 {} 第 {} 轮计划: {}；默认派发档位={}".format(
         args.phase,
         next_round,
         ", ".join(reviewers),
@@ -951,6 +941,7 @@ def command_dispatch(args: argparse.Namespace) -> None:
     review_dir = Path(args.review_dir).expanduser().resolve()
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         validate_state_data(state)
         ensure_strict_if_required(state)
         ensure_delegation_allowed(state, args.phase)
@@ -964,7 +955,7 @@ def command_dispatch(args: argparse.Namespace) -> None:
         if state["counters"]["total_reviewers"] >= state["limits"]["max_total_reviewers"]:
             die("累计 Reviewer 已达到上限")
 
-        profile = args.model_profile or round_data.get("default_model_profile") or DEFAULT_PROFILE_BY_TIER[round_data.get("effort_tier", "balanced")]
+        profile = args.model_profile or round_data.get("default_dispatch_profile") or DEFAULT_PROFILE_BY_TIER[round_data.get("effort_tier", "balanced")]
         validate_requested_profile(state, profile, args.escalation_reason)
         minimum_profile = args.minimum_acceptable_profile or profile
         if minimum_profile not in MODEL_PROFILES:
@@ -977,7 +968,6 @@ def command_dispatch(args: argparse.Namespace) -> None:
             if not args.allow_repeat or not args.repeat_reason.strip():
                 die("相同 Reviewer 已审过相同 packet；如确需第二意见，使用 --allow-repeat 并说明 --repeat-reason")
 
-        config = MODEL_PROFILES[profile]
         delegation_binding = state.get("delegation_budget", {})
         delegation_ref = ""
         if delegation_binding.get("ledger_path"):
@@ -990,23 +980,21 @@ def command_dispatch(args: argparse.Namespace) -> None:
             permit = budget["decisions"].get(delegation_ref)
             if not permit or permit.get("decision") != "DELEGATE":
                 die("统一预算账本缺少匹配的 DELEGATE permit")
-            if permit.get("role") != "reviewer" or permit.get("requested_profile") != profile:
-                die("Reviewer 派发与统一预算 permit 的角色或模型档位不一致")
+            if permit.get("role") != "reviewer" or permit.get("approved_profile") != profile:
+                die("Reviewer 派发与统一预算 permit 的角色或批准档位不一致")
         round_data["active"].append(args.reviewer)
         round_data.setdefault("dispatch", {})[args.reviewer] = {
             "scope": args.scope,
             "isolation_level": state["isolation"]["isolation_level"],
             "packet_sha256": packet_sha256,
             "effort_tier": round_data.get("effort_tier", "balanced"),
-            "model_profile": profile,
-            "requested_model": config["model"],
-            "requested_reasoning_effort": config["reasoning_effort"],
+            "approved_profile": profile,
             "minimum_acceptable_profile": minimum_profile,
             "escalation_reason": args.escalation_reason,
             "repeat_reason": args.repeat_reason if args.allow_repeat else "",
             "dispatched_at": now_iso(),
             "delegation_dispatch_ref": delegation_ref,
-            "budget_accounting_owner": "delegation-budget-v1" if delegation_ref else "legacy-review-controller",
+            "budget_accounting_owner": "delegation-budget-v2" if delegation_ref else "legacy-review-controller",
         }
         state["counters"]["total_reviewers"] += 1
         if profile == "terra-high":
@@ -1020,40 +1008,7 @@ def command_dispatch(args: argparse.Namespace) -> None:
         state["isolation"]["isolation_level"],
         profile,
     ))
-    print("[NEXT] 启动子 Agent 时显式请求 model={} reasoning={}".format(
-        config["model"], config["reasoning_effort"]
-    ))
-
-
-def runtime_profile(model: str, reasoning_effort: str) -> Optional[str]:
-    for profile, config in MODEL_PROFILES.items():
-        if config["model"] == model and config["reasoning_effort"] == reasoning_effort:
-            return profile
-    return None
-
-
-def evaluate_model_assignment(
-    requested_profile: str,
-    minimum_acceptable_profile: str,
-    runtime_model: str,
-    runtime_reasoning_effort: str,
-) -> Tuple[str, str]:
-    if not runtime_model and not runtime_reasoning_effort:
-        return "unverified", "运行时模型与推理强度未回传"
-    if runtime_model not in VALID_AUTOMATIC_MODELS:
-        return "mismatch", "运行时模型超出 Luna/Terra 自动策略"
-    if runtime_reasoning_effort not in VALID_AUTOMATIC_REASONING:
-        return "mismatch", "运行时推理强度超出 low/medium/high 自动策略"
-    actual_profile = runtime_profile(runtime_model, runtime_reasoning_effort)
-    if actual_profile is None:
-        return "mismatch", "运行时模型组合不属于四级批准档位"
-    if actual_profile == requested_profile:
-        return "declared_match", "Reviewer 自报运行档位与请求一致；尚无可信宿主证明"
-    if MODEL_PROFILE_ORDER[actual_profile] < MODEL_PROFILE_ORDER[requested_profile]:
-        if MODEL_PROFILE_ORDER[actual_profile] >= MODEL_PROFILE_ORDER[minimum_acceptable_profile]:
-            return "fallback_acceptable", "Reviewer 自报使用较低但仍可接受的运行档位"
-        return "underpowered", "Reviewer 自报运行档位低于最低可接受档位"
-    return "mismatch", "运行时档位高于请求，可能产生计划外消耗"
+    print("[NEXT] 按 approved-profile={} 启动子 Agent；运行身份不属于 Reviewer 契约。".format(profile))
 
 
 def calibration_projection(
@@ -1072,12 +1027,7 @@ def calibration_projection(
             str(dispatch_record.get("packet_sha256", "")),
         )
     task_id = str(result_payload.get("task_id") or state.get("task_id") or state.get("boundary_id", ""))
-    requested_profile = str(dispatch_record["model_profile"])
-    assignment_payload = result_payload.get("model_assignment", {}) if result_payload else {}
-    declared_runtime_profile = runtime_profile(
-        str(assignment_payload.get("runtime_model", "")).strip(),
-        str(assignment_payload.get("runtime_reasoning_effort", "")).strip(),
-    ) or "UNKNOWN"
+    approved_profile = str(dispatch_record["approved_profile"])
     calibration_findings: List[Dict[str, Any]] = []
     raw_findings = result_payload.get("findings", [])
     if not isinstance(raw_findings, list):
@@ -1106,13 +1056,12 @@ def calibration_projection(
         "repaired": nonnegative_int(result_payload.get("repaired", 0), "repaired"),
         "regressions_prevented": nonnegative_int(result_payload.get("regressions_prevented", 0), "regressions_prevented"),
         "duration_ms": nonnegative_int(result_payload.get("duration_ms", 0), "duration_ms"),
-        "estimated_cost_units": MODEL_PROFILE_COST_UNITS[requested_profile],
+        "estimated_cost_units": MODEL_PROFILE_COST_UNITS[approved_profile],
         "cost_formula_version": COST_FORMULA_VERSION,
         "calibration_finalized": False,
-        "requested_model_profile": requested_profile,
-        "declared_runtime_profile": declared_runtime_profile,
-        "runtime_evidence_level": "declared" if declared_runtime_profile != "UNKNOWN" else "unavailable",
-        "cost_basis_profile": requested_profile,
+        "approved_dispatch_profile": approved_profile,
+        "cost_basis_profile": approved_profile,
+        "cost_basis_units": MODEL_PROFILE_COST_UNITS[approved_profile],
         "findings": calibration_findings,
     }
     if projection["task_difficulty"] not in {"LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"}:
@@ -1161,6 +1110,7 @@ def command_result(args: argparse.Namespace) -> None:
     review_dir = Path(args.review_dir).expanduser().resolve()
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         validate_state_data(state)
         round_data = get_round(state, args.phase, args.round)
         expected_packet = round_data.get("packet_sha256", "")
@@ -1195,23 +1145,19 @@ def command_result(args: argparse.Namespace) -> None:
                 result_payload = json.loads(result_path.read_text(encoding="utf-8-sig"))
             except json.JSONDecodeError as exc:
                 die("Reviewer result_file 不是有效 JSON: {}".format(exc))
-            if result_payload.get("schema_version") not in {2, 3}:
-                die("Reviewer result_file schema_version 必须是 2 或 3")
-            if result_payload.get("schema_version") == 3:
-                validate_v3_result_shape(result_payload)
+            if result_payload.get("schema_version") != 4:
+                die("Reviewer result_file schema_version 必须是 4；旧结果仅允许只读审计")
+            validate_v4_result_shape(result_payload)
             if result_payload.get("reviewer") != args.reviewer:
                 die("Reviewer result_file 身份不匹配")
             if result_payload.get("boundary_id") != state.get("boundary_id"):
                 die("Reviewer result_file boundary_id 不匹配")
             if expected_packet and result_payload.get("packet_sha256") != expected_packet:
                 die("Reviewer result_file packet_sha256 不匹配")
-            if result_payload.get("schema_version") == 3:
-                result_identity = "{}|{}|{}|{}|{}|{}".format(
-                    state.get("boundary_id", ""), state.get("task_id", ""), args.phase,
-                    args.round, args.reviewer, expected_packet,
-                )
-            else:
-                result_identity = str(state.get("boundary_id", "")) + "|" + args.reviewer + "|" + expected_packet
+            result_identity = "{}|{}|{}|{}|{}|{}".format(
+                state.get("boundary_id", ""), state.get("task_id", ""), args.phase,
+                args.round, args.reviewer, expected_packet,
+            )
             expected_result_id = "RVR_" + hashlib.sha256(result_identity.encode("utf-8")).hexdigest()
             if result_payload.get("result_id") != expected_result_id:
                 die("Reviewer result_file result_id 与派发身份不匹配")
@@ -1226,24 +1172,23 @@ def command_result(args: argparse.Namespace) -> None:
             if result_payload.get("calibration_finalized") is True:
                 die("Reviewer result_file 不得自行设置 calibration_finalized=true")
 
-        assignment_payload = result_payload.get("model_assignment", {}) if result_payload else {}
-        requested_profile = dispatch_record["model_profile"]
+        assignment_payload = result_payload.get("dispatch_assignment", {}) if result_payload else {}
+        approved_profile = dispatch_record["approved_profile"]
         minimum_profile = dispatch_record["minimum_acceptable_profile"]
-        result_requested_profile = assignment_payload.get("requested_profile", requested_profile)
-        if result_requested_profile != requested_profile:
-            die("Reviewer result_file requested_profile 与派发记录不匹配")
+        result_approved_profile = assignment_payload.get("approved_profile", approved_profile)
+        if result_approved_profile != approved_profile:
+            die("Reviewer result_file approved_profile 与派发记录不匹配")
         result_minimum_profile = assignment_payload.get("minimum_acceptable_profile", minimum_profile)
         if result_minimum_profile != minimum_profile:
             die("Reviewer result_file minimum_acceptable_profile 与派发记录不匹配")
-        if assignment_payload.get("status") == "verified":
-            die("Reviewer 自报结果不得声明 verified；可信宿主证据必须由独立适配器提供")
-        runtime_model = str(assignment_payload.get("runtime_model", "")).strip()
-        runtime_effort = str(assignment_payload.get("runtime_reasoning_effort", "")).strip()
-        assignment_status, assignment_note = evaluate_model_assignment(
-            requested_profile, minimum_profile, runtime_model, runtime_effort
-        )
-        if assignment_status == "underpowered" and args.status != "incomplete":
-            die("运行档位低于 minimum_acceptable_profile；只能登记 incomplete，状态未修改")
+        permit_ref = str(dispatch_record.get("delegation_dispatch_ref", ""))
+        if assignment_payload.get("dispatch_permit_ref", permit_ref) != permit_ref:
+            die("Reviewer result_file dispatch_permit_ref 与派发记录不匹配")
+        expected_policy_status = "approved" if permit_ref else "legacy-unbound"
+        if assignment_payload.get("policy_status", expected_policy_status) != expected_policy_status:
+            die("Reviewer result_file policy_status 与派发记录不匹配")
+        if float(assignment_payload.get("cost_basis_units", MODEL_PROFILE_COST_UNITS[approved_profile])) != MODEL_PROFILE_COST_UNITS[approved_profile]:
+            die("Reviewer result_file cost_basis_units 与批准档位不匹配")
 
         if args.reviewer not in round_data["active"]:
             die("Reviewer 当前不处于 active 状态")
@@ -1258,41 +1203,31 @@ def command_result(args: argparse.Namespace) -> None:
             "summary": args.summary,
             "result_file": args.result_file,
             "isolation_level": state["isolation"]["isolation_level"],
-            "model_assignment": {
-                "requested_profile": requested_profile,
-                "requested_model": dispatch_record["requested_model"],
-                "requested_reasoning_effort": dispatch_record["requested_reasoning_effort"],
+            "dispatch_assignment": {
+                "approved_profile": approved_profile,
                 "minimum_acceptable_profile": minimum_profile,
-                "runtime_model": runtime_model,
-                "runtime_reasoning_effort": runtime_effort,
-                "status": assignment_status,
-                "runtime_evidence_level": "declared" if runtime_model else "unavailable",
-                "runtime_evidence_source": "reviewer-result" if runtime_model else "none",
-                "note": assignment_note,
+                "dispatch_permit_ref": permit_ref,
+                "policy_status": expected_policy_status,
+                "cost_basis_units": MODEL_PROFILE_COST_UNITS[approved_profile],
             },
             "calibration_record": calibration_record,
             "completed_at": now_iso(),
             "delegation_reservation_id": args.delegation_reservation_id,
             "delegation_attribution": delegation_attribution,
         }
-        if assignment_status == "mismatch":
-            state["counters"]["model_policy_violations"] += 1
-        if assignment_status == "underpowered":
-            state["counters"]["underpowered_results"] += 1
         validate_state_data(state)
         save_state(review_dir, state)
         rebuild_calibration_ledger(review_dir, state)
-    print("[OK] 已记录 Reviewer 结果: {} -> {} / model={}".format(
-        args.reviewer, args.status, assignment_status
+    print("[OK] 已记录 Reviewer 结果: {} -> {} / approved-profile={}".format(
+        args.reviewer, args.status, approved_profile
     ))
-    if assignment_status in {"unverified", "underpowered", "mismatch"}:
-        warn(assignment_note)
 
 
 def command_merge(args: argparse.Namespace) -> None:
     review_dir = Path(args.review_dir).expanduser().resolve()
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         validate_state_data(state)
         round_data = get_round(state, args.phase, args.round)
         if round_data["active"]:
@@ -1300,12 +1235,6 @@ def command_merge(args: argparse.Namespace) -> None:
         missing = set(round_data["planned_reviewers"]) - set(round_data["results"].keys())
         if missing:
             die("尚未收齐 Reviewer 结果: {}".format(", ".join(sorted(missing))))
-        underpowered = [
-            reviewer for reviewer, result in round_data["results"].items()
-            if result.get("model_assignment", {}).get("status") == "underpowered"
-        ]
-        if underpowered:
-            die("存在低于最低可接受档位的 Reviewer，不能正常归并: {}".format(", ".join(sorted(underpowered))))
         computed_blocking = sum(int(item.get("blocking_count", 0)) for item in round_data["results"].values())
         computed_nonblocking = sum(int(item.get("nonblocking_count", 0)) for item in round_data["results"].values())
         if args.blocking_count > computed_blocking or args.nonblocking_count > computed_nonblocking:
@@ -1317,8 +1246,8 @@ def command_merge(args: argparse.Namespace) -> None:
             "summary": args.summary,
             "repair_required": args.repair_required,
             "isolation_level": state["isolation"]["isolation_level"],
-            "model_profile_counts": dict(Counter(
-                record.get("model_profile", "unknown")
+            "approved_profile_counts": dict(Counter(
+                record.get("approved_profile", "unknown")
                 for record in round_data.get("dispatch", {}).values()
             )),
             "merged_at": now_iso(),
@@ -1334,13 +1263,14 @@ def command_finalize_calibration(args: argparse.Namespace) -> None:
     review_dir = Path(args.review_dir).expanduser().resolve()
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         validate_state_data(state)
         round_data = get_round(state, args.phase, args.round)
         result = round_data.get("results", {}).get(args.reviewer)
         if not isinstance(result, dict):
             die("Reviewer 结果尚未登记，不能最终化校准归因")
-        if result.get("status") == "incomplete" or result.get("model_assignment", {}).get("status") in {"underpowered", "mismatch"}:
-            die("incomplete、underpowered 或 mismatch 结果不能最终化校准归因")
+        if result.get("status") == "incomplete":
+            die("incomplete 结果不能最终化校准归因")
         record = result.get("calibration_record")
         if not isinstance(record, dict) or not record.get("reviewer_results"):
             die("Reviewer 结果缺少可最终化的校准投影")
@@ -1371,6 +1301,7 @@ def command_repair(args: argparse.Namespace) -> None:
     review_dir = Path(args.review_dir).expanduser().resolve()
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         validate_state_data(state)
         current = state["counters"]["repair_rounds"] + 1
         if current > state["limits"]["max_repair_rounds"]:
@@ -1393,8 +1324,8 @@ def command_repair(args: argparse.Namespace) -> None:
     print("[OK] 已记录第 {} 轮集中修复".format(current))
 
 
-def model_profile_counts(state: Dict[str, Any]) -> Dict[str, int]:
-    return dict(Counter(record.get("model_profile", "unknown") for _, _, _, record in all_dispatch_records(state)))
+def dispatch_profile_counts(state: Dict[str, Any]) -> Dict[str, int]:
+    return dict(Counter(record.get("approved_profile", "unknown") for _, _, _, record in all_dispatch_records(state)))
 
 
 def command_validate(args: argparse.Namespace) -> None:
@@ -1412,18 +1343,18 @@ def command_validate(args: argparse.Namespace) -> None:
             active_count(state),
             state["isolation"]["isolation_level"],
             state["isolation"]["strict_readonly_eligible"],
-            json.dumps(model_profile_counts(state), ensure_ascii=False, sort_keys=True),
+            json.dumps(dispatch_profile_counts(state), ensure_ascii=False, sort_keys=True),
         )
     )
-    if state["counters"].get("model_policy_violations", 0):
-        warn("存在模型策略不匹配；关闭台账前必须显式确认。")
 
 
 def command_sync_calibration(args: argparse.Namespace) -> None:
     review_dir = Path(args.review_dir).expanduser().resolve()
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         validate_state_data(state)
+        save_state(review_dir, state)
         rebuild_calibration_ledger(review_dir, state)
         validate_calibration_ledger(review_dir, state)
     print("[OK] 已从 review-state 重建校准台账")
@@ -1446,9 +1377,7 @@ def command_status(args: argparse.Namespace) -> None:
     print("- 系统级严格只读资格: " + ("是" if isolation.get("strict_readonly_eligible") else "否"))
     print("- 累计 Reviewer: {} / {}".format(state["counters"]["total_reviewers"], limits["max_total_reviewers"]))
     print("- Terra High Reviewer: {} / {}".format(state["counters"]["terra_high_reviewers"], limits["max_terra_high_reviewers"]))
-    print("- 模型策略不匹配: {}".format(state["counters"]["model_policy_violations"]))
-    print("- 低于最低可接受档位: {}".format(state["counters"]["underpowered_results"]))
-    print("- 模型档位分布: " + json.dumps(model_profile_counts(state), ensure_ascii=False, sort_keys=True))
+    print("- 批准派发档位分布: " + json.dumps(dispatch_profile_counts(state), ensure_ascii=False, sort_keys=True))
     print("- 集中修复轮次: {} / {}".format(state["counters"]["repair_rounds"], limits["max_repair_rounds"]))
     print("- 当前活跃 Reviewer: {} / {}".format(active_count(state), limits["max_parallel_reviewers"]))
     for phase_name in ("pre", "post"):
@@ -1460,7 +1389,7 @@ def command_status(args: argparse.Namespace) -> None:
         print("- {} 当前轮次: {}".format(phase_name, phase.get("current_round", 0)))
         for round_key, round_data in sorted(phase.get("rounds", {}).items(), key=lambda item: int(item[0])):
             profiles = Counter(
-                record.get("model_profile", "unknown")
+                record.get("approved_profile", "unknown")
                 for record in round_data.get("dispatch", {}).values()
             )
             print(
@@ -1481,22 +1410,11 @@ def command_close(args: argparse.Namespace) -> None:
     review_dir = Path(args.review_dir).expanduser().resolve()
     with review_lock(review_dir, args.force_unlock):
         state = load_state(review_dir)
+        ensure_state_mutable(state)
         validate_state_data(state)
         validate_calibration_ledger(review_dir, state)
         if active_count(state):
             die("仍有活跃 Reviewer，不能关闭")
-        violations = int(state["counters"].get("model_policy_violations", 0))
-        if violations and not args.ack_model_policy_violation:
-            die("存在 {} 个模型策略不匹配；请核对后使用 --ack-model-policy-violation 显式确认".format(violations))
-        underpowered = int(state["counters"].get("underpowered_results", 0))
-        underpowered_allowed = {
-            "有阻塞问题",
-            "达到复审上限，仍有阻塞或未验证项",
-            "工具或环境受限，未完成独立复审",
-            "工具或环境受限，未完成严格独立复审",
-        }
-        if underpowered and args.conclusion not in underpowered_allowed:
-            die("存在 {} 个 underpowered 结果；不能使用正常完成结论".format(underpowered))
         isolation = state["isolation"]
         if args.conclusion.startswith("系统隔离复审") and not isolation.get("strict_readonly_eligible"):
             die("没有系统级只读运行时证据，不能使用系统隔离复审结论")
@@ -1514,8 +1432,6 @@ def command_close(args: argparse.Namespace) -> None:
         state["conclusion"] = args.conclusion
         if args.note:
             state.setdefault("notes", []).append(args.note)
-        if violations:
-            state.setdefault("notes", []).append("已显式确认模型策略不匹配 {} 项。".format(violations))
         save_state(review_dir, state)
     print("[OK] 已关闭复审台账: " + args.conclusion)
 
@@ -1526,7 +1442,7 @@ def add_common(parser: argparse.ArgumentParser) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="维护多 Agent 复审预算、模型路由与运行时隔离证据")
+    parser = argparse.ArgumentParser(description="维护多 Agent 复审预算、批准派发档位与隔离证据")
     sub = parser.add_subparsers(dest="command", required=True)
 
     init = sub.add_parser("init")
@@ -1589,7 +1505,8 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.add_argument("--round", type=int, required=True)
     dispatch.add_argument("--reviewer", required=True)
     dispatch.add_argument("--scope", required=True)
-    dispatch.add_argument("--model-profile", choices=list(MODEL_PROFILES), default="")
+    dispatch.add_argument("--approved-profile", "--model-profile", dest="model_profile",
+                          choices=list(MODEL_PROFILES), default="")
     dispatch.add_argument("--minimum-acceptable-profile", choices=list(MODEL_PROFILES), default="")
     dispatch.add_argument("--escalation-reason", default="")
     dispatch.add_argument("--allow-repeat", action="store_true")

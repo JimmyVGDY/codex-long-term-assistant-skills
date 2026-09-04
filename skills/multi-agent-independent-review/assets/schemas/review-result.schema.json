@@ -1,18 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Cross Project Reviewer Result V3",
+  "title": "Cross Project Reviewer Result V4",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema_version", "result_id", "reviewer", "task_id", "review_phase", "review_round",
     "boundary_id", "packet_sha256", "status", "isolation_level",
-    "model_assignment", "task_difficulty", "duration_ms",
+    "dispatch_assignment", "task_difficulty", "duration_ms",
     "estimated_cost_units", "cost_formula_version", "calibration_finalized",
     "accepted", "rejected", "duplicate", "repaired", "regressions_prevented",
     "checked_scope", "findings", "unverified_items", "summary"
   ],
   "properties": {
-    "schema_version": {"const": 3},
+    "schema_version": {"const": 4},
     "result_id": {"type": "string", "pattern": "^RVR_[a-f0-9]{64}$"},
     "reviewer": {"type": "string", "minLength": 1},
     "task_id": {"type": "string", "minLength": 1},
@@ -22,24 +22,19 @@
     "packet_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
     "status": {"enum": ["pass", "nonblocking", "blocking", "incomplete"]},
     "isolation_level": {"enum": ["system-readonly", "logical-readonly", "tool-restricted", "self-review", "unknown"]},
-    "model_assignment": {
+    "dispatch_assignment": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "requested_profile", "requested_model", "requested_reasoning_effort",
-        "minimum_acceptable_profile", "runtime_model", "runtime_reasoning_effort",
-        "status", "runtime_evidence_level", "runtime_evidence_source"
+        "approved_profile", "minimum_acceptable_profile", "dispatch_permit_ref",
+        "policy_status", "cost_basis_units"
       ],
       "properties": {
-        "requested_profile": {"enum": ["luna-low", "luna-medium", "terra-medium", "terra-high"]},
-        "requested_model": {"enum": ["gpt-5.6-luna", "gpt-5.6-terra"]},
-        "requested_reasoning_effort": {"enum": ["low", "medium", "high"]},
+        "approved_profile": {"enum": ["luna-low", "luna-medium", "terra-medium", "terra-high"]},
         "minimum_acceptable_profile": {"enum": ["luna-low", "luna-medium", "terra-medium", "terra-high"]},
-        "runtime_model": {"type": "string"},
-        "runtime_reasoning_effort": {"type": "string"},
-        "status": {"enum": ["declared_match", "fallback_acceptable", "underpowered", "unverified", "mismatch"]},
-        "runtime_evidence_level": {"enum": ["unavailable", "declared"]},
-        "runtime_evidence_source": {"type": "string"}
+        "dispatch_permit_ref": {"type": "string", "pattern": "^(|sha256:[a-f0-9]{64})$"},
+        "policy_status": {"enum": ["approved", "legacy-unbound"]},
+        "cost_basis_units": {"type": "number", "exclusiveMinimum": 0}
       }
     },
     "task_difficulty": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"]},

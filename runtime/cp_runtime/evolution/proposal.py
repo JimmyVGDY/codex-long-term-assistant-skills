@@ -27,9 +27,9 @@ def _recommendation(signal: PatternSignal, assessment: ValueComplexityAssessment
             "对该失败模式关联的任务样本进行共同因子分析；将根因定位到输入合同、路由、实施步骤、验证或复审中的单一责任边界；"
             "优先增加前置校验、负向测试或精确触发条件，不扩大默认模型档位和 Reviewer 数量。"
         )
-    if signal.signal_type is SignalType.MODEL_ESCALATION:
+    if signal.signal_type is SignalType.DISPATCH_PROFILE_VALUE_REGRESSION:
         return (
-            "对比推荐档位与实际升级任务的复杂度、风险、上下文长度和修复结果；修订复杂度特征或升级阈值；"
+            "对比相邻批准档位的任务难度、风险、预留成本、结果、Finding、返修和耗时；修订派发特征或阈值；"
             "通过历史样本回放验证节省成本且不降低 Blocking Finding 命中率。"
         )
     if signal.signal_type is SignalType.ROUTING_DEVIATION:
@@ -54,15 +54,15 @@ def _recommendation(signal: PatternSignal, assessment: ValueComplexityAssessment
         )
     if signal.signal_type is SignalType.NEGATIVE_OUTCOME:
         return (
-            "按失败类别、Skill、项目阶段、模型档位和 Reviewer 组合分层复盘；补齐可区分根因的结构化字段；"
+            "按失败类别、Skill、项目阶段、批准派发档位和 Reviewer 组合分层复盘；补齐可区分根因的结构化字段；"
             "在没有单一高置信根因前，只形成调查任务，不直接修改全局规则。"
         )
     return "收集更多独立任务证据，明确价值、复杂度、风险、回滚和验证边界后再决定是否修改。"
 
 
 def _expected_value(signal: PatternSignal) -> str:
-    if signal.signal_type is SignalType.MODEL_ESCALATION:
-        return "降低不必要的模型升级和 Token/credits 消耗，同时保持任务质量与 Blocking Finding 覆盖率。"
+    if signal.signal_type is SignalType.DISPATCH_PROFILE_VALUE_REGRESSION:
+        return "降低低收益的高档位派发成本，同时保持任务质量与 Blocking Finding 覆盖率。"
     if signal.signal_type is SignalType.LOW_REVIEWER_YIELD:
         return "减少低收益 Reviewer 调用和重复上下文加载，并保留高风险任务的兜底覆盖。"
     if signal.signal_type is SignalType.ROUTING_DEVIATION:
@@ -76,7 +76,7 @@ def _expected_value(signal: PatternSignal) -> str:
 
 def _rollback_plan(signal: PatternSignal) -> Tuple[str, ...]:
     return (
-        "实施前记录目标文件、规则、模型配置或 Reviewer Profile 的完整哈希和 Git 基线",
+        "实施前记录目标文件、规则、派发配置或 Reviewer Profile 的完整哈希和 Git 基线",
         "所有变更以独立任务和最小提交实施，不覆盖历史提案、Evidence 和观察快照",
         "验证失败、质量下降或成本异常时恢复原配置并重新执行原回归基线",
         "回滚后记录失败原因和实际结果，不自动再次应用同一提案",
@@ -86,7 +86,7 @@ def _rollback_plan(signal: PatternSignal) -> Tuple[str, ...]:
 def _validation_plan(signal: PatternSignal) -> Tuple[str, ...]:
     base = [
         "使用提案 Evidence 中的历史任务构造回放集，并补充至少一个负向对照样本",
-        "比较修改前后的成功率、Blocking Finding、修复轮次、模型升级率和 Reviewer 成本",
+        "比较修改前后的成功率、Blocking Finding、修复轮次、批准档位分布和 Reviewer 成本",
         "执行现有 Skill 路由回归、运行时合同测试、安装/恢复测试和最终读回校验",
         "至少经过一个新的独立任务窗口后再判断优化是否有效，不以单次成功作为结论",
     ]

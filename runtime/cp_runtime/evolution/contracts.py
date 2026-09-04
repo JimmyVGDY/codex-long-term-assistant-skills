@@ -80,7 +80,7 @@ class ExecutionAuthorization(str, Enum):
 
 class SignalType(str, Enum):
     REPEATED_FAILURE = "REPEATED_FAILURE"
-    MODEL_ESCALATION = "MODEL_ESCALATION"
+    DISPATCH_PROFILE_VALUE_REGRESSION = "DISPATCH_PROFILE_VALUE_REGRESSION"
     ROUTING_DEVIATION = "ROUTING_DEVIATION"
     EXCESSIVE_REPAIR = "EXCESSIVE_REPAIR"
     LOW_REVIEWER_YIELD = "LOW_REVIEWER_YIELD"
@@ -565,7 +565,7 @@ class EvolutionPolicy:
     min_records: int = 5
     min_independent_tasks: int = 3
     repeated_failure_count: int = 3
-    model_escalation_rate: float = 0.40
+    dispatch_profile_value_regression_rate: float = 0.25
     routing_deviation_rate: float = 0.30
     excessive_repair_average: float = 1.50
     high_repair_rounds: int = 2
@@ -576,7 +576,6 @@ class EvolutionPolicy:
     reviewer_low_yield_rate: float = 0.05
     min_lifecycle_completeness_rate: float = 0.80
     min_session_end_coverage: float = 0.80
-    min_actual_model_coverage: float = 0.75
     min_known_terminal_outcome_coverage: float = 0.80
     min_project_repo_binding_coverage: float = 1.00
     min_observation_window_days: int = 7
@@ -600,7 +599,7 @@ class EvolutionPolicy:
         for name in integer_fields:
             if int(getattr(self, name)) <= 0:
                 raise ContractError("%s 必须大于 0" % name)
-        for name in ("model_escalation_rate", "routing_deviation_rate", "reviewer_low_yield_rate", "reviewer_high_duplicate_rate", "negative_outcome_rate", "min_lifecycle_completeness_rate", "min_session_end_coverage", "min_actual_model_coverage", "min_known_terminal_outcome_coverage", "min_project_repo_binding_coverage", "reviewer_min_attribution_coverage", "reviewer_min_cost_coverage"):
+        for name in ("dispatch_profile_value_regression_rate", "routing_deviation_rate", "reviewer_low_yield_rate", "reviewer_high_duplicate_rate", "negative_outcome_rate", "min_lifecycle_completeness_rate", "min_session_end_coverage", "min_known_terminal_outcome_coverage", "min_project_repo_binding_coverage", "reviewer_min_attribution_coverage", "reviewer_min_cost_coverage"):
             value = float(getattr(self, name))
             if not 0.0 <= value <= 1.0:
                 raise ContractError("%s 必须在 0-1 之间" % name)

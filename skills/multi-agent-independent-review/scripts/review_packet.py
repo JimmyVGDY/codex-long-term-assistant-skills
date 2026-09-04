@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -31,10 +32,10 @@ SENSITIVE_NAMES = {
 }
 SENSITIVE_SUFFIXES = {".pem", ".key", ".p12", ".pfx", ".jks", ".keystore"}
 MODEL_PROFILES: Dict[str, Dict[str, str]] = {
-    "luna-low": {"model": "gpt-5.6-luna", "reasoning_effort": "low"},
-    "luna-medium": {"model": "gpt-5.6-luna", "reasoning_effort": "medium"},
-    "terra-medium": {"model": "gpt-5.6-terra", "reasoning_effort": "medium"},
-    "terra-high": {"model": "gpt-5.6-terra", "reasoning_effort": "high"},
+    "luna-low": {},
+    "luna-medium": {},
+    "terra-medium": {},
+    "terra-high": {},
 }
 DEFAULT_PROFILE_BY_TIER = {
     "economy": "luna-low",
@@ -51,6 +52,10 @@ COST_FORMULA_VERSION = "profile-weight-v1"
 FORBIDDEN_CALIBRATION_KEYS = {
     "prompt", "raw_prompt", "response", "full_response", "diff", "patch",
     "token", "tokens", "input_tokens", "output_tokens", "api_key", "cookie",
+    "actual" + "_model", "actual" + "_reasoning_effort",
+    "runtime" + "_model", "runtime" + "_reasoning_effort",
+    "runtime" + "_model_evidence", "host" + "_runtime_attestation",
+    "diagnostic" + "_model_observation",
 }
 
 
@@ -466,7 +471,6 @@ def command_result_template(args: argparse.Namespace) -> None:
     profile_order = {name: index for index, name in enumerate(MODEL_PROFILES)}
     if profile_order[minimum_profile] > profile_order[profile]:
         die("minimum-acceptable-profile 不得高于请求档位")
-    config = MODEL_PROFILES[profile]
     task_id = args.task_id or manifest["boundary_id"]
     review_phase = args.review_phase or manifest.get("phase") or "post"
     result_id = "RVR_" + hashlib.sha256(
@@ -476,7 +480,7 @@ def command_result_template(args: argparse.Namespace) -> None:
         )).encode("utf-8")
     ).hexdigest()
     result = {
-        "schema_version": 3,
+        "schema_version": 4,
         "result_id": result_id,
         "reviewer": args.reviewer,
         "task_id": task_id,
@@ -486,16 +490,12 @@ def command_result_template(args: argparse.Namespace) -> None:
         "packet_sha256": manifest["packet_sha256"],
         "status": "incomplete",
         "isolation_level": "unknown",
-        "model_assignment": {
-            "requested_profile": profile,
-            "requested_model": config["model"],
-            "requested_reasoning_effort": config["reasoning_effort"],
+        "dispatch_assignment": {
+            "approved_profile": profile,
             "minimum_acceptable_profile": minimum_profile,
-            "runtime_model": "",
-            "runtime_reasoning_effort": "",
-            "status": "unverified",
-            "runtime_evidence_level": "unavailable",
-            "runtime_evidence_source": "none",
+            "dispatch_permit_ref": "",
+            "policy_status": "legacy-unbound",
+            "cost_basis_units": MODEL_PROFILE_COST_UNITS[profile],
         },
         "task_difficulty": args.task_difficulty,
         "duration_ms": 0,
@@ -530,7 +530,7 @@ def command_validate_result(args: argparse.Namespace) -> None:
         "packet_sha256",
         "status",
         "isolation_level",
-        "model_assignment",
+        "dispatch_assignment",
         "checked_scope",
         "findings",
         "unverified_items",
@@ -539,10 +539,10 @@ def command_validate_result(args: argparse.Namespace) -> None:
     if missing:
         die("Reviewer 结果缺少字段: " + ",".join(missing))
     schema_version = result["schema_version"]
-    if schema_version not in {2, 3}:
-        die("Reviewer 结果 schema_version 必须是 2 或 3")
+    if schema_version != 4:
+        die("Reviewer 结果 schema_version 必须是 4；旧 V2/V3 结果只能由旧台账只读审计")
     allowed_root = set(required) | {"summary"}
-    if schema_version == 3:
+    if schema_version == 4:
         required_v3 = {
             "task_id", "review_phase", "review_round", "task_difficulty", "duration_ms",
             "estimated_cost_units", "cost_formula_version", "calibration_finalized",
@@ -550,7 +550,7 @@ def command_validate_result(args: argparse.Namespace) -> None:
         }
         missing_v3 = sorted(required_v3 - set(result))
         if missing_v3:
-            die("Reviewer v3 结果缺少校准字段: " + ",".join(missing_v3))
+            die("Reviewer v4 结果缺少校准字段: " + ",".join(missing_v3))
         allowed_root.update(required_v3)
         reject_forbidden_calibration_fields(result)
         if not str(result["task_id"]).strip():
@@ -569,13 +569,11 @@ def command_validate_result(args: argparse.Namespace) -> None:
     unexpected_root = sorted(set(result) - allowed_root)
     if unexpected_root:
         die("Reviewer 结果包含 schema 未允许字段: " + ",".join(unexpected_root))
-    if schema_version == 3:
+    if schema_version == 4:
         identity = "{}|{}|{}|{}|{}|{}".format(
             manifest["boundary_id"], result["task_id"], result["review_phase"],
             result["review_round"], result["reviewer"], manifest["packet_sha256"],
         )
-    else:
-        identity = manifest["boundary_id"] + "|" + str(result["reviewer"]) + "|" + manifest["packet_sha256"]
     expected_result_id = "RVR_" + hashlib.sha256(identity.encode("utf-8")).hexdigest()
     if result["result_id"] != expected_result_id:
         die("Reviewer 结果 result_id 与审查包身份不匹配")
@@ -589,7 +587,7 @@ def command_validate_result(args: argparse.Namespace) -> None:
         die("Reviewer 结果 status 非法")
     if not isinstance(result["findings"], list) or not isinstance(result["unverified_items"], list):
         die("Reviewer findings/unverified_items 必须是数组")
-    if schema_version == 3:
+    if schema_version == 4:
         required_finding = {
             "id", "dimension", "severity", "evidence_level", "blocking", "summary",
             "location", "root_cause_group", "required_validation", "disposition",
@@ -609,60 +607,35 @@ def command_validate_result(args: argparse.Namespace) -> None:
             evidence = finding["regression_evidence"]
             if not isinstance(evidence, list) or any(not isinstance(item, str) for item in evidence):
                 die("finding regression_evidence 必须是字符串数组")
-    assignment = result["model_assignment"]
+    assignment = result["dispatch_assignment"]
     if not isinstance(assignment, dict):
-        die("model_assignment 必须是对象")
+        die("dispatch_assignment 必须是对象")
     allowed_assignment = {
-        "requested_profile", "requested_model", "requested_reasoning_effort",
-        "runtime_model", "runtime_reasoning_effort", "status",
+        "approved_profile", "minimum_acceptable_profile", "dispatch_permit_ref",
+        "policy_status", "cost_basis_units",
     }
-    if schema_version == 3:
-        allowed_assignment.update({
-            "minimum_acceptable_profile", "runtime_evidence_level", "runtime_evidence_source",
-        })
     unexpected_assignment = sorted(set(assignment) - allowed_assignment)
     if unexpected_assignment:
-        die("model_assignment 包含 schema 未允许字段: " + ",".join(unexpected_assignment))
-    requested_profile = assignment.get("requested_profile")
-    if requested_profile not in MODEL_PROFILES:
-        die("model_assignment.requested_profile 非法")
-    expected = MODEL_PROFILES[requested_profile]
-    if assignment.get("requested_model") != expected["model"]:
-        die("model_assignment.requested_model 与档位不一致")
-    if assignment.get("requested_reasoning_effort") != expected["reasoning_effort"]:
-        die("model_assignment.requested_reasoning_effort 与档位不一致")
-    if schema_version == 3:
-        minimum_profile = assignment.get("minimum_acceptable_profile")
-        if minimum_profile not in MODEL_PROFILES:
-            die("model_assignment.minimum_acceptable_profile 非法")
-        profile_order = {name: index for index, name in enumerate(MODEL_PROFILES)}
-        if profile_order[minimum_profile] > profile_order[requested_profile]:
-            die("minimum_acceptable_profile 不得高于 requested_profile")
-        if assignment.get("status") not in {
-            "unverified", "declared_match", "fallback_acceptable", "underpowered", "mismatch"
-        }:
-            die("Reviewer 自报 model_assignment.status 非法；不得声明 verified")
-        if assignment.get("runtime_evidence_level") not in {"unavailable", "declared"}:
-            die("runtime_evidence_level 非法")
-        if not isinstance(assignment.get("runtime_evidence_source"), str):
-            die("runtime_evidence_source 必须是字符串")
-        if result["cost_formula_version"] != COST_FORMULA_VERSION:
-            die("cost_formula_version 非法")
-        expected_cost = MODEL_PROFILE_COST_UNITS[requested_profile]
-        if isinstance(result["estimated_cost_units"], bool) or not isinstance(result["estimated_cost_units"], (int, float)):
-            die("estimated_cost_units 必须是数字")
-        if float(result["estimated_cost_units"]) != expected_cost:
-            die("estimated_cost_units 必须由 requested_profile 按 {} 计算".format(COST_FORMULA_VERSION))
-    runtime_model = str(assignment.get("runtime_model", ""))
-    runtime_effort = str(assignment.get("runtime_reasoning_effort", ""))
-    if bool(runtime_model) != bool(runtime_effort):
-        die("runtime_model 与 runtime_reasoning_effort 必须同时填写或同时留空")
-    if schema_version == 3:
-        evidence_level = assignment.get("runtime_evidence_level")
-        if runtime_model and evidence_level != "declared":
-            die("填写 Reviewer 自报运行档位时 runtime_evidence_level 必须是 declared")
-        if not runtime_model and evidence_level != "unavailable":
-            die("未填写运行档位时 runtime_evidence_level 必须是 unavailable")
+        die("dispatch_assignment 包含 schema 未允许字段: " + ",".join(unexpected_assignment))
+    approved_profile = assignment.get("approved_profile")
+    if approved_profile not in MODEL_PROFILES:
+        die("dispatch_assignment.approved_profile 非法")
+    minimum_profile = assignment.get("minimum_acceptable_profile")
+    if minimum_profile not in MODEL_PROFILES:
+        die("dispatch_assignment.minimum_acceptable_profile 非法")
+    profile_order = {name: index for index, name in enumerate(MODEL_PROFILES)}
+    if profile_order[minimum_profile] > profile_order[approved_profile]:
+        die("minimum_acceptable_profile 不得高于 approved_profile")
+    permit_ref = str(assignment.get("dispatch_permit_ref") or "")
+    if permit_ref and not re.fullmatch(r"sha256:[a-f0-9]{64}", permit_ref):
+        die("dispatch_permit_ref 必须是 sha256 引用")
+    if assignment.get("policy_status") not in {"approved", "legacy-unbound"}:
+        die("dispatch_assignment.policy_status 非法")
+    if result["cost_formula_version"] != COST_FORMULA_VERSION:
+        die("cost_formula_version 非法")
+    expected_cost = MODEL_PROFILE_COST_UNITS[approved_profile]
+    if float(assignment.get("cost_basis_units") or 0) != expected_cost or float(result["estimated_cost_units"]) != expected_cost:
+        die("成本依据必须由 approved_profile 按 {} 计算".format(COST_FORMULA_VERSION))
     print("[OK] Reviewer 结构化结果有效", args.result_file)
 
 
@@ -701,7 +674,8 @@ def main() -> None:
     template.add_argument("--review-phase", choices=["pre", "post"], default="")
     template.add_argument("--review-round", type=int, default=1)
     template.add_argument("--task-difficulty", choices=["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"], default="UNKNOWN")
-    template.add_argument("--model-profile", choices=list(MODEL_PROFILES), default="")
+    template.add_argument("--approved-profile", "--model-profile", dest="model_profile",
+                          choices=list(MODEL_PROFILES), default="")
     template.add_argument("--minimum-acceptable-profile", choices=list(MODEL_PROFILES), default="")
     template.add_argument("--output", required=True)
     template.set_defaults(func=command_result_template)

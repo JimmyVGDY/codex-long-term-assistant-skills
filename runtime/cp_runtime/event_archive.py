@@ -26,6 +26,16 @@ class EventArchiveError(RuntimeError):
     pass
 
 
+def _archive_root_for_event(event_path: Path) -> Path:
+    """中文：返回单条物理事件链的版本隔离归档目录。
+
+    English: Return the version-isolated archive root for one physical event chain.
+    """
+    event_path = Path(event_path)
+    name = "events-v3" if "task-outcome-v3" in event_path.name else "events"
+    return event_path.parent / "archive" / name
+
+
 def _sha_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -95,7 +105,7 @@ def _atomic_json(path: Path, value: Mapping[str, Any]) -> None:
 
 def verify_archive(event_path: Path, archive_root: Optional[Path] = None) -> Dict[str, Any]:
     event_path = Path(event_path)
-    root = Path(archive_root or event_path.parent / "archive" / "events")
+    root = Path(archive_root or _archive_root_for_event(event_path))
     previous = ZERO_HASH
     archived_names: set[str] = set()
     segment_count = record_count = 0
@@ -123,7 +133,7 @@ def verify_archive(event_path: Path, archive_root: Optional[Path] = None) -> Dic
 
 def archive_closed_segments(event_path: Path, archive_root: Optional[Path] = None) -> Dict[str, Any]:
     event_path = Path(event_path)
-    root = Path(archive_root or event_path.parent / "archive" / "events")
+    root = Path(archive_root or _archive_root_for_event(event_path))
     with OwnerTokenLock(event_path, timeout=10.0):
         segments = event_segment_paths(event_path)
         _files, events, _tail = _read_event_files_unlocked(event_path)
@@ -177,10 +187,10 @@ def capacity_report(project_dir: Path, soft_bytes: Optional[int] = None,
             continue
         files += 1; size = path.stat().st_size
         normalized = path.as_posix().lower()
-        if "seal-queue/" in normalized: category = "queue"
+        if "seal-queue-v3/" in normalized or "seal-queue/" in normalized: category = "queue"
         elif "/archive/" in normalized: category = "archives"
         elif path.name.endswith(".seals.jsonl"): category = "seals"
-        elif "task-outcome-v2" in path.name: category = "events"
+        elif "task-outcome-v3" in path.name or "task-outcome-v2" in path.name: category = "events"
         else: category = "other"
         categories[category] += size
     total = sum(categories.values())
@@ -205,7 +215,7 @@ def _health_item(project_name: str) -> Dict[str, Any]:
             "archive_status": "UNAVAILABLE", "capacity_status": "UNKNOWN",
             "event_count": 0, "segment_count": 0, "seal_count": 0,
             "pending_jobs": 0, "archive_segment_count": 0,
-            "last_event_at": None, "error_code": "NONE"}
+            "last_event_at": None, "error_code": "NONE", "event_chains": []}
 
 
 def health_overview(project_context_root: Path, keyring_path: Optional[Path] = None) -> Dict[str, Any]:
@@ -230,51 +240,97 @@ def health_overview(project_context_root: Path, keyring_path: Optional[Path] = N
             projects.append(item)
             continue
         feedback = project / "feedback"
-        event = project / "feedback" / "task-outcome-v2.jsonl"
-        queue = feedback / "seal-queue"
+        current_event = feedback / "task-outcome-v3.jsonl"
+        legacy_event = feedback / "task-outcome-v2.jsonl"
+        current_has_files = current_event.exists() or any(
+            current_event.parent.glob(current_event.stem + ".segment-*" + current_event.suffix)
+        )
+        legacy_has_files = legacy_event.exists() or any(
+            legacy_event.parent.glob(legacy_event.stem + ".segment-*" + legacy_event.suffix)
+        )
+        events = ([current_event] if current_has_files else []) + ([legacy_event] if legacy_has_files else [])
+        current_queue = feedback / "seal-queue-v3"
+        legacy_queue = feedback / "seal-queue"
+        queues = (current_queue, legacy_queue)
         archive_root = feedback / "archive"
-        boundaries = (feedback, event, queue, archive_root, archive_root / "events",
-                      *(queue / state for state in ("pending", "running", "done", "dead-letter")))
+        boundaries = (feedback, *events, *queues, archive_root,
+                      *(_archive_root_for_event(event) for event in events),
+                      *(queue / state for queue in queues
+                        for state in ("pending", "running", "done", "dead-letter")))
         if any(_is_reparse(path) for path in boundaries):
             item = _health_item(project.name)
             item["error_code"] = "PROJECT_REPARSE_REJECTED"
             projects.append(item)
             continue
+        if not events:
+            continue
         try:
-            segments = event_segment_paths(event)
-            seal_path = Path(str(event) + ".seals.jsonl")
-            if any(_is_reparse(path) for path in [*segments, seal_path]):
-                raise EventArchiveError("PROJECT_REPARSE_REJECTED")
+            for event in events:
+                segments = event_segment_paths(event)
+                seal_path = Path(str(event) + ".seals.jsonl")
+                if any(_is_reparse(path) for path in [*segments, seal_path]):
+                    raise EventArchiveError("PROJECT_REPARSE_REJECTED")
         except Exception as exc:
             item = _health_item(project.name)
             item["error_code"] = ("PROJECT_REPARSE_REJECTED" if str(exc) == "PROJECT_REPARSE_REJECTED"
                                   else "PROJECT_HEALTH_VALIDATION_FAILED")
             projects.append(item)
             continue
-        if not event.exists() and not segments:
-            continue
         item = _health_item(project.name)
         try:
-            chain = read_event_chain(event, allow_duplicate_ids=True)
-            rows = chain["events"]
-            project_ids = {str(row.get("project_id") or "") for row in rows}
-            repos = {str(row.get("repo_fingerprint") or "") for row in rows}
-            item.update(event_count=chain["record_count"], segment_count=len(event_segment_paths(event)),
-                        chain_status="VALID", last_event_at=str(rows[-1].get("captured_at") or "") if rows else None)
+            project_ids: set[str] = set()
+            repos: set[str] = set()
+            last_events: list[str] = []
+            seal_statuses: list[str] = []
+            for event in events:
+                chain = read_event_chain(event, allow_duplicate_ids=True)
+                rows = chain["events"]
+                project_ids.update(str(row.get("project_id") or "") for row in rows)
+                repos.update(str(row.get("repo_fingerprint") or "") for row in rows)
+                if rows:
+                    last_events.append(str(rows[-1].get("captured_at") or ""))
+                detail = {
+                    "role": "current" if event == current_event else "legacy-readonly",
+                    "schema_version": chain["schema_version"],
+                    "chain_status": "VALID",
+                    "event_count": chain["record_count"],
+                    "segment_count": len(event_segment_paths(event)),
+                    "seal_status": "UNAVAILABLE",
+                    "seal_count": 0,
+                    "archive_status": "UNAVAILABLE",
+                    "archive_segment_count": 0,
+                    "queue_status": "EMPTY",
+                    "pending_jobs": 0,
+                }
+                item["event_count"] += detail["event_count"]
+                item["segment_count"] += detail["segment_count"]
+                try:
+                    seal = verify_event_seals(event, keyring_path=keyring_path)
+                    detail.update(seal_status=seal["seal_status"], seal_count=seal["seal_count"])
+                except IntegrityError:
+                    pass
+                seal_statuses.append(detail["seal_status"])
+                archive = verify_archive(event)
+                detail.update(archive_status="VALID", archive_segment_count=archive["segment_count"])
+                chain_queue = current_queue if event == current_event else legacy_queue
+                pending = sum(1 for state in ("pending", "running")
+                              for _ in (chain_queue / state).glob("job-*.json"))
+                detail.update(pending_jobs=pending, queue_status="PENDING" if pending else "EMPTY")
+                item["seal_count"] += detail["seal_count"]
+                item["archive_segment_count"] += detail["archive_segment_count"]
+                item["pending_jobs"] += pending
+                item["event_chains"].append(detail)
+            item.update(chain_status="VALID", last_event_at=max(last_events) if last_events else None)
             if project_ids == {project.name} and len(repos) == 1:
                 item["binding_status"] = "VALID"
             else:
                 item.update(binding_status="CONFLICT", error_code="PROJECT_BINDING_CONFLICT")
-            try:
-                seal = verify_event_seals(event, keyring_path=keyring_path)
-                item.update(seal_status=seal["seal_status"], seal_count=seal["seal_count"])
-            except IntegrityError:
-                item["seal_status"] = "UNAVAILABLE"
-            queue = project / "feedback" / "seal-queue"
-            pending = sum(1 for state in ("pending", "running") for _ in (queue / state).glob("job-*.json"))
-            item.update(pending_jobs=pending, queue_status="PENDING" if pending else "EMPTY")
-            archive = verify_archive(event)
-            item.update(archive_status="VALID", archive_segment_count=archive["segment_count"])
+            if seal_statuses and len(set(seal_statuses)) == 1:
+                item["seal_status"] = seal_statuses[0]
+            elif seal_statuses and "UNAVAILABLE" not in seal_statuses:
+                item["seal_status"] = "VALID_SEALED_PREFIX_WITH_UNSEALED_TAIL"
+            item["queue_status"] = "PENDING" if item["pending_jobs"] else "EMPTY"
+            item["archive_status"] = "VALID"
             item["capacity_status"] = capacity_report(project)["status"]
         except Exception:
             item["error_code"] = "PROJECT_HEALTH_VALIDATION_FAILED"

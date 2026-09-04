@@ -26,7 +26,7 @@ from .contracts import (
     sha256_hex,
 )
 from .storage import JsonLineRecord, StorageError, read_jsonl, safe_child
-from ..event_v2 import read_event_chain, EventContractError
+from ..event_v3 import read_event_chain, EventContractError
 from ..integrity import IntegrityError, verify_event_seals
 
 _ALLOWED_SOURCE_WORDS = (
@@ -35,12 +35,7 @@ _ALLOWED_SOURCE_WORDS = (
 _EXCLUDED_SOURCE_WORDS = (
     "proposal", "decision", "snapshot", "assessment", "knowledge-candidate"
 )
-_MODEL_RANK = {
-    "luna-low": 1,
-    "luna-medium": 2,
-    "terra-medium": 3,
-    "terra-high": 4,
-}
+_DISPATCH_PROFILES = ("luna-low", "luna-medium", "terra-medium", "terra-high")
 _SUCCESS_OUTCOMES = {"accepted", "success", "succeeded", "pass", "passed", "ok", "completed", "complete"}
 _UNKNOWN_OUTCOMES = {"", "unknown", "none", "n/a", "na"}
 _TIME_FIELDS = (
@@ -178,29 +173,6 @@ def _evidence(row: JsonLineRecord, task_id: Optional[str]) -> EvidenceReference:
     )
 
 
-def _normalize_model(value: Optional[str]) -> Optional[str]:
-    if not value:
-        return None
-    normalized = value.strip().lower().replace("_", "-").replace(" ", "-")
-    aliases = {
-        "lunalow": "luna-low",
-        "lunamedium": "luna-medium",
-        "terramedium": "terra-medium",
-        "terrahigh": "terra-high",
-    }
-    return aliases.get(normalized.replace("-", ""), normalized)
-
-
-def _is_model_escalation(recommended: Optional[str], actual: Optional[str]) -> bool:
-    recommended = _normalize_model(recommended)
-    actual = _normalize_model(actual)
-    if not recommended or not actual or recommended == actual:
-        return False
-    if recommended in _MODEL_RANK and actual in _MODEL_RANK:
-        return _MODEL_RANK[actual] > _MODEL_RANK[recommended]
-    return False
-
-
 def _failure_labels(payload: Mapping[str, Any]) -> Set[str]:
     labels: Set[str] = set()
     for field in ("failure_code", "error_code", "error_type", "failure_type", "failure_category"):
@@ -268,7 +240,7 @@ def discover_sources(
     if explicit_sources:
         for raw in explicit_sources:
             candidate = safe_child(project_dir, raw)
-            has_segments = candidate.name == "task-outcome-v2.jsonl" and any(
+            has_segments = candidate.name in {"task-outcome-v2.jsonl", "task-outcome-v3.jsonl"} and any(
                 candidate.parent.glob(candidate.stem + ".segment-*" + candidate.suffix))
             if (not candidate.exists() or not candidate.is_file()) and not has_segments:
                 raise ObservationError("显式数据源不存在: %s" % raw)
@@ -326,7 +298,7 @@ def _expected_repo_fingerprint(project_dir: Path) -> Optional[str]:
         return None
 
 
-def _with_hashed_v2_session_ids(source: Path, rows: Sequence[JsonLineRecord]) -> List[JsonLineRecord]:
+def _with_hashed_event_session_ids(source: Path, rows: Sequence[JsonLineRecord]) -> List[JsonLineRecord]:
     """中文：恢复仅用于分组的稳定 session 代号，不把原始 session_id 写入快照或日志。
 
     English: Recover a stable session alias only for grouping and never write the raw session_id to snapshots or logs.
@@ -342,7 +314,7 @@ def _with_hashed_v2_session_ids(source: Path, rows: Sequence[JsonLineRecord]) ->
     for row in rows:
         raw = raw_by_line.get(row.line_number, {})
         session_id = str(raw.get("session_id", "")).strip() if isinstance(raw, Mapping) else ""
-        if str(row.payload.get("schema_version", "")) == "2.0" and session_id:
+        if str(row.payload.get("schema_version", "")) in {"2.0", "3.0"} and session_id:
             payload = dict(row.payload)
             payload["session_id"] = "session-" + sha256_hex(session_id)[:16]
             restored.append(JsonLineRecord(row.relative_path, row.line_number, payload, row.raw_hash))
@@ -351,7 +323,7 @@ def _with_hashed_v2_session_ids(source: Path, rows: Sequence[JsonLineRecord]) ->
     return restored
 
 
-def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, project_dir: Path) -> Tuple[List[JsonLineRecord], int, int, Mapping[str, Any]]:
+def _validate_and_aggregate_events(rows: Sequence[JsonLineRecord], project_id: str, project_dir: Path) -> Tuple[List[JsonLineRecord], int, int, Mapping[str, Any]]:
     """中文：V6 严格隔离项目、按 event_id 去重，并把生命周期事件按 task_id 折叠。
 
     English: V6 strictly isolates projects, deduplicates by event_id, and folds lifecycle events by task_id.
@@ -369,14 +341,14 @@ def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, 
         row_project = _first_text(payload, ("project_id",))
         if row_project and row_project != project_id:
             raise ObservationError("检测到跨项目记录：%s != %s（%s:%d）" % (row_project, project_id, row.relative_path, row.line_number))
-        is_v2 = str(payload.get("schema_version", "")) == "2.0" and bool(payload.get("event_id"))
-        if not is_v2:
+        is_event = str(payload.get("schema_version", "")) in {"2.0", "3.0"} and bool(payload.get("event_id"))
+        if not is_event:
             legacy.append(row)
             continue
         raw_v2 += 1
         repo_fp = _first_text(payload, ("repo_fingerprint",))
         if not repo_fp:
-            raise ObservationError("TaskOutcomeEvent V2 缺少 repo_fingerprint：%s:%d" % (row.relative_path, row.line_number))
+            raise ObservationError("TaskOutcomeEvent 缺少 repo_fingerprint：%s:%d" % (row.relative_path, row.line_number))
         if observed_fp is None:
             observed_fp = repo_fp
         if repo_fp != observed_fp:
@@ -450,7 +422,7 @@ def _validate_and_aggregate_v2(rows: Sequence[JsonLineRecord], project_id: str, 
         merged["actual_reviewers"] = sum(1 for row in group if str(row.payload.get("event_type", "")).upper() == "SUBAGENT_STARTED")
         if terminal is not None:
             merged["terminal_outcome"] = str(terminal.payload.get("terminal_outcome") or "UNKNOWN")
-            for key in ("blocking_findings", "nonblocking_findings", "repair_rounds", "recommended_model", "actual_model", "actual_reasoning_effort"):
+            for key in ("blocking_findings", "nonblocking_findings", "repair_rounds", "approved_dispatch_profile", "reserved_units"):
                 if key in terminal.payload:
                     merged[key] = terminal.payload[key]
         raw_hash = sha256_hex(canonical_json(merged))
@@ -496,13 +468,13 @@ def observe_project(
 
     all_rows: List[JsonLineRecord] = []
     for source in sources:
-        is_task_outcome = source.name == "task-outcome-v2.jsonl"
+        is_task_outcome = source.name in {"task-outcome-v2.jsonl", "task-outcome-v3.jsonl"}
         if is_task_outcome:
             try:
                 import os
                 chain_data = read_event_chain(source, os.environ.get("CP_ASSISTANT_HMAC_KEY"), allow_duplicate_ids=True)
             except EventContractError as exc:
-                raise ObservationError("TaskOutcomeEvent V2 完整性校验失败: %s" % exc) from exc
+                raise ObservationError("TaskOutcomeEvent 完整性校验失败: %s" % exc) from exc
             requires_seal = any(
                 bool((event.get("metadata") or {}).get("seal_required"))
                 for event in chain_data["events"]
@@ -511,14 +483,14 @@ def observe_project(
                 try:
                     seal = verify_event_seals(source)
                 except IntegrityError as exc:
-                    raise ObservationError("TaskOutcomeEvent V2 封印校验失败: %s" % exc) from exc
+                    raise ObservationError("TaskOutcomeEvent 封印校验失败: %s" % exc) from exc
                 if seal["seal_status"] != "SEALED_CURRENT":
-                    raise ObservationError("TaskOutcomeEvent V2 存在 seal_required 的未封印尾部")
+                    raise ObservationError("TaskOutcomeEvent 存在 seal_required 的未封印尾部")
             total_bytes = sum(Path(item).stat().st_size for item in chain_data["files"])
             if total_bytes > policy.max_source_file_bytes:
-                raise ObservationError("TaskOutcomeEvent V2 分段总大小超过策略上限")
+                raise ObservationError("TaskOutcomeEvent 分段总大小超过策略上限")
             if len(chain_data["events"]) > policy.max_record_count:
-                raise ObservationError("TaskOutcomeEvent V2 记录数超过策略上限")
+                raise ObservationError("TaskOutcomeEvent 记录数超过策略上限")
             relative = source.resolve(strict=False).relative_to(project_dir).as_posix()
             rows = [JsonLineRecord(relative_path=relative, line_number=index,
                                    payload=item, raw_hash=sha256_hex(canonical_json(item)))
@@ -530,22 +502,22 @@ def observe_project(
                 max_bytes=policy.max_source_file_bytes,
                 max_records=policy.max_record_count,
             )
-        rows = _with_hashed_v2_session_ids(source, rows)
+        rows = _with_hashed_event_session_ids(source, rows)
         # 中文：V6 Hook 事件采用独立 hash-chain/HMAC 契约；任何链路损坏都失败关闭。
         # English: V6 Hook events use an independent hash-chain and HMAC contract; any chain corruption fails closed.
-        if rows and all(str(row.payload.get("schema_version", "")) == "2.0" and row.payload.get("event_id") for row in rows):
+        if rows and all(str(row.payload.get("source_schema_version") or row.payload.get("schema_version") or "") in {"2.0", "3.0"} and row.payload.get("event_id") for row in rows):
             try:
                 chain_result = chain_data if is_task_outcome else {"duplicate_event_id_count": 0}
                 if chain_result.get("duplicate_event_id_count"):
-                    warnings.append("TaskOutcomeEvent V2 检测到重复 event_id，完整链验证后按 event_id 去重")
+                    warnings.append("TaskOutcomeEvent 检测到重复 event_id，完整链验证后按 event_id 去重")
             except EventContractError as exc:
-                raise ObservationError("TaskOutcomeEvent V2 完整性校验失败: %s" % exc) from exc
+                raise ObservationError("TaskOutcomeEvent 完整性校验失败: %s" % exc) from exc
         all_rows.extend(rows)
         if len(all_rows) > policy.max_record_count:
             raise ObservationError("全部数据源记录总数超过策略上限")
 
     raw_record_count = len(all_rows)
-    all_rows, raw_v2_event_count, duplicate_v2_event_count, v2_diagnostics = _validate_and_aggregate_v2(all_rows, project_id, project_dir)
+    all_rows, raw_v2_event_count, duplicate_v2_event_count, v2_diagnostics = _validate_and_aggregate_events(all_rows, project_id, project_dir)
     if duplicate_v2_event_count:
         warnings.append("%d 条重复 event_id 已在聚合前去重" % duplicate_v2_event_count)
     if v2_diagnostics["missing_event_categories"]:
@@ -565,20 +537,19 @@ def observe_project(
     known_outcome_tasks: Set[str] = set()
     routing_deviation_count = 0
     routing_known_count = 0
-    model_escalation_count = 0
-    model_comparison_count = 0
-    actual_model_count = 0
-    actual_model_tasks: Set[str] = set()
     repair_rounds: List[int] = []
     high_repair_count = 0
     failure_counter: Counter[str] = Counter()
     failure_tasks: DefaultDict[str, Set[str]] = defaultdict(set)
     failure_evidence: DefaultDict[str, List[EvidenceReference]] = defaultdict(list)
-    model_evidence: List[EvidenceReference] = []
     routing_evidence: List[EvidenceReference] = []
     repair_evidence: List[EvidenceReference] = []
     negative_evidence: List[EvidenceReference] = []
     reviewer_stats: Dict[str, Dict[str, Any]] = {}
+    profile_value_stats: Dict[str, Dict[str, Any]] = {
+        profile: {"samples": 0, "tasks": set(), "value_score": 0.0, "cost_units": 0.0, "evidence": []}
+        for profile in _DISPATCH_PROFILES
+    }
     reviewer_result_identities: Dict[Tuple[str, str, str], str] = {}
     skill_usage: Counter[str] = Counter()
     records_without_task = 0
@@ -620,19 +591,6 @@ def observe_project(
                 if len(routing_evidence) < 50:
                     routing_evidence.append(evidence)
 
-        recommended_model = _first_text(payload, ("recommended_model", "suggested_model", "recommendedModel"))
-        actual_model = _first_text(payload, ("actual_model", "selected_model", "actualModel", "model_profile"))
-        if recommended_model and actual_model:
-            model_comparison_count += 1
-            if _is_model_escalation(recommended_model, actual_model):
-                model_escalation_count += 1
-                if len(model_evidence) < 50:
-                    model_evidence.append(evidence)
-        if actual_model:
-            actual_model_count += 1
-            if task_id:
-                actual_model_tasks.add(task_id)
-
         repair = _to_int(payload.get("repair_rounds", payload.get("repairRounds", 0)), 0)
         if repair >= 0 and ("repair_rounds" in payload or "repairRounds" in payload):
             repair_rounds.append(repair)
@@ -665,8 +623,8 @@ def observe_project(
                 "duration_ms": 0, "cost_units": 0.0,
                 "known_cost_invocation_count": 0, "unknown_cost_invocation_count": 0,
                 "finalized_known_cost_invocation_count": 0, "finalized_cost_units": 0.0,
-                "cost_formula_versions": Counter(), "requested_model_profiles": Counter(),
-                "declared_runtime_profiles": Counter(), "cost_basis_profiles": Counter(),
+                "cost_formula_versions": Counter(), "approved_dispatch_profiles": Counter(),
+                "cost_basis_profiles": Counter(),
                 "profile_difficulty": Counter(), "unfinalized_invocation_count": 0,
                 "attribution_count": 0,
                 "labeled_finding_count": 0, "unattributed_result_count": 0,
@@ -704,18 +662,14 @@ def observe_project(
             if difficulty not in {"LOW", "MEDIUM", "HIGH", "CRITICAL"}:
                 difficulty = "UNKNOWN"
             stats["difficulty_distribution"][difficulty] += 1
-            valid_profiles = {"luna-low", "luna-medium", "terra-medium", "terra-high"}
-            requested_profile = str(result.get("requested_model_profile") or result.get("model_profile") or "UNKNOWN").strip().lower()
-            if requested_profile not in valid_profiles:
-                requested_profile = "UNKNOWN"
-            declared_profile = str(result.get("declared_runtime_profile") or "UNKNOWN").strip().lower()
-            if declared_profile not in valid_profiles:
-                declared_profile = "UNKNOWN"
-            cost_basis_profile = str(result.get("cost_basis_profile") or requested_profile).strip().lower()
+            valid_profiles = set(_DISPATCH_PROFILES)
+            approved_profile = str(result.get("approved_dispatch_profile") or result.get("cost_basis_profile") or "UNKNOWN").strip().lower()
+            if approved_profile not in valid_profiles:
+                approved_profile = "UNKNOWN"
+            cost_basis_profile = str(result.get("cost_basis_profile") or approved_profile).strip().lower()
             if cost_basis_profile not in valid_profiles:
                 cost_basis_profile = "UNKNOWN"
-            stats["requested_model_profiles"][requested_profile] += 1
-            stats["declared_runtime_profiles"][declared_profile] += 1
+            stats["approved_dispatch_profiles"][approved_profile] += 1
             stats["cost_basis_profiles"][cost_basis_profile] += 1
             stats["profile_difficulty"]["cost-basis:" + cost_basis_profile + "|" + difficulty] += 1
             stats["duration_ms"] += max(0, _to_int(result.get("duration_ms"), 0))
@@ -733,6 +687,22 @@ def observe_project(
                     "legacy-cost-units" if cost_source == "cost_units" else "UNKNOWN"
                 ))
                 stats["cost_formula_versions"][formula] += 1
+                if finalized and approved_profile in profile_value_stats:
+                    value_score = max(0.0, float(
+                        max(0, _to_int(result.get("accepted"), 0)) * 3
+                        + max(0, _to_int(result.get("repaired"), 0)) * 2
+                        + max(0, _to_int(result.get("regressions_prevented"), 0)) * 4
+                        - max(0, _to_int(result.get("duplicate"), 0))
+                        - max(0, _to_int(result.get("blocking_findings"), 0))
+                    ))
+                    profile_stats = profile_value_stats[approved_profile]
+                    profile_stats["samples"] += 1
+                    if task_id:
+                        profile_stats["tasks"].add(task_id)
+                    profile_stats["value_score"] += value_score
+                    profile_stats["cost_units"] += cost_value
+                    if len(profile_stats["evidence"]) < 50:
+                        profile_stats["evidence"].append(evidence)
             if finalized and any(name in result for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented")):
                 stats["attribution_count"] += 1
                 stats["labeled_finding_count"] += sum(max(0, _to_int(result.get(name), 0))
@@ -804,7 +774,6 @@ def observe_project(
         if all_rows:
             warnings.append("数据记录缺少可解析的带时区时间，无法形成长期窗口置信度")
 
-    model_rate = (float(model_escalation_count) / model_comparison_count) if model_comparison_count else 0.0
     routing_rate = (float(routing_deviation_count) / routing_known_count) if routing_known_count else 0.0
     negative_rate = (float(negative_count) / known_outcome_count) if known_outcome_count else 0.0
     repair_average = mean(repair_rounds) if repair_rounds else 0.0
@@ -861,9 +830,7 @@ def observe_project(
                                                          stats["regression_prevention_claim_count"], 6)
             if stats["regression_prevention_claim_count"] else None,
             "task_difficulty_distribution": dict(sorted(stats["difficulty_distribution"].items())),
-            "model_profile_distribution": dict(sorted(stats["requested_model_profiles"].items())),
-            "requested_model_profile_distribution": dict(sorted(stats["requested_model_profiles"].items())),
-            "declared_runtime_profile_distribution": dict(sorted(stats["declared_runtime_profiles"].items())),
+            "approved_dispatch_profile_distribution": dict(sorted(stats["approved_dispatch_profiles"].items())),
             "cost_basis_profile_distribution": dict(sorted(stats["cost_basis_profiles"].items())),
             "profile_difficulty_distribution": dict(sorted(stats["profile_difficulty"].items())),
             "known_task_difficulty_coverage": round(float(invocations - stats["difficulty_distribution"]["UNKNOWN"]) / invocations, 6)
@@ -906,6 +873,25 @@ def observe_project(
     for stats in reviewer_stats.values():
         reviewer_cost_formulas.update(stats["cost_formula_versions"])
 
+    profile_value_comparisons: List[Dict[str, Any]] = []
+    profile_value_regressions: List[Dict[str, Any]] = []
+    for lower, higher in zip(_DISPATCH_PROFILES, _DISPATCH_PROFILES[1:]):
+        low = profile_value_stats[lower]
+        high = profile_value_stats[higher]
+        low_value = float(low["value_score"]) / float(low["cost_units"]) if low["cost_units"] else 0.0
+        high_value = float(high["value_score"]) / float(high["cost_units"]) if high["cost_units"] else 0.0
+        eligible = low["samples"] >= policy.min_records and high["samples"] >= policy.min_records and low_value > 0
+        regression_rate = max(0.0, 1.0 - (high_value / low_value)) if eligible else 0.0
+        comparison = {
+            "lower_profile": lower, "higher_profile": higher,
+            "lower_samples": low["samples"], "higher_samples": high["samples"],
+            "lower_value_per_unit": round(low_value, 6), "higher_value_per_unit": round(high_value, 6),
+            "regression_rate": round(regression_rate, 6), "eligible": eligible,
+        }
+        profile_value_comparisons.append(comparison)
+        if eligible and regression_rate >= policy.dispatch_profile_value_regression_rate:
+            profile_value_regressions.append(comparison)
+
     metrics: Dict[str, Any] = {
         "policy_version": policy.policy_version,
         "source_file_count": source_count,
@@ -920,14 +906,10 @@ def observe_project(
         "accepted_count": accepted_count,
         "negative_outcome_count": negative_count,
         "negative_outcome_rate": round(negative_rate, 6),
-        "model_comparison_count": model_comparison_count,
-        "actual_model_count": actual_model_count,
-        "actual_model_task_count": len(actual_model_tasks),
         "known_terminal_outcome_task_count": len(known_outcome_tasks),
-        "actual_model_coverage": round(float(len(actual_model_tasks)) / len(task_ids), 6) if task_ids else 0.0,
         "known_terminal_outcome_coverage": round(float(len(known_outcome_tasks)) / len(task_ids), 6) if task_ids else 0.0,
-        "model_escalation_count": model_escalation_count,
-        "model_escalation_rate": round(model_rate, 6),
+        "dispatch_profile_value_comparisons": profile_value_comparisons,
+        "dispatch_profile_value_regression_count": len(profile_value_regressions),
         "routing_known_count": routing_known_count,
         "routing_deviation_count": routing_deviation_count,
         "routing_deviation_rate": round(routing_rate, 6),
@@ -964,14 +946,8 @@ def observe_project(
         )
         if anomaly_count:
             common_gate_failures.append("lifecycle_integrity_anomalies=%d" % anomaly_count)
-    model_gate_failures: List[str] = []
     outcome_gate_failures: List[str] = []
     if raw_v2_event_count:
-        if metrics["actual_model_coverage"] < policy.min_actual_model_coverage:
-            model_gate_failures.append(
-                "actual_model_coverage=%.3f<%.3f"
-                % (metrics["actual_model_coverage"], policy.min_actual_model_coverage)
-            )
         if metrics["known_terminal_outcome_coverage"] < policy.min_known_terminal_outcome_coverage:
             outcome_gate_failures.append(
                 "known_terminal_outcome_coverage=%.3f<%.3f"
@@ -982,7 +958,11 @@ def observe_project(
 
     requirements = {
         SignalType.REPEATED_FAILURE: ("common_integrity", "explicit_failure_pattern"),
-        SignalType.MODEL_ESCALATION: ("common_integrity", "actual_model_coverage"),
+        SignalType.DISPATCH_PROFILE_VALUE_REGRESSION: (
+            "common_integrity",
+            "approved_dispatch_profile_attribution",
+            "cost_basis_units",
+        ),
         SignalType.ROUTING_DEVIATION: ("common_integrity", "explicit_routing_observation"),
         SignalType.EXCESSIVE_REPAIR: ("common_integrity", "explicit_repair_rounds"),
         SignalType.LOW_REVIEWER_YIELD: ("common_integrity", "reviewer_attribution"),
@@ -992,9 +972,7 @@ def observe_project(
     signal_eligibility: Dict[str, Dict[str, Any]] = {}
     for signal_type in SignalType:
         failures = list(common_gate_failures)
-        if signal_type is SignalType.MODEL_ESCALATION:
-            failures.extend(model_gate_failures)
-        elif signal_type is SignalType.NEGATIVE_OUTCOME:
+        if signal_type is SignalType.NEGATIVE_OUTCOME:
             failures.extend(outcome_gate_failures)
         signal_eligibility[signal_type.value] = {
             "eligible": not failures,
@@ -1045,19 +1023,45 @@ def observe_project(
             metrics={"window_days": window_days, "record_count": len(all_rows)},
         ))
 
-    if model_comparison_count >= policy.min_records and model_rate >= policy.model_escalation_rate:
-        independent = len({ref.task_id for ref in model_evidence if ref.task_id})
+    for comparison in profile_value_regressions:
+        lower = comparison["lower_profile"]
+        higher = comparison["higher_profile"]
+        profile_evidence = list(profile_value_stats[lower]["evidence"])
+        profile_evidence.extend(profile_value_stats[higher]["evidence"])
+        unique_evidence: Dict[Tuple[str, str, Optional[int]], EvidenceReference] = {}
+        for ref in profile_evidence:
+            unique_evidence[(ref.source, ref.sha256, ref.line)] = ref
+        independent_tasks = set(profile_value_stats[lower]["tasks"])
+        independent_tasks.update(profile_value_stats[higher]["tasks"])
+        occurrence_count = min(
+            int(comparison["lower_samples"]),
+            int(comparison["higher_samples"]),
+        )
         signals.append(PatternSignal(
-            signal_id=new_id("SIG", "%s|%s" % (project_id, SignalType.MODEL_ESCALATION.value)),
-            signal_type=SignalType.MODEL_ESCALATION,
-            target="model-routing",
-            occurrence_count=model_escalation_count,
-            independent_task_count=independent,
-            rate=model_rate,
-            confidence=_confidence(independent, model_escalation_count, source_count, window_days, policy),
-            summary="%d/%d 次模型路由发生向上升级，升级率 %.2f%%" % (model_escalation_count, model_comparison_count, model_rate * 100),
-            evidence=tuple(model_evidence),
-            metrics={"comparison_count": model_comparison_count, "window_days": window_days},
+            signal_id=new_id(
+                "SIG",
+                "%s|%s|%s|%s"
+                % (
+                    project_id,
+                    SignalType.DISPATCH_PROFILE_VALUE_REGRESSION.value,
+                    lower,
+                    higher,
+                ),
+            ),
+            signal_type=SignalType.DISPATCH_PROFILE_VALUE_REGRESSION,
+            target="dispatch-profile:%s->%s" % (lower, higher),
+            occurrence_count=occurrence_count,
+            independent_task_count=len(independent_tasks),
+            rate=float(comparison["regression_rate"]),
+            confidence=_confidence(
+                len(independent_tasks), occurrence_count, source_count, window_days, policy
+            ),
+            summary=(
+                "批准派发档位 %s 相对 %s 的单位成本价值下降 %.2f%%"
+                % (higher, lower, float(comparison["regression_rate"]) * 100)
+            ),
+            evidence=tuple(unique_evidence.values()),
+            metrics={**comparison, "window_days": window_days},
         ))
 
     if routing_known_count >= policy.min_records and routing_rate >= policy.routing_deviation_rate:

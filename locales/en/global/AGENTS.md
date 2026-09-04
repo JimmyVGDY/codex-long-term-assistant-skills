@@ -34,7 +34,7 @@ Skill activation does not expand file, Git, environment, production, or data aut
 - For a controlled budgeted task, the primary agent must initialize the ledger and set both `CP_DELEGATION_BUDGET_PATH` and `CP_DELEGATION_BUDGET_REQUIRED=1` in the host launch environment. Without explicit activation, only the model ceiling is active and the budget gate must not be reported as passed.
 - PreToolUse atomically reserves only when the explicit dispatch permit, stable host dispatch ID, role, and profile agree. Exhaustion, unknown roles, invalid reasons, or ledger corruption fail closed.
 - Started subagents are never refunded. A reservation is released only with a host proof reference that the agent did not start. Nested agents charge the same root budget.
-- An omitted model charges the Task Envelope default as `policy-default`; ordinary Hook fields do not verify the runtime model. A trusted higher actual profile causes a top-up, and insufficient balance records a violation that blocks later dispatches.
+- An omitted model charges the Task Envelope approved default as `policy-default`. The budget is reserved once before dispatch; no host runtime model identity is read or inferred after start and no profile top-up occurs.
 - Reviewer keeps rounds, findings, and review state but no longer owns the total budget. An unchanged packet must not trigger mechanical repeat review.
 
 ## 5. Change, validation, and review
@@ -56,7 +56,7 @@ Skill activation does not expand file, Git, environment, production, or data aut
 
 ```text
 UserPromptSubmit -> PreToolUse -> SubagentStart/Stop -> Stop -> SessionEnd
-        -> TaskOutcomeEvent V2 -> event_id deduplication -> task aggregation
+        -> TaskOutcomeEvent V3 -> event_id deduplication -> task aggregation
         -> project_id + repo_fingerprint isolation
         -> Snapshot -> Assessment -> Proposal -> human decision -> separate implementation task
 ```

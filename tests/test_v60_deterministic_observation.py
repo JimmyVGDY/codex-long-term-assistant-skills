@@ -32,7 +32,7 @@ class V60DeterministicObservationTests(unittest.TestCase):
         p=self.project_dir/rel; p.parent.mkdir(parents=True,exist_ok=True)
         p.write_text(''.join(json.dumps(x,ensure_ascii=False)+'\n' for x in rows),encoding='utf-8'); return p
 
-    def test_event_v2_rejects_negative_counts_and_cross_project(self):
+    def test_event_v3_rejects_negative_counts_and_cross_project(self):
         with self.assertRaises(EventContractError): self.event(repair_rounds=-1)
         a=self.event(event_id='E1')
         b=dict(self.event(event_id='E2')); b['project_id']='project-beta'
@@ -86,7 +86,7 @@ class V60DeterministicObservationTests(unittest.TestCase):
         self.assertFalse(snap.signals)
         self.assertTrue(all(not item['eligible'] for item in snap.metrics['signal_eligibility'].values()))
 
-    def test_signal_specific_gates_do_not_block_non_model_and_non_outcome_patterns(self):
+    def test_signal_specific_gates_do_not_block_non_outcome_patterns(self):
         event_path=self.project_dir/'feedback'/'task-outcome-v2.jsonl'; event_path.parent.mkdir(parents=True,exist_ok=True)
         legacy=[]
         for index,day in enumerate((1,3,5,7,9)):
@@ -111,19 +111,17 @@ class V60DeterministicObservationTests(unittest.TestCase):
         self.assertTrue(eligibility['REPEATED_FAILURE']['eligible'])
         self.assertTrue(eligibility['ROUTING_DEVIATION']['eligible'])
         self.assertTrue(eligibility['EXCESSIVE_REPAIR']['eligible'])
-        self.assertFalse(eligibility['MODEL_ESCALATION']['eligible'])
-        self.assertIn('actual_model_coverage=0.000<0.750',eligibility['MODEL_ESCALATION']['failures'])
+        self.assertTrue(eligibility['DISPATCH_PROFILE_VALUE_REGRESSION']['eligible'])
         self.assertFalse(eligibility['NEGATIVE_OUTCOME']['eligible'])
         self.assertIn('known_terminal_outcome_coverage=0.000<0.800',eligibility['NEGATIVE_OUTCOME']['failures'])
         self.assertTrue(snap.metrics['evidence_sufficient'])
         self.assertEqual((),snap.metrics['insufficient_evidence'])
-        self.assertIn('actual_model_coverage=0.000<0.750',snap.metrics['partial_insufficient_evidence'])
         self.assertIn('known_terminal_outcome_coverage=0.000<0.800',snap.metrics['partial_insufficient_evidence'])
         signal_types={signal.signal_type.value for signal in snap.signals}
         self.assertIn('REPEATED_FAILURE',signal_types)
         self.assertIn('ROUTING_DEVIATION',signal_types)
         self.assertIn('EXCESSIVE_REPAIR',signal_types)
-        self.assertNotIn('MODEL_ESCALATION',signal_types)
+        self.assertNotIn('DISPATCH_PROFILE_VALUE_REGRESSION',signal_types)
         self.assertNotIn('NEGATIVE_OUTCOME',signal_types)
 
         result=ControlledEvolutionService(self.root,self.project_id).run(
@@ -133,7 +131,7 @@ class V60DeterministicObservationTests(unittest.TestCase):
         self.assertIn('failure_code:shared-contract-gap',targets)
         self.assertIn('skill-routing',targets)
         self.assertIn('review-repair-loop',targets)
-        self.assertNotIn('model-routing',targets)
+        self.assertFalse(any(target.startswith('dispatch-profile:') for target in targets))
         self.assertNotIn('quality-outcome',targets)
         self.assertTrue(all(proposal['execution_authorization']=='NONE' for proposal in result['proposals']))
         self.assertFalse(result['automatic_execution'])
@@ -141,11 +139,11 @@ class V60DeterministicObservationTests(unittest.TestCase):
         persisted=list((self.project_dir/'evolution'/'snapshots').glob('*.json'))
         self.assertEqual(1,len(persisted))
         persisted_snapshot=json.loads(persisted[0].read_text(encoding='utf-8'))
-        self.assertFalse(persisted_snapshot['metrics']['signal_eligibility']['MODEL_ESCALATION']['eligible'])
+        self.assertTrue(persisted_snapshot['metrics']['signal_eligibility']['DISPATCH_PROFILE_VALUE_REGRESSION']['eligible'])
         self.assertTrue(persisted_snapshot['metrics']['signal_eligibility']['REPEATED_FAILURE']['eligible'])
         self.assertTrue(persisted_snapshot['metrics']['partial_insufficient_evidence'])
 
-    def test_model_and_outcome_coverage_are_deduplicated_by_task(self):
+    def test_outcome_coverage_is_deduplicated_and_model_fields_are_ignored(self):
         rows=[]
         event_path=self.project_dir/'feedback'/'task-outcome-v2.jsonl'; event_path.parent.mkdir(parents=True,exist_ok=True)
         for index,day in enumerate((1,3,5,7)):
@@ -172,11 +170,10 @@ class V60DeterministicObservationTests(unittest.TestCase):
         self.write_jsonl('feedback/execution-feedback.jsonl',rows)
 
         snap=observe_project(self.project_id,self.project_dir)
-        self.assertEqual(1,snap.metrics['actual_model_task_count'])
         self.assertEqual(1,snap.metrics['known_terminal_outcome_task_count'])
-        self.assertEqual(0.25,snap.metrics['actual_model_coverage'])
         self.assertEqual(0.25,snap.metrics['known_terminal_outcome_coverage'])
-        self.assertFalse(snap.metrics['signal_eligibility']['MODEL_ESCALATION']['eligible'])
+        self.assertNotIn('actual_model_coverage',snap.metrics)
+        self.assertNotIn('MODEL_ESCALATION',snap.metrics['signal_eligibility'])
         self.assertFalse(snap.metrics['signal_eligibility']['NEGATIVE_OUTCOME']['eligible'])
 
     def test_v63_unknown_and_reviewer_attribution_metrics(self):
@@ -322,7 +319,7 @@ class V60DeterministicObservationTests(unittest.TestCase):
         r=subprocess.run([sys.executable,str(hook),'Stop'],input=malformed,capture_output=True,env=env,timeout=10)
         self.assertEqual(0,r.returncode,r.stderr.decode('utf-8',errors='replace'))
         self.assertEqual('{}',r.stdout.decode('utf-8').strip())
-        event_files=list(data_root.rglob('task-outcome-v2.jsonl'))
+        event_files=list(data_root.rglob('task-outcome-v3.jsonl'))
         self.assertEqual(1,len(event_files),event_files)
         events=[json.loads(line) for line in event_files[0].read_text(encoding='utf-8').splitlines() if line.strip()]
         self.assertEqual(['S-UTF8','S-TRUNCATED'],[event['session_id'] for event in events])

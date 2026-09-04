@@ -46,7 +46,7 @@ Skill 激活不扩大文件、Git、环境、生产或数据权限，也不自�
 - 受控预算任务必须由主 Agent 先初始化账本，并在宿主启动环境同时设置 `CP_DELEGATION_BUDGET_PATH` 与 `CP_DELEGATION_BUDGET_REQUIRED=1`；未显式激活时只有模型上限生效，不得宣称预算门禁已通过。
 - PreToolUse 仅在显式 dispatch permit、稳定宿主派发 ID、角色和模型档位一致时原子预占；超额、未知角色、非法原因码或损坏账本失败关闭。
 - 子 Agent 启动后不退款；只有宿主提供“未启动”的 SHA-256 证据引用才释放预占。嵌套派发继续扣根预算。
-- 未显式指定模型时按 Task Envelope 默认档位计费并标记 `policy-default`；普通 Hook 字段不能证明实际模型。可信实际档位更高时补扣，余额不足则标记违规并阻断后续派发。
+- 未显式指定模型时按 Task Envelope 默认批准档位计费并标记 `policy-default`。预算在派发前一次性预占；启动后不读取或推断宿主实际模型，也不进行档位补扣。
 - Reviewer 仍管理轮次、Finding 和复审状态，但不拥有总预算；相同 packet 无变化时不得机械重复。
 
 ## 5. 修改、验证与复审
@@ -71,7 +71,7 @@ Skill 激活不扩大文件、Git、环境、生产或数据权限，也不自�
 ```text
 UserPromptSubmit -> PreToolUse -> SubagentStart/Stop -> Stop -> SessionEnd
         ↓
-TaskOutcomeEvent V2
+TaskOutcomeEvent V3
         ↓ event_id 去重
 Task 聚合
         ↓ project_id + repo_fingerprint 隔离

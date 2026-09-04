@@ -93,26 +93,10 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
         with self.assertRaises(IntegrityError):
             verify_keyring(self.keyring)
 
-    def test_host_session_is_diagnostic_and_cannot_prove_model(self) -> None:
+    def test_lifecycle_module_has_no_host_model_reader(self) -> None:
         lifecycle = load_script("lifecycle_v65", "lifecycle-acceptance.py")
-        host = self.root / "host.jsonl"
-        rows = [
-            {"type": "session_meta", "payload": {"source": {"subagent": {"thread_spawn": {
-                "parent_thread_id": "PARENT"}}}, "agent_role": "reviewer"}},
-            {"type": "turn_context", "payload": {"turn_id": "CHILD", "model": "gpt-5.6-luna",
-                                                      "effort": "low"}},
-        ]
-        host.write_text("".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
-        diagnostic = lifecycle._model_evidence(["CHILD"], [], "gpt-5.6-luna", "low", host, "PARENT")
-        self.assertEqual("UNAVAILABLE", diagnostic["runtime_model_evidence"])
-        self.assertEqual("gpt-5.6-luna / low", diagnostic["diagnostic_model_observation"])
-        hook = [{"actual_model": "gpt-5.6-luna", "actual_reasoning_effort": "low",
-                 "actual_model_source": "host-attested-hook-payload",
-                 "actual_reasoning_effort_source": "host-attested-hook-payload",
-                 "metadata": {"host_attestation_ref": "sha256:" + "1" * 64}}]
-        evidence = lifecycle._model_evidence(["CHILD"], hook, "gpt-5.6-luna", "low", host, "PARENT")
-        self.assertEqual("VERIFIED", evidence["status"])
-        self.assertEqual("DIAGNOSTIC", evidence["host_session_trust_level"])
+        self.assertFalse(hasattr(lifecycle, "_model_evidence"))
+        self.assertFalse(hasattr(lifecycle, "load_host_session_facts"))
 
     def test_release_attestation_key_rotation_verifies_old_and_new_signatures(self) -> None:
         attestation_module = load_script("release_attestation_v65", "release-attestation.py")
@@ -122,43 +106,40 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
         plugin = self.root / "plugin.json"
         plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "7.4.2", "installed": True, "enabled": True}]}), encoding="utf-8")
+            "version": "7.4.3", "installed": True, "enabled": True}]}), encoding="utf-8")
         event_file = self.root / "attestation-events.jsonl"
         append_event(event_file, self.event(99))
         seal_state = seal_event_chain(event_file, keyring_path=self.keyring)
         lifecycle = self.root / "lifecycle.json"
-        lifecycle.write_text(json.dumps({"ok": True, "project_id": "project-v65",
+        lifecycle.write_text(json.dumps({"ok": True, "schema_version": "2.0", "project_id": "project-v65",
             "repo_fingerprint": "sha256:" + "a" * 64,
             "required_sequence": ["TURN_OPENED", "SUBAGENT_STARTED", "SUBAGENT_STOPPED",
                                   "TASK_COMPLETED", "SESSION_ENDED"],
-            "actual_subagent_models": ["gpt-5.6-luna"],
-            "subagent_model_evidence": {"status": "PASS", "expected_model": "gpt-5.6-luna",
-                "hook_payload_match": True, "actual_model_fact_preserved": True},
+            "schema_version": "2.0",
+            "privacy": {"host_model_information_read": False,
+                        "host_model_information_exported": False},
             "event_chain": {"valid": True, "seal_status": "SEALED_CURRENT",
                             "head": seal_state["event_chain_head"]}}), encoding="utf-8")
         validation = self.root / "validation.json"; validation.write_text('{"ok":true}', encoding="utf-8")
         witness = self.root / "witness.json"; witness.write_text(json.dumps({
             "ok": True, "reproducible": True, "artifact_sha256": digest}), encoding="utf-8")
         unified = self.root / "unified.json"; unified.write_text(json.dumps({
-            "ok": True, "version": "7.4.2", "artifact_sha256": digest,
-            "status": {name: "PASS" for name in ("package", "artifact", "host", "plugin", "lifecycle", "model_gate", "payload")}}), encoding="utf-8")
-        model_gate = self.root / "model-gate.json"; model_gate.write_text(json.dumps({
-            "ok": True, "automatic_ceiling": "gpt-5.6-terra + high", "cases": [
-                {"model": model, "reasoning_effort": effort, "actual": actual,
-                 "expected": actual, "returncode": 0, "pass": True}
-                for model, effort, actual in (
-                    ("gpt-5.6-luna", "low", "allow"),
-                    ("gpt-5.6-luna", "medium", "allow"),
-                    ("gpt-5.6-terra", "medium", "allow"),
-                    ("gpt-5.6-terra", "high", "allow"),
-                    ("gpt-5.6-terra", "xhigh", "deny"),
-                    ("gpt-5.6-sol", "low", "deny"),
-                )]}), encoding="utf-8")
+            "ok": True, "version": "7.4.3", "artifact_sha256": digest,
+            "status": {name: "PASS" for name in ("package", "artifact", "host", "plugin", "lifecycle", "dispatch_policy", "payload")}}), encoding="utf-8")
+        dispatch_policy = self.root / "dispatch-policy.json"; dispatch_policy.write_text(json.dumps({
+            "ok": True, "schema_version": "2.0", "dispatch_policy_status": "PASS",
+            "automatic_ceiling_profile": "terra-high", "cases": [
+                {"case_id": "allow-low", "expected": "allow", "observed": "allow",
+                 "exit_code": 0, "pass": True},
+                {"case_id": "deny-high", "expected": "deny", "observed": "deny",
+                 "exit_code": 0, "pass": True}],
+            "privacy": {"host_model_information_collected": False,
+                        "host_model_information_exported": False}}), encoding="utf-8")
         version = self.root / "version.txt"; version.write_text("codex-cli 0.153.2\n", encoding="utf-8")
         args = (artifact, plugin, lifecycle, validation, witness, unified, version)
         first = attestation_module.create_attestation(*args, keyring_path=self.keyring,
                                                        event_file_path=event_file,
-                                                       model_gate_report_path=model_gate)
+                                                       dispatch_policy_report_path=dispatch_policy)
         first_path = self.root / "attestation-first.json"
         first_path.write_text(json.dumps(first), encoding="utf-8")
         first_key = first["integrity"]["hmac_key_id"]
@@ -169,12 +150,12 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
         with self.assertRaises(attestation_module.AttestationError):
             attestation_module.create_attestation(*args, keyring_path=self.keyring,
                                                    event_file_path=event_file,
-                                                   model_gate_report_path=model_gate)
+                                                   dispatch_policy_report_path=dispatch_policy)
         lifecycle.write_text(original_lifecycle, encoding="utf-8")
         rotate_key("release-attestation", self.keyring)
         second = attestation_module.create_attestation(*args, keyring_path=self.keyring,
                                                         event_file_path=event_file,
-                                                        model_gate_report_path=model_gate)
+                                                        dispatch_policy_report_path=dispatch_policy)
         second_path = self.root / "attestation-second.json"
         second_path.write_text(json.dumps(second), encoding="utf-8")
         self.assertNotEqual(first_key, second["integrity"]["hmac_key_id"])

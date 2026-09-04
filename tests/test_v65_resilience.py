@@ -75,37 +75,37 @@ class V64ResilienceTests(unittest.TestCase):
         with self.assertRaises(manager.InstallError):
             manager.migrate_state_v1_to_v2({"schema_version": 99}, "user", "plugin")
 
-    def test_hook_does_not_infer_actual_facts_from_generic_aliases(self) -> None:
+    def test_hook_drops_all_host_model_identity_aliases(self) -> None:
         base = {"hook_event_name": "Stop", "cwd": str(self.root), "session_id": "s", "turn_id": "t",
                 "model": "gpt-5.6-terra", "reasoning_effort": "high", "quality_outcome": "PASS", "status": "success"}
         result = _event(base)
         assert result is not None
-        self.assertEqual("", result["actual_model"])
-        self.assertEqual("", result["actual_reasoning_effort"])
+        self.assertNotIn("actual_model", result)
+        self.assertNotIn("actual_reasoning_effort", result)
         self.assertEqual("UNKNOWN", result["terminal_outcome"])
-        self.assertEqual("unavailable", result["actual_model_source"])
+        self.assertNotIn("actual_model_source", result)
         explicit = dict(base, actual_model="gpt-5.6-terra", actual_reasoning_effort="high", terminal_outcome="PASS")
         validated = make_event(_event(explicit) or {})
-        self.assertEqual("unavailable", validated["actual_model_source"])
-        self.assertEqual("", validated["actual_model"])
+        self.assertNotIn("actual_model_source", validated)
+        self.assertNotIn("actual_model", validated)
         self.assertEqual("hook-payload", validated["terminal_outcome_source"])
 
-    def test_invalid_terminal_unknown_model_and_hash_consistent_bad_schema_fail(self) -> None:
+    def test_invalid_terminal_model_identity_is_ignored_and_bad_schema_fails(self) -> None:
         with self.assertRaises(EventContractError):
             make_event(dict(self.event(1), terminal_outcome="SUCCESS"))
-        with self.assertRaises(EventContractError):
-            make_event(dict(self.event(1), actual_model="gpt-invented"))
+        sanitized = make_event(dict(self.event(1), actual_model="gpt-invented"))
+        self.assertNotIn("actual_model", sanitized)
         payload = make_event(self.event(2, "TASK_COMPLETED"))
         payload["terminal_outcome"] = "SUCCESS"
         envelope = dict(payload, previous_hash=ZERO_HASH,
                         record_hash=sha256_hex(ZERO_HASH + "\n" + canonical_json(payload)))
-        path = self.root / "task-outcome-v2.jsonl"
+        path = self.root / "task-outcome-v3.jsonl"
         path.write_text(canonical_json(envelope) + "\n", encoding="utf-8")
         with self.assertRaises(EventContractError):
             verify_event_chain(path)
 
     def test_segments_are_contiguous_and_missing_segment_fails(self) -> None:
-        path = self.root / "task-outcome-v2.jsonl"
+        path = self.root / "task-outcome-v3.jsonl"
         old = os.environ.get("CP_ASSISTANT_EVENT_SEGMENT_BYTES")
         os.environ["CP_ASSISTANT_EVENT_SEGMENT_BYTES"] = "256"
         try:
@@ -119,13 +119,13 @@ class V64ResilienceTests(unittest.TestCase):
         result = read_event_chain(path)
         self.assertEqual(6, result["record_count"])
         self.assertGreaterEqual(len(result["files"]), 2)
-        segment = sorted(self.root.glob("task-outcome-v2.segment-*.jsonl"))[0]
+        segment = sorted(self.root.glob("task-outcome-v3.segment-*.jsonl"))[0]
         segment.unlink()
         with self.assertRaises(EventContractError):
             verify_event_chain(path)
 
     def test_partial_active_tail_is_quarantined_and_chain_continues(self) -> None:
-        path = self.root / "task-outcome-v2.jsonl"
+        path = self.root / "task-outcome-v3.jsonl"
         append_event(path, self.event(1))
         with path.open("ab") as handle:
             handle.write(b'{"partial":')
@@ -134,12 +134,12 @@ class V64ResilienceTests(unittest.TestCase):
         append_event(path, self.event(2, "TASK_COMPLETED"))
         result = read_event_chain(path)
         self.assertEqual(2, result["record_count"])
-        quarantines = list(self.root.glob("task-outcome-v2.corrupt-tail-*.bin"))
+        quarantines = list(self.root.glob("task-outcome-v3.corrupt-tail-*.bin"))
         self.assertEqual(1, len(quarantines))
         self.assertEqual(b'{"partial":', quarantines[0].read_bytes())
 
     def test_real_process_mid_record_crash_recovers_without_chain_loss(self) -> None:
-        path = self.root / "task-outcome-v2.jsonl"
+        path = self.root / "task-outcome-v3.jsonl"
         append_event(path, self.event(1))
         code = (
             "from pathlib import Path; from cp_runtime.event_v2 import append_event; "
@@ -151,7 +151,7 @@ class V64ResilienceTests(unittest.TestCase):
         append_event(path, self.event(3, "TASK_COMPLETED"))
         result = read_event_chain(path)
         self.assertEqual(["EVT_001", "EVT_003"], [item["event_id"] for item in result["events"]])
-        self.assertEqual(1, len(list(self.root.glob("task-outcome-v2.corrupt-tail-*.bin"))))
+        self.assertEqual(1, len(list(self.root.glob("task-outcome-v3.corrupt-tail-*.bin"))))
 
 
 if __name__ == "__main__":

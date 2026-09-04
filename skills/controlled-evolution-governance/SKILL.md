@@ -14,7 +14,7 @@ description: >-
 4. 观察必须按 `project_id + repo_fingerprint` 双重隔离；任一不一致立即拒绝聚合。
 5. 原始事件先按 `event_id` 去重，再按 `task_id` 聚合；同一 Task 不得因生命周期事件数量更多而被重复加权。
 6. 终态结果只使用 `PASS/BLOCKED/FAILED/CANCELLED/PARTIAL/UNKNOWN`；禁止从通用 `status` 猜测任务成败。
-7. 自动 Reviewer、Explorer、Worker 共用根任务预算且最高 Terra High；显式 Sol 或 `xhigh/max/ultra` 由 Hook 前置拒绝，实际启动模型仍要靠可信宿主证明核验。
+7. 自动 Reviewer、Explorer、Worker 共用根任务预算且最高 Terra High；显式 Sol 或 `xhigh/max/ultra` 由 Hook 前置拒绝。宿主实际模型身份不读取、不推断，也不参与治理。
 8. Hook 只采集最小结构化元数据，禁止保存原始 Prompt、完整回答、代码正文、Patch、Token、Cookie、API Key 或其他凭据。
 
 ## 标准流程
@@ -22,7 +22,7 @@ description: >-
 ```text
 Lifecycle Hooks
     ↓
-TaskOutcomeEvent V2
+TaskOutcomeEvent V3
     ↓ event_id 去重
 Task 聚合
     ↓ project_id + repo_fingerprint 隔离
@@ -41,11 +41,11 @@ Optimization Proposal
 
 详细契约按需读取：
 
-- `references/task-outcome-event-v2.md`
+- `references/task-outcome-event-v3.md`
 - `references/proposal-lifecycle-v6.md`
 
 ## 模型与成本原则
 
 治理分析默认先使用 Luna 处理机械聚合与读取，只有涉及跨任务语义冲突、高风险策略裁决时逐级升到 Terra；自动最高 `gpt-5.6-terra + high`，禁止用更强模型掩盖数据质量或路由问题。
 
-DelegationBudget 校准只消费主协调 Agent 已最终化、项目身份完整且实际模型可信的样本。离线回放不足最低样本时必须返回“不调整”；任何建议都保持 `execution_authorization=NONE`，不得直接修改预算或路由。
+DelegationBudget 校准只消费主协调 Agent 已最终化、项目身份完整、批准档位与成本依据明确的样本。离线回放不足最低样本时必须返回“不调整”；任何建议都保持 `execution_authorization=NONE`，不得直接修改预算或路由。

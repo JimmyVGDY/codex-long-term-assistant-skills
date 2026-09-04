@@ -1,6 +1,9 @@
-"""中文：TaskOutcomeEvent V2：最小、可验证、默认脱敏的生命周期事件；仅负责本地观察，不授予仓库写入、提交、部署或环境修改权限。
+"""中文：TaskOutcomeEvent V3 与只读 V2 兼容入口。
 
-English: TaskOutcomeEvent V2 provides minimal, verifiable, redacted-by-default lifecycle events. It observes locally and grants no repository write, commit, deployment, or environment-modification authority.
+English: TaskOutcomeEvent V3 with a read-only V2 compatibility entry point.
+
+新写入只使用 V3，并禁止采集、推断、保存或导出宿主实际模型身份。V2 仅用于
+原始哈希/HMAC 校验，验证后的公共读取结果会经过白名单投影。
 """
 from __future__ import annotations
 
@@ -15,7 +18,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
-SCHEMA_VERSION = "2.0"
+SCHEMA_VERSION = "3.0"
+LEGACY_SCHEMA_VERSION = "2.0"
 ZERO_HASH = "0" * 64
 TERMINAL_OUTCOMES = {"PASS", "BLOCKED", "FAILED", "CANCELLED", "PARTIAL", "UNKNOWN"}
 EVENT_TYPES = {"TURN_OPENED", "PRE_TOOL_GUARD", "SUBAGENT_STARTED", "SUBAGENT_STOPPED", "TASK_COMPLETED", "SESSION_ENDED"}
@@ -23,7 +27,15 @@ FACT_SOURCES = {"hook-payload", "host-attested-hook-payload", "unavailable"}
 REASONING_EFFORTS = {"none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"}
 KNOWN_CODEX_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.5",
                       "gpt-5.4", "gpt-5.4-mini", "gpt-5.3-codex-spark"}
+DISPATCH_PROFILES = {"", "luna-low", "luna-medium", "terra-medium", "terra-high"}
 SENSITIVE_KEY = re.compile(r"(prompt|content|message|response|completion|patch|diff|code|token|secret|password|authorization|cookie|api.?key|private.?key)", re.I)
+PROHIBITED_MODEL_KEYS = {
+    "model", "modelname", "actualmodel", "actualreasoningeffort", "runtimemodel",
+    "runtimereasoningeffort", "recommendedmodel", "selectedmodel", "modelprofile",
+    "runtimeprofile", "actualprofile", "reasoning", "reasoningeffort", "effort",
+    "hostruntimeattestation", "runtimemodelevidence", "diagnosticmodelobservation",
+    "hostattestationref", "actualmodelsource", "actualreasoningeffortsource",
+}
 
 class EventContractError(ValueError):
     pass
@@ -66,6 +78,9 @@ def sanitize(value: Any, depth: int = 0) -> Any:
         out: Dict[str, Any] = {}
         for key, item in value.items():
             k = str(key)
+            normalized = re.sub(r"[^a-z0-9]", "", k.lower())
+            if normalized in PROHIBITED_MODEL_KEYS or "actualmodel" in normalized or "runtimemodel" in normalized:
+                continue
             if SENSITIVE_KEY.search(k):
                 out[k] = "<redacted>"
             else:
@@ -73,6 +88,34 @@ def sanitize(value: Any, depth: int = 0) -> Any:
         return out
     if isinstance(value, (list, tuple)):
         return [sanitize(item, depth + 1) for item in list(value)[:100]]
+    if isinstance(value, str):
+        text = value[:2048]
+        text = re.sub(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]+", r"\1<redacted>", text)
+        text = re.sub(r"(?i)(sk-[A-Za-z0-9_-]{8,})", "<redacted>", text)
+        return text
+    if isinstance(value, (int, float, bool)) or value is None:
+        return value
+    return str(value)[:512]
+
+
+def _legacy_sanitize_v2(value: Any, depth: int = 0) -> Any:
+    """中文：精确复现 V2 写入时的清洗规则，仅供不可变旧链校验。
+
+    English: Reproduce V2 write-time sanitization for immutable legacy-chain verification only.
+    """
+    if depth > 6:
+        return "<depth-limit>"
+    if isinstance(value, Mapping):
+        out: Dict[str, Any] = {}
+        for key, item in value.items():
+            k = str(key)
+            if SENSITIVE_KEY.search(k):
+                out[k] = "<redacted>"
+            else:
+                out[k] = _legacy_sanitize_v2(item, depth + 1)
+        return out
+    if isinstance(value, (list, tuple)):
+        return [_legacy_sanitize_v2(item, depth + 1) for item in list(value)[:100]]
     if isinstance(value, str):
         text = value[:2048]
         text = re.sub(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]+", r"\1<redacted>", text)
@@ -133,7 +176,7 @@ def project_id_for(repo_fingerprint: str, cwd: str = "") -> str:
     return (slug[:48] + "-" + suffix)[:128]
 
 
-def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
+def _validate_identity_and_terminal(payload: Mapping[str, Any]) -> Tuple[str, str, str]:
     event_type = _text(payload.get("event_type")).upper()
     if event_type not in EVENT_TYPES:
         raise EventContractError("未知 event_type: %s" % event_type)
@@ -146,12 +189,67 @@ def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
     terminal = _text(payload.get("terminal_outcome"), "UNKNOWN").upper()
     if terminal not in TERMINAL_OUTCOMES:
         raise EventContractError("terminal_outcome 非法")
+    return event_type, project_id, repo_fingerprint
+
+
+def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    """中文：构造 V3 事件；输入中的任何宿主模型身份字段都会被忽略。
+
+    English: Build a V3 event while ignoring every host model-identity input field.
+    """
+    event_type, project_id, repo_fingerprint = _validate_identity_and_terminal(payload)
+    terminal = _text(payload.get("terminal_outcome"), "UNKNOWN").upper()
+    terminal_source = _text(payload.get("terminal_outcome_source"), "unavailable")
+    if terminal_source not in {"hook-payload", "unavailable"}:
+        raise EventContractError("终态事实来源非法")
+    if terminal_source == "hook-payload" and terminal == "UNKNOWN":
+        raise EventContractError("terminal_outcome 与来源不一致")
+    approved_profile = _text(payload.get("approved_dispatch_profile")).lower()
+    if approved_profile not in DISPATCH_PROFILES:
+        raise EventContractError("approved_dispatch_profile 非法")
+    permit_ref = _text(payload.get("dispatch_permit_ref"))
+    if permit_ref and not re.fullmatch(r"sha256:[0-9a-f]{64}", permit_ref):
+        raise EventContractError("dispatch_permit_ref 必须是 sha256 引用")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "event_id": _text(payload.get("event_id")) or ("EVT_" + secrets.token_hex(16)),
+        "event_type": event_type,
+        "captured_at": _text(payload.get("captured_at")) or utc_now(),
+        "captured_by": _text(payload.get("captured_by")) or "codex-hook-v7",
+        "session_id": _text(payload.get("session_id"))[:160],
+        "turn_id": _text(payload.get("turn_id"))[:160],
+        "task_id": _text(payload.get("task_id"))[:160],
+        "project_id": project_id,
+        "repo_fingerprint": repo_fingerprint,
+        "terminal_outcome": terminal,
+        "terminal_outcome_source": terminal_source,
+        "approved_dispatch_profile": approved_profile,
+        "dispatch_permit_ref": permit_ref,
+        "reserved_units": _nonnegative(payload.get("reserved_units"), "reserved_units"),
+        "recommended_reviewers": _nonnegative(payload.get("recommended_reviewers"), "recommended_reviewers"),
+        "actual_reviewers": _nonnegative(payload.get("actual_reviewers"), "actual_reviewers"),
+        "blocking_findings": _nonnegative(payload.get("blocking_findings"), "blocking_findings"),
+        "nonblocking_findings": _nonnegative(payload.get("nonblocking_findings"), "nonblocking_findings"),
+        "repair_rounds": _nonnegative(payload.get("repair_rounds"), "repair_rounds"),
+        "duration_ms": _nonnegative(payload.get("duration_ms"), "duration_ms"),
+        "metadata": sanitize(payload.get("metadata") or {}),
+    }
+
+
+# 中文：PRIVACY_LEGACY_READER_BEGIN；English: legacy-reader scope begins.
+def _make_legacy_event_v2(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    """中文：仅用于验证不可变 V2 记录；返回值不得进入观察、报告或导出。
+
+    English: Validate immutable V2 records only; never expose the result to observation, reports, or exports.
+    """
+    event_type, project_id, repo_fingerprint = _validate_identity_and_terminal(payload)
+    terminal = _text(payload.get("terminal_outcome"), "UNKNOWN").upper()
     actual_model = _text(payload.get("actual_model"))[:128]
     actual_effort = _text(payload.get("actual_reasoning_effort")).lower()[:64]
     if actual_model and actual_model not in KNOWN_CODEX_MODELS:
-        raise EventContractError("actual_model 非法")
+        raise EventContractError("旧事件模型字段非法")
     if actual_effort and actual_effort not in REASONING_EFFORTS:
-        raise EventContractError("actual_reasoning_effort 非法")
+        raise EventContractError("旧事件推理字段非法")
     sources = {
         "actual_model_source": _text(payload.get("actual_model_source"), "unavailable"),
         "actual_reasoning_effort_source": _text(payload.get("actual_reasoning_effort_source"), "unavailable"),
@@ -161,13 +259,13 @@ def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
     if any(source not in FACT_SOURCES for source in sources.values()):
         raise EventContractError("宿主事实来源非法")
     if sources["actual_model_source"] in {"hook-payload", "host-attested-hook-payload"} and not actual_model:
-        raise EventContractError("actual_model 与来源不一致")
+        raise EventContractError("旧事件模型字段与来源不一致")
     if sources["actual_reasoning_effort_source"] in {"hook-payload", "host-attested-hook-payload"} and not actual_effort:
-        raise EventContractError("actual_reasoning_effort 与来源不一致")
+        raise EventContractError("旧事件推理字段与来源不一致")
     if sources["terminal_outcome_source"] == "hook-payload" and terminal == "UNKNOWN":
         raise EventContractError("terminal_outcome 与来源不一致")
     event: Dict[str, Any] = {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": LEGACY_SCHEMA_VERSION,
         "event_id": _text(payload.get("event_id")) or ("EVT_" + secrets.token_hex(16)),
         "event_type": event_type,
         "captured_at": _text(payload.get("captured_at")) or utc_now(),
@@ -188,9 +286,10 @@ def make_event(payload: Mapping[str, Any]) -> Dict[str, Any]:
         "nonblocking_findings": _nonnegative(payload.get("nonblocking_findings"), "nonblocking_findings"),
         "repair_rounds": _nonnegative(payload.get("repair_rounds"), "repair_rounds"),
         "duration_ms": _nonnegative(payload.get("duration_ms"), "duration_ms"),
-        "metadata": sanitize(payload.get("metadata") or {}),
+        "metadata": _legacy_sanitize_v2(payload.get("metadata") or {}),
     }
     return event
+# 中文：PRIVACY_LEGACY_READER_END；English: legacy-reader scope ends.
 
 
 class OwnerTokenLock:
@@ -329,24 +428,40 @@ def _read_event_files_unlocked(path: Path, *, recover_active_tail: bool = False)
     return files, events, quarantine
 
 
-_STORED_REQUIRED_FIELDS = {
+_V3_STORED_REQUIRED_FIELDS = {
+    "schema_version", "event_id", "event_type", "captured_at", "captured_by", "session_id", "turn_id",
+    "task_id", "project_id", "repo_fingerprint", "terminal_outcome", "terminal_outcome_source",
+    "approved_dispatch_profile", "dispatch_permit_ref", "reserved_units", "recommended_reviewers",
+    "actual_reviewers", "blocking_findings", "nonblocking_findings", "repair_rounds", "duration_ms", "metadata",
+}
+# 中文：PRIVACY_LEGACY_READER_BEGIN；English: legacy-reader scope begins.
+_V2_STORED_REQUIRED_FIELDS = {
     "schema_version", "event_id", "event_type", "captured_at", "captured_by", "session_id", "turn_id",
     "task_id", "project_id", "repo_fingerprint", "terminal_outcome", "recommended_model", "actual_model",
     "actual_reasoning_effort", "recommended_reviewers", "actual_reviewers", "blocking_findings",
     "nonblocking_findings", "repair_rounds", "duration_ms", "metadata",
 }
-_STORED_OPTIONAL_FIELDS = {"actual_model_source", "actual_reasoning_effort_source", "terminal_outcome_source"}
+_V2_STORED_OPTIONAL_FIELDS = {"actual_model_source", "actual_reasoning_effort_source", "terminal_outcome_source"}
+# 中文：PRIVACY_LEGACY_READER_END；English: legacy-reader scope ends.
 
 
 def _validate_stored_payload(payload: Mapping[str, Any], source: str, number: int) -> None:
-    if payload.get("schema_version") != SCHEMA_VERSION:
+    version = payload.get("schema_version")
+    if version == SCHEMA_VERSION:
+        required = _V3_STORED_REQUIRED_FIELDS
+        optional: set[str] = set()
+        validated = make_event(payload)
+    elif version == LEGACY_SCHEMA_VERSION:
+        required = _V2_STORED_REQUIRED_FIELDS
+        optional = _V2_STORED_OPTIONAL_FIELDS
+        validated = _make_legacy_event_v2(payload)
+    else:
         raise EventContractError("%s 第 %d 行 schema_version 非法" % (source, number))
-    missing = _STORED_REQUIRED_FIELDS - set(payload)
-    unknown = set(payload) - _STORED_REQUIRED_FIELDS - _STORED_OPTIONAL_FIELDS
+    missing = required - set(payload)
+    unknown = set(payload) - required - optional
     if missing or unknown:
         raise EventContractError("%s 第 %d 行 schema 字段不完整 missing=%s unknown=%s" %
                                  (source, number, sorted(missing), sorted(unknown)))
-    validated = make_event(payload)
     for key, value in payload.items():
         if validated.get(key) != value:
             raise EventContractError("%s 第 %d 行字段非法或未规范化: %s" % (source, number, key))
@@ -357,6 +472,7 @@ def _verify_events(events: Iterable[Mapping[str, Any]], hmac_key: Optional[str],
     count = 0
     duplicate_count = 0
     seen = set()
+    schema_versions = set()
     for obj_with_source in events:
         obj = dict(obj_with_source)
         source = obj.pop("__event_source_file", "event")
@@ -366,6 +482,9 @@ def _verify_events(events: Iterable[Mapping[str, Any]], hmac_key: Optional[str],
         record_hash = obj.get("record_hash")
         payload = {k: v for k, v in obj.items() if k not in {"previous_hash", "record_hash", "record_hmac_sha256"}}
         _validate_stored_payload(payload, str(source), int(number))
+        schema_versions.add(str(payload.get("schema_version")))
+        if len(schema_versions) > 1:
+            raise EventContractError("同一事件链禁止混用 V2 与 V3")
         expected = sha256_hex(previous + "\n" + canonical_json(payload))
         if expected != record_hash:
             raise EventContractError("%s 第 %d 行 record_hash 不一致" % (source, number))
@@ -384,7 +503,45 @@ def _verify_events(events: Iterable[Mapping[str, Any]], hmac_key: Optional[str],
         previous = record_hash
         count += 1
     return {"ok": True, "record_count": count, "head_hash": previous,
+            "schema_version": next(iter(schema_versions), SCHEMA_VERSION),
             "duplicate_event_id_count": duplicate_count}
+
+
+def project_event_for_observation(raw: Mapping[str, Any]) -> Dict[str, Any]:
+    """中文：把已验证事件投影为不含模型身份的公共观察视图。
+
+    English: Project a verified event into a public observation view without model identity.
+    """
+    source_version = str(raw.get("schema_version") or "")
+    common = {
+        "schema_version": SCHEMA_VERSION,
+        "source_schema_version": source_version,
+        "event_id": _text(raw.get("event_id")),
+        "event_type": _text(raw.get("event_type")).upper(),
+        "captured_at": _text(raw.get("captured_at")),
+        "captured_by": _text(raw.get("captured_by")),
+        "session_id": _text(raw.get("session_id"))[:160],
+        "turn_id": _text(raw.get("turn_id"))[:160],
+        "task_id": _text(raw.get("task_id"))[:160],
+        "project_id": _text(raw.get("project_id")),
+        "repo_fingerprint": _text(raw.get("repo_fingerprint")),
+        "terminal_outcome": _text(raw.get("terminal_outcome"), "UNKNOWN").upper(),
+        "terminal_outcome_source": _text(raw.get("terminal_outcome_source"), "unavailable"),
+        "approved_dispatch_profile": _text(raw.get("approved_dispatch_profile")).lower(),
+        "dispatch_permit_ref": _text(raw.get("dispatch_permit_ref")),
+        "reserved_units": _nonnegative(raw.get("reserved_units"), "reserved_units"),
+        "recommended_reviewers": _nonnegative(raw.get("recommended_reviewers"), "recommended_reviewers"),
+        "actual_reviewers": _nonnegative(raw.get("actual_reviewers"), "actual_reviewers"),
+        "blocking_findings": _nonnegative(raw.get("blocking_findings"), "blocking_findings"),
+        "nonblocking_findings": _nonnegative(raw.get("nonblocking_findings"), "nonblocking_findings"),
+        "repair_rounds": _nonnegative(raw.get("repair_rounds"), "repair_rounds"),
+        "duration_ms": _nonnegative(raw.get("duration_ms"), "duration_ms"),
+        "metadata": sanitize(raw.get("metadata") or {}),
+    }
+    for key in ("previous_hash", "record_hash", "record_hmac_sha256"):
+        if key in raw:
+            common[key] = raw[key]
+    return common
 
 
 def read_event_chain(path: Path, hmac_key: Optional[str] = None, allow_duplicate_ids: bool = False,
@@ -394,7 +551,9 @@ def read_event_chain(path: Path, hmac_key: Optional[str] = None, allow_duplicate
     with OwnerTokenLock(path):
         files, internal, quarantine = _read_event_files_unlocked(path, recover_active_tail=recover_active_tail)
         verification = _verify_events(internal, hmac_key, allow_duplicate_ids)
-        events = [{k: v for k, v in item.items() if not k.startswith("__event_source_")} for item in internal]
+        events = [project_event_for_observation(
+            {k: v for k, v in item.items() if not k.startswith("__event_source_")}
+        ) for item in internal]
         return {**verification, "files": [str(item) for item in files], "events": events,
                 "quarantined_tail": str(quarantine) if quarantine else None}
 
@@ -411,13 +570,15 @@ def append_event(path: Path, event: Mapping[str, Any], hmac_key: Optional[str] =
         # 中文：重复 ID 保持可观察并由聚合策略处理；追加操作仍需扩展其他部分有效的旧事件链。
         # English: Duplicate IDs remain observable and are handled by aggregation policy; append must still extend an otherwise valid legacy chain.
         verification = _verify_events(existing, hmac_key, allow_duplicate_ids=True)
+        if existing and verification.get("schema_version") == LEGACY_SCHEMA_VERSION:
+            raise EventContractError("TaskOutcomeEvent V2 链为只读；请写入独立 V3 路径")
         if deduplicate_event_id:
             for stored in existing:
                 if stored.get("event_id") == validated["event_id"]:
                     return {key: value for key, value in stored.items() if not key.startswith("__event_source_")}
         if deduplicate_identity_fields:
             fields = tuple(deduplicate_identity_fields)
-            if not fields or any(field not in _STORED_REQUIRED_FIELDS for field in fields):
+            if not fields or any(field not in _V3_STORED_REQUIRED_FIELDS for field in fields):
                 raise EventContractError("事件去重身份字段非法")
             for stored in existing:
                 if all(stored.get(field) == validated.get(field) for field in fields):
@@ -498,7 +659,7 @@ def aggregate_by_task(events: Iterable[Mapping[str, Any]], project_id: str, repo
     result: Dict[str, Dict[str, Any]] = {}
     seen = set()
     for raw in events:
-        event = make_event(raw)
+        event = project_event_for_observation(raw)
         if event["project_id"] != project_id or event["repo_fingerprint"] != repo_fingerprint:
             raise EventContractError("检测到跨项目或跨仓库事件")
         if event["event_id"] in seen:

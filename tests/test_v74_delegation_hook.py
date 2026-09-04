@@ -20,10 +20,10 @@ FINGERPRINT = "sha256:" + "a" * 64
 class DelegationHookTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
-        self.ledger = Path(self.temp.name) / "delegation-budget-v1.jsonl"
+        self.ledger = Path(self.temp.name) / "delegation-budget-v2.jsonl"
         initialize_budget(self.ledger, budget_id="BUDGET-HOOK", task_id="TASK-HOOK",
                           project_id="project-hook", repo_fingerprint=FINGERPRINT,
-                          budget_class="STANDARD", default_model_profile="luna-low")
+                          budget_class="STANDARD", default_dispatch_profile="luna-low")
         self.hook = ROOT / "hooks" / "cp_hook.py"
         self.env = os.environ.copy()
         self.env["CP_DELEGATION_BUDGET_PATH"] = str(self.ledger)
@@ -49,7 +49,7 @@ class DelegationHookTests(unittest.TestCase):
 
     def test_pretool_consumes_explicit_permit_and_replay_is_idempotent(self) -> None:
         record_decision(self.ledger, dispatch_key="worker-permit", decision="DELEGATE", role="worker",
-                        requested_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")
+                        approved_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")
         payload = {
             "hook_event_name": "PreToolUse", "tool_name": "spawn_agent",
             "tool_use_id": "host-tool-1", "cwd": str(ROOT),
@@ -64,7 +64,7 @@ class DelegationHookTests(unittest.TestCase):
 
     def test_missing_permit_role_mismatch_and_missing_tool_id_fail_closed(self) -> None:
         record_decision(self.ledger, dispatch_key="review-permit", decision="DELEGATE", role="reviewer",
-                        requested_profile="luna-low", reason_code="INDEPENDENT_EVIDENCE_GAIN")
+                        approved_profile="luna-low", reason_code="INDEPENDENT_EVIDENCE_GAIN")
         base = {"hook_event_name": "PreToolUse", "tool_name": "spawn_agent", "tool_use_id": "tool-x",
                 "cwd": str(ROOT), "tool_input": {"task_name": "review-permit", "agent_type": "worker",
                                                     "model": "gpt-5.6-luna", "reasoning_effort": "low"}}
@@ -91,7 +91,7 @@ class DelegationHookTests(unittest.TestCase):
 
     def test_unified_exec_is_not_a_dispatch_and_cannot_consume_a_permit(self) -> None:
         record_decision(self.ledger, dispatch_key="nested-dispatch", decision="DELEGATE", role="worker",
-                        requested_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")
+                        approved_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")
         payload = {
             "hook_event_name": "PreToolUse", "tool_name": "unified_exec",
             "tool_use_id": "unified-tool", "cwd": str(ROOT),
@@ -140,9 +140,9 @@ class DelegationHookTests(unittest.TestCase):
 
     def test_lifecycle_reconciles_only_explicit_reservation(self) -> None:
         record_decision(self.ledger, dispatch_key="lifecycle", decision="DELEGATE", role="explorer",
-                        requested_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")
+                        approved_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")
         reserved = reserve_budget(self.ledger, dispatch_key="lifecycle", host_dispatch_id="life-tool",
-                                  requested_profile="luna-low", request_basis="explicit-request", role="explorer")
+                                  approved_profile="luna-low", approval_basis="explicit-request", role="explorer")
         start = {"hook_event_name": "SubagentStart", "reservation_id": reserved["reservation_id"],
                  "agent_id": "child-agent", "agent_type": "explorer", "cwd": str(ROOT)}
         self.assertEqual(0, self.invoke("SubagentStart", start).returncode)
@@ -154,9 +154,9 @@ class DelegationHookTests(unittest.TestCase):
 
     def test_unassociated_start_does_not_guess_or_consume_reservation(self) -> None:
         record_decision(self.ledger, dispatch_key="unassociated", decision="DELEGATE", role="worker",
-                        requested_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")
+                        approved_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")
         reserved = reserve_budget(self.ledger, dispatch_key="unassociated", host_dispatch_id="unassociated-tool",
-                                  requested_profile="luna-low", request_basis="explicit-request", role="worker")
+                                  approved_profile="luna-low", approval_basis="explicit-request", role="worker")
         payload = {"hook_event_name": "SubagentStart", "agent_id": "unknown-child",
                    "agent_type": "worker", "cwd": str(ROOT)}
         self.assertEqual(0, self.invoke("SubagentStart", payload).returncode)
@@ -166,7 +166,7 @@ class DelegationHookTests(unittest.TestCase):
 
     def test_reviewer_controller_links_permit_without_double_charging(self) -> None:
         record_decision(self.ledger, dispatch_key="review-budget-key", decision="DELEGATE", role="reviewer",
-                        requested_profile="luna-medium", reason_code="INDEPENDENT_EVIDENCE_GAIN")
+                        approved_profile="luna-medium", reason_code="INDEPENDENT_EVIDENCE_GAIN")
         review = Path(self.temp.name) / "review"
         common = ("--review-dir", str(review))
         self.controller("init", *common, "--boundary-id", "BOUNDARY-1",
@@ -181,7 +181,7 @@ class DelegationHookTests(unittest.TestCase):
         before = read_budget(self.ledger)
         self.assertEqual(0, before["usage"]["dispatches"])
         reserved = reserve_budget(self.ledger, dispatch_key="review-budget-key", host_dispatch_id="review-tool",
-                                  requested_profile="luna-medium", request_basis="explicit-request", role="reviewer")
+                                  approved_profile="luna-medium", approval_basis="explicit-request", role="reviewer")
         missing_attribution = self.controller(
             "result", *common, "--phase", "post", "--round", "1",
             "--reviewer", "reviewer-one", "--status", "pass", "--summary", "完成",
@@ -202,7 +202,7 @@ class DelegationHookTests(unittest.TestCase):
         state = json.loads((review / "review-state.json").read_text(encoding="utf-8"))
         dispatch = state["phases"]["post"]["rounds"]["1"]["dispatch"]["reviewer-one"]
         result = state["phases"]["post"]["rounds"]["1"]["results"]["reviewer-one"]
-        self.assertEqual("delegation-budget-v1", dispatch["budget_accounting_owner"])
+        self.assertEqual("delegation-budget-v2", dispatch["budget_accounting_owner"])
         self.assertEqual("parent-verified", result["delegation_attribution"])
         self.assertEqual(2, read_budget(self.ledger)["usage"]["units"])
 

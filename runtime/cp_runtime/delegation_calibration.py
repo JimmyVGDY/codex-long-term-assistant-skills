@@ -21,8 +21,8 @@ from .delegation_budget import (
 )
 from .event_v2 import OwnerTokenLock
 
-SAMPLE_SCHEMA = "1.0"
-REPLAY_SCHEMA = "1.0"
+SAMPLE_SCHEMA = "2.0"
+REPLAY_SCHEMA = "2.0"
 IDENTITY_KEYS = ("budget_id", "task_id", "project_id", "repo_fingerprint")
 ROLE_METRICS = {
     "reviewer": {"accepted_findings", "repaired_findings", "duplicate_findings", "missed_findings", "regressions_prevented"},
@@ -77,6 +77,8 @@ def build_pending_sample(ledger_path: Path, reservation_id: str,
     English: Build a bounded pending sample; this is never calibration-eligible.
     """
     budget = read_budget(Path(ledger_path))
+    if budget.get("read_only"):
+        raise DelegationBudgetError("DelegationBudget V1 只读投影不能生成新校准样本")
     reservation = budget["reservations"].get(str(reservation_id))
     if not reservation:
         raise DelegationBudgetError("校准 reservation 不存在")
@@ -91,8 +93,6 @@ def build_pending_sample(ledger_path: Path, reservation_id: str,
     decision = budget["decisions"].get(reservation["dispatch_ref"])
     if not decision:
         raise DelegationBudgetError("校准样本缺少路由决策")
-    actual_profile = reservation.get("actual_profile") or ""
-    actual_verified = bool(actual_profile)
     identity = budget["identity"]
     return {
         "schema_version": SAMPLE_SCHEMA,
@@ -104,9 +104,8 @@ def build_pending_sample(ledger_path: Path, reservation_id: str,
         "responsibility": decision["responsibility"],
         "difficulty": decision["difficulty"],
         "risk_domain": decision["risk_domain"],
-        "requested_profile": reservation["requested_profile"],
-        "actual_profile": actual_profile,
-        "runtime_profile_verified": actual_verified,
+        "approved_profile": reservation["approved_profile"],
+        "cost_basis_units": reservation["charged_units"],
         "context_size": decision["context_size"],
         "duration_ms": 0,
         "retry_count": 0,
@@ -150,7 +149,7 @@ def _validate_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
     expected_keys = {
         "schema_version", "record_id", *IDENTITY_KEYS, "reservation_id", "reservation_completion_ref",
         "role", "responsibility",
-        "difficulty", "risk_domain", "requested_profile", "actual_profile", "runtime_profile_verified",
+        "difficulty", "risk_domain", "approved_profile", "cost_basis_units",
         "context_size", "duration_ms", "retry_count", "metrics", "value_score", "source",
         "calibration_finalized", "finalized_by", "evidence_refs",
     }
@@ -170,12 +169,11 @@ def _validate_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
         raise DelegationBudgetError("校准 repo_fingerprint 非法")
     if not SHA_REF.fullmatch(str(sample.get("reservation_completion_ref") or "")):
         raise DelegationBudgetError("校准 reservation 完成引用非法")
-    requested = str(sample.get("requested_profile") or "")
-    actual = str(sample.get("actual_profile") or "")
-    if requested not in PROFILE_WEIGHTS or (actual and actual not in PROFILE_WEIGHTS):
-        raise DelegationBudgetError("校准模型档位非法")
-    if sample.get("runtime_profile_verified") is not bool(actual):
-        raise DelegationBudgetError("校准实际模型证明状态非法")
+    approved = str(sample.get("approved_profile") or "")
+    if approved not in PROFILE_WEIGHTS:
+        raise DelegationBudgetError("校准批准档位非法")
+    if _nonnegative(sample.get("cost_basis_units"), "cost_basis_units") != PROFILE_WEIGHTS[approved]:
+        raise DelegationBudgetError("校准成本依据与批准档位不一致")
     metrics = sample.get("metrics")
     if not isinstance(metrics, Mapping) or set(metrics) != ROLE_METRICS[role]:
         raise DelegationBudgetError("角色校准指标字段不完整或包含未知字段")
@@ -205,6 +203,8 @@ def _validate_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
 def _validate_against_budget(sample: Mapping[str, Any], ledger_path: Path) -> Dict[str, Any]:
     value = _validate_sample(sample)
     budget = read_budget(Path(ledger_path))
+    if budget.get("read_only"):
+        raise DelegationBudgetError("DelegationBudget V1 只读投影不能参与新校准")
     if any(value[key] != budget["identity"][key] for key in IDENTITY_KEYS):
         raise DelegationBudgetError("校准样本与预算账本身份不一致")
     reservation = budget["reservations"].get(value["reservation_id"])
@@ -220,9 +220,8 @@ def _validate_against_budget(sample: Mapping[str, Any], ledger_path: Path) -> Di
         "responsibility": decision["responsibility"],
         "difficulty": decision["difficulty"],
         "risk_domain": decision["risk_domain"],
-        "requested_profile": reservation["requested_profile"],
-        "actual_profile": reservation.get("actual_profile") or "",
-        "runtime_profile_verified": bool(reservation.get("actual_profile")),
+        "approved_profile": reservation["approved_profile"],
+        "cost_basis_units": reservation["charged_units"],
         "context_size": decision["context_size"],
     }
     if any(value[key] != expected[key] for key in expected):
@@ -276,11 +275,10 @@ def offline_replay(samples: Iterable[Mapping[str, Any]], *, ledger_path: Path,
     if minimum < 1:
         raise DelegationBudgetError("minimum_samples_per_profile 至少为 1")
     validated = [_validate_against_budget(item, ledger_path) for item in samples]
-    eligible = [dict(item) for item in validated
-                if item.get("calibration_finalized") is True and item.get("runtime_profile_verified") is True]
+    eligible = [dict(item) for item in validated if item.get("calibration_finalized") is True]
     scenario_groups: Dict[tuple[str, ...], Dict[str, List[Dict[str, Any]]]] = {}
     for item in eligible:
-        profile = str(item.get("actual_profile") or "")
+        profile = str(item.get("approved_profile") or "")
         if profile not in PROFILE_WEIGHTS:
             continue
         scenario = tuple(str(item.get(key) or "UNKNOWN") for key in
@@ -306,7 +304,7 @@ def offline_replay(samples: Iterable[Mapping[str, Any]], *, ledger_path: Path,
     return {
         "schema_version": REPLAY_SCHEMA,
         "proposal_id": "OPT_" + digest,
-        "proposal_type": "DELEGATION_MODEL_ROUTING_REVIEW",
+        "proposal_type": "DELEGATION_PROFILE_VALUE_REVIEW",
         "execution_authorization": "NONE",
         "sample_count": len(eligible),
         "minimum_samples_per_profile": minimum,

@@ -1,10 +1,10 @@
-"""中文：DelegationBudget V1：Reviewer、Explorer、Worker 共用的根任务加权预算账本。
+"""中文：DelegationBudget V2 与只读 V1 兼容校验。
 
-English: DelegationBudget V1, the root-task weighted budget ledger shared by
+English: DelegationBudget V2, the root-task weighted budget ledger shared by
 Reviewer, Explorer, and Worker subagents.
 
 账本只接受受控枚举、标识符和 SHA-256 引用；不保存 Prompt、回答、代码、Diff、
-原始 tool input、Token 或凭据。TaskOutcomeEvent V2 保持冻结，两条链互不改写。
+原始 tool input、Token 或凭据。事件链与预算链互不改写；旧 V1 账本只读验证。
 """
 from __future__ import annotations
 
@@ -19,7 +19,8 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 from .event_v2 import OwnerTokenLock
 
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "2.0"
+LEGACY_SCHEMA_VERSION = "1.0"
 ZERO_HASH = "0" * 64
 ROLES = {"reviewer", "explorer", "worker"}
 PROFILES = ("luna-low", "luna-medium", "terra-medium", "terra-high")
@@ -41,8 +42,31 @@ EVENT_TYPES = {
 }
 EVENT_DATA_KEYS = {
     ("DECISION_RECORDED", "budget-initialized"): {
-        "decision_kind", "budget_class", "default_model_profile", "limits",
+        "decision_kind", "budget_class", "default_dispatch_profile", "limits",
         "role_limits", "cost_formula_version", "association_mode",
+    },
+    ("DECISION_RECORDED", "dispatch"): {
+        "decision_kind", "dispatch_ref", "decision", "role", "approved_profile",
+        "reason_code", "responsibility", "difficulty", "risk_domain", "context_size",
+        "parent_reservation_id", "depth", "prior_profile", "prior_result_ref",
+    },
+    ("BUDGET_RESERVED", ""): {
+        "reservation_id", "dispatch_ref", "host_dispatch_ref", "role",
+        "approved_profile", "approval_basis", "units", "parent_reservation_id",
+        "depth", "association",
+    },
+    ("AGENT_STARTED", ""): {
+        "reservation_id", "agent_ref", "association",
+    },
+    ("AGENT_COMPLETED", ""): {"reservation_id", "outcome"},
+    ("NOT_STARTED_RELEASED", ""): {"reservation_id", "proof_ref", "proof_kind"},
+    ("TASK_BUDGET_CLOSED", ""): {"conclusion", "association_complete", "budget_pass"},
+}
+# 中文：PRIVACY_LEGACY_READER_BEGIN；English: legacy-reader scope begins.
+LEGACY_EVENT_DATA_KEYS = {
+    ("DECISION_RECORDED", "budget-initialized"): {
+        "decision_kind", "budget_class", "default_model_profile", "limits", "role_limits",
+        "cost_formula_version", "association_mode",
     },
     ("DECISION_RECORDED", "dispatch"): {
         "decision_kind", "dispatch_ref", "decision", "role", "requested_profile",
@@ -50,19 +74,18 @@ EVENT_DATA_KEYS = {
         "parent_reservation_id", "depth", "prior_profile", "prior_result_ref",
     },
     ("BUDGET_RESERVED", ""): {
-        "reservation_id", "dispatch_ref", "host_dispatch_ref", "role",
-        "requested_profile", "request_basis", "units", "parent_reservation_id",
-        "depth", "association",
+        "reservation_id", "dispatch_ref", "host_dispatch_ref", "role", "requested_profile",
+        "request_basis", "units", "parent_reservation_id", "depth", "association",
     },
     ("AGENT_STARTED", ""): {
-        "reservation_id", "agent_ref", "actual_profile", "runtime_evidence",
-        "top_up_units", "association",
+        "reservation_id", "agent_ref", "actual_profile", "runtime_evidence", "top_up_units", "association",
     },
     ("AGENT_COMPLETED", ""): {"reservation_id", "outcome"},
     ("NOT_STARTED_RELEASED", ""): {"reservation_id", "proof_ref", "proof_kind"},
     ("BUDGET_VIOLATED", ""): {"reservation_id", "reason_code", "required_top_up_units"},
     ("TASK_BUDGET_CLOSED", ""): {"conclusion", "association_complete", "budget_pass"},
 }
+# 中文：PRIVACY_LEGACY_READER_END；English: legacy-reader scope ends.
 RESERVATION_STATES = {"RESERVED", "STARTED", "COMPLETED", "NOT_STARTED_RELEASED"}
 IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$")
 SHA_REF = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -209,9 +232,10 @@ def _event(identity: Mapping[str, str], event_type: str, event_id: str, data: Ma
     return record
 
 
-def _validate_event_data(event_type: str, data: Mapping[str, Any]) -> None:
+def _validate_event_data(schema_version: str, event_type: str, data: Mapping[str, Any]) -> None:
     decision_kind = str(data.get("decision_kind") or "") if event_type == "DECISION_RECORDED" else ""
-    expected = EVENT_DATA_KEYS.get((event_type, decision_kind))
+    contracts = EVENT_DATA_KEYS if schema_version == SCHEMA_VERSION else LEGACY_EVENT_DATA_KEYS
+    expected = contracts.get((event_type, decision_kind))
     if expected is None or set(data) != expected:
         raise DelegationBudgetError("预算事件 data 字段非法")
 
@@ -222,6 +246,7 @@ def _read_records_unlocked(path: Path) -> List[Dict[str, Any]]:
     records: List[Dict[str, Any]] = []
     previous = ZERO_HASH
     identity: Optional[tuple[str, str, str, str]] = None
+    ledger_schema: Optional[str] = None
     seen = set()
     with path.open("r", encoding="utf-8") as handle:
         for number, line in enumerate(handle, 1):
@@ -238,8 +263,14 @@ def _read_records_unlocked(path: Path) -> List[Dict[str, Any]]:
             }
             if not isinstance(record, dict) or set(record) != expected_keys:
                 raise DelegationBudgetError("预算账本第 %d 行字段非法" % number)
-            if record["schema_version"] != SCHEMA_VERSION or record["event_type"] not in EVENT_TYPES:
+            if record["schema_version"] not in {SCHEMA_VERSION, LEGACY_SCHEMA_VERSION} or record["event_type"] not in EVENT_TYPES:
                 raise DelegationBudgetError("预算账本 schema 或事件类型未知")
+            if ledger_schema is None:
+                ledger_schema = str(record["schema_version"])
+            elif record["schema_version"] != ledger_schema:
+                raise DelegationBudgetError("同一预算账本禁止混用 V1 与 V2")
+            if record["schema_version"] == SCHEMA_VERSION and record["event_type"] == "BUDGET_VIOLATED":
+                raise DelegationBudgetError("Budget V2 不支持启动后补扣违规事件")
             if record["sequence"] != len(records) + 1 or record["previous_hash"] != previous:
                 raise DelegationBudgetError("预算账本序号或哈希链断裂")
             if record["event_id"] in seen:
@@ -255,7 +286,7 @@ def _read_records_unlocked(path: Path) -> List[Dict[str, Any]]:
                 raise DelegationBudgetError("预算账本哈希校验失败")
             if not isinstance(record["data"], dict):
                 raise DelegationBudgetError("预算事件 data 必须是对象")
-            _validate_event_data(record["event_type"], record["data"])
+            _validate_event_data(str(record["schema_version"]), record["event_type"], record["data"])
             previous = record["record_hash"]
             seen.add(record["event_id"])
             records.append(record)
@@ -283,10 +314,12 @@ def _identity(records: List[Dict[str, Any]]) -> Dict[str, str]:
 def _replay(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     if not records or records[0]["event_type"] != "DECISION_RECORDED" or records[0]["data"].get("decision_kind") != "budget-initialized":
         raise DelegationBudgetError("预算账本缺少初始化事件")
+    if records[0].get("schema_version") != SCHEMA_VERSION:
+        raise DelegationBudgetError("DelegationBudget V1 为只读；请初始化独立 V2 账本")
     init = records[0]["data"]
     limits = _validate_limits(init.get("limits") or {})
     role_limits = _validate_role_limits(init.get("role_limits") or {}, limits)
-    default_profile = str(init.get("default_model_profile") or "")
+    default_profile = str(init.get("default_dispatch_profile") or "")
     budget_class = str(init.get("budget_class") or "")
     if default_profile not in PROFILE_WEIGHTS or budget_class not in BUDGET_CLASSES:
         raise DelegationBudgetError("初始化预算档位非法")
@@ -309,7 +342,7 @@ def _replay(records: List[Dict[str, Any]]) -> Dict[str, Any]:
                 raise DelegationBudgetError("dispatch decision 重复")
             decision = str(data.get("decision") or "")
             role = normalize_role(data.get("role"))
-            profile = str(data.get("requested_profile") or "")
+            profile = str(data.get("approved_profile") or "")
             reason = str(data.get("reason_code") or "")
             difficulty = str(data.get("difficulty") or "")
             risk_domain = str(data.get("risk_domain") or "")
@@ -343,22 +376,22 @@ def _replay(records: List[Dict[str, Any]]) -> Dict[str, Any]:
             if data.get("dispatch_ref") not in decisions:
                 raise DelegationBudgetError("预占缺少对应 decision")
             role = normalize_role(data.get("role"))
-            profile = str(data.get("requested_profile") or "")
+            profile = str(data.get("approved_profile") or "")
             if profile not in PROFILE_WEIGHTS:
                 raise DelegationBudgetError("预占模型档位非法")
             decision = decisions[data["dispatch_ref"]]
             if decision["decision"] != "DELEGATE" or role != decision["role"] \
-                    or profile != decision["requested_profile"] \
+                    or profile != decision["approved_profile"] \
                     or data["units"] != PROFILE_WEIGHTS[profile] \
                     or data["parent_reservation_id"] != decision["parent_reservation_id"] \
                     or data["depth"] != decision["depth"] \
-                    or data["request_basis"] not in {"policy-default", "explicit-request"} \
+                    or data["approval_basis"] not in {"policy-default", "explicit-request"} \
                     or data["association"] != "pretool-verified":
                 raise DelegationBudgetError("预占与显式 decision 不一致")
             _sha_ref(data.get("host_dispatch_ref"), "host_dispatch_ref")
             reservations[rid] = {
                 **dict(data), "role": role, "charged_units": PROFILE_WEIGHTS[profile],
-                "state": "RESERVED", "actual_profile": "", "agent_ref": "", "completion_ref": "",
+                "state": "RESERVED", "agent_ref": "", "completion_ref": "",
             }
         elif event_type == "AGENT_STARTED":
             rid = _identifier(data.get("reservation_id"), "reservation_id")
@@ -367,17 +400,8 @@ def _replay(records: List[Dict[str, Any]]) -> Dict[str, Any]:
                 raise DelegationBudgetError("AGENT_STARTED 状态转换非法")
             item["state"] = "STARTED"
             item["agent_ref"] = _sha_ref(data.get("agent_ref"), "agent_ref")
-            actual = str(data.get("actual_profile") or "")
-            expected_top_up = max(0, PROFILE_WEIGHTS.get(actual, 0) - item["charged_units"])
-            if data.get("top_up_units") != expected_top_up or data.get("association") != "reservation-id":
-                raise DelegationBudgetError("启动补扣或关联字段非法")
-            if actual:
-                if actual not in PROFILE_WEIGHTS or data.get("runtime_evidence") != "host-attested-hook-payload":
-                    raise DelegationBudgetError("实际模型档位缺少可信证明")
-                item["actual_profile"] = actual
-                item["charged_units"] = max(item["charged_units"], PROFILE_WEIGHTS[actual])
-            elif data.get("runtime_evidence") != "unavailable":
-                raise DelegationBudgetError("未证明实际模型时 runtime_evidence 必须不可用")
+            if data.get("association") != "reservation-id":
+                raise DelegationBudgetError("启动关联字段非法")
         elif event_type == "AGENT_COMPLETED":
             rid = _identifier(data.get("reservation_id"), "reservation_id")
             item = reservations.get(rid)
@@ -399,15 +423,6 @@ def _replay(records: List[Dict[str, Any]]) -> Dict[str, Any]:
                 raise DelegationBudgetError("预占释放证明类型非法")
             item["state"] = "NOT_STARTED_RELEASED"
             item["charged_units"] = 0
-        elif event_type == "BUDGET_VIOLATED":
-            rid = _identifier(data.get("reservation_id"), "reservation_id")
-            item = reservations.get(rid)
-            required = _positive(data.get("required_top_up_units"), "required_top_up_units")
-            if not item or item["state"] != "STARTED" \
-                    or data.get("reason_code") != "ACTUAL_PROFILE_TOP_UP_EXCEEDED" \
-                    or required != max(0, item["charged_units"] - PROFILE_WEIGHTS[item["requested_profile"]]):
-                raise DelegationBudgetError("预算违规事件非法")
-            violations.append(dict(data))
         elif event_type == "TASK_BUDGET_CLOSED":
             if closed:
                 raise DelegationBudgetError("预算已经关闭")
@@ -430,31 +445,245 @@ def _replay(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         }
         for role in sorted(ROLES)
     }
-    profile_usage = {profile: sum(1 for item in charged if (item.get("actual_profile") or item["requested_profile"]) == profile) for profile in PROFILES}
+    profile_usage = {profile: sum(1 for item in charged if item["approved_profile"] == profile) for profile in PROFILES}
     used_units = sum(item["charged_units"] for item in charged)
     violated = bool(violations) or used_units > limits["max_units"]
     return {
         "identity": _identity(records), "budget_class": budget_class,
-        "default_model_profile": default_profile, "limits": limits, "role_limits": role_limits,
+        "schema_version": SCHEMA_VERSION, "read_only": False,
+        "default_dispatch_profile": default_profile, "limits": limits, "role_limits": role_limits,
         "decisions": decisions, "reservations": reservations, "violations": violations,
         "usage": {"units": used_units, "dispatches": len(charged), "active": len(active),
-                  "terra_high": sum(1 for item in charged if (item.get("actual_profile") or item["requested_profile"]) == "terra-high"),
-                  "by_role": role_usage, "by_profile": profile_usage},
+                  "terra_high": sum(1 for item in charged if item["approved_profile"] == "terra-high"),
+                  "by_role": role_usage, "by_approved_profile": profile_usage},
         "remaining_units": max(0, limits["max_units"] - used_units),
         "violated": violated, "closed": closed, "association_complete": all(item["state"] != "RESERVED" for item in charged),
         "head_hash": records[-1]["record_hash"], "event_count": len(records),
     }
 
 
+# 中文：PRIVACY_LEGACY_READER_BEGIN；English: legacy-reader scope begins.
+def _replay_legacy_budget(records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """中文：先重放冻结的 V1 状态机，再暴露安全投影。
+
+    English: Replay the frozen V1 state machine before any safe projection is exposed.
+    """
+    if not records or records[0]["event_type"] != "DECISION_RECORDED" \
+            or records[0]["data"].get("decision_kind") != "budget-initialized":
+        raise DelegationBudgetError("旧预算账本缺少初始化事件")
+    init = records[0]["data"]
+    limits = _validate_limits(init.get("limits") or {})
+    role_limits = _validate_role_limits(init.get("role_limits") or {}, limits)
+    default_profile = str(init.get("default_model_profile") or "")
+    budget_class = str(init.get("budget_class") or "")
+    if default_profile not in PROFILE_WEIGHTS or budget_class not in BUDGET_CLASSES:
+        raise DelegationBudgetError("旧预算初始化档位非法")
+    if init["limits"] != BUDGET_CLASSES[budget_class] \
+            or init["cost_formula_version"] != "profile-weight-v1" \
+            or init["association_mode"] != "explicit-dispatch-permit":
+        raise DelegationBudgetError("旧预算初始化契约非法")
+    decisions: Dict[str, Dict[str, Any]] = {}
+    reservations: Dict[str, Dict[str, Any]] = {}
+    violations: List[Dict[str, Any]] = []
+    closed = False
+    for record in records[1:]:
+        event_type = record["event_type"]
+        data = record["data"]
+        if closed:
+            raise DelegationBudgetError("旧预算关闭后不得追加事件")
+        if event_type == "DECISION_RECORDED":
+            ref = _sha_ref(data.get("dispatch_ref"), "dispatch_ref")
+            if ref in decisions:
+                raise DelegationBudgetError("旧预算 dispatch decision 重复")
+            decision = str(data.get("decision") or "")
+            role = normalize_role(data.get("role"))
+            profile = str(data.get("requested_profile") or "")
+            reason = str(data.get("reason_code") or "")
+            difficulty = str(data.get("difficulty") or "")
+            risk_domain = str(data.get("risk_domain") or "")
+            context_size = str(data.get("context_size") or "")
+            if decision not in {"INLINE", "DELEGATE"} or profile not in PROFILE_WEIGHTS or reason not in REASONS:
+                raise DelegationBudgetError("旧预算路由决策非法")
+            if difficulty not in DIFFICULTIES or risk_domain not in RISK_DOMAINS or context_size not in CONTEXT_SIZES:
+                raise DelegationBudgetError("旧预算校准场景枚举非法")
+            _identifier(data.get("responsibility"), "responsibility")
+            parent_reservation_id = str(data.get("parent_reservation_id") or "")
+            if parent_reservation_id:
+                _identifier(parent_reservation_id, "parent_reservation_id")
+            depth = _positive(data.get("depth"), "depth")
+            prior_profile = str(data.get("prior_profile") or "")
+            prior_result_ref = str(data.get("prior_result_ref") or "")
+            if decision == "INLINE" and reason != "INLINE_SUFFICIENT":
+                raise DelegationBudgetError("旧预算 INLINE 决策原因非法")
+            if decision == "DELEGATE" and reason == "INLINE_SUFFICIENT":
+                raise DelegationBudgetError("旧预算 DELEGATE 决策原因非法")
+            if reason == "LOWER_TIER_INCONCLUSIVE":
+                if prior_profile not in PROFILE_WEIGHTS or PROFILE_ORDER[profile] != PROFILE_ORDER[prior_profile] + 1:
+                    raise DelegationBudgetError("旧预算逐级升级关系非法")
+                _sha_ref(prior_result_ref, "prior_result_ref")
+            elif prior_profile or prior_result_ref:
+                raise DelegationBudgetError("旧预算非升级决策携带上一档结果")
+            decisions[ref] = {**dict(data), "role": role, "depth": depth}
+        elif event_type == "BUDGET_RESERVED":
+            rid = _identifier(data.get("reservation_id"), "reservation_id")
+            if rid in reservations:
+                raise DelegationBudgetError("旧预算 reservation_id 重复")
+            if data.get("dispatch_ref") not in decisions:
+                raise DelegationBudgetError("旧预算预占缺少对应 decision")
+            role = normalize_role(data.get("role"))
+            profile = str(data.get("requested_profile") or "")
+            if profile not in PROFILE_WEIGHTS:
+                raise DelegationBudgetError("旧预算预占档位非法")
+            decision = decisions[data["dispatch_ref"]]
+            if decision["decision"] != "DELEGATE" or role != decision["role"] \
+                    or profile != decision["requested_profile"] \
+                    or data["units"] != PROFILE_WEIGHTS[profile] \
+                    or data["parent_reservation_id"] != decision["parent_reservation_id"] \
+                    or data["depth"] != decision["depth"] \
+                    or data["request_basis"] not in {"policy-default", "explicit-request"} \
+                    or data["association"] != "pretool-verified":
+                raise DelegationBudgetError("旧预算预占与显式 decision 不一致")
+            _sha_ref(data.get("host_dispatch_ref"), "host_dispatch_ref")
+            reservations[rid] = {
+                **dict(data), "role": role, "charged_units": PROFILE_WEIGHTS[profile],
+                "state": "RESERVED", "actual_profile": "", "agent_ref": "", "completion_ref": "",
+            }
+        elif event_type == "AGENT_STARTED":
+            rid = _identifier(data.get("reservation_id"), "reservation_id")
+            item = reservations.get(rid)
+            if not item or item["state"] != "RESERVED":
+                raise DelegationBudgetError("旧预算 AGENT_STARTED 状态转换非法")
+            item["state"] = "STARTED"
+            item["agent_ref"] = _sha_ref(data.get("agent_ref"), "agent_ref")
+            actual = str(data.get("actual_profile") or "")
+            expected_top_up = max(0, PROFILE_WEIGHTS.get(actual, 0) - item["charged_units"])
+            if data.get("top_up_units") != expected_top_up or data.get("association") != "reservation-id":
+                raise DelegationBudgetError("旧预算启动补扣或关联字段非法")
+            if actual:
+                if actual not in PROFILE_WEIGHTS or data.get("runtime_evidence") != "host-attested-hook-payload":
+                    raise DelegationBudgetError("旧预算实际档位缺少原始证明")
+                item["actual_profile"] = actual
+                item["charged_units"] = max(item["charged_units"], PROFILE_WEIGHTS[actual])
+            elif data.get("runtime_evidence") != "unavailable":
+                raise DelegationBudgetError("旧预算未证明实际档位时证据状态非法")
+        elif event_type == "AGENT_COMPLETED":
+            rid = _identifier(data.get("reservation_id"), "reservation_id")
+            item = reservations.get(rid)
+            if not item or item["state"] != "STARTED":
+                raise DelegationBudgetError("旧预算 AGENT_COMPLETED 状态转换非法")
+            item["state"] = "COMPLETED"
+            outcome = str(data.get("outcome") or "")
+            if outcome not in {"PASS", "BLOCKED", "FAILED", "CANCELLED", "PARTIAL", "UNKNOWN"}:
+                raise DelegationBudgetError("旧预算 Agent outcome 非法")
+            item["outcome"] = outcome
+            item["completion_ref"] = "sha256:" + record["record_hash"]
+        elif event_type == "NOT_STARTED_RELEASED":
+            rid = _identifier(data.get("reservation_id"), "reservation_id")
+            item = reservations.get(rid)
+            if not item or item["state"] != "RESERVED":
+                raise DelegationBudgetError("旧预算只有未启动预占可以释放")
+            _sha_ref(data.get("proof_ref"), "proof_ref")
+            if data.get("proof_kind") != "host-confirmed-not-started":
+                raise DelegationBudgetError("旧预算预占释放证明类型非法")
+            item["state"] = "NOT_STARTED_RELEASED"
+            item["charged_units"] = 0
+        elif event_type == "BUDGET_VIOLATED":
+            rid = _identifier(data.get("reservation_id"), "reservation_id")
+            item = reservations.get(rid)
+            required = _positive(data.get("required_top_up_units"), "required_top_up_units")
+            if not item or item["state"] != "STARTED" \
+                    or data.get("reason_code") != "ACTUAL_PROFILE_TOP_UP_EXCEEDED" \
+                    or required != max(0, item["charged_units"] - PROFILE_WEIGHTS[item["requested_profile"]]):
+                raise DelegationBudgetError("旧预算违规事件非法")
+            violations.append(dict(data))
+        elif event_type == "TASK_BUDGET_CLOSED":
+            if closed:
+                raise DelegationBudgetError("旧预算已经关闭")
+            if data.get("conclusion") not in {"PASS", "BLOCKED", "FAILED", "CANCELLED", "PARTIAL", "UNKNOWN"} \
+                    or not isinstance(data.get("association_complete"), bool) \
+                    or not isinstance(data.get("budget_pass"), bool):
+                raise DelegationBudgetError("旧预算关闭事件非法")
+            expected_association = all(item["state"] != "RESERVED" for item in reservations.values()
+                                       if item["state"] != "NOT_STARTED_RELEASED")
+            if data["association_complete"] != expected_association or data["budget_pass"] != (not violations):
+                raise DelegationBudgetError("旧预算关闭快照与账本状态不一致")
+            closed = True
+    return {
+        "init": init, "limits": limits, "role_limits": role_limits,
+        "decisions": decisions, "reservations": reservations,
+        "violations": violations, "closed": closed,
+    }
+
+
+def _project_legacy_budget(records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """中文：返回 V1 的安全只读投影；宿主模型身份及补扣内容不进入结果。
+
+    English: Return a safe read-only V1 projection without host model identity or top-up data.
+    """
+    if not records or records[0].get("schema_version") != LEGACY_SCHEMA_VERSION:
+        raise DelegationBudgetError("不是 DelegationBudget V1 账本")
+    replayed = _replay_legacy_budget(records)
+    init = replayed["init"]
+    limits = replayed["limits"]
+    role_limits = replayed["role_limits"]
+    decisions = {
+        ref: {
+            "decision_kind": "dispatch", "dispatch_ref": data["dispatch_ref"],
+            "decision": data["decision"], "role": data["role"],
+            "approved_profile": data["requested_profile"], "reason_code": data["reason_code"],
+            "responsibility": data["responsibility"], "difficulty": data["difficulty"],
+            "risk_domain": data["risk_domain"], "context_size": data["context_size"],
+            "parent_reservation_id": data["parent_reservation_id"], "depth": data["depth"],
+            "prior_profile": data["prior_profile"], "prior_result_ref": data["prior_result_ref"],
+        }
+        for ref, data in replayed["decisions"].items()
+    }
+    reservations = {
+        rid: {
+            "reservation_id": data["reservation_id"], "dispatch_ref": data["dispatch_ref"],
+            "host_dispatch_ref": data["host_dispatch_ref"], "role": data["role"],
+            "approved_profile": data["requested_profile"], "approval_basis": data["request_basis"],
+            "units": data["units"], "charged_units": data["units"],
+            "parent_reservation_id": data["parent_reservation_id"], "depth": data["depth"],
+            "association": data["association"], "state": data["state"],
+            "agent_ref": data.get("agent_ref", ""), "completion_ref": data.get("completion_ref", ""),
+            **({"outcome": data["outcome"]} if "outcome" in data else {}),
+        }
+        for rid, data in replayed["reservations"].items()
+    }
+    closed = replayed["closed"]
+    charged = [item for item in reservations.values() if item["state"] != "NOT_STARTED_RELEASED"]
+    active = [item for item in charged if item["state"] in {"RESERVED", "STARTED"}]
+    used_units = sum(int(item["charged_units"]) for item in charged)
+    by_role = {role: {"units": sum(item["charged_units"] for item in charged if item["role"] == role),
+                      "dispatches": sum(1 for item in charged if item["role"] == role),
+                      "active": sum(1 for item in active if item["role"] == role)} for role in sorted(ROLES)}
+    by_profile = {profile: sum(1 for item in charged if item["approved_profile"] == profile) for profile in PROFILES}
+    return {
+        "schema_version": LEGACY_SCHEMA_VERSION, "read_only": True, "identity": _identity(records),
+        "budget_class": init["budget_class"], "default_dispatch_profile": init["default_model_profile"],
+        "limits": limits, "role_limits": role_limits, "decisions": decisions, "reservations": reservations,
+        "violations": [], "usage": {"units": used_units, "dispatches": len(charged), "active": len(active),
+        "terra_high": by_profile["terra-high"], "by_role": by_role, "by_approved_profile": by_profile},
+        "remaining_units": max(0, limits["max_units"] - used_units), "violated": False, "closed": closed,
+        "association_complete": all(item["state"] != "RESERVED" for item in charged),
+        "head_hash": records[-1]["record_hash"], "event_count": len(records),
+    }
+# 中文：PRIVACY_LEGACY_READER_END；English: legacy-reader scope ends.
+
+
 def read_budget(path: Path) -> Dict[str, Any]:
     path = Path(path)
     with OwnerTokenLock(path, timeout=1.5):
-        return _replay(_read_records_unlocked(path))
+        records = _read_records_unlocked(path)
+        if records and records[0].get("schema_version") == LEGACY_SCHEMA_VERSION:
+            return _project_legacy_budget(records)
+        return _replay(records)
 
 
 def initialize_budget(path: Path, *, budget_id: str, task_id: str, project_id: str,
                       repo_fingerprint: str, budget_class: str,
-                      default_model_profile: str,
+                      default_dispatch_profile: str,
                       role_limits: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     path = Path(path)
     identity = {
@@ -463,13 +692,13 @@ def initialize_budget(path: Path, *, budget_id: str, task_id: str, project_id: s
         "project_id": _identifier(project_id, "project_id"),
         "repo_fingerprint": _sha_ref(repo_fingerprint, "repo_fingerprint"),
     }
-    if budget_class not in BUDGET_CLASSES or default_model_profile not in PROFILE_WEIGHTS:
-        raise DelegationBudgetError("预算或默认模型档位非法")
+    if budget_class not in BUDGET_CLASSES or default_dispatch_profile not in PROFILE_WEIGHTS:
+        raise DelegationBudgetError("预算或默认派发档位非法")
     limits = dict(BUDGET_CLASSES[budget_class])
     roles = _validate_role_limits(role_limits or _default_role_limits(limits), limits)
     data = {
         "decision_kind": "budget-initialized", "budget_class": budget_class,
-        "default_model_profile": default_model_profile, "limits": limits,
+        "default_dispatch_profile": default_dispatch_profile, "limits": limits,
         "role_limits": roles, "cost_formula_version": "profile-weight-v1",
         "association_mode": "explicit-dispatch-permit",
     }
@@ -486,7 +715,7 @@ def initialize_budget(path: Path, *, budget_id: str, task_id: str, project_id: s
 
 
 def record_decision(path: Path, *, dispatch_key: str, decision: str, role: str,
-                    requested_profile: str, reason_code: str,
+                    approved_profile: str, reason_code: str,
                     responsibility: str = "general", difficulty: str = "UNKNOWN",
                     risk_domain: str = "UNKNOWN", context_size: str = "UNKNOWN",
                     parent_reservation_id: str = "", prior_profile: str = "",
@@ -503,8 +732,8 @@ def record_decision(path: Path, *, dispatch_key: str, decision: str, role: str,
     responsibility = _identifier(responsibility, "responsibility")
     if decision not in {"INLINE", "DELEGATE"} or reason_code not in REASONS:
         raise DelegationBudgetError("路由决策或原因码非法")
-    if requested_profile not in PROFILE_WEIGHTS:
-        raise DelegationBudgetError("请求模型档位非法")
+    if approved_profile not in PROFILE_WEIGHTS:
+        raise DelegationBudgetError("批准派发档位非法")
     if difficulty not in DIFFICULTIES or risk_domain not in RISK_DOMAINS or context_size not in CONTEXT_SIZES:
         raise DelegationBudgetError("校准场景枚举非法")
     if decision == "INLINE" and reason_code != "INLINE_SUFFICIENT":
@@ -516,17 +745,17 @@ def record_decision(path: Path, *, dispatch_key: str, decision: str, role: str,
         state = _replay(records)
         if state["closed"] or state["violated"]:
             raise DelegationBudgetError("预算已关闭或已违规，拒绝新决策")
-        if reason_code == "MISSING_EVIDENCE" and PROFILE_ORDER[requested_profile] > PROFILE_ORDER[state["default_model_profile"]]:
-            raise DelegationBudgetError("MISSING_EVIDENCE 不允许升级模型")
+        if reason_code == "MISSING_EVIDENCE" and PROFILE_ORDER[approved_profile] > PROFILE_ORDER[state["default_dispatch_profile"]]:
+            raise DelegationBudgetError("MISSING_EVIDENCE 不允许升级派发档位")
         if reason_code == "LOWER_TIER_INCONCLUSIVE":
             if prior_profile not in PROFILE_WEIGHTS or not prior_result_ref:
                 raise DelegationBudgetError("逐级升级必须引用上一档结果")
             _sha_ref(prior_result_ref, "prior_result_ref")
-            if PROFILE_ORDER[requested_profile] != PROFILE_ORDER[prior_profile] + 1:
+            if PROFILE_ORDER[approved_profile] != PROFILE_ORDER[prior_profile] + 1:
                 raise DelegationBudgetError("LOWER_TIER_INCONCLUSIVE 只允许逐级升级")
         elif prior_profile or prior_result_ref:
             raise DelegationBudgetError("仅逐级升级决策可携带上一档结果")
-        if requested_profile == "terra-high" and reason_code not in {"SECURITY_OR_CONCURRENCY_RISK", "LOWER_TIER_INCONCLUSIVE"}:
+        if approved_profile == "terra-high" and reason_code not in {"SECURITY_OR_CONCURRENCY_RISK", "LOWER_TIER_INCONCLUSIVE"}:
             raise DelegationBudgetError("Terra High 仅允许高风险直达或逐级升级")
         depth = 1
         if parent_reservation_id:
@@ -539,7 +768,7 @@ def record_decision(path: Path, *, dispatch_key: str, decision: str, role: str,
             raise DelegationBudgetError("嵌套深度超过根任务预算")
         data = {
             "decision_kind": "dispatch", "dispatch_ref": dispatch_ref, "decision": decision,
-            "role": role, "requested_profile": requested_profile, "reason_code": reason_code,
+            "role": role, "approved_profile": approved_profile, "reason_code": reason_code,
             "responsibility": responsibility, "difficulty": difficulty, "risk_domain": risk_domain,
             "context_size": context_size, "parent_reservation_id": parent_reservation_id,
             "depth": depth, "prior_profile": prior_profile, "prior_result_ref": prior_result_ref,
@@ -557,7 +786,7 @@ def record_decision(path: Path, *, dispatch_key: str, decision: str, role: str,
 
 
 def reserve_budget(path: Path, *, dispatch_key: str, host_dispatch_id: str,
-                   requested_profile: str = "", request_basis: str = "",
+                   approved_profile: str = "", approval_basis: str = "",
                    role: str = "") -> Dict[str, Any]:
     path = Path(path)
     dispatch_ref = sha256_ref(_identifier(dispatch_key, "dispatch_key"))
@@ -572,15 +801,15 @@ def reserve_budget(path: Path, *, dispatch_key: str, host_dispatch_id: str,
             raise DelegationBudgetError("缺少显式 DELEGATE permit")
         if role and normalize_role(role) != decision["role"]:
             raise DelegationBudgetError("派发角色与显式 permit 不一致")
-        profile = requested_profile or decision["requested_profile"]
-        basis = request_basis or ("policy-default" if not requested_profile else "explicit-request")
-        if profile != decision["requested_profile"] or basis not in {"policy-default", "explicit-request"}:
-            raise DelegationBudgetError("派发模型档位与显式 permit 不一致")
+        profile = approved_profile or decision["approved_profile"]
+        basis = approval_basis or ("policy-default" if not approved_profile else "explicit-request")
+        if profile != decision["approved_profile"] or basis not in {"policy-default", "explicit-request"}:
+            raise DelegationBudgetError("批准派发档位与显式 permit 不一致")
         reservation_id = stable_id("DBR", state["identity"]["budget_id"], host_ref)
         existing = state["reservations"].get(reservation_id)
         expected = {
             "reservation_id": reservation_id, "dispatch_ref": dispatch_ref, "host_dispatch_ref": host_ref,
-            "role": decision["role"], "requested_profile": profile, "request_basis": basis,
+            "role": decision["role"], "approved_profile": profile, "approval_basis": basis,
             "units": PROFILE_WEIGHTS[profile], "parent_reservation_id": decision["parent_reservation_id"],
             "depth": decision["depth"], "association": "pretool-verified",
         }
@@ -608,8 +837,7 @@ def reserve_budget(path: Path, *, dispatch_key: str, host_dispatch_id: str,
         return {**expected, "idempotent": False}
 
 
-def mark_started(path: Path, *, reservation_id: str, agent_id: str,
-                 actual_profile: str = "", runtime_evidence: str = "unavailable") -> Dict[str, Any]:
+def mark_started(path: Path, *, reservation_id: str, agent_id: str) -> Dict[str, Any]:
     path = Path(path)
     reservation_id = _identifier(reservation_id, "reservation_id")
     agent_ref = sha256_ref(_identifier(agent_id, "agent_id"))
@@ -622,35 +850,17 @@ def mark_started(path: Path, *, reservation_id: str, agent_id: str,
         if not item:
             raise DelegationBudgetError("找不到 reservation")
         if item["state"] in {"STARTED", "COMPLETED"}:
-            if actual_profile and runtime_evidence != "host-attested-hook-payload":
-                raise DelegationBudgetError("实际档位补扣必须有可信宿主证明")
             if item["agent_ref"] != agent_ref:
                 raise DelegationBudgetError("reservation 已绑定其他 Agent")
-            if actual_profile != item.get("actual_profile", ""):
-                raise DelegationBudgetError("启动事件重放的实际档位不一致")
             return {"reservation_id": reservation_id, "state": item["state"], "idempotent": True}
         if item["state"] != "RESERVED":
             raise DelegationBudgetError("reservation 已释放，不能启动")
-        if actual_profile:
-            if actual_profile not in PROFILE_WEIGHTS or runtime_evidence != "host-attested-hook-payload":
-                raise DelegationBudgetError("实际档位补扣必须有可信宿主证明")
-        else:
-            runtime_evidence = "unavailable"
-        top_up = max(0, PROFILE_WEIGHTS.get(actual_profile, 0) - item["charged_units"])
-        insufficient = state["usage"]["units"] + top_up > state["limits"]["max_units"]
         data = {"reservation_id": reservation_id, "agent_ref": agent_ref,
-                "actual_profile": actual_profile, "runtime_evidence": runtime_evidence,
-                "top_up_units": top_up, "association": "reservation-id"}
+                "association": "reservation-id"}
         start = _event(state["identity"], "AGENT_STARTED", stable_id("DBE", reservation_id, "started"),
                        data, len(records) + 1, records[-1]["record_hash"])
-        additions = [start]
-        if insufficient:
-            violation_data = {"reservation_id": reservation_id, "reason_code": "ACTUAL_PROFILE_TOP_UP_EXCEEDED",
-                              "required_top_up_units": top_up}
-            additions.append(_event(state["identity"], "BUDGET_VIOLATED", stable_id("DBE", reservation_id, "violated"),
-                                    violation_data, len(records) + 2, start["record_hash"]))
-        _append_unlocked(path, additions)
-        return {**data, "state": "STARTED", "violated": insufficient, "idempotent": False}
+        _append_unlocked(path, [start])
+        return {**data, "state": "STARTED", "violated": False, "idempotent": False}
 
 
 def mark_completed(path: Path, *, reservation_id: str, outcome: str = "UNKNOWN") -> Dict[str, Any]:

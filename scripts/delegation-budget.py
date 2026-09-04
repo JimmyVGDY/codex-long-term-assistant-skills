@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：DelegationBudget V1 命令行适配器。
+"""中文：DelegationBudget V2 命令行适配器。
 
-English: DelegationBudget V1 command-line adapter.
+English: DelegationBudget V2 command-line adapter.
 """
 from __future__ import annotations
 
@@ -25,19 +25,19 @@ def emit(value: object) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="维护 DelegationBudget V1 根任务预算账本")
+    parser = argparse.ArgumentParser(description="维护 DelegationBudget V2 根任务预算账本")
     sub = parser.add_subparsers(dest="command", required=True)
     init = sub.add_parser("init")
     init.add_argument("--ledger", required=True); init.add_argument("--budget-id", required=True)
     init.add_argument("--task-id", required=True); init.add_argument("--project-id", required=True)
     init.add_argument("--repo-fingerprint", required=True)
     init.add_argument("--budget-class", choices=sorted(BUDGET_CLASSES), required=True)
-    init.add_argument("--default-model-profile", choices=list(PROFILE_WEIGHTS), required=True)
+    init.add_argument("--default-dispatch-profile", choices=list(PROFILE_WEIGHTS), required=True)
     decide = sub.add_parser("decide")
     decide.add_argument("--ledger", required=True); decide.add_argument("--dispatch-key", required=True)
     decide.add_argument("--decision", choices=["INLINE", "DELEGATE"], required=True)
     decide.add_argument("--role", choices=sorted(ROLES), required=True)
-    decide.add_argument("--requested-profile", choices=list(PROFILE_WEIGHTS), required=True)
+    decide.add_argument("--approved-profile", choices=list(PROFILE_WEIGHTS), required=True)
     decide.add_argument("--reason-code", choices=sorted(REASONS), required=True)
     decide.add_argument("--responsibility", default="general")
     decide.add_argument("--difficulty", choices=sorted(DIFFICULTIES), default="UNKNOWN")
@@ -49,13 +49,12 @@ def main() -> int:
     reserve = sub.add_parser("reserve")
     reserve.add_argument("--ledger", required=True); reserve.add_argument("--dispatch-key", required=True)
     reserve.add_argument("--host-dispatch-id", required=True)
-    reserve.add_argument("--requested-profile", choices=[""] + list(PROFILE_WEIGHTS), default="")
-    reserve.add_argument("--request-basis", choices=["", "policy-default", "explicit-request"], default="")
+    reserve.add_argument("--approved-profile", choices=[""] + list(PROFILE_WEIGHTS), default="")
+    reserve.add_argument("--approval-basis", choices=["", "policy-default", "explicit-request"], default="")
     reserve.add_argument("--role", choices=[""] + sorted(ROLES), default="")
     start = sub.add_parser("start")
     start.add_argument("--ledger", required=True); start.add_argument("--reservation-id", required=True)
-    start.add_argument("--agent-id", required=True); start.add_argument("--actual-profile", choices=[""] + list(PROFILE_WEIGHTS), default="")
-    start.add_argument("--runtime-evidence", choices=["unavailable", "host-attested-hook-payload"], default="unavailable")
+    start.add_argument("--agent-id", required=True)
     complete = sub.add_parser("complete")
     complete.add_argument("--ledger", required=True); complete.add_argument("--reservation-id", required=True)
     complete.add_argument("--outcome", default="UNKNOWN")
@@ -71,21 +70,20 @@ def main() -> int:
         if args.command == "init":
             result = initialize_budget(ledger, budget_id=args.budget_id, task_id=args.task_id,
                                        project_id=args.project_id, repo_fingerprint=args.repo_fingerprint,
-                                       budget_class=args.budget_class, default_model_profile=args.default_model_profile)
+                                       budget_class=args.budget_class, default_dispatch_profile=args.default_dispatch_profile)
         elif args.command == "decide":
             result = record_decision(ledger, dispatch_key=args.dispatch_key, decision=args.decision,
-                                     role=args.role, requested_profile=args.requested_profile,
+                                     role=args.role, approved_profile=args.approved_profile,
                                      reason_code=args.reason_code, responsibility=args.responsibility,
                                      difficulty=args.difficulty, risk_domain=args.risk_domain,
                                      context_size=args.context_size, parent_reservation_id=args.parent_reservation_id,
                                      prior_profile=args.prior_profile, prior_result_ref=args.prior_result_ref)
         elif args.command == "reserve":
             result = reserve_budget(ledger, dispatch_key=args.dispatch_key, host_dispatch_id=args.host_dispatch_id,
-                                    requested_profile=args.requested_profile, request_basis=args.request_basis,
+                                    approved_profile=args.approved_profile, approval_basis=args.approval_basis,
                                     role=args.role)
         elif args.command == "start":
-            result = mark_started(ledger, reservation_id=args.reservation_id, agent_id=args.agent_id,
-                                  actual_profile=args.actual_profile, runtime_evidence=args.runtime_evidence)
+            result = mark_started(ledger, reservation_id=args.reservation_id, agent_id=args.agent_id)
         elif args.command == "complete":
             result = mark_completed(ledger, reservation_id=args.reservation_id, outcome=args.outcome)
         elif args.command == "release-not-started":

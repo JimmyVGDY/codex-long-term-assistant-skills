@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：创建或验证 TaskOutcomeEvent V2 事件链的独立 HMAC 封印。
+"""中文：创建或验证 TaskOutcomeEvent V3/V2 事件链的独立 HMAC 封印。
 
-English: Create or verify detached HMAC seals for a TaskOutcomeEvent V2 chain.
+English: Create or verify detached HMAC seals for a TaskOutcomeEvent V3/V2 chain.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from cp_runtime.integrity import IntegrityError, seal_event_chain, verify_event_
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V6.6 event chain seal")
+    parser = argparse.ArgumentParser(description="TaskOutcomeEvent V3/V2 chain seal")
     parser.add_argument("command", choices=["create", "verify"])
     parser.add_argument("--event-file", required=True)
     parser.add_argument("--seal-file")

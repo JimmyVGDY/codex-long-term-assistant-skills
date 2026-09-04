@@ -65,12 +65,6 @@ def create_declared_result(packet_dir: Path, output: Path, reviewer: str, profil
     )
     payload = json.loads(output.read_text(encoding="utf-8"))
     payload["status"] = "pass"
-    requested = payload["model_assignment"]
-    requested["runtime_model"] = requested["requested_model"]
-    requested["runtime_reasoning_effort"] = requested["requested_reasoning_effort"]
-    requested["status"] = "declared_match"
-    requested["runtime_evidence_level"] = "declared"
-    requested["runtime_evidence_source"] = "reviewer-result"
     payload["summary"] = "no findings"
     output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -205,10 +199,10 @@ with tempfile.TemporaryDirectory(prefix="review-tools-v50-") as temp:
     )
     state = json.loads((review / "review-state.json").read_text(encoding="utf-8"))
     dispatch = state["phases"]["post"]["rounds"]["1"]["dispatch"]["cp_review_functional_business"]
-    assert dispatch["model_profile"] == "luna-medium"
-    assert dispatch["requested_model"] == "gpt-5.6-luna"
-    assert dispatch["requested_reasoning_effort"] == "medium"
+    assert dispatch["approved_profile"] == "luna-medium"
     assert dispatch["minimum_acceptable_profile"] == "luna-medium"
+    assert "requested_model" not in dispatch
+    assert "runtime_model" not in dispatch
 
     run(
         CONTROLLER,

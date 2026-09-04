@@ -26,7 +26,7 @@ _CONFIDENCE_POINTS = {
 }
 _BASE_VALUE = {
     SignalType.REPEATED_FAILURE: 35,
-    SignalType.MODEL_ESCALATION: 25,
+    SignalType.DISPATCH_PROFILE_VALUE_REGRESSION: 25,
     SignalType.ROUTING_DEVIATION: 30,
     SignalType.EXCESSIVE_REPAIR: 28,
     SignalType.LOW_REVIEWER_YIELD: 20,
@@ -35,7 +35,7 @@ _BASE_VALUE = {
 }
 _BASE_COMPLEXITY = {
     SignalType.REPEATED_FAILURE: 55,
-    SignalType.MODEL_ESCALATION: 35,
+    SignalType.DISPATCH_PROFILE_VALUE_REGRESSION: 35,
     SignalType.ROUTING_DEVIATION: 45,
     SignalType.EXCESSIVE_REPAIR: 50,
     SignalType.LOW_REVIEWER_YIELD: 30,
@@ -66,7 +66,7 @@ def _risk(signal: PatternSignal, action: ProposalAction) -> RiskLevel:
         return RiskLevel.HIGH if signal.rate >= 0.50 else RiskLevel.MEDIUM
     if signal.signal_type in {SignalType.ROUTING_DEVIATION, SignalType.EXCESSIVE_REPAIR}:
         return RiskLevel.MEDIUM
-    if signal.signal_type is SignalType.MODEL_ESCALATION:
+    if signal.signal_type is SignalType.DISPATCH_PROFILE_VALUE_REGRESSION:
         return RiskLevel.MEDIUM if signal.rate >= 0.65 else RiskLevel.LOW
     return RiskLevel.LOW
 
@@ -74,7 +74,7 @@ def _risk(signal: PatternSignal, action: ProposalAction) -> RiskLevel:
 def _recommended_action(signal: PatternSignal, policy: EvolutionPolicy) -> ProposalAction:
     if signal.signal_type is SignalType.REPEATED_FAILURE:
         return ProposalAction.MODIFY
-    if signal.signal_type is SignalType.MODEL_ESCALATION:
+    if signal.signal_type is SignalType.DISPATCH_PROFILE_VALUE_REGRESSION:
         return ProposalAction.MODIFY
     if signal.signal_type is SignalType.ROUTING_DEVIATION:
         return ProposalAction.MODIFY
@@ -119,10 +119,10 @@ def _rationale(signal: PatternSignal, action: ProposalAction) -> str:
             "%s。重复失败已跨越多个独立任务，继续仅在任务末尾修复会累积返工；"
             "建议定位共同触发条件，并以最小规则或验证补丁降低再次发生概率。" % signal.summary
         )
-    if signal.signal_type is SignalType.MODEL_ESCALATION:
+    if signal.signal_type is SignalType.DISPATCH_PROFILE_VALUE_REGRESSION:
         return (
-            "%s。推荐模型与实际模型频繁偏离，说明复杂度判断、路由阈值或任务特征提取可能不准确；"
-            "应先分析升级原因，再调整路由规则，不能直接提高全部任务默认档位。" % signal.summary
+            "%s。较高批准档位的单位成本收益低于相邻档位，说明派发阈值或任务特征可能需要复核；"
+            "应先回放批准档位、结果、Finding、返修、耗时与预留成本，再决定是否调整策略。" % signal.summary
         )
     if signal.signal_type is SignalType.ROUTING_DEVIATION:
         return (
