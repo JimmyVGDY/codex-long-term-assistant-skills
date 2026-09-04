@@ -197,9 +197,9 @@ def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
 
 
 def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
-    """中文：只在宿主显式传播 reservation_id 时对账；0.153.0 缺失时保留 RESERVED。
+    """中文：只在宿主显式传播 reservation_id 时对账；当前宿主缺失时保留 RESERVED。
 
-    English: Reconcile only when the host explicitly propagates reservation_id; keep RESERVED when Codex 0.153.0 omits it.
+    English: Reconcile only when the host explicitly propagates reservation_id; keep RESERVED when the current host omits it.
     """
     ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
     if not ledger_text or hook_name not in {"SubagentStart", "SubagentStop"}:
@@ -247,8 +247,8 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
             "project_id": project_id_for(fingerprint, cwd), "repo_fingerprint": fingerprint,
         }, "SESSION_END_IDENTITY_UNAVAILABLE")
         return None
-    # 中文：实际运行值需要外部配置的宿主信任锚；Codex 0.153.0 的普通 Hook 字段不构成此证明。
-    # English: Actual runtime values require an external host trust anchor; ordinary Codex 0.153.0 Hook fields do not provide that attestation.
+    # 中文：实际运行值需要外部配置的宿主信任锚；当前 Codex 的普通 Hook 字段不构成此证明。
+    # English: Actual runtime values require an external host trust anchor; ordinary current-Codex Hook fields do not provide that attestation.
     runtime_evidence = verify_hook_runtime_evidence(data, hook)
     model = runtime_evidence["model"] if runtime_evidence["status"] == "VERIFIED" else ""
     effort = runtime_evidence["reasoning_effort"] if runtime_evidence["status"] == "VERIFIED" else ""

@@ -89,6 +89,22 @@ class DelegationHookTests(unittest.TestCase):
             self.env["CP_DELEGATION_BUDGET_PATH"] = ledger
             self.env.pop("CP_DELEGATION_BUDGET_REQUIRED", None)
 
+    def test_unified_exec_is_not_a_dispatch_and_cannot_consume_a_permit(self) -> None:
+        record_decision(self.ledger, dispatch_key="nested-dispatch", decision="DELEGATE", role="worker",
+                        requested_profile="luna-low", reason_code="SEMANTIC_COMPLEXITY")
+        payload = {
+            "hook_event_name": "PreToolUse", "tool_name": "unified_exec",
+            "tool_use_id": "unified-tool", "cwd": str(ROOT),
+            "tool_input": {"source": "await tools.spawn_agent({task_name: 'nested-dispatch'})"},
+        }
+        result = self.invoke("PreToolUse", payload)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("", result.stdout)
+        state = read_budget(self.ledger)
+        self.assertEqual(0, state["usage"]["dispatches"])
+        self.assertEqual(1, len(state["decisions"]))
+        self.assertEqual({}, state["reservations"])
+
     def test_pretool_alias_conflicts_fail_closed_with_registered_envelope(self) -> None:
         top_level = {
             "hook_event_name": "PreToolUse", "tool_name": "spawn_agent",

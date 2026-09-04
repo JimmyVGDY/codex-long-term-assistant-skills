@@ -37,7 +37,7 @@ def validate_package():
                 tomllib.loads(path.read_text(encoding='utf-8-sig'))
         run([sys.executable,'-m','compileall','-q',str(ROOT/'runtime'),str(ROOT/'scripts'),str(ROOT/'hooks')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'payload-integrity.py'),'verify','--root',str(ROOT),
-             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.4.1'],validation_env)
+             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.4.2'],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'semantic-lint.py')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'routing-eval.py'),'validate'],validation_env)
         model_gate=run([sys.executable,str(ROOT/'scripts'/'model-gate-acceptance.py')],validation_env)
@@ -54,7 +54,7 @@ def test_count(output):
 
 package_test_count=test_count(tests); runtime_test_count=test_count(runtime_tests)
 result={
- 'ok':True,'evidence_scope':'package-only','version':'7.4.1','skill_count':10,'reviewer_count':7,
+ 'ok':True,'evidence_scope':'package-only','version':'7.4.2','skill_count':10,'reviewer_count':7,
  'hooks':['UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'],
  'task_outcome_event':'2.0','execution_authorization':'NONE','automatic_self_modification':False,
  'requested_model_policy':'PASS','runtime_model_evidence':'UNAVAILABLE',

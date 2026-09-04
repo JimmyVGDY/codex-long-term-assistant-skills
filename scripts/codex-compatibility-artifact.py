@@ -24,7 +24,7 @@ MAX_ARTIFACT_BYTES = 256 * 1024 * 1024
 
 
 def download(version: str, output: Path) -> dict:
-    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.4.1")
+    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.4.2")
     profile = profile_for_version(registry, version)
     output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -36,7 +36,7 @@ def download(version: str, output: Path) -> dict:
             temporary = Path(handle.name)
             request = urllib.request.Request(
                 profile["artifact"]["tarball"],
-                headers={"User-Agent": "codex-long-term-assistant-skills/7.4.1"},
+                headers={"User-Agent": "codex-long-term-assistant-skills/7.4.2"},
             )
             with urllib.request.urlopen(request, timeout=120) as response:
                 total = 0

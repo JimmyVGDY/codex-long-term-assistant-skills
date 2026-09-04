@@ -138,6 +138,17 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
             if old is None: os.environ.pop("CP_ASSISTANT_HOST_ATTESTATION_KEY", None)
             else: os.environ["CP_ASSISTANT_HOST_ATTESTATION_KEY"] = old
 
+    def test_model_switch_without_fresh_attestation_never_reuses_prior_runtime_evidence(self) -> None:
+        now = datetime.now(timezone.utc)
+        previous = {"hook_event_name": "SubagentStart", "session_id": "S", "turn_id": "T1",
+                    "agent_id": "A", "actual_model": "gpt-5.6-luna",
+                    "actual_reasoning_effort": "low"}
+        switched = dict(previous, turn_id="T2", actual_model="gpt-6-astra")
+        self.assertEqual("UNAVAILABLE", verify_hook_runtime_evidence(previous, "SubagentStart", now)["status"])
+        result = verify_hook_runtime_evidence(switched, "SubagentStart", now)
+        self.assertEqual("UNAVAILABLE", result["status"])
+        self.assertNotEqual("VERIFIED", result["status"])
+
     def test_true_spawn_multiprocess_append_and_rotate(self) -> None:
         context = multiprocessing.get_context("spawn")
         processes = [context.Process(target=_event, args=(str(self.event_file), i, self.project_id, self.repo))

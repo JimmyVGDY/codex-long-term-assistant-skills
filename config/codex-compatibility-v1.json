@@ -1,14 +1,14 @@
 {
     "schema_version": 1,
-    "package_version": "7.4.1",
+    "package_version": "7.4.2",
     "window_policy": {
-        "anchor": "0.153.0",
+        "anchor": "0.153.2",
         "preceding_stable_releases": 10,
         "include_patch_releases": true,
         "include_prereleases": false,
-        "frozen_at": "2026-09-03",
+        "frozen_at": "2026-09-04",
         "release_order_source": "https://learn.chatgpt.com/docs/changelog?type=codex-cli",
-        "frozen_release_order_sha256": "9cc96085afd88a1275d2cd5f323dc081a81cc4b0865d978342195166a78bf679"
+        "frozen_release_order_sha256": "f9a2070d0ae5933661acec7721922aed7b68708b9be33e586fd1a495c54d9612"
     },
     "profiles": {
         "marketplace": {
@@ -176,8 +176,60 @@
     },
     "versions": [
         {
-            "version": "0.153.0",
+            "version": "0.153.2",
             "stable_release_ordinal": 0,
+            "marketplace_profile": "local-interface-v2",
+            "plugin_cli_profile": "remote-capable-v2",
+            "plugin_json_profile": "plugin-list-v1",
+            "hook_profile": "hook-json-v1",
+            "artifact": {
+                "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.153.2.tgz",
+                "npm_integrity": "sha512-IRocJlE+jCZGYHwIJWBja2nDswTSZY4sNddQgU5xiR/mVWxo5WcO8pqcajXJea1XDoNK9CaVzizVhUxDhFkU6g==",
+                "tarball_sha256": "afa72740e87733d1378a38faf30b2643c35d1cda0ddc99be2cc98a6b39c5f5fc"
+            },
+            "probe_evidence": {
+                "version_output_sha256": "c130a67739555a5e9d68157cdbd18a75900b43731237a19eaa8666d7f72aa00e",
+                "plugin_list_empty_sha256": "64c96bf69647760a3be455980e26a7bc4afc398a4a34b91a35f3313eff1d9665",
+                "marketplace_add_help_sha256": "fa991053b32a60c82ddc07a3bf0456c73b9a1aadb8160ccef786f60668328316",
+                "marketplace_remove_help_sha256": "6dc98546d6981b7623b390e79fc7865bcd40488ba03860966e80205d1c29a893",
+                "plugin_add_help_sha256": "9835785c0d21c7cea49336e910ec3ebd2fce2241f022a3b4c3297b53a13a4d5a",
+                "plugin_remove_help_sha256": "1866b6ffa4066189d554ba77ceae69e01774dcefbbd76c2a18d1591304add277",
+                "windows_cli_contract": "CLI_CONTRACT_PASS",
+                "windows_isolated_plugin": "ISOLATED_PLUGIN_PASS",
+                "ubuntu_cli_contract": "NOT_EVALUATED",
+                "synthetic_hook": "SYNTHETIC_HOOK_PASS",
+                "real_host": "NOT_EVALUATED"
+            }
+        },
+        {
+            "version": "0.153.1",
+            "stable_release_ordinal": 1,
+            "marketplace_profile": "local-interface-v2",
+            "plugin_cli_profile": "remote-capable-v2",
+            "plugin_json_profile": "plugin-list-v1",
+            "hook_profile": "hook-json-v1",
+            "artifact": {
+                "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.153.1.tgz",
+                "npm_integrity": "sha512-d5txIVzNIkZnAmCiqxksAACqm+xUvq83YGKd3YYAF9ISXWkC7hsiPXpSD24ypKOqpvbZiScMSq0e0p4TycczNw==",
+                "tarball_sha256": "f5a0de29c5cf6b942fc80d2afd42614caffe343b78fd2a25da2f123719dc7678"
+            },
+            "probe_evidence": {
+                "version_output_sha256": "68e369aa045c52cce6fbed962450e776feddadbdc24b58020553961cc3eaa4ef",
+                "plugin_list_empty_sha256": "64c96bf69647760a3be455980e26a7bc4afc398a4a34b91a35f3313eff1d9665",
+                "marketplace_add_help_sha256": "fa991053b32a60c82ddc07a3bf0456c73b9a1aadb8160ccef786f60668328316",
+                "marketplace_remove_help_sha256": "6dc98546d6981b7623b390e79fc7865bcd40488ba03860966e80205d1c29a893",
+                "plugin_add_help_sha256": "9835785c0d21c7cea49336e910ec3ebd2fce2241f022a3b4c3297b53a13a4d5a",
+                "plugin_remove_help_sha256": "1866b6ffa4066189d554ba77ceae69e01774dcefbbd76c2a18d1591304add277",
+                "windows_cli_contract": "CLI_CONTRACT_PASS",
+                "windows_isolated_plugin": "ISOLATED_PLUGIN_PASS",
+                "ubuntu_cli_contract": "NOT_EVALUATED",
+                "synthetic_hook": "SYNTHETIC_HOOK_PASS",
+                "real_host": "NOT_EVALUATED"
+            }
+        },
+        {
+            "version": "0.153.0",
+            "stable_release_ordinal": 2,
             "marketplace_profile": "local-interface-v2",
             "plugin_cli_profile": "remote-capable-v2",
             "plugin_json_profile": "plugin-list-v1",
@@ -203,7 +255,7 @@
         },
         {
             "version": "0.152.1",
-            "stable_release_ordinal": 1,
+            "stable_release_ordinal": 3,
             "marketplace_profile": "local-interface-v2",
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
@@ -229,7 +281,7 @@
         },
         {
             "version": "0.152.0",
-            "stable_release_ordinal": 2,
+            "stable_release_ordinal": 4,
             "marketplace_profile": "local-interface-v2",
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
@@ -255,7 +307,7 @@
         },
         {
             "version": "0.151.0",
-            "stable_release_ordinal": 3,
+            "stable_release_ordinal": 5,
             "marketplace_profile": "local-interface-v2",
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
@@ -281,7 +333,7 @@
         },
         {
             "version": "0.150.1",
-            "stable_release_ordinal": 4,
+            "stable_release_ordinal": 6,
             "marketplace_profile": "local-interface-v2",
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
@@ -307,7 +359,7 @@
         },
         {
             "version": "0.150.0",
-            "stable_release_ordinal": 5,
+            "stable_release_ordinal": 7,
             "marketplace_profile": "local-interface-v2",
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
@@ -333,7 +385,7 @@
         },
         {
             "version": "0.149.1",
-            "stable_release_ordinal": 6,
+            "stable_release_ordinal": 8,
             "marketplace_profile": "local-interface-v2",
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
@@ -359,7 +411,7 @@
         },
         {
             "version": "0.149.0",
-            "stable_release_ordinal": 7,
+            "stable_release_ordinal": 9,
             "marketplace_profile": "local-interface-v2",
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
@@ -385,7 +437,7 @@
         },
         {
             "version": "0.148.0",
-            "stable_release_ordinal": 8,
+            "stable_release_ordinal": 10,
             "marketplace_profile": "local-interface-v2",
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
@@ -397,58 +449,6 @@
             },
             "probe_evidence": {
                 "version_output_sha256": "0d605831ff6be3a2545850cc304f621d824d31ff2e0985d034b09f9f03ffb2b1",
-                "plugin_list_empty_sha256": "64c96bf69647760a3be455980e26a7bc4afc398a4a34b91a35f3313eff1d9665",
-                "marketplace_add_help_sha256": "fa991053b32a60c82ddc07a3bf0456c73b9a1aadb8160ccef786f60668328316",
-                "marketplace_remove_help_sha256": "6dc98546d6981b7623b390e79fc7865bcd40488ba03860966e80205d1c29a893",
-                "plugin_add_help_sha256": "b105ab239f2849bfbd3947a7acfbf08c94d8404dc489f361194f04ba77eefea7",
-                "plugin_remove_help_sha256": "3f2d5e677d64c3f1c53fb6f85474dad8e1a145f67d3fcedf83bc30ffa3409c5f",
-                "windows_cli_contract": "CLI_CONTRACT_PASS",
-                "windows_isolated_plugin": "ISOLATED_PLUGIN_PASS",
-                "ubuntu_cli_contract": "NOT_EVALUATED",
-                "synthetic_hook": "SYNTHETIC_HOOK_PASS",
-                "real_host": "NOT_EVALUATED"
-            }
-        },
-        {
-            "version": "0.147.0",
-            "stable_release_ordinal": 9,
-            "marketplace_profile": "local-interface-v2",
-            "plugin_cli_profile": "snapshot-v1",
-            "plugin_json_profile": "plugin-list-v1",
-            "hook_profile": "hook-json-v1",
-            "artifact": {
-                "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.147.0.tgz",
-                "npm_integrity": "sha512-EQLEXecAG2ptxI7UpBMo2TR/ga5596/c/OsYF/0LoUDh5JANZ7IoGqlzBEWbuEVQ76JePIbtTW/ihCkp1a7Z3w==",
-                "tarball_sha256": "d28b4fd4bd9f07ea71083d0cc40c579595cebbd4c10bc8ca98a6d385432e7255"
-            },
-            "probe_evidence": {
-                "version_output_sha256": "7aa31f8b0864fa0a787657d21167487f49ed01497802a4e5955ef02db3e94272",
-                "plugin_list_empty_sha256": "64c96bf69647760a3be455980e26a7bc4afc398a4a34b91a35f3313eff1d9665",
-                "marketplace_add_help_sha256": "1de5b15772fd3198fdc8c6551cf0a5f3ebb601534f10d3945a0688b344f03664",
-                "marketplace_remove_help_sha256": "6dc98546d6981b7623b390e79fc7865bcd40488ba03860966e80205d1c29a893",
-                "plugin_add_help_sha256": "2d8a2f13a6f8256549e561e6ebafddbe23264b82ed0a5254e1211ec54eb4f7bd",
-                "plugin_remove_help_sha256": "aff727bf08e0114c2d5b71d1f1e9599ec274980bda101d4b24c79bce23b3adcc",
-                "windows_cli_contract": "CLI_CONTRACT_PASS",
-                "windows_isolated_plugin": "ISOLATED_PLUGIN_PASS",
-                "ubuntu_cli_contract": "NOT_EVALUATED",
-                "synthetic_hook": "SYNTHETIC_HOOK_PASS",
-                "real_host": "NOT_EVALUATED"
-            }
-        },
-        {
-            "version": "0.146.1",
-            "stable_release_ordinal": 10,
-            "marketplace_profile": "local-interface-v2",
-            "plugin_cli_profile": "snapshot-v1",
-            "plugin_json_profile": "plugin-list-v1",
-            "hook_profile": "hook-json-v1",
-            "artifact": {
-                "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.146.1.tgz",
-                "npm_integrity": "sha512-f51R56E/G15soLhf5l5pWUiM+mGHK0NdLozOtzjRoAa+bA20hgWrkyxE/fpwCnuGQM6XNdktHYtK9xQ7bPIbTA==",
-                "tarball_sha256": "83aa9ac0192d542fc06fa9e6402f438fbf71a857b733a55b82fe7d007b3aefc8"
-            },
-            "probe_evidence": {
-                "version_output_sha256": "ce7cb1ec43bfe731405611eed31d613a0ae31dd78d17ee1b3e7a57316cb6e499",
                 "plugin_list_empty_sha256": "64c96bf69647760a3be455980e26a7bc4afc398a4a34b91a35f3313eff1d9665",
                 "marketplace_add_help_sha256": "fa991053b32a60c82ddc07a3bf0456c73b9a1aadb8160ccef786f60668328316",
                 "marketplace_remove_help_sha256": "6dc98546d6981b7623b390e79fc7865bcd40488ba03860966e80205d1c29a893",

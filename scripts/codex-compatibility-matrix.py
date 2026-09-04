@@ -59,7 +59,7 @@ def main() -> int:
             manager.COMPATIBILITY_REGISTRY, args.expected_version, Path(args.artifact),
         )
 
-    with tempfile.TemporaryDirectory(prefix=f"cp-v741-matrix-{args.expected_version}-") as td:
+    with tempfile.TemporaryDirectory(prefix=f"cp-codex-matrix-{args.expected_version}-") as td:
         isolated_home = Path(td) / "codex-home"
         isolated_home.mkdir()
         original_home = os.environ.get("CODEX_HOME")

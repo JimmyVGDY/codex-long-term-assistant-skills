@@ -1,6 +1,6 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.4.1",
+  "version": "7.4.2",
   "release_name": "Codex 当前稳定版与前十个稳定发行版兼容",
   "generated_for": "Codex Plugin-first cross-project engineering assistant with an immutable eleven-stable-release host registry, isolated Plugin preflight, schema-3 host binding and drift detection, explicit Hook aliases, one root-task weighted delegation budget, and a Luna/Terra High automatic ceiling",
   "default_locale": "zh-CN",
@@ -513,6 +513,7 @@
     ]
   },
   "upgrade_from": [
+    "7.4.1",
     "7.4.0",
     "7.3.0",
     "7.2.0",
@@ -655,8 +656,10 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "anchor": "0.153.0",
+    "anchor": "0.153.2",
     "verified_versions": [
+      "0.153.2",
+      "0.153.1",
       "0.153.0",
       "0.152.1",
       "0.152.0",
@@ -665,9 +668,7 @@
       "0.150.0",
       "0.149.1",
       "0.149.0",
-      "0.148.0",
-      "0.147.0",
-      "0.146.1"
+      "0.148.0"
     ],
     "window_policy": "current-plus-ten-preceding-stable-releases-patch-counts",
     "registry": "config/codex-compatibility-v1.json",

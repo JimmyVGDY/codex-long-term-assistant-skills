@@ -244,7 +244,7 @@ def validate_registry(registry: Mapping[str, Any], expected_package_version: Opt
     anchor = window["anchor"]
     _stable_tuple(anchor)
     if type(window["preceding_stable_releases"]) is not int or window["preceding_stable_releases"] != 10:
-        raise CompatibilityError("V7.4.1 必须固定前十个稳定发行版")
+        raise CompatibilityError("当前发行版必须固定前十个稳定发行版")
     if window["include_patch_releases"] is not True or window["include_prereleases"] is not False:
         raise CompatibilityError("稳定发行窗口策略无效")
     if not isinstance(window["frozen_at"], str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", window["frozen_at"]):

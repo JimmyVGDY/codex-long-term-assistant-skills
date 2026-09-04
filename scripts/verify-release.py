@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：失败关闭的 V7.4.1 端到端发行验证器。
+"""中文：失败关闭的 V7.4.2 端到端发行验证器。
 
-English: Fail-closed V7.4.1 end-to-end release verifier.
+English: Fail-closed V7.4.2 end-to-end release verifier.
 """
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ from typing import Any, Dict, Mapping
 
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
 
-VERSION = "7.4.1"
-TARGET_CODEX_VERSION = "0.153.0"
+VERSION = "7.4.2"
+TARGET_CODEX_VERSION = "0.153.2"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.4.1",
+  "version": "7.4.2",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,12 +9,12 @@
     "runtime"
   ],
   "file_count": 182,
-  "payload_digest": "7fe0aeba4d5d675b2c80ac384a8bd58025c9965fba2a64cafedd047b56ca3b39",
+  "payload_digest": "4b9bf790d8f8392b4f191dbf8c7de3748d8d4b2d984d7bfffbdd27a85cd97679",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "e6e3712a657a3ff43124c0596ab07a9a7ce54d435a1206dabdd112492ca7a972",
-      "size": 329
+      "sha256": "c8416efc8c8b3883672c52dbaedc5bd5dc445767d4b058b2bfcf874fe37241c3",
+      "size": 325
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -748,8 +748,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "62e3da5740db0e13f288812097556cddc33a7d8293bc66d5a58c1f8d0533f770",
-      "size": 24511
+      "sha256": "52d916aed50cbdca7ae2d1c6f726ba4aff6ed6386c2c52fef168b538cd49f274",
+      "size": 24517
     },
     {
       "path": "hooks/hooks.json",

@@ -33,13 +33,13 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.4.1"
+VERSION = "7.4.2"
 MARKETPLACE = "cp-assistant-local"
 COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
-COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, "7.4.1")
+COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, VERSION)
 TARGET_CODEX_VERSION = str(COMPATIBILITY_REGISTRY["window_policy"]["anchor"])
-# 中文：V7.4.1 按冻结的稳定发行序列支持当前版和前十个稳定发行版。
-# English: V7.4.1 supports the frozen current stable release and ten preceding stable releases.
+# 中文：当前包按冻结的稳定发行序列支持当前版和前十个稳定发行版。
+# English: The current package supports the frozen current stable release and ten preceding stable releases.
 SUPPORTED_CODEX_VERSIONS = tuple(item["version"] for item in COMPATIBILITY_REGISTRY["versions"])
 REPAIRABLE_MARKETPLACE_STATE_VERSIONS = frozenset({
     "6.1.0", "6.2.0", "6.3.0", "7.2.0", "7.3.0", "7.4.0",
@@ -1193,7 +1193,7 @@ def _isolated_plugin_preflight(profile: Mapping[str, Any]) -> Dict[str, Any]:
     json_profile = COMPATIBILITY_REGISTRY["profiles"]["plugin_json"][
         version_profile["plugin_json_profile"]
     ]
-    with tempfile.TemporaryDirectory(prefix="cp-v741-preflight-") as td:
+    with tempfile.TemporaryDirectory(prefix="cp-plugin-preflight-") as td:
         root = Path(td)
         isolated_home = root / "codex-home"
         market = root / "marketplace"
@@ -1543,7 +1543,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("安装失败且回滚不完整；请执行 doctor --recover：%s" % "; ".join(journal["rollback_errors"])) from exc
         raise
-    print("[OK] V7.4.1 账户级安装完成，mode=%s" % mode)
+    print("[OK] V%s 账户级安装完成，mode=%s" % (VERSION, mode))
     if mode == "plugin":
         print("[OK] Codex Marketplace 已注册，Plugin 已执行 codex plugin add")
 
@@ -1616,7 +1616,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         if journal["rollback_errors"]:
             raise InstallError("仓库安装回滚不完整；请执行 doctor --recover") from exc
         raise
-    print("[OK] V7.4.1 仓库级 Skills 安装完成: %s" % repo)
+    print("[OK] V%s 仓库级 Skills 安装完成: %s" % (VERSION, repo))
 
 
 def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
@@ -1678,7 +1678,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                 state = migrate_state_to_v3(load_json(state_path("user"), {}) or {}, "user", mode)
                 identity = state.get("payload_identity") or {}
                 if state.get("version") != VERSION or state.get("schema_version") != 3:
-                    errors.append("安装状态不是 V7.4.1 schema 3")
+                    errors.append("安装状态不是 V%s schema 3" % VERSION)
                 if any(identity.get(key) != source_report["payload_digest"]
                        for key in ("manifest_digest", "marketplace_digest", "cache_digest")):
                     errors.append("安装状态 payload 身份读回不一致")
@@ -1706,7 +1706,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
     if errors:
         for item in errors: print("[FAIL]",item)
         raise SystemExit(1)
-    print("[OK] V7.4.1 安装验证通过 scope=%s mode=%s" % (scope, mode))
+    print("[OK] V%s 安装验证通过 scope=%s mode=%s" % (VERSION, scope, mode))
 
 
 def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_run: bool) -> None:
@@ -1826,7 +1826,7 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
-    print("[OK] V7.4.1 已卸载并恢复安装前状态；项目上下文/观测数据未删除")
+    print("[OK] V%s 已卸载并恢复安装前状态；项目上下文/观测数据未删除" % VERSION)
 
 
 def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict[str, Any]]:
@@ -1974,7 +1974,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
 
 
 def main() -> None:
-    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V7.4.1 安装器")
+    p=argparse.ArgumentParser(description="Codex 跨项目长期技术助手 V%s 安装器" % VERSION)
     sub=p.add_subparsers(dest="command",required=True)
     for name in ("install","verify","uninstall"):
         q=sub.add_parser(name)
