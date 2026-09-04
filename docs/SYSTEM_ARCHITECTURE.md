@@ -1,6 +1,6 @@
 # V7.4 当前系统架构与安全边界
 
-> 状态：`active`。本页描述 V7.4.4 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
+> 状态：`active`。本页描述 V7.4.5 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
 
 ## 1. 分层
 
@@ -22,7 +22,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-包版本是 V7.4.4；`TaskOutcomeEvent V3`、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
+包版本是 V7.4.5；`TaskOutcomeEvent V3`、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
 
 ## 2. Skill 路由
 

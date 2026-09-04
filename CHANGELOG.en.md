@@ -6,6 +6,18 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 None.
 
+## 7.4.5 - 2026-09-05
+
+### Changed
+
+- Advanced the closed compatibility registry to Codex CLI 0.153.3, retained an eleven-stable-release window, and removed 0.148.0 from the active set. Pinned the official npm artifact, SRI, SHA-256, and normalized CLI/Plugin evidence.
+- Updated the installer, compatibility matrix, release validation, bilingual documentation, and site indexes. The upstream Amazon Bedrock/Astra changes in 0.153.3 do not alter Plugin/Hook contracts or expand automatic subagent routing beyond Luna/Terra profiles.
+
+### Validation
+
+- The native Windows CLI was updated through the same global npm channel from 0.153.2 to 0.153.3. The isolated 0.153.3 compatibility cell and V7.4.5 account-level transactional install, Plugin activation, `HOST_COMPATIBLE`, and three-way payload readback pass.
+- Actual uninstall/rollback and a parent/child Agent lifecycle journey were not exercised. Remote CI, tag, asset provenance, and public Release require post-delivery readback.
+
 ## 7.4.4 - 2026-09-04
 
 ### Added

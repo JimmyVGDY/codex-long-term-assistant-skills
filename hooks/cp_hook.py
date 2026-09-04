@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：Codex V7.4.4 生命周期 Hook：派发策略、统一委派预算与最小元数据观测。
+"""中文：Codex V7.4.5 生命周期 Hook：派发策略、统一委派预算与最小元数据观测。
 
-English: Codex V7.4.4 lifecycle Hook for dispatch policy, delegation budget, and minimal metadata observation.
+English: Codex V7.4.5 lifecycle Hook for dispatch policy, delegation budget, and minimal metadata observation.
 """
 from __future__ import annotations
 

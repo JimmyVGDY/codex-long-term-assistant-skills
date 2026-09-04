@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "status": "PASS",
+  "evidence_scope": "package-only-pre-push",
+  "version": "7.4.5",
+  "package_validation": "PASS (238 package + 6 runtime tests)",
+  "strict_localization": "PASS (0 findings)",
+  "semantic_lint": "PASS",
+  "plugin_payload_manifest": "PASS (182 files, digest a9e5e1e42e5e3f64403244a1b9ac7f2afb1027a0c4ff3e6fbdb6dab2b8daef86)",
+  "python_compatibility": "PASS (minimum 3.11, validated 3.13.15)",
+  "worktree_side_effect_gate": "PASS",
+  "codex_compatibility_registry": "PASS (11 frozen stable releases anchored at 0.153.3)",
+  "codex_compatibility_matrix": "NOT_EVALUATED (separate GitHub Actions workflow)",
+  "real_account_installation": "PASS (Codex CLI 0.153.3, Plugin 7.4.5 installed/enabled, HOST_COMPATIBLE, three-way payload match)",
+  "postimplementation_independent_review": "PASS (logical-readonly; 2 findings repaired and re-reviewed, 0 remaining)",
+  "assets_and_provenance": "NOT_EVALUATED (remote tag workflow)",
+  "remote_main": "NOT_PUSHED",
+  "tag": "NOT_CREATED",
+  "draft_release": "NOT_CREATED",
+  "public_release": "NOT_CREATED",
+  "execution_authorization": "NONE"
+}

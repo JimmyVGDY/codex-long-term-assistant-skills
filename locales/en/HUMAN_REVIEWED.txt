@@ -288,5 +288,10 @@ docs/releases/v7.4.4/HISTORICAL_RELEASE_BACKFILL.json
 docs/releases/v7.4.4/RELEASE_NOTES.en.md
 docs/releases/v7.4.4/RELEASE_NOTES.md
 docs/releases/v7.4.4/VALIDATION_REPORT.md
+docs/releases/v7.4.5/AUDIT_REPORT.md
+docs/releases/v7.4.5/BUILD_INFO.json
+docs/releases/v7.4.5/PACKAGE_VALIDATION.json
+docs/releases/v7.4.5/RELEASE_NOTES.md
+docs/releases/v7.4.5/VALIDATION_REPORT.md
 docs/releases/RELEASE_AUTOMATION.en.md
 skills/controlled-evolution-governance/references/task-outcome-event-v3.md

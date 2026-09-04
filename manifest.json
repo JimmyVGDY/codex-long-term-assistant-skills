@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.4.4",
-  "release_name": "版本化发行标题与历史标题回填",
+  "version": "7.4.5",
+  "release_name": "Codex CLI 0.153.3 稳定版兼容",
   "generated_for": "Codex Plugin-first cross-project engineering assistant with an immutable eleven-stable-release host registry, isolated Plugin preflight, schema-3 host binding and drift detection, explicit Hook aliases, one root-task weighted delegation budget, and a Luna/Terra High automatic ceiling",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -183,8 +183,8 @@
     "automatic_reviewer_model_ceiling": "gpt-5.6-terra",
     "automatic_reviewer_reasoning_ceiling": "high",
     "review_packet_schema_version": 3,
-    "review_result_schema_version": 3,
-    "review_state_schema_version": 6,
+    "review_result_schema_version": 4,
+    "review_state_schema_version": 7,
     "minimum_acceptable_reviewer_profile_required": true,
     "inline_delegation_decision_gate": true,
     "duplicate_review_dispatch_protection": true,
@@ -217,7 +217,7 @@
     "finalization_readback_required_for_external_action_claims": true,
     "task_execution_envelope_schema_version": 3,
     "execution_state_schema_version": 4,
-    "delegation_budget_schema_version": "1.0",
+    "delegation_budget_schema_version": "2.0",
     "delegation_calibration_schema_version": "1.0"
   },
   "log_analysis_modes": [
@@ -512,6 +512,7 @@
     ]
   },
   "upgrade_from": [
+    "7.4.4",
     "7.4.3",
     "7.4.2",
     "7.4.1",
@@ -654,8 +655,9 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "anchor": "0.153.2",
+    "anchor": "0.153.3",
     "verified_versions": [
+      "0.153.3",
       "0.153.2",
       "0.153.1",
       "0.153.0",
@@ -665,8 +667,7 @@
       "0.150.1",
       "0.150.0",
       "0.149.1",
-      "0.149.0",
-      "0.148.0"
+      "0.149.0"
     ],
     "window_policy": "current-plus-ten-preceding-stable-releases-patch-counts",
     "registry": "config/codex-compatibility-v1.json",

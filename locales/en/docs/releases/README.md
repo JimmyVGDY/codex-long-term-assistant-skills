@@ -1,6 +1,6 @@
 # Release evidence archive
 
-V7.4.4 is the current release, themed “Versioned Release titles and historical title backfill”. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
+V7.4.5 is the current release, themed “Codex CLI 0.153.3 stable compatibility”. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
 
 Chinese source: [README.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/releases/README.md)
 
@@ -8,6 +8,7 @@ Release evidence is grouped by semantic version. Each directory contains only th
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.4.5 | [Open](v7.4.5/RELEASE_NOTES.md) | [Open](v7.4.5/AUDIT_REPORT.md) | [Open](v7.4.5/VALIDATION_REPORT.md) | Windows 0.153.3 transactional install, Plugin readback, isolated 0.153.3 cell, and package validation pass; full matrix/tag/Release require separate readback | [JSON](v7.4.5/BUILD_INFO.json) | [JSON](v7.4.5/PACKAGE_VALIDATION.json) |
 | 7.4.4 | [Open](v7.4.4/RELEASE_NOTES.md) | [Open](v7.4.4/AUDIT_REPORT.md) | [Open](v7.4.4/VALIDATION_REPORT.md) | Local package-only validation and logical-readonly review passed; remote CI/tag/Release readback pending; historical title backfill complete | [JSON](v7.4.4/BUILD_INFO.json) | [JSON](v7.4.4/PACKAGE_VALIDATION.json) |
 | 7.4.3 | [Open](v7.4.3/RELEASE_NOTES.md) | [Open](v7.4.3/AUDIT_REPORT.md) | [Open](v7.4.3/VALIDATION_REPORT.md) | Local package validation, logically read-only independent review, and Windows account reinstall/lifecycle passed; remote CI, tag, and public Release not run | [JSON](v7.4.3/BUILD_INFO.json) | [JSON](v7.4.3/PACKAGE_VALIDATION.json) |
 | 7.4.2 | [Open](v7.4.2/RELEASE_NOTES.md) | [Open](v7.4.2/AUDIT_REPORT.md) | [Open](v7.4.2/VALIDATION_REPORT.md) | Windows/Ubuntu eleven-version matrix, package validation, account install, and Codex 0.153.2 native parent/child Agent acceptance pass | [JSON](v7.4.2/BUILD_INFO.json) | [JSON](v7.4.2/PACKAGE_VALIDATION.json) |

@@ -6,6 +6,18 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 暂无。
 
+## 7.4.5 - 2026-09-05
+
+### Changed
+
+- 将闭合兼容注册表推进到 Codex CLI 0.153.3，活动窗口保留 11 个稳定发行版并移出 0.148.0；固定官方 npm 制品、SRI、SHA-256 与规范化 CLI/Plugin 摘要。
+- 同步更新安装器、兼容矩阵、发布验证、双语文档和站点索引。0.153.3 的 Amazon Bedrock/Astra 上游变化不修改 Plugin/Hook 合同，也不扩大自动子 Agent 的 Luna/Terra 路由策略。
+
+### Validation
+
+- Windows 原生 CLI 通过同一 npm 全局通道从 0.153.2 更新到 0.153.3；0.153.3 隔离兼容单元与 V7.4.5 账户级事务安装、Plugin 激活、`HOST_COMPATIBLE` 和三方 payload 摘要读回通过。
+- 实际卸载/回滚与父子 Agent 生命周期旅程未执行；远端 CI、标签、资产来源证明和公开 Release 需在交付后独立读回。
+
 ## 7.4.4 - 2026-09-04
 
 ### Added

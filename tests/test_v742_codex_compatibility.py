@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：V7.4.4 稳定版兼容注册表契约测试。
+"""中文：V7.4.5 稳定版兼容注册表契约测试。
 
-English: V7.4.4 stable-release compatibility registry contract tests.
+English: V7.4.5 stable-release compatibility registry contract tests.
 """
 from __future__ import annotations
 
@@ -32,18 +32,18 @@ from codex_compatibility import (  # noqa: E402
 
 REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 EXPECTED_VERSIONS = [
-    "0.153.2", "0.153.1", "0.153.0", "0.152.1", "0.152.0", "0.151.0",
-    "0.150.1", "0.150.0", "0.149.1", "0.149.0", "0.148.0",
+    "0.153.3", "0.153.2", "0.153.1", "0.153.0", "0.152.1", "0.152.0",
+    "0.151.0", "0.150.1", "0.150.0", "0.149.1", "0.149.0",
 ]
 
 
 class RegistryTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.registry = load_registry(REGISTRY_PATH, "7.4.4")
+        self.registry = load_registry(REGISTRY_PATH, "7.4.5")
 
     def test_registry_is_exact_frozen_stable_window(self) -> None:
         self.assertEqual(EXPECTED_VERSIONS, [item["version"] for item in self.registry["versions"]])
-        self.assertEqual("0.153.2", self.registry["window_policy"]["anchor"])
+        self.assertEqual("0.153.3", self.registry["window_policy"]["anchor"])
         self.assertEqual(10, self.registry["window_policy"]["preceding_stable_releases"])
         self.assertEqual(64, len(canonical_digest(self.registry)))
 
@@ -57,18 +57,18 @@ class RegistryTests(unittest.TestCase):
     def test_unknown_and_prerelease_versions_fail_closed(self) -> None:
         with self.assertRaises(CompatibilityError):
             profile_for_version(self.registry, "0.145.0")
-        for exited in ("0.147.0", "0.146.1"):
+        for exited in ("0.148.0", "0.147.0", "0.146.1"):
             with self.subTest(exited=exited):
                 with self.assertRaises(CompatibilityError):
                     profile_for_version(self.registry, exited)
         for output in (
-            "codex-cli 0.153.2\n", " codex-cli 0.153.2", "codex-cli 0.153.2-beta.1",
-            "codex 0.153.2", "codex-cli v0.153.2", "codex-cli 0.153",
+            "codex-cli 0.153.3\n", " codex-cli 0.153.3", "codex-cli 0.153.3-beta.1",
+            "codex 0.153.3", "codex-cli v0.153.3", "codex-cli 0.153",
         ):
             with self.subTest(output=output):
                 with self.assertRaises(CompatibilityError):
                     parse_codex_version_output(output)
-        self.assertEqual("0.153.2", parse_codex_version_output("codex-cli 0.153.2"))
+        self.assertEqual("0.153.3", parse_codex_version_output("codex-cli 0.153.3"))
 
     def test_unknown_top_level_and_duplicate_version_fail_closed(self) -> None:
         invalid = copy.deepcopy(self.registry)
@@ -123,11 +123,11 @@ class RegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="cp-v742-artifact-") as temporary:
             path = Path(temporary) / "codex.tgz"
             path.write_bytes(payload)
-            report = verify_artifact_file(registry, "0.153.2", path)
+            report = verify_artifact_file(registry, "0.153.3", path)
             self.assertEqual(artifact["tarball_sha256"], report["tarball_sha256"])
             path.write_bytes(payload + b"tampered")
             with self.assertRaises(CompatibilityError):
-                verify_artifact_file(registry, "0.153.2", path)
+                verify_artifact_file(registry, "0.153.3", path)
 
     def test_hook_alias_registry_matches_runtime_adapter(self) -> None:
         tree = ast.parse((ROOT / "hooks" / "cp_hook.py").read_text(encoding="utf-8"))
@@ -150,7 +150,7 @@ class RegistryTests(unittest.TestCase):
 class PluginListNormalizerTests(unittest.TestCase):
     PACKAGE = "codex-cross-project-engineering-assistant"
     MARKETPLACE = "cp-assistant-local"
-    VERSION = "7.4.4"
+    VERSION = "7.4.5"
 
     def setUp(self) -> None:
         registry = load_registry(REGISTRY_PATH)

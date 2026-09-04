@@ -88,6 +88,9 @@ nav:
           - Approval, evidence, and finalization: zh-CN/docs/APPROVAL_EVIDENCE_FINALIZATION.md
           - Controlled-evolution operations: zh-CN/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
       - Release and history:
+          - V7.4.5 release notes: zh-CN/docs/releases/v7.4.5/RELEASE_NOTES.md
+          - V7.4.5 validation report: zh-CN/docs/releases/v7.4.5/VALIDATION_REPORT.md
+          - V7.4.5 audit report: zh-CN/docs/releases/v7.4.5/AUDIT_REPORT.md
           - V7.4.4 release notes: zh-CN/docs/releases/v7.4.4/RELEASE_NOTES.md
           - V7.4.4 validation report: zh-CN/docs/releases/v7.4.4/VALIDATION_REPORT.md
           - V7.4.4 audit report: zh-CN/docs/releases/v7.4.4/AUDIT_REPORT.md
@@ -111,6 +114,9 @@ nav:
           - Approval, evidence, and finalization: en/docs/APPROVAL_EVIDENCE_FINALIZATION.md
           - Controlled-evolution operations: en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md
       - Release and history:
+          - V7.4.5 release notes: en/docs/releases/v7.4.5/RELEASE_NOTES.md
+          - V7.4.5 validation report: en/docs/releases/v7.4.5/VALIDATION_REPORT.md
+          - V7.4.5 audit report: en/docs/releases/v7.4.5/AUDIT_REPORT.md
           - V7.4.4 release notes: en/docs/releases/v7.4.4/RELEASE_NOTES.md
           - V7.4.4 validation report: en/docs/releases/v7.4.4/VALIDATION_REPORT.md
           - V7.4.4 audit report: en/docs/releases/v7.4.4/AUDIT_REPORT.md

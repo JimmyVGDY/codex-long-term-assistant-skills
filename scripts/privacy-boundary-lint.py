@@ -36,10 +36,10 @@ def allowed(relative: Path) -> bool:
     parts = relative.parts
     historical_release = (
         len(parts) >= 4 and parts[:2] == ("docs", "releases")
-        and parts[2].startswith("v") and parts[2] != "v7.4.4"
+        and parts[2].startswith("v") and parts[2] != "v7.4.5"
     ) or (
         len(parts) >= 6 and parts[:4] == ("locales", "en", "docs", "releases")
-        and parts[4].startswith("v") and parts[4] != "v7.4.4"
+        and parts[4].startswith("v") and parts[4] != "v7.4.5"
     )
     if historical_release:
         return True

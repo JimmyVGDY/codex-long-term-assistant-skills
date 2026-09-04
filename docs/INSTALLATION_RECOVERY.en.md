@@ -4,10 +4,10 @@ Chinese: [`INSTALLATION_RECOVERY.md`](INSTALLATION_RECOVERY.md)
 
 ## Preconditions
 
-- Native Windows Codex CLI 0.153.2.
+- Native Windows Codex CLI 0.153.3.
 - Python 3.11 or later.
 - Extract the archive before running commands.
-- Supported managed upgrades: 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
+- Supported managed upgrades: 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
 - A native Windows process uses a native Windows `CODEX_HOME`; WSL-style drive mappings are normalized before use.
 - Unknown Skills, agents, Hooks, MCP configuration, Plugin files, and `config.toml` content remain outside managed deletion scope.
 
@@ -24,14 +24,14 @@ codex plugin list --json
 
 Dry-run acceptance requires prior-version detection, a bounded backup, contained destinations, rejected link and reparse ancestors, preserved unknown files, and a complete rollback plan.
 
-Codex 0.153.2 requires top-level `interface.displayName` in a local Marketplace manifest. After backup, the upgrader removes the legacy `owner`, writes a controlled `interface.displayName`, preserves other unknown external fields, and proceeds only after `codex plugin list --json` recovers.
+Codex 0.153.3 requires top-level `interface.displayName` in a local Marketplace manifest. After backup, the upgrader removes the legacy `owner`, writes a controlled `interface.displayName`, preserves other unknown external fields, and proceeds only after `codex plugin list --json` recovers.
 
 Plugin acceptance requires:
 
 ```ini
 installed = true
 enabled = true
-version = 7.4.4
+version = 7.4.5
 ```
 
 SessionEnd keeps a three-second host timeout. The Hook only constructs a capped, body-free sanitized event and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe; it does not scan or write the event chain. Stable-identity validation, semantic deduplication, persistence, DPAPI decryption, v2 signed enqueue, and sealing run in the worker outside the Hook budget. Evolution rejects an unsealed `seal_required` chain.

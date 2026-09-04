@@ -2,9 +2,9 @@
 
 Chinese: [README.md](README.md)
 
-This page organizes the V7.4.4 documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
+This page organizes the V7.4.5 documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
 
-> Version scope: V7.4.4 is the current package version. TaskOutcomeEvent V3, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
+> Version scope: V7.4.5 is the current package version. TaskOutcomeEvent V3, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
 
 ## Getting started
 
@@ -30,13 +30,13 @@ This page organizes the V7.4.4 documentation by adoption stage. Historical repor
 - [Controlled-evolution operations](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](VALIDATION_REPORT.md)
-- [V7.4.4 package validation report](releases/v7.4.4/VALIDATION_REPORT.en.md)
-- [V7.4.4 audit report](releases/v7.4.4/AUDIT_REPORT.en.md)
+- [V7.4.5 package validation report](releases/v7.4.5/VALIDATION_REPORT.en.md)
+- [V7.4.5 audit report](releases/v7.4.5/AUDIT_REPORT.en.md)
 
 ## Release and history
 
 - [Release evidence index](releases/README.en.md)
-- [V7.4.4 release notes](releases/v7.4.4/RELEASE_NOTES.en.md)
+- [V7.4.5 release notes](releases/v7.4.5/RELEASE_NOTES.en.md)
 - [Changelog](../CHANGELOG.en.md)
 - [Public reconstruction index](history/README.en.md)
 - [Public reconstruction release index](history/RELEASE_ARCHIVES.md)
