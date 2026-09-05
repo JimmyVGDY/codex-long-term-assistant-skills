@@ -6,6 +6,19 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 暂无。
 
+## 7.4.6 - 2026-09-05
+
+### Changed
+
+- 将闭合兼容注册表推进到 Codex CLI 0.153.4，活动窗口继续保留 11 个稳定发行版并移出 0.149.0；固定官方 npm 制品、SRI、SHA-256 与规范化 CLI/Plugin 摘要。
+- 同步更新账户安装器、兼容矩阵、发布验证、双语文档和站点索引。0.153.4 修复内置模型选择器中的 Astra 可见性并在未显式选模时将其作为内置默认，同时把异步提问说明限定为宿主提供对应工具时适用；Plugin、Marketplace 与 Hook 合同保持不变，自动子 Agent 仍只允许 Luna/Terra 档位。
+- 补强语义发布门禁，强制保留从上一稳定包 V7.4.5 升级到 V7.4.6 的声明，并增加回归断言。
+
+### Validation
+
+- Windows 原生 CLI 通过同一 npm 全局通道从 0.153.3 更新到 0.153.4；0.153.4 官方制品与隔离兼容单元通过，V7.4.6 账户级事务安装、Plugin 激活、`HOST_COMPATIBLE` 和 182 文件三方 payload 摘要读回通过。
+- 实际卸载/回滚与父子 Agent 生命周期旅程未执行；完整 11 版本矩阵、远端 CI、标签、六项资产来源证明和公开 Release 需在交付阶段独立读回。
+
 ## 7.4.5 - 2026-09-05
 
 ### Changed

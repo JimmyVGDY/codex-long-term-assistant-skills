@@ -75,7 +75,7 @@ A hard-coded model overrides bounded scheduling and `[agents]` defaults, breakin
 
 ## 6. Plugin and Hooks
 
-V7.4.5 uses a frozen registry for the Plugin and Marketplace interfaces in Codex CLI 0.153.3 and the ten preceding stable releases. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.4.5`, and the schema-3 host snapshot is `HOST_COMPATIBLE`. Files present on disk do not establish installation or enablement.
+V7.4.6 uses a frozen registry for the Plugin and Marketplace interfaces in Codex CLI 0.153.4 and the ten preceding stable releases. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.4.6`, and the schema-3 host snapshot is `HOST_COMPATIBLE`. Files present on disk do not establish installation or enablement.
 
 The Plugin supplies six Hooks through `hooks/hooks.json`. On Windows, `hooks\cp_hook.cmd` selects an available Python launcher without an extra `python3.exe` shim. SessionEnd keeps a three-second host budget: the Hook only constructs a capped, body-free sanitized Event V3 and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe. It neither scans nor writes the event chain. Outside the Hook budget, the worker validates stable lifecycle identity, semantically deduplicates, persists the terminal event, creates the signed job, and seals the chain. Every queue entry point rejects missing stable lifecycle IDs, and an unsealed `seal_required` chain cannot enter Evolution.
 

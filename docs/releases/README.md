@@ -1,6 +1,6 @@
 # 历版发行资料
 
-V7.4.5 是当前版本，主题为“Codex CLI 0.153.3 稳定版兼容”。下表中的其他版本仅用于发行追溯；其详情页会显示历史资料提示并从默认站内搜索排除，不能作为当前安装或操作说明。
+V7.4.6 是当前版本，主题为“Codex CLI 0.153.4 稳定版兼容”。下表中的其他版本仅用于发行追溯；其详情页会显示历史资料提示并从默认站内搜索排除，不能作为当前安装或操作说明。
 
 English: [README.en.md](README.en.md)
 
@@ -10,6 +10,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.4.6 | [查看](v7.4.6/RELEASE_NOTES.md) | [查看](v7.4.6/AUDIT_REPORT.md) | [查看](v7.4.6/VALIDATION_REPORT.md) | Windows 0.153.4 事务安装、Plugin 读回与 0.153.4 隔离单元通过；完整矩阵/标签/Release 需单独读回 | [JSON](v7.4.6/BUILD_INFO.json) | [JSON](v7.4.6/PACKAGE_VALIDATION.json) |
 | 7.4.5 | [查看](v7.4.5/RELEASE_NOTES.md) | [查看](v7.4.5/AUDIT_REPORT.md) | [查看](v7.4.5/VALIDATION_REPORT.md) | Windows 0.153.3 事务安装、Plugin 读回、0.153.3 隔离单元与包级验证通过；完整矩阵/标签/Release 需单独读回 | [JSON](v7.4.5/BUILD_INFO.json) | [JSON](v7.4.5/PACKAGE_VALIDATION.json) |
 | 7.4.4 | [查看](v7.4.4/RELEASE_NOTES.md) | [查看](v7.4.4/AUDIT_REPORT.md) | [查看](v7.4.4/VALIDATION_REPORT.md) | 本地 package-only 验证与逻辑只读复审通过；远端 CI/标签/Release 待读回；历史标题回填已完成 | [JSON](v7.4.4/BUILD_INFO.json) | [JSON](v7.4.4/PACKAGE_VALIDATION.json) |
 | 7.4.3 | [查看](v7.4.3/RELEASE_NOTES.md) | [查看](v7.4.3/AUDIT_REPORT.md) | [查看](v7.4.3/VALIDATION_REPORT.md) | 本地包级验证、逻辑只读独立复审与 Windows 账户重装/生命周期通过；远程 CI、标签和公开 Release 尚未执行 | [JSON](v7.4.3/BUILD_INFO.json) | [JSON](v7.4.3/PACKAGE_VALIDATION.json) |

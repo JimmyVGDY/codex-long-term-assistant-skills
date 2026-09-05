@@ -2,10 +2,10 @@
 
 ## 适用范围
 
-- 目标宿主：Windows 原生 Codex CLI 0.153.3。
+- 目标宿主：Windows 原生 Codex CLI 0.153.4。
 - Python：3.11 或更高版本。
 - 推荐形态：账户级 Plugin。
-- 可升级版本：7.4.4、7.4.3、7.4.2、7.4.1、7.4.0、7.3.0、7.2.0、7.1.0、7.0.0、6.6.1、6.6.0、6.5.0、6.4.0、6.3.0、6.2.0、6.1.0、6.0.0、5.1.0、5.0.0、4.2.0、4.1.0、4.0.0。
+- 可升级版本：7.4.5、7.4.4、7.4.3、7.4.2、7.4.1、7.4.0、7.3.0、7.2.0、7.1.0、7.0.0、6.6.1、6.6.0、6.5.0、6.4.0、6.3.0、6.2.0、6.1.0、6.0.0、5.1.0、5.0.0、4.2.0、4.1.0、4.0.0。
 - 受管对象：本包 Marketplace payload、manifest 条目、Plugin cache、Reviewer、全局规则和安装状态。
 
 安装器不改写 `config.toml`，不删除未知 Skill、Agent、Hook、MCP、项目上下文、Event、Snapshot、Assessment、Proposal 或历史备份。
@@ -22,7 +22,7 @@ Windows 原生进程若继承 `/mnt/c/.../.codex`，必须转换为盘符路径�
 
 ## 标准升级
 
-在解压后的 V7.4.5 语言包根目录依次执行：
+在解压后的 V7.4.6 语言包根目录依次执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -34,7 +34,7 @@ codex plugin list --json
 
 dry-run 应明确显示：
 
-- 当前升级应读回已安装版本与 `to_version=7.4.5`；V7.4.4 升级路径必须被识别；
+- 当前升级应读回已安装版本与 `to_version=7.4.6`；V7.4.5 升级路径必须被识别；
 - schema 2 保持不变，旧 schema 1 才迁移到 2；
 - 新升级备份路径；
 - Marketplace payload、manifest 和 Plugin cache 分离目标；
@@ -42,15 +42,15 @@ dry-run 应明确显示：
 - 完整回滚动作；
 - 无路径越界或链接型路径风险。
 
-Codex 0.153.3 的本地 Marketplace manifest 必须包含顶层 `interface.displayName`。升级器会在备份后移除旧 `owner`、生成受控的 `interface.displayName`，并保留其他未知外部字段；`codex plugin list --json` 恢复正常后才继续激活。
+Codex 0.153.4 的本地 Marketplace manifest 必须包含顶层 `interface.displayName`。升级器会在备份后移除旧 `owner`、生成受控的 `interface.displayName`，并保留其他未知外部字段；`codex plugin list --json` 恢复正常后才继续激活。
 
-完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.4.5`，schema 3 宿主状态为 `HOST_COMPATIBLE`，并且 10 个 Skill、7 个 Reviewer、6 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。`java-backend-engineering`、`python-backend-ai-engineering`、`data-middleware-ai-infrastructure` 和此前废弃的 `vue-frontend-engineering` 不得残留；文件复制完成不构成 Plugin 成功状态。
+完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.4.6`，schema 3 宿主状态为 `HOST_COMPATIBLE`，并且 10 个 Skill、7 个 Reviewer、6 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。`java-backend-engineering`、`python-backend-ai-engineering`、`data-middleware-ai-infrastructure` 和此前废弃的 `vue-frontend-engineering` 不得残留；文件复制完成不构成 Plugin 成功状态。
 
 ## 事务与能力探测
 
 安装前 `doctor` 检查：
 
-- Codex 版本精确为 0.153.3；
+- Codex 版本精确为 0.153.4；
 - `plugin list --json` 可执行；
 - Marketplace add/remove 与 Plugin add/remove 命令存在；
 - state schema 可识别；
@@ -109,8 +109,8 @@ python scripts\package_manager.py uninstall --scope user --mode plugin
 
 ```powershell
 python scripts\validate-package.py
-python scripts\build-release.py verify --archive ..\Codex-Skills-V7.4.5-zh-CN.zip --locale zh-CN
-python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.4.5.json --artifact ..\Codex-Skills-V7.4.5-zh-CN.zip
+python scripts\build-release.py verify --archive ..\Codex-Skills-V7.4.6-zh-CN.zip --locale zh-CN
+python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.4.6.json --artifact ..\Codex-Skills-V7.4.6-zh-CN.zip
 ```
 
 `validate-package.py` 调用当前 `validate-v73.py`，检查执行前后的 Git index、受管与未跟踪文件内容、删除状态和链接类型；`--output` 只能写到仓库外。其 `routing_host_observation` 固定为 `NOT_EVALUATED`，不能替代真实宿主路由验收。

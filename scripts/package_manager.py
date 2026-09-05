@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.4.5"
+VERSION = "7.4.6"
 MARKETPLACE = "cp-assistant-local"
 COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, VERSION)

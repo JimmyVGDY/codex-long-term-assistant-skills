@@ -1,6 +1,6 @@
 # Release evidence archive
 
-V7.4.5 is the current release, themed “Codex CLI 0.153.3 stable compatibility”. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
+V7.4.6 is the current release, themed “Codex CLI 0.153.4 stable compatibility”. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
 
 Chinese: [README.md](README.md)
 
@@ -10,6 +10,7 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.en.md) for v
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.4.6 | [Open](v7.4.6/RELEASE_NOTES.en.md) | [Open](v7.4.6/AUDIT_REPORT.en.md) | [Open](v7.4.6/VALIDATION_REPORT.en.md) | Windows 0.153.4 transactional install, Plugin readback, and isolated 0.153.4 cell pass; full matrix/tag/Release require separate readback | [JSON](v7.4.6/BUILD_INFO.json) | [JSON](v7.4.6/PACKAGE_VALIDATION.json) |
 | 7.4.5 | [Open](v7.4.5/RELEASE_NOTES.en.md) | [Open](v7.4.5/AUDIT_REPORT.en.md) | [Open](v7.4.5/VALIDATION_REPORT.en.md) | Windows 0.153.3 transactional install, Plugin readback, isolated 0.153.3 cell, and package validation pass; full matrix/tag/Release require separate readback | [JSON](v7.4.5/BUILD_INFO.json) | [JSON](v7.4.5/PACKAGE_VALIDATION.json) |
 | 7.4.4 | [Open](v7.4.4/RELEASE_NOTES.en.md) | [Open](v7.4.4/AUDIT_REPORT.en.md) | [Open](v7.4.4/VALIDATION_REPORT.en.md) | Local package-only validation and logical-readonly review passed; remote CI/tag/Release readback pending; historical title backfill complete | [JSON](v7.4.4/BUILD_INFO.json) | [JSON](v7.4.4/PACKAGE_VALIDATION.json) |
 | 7.4.3 | [Open](v7.4.3/RELEASE_NOTES.en.md) | [Open](v7.4.3/AUDIT_REPORT.en.md) | [Open](v7.4.3/VALIDATION_REPORT.en.md) | Local package validation, logically read-only independent review, and Windows account reinstall/lifecycle passed; remote CI, tag, and public Release not run | [JSON](v7.4.3/BUILD_INFO.json) | [JSON](v7.4.3/PACKAGE_VALIDATION.json) |

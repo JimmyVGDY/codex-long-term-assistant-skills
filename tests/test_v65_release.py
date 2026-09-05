@@ -27,7 +27,7 @@ class V64ReleaseTests(unittest.TestCase):
         cls.root = Path(cls.temporary.name)
         cls.builder = load_script("build_release_v65", "build-release.py")
         cls.verifier = load_script("verify_release_v65", "verify-release.py")
-        cls.artifact = cls.root / "Codex-Skills-V7.4.5-zh-CN.zip"
+        cls.artifact = cls.root / "Codex-Skills-V7.4.6-zh-CN.zip"
         cls.build = cls.builder.build_release(cls.artifact, "zh-CN")
 
     @classmethod
@@ -36,12 +36,12 @@ class V64ReleaseTests(unittest.TestCase):
 
     def evidence(self):
         digest = json.loads((ROOT / "PLUGIN_PAYLOAD_MANIFEST.json").read_text(encoding="utf-8"))["payload_digest"]
-        package = {"ok": True, "version": "7.4.5"}
-        witness = {"ok": True, "reproducible": True, "version": "7.4.5",
+        package = {"ok": True, "version": "7.4.6"}
+        witness = {"ok": True, "reproducible": True, "version": "7.4.6",
                    "artifact_sha256": hashlib.sha256(self.artifact.read_bytes()).hexdigest()}
         plugin = {"installed": [{"pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
                                   "name": "codex-cross-project-engineering-assistant",
-                                  "marketplaceName": "cp-assistant-local", "version": "7.4.5",
+                                  "marketplaceName": "cp-assistant-local", "version": "7.4.6",
                                   "installed": True, "enabled": True}]}
         lifecycle = {"ok": True, "schema_version": "2.0", "project_id": "project-v65",
                      "repo_fingerprint": "sha256:" + "b" * 64,
@@ -56,7 +56,7 @@ class V64ReleaseTests(unittest.TestCase):
                      "exit_code": 0, "pass": True}],
                 "privacy": {"host_model_information_collected": False,
                             "host_model_information_exported": False}}
-        host = {"codex_version": "codex-cli 0.153.3", "capability_profile": {"ok": True}}
+        host = {"codex_version": "codex-cli 0.153.4", "capability_profile": {"ok": True}}
         report = {key: {"ok": True, "payload_digest": digest} for key in ("source", "marketplace", "cache")}
         return package, witness, plugin, lifecycle, gate, host, report
 
@@ -84,7 +84,7 @@ class V64ReleaseTests(unittest.TestCase):
     def test_manifest_schema_metadata_matches_current_runtime_contracts(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
         build_info = json.loads(
-            (ROOT / "docs" / "releases" / "v7.4.5" / "BUILD_INFO.json").read_text(encoding="utf-8")
+            (ROOT / "docs" / "releases" / "v7.4.6" / "BUILD_INFO.json").read_text(encoding="utf-8")
         )
         governance = manifest["quality_limits"]
         expected = {

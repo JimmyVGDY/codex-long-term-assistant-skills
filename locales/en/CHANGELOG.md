@@ -4,6 +4,19 @@
 
 None.
 
+## 7.4.6 - 2026-09-05
+
+### Changed
+
+- Advanced the closed compatibility registry to Codex CLI 0.153.4, retained an eleven-stable-release window, and removed 0.149.0 from the active set. Pinned the official npm artifact, SRI, SHA-256, and normalized CLI/Plugin evidence.
+- Updated the account installer, compatibility matrix, release validation, bilingual documentation, and site indexes. Codex CLI 0.153.4 fixes Astra visibility in the bundled model picker, makes it the bundled default when no model is selected explicitly, and limits async-question guidance to hosts where the tool is available. Plugin, Marketplace, and Hook contracts remain unchanged; automatic subagents remain limited to Luna/Terra profiles.
+- Strengthened the semantic release gate to require the V7.4.5-to-V7.4.6 upgrade declaration and added a regression assertion.
+
+### Validation
+
+- The native Windows CLI was updated through the same global npm channel from 0.153.3 to 0.153.4. Official-artifact and isolated 0.153.4 checks pass, as do the V7.4.6 account-level transaction, Plugin activation, `HOST_COMPATIBLE`, and three-way 182-file payload readback.
+- Actual uninstall/rollback and a parent/child Agent lifecycle journey were not exercised. The complete eleven-version matrix, remote CI, tag, six-asset provenance, and public Release require delivery-stage readback.
+
 ## 7.4.5 - 2026-09-05
 
 ### Changed

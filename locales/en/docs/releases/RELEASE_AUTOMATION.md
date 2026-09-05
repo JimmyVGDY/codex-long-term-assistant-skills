@@ -4,7 +4,7 @@ The GitHub Release title is composed from `manifest.json.release_name` and `loca
 
 The workflow transports the validated title through a job output and then an environment variable, avoiding direct shell-expression interpolation. A tag run is Draft-only, does not publish automatically, and does not overwrite an existing Release or its assets. Checksums, build witnesses, and GitHub provenance remain separate evidence mechanisms for the bilingual reproducible assets.
 
-The Codex CLI 0.153.3 compatibility boundary is current. The V7.4.5 English title segment is `Codex CLI 0.153.3 stable compatibility`; the complete bilingual title is assembled from the two manifest values. Historical Release title backfill is an independent online metadata operation; releases v7.3.0 through v7.4.3 were completed and read back individually, while v7.2.0 and earlier were unchanged.
+The Codex CLI 0.153.4 compatibility boundary is current. The V7.4.6 English title segment is `Codex CLI 0.153.4 stable compatibility`; the complete bilingual title is assembled from the two manifest values. Historical Release title backfill is an independent online metadata operation; releases v7.3.0 through v7.4.3 were completed and read back individually, while v7.2.0 and earlier were unchanged.
 
 ## Failure handling and rollback boundaries
 
@@ -21,5 +21,5 @@ Commit, push, tag, CI, Draft, public Release, and effective installation remain 
 - Confirm job-output/environment-variable transport.
 - Confirm Draft-only and existing-Release no-overwrite behavior.
 - Confirm bilingual assets, checksums, witnesses, and provenance separately.
-- Confirm Codex CLI 0.153.3 compatibility evidence.
+- Confirm Codex CLI 0.153.4 compatibility evidence.
 - Obtain online readback before recording historical title backfill as complete.

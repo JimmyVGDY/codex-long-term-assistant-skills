@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：失败关闭的 V7.4.5 端到端发行验证器。
+"""中文：失败关闭的 V7.4.6 端到端发行验证器。
 
-English: Fail-closed V7.4.5 end-to-end release verifier.
+English: Fail-closed V7.4.6 end-to-end release verifier.
 """
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ from typing import Any, Dict, Mapping
 
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
 
-VERSION = "7.4.5"
-TARGET_CODEX_VERSION = "0.153.3"
+VERSION = "7.4.6"
+TARGET_CODEX_VERSION = "0.153.4"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
@@ -207,7 +207,7 @@ def verify_release(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.4.5 端到端发行验证")
+    parser = argparse.ArgumentParser(description="V7.4.6 端到端发行验证")
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--package-validation", required=True)
     parser.add_argument("--build-witness", required=True)

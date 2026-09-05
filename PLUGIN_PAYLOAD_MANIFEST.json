@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.4.5",
+  "version": "7.4.6",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,11 +9,11 @@
     "runtime"
   ],
   "file_count": 182,
-  "payload_digest": "a9e5e1e42e5e3f64403244a1b9ac7f2afb1027a0c4ff3e6fbdb6dab2b8daef86",
+  "payload_digest": "3f9d710de0e542d0bdeecef27930a5fbc1dae710d9a606bca012a58ce2fe5857",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "14e212daaa4fb3b37ede4e09642c00bcab894b87e845ff4fc9f43757836cacd7",
+      "sha256": "63c1e6d784d2e1455b0bdf7a7c32dc3d3d39eb2c34d16af0c632164afc93eb04",
       "size": 305
     },
     {
@@ -753,7 +753,7 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "423635367962fe054e8898423974c7c3b25547d3870fc44d4a95a958a2da2e46",
+      "sha256": "2ea34ea7b3c281fb52327f3b0dd84084704b6125dc487090c9b9c98acf6ddc03",
       "size": 24052
     },
     {

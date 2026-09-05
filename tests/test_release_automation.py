@@ -128,7 +128,7 @@ class ReleaseAutomationTests(unittest.TestCase):
             self.assertEqual(len(metadata), len(rendered.splitlines()))
 
     def test_github_metadata_renders_release_title_as_one_line(self) -> None:
-        metadata = release_workflow.release_metadata(ROOT, "v7.4.5")
+        metadata = release_workflow.release_metadata(ROOT, "v7.4.6")
         rendered = release_workflow._render_metadata(metadata, "github")
         expected = "release_title=%s" % metadata["release_title"]
         self.assertEqual(1, rendered.splitlines().count(expected))
@@ -254,8 +254,8 @@ class ReleaseAutomationTests(unittest.TestCase):
             output = Path(temporary) / "notes.md"
             release_workflow.write_release_notes(output)
             value = output.read_text(encoding="utf-8")
-            self.assertIn("# V7.4.5 发行说明", value)
-            self.assertIn("# V7.4.5 Release Notes", value)
+            self.assertIn("# V7.4.6 发行说明", value)
+            self.assertIn("# V7.4.6 Release Notes", value)
             self.assertNotIn("English: [RELEASE_NOTES.en.md]", value)
             self.assertNotIn("Chinese: [RELEASE_NOTES.md]", value)
 

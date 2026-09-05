@@ -1,6 +1,6 @@
 # V7.4 当前自观察与受控演进架构
 
-> 状态：`active`。本页描述 V7.4.5 当前行为；Evolution 组件 Manifest 的 `5.1.0` 和默认策略 `v6.5-default-1` 是内部合同版本。
+> 状态：`active`。本页描述 V7.4.6 当前行为；Evolution 组件 Manifest 的 `5.1.0` 和默认策略 `v6.5-default-1` 是内部合同版本。
 
 ## 1. 设计目标
 
@@ -180,7 +180,7 @@ record_hash
 
 ## 10. 组件合同与包版本
 
-当前包版本 V7.4.5 继续使用以下基础执行合同：
+当前包版本 V7.4.6 继续使用以下基础执行合同：
 
 ```text
 Project Profile / Project State

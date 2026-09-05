@@ -708,9 +708,9 @@
         "英文主界面缺失: ": "English primary surface is missing: ",
         "Codex 发行命中无关品牌: ": "Codex release contains an unrelated brand: ",
         "中性语言门禁命中 %s: %s": "Neutral-language gate matched %s: %s",
-        "[OK] V7.4.5 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致": "[OK] V7.4.5 semantic validation passed: the eleven-release registry, isolated Plugin preflight, unified delegation budget, dispatch policy, model-identity privacy, and legacy compatibility boundaries agree",
-        "manifest 版本不是 7.4.5": "manifest version must be 7.4.5",
-        "缺少 %s -> V7.4.5 升级声明": "Missing %s -> V7.4.5 upgrade path"
+        "[OK] V7.4.6 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致": "[OK] V7.4.6 semantic validation passed: the eleven-release registry, isolated Plugin preflight, unified delegation budget, dispatch policy, model-identity privacy, and legacy compatibility boundaries agree",
+        "manifest 版本不是 7.4.6": "manifest version must be 7.4.6",
+        "缺少 %s -> V7.4.6 升级声明": "Missing %s -> V7.4.6 upgrade path"
       },
       "preserve": [
         "用户",
@@ -741,7 +741,7 @@
         "派发策略门禁 cases 无效": "Invalid dispatch-policy gate cases",
         "派发策略报告的模型身份隐私声明无效": "Invalid model-identity privacy result in dispatch-policy evidence",
         "生命周期模型身份隐私声明无效": "Invalid lifecycle model-identity privacy result",
-        "V7.4.5 端到端发行验证": "V7.4.5 end-to-end release validation",
+        "V7.4.6 端到端发行验证": "V7.4.6 end-to-end release validation",
         "派发策略门禁存在失败用例": "Dispatch-policy gate contains a failed case",
         "派发策略门禁用例无效或冲突": "Dispatch-policy gate contains an invalid case conflict",
         "派发策略证据包含宿主模型身份字段": "Dispatch-policy evidence contains prohibited model-identity fields"
