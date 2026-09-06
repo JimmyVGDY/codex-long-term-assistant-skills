@@ -5,6 +5,7 @@ English: Cross-module identity, policy, and evolution-loop regression tests.
 from __future__ import annotations
 
 import hashlib
+import os
 import json
 import sys
 import subprocess
@@ -95,6 +96,19 @@ class EvolutionProjectCase(unittest.TestCase):
 
 
 class EvolutionFeedbackTests(EvolutionProjectCase):
+    @unittest.skipUnless(os.name == "nt", "Windows short-path aliases")
+    def test_finalized_report_enumeration_accepts_real_windows_short_path(self):
+        import ctypes
+        from cp_runtime.evolution.task_feedback import finalized_reports
+        final = self.finalize(self.validation())
+        buffer = ctypes.create_unicode_buffer(32768)
+        length = ctypes.windll.kernel32.GetShortPathNameW(str(self.project), buffer, len(buffer))
+        if not length or Path(buffer.value) == self.project:
+            self.skipTest("Volume does not expose a distinct short-path alias")
+        short = Path(buffer.value)
+        self.assertEqual(self.project.resolve(), short.resolve())
+        self.assertEqual([(final["reference"]["path"], final["report"])], finalized_reports(short))
+
     def test_worktree_change_requires_new_turn_after_finalization(self):
         self.finalize(self.validation())
         (self.repo / "change.txt").write_text("new baseline")

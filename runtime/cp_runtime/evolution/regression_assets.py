@@ -74,7 +74,7 @@ def record_followups(project_dir: Path, proposal: OptimizationProposal, report: 
     for index, path in enumerate(sorted(root.glob("*.json"))):
         if index >= 1000:
             raise ArtifactError("TOO_MANY_REGRESSION_CANDIDATES")
-        relative = path.relative_to(project_dir).as_posix()
+        relative = "evolution/regression-candidates/" + path.name
         value = load(project_dir, relative, schema="regression-candidate/1")
         if value["proposal_id"] != proposal.proposal_id:
             continue
@@ -110,7 +110,7 @@ def verify_followups(project_dir: Path, views: Mapping[str, Any]) -> list[dict[s
         total += path.stat().st_size
         if index >= 1000 or total > MAX_BYTES:
             raise ArtifactError("REGRESSION_FOLLOWUP_LIMIT")
-        value = load(project_dir, path.relative_to(project_dir).as_posix(), schema="regression-followup/1")
+        value = load(project_dir, "evolution/regression-followups/" + path.name, schema="regression-followup/1")
         view = views.get(value["proposal_id"])
         if view is None or view.latest_benefit is None:
             raise ArtifactError("REGRESSION_FOLLOWUP_IMPLEMENTATION_MISSING")

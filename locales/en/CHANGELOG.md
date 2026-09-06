@@ -7,6 +7,8 @@ None.
 
 ## 7.5.0 - 2026-09-06
 
+- Windows CI exposed mixed short-path aliases (such as RUNNER~1) and full paths in relative references. Feedback and regression enumeration now use fixed references beneath checked directories, and project identity uses the canonical name of the verified Profile path. A real Windows short-path regression passed. Post-fix focused tests and installation readback are recorded separately; the first complete package run belongs to the preceding candidate, and final full-suite evidence comes from CI for the fix commit.
+
 - Fix Profile/Hook repository fingerprint disagreement and unify default/explicit policy.
 - Add task binding, structured validation evidence and parent-finalized feedback; Stop links reports while preserving host terminal fields.
 - Check identity, policy, seals, coverage and freshness before analysis. Explicit opt-in enables incremental, cooled-down analysis and idempotent recovery.

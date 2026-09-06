@@ -78,9 +78,11 @@ def persist(root: Path, relative: str, value: Mapping[str, Any]) -> dict[str, st
 
 
 def project_identity(project_dir: Path, *, verify_live: bool = True) -> dict[str, str]:
-    profile = read_json(safe_child(project_dir, "project-profile.json"), max_bytes=MAX_ARTIFACT_BYTES)
+    profile_path = safe_child(project_dir, "project-profile.json")
+    profile = read_json(profile_path, max_bytes=MAX_ARTIFACT_BYTES)
     verify_record(profile, "project-profile")
-    if profile.get("project_id") != project_dir.name:
+    project_id = profile_path.parent.name
+    if profile.get("project_id") != project_id:
         raise ArtifactError("PROJECT_IDENTITY_MISMATCH")
     identity = profile.get("identity") or {}
     if not identity.get("repo_path"):
@@ -89,7 +91,7 @@ def project_identity(project_dir: Path, *, verify_live: bool = True) -> dict[str
     fingerprint = repo_fingerprint_for_identity(root, str(identity.get("remote_origin") or ""))
     if verify_live and stable_repo_fingerprint(root) != fingerprint:
         raise ArtifactError("REPO_IDENTITY_MISMATCH")
-    return {"project_id": project_dir.name, "repo_fingerprint": fingerprint, "worktree_root": root}
+    return {"project_id": project_id, "repo_fingerprint": fingerprint, "worktree_root": root}
 
 
 def _git_bytes(repo: Path, arguments: list[str], timeout: float = 2) -> bytes:

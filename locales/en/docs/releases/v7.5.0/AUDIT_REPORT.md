@@ -11,3 +11,7 @@ Legacy event and proposal chains remain readable without rewriting. Default and 
 Automation may collect minimal metadata, check, compare and prepare candidates. It never automatically accepts or implements proposals, changes business code/Skills/AGENTS/routing, deploys or promotes knowledge across projects. Implementation PASS and benefit SUPPORTED remain separate.
 
 See the [validation report](VALIDATION_REPORT.md) for test and installation boundaries. Remote release state is independently evidenced by workflows and assets.
+
+Windows CI exposed mixed short-path aliases (such as RUNNER~1) and full paths in relative references. Feedback and regression enumeration now use fixed references beneath checked directories, and project identity uses the canonical name of the verified Profile path. A real Windows short-path regression passed. Post-fix focused tests and installation readback are recorded separately; the first complete package run belongs to the preceding candidate, and final full-suite evidence comes from CI for the fix commit.
+
+The subsequent Windows alias repair passed 44 focused tests, six runtime tests and one additional logical-readonly review (six reviewer dispatches across the complete task). The updated payload was reinstalled and its installed feedback/sealing smoke checks passed.

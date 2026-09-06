@@ -169,7 +169,7 @@ def finalized_reports(project_dir: Path, maximum: int = 200000) -> list[tuple[st
     result = []
     total_bytes = 0
     for path in sorted(paths):
-        relative = path.relative_to(project_dir).as_posix()
+        relative = "feedback/finalized-tasks/" + path.name
         value = load(project_dir, relative)
         total_bytes += path.stat().st_size + sum(safe_child(project_dir, ref["path"]).stat().st_size for ref in value["evidence_refs"])
         if total_bytes > MAX_BYTES:

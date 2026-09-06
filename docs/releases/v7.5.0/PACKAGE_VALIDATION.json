@@ -44,5 +44,14 @@
     "package_test_command": "python -m unittest discover -s tests -p test_*.py",
     "runtime_test_command": "python -m unittest discover -s runtime/tests -p test_*.py",
     "dispatch_policy_command": "python scripts/dispatch-policy-acceptance.py"
+  },
+  "full_suite_scope": "First local candidate before Windows short-path compatibility repair; final full suite is independently rerun in CI for the fix commit.",
+  "windows_alias_fix": {
+    "focused_tests": 44,
+    "runtime_tests": 6,
+    "real_windows_short_alias": "PASS",
+    "independent_review": "logical-readonly PASS",
+    "installed_runtime_smoke": "PASS",
+    "full_suite": "Pending fix-commit CI"
   }
 }
