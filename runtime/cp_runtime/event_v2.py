@@ -126,50 +126,68 @@ def _legacy_sanitize_v2(value: Any, depth: int = 0) -> Any:
     return str(value)[:512]
 
 
-def stable_repo_fingerprint(cwd: str) -> str:
+def repo_fingerprint_for_identity(repo_path: str, remote_origin: str) -> str:
+    """中文：Profile 与 Hook 共用原始字符串身份哈希，保留历史事件指纹。
+
+    English: Share the raw-string identity hash between Profiles and Hooks without changing historical fingerprints.
+    """
+    root = Path(repo_path).expanduser().resolve(strict=False)
+    return "sha256:" + sha256_hex(str(root) + "\n" + remote_origin.strip())
+
+
+def _repo_identity_source(cwd: str) -> Tuple[Path, str]:
+    """中文：有界读取普通仓库和 linked worktree 的公共配置。
+
+    English: Read shared configuration for normal repositories and linked worktrees with size bounds.
+    """
     path = Path(cwd or os.getcwd()).expanduser().resolve(strict=False)
     root = path
     probe = path
-    while probe.parent != probe:
+    while True:
         if (probe / ".git").exists():
             root = probe
             break
+        if probe.parent == probe:
+            break
         probe = probe.parent
     remote = ""
-    config = root / ".git" / "config"
     try:
+        gitdir = root / ".git"
+        if gitdir.is_file():
+            if gitdir.stat().st_size > 4096:
+                raise EventContractError("GITDIR_LIMIT")
+            pointer = gitdir.read_text(encoding="utf-8").strip()
+            if not pointer.startswith("gitdir: "):
+                raise EventContractError("GITDIR_INVALID")
+            gitdir = (root / pointer[8:]).resolve()
+        common = gitdir / "commondir"
+        if common.is_file():
+            if common.stat().st_size > 4096:
+                raise EventContractError("COMMONDIR_LIMIT")
+            gitdir = (gitdir / common.read_text(encoding="utf-8").strip()).resolve()
+        config = gitdir / "config"
         if config.is_file():
+            if config.stat().st_size > 1048576:
+                raise EventContractError("GIT_CONFIG_LIMIT")
             text = config.read_text(encoding="utf-8", errors="ignore")
-            match = re.search(r'(?ms)^\s*\[remote\s+"origin"\].*?^\s*url\s*=\s*(.+?)\s*$', text)
+            match = re.search(r'(?m)^\s*\[remote\s+"origin"\][^\r\n]*\r?\n(?:(?!\s*\[)[^\r\n]*\r?\n)*?\s*url\s*=\s*([^\r\n]+)', text)
             if match:
                 remote = match.group(1).strip()
     except OSError:
         pass
-    return "sha256:" + sha256_hex(str(root) + "\n" + remote)
+    return root, remote
+
+
+def stable_repo_fingerprint(cwd: str) -> str:
+    root, remote = _repo_identity_source(cwd)
+    return repo_fingerprint_for_identity(str(root), remote)
 
 
 def project_id_for(repo_fingerprint: str, cwd: str = "") -> str:
     explicit = os.environ.get("CP_PROJECT_ID", "").strip()
     if explicit and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", explicit):
         return explicit
-    path = Path(cwd or os.getcwd()).expanduser().resolve(strict=False)
-    root = path
-    probe = path
-    while probe.parent != probe:
-        if (probe / ".git").exists():
-            root = probe
-            break
-        probe = probe.parent
-    remote = ""
-    config = root / ".git" / "config"
-    try:
-        if config.is_file():
-            text = config.read_text(encoding="utf-8", errors="ignore")
-            match = re.search(r'(?ms)^\s*\[remote\s+"origin"\].*?^\s*url\s*=\s*(.+?)\s*$', text)
-            if match:
-                remote = match.group(1).strip()
-    except OSError:
-        pass
+    root, remote = _repo_identity_source(cwd)
     source = remote or str(root)
     suffix = sha256_hex(source)[:10]
     slug = re.sub(r"[^A-Za-z0-9._-]+", "-", root.name).strip("-._") or "project"
@@ -555,6 +573,8 @@ def read_event_chain(path: Path, hmac_key: Optional[str] = None, allow_duplicate
             {k: v for k, v in item.items() if not k.startswith("__event_source_")}
         ) for item in internal]
         return {**verification, "files": [str(item) for item in files], "events": events,
+                "event_sources": [{"file": item["__event_source_file"], "line": item["__event_source_line"],
+                                   "record_hash": item["record_hash"]} for item in internal],
                 "quarantined_tail": str(quarantine) if quarantine else None}
 
 

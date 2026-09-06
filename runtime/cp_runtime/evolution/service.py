@@ -21,6 +21,7 @@ from .observation import observe_project
 from .proposal import generate_proposals
 from .registry import ProposalRegistry, ProposalView
 from .storage import atomic_write_json, exclusive_write_json, read_json, resolve_project_dir, safe_child
+from .health import inspect_health
 
 
 class EvolutionServiceError(RuntimeError):
@@ -61,6 +62,8 @@ class ControlledEvolutionService:
         self,
         explicit_sources: Optional[Sequence[str]] = None,
         observed_at: Optional[str] = None,
+        window_start: Optional[str] = None,
+        window_end: Optional[str] = None,
     ) -> SelfObservationSnapshot:
         return observe_project(
             project_id=self.project_id,
@@ -68,7 +71,14 @@ class ControlledEvolutionService:
             policy=self.policy,
             explicit_sources=explicit_sources,
             observed_at=observed_at,
+            window_start=window_start,
+            window_end=window_end,
         )
+
+    def health(self, explicit_sources: Optional[Sequence[str]] = None, observed_at: Optional[str] = None,
+               max_age_days: int = 30) -> Mapping[str, Any]:
+        return inspect_health(self.project_dir, self.project_id, self.policy, explicit_sources=explicit_sources,
+                              observed_at=observed_at, max_age_days=max_age_days)[0]
 
     def analyze(self, snapshot: SelfObservationSnapshot) -> List[ValueComplexityAssessment]:
         return assess_snapshot(snapshot, self.policy)
@@ -86,12 +96,22 @@ class ControlledEvolutionService:
         dry_run: bool = False,
         observed_at: Optional[str] = None,
     ) -> Mapping[str, Any]:
-        snapshot = self.observe(explicit_sources=explicit_sources, observed_at=observed_at)
+        health, snapshot = inspect_health(self.project_dir, self.project_id, self.policy,
+                                          explicit_sources=explicit_sources, observed_at=observed_at)
+        if not health["analysis_allowed"] or snapshot is None:
+            return {"schema_version": "1.0", "mode": "BLOCKED", "project_id": self.project_id,
+                    "health": health, "snapshot": to_primitive(snapshot) if snapshot else None,
+                    "assessment_count": 0, "assessments": [], "proposal_count": 0, "proposals": [],
+                    "registered": [], "registry": None, "execution_authorization": "NONE",
+                    "automatic_execution": False}
         assessments = self.analyze(snapshot)
         proposals = self.propose(snapshot, assessments)
 
         registered: List[Mapping[str, Any]] = []
         if not dry_run:
+            if snapshot.metrics.get("repo_fingerprint"):
+                from .snapshots import persist_snapshot
+                persist_snapshot(self.project_dir, snapshot)
             snapshots_dir = safe_child(self.evolution_root, "snapshots", create_parent=True)
             assessments_dir = safe_child(self.evolution_root, "assessments", create_parent=True)
             snapshots_dir.mkdir(parents=True, exist_ok=True)
@@ -138,6 +158,7 @@ class ControlledEvolutionService:
         return {
             "schema_version": "1.0",
             "mode": "DRY_RUN" if dry_run else "PERSISTED",
+            "health": health,
             "project_id": self.project_id,
             "snapshot": to_primitive(snapshot),
             "assessment_count": len(assessments),

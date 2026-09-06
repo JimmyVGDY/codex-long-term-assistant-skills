@@ -15,6 +15,7 @@ from .contracts import (
     SignalType,
     ValueComplexityAssessment,
 )
+from .hypothesis import create_hypothesis
 
 
 class ProposalGenerationError(RuntimeError):
@@ -145,5 +146,6 @@ def generate_proposals(
             rollback_plan=_rollback_plan(signal),
             validation_plan=_validation_plan(signal),
             constraints=constraints,
+            hypothesis=create_hypothesis(snapshot, signal),
         ))
     return proposals

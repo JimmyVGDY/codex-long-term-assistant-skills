@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：Codex V7.4.6 生命周期 Hook：派发策略、统一委派预算与最小元数据观测。
+"""中文：Codex V7.5.0 生命周期 Hook：派发策略、统一委派预算与最小元数据观测。
 
-English: Codex V7.4.6 lifecycle Hook for dispatch policy, delegation budget, and minimal metadata observation.
+English: Codex V7.5.0 lifecycle Hook for dispatch policy, delegation budget, and minimal metadata observation.
 """
 from __future__ import annotations
 
@@ -33,6 +33,7 @@ from cp_runtime.delegation_budget import (  # noqa: E402
     reserve_budget,
 )
 from cp_runtime.seal_queue import launch_worker  # noqa: E402
+from cp_runtime.evolution.task_feedback import consume_for_hook  # noqa: E402
 
 ALLOWED_REASONING = {"", "none", "minimal", "low", "medium", "high"}
 ALLOWED_AUTOMATIC_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra"}
@@ -266,7 +267,7 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
             approved_profile = ""
             permit_ref = ""
             reserved_units = 0
-    return {
+    event = {
         "event_type": event_type,
         "session_id": session_id,
         "turn_id": turn_id,
@@ -280,6 +281,17 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
         "reserved_units": reserved_units,
         "metadata": metadata,
     }
+    if event_type == "TASK_COMPLETED":
+        try:
+            report = consume_for_hook(_data_path(event).parent.parent, event, cwd)
+            if report is not None:
+                metadata["finalized_feedback_hash"] = report["content_hash"]
+                metadata["feedback_status"] = "VERIFIED"
+            else:
+                metadata["feedback_status"] = "UNAVAILABLE"
+        except Exception:
+            metadata["feedback_status"] = "INVALID_OR_STALE"
+    return event
 
 
 def _data_path(event: Mapping[str, Any]) -> Path:
@@ -417,6 +429,21 @@ def main() -> int:
     # English: Normal Stop handling returns the host-defined neutral response; the recovery above preserves this branch when Windows truncates a non-ASCII last_assistant_message.
     if hook_name in {"Stop", "SubagentStop"}:
         print("{}")
+    elif hook_name == "UserPromptSubmit" and event is not None and all(event.get(key) for key in ("session_id", "turn_id", "task_id")):
+        try:
+            from cp_runtime.evolution.artifacts import identifier, project_identity
+            project_dir = _data_path(event).parent.parent
+            identity = project_identity(project_dir)
+            if all(identity[key] == event[key] for key in ("project_id", "repo_fingerprint")):
+                binding = {key: identifier(event[key]) for key in ("session_id", "turn_id", "task_id")}
+                binding.update(project_id=identity["project_id"], context_root=str(project_dir.parent),
+                               cli_path=str(ROOT / "scripts" / "evolution.py"))
+                print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext":
+                    "Engineering task feedback binding: " + json.dumps(binding, ensure_ascii=False, sort_keys=True)
+                    + ". When validation is already required, use the Python cli_path entrypoint validate-task and finalize-task before the final reply. "
+                    + "The parent confirms outcome and routing; missing evidence remains UNKNOWN. Do not add validation solely for feedback."}}, ensure_ascii=False))
+        except Exception:
+            pass
     return 0
 
 

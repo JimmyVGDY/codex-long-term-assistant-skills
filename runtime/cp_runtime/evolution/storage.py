@@ -127,6 +127,18 @@ def resolve_project_dir(context_root: Path, project_id: str, create: bool = Fals
     return project_resolved
 
 
+def _resolved_path(path: Path) -> Path:
+    # 中文：Windows 并发创建时 resolve 可能返回扩展路径，统一前缀后仍检查真实路径。
+    # English: Normalize extended paths returned during concurrent Windows creation before checking real containment.
+    value = str(path.resolve(strict=False))
+    if os.name == "nt":
+        if value.startswith("\\\\?\\UNC\\"):
+            value = "\\\\" + value[8:]
+        elif value.startswith("\\\\?\\"):
+            value = value[4:]
+    return Path(value)
+
+
 def safe_child(base: Path, *parts: str, create_parent: bool = False) -> Path:
     base = Path(base).absolute()
     candidate = base.joinpath(*parts)
@@ -137,8 +149,8 @@ def safe_child(base: Path, *parts: str, create_parent: bool = False) -> Path:
     if create_parent:
         candidate.parent.mkdir(parents=True, exist_ok=True)
     _reject_symlink_components(candidate.parent, base)
-    base_resolved = base.resolve(strict=False)
-    candidate_resolved = candidate.resolve(strict=False)
+    base_resolved = _resolved_path(base)
+    candidate_resolved = _resolved_path(candidate)
     try:
         candidate_resolved.relative_to(base_resolved)
     except ValueError as exc:

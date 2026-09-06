@@ -21,12 +21,14 @@ def main() -> int:
     parser.add_argument("--samples", required=True)
     parser.add_argument("--ledger", required=True)
     parser.add_argument("--minimum-samples-per-profile", type=int, default=3)
+    parser.add_argument("--minimum-tasks-per-profile", type=int, default=3)
     args = parser.parse_args()
     try:
         ledger = Path(args.ledger).expanduser().resolve()
         result = offline_replay(load_samples(Path(args.samples).expanduser().resolve(), ledger_path=ledger),
                                 ledger_path=ledger,
-                                minimum_samples_per_profile=args.minimum_samples_per_profile)
+                                minimum_samples_per_profile=args.minimum_samples_per_profile,
+                                minimum_tasks_per_profile=args.minimum_tasks_per_profile)
     except (DelegationBudgetError, OSError, ValueError, json.JSONDecodeError) as exc:
         print("[FAIL] " + str(exc), file=sys.stderr); return 2
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))

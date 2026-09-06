@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.4.6",
-  "description": "Cross-project engineering assistance for Codex 0.153.4 and ten preceding stable releases, using approved dispatch profiles without collecting host runtime model identity.",
+  "version": "7.5.0",
+  "description": "Cross-project engineering assistant V7.5.0: task feedback, observation health, incremental analysis, cross-ledger calibration and verifiable benefits.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

@@ -15,7 +15,7 @@ from types import MappingProxyType
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 SCHEMA_VERSION = "1.0"
-POLICY_VERSION = "v6.5-default-1"
+POLICY_VERSION = "v7.4.3-default-1"
 _PROJECT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
 
@@ -148,6 +148,8 @@ def to_primitive(value: Any) -> Any:
     if is_dataclass(value):
         result: Dict[str, Any] = {}
         for field in fields(value):
+            if field.name == "hypothesis" and getattr(value, "schema_version", "") == "1.0":
+                continue
             result[field.name] = to_primitive(getattr(value, field.name))
         return result
     if isinstance(value, Mapping):
@@ -422,10 +424,19 @@ class OptimizationProposal:
     execution_authorization: ExecutionAuthorization
     status: ProposalStatus
     content_hash: str
+    hypothesis: Optional[Mapping[str, Any]] = None
 
     def __post_init__(self) -> None:
-        if self.schema_version != SCHEMA_VERSION:
+        if self.schema_version not in {"1.0", "2.0"}:
             raise ContractError("不支持的优化提案 schema_version")
+        if self.schema_version == "2.0":
+            from .hypothesis import validate_hypothesis
+            if self.hypothesis is None:
+                raise ContractError("HYPOTHESIS_REQUIRED")
+            validate_hypothesis(self.hypothesis, self.project_id)
+            object.__setattr__(self, "hypothesis", _freeze(self.hypothesis))
+        elif self.hypothesis is not None:
+            raise ContractError("LEGACY_PROPOSAL_HYPOTHESIS_FORBIDDEN")
         object.__setattr__(self, "proposal_id", _require_text(self.proposal_id, "proposal_id", 3, 128))
         validate_project_id(self.project_id)
         object.__setattr__(self, "assessment_id", _require_text(self.assessment_id, "assessment_id", 3, 128))
@@ -465,6 +476,7 @@ class OptimizationProposal:
         validation_plan: Sequence[str],
         constraints: Sequence[str],
         created_at: Optional[str] = None,
+        hypothesis: Optional[Mapping[str, Any]] = None,
     ) -> "OptimizationProposal":
         timestamp = created_at or utc_now_iso()
         fingerprint = sha256_hex({
@@ -481,7 +493,7 @@ class OptimizationProposal:
             ],
         })
         payload: Dict[str, Any] = {
-            "schema_version": SCHEMA_VERSION,
+            "schema_version": "2.0" if hypothesis is not None else SCHEMA_VERSION,
             "proposal_id": new_id("EVO"),
             "project_id": validate_project_id(project_id),
             "assessment_id": assessment.assessment_id,
@@ -502,6 +514,11 @@ class OptimizationProposal:
             "execution_authorization": ExecutionAuthorization.NONE,
             "status": ProposalStatus.PENDING_REVIEW,
         }
+        if hypothesis is not None:
+            payload["hypothesis"] = hypothesis
+            hypothesis_key = {key: value for key, value in hypothesis.items()
+                              if key not in {"baseline_snapshot_id", "baseline_snapshot_hash"}}
+            payload["fingerprint"] = sha256_hex({"legacy_fingerprint": fingerprint, "hypothesis": hypothesis_key})
         payload["content_hash"] = _hash_payload(payload)
         return cls(**payload)
 

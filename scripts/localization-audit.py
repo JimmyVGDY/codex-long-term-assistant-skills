@@ -30,9 +30,9 @@ EXCLUDED_ROOTS = {"dist"}
 
 
 def human_reviewed_paths() -> set[str]:
-    """中文：读取已经逐文件人工翻译并校订的规范源路径。
+    """中文：读取逐文件校订的规范源路径；历史索引名称不证明审阅者身份。
 
-    English: Read canonical source paths translated and reviewed file by file.
+    English: Read file-reviewed translation paths; the legacy index name does not attest reviewer identity.
     """
     if not REVIEWED_PATH.is_file():
         return set()
@@ -169,7 +169,7 @@ def audit(files: Iterable[Path]) -> dict[str, Any]:
                 if not document_pair_exists(path):
                     findings.append(issue("DOCUMENT_ENGLISH_PAIR_MISSING", path))
                 elif relative.as_posix() not in reviewed:
-                    findings.append(issue("ENGLISH_PAIR_NOT_HUMAN_REVIEWED", path))
+                    findings.append(issue("ENGLISH_PAIR_REVIEW_MISSING", path))
             english_document = path.name.endswith(".en.md") or "locales/en" in relative.as_posix()
             # 中文：人工校订索引保存规范源路径，中文文件名属于路径数据而不是英文正文。
             # English: The review index stores canonical source paths; Chinese filenames are path data, not English prose.
@@ -181,7 +181,7 @@ def audit(files: Iterable[Path]) -> dict[str, Any]:
                 if not structured_pair_exists(relative):
                     findings.append(issue("STRUCTURED_ENGLISH_PAIR_MISSING", path))
                 elif relative.as_posix() not in reviewed:
-                    findings.append(issue("ENGLISH_PAIR_NOT_HUMAN_REVIEWED", path))
+                    findings.append(issue("ENGLISH_PAIR_REVIEW_MISSING", path))
         elif path.suffix.lower() in CODE_SUFFIXES:
             counts["code"] += 1
             findings.extend(audit_python(path, text) if path.suffix.lower() == ".py"

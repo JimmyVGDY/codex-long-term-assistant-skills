@@ -1,17 +1,47 @@
 {
-  "release_name": "Codex CLI 0.153.4 stable compatibility",
+  "release_name": "Task feedback and measured optimization benefits",
   "generated_for": "Codex Plugin-first cross-project engineering assistance for Codex CLI 0.153.4, with one weighted root-task budget across Reviewer, Explorer, and Worker, parent-finalized calibration, four general primary domains, deterministic lifecycle controls, and a Terra High automatic ceiling",
   "skills": {
-    "backend-engineering": {"display_name": "General Backend Engineering", "description": "Use for server applications, APIs, business logic, access, application transactions, concurrency, jobs, Workers, resources, and backend reviews across Java, Python, Node.js, Go, .NET, Rust, and other stacks."},
-    "ai-engineering": {"display_name": "General AI Engineering", "description": "Use for models and multimodal generation, structured output, prompt safety, RAG, agents, evaluation, routing, inference Workers, and generation recovery across languages and providers."},
-    "frontend-engineering": {"display_name": "Frontend Engineering", "description": "Use for browser, WebView, desktop renderer, JavaScript or TypeScript, web frameworks, state, routing, forms, streaming, build, test, performance, security, SEO, and accessibility work."},
-    "data-middleware-infrastructure": {"display_name": "Data, Middleware, and Infrastructure", "description": "Use for databases, locks, Redis, messaging, search and vector storage, files and object storage, GPU resources, containers, orchestration, networks, and infrastructure."},
-    "log-observability-analysis": {"display_name": "Log and Observability Analysis", "description": "Use for logs, metrics, distributed traces, profiling, alerts, and change-event analysis across bounded local, non-production, and production-read-only contexts."},
-    "engineering-quality-delivery": {"display_name": "Engineering Quality and Delivery", "description": "Use when behavior changes or work includes validation, Git, approval, release, rollback, restart, deployment, or production boundaries."},
-    "multi-agent-independent-review": {"display_name": "Independent Multi-Agent Review", "description": "Use for risk-based design gates and independent functional, compatibility, security, performance, contract, concurrency, and delivery reviews."},
-    "technical-document-writing": {"display_name": "Technical Documentation", "description": "Use for technical plans, architecture, implementation plans, API or database documentation, runbooks, incident reports, review reports, management reports, and README work."},
-    "long-running-task-memory": {"display_name": "Long-Running Task Memory", "description": "Use for cross-session, multi-stage, multi-module, multi-repository, multi-agent, observation-window, and context-compaction work that needs recoverable checkpoints."},
-    "controlled-evolution-governance": {"display_name": "Controlled Evolution Governance", "description": "Use only for cross-task retrospectives, observation governance, model-cost routing, reviewer calibration, routing drift, proposal lifecycle, project isolation, and assistant version governance."}
+    "backend-engineering": {
+      "display_name": "General Backend Engineering",
+      "description": "Use for server applications, APIs, business logic, access, application transactions, concurrency, jobs, Workers, resources, and backend reviews across Java, Python, Node.js, Go, .NET, Rust, and other stacks."
+    },
+    "ai-engineering": {
+      "display_name": "General AI Engineering",
+      "description": "Use for models and multimodal generation, structured output, prompt safety, RAG, agents, evaluation, routing, inference Workers, and generation recovery across languages and providers."
+    },
+    "frontend-engineering": {
+      "display_name": "Frontend Engineering",
+      "description": "Use for browser, WebView, desktop renderer, JavaScript or TypeScript, web frameworks, state, routing, forms, streaming, build, test, performance, security, SEO, and accessibility work."
+    },
+    "data-middleware-infrastructure": {
+      "display_name": "Data, Middleware, and Infrastructure",
+      "description": "Use for databases, locks, Redis, messaging, search and vector storage, files and object storage, GPU resources, containers, orchestration, networks, and infrastructure."
+    },
+    "log-observability-analysis": {
+      "display_name": "Log and Observability Analysis",
+      "description": "Use for logs, metrics, distributed traces, profiling, alerts, and change-event analysis across bounded local, non-production, and production-read-only contexts."
+    },
+    "engineering-quality-delivery": {
+      "display_name": "Engineering Quality and Delivery",
+      "description": "Use when behavior changes or work includes validation, Git, approval, release, rollback, restart, deployment, or production boundaries."
+    },
+    "multi-agent-independent-review": {
+      "display_name": "Independent Multi-Agent Review",
+      "description": "Use for risk-based design gates and independent functional, compatibility, security, performance, contract, concurrency, and delivery reviews."
+    },
+    "technical-document-writing": {
+      "display_name": "Technical Documentation",
+      "description": "Use for technical plans, architecture, implementation plans, API or database documentation, runbooks, incident reports, review reports, management reports, and README work."
+    },
+    "long-running-task-memory": {
+      "display_name": "Long-Running Task Memory",
+      "description": "Use for cross-session, multi-stage, multi-module, multi-repository, multi-agent, observation-window, and context-compaction work that needs recoverable checkpoints."
+    },
+    "controlled-evolution-governance": {
+      "display_name": "Controlled Evolution Governance",
+      "description": "Use only for cross-task retrospectives, observation governance, model-cost routing, reviewer calibration, routing drift, proposal lifecycle, project isolation, and assistant version governance."
+    }
   },
   "custom_agents": {
     "cp_review_functional_business": "Functional correctness and business semantics",

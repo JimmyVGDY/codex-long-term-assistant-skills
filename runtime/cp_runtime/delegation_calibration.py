@@ -12,6 +12,8 @@ import hashlib
 import json
 import os
 import re
+import math
+from statistics import mean, stdev
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping
 
@@ -201,8 +203,12 @@ def _validate_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 def _validate_against_budget(sample: Mapping[str, Any], ledger_path: Path) -> Dict[str, Any]:
-    value = _validate_sample(sample)
     budget = read_budget(Path(ledger_path))
+    return _validate_against_budget_state(sample, budget)
+
+
+def _validate_against_budget_state(sample: Mapping[str, Any], budget: Mapping[str, Any]) -> Dict[str, Any]:
+    value = _validate_sample(sample)
     if budget.get("read_only"):
         raise DelegationBudgetError("DelegationBudget V1 只读投影不能参与新校准")
     if any(value[key] != budget["identity"][key] for key in IDENTITY_KEYS):
@@ -269,15 +275,28 @@ def load_samples(path: Path, *, ledger_path: Path) -> List[Dict[str, Any]]:
     return values
 
 
-def offline_replay(samples: Iterable[Mapping[str, Any]], *, ledger_path: Path,
-                   minimum_samples_per_profile: int = 3) -> Dict[str, Any]:
+def compare_scenarios(samples: Iterable[Mapping[str, Any]], *, minimum_samples_per_profile: int = 3,
+                      minimum_tasks_per_profile: int = 3) -> List[Dict[str, Any]]:
+    """中文：按场景和独立任务等权比较，保留不确定性与质量底线。
+
+    English: Compare scenarios with equal independent-task weights, uncertainty, and quality guardrails.
+    """
     minimum = _nonnegative(minimum_samples_per_profile, "minimum_samples_per_profile")
-    if minimum < 1:
+    task_minimum = _nonnegative(minimum_tasks_per_profile, "minimum_tasks_per_profile")
+    if minimum < 1 or task_minimum < 1:
         raise DelegationBudgetError("minimum_samples_per_profile 至少为 1")
-    validated = [_validate_against_budget(item, ledger_path) for item in samples]
-    eligible = [dict(item) for item in validated if item.get("calibration_finalized") is True]
     scenario_groups: Dict[tuple[str, ...], Dict[str, List[Dict[str, Any]]]] = {}
-    for item in eligible:
+    seen: Dict[str, str] = {}
+    for raw in samples:
+        item = _validate_sample(raw)
+        if not item["calibration_finalized"]:
+            continue
+        encoded = canonical_json(item)
+        if item["record_id"] in seen:
+            if seen[item["record_id"]] != encoded:
+                raise DelegationBudgetError("CALIBRATION_DUPLICATE_CONFLICT")
+            continue
+        seen[item["record_id"]] = encoded
         profile = str(item.get("approved_profile") or "")
         if profile not in PROFILE_WEIGHTS:
             continue
@@ -286,20 +305,79 @@ def offline_replay(samples: Iterable[Mapping[str, Any]], *, ledger_path: Path,
         scenario_groups.setdefault(scenario, {}).setdefault(profile, []).append(item)
     comparisons: List[Dict[str, Any]] = []
     ordered = sorted(PROFILE_ORDER, key=PROFILE_ORDER.get)
+
+    def aggregate(items: List[Dict[str, Any]]) -> Dict[str, Any]:
+        tasks: Dict[str, List[Dict[str, Any]]] = {}
+        for item in items:
+            tasks.setdefault(item["task_id"], []).append(item)
+        yields = [sum(row["value_score"] for row in rows) / sum(row["cost_basis_units"] for row in rows) for rows in tasks.values()]
+        average = mean(yields) if yields else 0.0
+        interval = None
+        if len(yields) >= 2:
+            critical = 12.707 if len(yields) == 2 else 4.303 if len(yields) == 3 else 3.183 if len(yields) == 4 else 2.777 if len(yields) < 10 else 2.263 if len(yields) < 30 else 2.046
+            margin = critical * stdev(yields) / math.sqrt(len(yields))
+            interval = [max(0.0, average - margin), average + margin]
+        harmed = sum(any(row["metrics"].get("missed_findings", 0) or row["metrics"].get("rollbacks", 0) for row in rows) for rows in tasks.values())
+        return {"samples": len(items), "tasks": len(tasks), "yield": average, "interval": interval,
+                "harm_rate": harmed / len(tasks) if tasks else None}
+
     for scenario, profiles in sorted(scenario_groups.items()):
         for lower, higher in zip(ordered, ordered[1:]):
             low = profiles.get(lower, []); high = profiles.get(higher, [])
-            enough = len(low) >= minimum and len(high) >= minimum
-            low_yield = (sum(item["value_score"] for item in low) / (len(low) * PROFILE_WEIGHTS[lower])) if low else 0.0
-            high_yield = (sum(item["value_score"] for item in high) / (len(high) * PROFILE_WEIGHTS[higher])) if high else 0.0
+            low_stats, high_stats = aggregate(low), aggregate(high)
+            enough = (len(low) >= minimum and len(high) >= minimum and low_stats["tasks"] >= task_minimum
+                      and high_stats["tasks"] >= task_minimum and "UNKNOWN" not in scenario)
+            low_yield, high_yield = low_stats["yield"], high_stats["yield"]
+            recommendation = "NO_CHANGE_INSUFFICIENT_DATA"
+            if enough:
+                recommendation = "NO_CHANGE_UNCERTAIN"
+                lower_ci, higher_ci = low_stats["interval"], high_stats["interval"]
+                if lower_ci and higher_ci:
+                    if lower_ci[0] > higher_ci[1] and low_stats["harm_rate"] <= high_stats["harm_rate"]:
+                        recommendation = lower
+                    elif higher_ci[0] > lower_ci[1] and high_stats["harm_rate"] <= low_stats["harm_rate"]:
+                        recommendation = higher
             comparisons.append({
                 "scenario": dict(zip(("role", "responsibility", "difficulty", "risk_domain", "context_size"), scenario)),
                 "lower_profile": lower, "higher_profile": higher,
                 "lower_samples": len(low), "higher_samples": len(high),
+                "lower_independent_tasks": low_stats["tasks"], "higher_independent_tasks": high_stats["tasks"],
+                "lower_yield_interval_95": low_stats["interval"], "higher_yield_interval_95": high_stats["interval"],
+                "lower_harm_rate": low_stats["harm_rate"], "higher_harm_rate": high_stats["harm_rate"],
                 "lower_value_per_unit": round(low_yield, 6), "higher_value_per_unit": round(high_yield, 6),
                 "eligible": enough,
-                "recommendation": (higher if enough and high_yield > low_yield else lower) if enough else "NO_CHANGE_INSUFFICIENT_DATA",
+                "recommendation": recommendation,
+                "regression_rate": max(0.0, 1.0 - high_yield / low_yield) if enough and low_yield else 0.0,
             })
+    return comparisons
+
+
+def offline_replay_many(samples: Iterable[Mapping[str, Any]], *, ledger_paths: Mapping[str, Path],
+                        minimum_samples_per_profile: int = 3, minimum_tasks_per_profile: int = 3) -> Dict[str, Any]:
+    if not 1 <= len(ledger_paths) <= 100:
+        raise DelegationBudgetError("CALIBRATION_LEDGER_LIMIT")
+    budgets = {key: read_budget(Path(path)) for key, path in ledger_paths.items()}
+    identity = None
+    validated = []
+    seen = set()
+    for raw_index, raw in enumerate(samples):
+        if raw_index >= 10000:
+            raise DelegationBudgetError("CALIBRATION_SAMPLE_LIMIT")
+        budget = budgets.get(str(raw.get("budget_id") or ""))
+        if budget is None:
+            raise DelegationBudgetError("CALIBRATION_LEDGER_MISSING")
+        item = _validate_against_budget_state(raw, budget)
+        current_identity = (item["project_id"], item["repo_fingerprint"])
+        if identity is not None and identity != current_identity:
+            raise DelegationBudgetError("CALIBRATION_PROJECT_REPO_MISMATCH")
+        identity = current_identity
+        key = (item["record_id"], canonical_json(item))
+        if key not in seen:
+            seen.add(key)
+            validated.append(item)
+    eligible = [item for item in validated if item["calibration_finalized"]]
+    comparisons = compare_scenarios(eligible, minimum_samples_per_profile=minimum_samples_per_profile,
+                                    minimum_tasks_per_profile=minimum_tasks_per_profile)
     digest = hashlib.sha256(canonical_json(comparisons).encode("utf-8")).hexdigest()
     return {
         "schema_version": REPLAY_SCHEMA,
@@ -307,7 +385,18 @@ def offline_replay(samples: Iterable[Mapping[str, Any]], *, ledger_path: Path,
         "proposal_type": "DELEGATION_PROFILE_VALUE_REVIEW",
         "execution_authorization": "NONE",
         "sample_count": len(eligible),
-        "minimum_samples_per_profile": minimum,
+        "minimum_samples_per_profile": minimum_samples_per_profile,
+        "minimum_tasks_per_profile": minimum_tasks_per_profile,
+        "identity": None if identity is None else {"project_id": identity[0], "repo_fingerprint": identity[1]},
+        "uncertainty_method": "CONSERVATIVE_T_INTERVAL_OVER_TASK_YIELDS",
         "comparisons": comparisons,
         "automatic_changes_applied": False,
     }
+
+
+def offline_replay(samples: Iterable[Mapping[str, Any]], *, ledger_path: Path,
+                   minimum_samples_per_profile: int = 3, minimum_tasks_per_profile: int = 3) -> Dict[str, Any]:
+    budget = read_budget(Path(ledger_path))
+    return offline_replay_many(samples, ledger_paths={budget["identity"]["budget_id"]: ledger_path},
+                               minimum_samples_per_profile=minimum_samples_per_profile,
+                               minimum_tasks_per_profile=minimum_tasks_per_profile)

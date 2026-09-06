@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -18,6 +19,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.seal_queue import (  # noqa: E402
     BOOTSTRAP_EVENT_MAX_BYTES, SealQueueError, prepare_session_end, process_queue,
 )
+from cp_runtime.evolution.incremental import automation_tick  # noqa: E402
 
 
 def main() -> None:
@@ -42,6 +44,13 @@ def main() -> None:
             raise SealQueueError("BOOTSTRAP_EVENT_INVALID")
         prepare_session_end(queue, event, keyring)
     report = process_queue(queue, keyring, args.max_jobs)
+    if report["ok"] and report["completed"]:
+        try:
+            if keyring is not None:
+                os.environ["CP_ASSISTANT_KEYRING_PATH"] = str(keyring.resolve())
+            report["evolution"] = automation_tick(queue.parent.parent)
+        except Exception:
+            report["evolution"] = {"status": "RETRY_REQUIRED", "notification_required": True}
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))
     if not report["ok"]: raise SystemExit(2)
 

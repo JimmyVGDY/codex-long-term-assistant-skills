@@ -26,6 +26,9 @@ from runtime.cp_runtime.evolution.contracts import ContractError  # noqa: E402
 from runtime.cp_runtime.evolution.observation import ObservationError  # noqa: E402
 from runtime.cp_runtime.evolution.redaction import redact  # noqa: E402
 from runtime.cp_runtime.evolution.storage import StorageError  # noqa: E402
+from tests.evolution_legacy_fixture import legacy_service
+
+ControlledEvolutionService = legacy_service(ControlledEvolutionService)
 
 
 class ControlledEvolutionTest(unittest.TestCase):

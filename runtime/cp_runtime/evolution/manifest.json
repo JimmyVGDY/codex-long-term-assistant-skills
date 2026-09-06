@@ -13,7 +13,14 @@
     "append-only-proposal-registry",
     "human-decision-recording",
     "hash-chain-integrity",
-    "sensitive-data-redaction"
+    "sensitive-data-redaction",
+    "parent-finalized-task-feedback",
+    "pre-analysis-health-gates",
+    "opt-in-incremental-analysis",
+    "cross-ledger-scenario-calibration",
+    "testable-proposal-hypotheses",
+    "verified-benefit-lifecycle",
+    "pending-regression-candidates"
   ],
   "prohibited_capabilities": [
     "automatic-skill-modification",

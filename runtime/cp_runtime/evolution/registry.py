@@ -25,6 +25,8 @@ from .contracts import (
 from .storage import FileLock, StorageError, append_hash_chain, read_hash_chain, safe_child
 from .redaction import redact_text
 from .lifecycle import LifecycleEventType, ProposalLifecycleEvent
+from .governed import GovernedLifecycle
+from .benefits import implementation_evidence
 
 
 class RegistryError(RuntimeError):
@@ -39,6 +41,8 @@ class ProposalView:
     proposal: OptimizationProposal
     current_status: ProposalStatus
     latest_decision: Optional[ProposalDecision]
+    latest_benefit: Optional[Mapping[str, Any]] = None
+    final_outcome: Optional[str] = None
 
 
 def _evidence(raw: Mapping[str, Any]) -> EvidenceReference:
@@ -75,6 +79,7 @@ def _proposal(raw: Mapping[str, Any]) -> OptimizationProposal:
         execution_authorization=ExecutionAuthorization(str(raw["execution_authorization"])),
         status=ProposalStatus(str(raw["status"])),
         content_hash=str(raw["content_hash"]),
+        hypothesis=raw.get("hypothesis"),
     )
 
 
@@ -113,6 +118,7 @@ class ProposalRegistry:
         self.decisions_path = safe_child(self.root, "decisions.jsonl", create_parent=True)
         self.lifecycle_path = safe_child(self.root, "lifecycle.jsonl", create_parent=True)
         self.guard_path = safe_child(self.root, "registry.guard", create_parent=True)
+        self.governed = GovernedLifecycle(self.root)
 
     def _proposal_records(self) -> List[OptimizationProposal]:
         records = read_hash_chain(self.proposals_path)
@@ -158,6 +164,9 @@ class ProposalRegistry:
         for decision in decisions:
             decisions_by_proposal.setdefault(decision.proposal_id, []).append(decision)
         known_ids = {proposal.proposal_id for proposal in proposals}
+        governed_records = self.governed.records()
+        if {event["proposal_id"] for event in governed_records} - known_ids:
+            raise RegistryError("UNKNOWN_GOVERNED_PROPOSAL")
         unknown = sorted({decision.proposal_id for decision in decisions} - known_ids)
         unknown_lifecycle = sorted({event.proposal_id for event in lifecycle} - known_ids)
         if unknown:
@@ -173,6 +182,13 @@ class ProposalRegistry:
             latest = proposal_decisions[-1] if proposal_decisions else None
             status = _decision_status(latest.decision) if latest else ProposalStatus.PENDING_REVIEW
             lifecycle_events = lifecycle_by_proposal.get(proposal.proposal_id, [])
+            if proposal.schema_version == "2.0":
+                if lifecycle_events:
+                    raise RegistryError("NEW_PROPOSAL_IN_LEGACY_LIFECYCLE")
+                state = self.governed.replay(proposal, status, records=governed_records)
+                views.append(ProposalView(proposal, ProposalStatus(state["status"]), latest,
+                                          state["benefit"], state["final_outcome"]))
+                continue
             if lifecycle_events:
                 if status is not ProposalStatus.ACCEPTED:
                     raise RegistryError("只有 ACCEPTED 提案才能进入实施生命周期")
@@ -204,8 +220,14 @@ class ProposalRegistry:
                 if existing.proposal.fingerprint == proposal.fingerprint:
             # 中文：相同证据摘要不触发机械重生；只有证据或策略变化形成新 fingerprint 时才能注册新提案。
             # English: An identical evidence digest cannot trigger mechanical rebirth; a new proposal requires evidence or policy change that produces a new fingerprint.
+                    if existing.proposal.schema_version == "2.0":
+                        from .regression_assets import create_candidates
+                        create_candidates(self.root.parent, existing.proposal)
                     return existing, False
             append_hash_chain(self.proposals_path, proposal)
+            if proposal.schema_version == "2.0":
+                from .regression_assets import create_candidates
+                create_candidates(self.root.parent, proposal)
         return self.get(proposal.proposal_id), True
 
     def decide(
@@ -231,6 +253,10 @@ class ProposalRegistry:
     def link_implementation(self, proposal_id: str, actor: str, implementation_task_id: str, git_baseline: str) -> ProposalView:
         with FileLock(self.guard_path):
             current = self.get(proposal_id)
+            if current.proposal.schema_version == "2.0":
+                self.governed.append(current.proposal, _decision_status(current.latest_decision.decision) if current.latest_decision else ProposalStatus.PENDING_REVIEW,
+                                     actor, "LINK", {"task_id": implementation_task_id, "git_baseline": git_baseline})
+                return self.get(proposal_id)
             if current.current_status is not ProposalStatus.ACCEPTED:
                 raise RegistryError("只有 ACCEPTED 提案才能绑定实施任务")
             event = ProposalLifecycleEvent.create(proposal_id, LifecycleEventType.IMPLEMENTATION_LINKED, actor, implementation_task_id=implementation_task_id, git_baseline=git_baseline)
@@ -240,15 +266,35 @@ class ProposalRegistry:
     def record_validation(self, proposal_id: str, actor: str, implementation_commit: str, evidence_refs: Sequence[str]) -> ProposalView:
         with FileLock(self.guard_path):
             current = self.get(proposal_id)
+            if current.proposal.schema_version == "2.0":
+                initial = _decision_status(current.latest_decision.decision) if current.latest_decision else ProposalStatus.PENDING_REVIEW
+                state = self.governed.replay(current.proposal, initial)
+                if not state["link"]:
+                    raise RegistryError("IMPLEMENTATION_LINK_REQUIRED")
+                refs = implementation_evidence(self.root.parent, state["link"]["task_id"], implementation_commit, evidence_refs)
+                self.governed.append(current.proposal, initial, actor, "VALIDATE", {"commit": implementation_commit, "references": refs})
+                return self.get(proposal_id)
             if current.current_status is not ProposalStatus.IMPLEMENTATION_LINKED:
                 raise RegistryError("必须先绑定实施 Task/Git Baseline，才能记录验证")
             event = ProposalLifecycleEvent.create(proposal_id, LifecycleEventType.VALIDATION_RECORDED, actor, implementation_commit=implementation_commit, evidence_refs=evidence_refs)
             append_hash_chain(self.lifecycle_path, event)
         return self.get(proposal_id)
 
-    def close(self, proposal_id: str, actor: str, final_outcome: str) -> ProposalView:
+    def close(self, proposal_id: str, actor: str, final_outcome: str, evidence_refs: Sequence[str] = ()) -> ProposalView:
         with FileLock(self.guard_path):
             current = self.get(proposal_id)
+            if current.proposal.schema_version == "2.0":
+                initial = _decision_status(current.latest_decision.decision) if current.latest_decision else ProposalStatus.PENDING_REVIEW
+                state = self.governed.replay(current.proposal, initial)
+                refs = []
+                if final_outcome == "ROLLED_BACK":
+                    if not state["link"]:
+                        raise RegistryError("IMPLEMENTATION_LINK_REQUIRED")
+                    refs = implementation_evidence(self.root.parent, state["link"]["task_id"], state["link"]["git_baseline"], evidence_refs)
+                data = {"outcome": final_outcome, "references": refs,
+                        "reason_code": "EXPLICIT_PROPOSAL_CANCELLATION" if final_outcome == "CANCELLED" else "EVIDENCE_BASED_CLOSURE"}
+                self.governed.append(current.proposal, initial, actor, "CLOSE", data)
+                return self.get(proposal_id)
             if current.current_status is not ProposalStatus.VALIDATION_RECORDED:
                 raise RegistryError("只有已记录验证证据的提案才能关闭")
             event = ProposalLifecycleEvent.create(proposal_id, LifecycleEventType.CLOSED, actor, final_outcome=final_outcome)
@@ -258,14 +304,33 @@ class ProposalRegistry:
     def supersede(self, proposal_id: str, actor: str, superseded_by: str) -> ProposalView:
         with FileLock(self.guard_path):
             current = self.get(proposal_id)
+            if current.proposal.schema_version == "2.0":
+                self.get(superseded_by)
+                initial = _decision_status(current.latest_decision.decision) if current.latest_decision else ProposalStatus.PENDING_REVIEW
+                self.governed.append(current.proposal, initial, actor, "SUPERSEDE", {"superseded_by": superseded_by})
+                return self.get(proposal_id)
             if current.current_status is not ProposalStatus.ACCEPTED:
                 raise RegistryError("仅允许在尚未实施的 ACCEPTED 状态标记 SUPERSEDED")
             event = ProposalLifecycleEvent.create(proposal_id, LifecycleEventType.SUPERSEDED, actor, superseded_by=superseded_by)
             append_hash_chain(self.lifecycle_path, event)
         return self.get(proposal_id)
 
+    def observe_benefit(self, proposal_id: str, actor: str, before_ref: Mapping[str, str], after_ref: Mapping[str, str]) -> ProposalView:
+        with FileLock(self.guard_path):
+            current = self.get(proposal_id)
+            if current.proposal.schema_version != "2.0":
+                raise RegistryError("LEGACY_PROPOSAL_HAS_NO_BENEFIT_HYPOTHESIS")
+            initial = _decision_status(current.latest_decision.decision) if current.latest_decision else ProposalStatus.PENDING_REVIEW
+            self.governed.observe(current.proposal, initial, actor, before_ref, after_ref)
+            from .regression_assets import record_followups
+            report = self.governed.replay(current.proposal, initial)["benefit"]
+            record_followups(self.root.parent, current.proposal, report)
+        return self.get(proposal_id)
+
     def validate(self) -> Mapping[str, Any]:
         views = self.list()
+        from .regression_assets import verify_followups
+        followups = verify_followups(self.root.parent, {view.proposal.proposal_id: view for view in views})
         active_fingerprints: Dict[str, str] = {}
         for view in views:
             fingerprint = view.proposal.fingerprint
@@ -283,6 +348,7 @@ class ProposalRegistry:
         return {
             "project_id": self.project_id,
             "proposal_count": len(views),
+            "verified_regression_followup_count": len(followups),
             "pending_count": sum(1 for view in views if view.current_status is ProposalStatus.PENDING_REVIEW),
             "accepted_count": sum(1 for view in views if view.current_status is ProposalStatus.ACCEPTED),
             "rejected_count": sum(1 for view in views if view.current_status is ProposalStatus.REJECTED),

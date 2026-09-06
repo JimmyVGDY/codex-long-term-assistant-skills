@@ -26,8 +26,10 @@ from .contracts import (
     sha256_hex,
 )
 from .storage import JsonLineRecord, StorageError, read_jsonl, safe_child
-from ..event_v3 import read_event_chain, EventContractError
+from ..event_v3 import read_event_chain, EventContractError, repo_fingerprint_for_identity
 from ..integrity import IntegrityError, verify_event_seals
+from .task_feedback import finalized_reports
+from .calibration_sources import project_calibration
 
 _ALLOWED_SOURCE_WORDS = (
     "feedback", "execution", "review", "evidence", "checkpoint", "audit", "outcome", "result"
@@ -39,7 +41,7 @@ _DISPATCH_PROFILES = ("luna-low", "luna-medium", "terra-medium", "terra-high")
 _SUCCESS_OUTCOMES = {"accepted", "success", "succeeded", "pass", "passed", "ok", "completed", "complete"}
 _UNKNOWN_OUTCOMES = {"", "unknown", "none", "n/a", "na"}
 _TIME_FIELDS = (
-    "timestamp", "created_at", "updated_at", "recorded_at", "completed_at", "finished_at", "observed_at"
+    "captured_at", "timestamp", "created_at", "updated_at", "recorded_at", "completed_at", "finished_at", "observed_at"
 )
 
 
@@ -48,6 +50,10 @@ class ObservationError(RuntimeError):
 
     English: Observation input is insufficient, corrupted, or out of bounds.
     """
+
+    def __init__(self, message: str, code: str = "DATA_DAMAGED") -> None:
+        super().__init__(message)
+        self.code = code
 
 
 def _to_int(value: Any, default: int = 0) -> int:
@@ -175,9 +181,9 @@ def _evidence(row: JsonLineRecord, task_id: Optional[str]) -> EvidenceReference:
 
 def _failure_labels(payload: Mapping[str, Any]) -> Set[str]:
     labels: Set[str] = set()
-    for field in ("failure_code", "error_code", "error_type", "failure_type", "failure_category"):
+    for field in ("failure_code", "error_code", "error_type", "failure_type", "failure_category", "root_cause_id"):
         value = payload.get(field)
-        if value is not None and str(value).strip():
+        if value is not None and str(value).strip().lower() not in {"", "none", "unknown"}:
             labels.add("%s:%s" % (field, str(value).strip().lower()[:160]))
     categories = payload.get("blocking_categories")
     if isinstance(categories, (list, tuple)):
@@ -256,6 +262,8 @@ def discover_sources(
             parts = relative.split("/")
             if "evolution" in {part.lower() for part in parts[:-1]}:
                 continue
+            if candidate.name.endswith(".seals.jsonl") or any(part.startswith("seal-queue") for part in parts):
+                continue
             lowered = relative.lower()
             if any(word in lowered for word in _EXCLUDED_SOURCE_WORDS):
                 continue
@@ -292,19 +300,18 @@ def _expected_repo_fingerprint(project_dir: Path) -> Optional[str]:
         remote = str(identity.get("remote_origin") or "").strip()
         if not repo_path:
             return None
-        normalized = str(Path(repo_path).expanduser().resolve(strict=False))
-        return "sha256:" + sha256_hex(normalized + "\n" + remote)
+        return repo_fingerprint_for_identity(repo_path, remote)
     except Exception:
         return None
 
 
-def _with_hashed_event_session_ids(source: Path, rows: Sequence[JsonLineRecord]) -> List[JsonLineRecord]:
+def _with_hashed_event_session_ids(source: Path, rows: Sequence[JsonLineRecord], *, verified_chain: bool = False) -> List[JsonLineRecord]:
     """中文：恢复仅用于分组的稳定 session 代号，不把原始 session_id 写入快照或日志。
 
     English: Recover a stable session alias only for grouping and never write the raw session_id to snapshots or logs.
     """
     raw_by_line: Dict[int, Mapping[str, Any]] = {}
-    for number, line in enumerate(source.read_text(encoding="utf-8").splitlines(), 1):
+    for number, line in enumerate([] if verified_chain else source.read_text(encoding="utf-8").splitlines(), 1):
         if line.strip():
             try:
                 raw_by_line[number] = json.loads(line)
@@ -312,7 +319,7 @@ def _with_hashed_event_session_ids(source: Path, rows: Sequence[JsonLineRecord])
                 continue
     restored: List[JsonLineRecord] = []
     for row in rows:
-        raw = raw_by_line.get(row.line_number, {})
+        raw = row.payload if verified_chain else raw_by_line.get(row.line_number, {})
         session_id = str(raw.get("session_id", "")).strip() if isinstance(raw, Mapping) else ""
         if str(row.payload.get("schema_version", "")) in {"2.0", "3.0"} and session_id:
             payload = dict(row.payload)
@@ -340,9 +347,11 @@ def _validate_and_aggregate_events(rows: Sequence[JsonLineRecord], project_id: s
         payload = row.payload
         row_project = _first_text(payload, ("project_id",))
         if row_project and row_project != project_id:
-            raise ObservationError("检测到跨项目记录：%s != %s（%s:%d）" % (row_project, project_id, row.relative_path, row.line_number))
+            raise ObservationError("检测到跨项目记录：%s != %s（%s:%d）" % (row_project, project_id, row.relative_path, row.line_number), code="IDENTITY_MISMATCH")
         is_event = str(payload.get("schema_version", "")) in {"2.0", "3.0"} and bool(payload.get("event_id"))
         if not is_event:
+            if expected_fp and (row_project != project_id or payload.get("repo_fingerprint") != expected_fp):
+                raise ObservationError("LEGACY_SOURCE_IDENTITY_MISMATCH", code="IDENTITY_MISMATCH")
             legacy.append(row)
             continue
         raw_v2 += 1
@@ -352,7 +361,7 @@ def _validate_and_aggregate_events(rows: Sequence[JsonLineRecord], project_id: s
         if observed_fp is None:
             observed_fp = repo_fp
         if repo_fp != observed_fp:
-            raise ObservationError("检测到跨仓库事件：%s != %s" % (repo_fp, observed_fp))
+            raise ObservationError("检测到跨仓库事件：%s != %s" % (repo_fp, observed_fp), code="IDENTITY_MISMATCH")
         binding_count += 1
         event_id = str(payload.get("event_id"))
         if event_id in seen_event_ids:
@@ -458,8 +467,11 @@ def observe_project(
     policy: Optional[EvolutionPolicy] = None,
     explicit_sources: Optional[Sequence[str]] = None,
     observed_at: Optional[str] = None,
+    window_start: Optional[str] = None,
+    window_end: Optional[str] = None,
 ) -> SelfObservationSnapshot:
     policy = policy or EvolutionPolicy()
+    scoped_window = bool(window_start or window_end)
     project_dir = Path(project_dir).resolve()
     sources = discover_sources(project_dir, policy, explicit_sources)
     warnings: List[str] = []
@@ -485,16 +497,16 @@ def observe_project(
                 except IntegrityError as exc:
                     raise ObservationError("TaskOutcomeEvent 封印校验失败: %s" % exc) from exc
                 if seal["seal_status"] != "SEALED_CURRENT":
-                    raise ObservationError("TaskOutcomeEvent 存在 seal_required 的未封印尾部")
+                    raise ObservationError("TaskOutcomeEvent 存在 seal_required 的未封印尾部", code="SEAL_PENDING")
             total_bytes = sum(Path(item).stat().st_size for item in chain_data["files"])
             if total_bytes > policy.max_source_file_bytes:
                 raise ObservationError("TaskOutcomeEvent 分段总大小超过策略上限")
             if len(chain_data["events"]) > policy.max_record_count:
                 raise ObservationError("TaskOutcomeEvent 记录数超过策略上限")
             relative = source.resolve(strict=False).relative_to(project_dir).as_posix()
-            rows = [JsonLineRecord(relative_path=relative, line_number=index,
-                                   payload=item, raw_hash=sha256_hex(canonical_json(item)))
-                    for index, item in enumerate(chain_data["events"], 1)]
+            rows = [JsonLineRecord(relative_path=(source.parent / origin["file"]).relative_to(project_dir).as_posix(),
+                                   line_number=origin["line"], payload=item, raw_hash=origin["record_hash"])
+                    for item, origin in zip(chain_data["events"], chain_data["event_sources"])]
         else:
             rows = read_jsonl(
                 source,
@@ -502,7 +514,7 @@ def observe_project(
                 max_bytes=policy.max_source_file_bytes,
                 max_records=policy.max_record_count,
             )
-        rows = _with_hashed_event_session_ids(source, rows)
+        rows = _with_hashed_event_session_ids(source, rows, verified_chain=is_task_outcome)
         # 中文：V6 Hook 事件采用独立 hash-chain/HMAC 契约；任何链路损坏都失败关闭。
         # English: V6 Hook events use an independent hash-chain and HMAC contract; any chain corruption fails closed.
         if rows and all(str(row.payload.get("source_schema_version") or row.payload.get("schema_version") or "") in {"2.0", "3.0"} and row.payload.get("event_id") for row in rows):
@@ -517,7 +529,63 @@ def observe_project(
             raise ObservationError("全部数据源记录总数超过策略上限")
 
     raw_record_count = len(all_rows)
+    input_manifest = [{"source": row.relative_path, "cursor": row.line_number,
+                       "record_id": str(row.payload.get("event_id") or row.payload.get("record_id") or row.line_number),
+                       "record_hash": row.raw_hash} for row in all_rows]
+    input_record_digest = sha256_hex([(row.relative_path, row.line_number, row.raw_hash) for row in all_rows])
+    verified_rows = all_rows
     all_rows, raw_v2_event_count, duplicate_v2_event_count, v2_diagnostics = _validate_and_aggregate_events(all_rows, project_id, project_dir)
+    feedback = finalized_reports(project_dir, policy.max_record_count)
+    feedback_by_identity = {
+        ("session-" + sha256_hex(report["subject"]["session_id"])[:16],
+         report["subject"]["turn_id"], report["subject"]["task_id"]): (path, report)
+        for path, report in feedback
+    }
+    merged_rows = []
+    feedback_applied = 0
+    for row in all_rows:
+        payload = dict(row.payload)
+        key = tuple(str(payload.get(name) or "") for name in ("session_id", "turn_id", "task_id"))
+        matched = feedback_by_identity.get(key)
+        if matched and payload.get("event_type") == "TASK_AGGREGATE":
+            path, report = matched
+            observed_hash = (payload.get("metadata") or {}).get("finalized_feedback_hash")
+            if observed_hash and observed_hash != report["content_hash"]:
+                raise ObservationError("FEEDBACK_EVENT_REFERENCE_MISMATCH")
+            if (payload.get("metadata") or {}).get("feedback_status") == "INVALID_OR_STALE":
+                raise ObservationError("FEEDBACK_EVENT_STALE")
+            payload.update(terminal_outcome=report["terminal_outcome"], repair_rounds=report["repair_rounds"],
+                           failure_category=report["failure_category"], finalized_feedback_hash=report["content_hash"])
+            if report["routing_deviation"] != "UNKNOWN":
+                payload["routing_deviation"] = report["routing_deviation"]
+            if report["failure_category"] not in {"NONE", "UNKNOWN"}:
+                payload["failure_type"] = report["failure_category"]
+            if report["root_cause_confirmed"]:
+                payload["root_cause_id"] = report["root_cause_id"]
+            row = JsonLineRecord(relative_path=path, line_number=1, payload=payload, raw_hash=report["content_hash"])
+            feedback_applied += 1
+        merged_rows.append(row)
+    all_rows = merged_rows
+    all_rows = [row for row in all_rows if not str(row.payload.get("record_id") or "").startswith("DCS_")]
+    if window_start or window_end:
+        start = parse_iso_datetime(window_start, "window_start") if window_start else None
+        end = parse_iso_datetime(window_end, "window_end") if window_end else None
+        if start and end and start >= end:
+            raise ObservationError("INVALID_OBSERVATION_WINDOW")
+        selected = []
+        for row in all_rows:
+            captured = _extract_timestamp(row.payload)
+            if captured:
+                instant = parse_iso_datetime(captured, "captured_at")
+                if (start is None or instant >= start) and (end is None or instant < end):
+                    selected.append(row)
+        all_rows = selected
+        selected_tasks = {(str(row.payload.get("session_id") or ""), _extract_task_id(row.payload)) for row in all_rows}
+        selected_sessions = {key[0] for key in selected_tasks}
+        scoped_rows = [row for row in verified_rows
+                       if (str(row.payload.get("session_id") or ""), _extract_task_id(row.payload)) in selected_tasks
+                       or (row.payload.get("event_type") == "SESSION_ENDED" and row.payload.get("session_id") in selected_sessions)]
+        _, raw_v2_event_count, duplicate_v2_event_count, v2_diagnostics = _validate_and_aggregate_events(scoped_rows, project_id, project_dir)
     if duplicate_v2_event_count:
         warnings.append("%d 条重复 event_id 已在聚合前去重" % duplicate_v2_event_count)
     if v2_diagnostics["missing_event_categories"]:
@@ -546,10 +614,6 @@ def observe_project(
     repair_evidence: List[EvidenceReference] = []
     negative_evidence: List[EvidenceReference] = []
     reviewer_stats: Dict[str, Dict[str, Any]] = {}
-    profile_value_stats: Dict[str, Dict[str, Any]] = {
-        profile: {"samples": 0, "tasks": set(), "value_score": 0.0, "cost_units": 0.0, "evidence": []}
-        for profile in _DISPATCH_PROFILES
-    }
     reviewer_result_identities: Dict[Tuple[str, str, str], str] = {}
     skill_usage: Counter[str] = Counter()
     records_without_task = 0
@@ -687,22 +751,6 @@ def observe_project(
                     "legacy-cost-units" if cost_source == "cost_units" else "UNKNOWN"
                 ))
                 stats["cost_formula_versions"][formula] += 1
-                if finalized and approved_profile in profile_value_stats:
-                    value_score = max(0.0, float(
-                        max(0, _to_int(result.get("accepted"), 0)) * 3
-                        + max(0, _to_int(result.get("repaired"), 0)) * 2
-                        + max(0, _to_int(result.get("regressions_prevented"), 0)) * 4
-                        - max(0, _to_int(result.get("duplicate"), 0))
-                        - max(0, _to_int(result.get("blocking_findings"), 0))
-                    ))
-                    profile_stats = profile_value_stats[approved_profile]
-                    profile_stats["samples"] += 1
-                    if task_id:
-                        profile_stats["tasks"].add(task_id)
-                    profile_stats["value_score"] += value_score
-                    profile_stats["cost_units"] += cost_value
-                    if len(profile_stats["evidence"]) < 50:
-                        profile_stats["evidence"].append(evidence)
             if finalized and any(name in result for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented")):
                 stats["attribution_count"] += 1
                 stats["labeled_finding_count"] += sum(max(0, _to_int(result.get(name), 0))
@@ -873,27 +921,33 @@ def observe_project(
     for stats in reviewer_stats.values():
         reviewer_cost_formulas.update(stats["cost_formula_versions"])
 
-    profile_value_comparisons: List[Dict[str, Any]] = []
+    calibration_rows, calibration_replay = project_calibration(project_dir, minimum_samples=policy.min_records,
+                                                               minimum_tasks=policy.min_independent_tasks)
+    if scoped_window:
+        from ..delegation_calibration import compare_scenarios
+        calibration_rows = [row for row in calibration_rows if row["sample"]["task_id"] in task_ids]
+        calibration_replay["comparisons"] = compare_scenarios([row["sample"] for row in calibration_rows],
+                                                              minimum_samples_per_profile=policy.min_records,
+                                                              minimum_tasks_per_profile=policy.min_independent_tasks)
+    profile_value_comparisons = calibration_replay["comparisons"]
     profile_value_regressions: List[Dict[str, Any]] = []
-    for lower, higher in zip(_DISPATCH_PROFILES, _DISPATCH_PROFILES[1:]):
-        low = profile_value_stats[lower]
-        high = profile_value_stats[higher]
-        low_value = float(low["value_score"]) / float(low["cost_units"]) if low["cost_units"] else 0.0
-        high_value = float(high["value_score"]) / float(high["cost_units"]) if high["cost_units"] else 0.0
-        eligible = low["samples"] >= policy.min_records and high["samples"] >= policy.min_records and low_value > 0
-        regression_rate = max(0.0, 1.0 - (high_value / low_value)) if eligible else 0.0
-        comparison = {
-            "lower_profile": lower, "higher_profile": higher,
-            "lower_samples": low["samples"], "higher_samples": high["samples"],
-            "lower_value_per_unit": round(low_value, 6), "higher_value_per_unit": round(high_value, 6),
-            "regression_rate": round(regression_rate, 6), "eligible": eligible,
-        }
-        profile_value_comparisons.append(comparison)
-        if eligible and regression_rate >= policy.dispatch_profile_value_regression_rate:
+    for comparison in profile_value_comparisons:
+        comparison["scenario_key"] = sha256_hex(comparison["scenario"])
+        if (comparison["eligible"] and comparison["regression_rate"] >= policy.dispatch_profile_value_regression_rate
+                and comparison["recommendation"] == comparison["lower_profile"]):
             profile_value_regressions.append(comparison)
 
     metrics: Dict[str, Any] = {
         "policy_version": policy.policy_version,
+        "input_record_digest": input_record_digest,
+        "input_manifest": input_manifest,
+        "calibration_input_digest": sha256_hex([(row["path"], row["record_hash"]) for row in calibration_rows]),
+        "policy_digest": sha256_hex(policy),
+        "repo_fingerprint": _expected_repo_fingerprint(project_dir),
+        "independent_task_ids": sorted(task_ids),
+        "finalized_feedback_count": feedback_applied,
+        "unmatched_feedback_count": len(feedback) - feedback_applied,
+        "feedback_input_digest": sha256_hex([(path, report["content_hash"]) for path, report in feedback]),
         "source_file_count": source_count,
         "record_count": len(all_rows),
         "raw_record_count": raw_record_count,
@@ -909,6 +963,8 @@ def observe_project(
         "known_terminal_outcome_task_count": len(known_outcome_tasks),
         "known_terminal_outcome_coverage": round(float(len(known_outcome_tasks)) / len(task_ids), 6) if task_ids else 0.0,
         "dispatch_profile_value_comparisons": profile_value_comparisons,
+        "reviewer_scenario_comparisons": [item for item in profile_value_comparisons if item["scenario"]["role"] == "reviewer"],
+        "legacy_reviewer_metrics_diagnostic_only": bool(_expected_repo_fingerprint(project_dir)),
         "dispatch_profile_value_regression_count": len(profile_value_regressions),
         "routing_known_count": routing_known_count,
         "routing_deviation_count": routing_deviation_count,
@@ -1026,13 +1082,16 @@ def observe_project(
     for comparison in profile_value_regressions:
         lower = comparison["lower_profile"]
         higher = comparison["higher_profile"]
-        profile_evidence = list(profile_value_stats[lower]["evidence"])
-        profile_evidence.extend(profile_value_stats[higher]["evidence"])
+        matched_rows = [row for row in calibration_rows if row["sample"]["calibration_finalized"]
+                        and row["sample"]["approved_profile"] in {lower, higher}
+                        and all(row["sample"][key] == value for key, value in comparison["scenario"].items())]
+        profile_evidence = [EvidenceReference(source_kind="delegation-calibration", source_path=row["path"],
+                                             line_number=row["line_number"], record_id=row["sample"]["record_id"],
+                                             task_id=row["sample"]["task_id"], record_hash=row["record_hash"]) for row in matched_rows]
         unique_evidence: Dict[Tuple[str, str, Optional[int]], EvidenceReference] = {}
         for ref in profile_evidence:
-            unique_evidence[(ref.source, ref.sha256, ref.line)] = ref
-        independent_tasks = set(profile_value_stats[lower]["tasks"])
-        independent_tasks.update(profile_value_stats[higher]["tasks"])
+            unique_evidence[(ref.source_path, ref.record_hash, ref.line_number)] = ref
+        independent_tasks = {row["sample"]["task_id"] for row in matched_rows}
         occurrence_count = min(
             int(comparison["lower_samples"]),
             int(comparison["higher_samples"]),
@@ -1045,11 +1104,11 @@ def observe_project(
                     project_id,
                     SignalType.DISPATCH_PROFILE_VALUE_REGRESSION.value,
                     lower,
-                    higher,
+                    higher + ":" + comparison["scenario_key"],
                 ),
             ),
             signal_type=SignalType.DISPATCH_PROFILE_VALUE_REGRESSION,
-            target="dispatch-profile:%s->%s" % (lower, higher),
+            target="dispatch-profile:%s->%s:%s" % (lower, higher, comparison["scenario_key"]),
             occurrence_count=occurrence_count,
             independent_task_count=len(independent_tasks),
             rate=float(comparison["regression_rate"]),
@@ -1095,6 +1154,8 @@ def observe_project(
         ))
 
     for reviewer, stats in sorted(reviewer_stats.items()):
+        if metrics["legacy_reviewer_metrics_diagnostic_only"]:
+            continue
         invocations = stats["invocations"]
         total_findings = stats["blocking_findings"] + stats["nonblocking_findings"]
         yield_rate = (float(total_findings) / invocations) if invocations else 0.0

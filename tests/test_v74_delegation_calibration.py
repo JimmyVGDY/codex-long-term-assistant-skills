@@ -125,7 +125,10 @@ class DelegationCalibrationTests(unittest.TestCase):
                     if item["lower_profile"] == "luna-low" and item["higher_profile"] == "luna-medium")
         self.assertFalse(pair["eligible"])
         self.assertEqual("NO_CHANGE_INSUFFICIENT_DATA", pair["recommendation"])
-        eligible = offline_replay(records, ledger_path=self.ledger, minimum_samples_per_profile=1)
+        independent = offline_replay(records, ledger_path=self.ledger, minimum_samples_per_profile=1)
+        self.assertFalse(independent["comparisons"][0]["eligible"])
+        eligible = offline_replay(records, ledger_path=self.ledger, minimum_samples_per_profile=1,
+                                 minimum_tasks_per_profile=1)
         pair = next(item for item in eligible["comparisons"]
                     if item["lower_profile"] == "luna-low" and item["higher_profile"] == "luna-medium")
         self.assertTrue(pair["eligible"])

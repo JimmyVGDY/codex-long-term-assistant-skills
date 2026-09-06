@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.4.6",
-  "description": "跨项目长期技术助手 V7.4.6：兼容 Codex CLI 0.153.4 与此前十个稳定发行版，以批准派发档位和结果归因治理预算。",
+  "version": "7.5.0",
+  "description": "跨项目长期技术助手 V7.5.0：结构化任务反馈、观察健康门禁、增量分析、跨账本校准与可验证收益闭环。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

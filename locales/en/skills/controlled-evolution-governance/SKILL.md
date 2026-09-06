@@ -11,7 +11,9 @@ description: Use only for cross-task retrospectives, observation governance, mod
 4. Aggregate only exact `project_id + repo_fingerprint` matches. Deduplicate by `event_id`, then aggregate by `task_id`.
 5. Terminal outcomes are only `PASS/BLOCKED/FAILED/CANCELLED/PARTIAL/UNKNOWN`; generic status fields cannot infer outcome.
 6. Hooks retain minimal structured metadata and never raw prompts, full answers, source bodies, patches, tokens, cookies, API keys, or credentials.
-7. Reviewer, Explorer, and Worker share one root-task budget and automatic routing stops at Terra High. Runtime model status remains `UNAVAILABLE` unless a trusted host attestation is correlated to the Hook event.
+7. Reviewer, Explorer, and Worker share one root-task budget and automatic routing stops at Terra High. Never read, infer, store or export the host's actual model identity.
+8. Pass the health gate before analysis. Project automation requires explicit opt-in. Keep NO_CHANGE, WAITING_FOR_TASKS and COOLDOWN quiet; report only meaningful changes, new candidates or actionable failures.
+9. New proposals freeze testable hypotheses. Separate implementation validation from benefit proof and revalidate references, windows, independent samples and quality guardrails on replay. Confirmed causes generate pending regression candidates without automatic implementation or cross-project promotion.
 
 ```text
 Lifecycle Hooks -> TaskOutcomeEvent V3 -> task aggregation

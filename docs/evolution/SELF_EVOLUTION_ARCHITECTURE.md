@@ -1,204 +1,54 @@
-# V7.4 当前自观察与受控演进架构
+# V7.5 自观察与受控演进架构
 
-> 状态：`active`。本页描述 V7.4.6 当前行为；Evolution 组件 Manifest 的 `5.1.0` 和默认策略 `v6.5-default-1` 是内部合同版本。
-
-## 1. 设计目标
-
-当前机制不允许 Agent 任意重写自身，而是建立一条可审计、可停止、可回滚的优化决策链：
+状态：`active`。包版本 V7.5.0；事件继续使用 TaskOutcomeEvent V3；默认策略为 `v7.4.3-default-1`。源码 `runtime/cp_runtime/evolution/` 是唯一权威实现。
 
 ```mermaid
 flowchart TD
-    A[Execution Feedback] --> O[Self Observation]
-    B[Review Results] --> O
-    C[Evidence Ledger] --> O
-    D[Checkpoint / Audit] --> O
-    O --> S[Observation Snapshot]
-    S --> V[Value & Complexity Analysis]
-    V --> P[Optimization Proposal]
-    P --> R[Append-only Proposal Registry]
-    R --> H{Human Decision}
-    H -->|Reject| X[保留历史并关闭]
-    H -->|Defer| W[等待更多证据]
-    H -->|Accept| T[创建独立实施任务]
-    T --> G[Task Envelope + Approval + Execution Guard]
-    G --> I[最小修改与回归]
-    I --> F[Finalization Integrity]
-    F --> A
+    H[生命周期 Hook] --> E[去重事件与任务聚合]
+    V[已有工程验证] --> F[主协调者最终化反馈]
+    F --> E
+    E --> C[身份 策略 封印 覆盖 新鲜度]
+    L[逐账本校验的校准样本] --> C
+    C --> I[有效增量与冷却门禁]
+    I --> S[不可变快照与事务]
+    S --> P[可检验假设与待审提案]
+    P --> D{人工决定}
+    D -->|ACCEPT| T[独立授权的实施任务]
+    T --> R[实施验证证据]
+    R --> B[观察窗口与收益比较]
+    B --> X[追加式生命周期与关闭]
+    P --> N[待审回归候选]
+    B --> N
 ```
 
-## 2. 唯一权威实现
+## 合同与模块
 
-```text
-runtime/cp_runtime/evolution/
-├── contracts.py      # 不可变合同、枚举、哈希
-├── redaction.py      # 敏感字段脱敏
-├── storage.py        # 安全路径、原子写入、哈希链
-├── observation.py    # 结构化自观察
-├── analysis.py       # 确定性价值/复杂度分析
-├── proposal.py       # 优化提案生成
-├── registry.py       # 提案与人工决策注册表
-├── service.py        # Observation → Analysis → Proposal 编排
-├── cli.py            # 命令行接口
-└── manifest.json     # 能力与禁止边界
-```
+| 模块 | 职责 |
+| --- | --- |
+| artifacts / task_feedback | 有界不可变产物、复合任务身份、机械验证与主协调者最终化 |
+| health / observation | 身份、策略、链和封印、覆盖率、新鲜度与信号门槛 |
+| incremental | 项目锁、记录级输入清单、幂等事务、提交水位、显式自动化与失败重试状态 |
+| calibration_sources / delegation_calibration | 每条样本核验自己的预算账本，按相同场景与独立任务比较 |
+| hypothesis / snapshots / benefits | 冻结指标目标、带哈希的观察证据、基线及观察窗口比较 |
+| governed / registry | 决策、实施关联、验证、收益观察和终态的确定性重放 |
+| regression_assets | 根因候选与同类失败后续观察，不执行候选代码 |
 
-其他 Skill、文档和脚本只能调用该目录，不能复制第二套合同和状态解释。
+## 数据与身份
 
-## 3. 输入边界
+数据位于仓库外项目上下文，必须匹配 project_id 与 repo_fingerprint。Profile 与 Hook 共用原始路径、Remote 字符串哈希；历史事件保持原字节。session/turn/task/工作树共同绑定反馈；观察快照使用 session 哈希代号。逐事件保留来源、记录身份、行游标和哈希，分段链直接使用验证后的来源信息。
 
-默认只读取项目上下文目录中允许的 JSONL：
+JSONL、最终反馈、验证证据、快照与收益报告均有读取边界。坏行、哈希失败、身份串线、引用不一致和符号链接失败关闭。Hook 不保存原始 Prompt、回答、命令、输出、代码、Diff 或凭据。验证命令由当前工程任务授权；自动分析只读业务仓库并写仓库外观察产物。
 
-```text
-~/.codex/project-context/<project-id>/
-```
+## 增量与闭环
 
-允许的数据类型包括：
+自动化默认禁用。启用后，SessionEnd worker 完成封印再检查健康与增量；没有有效变化时不制造新快照。锁内先发布事务、快照和候选，再原子提交 receipt；损坏与中断不推进水位。状态变化与新候选通过 notification_required 表达，运行时不直接发送消息。
 
-- execution feedback；
-- review results；
-- evidence events；
-- checkpoint events；
-- audit/outcome records。
+新提案 schema 2.0 带不可变假设与基线。ACCEPTED → IMPLEMENTATION_LINKED → VALIDATION_RECORDED 后可追加多个收益观察，样本不足继续等待。只有最新收益 SUPPORTED 才能 CLOSED/PASS；NOT_SUPPORTED 或 REGRESSED 可关闭为 FAILED。取消与回滚有独立前置条件，终态不可追加。登记与重放均重新核验文件、哈希、任务、提交、时间窗口和质量底线。
 
-默认排除：
+## 统计解释与授权
 
-- evolution 自己产生的 proposal、decision、snapshot 和 assessment；
-- 超过深度与数量上限的文件；
-- 项目上下文目录外文件；
-- 符号链接；
-- 损坏 JSONL；
-- 超过大小或记录数限制的数据源。
+档位和 Reviewer 比较共用角色、职责、难度、风险、上下文分组；每个独立任务等权，保留区间与质量损害指标。困难任务比例不同不构成直接改档依据。旧 Reviewer 总体代理仅为诊断，新候选使用核验后的场景比较。收益是观察关联，不宣称因果。
 
-任意一行损坏都会失败关闭，禁止跳过坏行后继续形成结论。
+旧提案及生命周期保持原合同与哈希，不能将“旧关闭成功”解释为“新收益已证实”。所有提案永久保持 execution_authorization=NONE；人工 ACCEPT 不能授予修改、提交、发布、删除或生产权限。候选回归资产必须在独立授权任务中实现，跨项目晋升单独审核。
 
-## 4. 观察指标
-
-当前运行时能够确定性聚合：
-
-- 已知结果成功率与非成功率；
-- 批准派发档位的结果价值与单位成本；
-- Skill 路由偏差率；
-- 平均修复轮次和高修复任务占比；
-- 重复失败类型及独立任务数；
-- Reviewer 调用量、发现数和单位调用发现率；
-- Skill 使用记录；
-- 数据源数量、观察窗口和缺少 Task ID 的记录。
-
-没有真实数据的字段不会被推断。无法确认“某能力本应被调用但未调用”时，不会仅凭 `usageCount=0` 自动生成退役提案。
-
-V7.4 按信号分别评估证据充足性：派发档位价值回归依赖相邻批准档位的结果与单位成本样本，负面结果依赖已知终态覆盖，路由偏差依赖明确路由观察，Reviewer 收益依赖稳定身份与归因覆盖。某个信号证据不足时只阻断该信号，不无条件否决其他证据充分的候选。
-
-## 5. 置信度
-
-| 等级 | 含义 |
-|---|---|
-| L0 | 没有可用证据 |
-| L1 | 单次或弱信号，只保留观察 |
-| L2 | 至少两个独立任务形成有限证据 |
-| L3 | 达到最小样本和多任务一致性，可生成受控修改或调查候选 |
-| L4 | 长窗口、多来源、足够独立任务形成稳定证据 |
-
-只有 L3/L4 信号可以直接形成 `MODIFY` 候选。L2 默认只能形成调查类建议。
-
-`DEPRECATE` 还必须同时满足：
-
-- 至少 20 次调用；
-- 至少 30 天观察窗口；
-- 至少 20 个独立任务；
-- 至少两个数据源；
-- 零有效发现；
-- L4 置信度。
-
-即使满足，也只会生成“先降为按需、进入观察期”的退役候选，不会自动删除 Reviewer。
-
-## 6. 提案合同
-
-每个提案必须包含：
-
-- Project ID；
-- Assessment ID；
-- 稳定 Fingerprint；
-- 问题和目标资源；
-- Evidence Reference；
-- 价值、复杂度、风险和置信度；
-- 推荐动作；
-- 预期收益；
-- 回滚计划；
-- 验证计划；
-- 禁止边界；
-- `execution_authorization = NONE`；
-- `status = PENDING_REVIEW`。
-
-提案 Fingerprint 用于阻止同一项目、同一问题和同一策略产生多个活跃副本。
-
-## 7. 决策与执行分离
-
-决策事件只允许：
-
-```text
-ACCEPT
-REJECT
-DEFER
-```
-
-每个决策必须记录明确 Actor 和不少于 10 个字符的理由。
-
-`ACCEPT` 不会改变提案中的 `execution_authorization`，也不会调用任何修改函数。当前 CLI 没有 `execute`、`apply`、`autofix` 或 `auto-accept` 子命令。
-
-## 8. 完整性
-
-`proposals.jsonl` 和 `decisions.jsonl` 使用追加式哈希链：
-
-```text
-sequence
-previous_hash
-recorded_at
-payload
-record_hash
-```
-
-读取时验证：
-
-- sequence 连续；
-- previous_hash 相连；
-- record_hash 与实际内容一致；
-- Proposal/Decision 自身 content_hash 一致；
-- Project ID 与注册表一致；
-- Decision 引用的 Proposal 存在。
-
-发现篡改或损坏后立即停止，不会自动修复历史。
-
-## 9. 安全边界
-
-- 存储路径必须位于仓库外项目上下文；
-- 拒绝 `..`、绝对路径和符号链接；
-- 写入采用同目录临时文件、fsync 和 `os.replace`；
-- 注册表采用锁文件和追加写；
-- 密钥、Token、Cookie、私钥和连接串在持久化前脱敏；
-- 所有策略字段采用白名单，未知字段失败；
-- 系统没有网络调用、模型调用和业务仓库写入接口。
-
-## 10. 组件合同与包版本
-
-当前包版本 V7.4.6 继续使用以下基础执行合同：
-
-```text
-Project Profile / Project State
-Task Envelope V2
-Approval
-Evidence Freshness
-Review Packet
-Checkpoint / Memory Projection
-Finalization Integrity
-```
-
-Evolution 组件在此基础上提供：
-
-```text
-Observation
-Analysis
-Proposal
-Human Decision Registry
-```
-
-真正实施被接受的提案时，必须重新进入当前任务执行链，而不是由 Evolution Runtime 越权执行。组件合同版本用于兼容已有状态和数据，不代表网站或安装包仍停留在旧版本。
+操作入口、状态码与示例见 [受控演进操作手册](CONTROLLED_EVOLUTION_OPERATIONS.md)。

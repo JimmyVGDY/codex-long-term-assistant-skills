@@ -1,141 +1,83 @@
-# V7.4 Controlled Evolution Operations Manual
+# V7.5 Controlled Evolution Operations
 
-> Status: `active`. This page applies to V7.4.6. The Evolution component manifest still uses contract version `5.1.0`, and the default policy is `v6.5-default-1`; neither value is the current package version.
+Status: `active`, package V7.5.0. Default and explicit policy entrypoints use `v7.4.3-default-1`. Every proposal retains `execution_authorization=NONE`.
 
-## 1. When to Use It
+## 1. Task feedback
 
-Run evolution analysis only when:
+After project onboarding, UserPromptSubmit supplies `context_root/project_id/session_id/turn_id/task_id/cli_path` when the host provides complete identity. Route validations already required by the engineering task through the following entrypoint; do not add meaningless tests solely for feedback. Replace placeholders with this prompt's actual binding, never the most recent unrelated task.
 
-- the task explicitly asks to analyze recurring failures, cost, or process problems;
-- a release, milestone, or incident review has been completed;
-- at least five records from at least three independent task IDs have accumulated; or
-- model tiers, reviewer combinations, or Skill routing need evaluation.
-
-Do not run the complete analysis automatically after every ordinary task. That would add context cost, state noise, and low-value proposals.
-
-## 2. Recommended Workflow
-
-### Step 1: Confirm Project Identity
-
-Confirm that `project_id` matches the current repository, remote, branch, and Project Profile. Stop if any cross-project contamination is detected.
-
-### Step 2: Run a Read-Only Dry Run
-
-```bash
-python3 -B scripts/evolution.py run \
-  --project-id <project-id> \
-  --context-root ~/.codex/project-context \
-  --dry-run
+```text
+python scripts/evolution.py validate-task --context-root CONTEXT --project-id PROJECT --session-id SESSION --turn-id TURN --task-id TASK -- python -m unittest tests.test_target
+python scripts/evolution.py finalize-task --context-root CONTEXT --project-id PROJECT --session-id SESSION --turn-id TURN --task-id TASK --actor parent:TASK --outcome PASS --failure-category NONE --routing-deviation MATCHED --repair-rounds 0 --evidence feedback/validations/VAL_ID.json
 ```
 
-Check:
+Validation retains a command digest, exit code, duration, Git commit and worktree fingerprint, without command/output bodies, prompts or code. Failed commands or changes during validation produce a nonzero CLI exit. The parent confirms outcome, failure category, repair rounds and routing; counts derive from referenced validation evidence. Earlier failed evidence remains available; final feedback references validation on the current matching worktree.
 
-- which source files were actually read;
-- how many records have no task ID;
-- whether the time window is trustworthy;
-- whether unrelated historical records were included; and
-- whether each signal has enough independent evidence.
+PASS requires valid passing evidence. Missing evidence remains UNKNOWN; never infer success from natural-language answers. Stop verifies report identity, hashes, references and the current worktree. Raw host terminal fields remain unchanged; observation merges the finalized report. Late feedback for an existing task is effective new input. Identical retries are idempotent; conflicting finalization fails.
 
-Evidence sufficiency is evaluated per signal: dispatch-profile value regression requires outcome and unit-cost samples for adjacent approved profiles, negative outcomes require known terminal outcomes, routing deviation requires explicit routing observations, and Reviewer yield requires attributable results. Missing evidence for one signal does not unconditionally block another signal with sufficient evidence.
+Failure categories: `NONE/INPUT_CONTRACT/ROUTING/IMPLEMENTATION/VALIDATION/REVIEW/ENVIRONMENT/UNKNOWN`. Routing: `MATCHED/MISSED/UNNECESSARY/WRONG_DOMAIN/UNKNOWN`. Add `--root-cause-id ROOT --root-cause-confirmed` only after the parent confirms the cause.
 
-### Step 3: Persist Proposals
+## 2. Check observation health first
 
-```bash
-python3 -B scripts/evolution.py run \
-  --project-id <project-id> \
-  --context-root ~/.codex/project-context
+```text
+python scripts/evolution.py health --context-root CONTEXT --project-id PROJECT
+python scripts/evolution.py run --context-root CONTEXT --project-id PROJECT --dry-run
 ```
 
-The runtime does not create another active proposal with the same fingerprint.
+Both run and automatic incremental analysis use the health gate. The low-level observe API preserves historical read compatibility and is not proof that the health gate passed.
 
-### Step 4: Conduct Human Review
+| Status | Meaning and response |
+| --- | --- |
+| READY | Healthy with eligible signals; candidates may be generated |
+| HEALTHY_NO_SIGNAL | Healthy with no eligible signal; remain quiet |
+| INSUFFICIENT_DATA | Task count, window or required coverage is insufficient |
+| IDENTITY_UNAVAILABLE / IDENTITY_MISMATCH | Binding is missing or project/repository differs; stop aggregation |
+| DATA_DAMAGED | Invalid profile, data, reference or seal; retain evidence and stop |
+| SEAL_PENDING | Wait for the worker to seal the pending tail |
+| STALE_DATA | Newest record is over 30 days old by default |
 
-For every proposal, check whether:
+Health includes policy digest, identity, chain integrity, lifecycle, terminal-outcome, reviewer attribution and cost coverage. Each signal uses its own evidence gates. Never recalculate historical hashes, skip bad lines or mix projects to clear a gate.
 
-1. the evidence genuinely supports the problem statement;
-2. correlation has been mistaken for causation;
-3. the conclusion exceeds its project or version scope;
-4. exceptional high-risk cases were omitted;
-5. the expected benefit is measurable;
-6. the rollback and validation plans are executable; and
-7. more data should be collected before changing any rule.
+## 3. Effective increments and project automation
 
-### Step 5: Record the Decision
-
-Use `decide` to record `ACCEPT`, `REJECT`, or `DEFER`:
-
-```bash
-python scripts/evolution.py decide \
-  --project-id <project-id> \
-  --context-root <context-root> \
-  --proposal-id <proposal-id> \
-  --decision <accept|reject|defer> \
-  --actor <human-actor> \
-  --rationale "<human rationale of at least ten characters>"
+```text
+python scripts/evolution.py incremental-run --context-root CONTEXT --project-id PROJECT
+python scripts/evolution.py automation enable --context-root CONTEXT --project-id PROJECT
+python scripts/evolution.py automation tick --context-root CONTEXT --project-id PROJECT
+python scripts/evolution.py automation disable --context-root CONTEXT --project-id PROJECT
 ```
 
-### Step 6: Create a Separate Implementation Task
+Automation is off by default. Opt-in permits checks, aggregation and candidate generation, without implementation authority. The existing SessionEnd seal worker triggers enabled projects; no new service is installed. Defaults are three new independent tasks and a 3,600-second cooldown, in addition to the observer's existing sample/window gates. `--milestone VERSION` explicitly triggers milestone analysis. Policy changes and late feedback/calibration samples are also recognized.
 
-Only after `ACCEPT` may a separately authorized implementation task be created. That task must regenerate its:
+NO_CHANGE, WAITING_FOR_TASKS and COOLDOWN remain quiet. Input fingerprints cover policy, record identities/hashes, feedback and calibration. A project lock protects immutable transaction/snapshot publication and candidate registration before an atomic watermark commit. No-change runs still verify existing outputs. Interrupted runs reuse the transaction without consuming the watermark. Worker analysis failures persist RETRY_REQUIRED in `evolution/automation-last-result.json`; a later effective seal or manual tick can retry. Unchanged failures do not repeatedly notify. Notification flags are consumed by callers; runtime sends no external messages.
 
-- Task Envelope;
-- Git baseline;
-- modification scope;
-- approval;
-- Review Packet;
-- rollback plan; and
-- acceptance criteria.
+## 4. Calibration across independent task ledgers
 
-## 3. Typical Signals and Responses
-
-| Signal | Default response | Prohibited shortcut |
-|---|---|---|
-| Repeated failures | `MODIFY` candidate | Do not simply add retries or raise the model tier |
-| Frequent model escalation | `MODIFY` candidate | Do not make Terra High the default for all tasks |
-| Skill-routing deviation | `MODIFY` candidate | Do not load every Skill by default |
-| Excessive repair rounds | `MODIFY` candidate | Do not remove the round limit |
-| Low reviewer discovery rate | `INVESTIGATE` | Do not remove a reviewer from a small sample |
-| Zero reviewer findings over a long window | `DEPRECATE` candidate | First reduce to on-demand use and observe; never delete automatically |
-| High non-success rate | `INVESTIGATE` | Do not change global rules before stratifying root causes |
-
-## 4. Data-Quality Problems
-
-Retain an observation but do not generate a modification proposal when:
-
-- the record count is below the policy minimum;
-- there are too few independent task IDs;
-- only one failure exists;
-- the reviewer sample is too small;
-- timestamps have no time zone;
-- only aggregate totals exist without traceable evidence; or
-- a data source is corrupt or its hash chain is invalid.
-
-## 5. Failure Handling
-
-### Corrupt JSONL
-
-Stop analysis, locate the failing line, and restore from a trusted backup or repair the source record. Never skip a bad line and continue.
-
-### Invalid Hash Chain
-
-Stop using the registry and restore it from backup. Preserve the damaged file for audit. Never recompute hashes to conceal historical changes.
-
-### Duplicate Proposal
-
-The runtime returns the existing active proposal. If an earlier proposal was `REJECTED` and materially new evidence now exists, generate a proposal in a new observation window.
-
-### Oversized Data Source
-
-Increase the limit only through controlled policy, or create a redacted aggregate first. Do not allow unbounded project-directory scans.
-
-## 6. Validation Commands
-
-```bash
-python scripts/evolution.py validate \
-  --project-id <project-id> \
-  --context-root <context-root>
+```text
+python scripts/evolution.py calibration-source --context-root CONTEXT --project-id PROJECT --ledger calibration/task-a-budget.jsonl --samples calibration/task-a-samples.jsonl
+python scripts/evolution.py calibration-replay --context-root CONTEXT --project-id PROJECT
 ```
 
-## 7. Explicit Limitation
+Register each task's own ledger and sample file under the same project context. Each sample is checked against its completed reservation, approved profile, cost and parent-finalization evidence. Group by role, responsibility, difficulty, risk and context size. Aggregate within each task before equal task weighting; preserve independent-task counts, conservative intervals and harm rates. Unknown scenarios, insufficient samples or overlapping intervals do not recommend profile changes. Global observation and offline replay share the comparison function. Legacy reviewer-wide proxies remain diagnostics and cannot drive new-project automatic candidates.
 
-The current analysis uses deterministic heuristics, not causal inference. It can identify stable patterns worth investigating or optimizing, but it cannot replace human understanding of business context, implementation details, production risk, and organizational constraints.
+## 5. Hypotheses, implementation and benefit
+
+New proposal schema 2.0 freezes baseline snapshot/metric, improvement direction and target, quality guardrails, project/repository/scenario scope, and defaults of five independent tasks and seven observation days. Baseline and follow-up use the same policy with disjoint task cohorts; follow-up starts after implementation validation. Results are observational evidence, not causal proof.
+
+Human `decide --decision accept|reject|defer` requires --proposal-id, --actor and a rationale of at least ten characters. ACCEPT only permits creating a separately authorized implementation task. That task follows the usual envelope, approval, validation and review workflow.
+
+```text
+python scripts/evolution.py snapshot --context-root CONTEXT --project-id PROJECT --window-start START_ISO --window-end END_ISO
+python scripts/evolution.py observe-benefit --context-root CONTEXT --project-id PROJECT --proposal-id PROPOSAL --actor parent:TASK --before BASELINE_PATH --before-hash BASELINE_HASH --after AFTER_PATH --after-hash AFTER_HASH
+python scripts/evolution.py validate --context-root CONTEXT --project-id PROJECT
+```
+
+Use link-implementation for the task and Git baseline, then record-validation for the implementation commit and validate-task evidence. Snapshot windows are timezone-aware half-open intervals. The before reference must be the proposal's frozen baseline snapshot. Observe-benefit and lifecycle readback both revalidate references and metrics.
+
+Implementation PASS is separate from benefit SUPPORTED, NOT_SUPPORTED, REGRESSED or INSUFFICIENT. Closing with PASS requires the latest benefit to be SUPPORTED; insufficient evidence continues observation. Cancellation records an explicit proposal cancellation. Rollback requires validation of a clean worktree at the baseline commit. No observation may be appended after a terminal state. Historical schemas retain their existing hashes and lifecycle, without fabricated benefit contracts.
+
+## 6. Regression candidates from failures
+
+Repeated-failure proposals with parent-confirmed causes produce pending negative-test, routing-case or preflight candidates under `evolution/regression-candidates/`, linked to original reports and validation. Candidates contain conditions and expectations; concrete project fixtures require a separately authorized implementation task. Subsequent benefit reports generate regression-followups with recurrence rates and insufficient-data status. Cross-project promotion requires separate review. Runtime never writes business tests, accepts proposals or modifies rules automatically.
+
+One immutable final report is allowed per project/repository/session/turn/task. A workspace change after finalization requires a new turn. Verified signal changes bypass both the new-task threshold and cooldown; damaged or incomplete lifecycle evidence still fails health gates. Benefit cohorts exclude the implementation task. Registry validation replays regression followups against candidate sources, implementation evidence, independent task cohorts and observation windows.

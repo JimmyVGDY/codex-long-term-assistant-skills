@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.4.6",
+  "version": "7.5.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 182,
-  "payload_digest": "3f9d710de0e542d0bdeecef27930a5fbc1dae710d9a606bca012a58ce2fe5857",
+  "file_count": 192,
+  "payload_digest": "11742fa17f56a3f241cbb6bb2a83c3bc7acde11ae74403841ab41769fc269eba",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "63c1e6d784d2e1455b0bdf7a7c32dc3d3d39eb2c34d16af0c632164afc93eb04",
-      "size": 305
+      "sha256": "da97ec48dd973b29a291e360cb19747091ae41914252f3f73e2fa79bb99b28cc",
+      "size": 298
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -148,8 +148,8 @@
     },
     {
       "path": "skills/controlled-evolution-governance/SKILL.md",
-      "sha256": "03de08b380e913f617cd57bd011f3a8ef17e461eedb4356e33613beca0d5accd",
-      "size": 2560
+      "sha256": "83ec53a2d01a1da23d33f793ba29cd70ef78de1d52b451bedf2af7782939a5e2",
+      "size": 3002
     },
     {
       "path": "skills/controlled-evolution-governance/agents/openai.yaml",
@@ -208,8 +208,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/SKILL.md",
-      "sha256": "f71347d11f5f8df74ec4d9e6832e4c20fc5b2e254f28bed96ac318d20fb0f52f",
-      "size": 3355
+      "sha256": "ce1fde23cdf4fa5aa23b7f48585069b0898553924986aa20763f78a44d2dd128",
+      "size": 3814
     },
     {
       "path": "skills/engineering-quality-delivery/agents/openai.yaml",
@@ -753,8 +753,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "2ea34ea7b3c281fb52327f3b0dd84084704b6125dc487090c9b9c98acf6ddc03",
-      "size": 24052
+      "sha256": "d8b93f0e0a1505b7c33dc90cf613c04d091bd2a3d460b3a57ae9f8c8866f92fe",
+      "size": 25939
     },
     {
       "path": "hooks/hooks.json",
@@ -763,8 +763,8 @@
     },
     {
       "path": "hooks/seal_worker.py",
-      "sha256": "e1afbfb54ba6fe2d4cf2e87ecce8846a4ac10e68396dac770f1039c443fe727b",
-      "size": 2063
+      "sha256": "f2a64ab6fa6c4c399e382765bdb9868a4ec4fb2a948838b3552f28fdbe81f35f",
+      "size": 2514
     },
     {
       "path": "runtime/cp_runtime/__init__.py",
@@ -803,8 +803,8 @@
     },
     {
       "path": "runtime/cp_runtime/delegation_calibration.py",
-      "sha256": "e51e018a9a9e362d7286b5ca8505263f71cc28b08931e29bef6c601f1e20e560",
-      "size": 16504
+      "sha256": "8341d4a208b4a5437d865ceda7abcab98c6a1939d129cc4e730e5011179fdbdc",
+      "size": 21628
     },
     {
       "path": "runtime/cp_runtime/event_archive.py",
@@ -813,8 +813,8 @@
     },
     {
       "path": "runtime/cp_runtime/event_v2.py",
-      "sha256": "ac398a48dc3dd325079f2c570f03eec015199db5b80c47235d0716cbf0ceb97e",
-      "size": 33223
+      "sha256": "be672f69766d4691430031de6dff65425bf6e87a63fa1d60b5e61d33d0697419",
+      "size": 34445
     },
     {
       "path": "runtime/cp_runtime/event_v3.py",
@@ -837,14 +837,49 @@
       "size": 8437
     },
     {
+      "path": "runtime/cp_runtime/evolution/artifacts.py",
+      "sha256": "31163992176c7a6f790fb99159586600252e31a4d9b86c32938bc4a86d983120",
+      "size": 5585
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/benefits.py",
+      "sha256": "f95603706d4d6b0440d3ba1d4241860ba829951f20f159dd84d41524691e1089",
+      "size": 7989
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/calibration_sources.py",
+      "sha256": "5cc2f16906d61e9ff912e7bc02eaf5323845d62742e642e388a625e3aff70544",
+      "size": 4673
+    },
+    {
       "path": "runtime/cp_runtime/evolution/cli.py",
-      "sha256": "d38ef6bebd3a36be866e24aa24b468ceb25178959823518ddba5a634df48e519",
-      "size": 9546
+      "sha256": "7d1284193b841aeaa521b97abcc3ef56184e51e391d311523a330f983b09a4bb",
+      "size": 17185
     },
     {
       "path": "runtime/cp_runtime/evolution/contracts.py",
-      "sha256": "6b68de1919ef26a6630bbb9746713e3df571946b3b099fb0edf4dc70289947e6",
-      "size": 26033
+      "sha256": "1b7010b100bee4a03c0969b96b534491feb394d65aaf8396dba78691a8855d45",
+      "size": 27125
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/governed.py",
+      "sha256": "aee7521da96d55e34b38ff1b7db630a0550e981a89414b6cb3065d495d46b475",
+      "size": 9221
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/health.py",
+      "sha256": "8d110e76e7f3b2216fe470a07676ed10dba320e9081a03315668ed95fe095f3a",
+      "size": 4211
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/hypothesis.py",
+      "sha256": "d302a81d04fde81d952cf28761f7fa12a5b3220a1af03056321f586594e57aef",
+      "size": 6000
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/incremental.py",
+      "sha256": "fdcd1889322adeb350f8944a7c550894db2b1d9d787f5424ff69f29b7ba5e650",
+      "size": 11723
     },
     {
       "path": "runtime/cp_runtime/evolution/lifecycle.py",
@@ -853,18 +888,18 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/manifest.json",
-      "sha256": "3ddfaa929a4dcb6b4b1e5345c6536cbb23323f08a55fc93c8747eaf8bc07a20d",
-      "size": 889
+      "sha256": "3cbf16f03c3b48cb28ad0dbc407f1a299fe76b70329f52a5c15b1ee94ad71027",
+      "size": 1143
     },
     {
       "path": "runtime/cp_runtime/evolution/observation.py",
-      "sha256": "131f4207869f820e4d5f6e18a894cecba3f47bebadfc4cd9c3db38dad38a76cc",
-      "size": 61516
+      "sha256": "d5c1c34c65d16214a217215df0e10d7700566092f2c64caafa6645f67c5ff3d1",
+      "size": 66475
     },
     {
       "path": "runtime/cp_runtime/evolution/proposal.py",
-      "sha256": "5640d853042f6ace58b73c5524be0195074860c509b41fecd5c786abbd5bebbe",
-      "size": 8338
+      "sha256": "35046ed6264e3a007ed80c5611a668012d31c1dfe3a6efb55b725e8a295e4389",
+      "size": 8440
     },
     {
       "path": "runtime/cp_runtime/evolution/redaction.py",
@@ -873,18 +908,33 @@
     },
     {
       "path": "runtime/cp_runtime/evolution/registry.py",
-      "sha256": "a8da67b98e4482b86d7b3ca866a34a4945c1621df96aa083a8a585c694ac89e5",
-      "size": 14964
+      "sha256": "ad9e42634245cdffa97fbd05b029d7c5304b0ac7f1286e09aac8f8b8c1e40977",
+      "size": 19798
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/regression_assets.py",
+      "sha256": "0a787c18255812ab88afa7d70d5342327462793e94f06831cf0b13e147a37d64",
+      "size": 8203
     },
     {
       "path": "runtime/cp_runtime/evolution/service.py",
-      "sha256": "f8d61e1b10c3c1ae142265cffb8dd21074336e7d6c50b21ca008b8bfe5e80e7f",
-      "size": 6237
+      "sha256": "ab4bb1953d32bf9e8f571b8b74fc694f4acd636cf17699778ba5a730eabe37be",
+      "size": 7597
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/snapshots.py",
+      "sha256": "ea04b7d40cc1a3bce707ed085851a9ea74f2406ca22ef3b0f75d6dab6076994d",
+      "size": 2302
     },
     {
       "path": "runtime/cp_runtime/evolution/storage.py",
-      "sha256": "dc089abbab0ba2fba3de36600d8a2957f23b34341599c42ef9c25b0555d02ffb",
-      "size": 13158
+      "sha256": "a4538a504bd9bd4656fb5b3e152b6e2b21b109bef50e88ed598a67bf2bc641b2",
+      "size": 13667
+    },
+    {
+      "path": "runtime/cp_runtime/evolution/task_feedback.py",
+      "sha256": "be9c87d07725f1e806256687de1960d9964dad586c9a418a77a24dbb062c8676",
+      "size": 10896
     },
     {
       "path": "runtime/cp_runtime/feedback.py",

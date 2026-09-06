@@ -1,0 +1,14 @@
+# V7.5.0 Release Notes
+
+Theme: task feedback and measured optimization benefits.
+
+- Fix Profile/Hook repository fingerprint disagreement and unify default/explicit policy.
+- Add task binding, structured validation evidence and parent-finalized feedback; Stop links reports while preserving host terminal fields.
+- Check identity, policy, seals, coverage and freshness before analysis. Explicit opt-in enables incremental, cooled-down analysis and idempotent recovery.
+- Freeze testable proposal hypotheses. Separate implementation validation from observed benefit, revalidate references on replay, and cover cancellation, rollback and terminal states.
+- Verify each calibration sample against its own ledger; compare matching scenarios within one project/repository using independent-task weights and uncertainty.
+- Generate pending regression candidates and recurrence follow-ups from confirmed causes, retaining execution_authorization=NONE.
+
+The frozen Codex CLI 0.153.4 plus ten preceding stable-release window is retained; no broader host support is claimed. Automation defaults to disabled. Historical event/proposal hashes remain unchanged. Analysis without valid project identity now returns a blocked state.
+
+See the [validation report](VALIDATION_REPORT.md) and [audit report](AUDIT_REPORT.md) for delivery evidence.

@@ -12,5 +12,6 @@ description: Use when behavior changes or work includes validation, Git, approva
 5. A changed baseline invalidates affected validation, Review Packets, and review conclusions.
 6. Treat commit, push, deployment, restart, data write, production operation, and effective state as separate authorization and readback boundaries.
 7. Regenerate final status from current evidence; never promote modified to deployed or effective.
+8. When the host provides a complete feedback binding and engineering validation is already required, run it through `scripts/evolution.py validate-task`. Before the final reply, the parent uses `finalize-task` to confirm outcome, failure category, repair rounds and routing. Derive counts from evidence without retaining command/output bodies. Missing binding or evidence remains UNKNOWN; do not add meaningless validation or full evolution analysis to ordinary tasks.
 
 Use Luna for mechanical evidence collection, Terra Medium for ordinary delivery judgment, and Terra High only for production, irreversible migration, complex rollback, or blocking conflicts. Stronger process gates do not automatically increase model effort.

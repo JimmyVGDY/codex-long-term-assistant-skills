@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.4.6",
-  "release_name": "Codex CLI 0.153.4 稳定版兼容",
+  "version": "7.5.0",
+  "release_name": "自观察反馈与优化收益闭环",
   "generated_for": "Codex Plugin-first cross-project engineering assistant with an immutable eleven-stable-release host registry, isolated Plugin preflight, schema-3 host binding and drift detection, explicit Hook aliases, one root-task weighted delegation budget, and a Luna/Terra High automatic ceiling",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -314,9 +314,9 @@
     "evolution_runtime": "runtime/cp_runtime/evolution",
     "evolution_cli": "scripts/evolution.py",
     "controlled_evolution_runtime": "runtime/cp_runtime/evolution",
-    "controlled_evolution_cli": "scripts/evolution.py"
-    ,"integrity_key_cli": "scripts/integrity-key.py"
-    ,"event_seal_cli": "scripts/event-seal.py"
+    "controlled_evolution_cli": "scripts/evolution.py",
+    "integrity_key_cli": "scripts/integrity-key.py",
+    "event_seal_cli": "scripts/event-seal.py"
   },
   "subagent_context_model": {
     "independent_context": true,
@@ -441,9 +441,27 @@
       "start_refund_policy": "no-refund-after-start",
       "runtime_unverified_policy": "requested-profile-cost-only",
       "hard_profiles": {
-        "LIGHT": {"max_units": 4, "max_dispatches": 2, "max_parallel": 1, "max_depth": 1, "max_terra_high": 0},
-        "STANDARD": {"max_units": 16, "max_dispatches": 6, "max_parallel": 3, "max_depth": 2, "max_terra_high": 1},
-        "STRICT": {"max_units": 32, "max_dispatches": 10, "max_parallel": 3, "max_depth": 2, "max_terra_high": 1}
+        "LIGHT": {
+          "max_units": 4,
+          "max_dispatches": 2,
+          "max_parallel": 1,
+          "max_depth": 1,
+          "max_terra_high": 0
+        },
+        "STANDARD": {
+          "max_units": 16,
+          "max_dispatches": 6,
+          "max_parallel": 3,
+          "max_depth": 2,
+          "max_terra_high": 1
+        },
+        "STRICT": {
+          "max_units": 32,
+          "max_dispatches": 10,
+          "max_parallel": 3,
+          "max_depth": 2,
+          "max_terra_high": 1
+        }
       },
       "proposal_execution_authorization": "NONE"
     },
@@ -534,7 +552,8 @@
     "5.0.0",
     "4.2.0",
     "4.1.0",
-    "4.0.0"
+    "4.0.0",
+    "7.4.6"
   ],
   "release_validation": {
     "python_syntax": true,
@@ -571,18 +590,18 @@
     "deterministic_zip_two_build_test": true,
     "release_attestation_tamper_test": true,
     "real_lifecycle_attestation": true,
-    "neutral_language_gate": true
-    ,"host_model_identity_privacy_tests": true
-    ,"detached_event_seal_rotation_tests": true
-    ,"reviewer_calibration_identity_tests": true
-    ,"dispatch_policy_acceptance_contract": true
-    ,"windows_spawn_multiprocess_fault_tests": true
-    ,"forced_termination_lock_recovery_tests": true
-    ,"power_loss_key_rotation_tests": true
-    ,"delayed_session_end_signed_seal_queue": true
-    ,"reviewer_calibration_v4_tests": true
-    ,"non_destructive_event_archive_tests": true
-    ,"capacity_budget_and_cross_project_health_tests": true
+    "neutral_language_gate": true,
+    "host_model_identity_privacy_tests": true,
+    "detached_event_seal_rotation_tests": true,
+    "reviewer_calibration_identity_tests": true,
+    "dispatch_policy_acceptance_contract": true,
+    "windows_spawn_multiprocess_fault_tests": true,
+    "forced_termination_lock_recovery_tests": true,
+    "power_loss_key_rotation_tests": true,
+    "delayed_session_end_signed_seal_queue": true,
+    "reviewer_calibration_v4_tests": true,
+    "non_destructive_event_archive_tests": true,
+    "capacity_budget_and_cross_project_health_tests": true
   },
   "controlled_evolution": {
     "runtime": "runtime/cp_runtime/evolution",
@@ -685,5 +704,17 @@
     "release_builder": "scripts/build-release.py",
     "release_attestation": "scripts/release-attestation.py",
     "lifecycle_acceptance": "scripts/lifecycle-acceptance.py"
+  },
+  "controlled_evolution_v75": {
+    "task_feedback_schema": "task-feedback/1",
+    "health_schema": "evolution-health/1",
+    "proposal_schema": "2.0",
+    "hypothesis_schema": "optimization-hypothesis/1",
+    "benefit_schema": "benefit-report/1",
+    "automation_default": "disabled",
+    "policy_version": "v7.4.3-default-1",
+    "cross_ledger_calibration": true,
+    "automatic_self_modification": false,
+    "execution_authorization": "NONE"
   }
 }

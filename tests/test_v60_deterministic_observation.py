@@ -12,6 +12,9 @@ from cp_runtime.evolution.observation import observe_project, ObservationError
 from cp_runtime.evolution.storage import exclusive_write_json, StorageError
 from cp_runtime.evolution.service import ControlledEvolutionService
 from cp_runtime.evolution.registry import ProposalRegistry
+from tests.evolution_legacy_fixture import legacy_service
+
+ControlledEvolutionService = legacy_service(ControlledEvolutionService)
 
 class V60DeterministicObservationTests(unittest.TestCase):
     def setUp(self):
