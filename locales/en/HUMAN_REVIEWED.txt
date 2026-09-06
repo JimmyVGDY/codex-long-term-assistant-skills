@@ -306,3 +306,6 @@ docs/releases/RELEASE_AUTOMATION.en.md
 skills/controlled-evolution-governance/references/task-outcome-event-v3.md
 
 docs/USER_GUIDE_V7.5.md
+docs/releases/v7.5.1/RELEASE_NOTES.md
+docs/releases/v7.5.1/VALIDATION_REPORT.md
+docs/releases/v7.5.1/AUDIT_REPORT.md

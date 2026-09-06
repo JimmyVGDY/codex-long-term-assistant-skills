@@ -22,7 +22,7 @@ from cp_runtime.evolution.contracts import to_primitive
 from cp_runtime.evolution.incremental import run_incremental, configure_automation, automation_tick, LAST_RESULT
 from cp_runtime.evolution.regression_assets import create_candidates, verify_candidate
 from cp_runtime.evolution.task_feedback import run_validation, finalize_feedback
-from cp_runtime.event_v3 import append_event
+from cp_runtime.event_v3 import append_event, OwnerTokenLock
 
 
 class CrossLedgerTests(EvolutionProjectCase):
@@ -135,9 +135,40 @@ class IncrementalRecoveryTests(EvolutionProjectCase):
     def test_concurrent_ticks_commit_one_transaction(self):
         EvolutionHealthTests.populate(self)
         service = ControlledEvolutionService(self.project.parent, self.project.name)
+
+        def attempt(_):
+            try:
+                return run_incremental(service)["status"]
+            except TimeoutError:
+                return "LOCK_TIMEOUT"
+
         with ThreadPoolExecutor(max_workers=2) as executor:
-            results = list(executor.map(lambda _: run_incremental(service), range(2)))
-        self.assertEqual(["ANALYZED", "NO_CHANGE"], sorted(result["status"] for result in results))
+            results = list(executor.map(attempt, range(2)))
+        self.assertEqual(1, results.count("ANALYZED"))
+        self.assertLessEqual(results.count("LOCK_TIMEOUT"), 1)
+        results = [run_incremental(service)["status"] if result == "LOCK_TIMEOUT" else result
+                   for result in results]
+        self.assertEqual(["ANALYZED", "NO_CHANGE"], sorted(results))
+        self.assertEqual(1, len(list((self.project / "evolution/transactions").glob("*.json"))))
+
+    def test_lock_timeout_preserves_watermark_and_worker_retry_is_idempotent(self):
+        from cp_runtime.evolution.incremental import RECEIPT
+        EvolutionHealthTests.populate(self)
+        configure_automation(self.project, enabled=True)
+        service = ControlledEvolutionService(self.project.parent, self.project.name)
+        with OwnerTokenLock(self.project / "evolution/incremental.guard"):
+            with self.assertRaises(TimeoutError):
+                run_incremental(service)
+            self.assertFalse((self.project / RECEIPT).exists())
+            self.assertFalse(list((self.project / "evolution/transactions").glob("*.json")))
+            first, second = automation_tick(self.project), automation_tick(self.project)
+            self.assertEqual("RETRY_REQUIRED", first["status"])
+            self.assertEqual("RETRY_REQUIRED", second["status"])
+            self.assertTrue(first["notification_required"])
+            self.assertFalse(second["notification_required"])
+            self.assertFalse((self.project / RECEIPT).exists())
+        self.assertEqual("ANALYZED", automation_tick(self.project)["status"])
+        self.assertEqual("NO_CHANGE", run_incremental(service)["status"])
         self.assertEqual(1, len(list((self.project / "evolution/transactions").glob("*.json"))))
 
     def test_worker_failure_is_durable_quiet_on_repeat_and_retryable(self):

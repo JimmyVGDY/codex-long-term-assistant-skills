@@ -1,6 +1,6 @@
 # Release evidence archive
 
-V7.5.0 is the current release, themed “Task feedback and measured optimization benefits”. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
+V7.5.1 is the current release, themed “Task feedback and measured optimization benefits”. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
 
 Chinese: [README.md](README.md)
 
@@ -10,7 +10,8 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.en.md) for v
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
-| 7.5.0 | [Notes](v7.5.0/RELEASE_NOTES.md) | [Audit](v7.5.0/AUDIT_REPORT.md) | [Validation](v7.5.0/VALIDATION_REPORT.md) | Local validation, logical-readonly review and installed paths pass; remote evidence is separate | [JSON](v7.5.0/BUILD_INFO.json) | [JSON](v7.5.0/PACKAGE_VALIDATION.json) |
+| 7.5.1 | [Notes](v7.5.1/RELEASE_NOTES.md) | [Audit](v7.5.1/AUDIT_REPORT.md) | [Validation](v7.5.1/VALIDATION_REPORT.md) | Six focused contention/recovery tests passed; see reports for full validation and installation | [JSON](v7.5.1/BUILD_INFO.json) | [JSON](v7.5.1/PACKAGE_VALIDATION.json) |
+| 7.5.0 | [Notes](v7.5.0/RELEASE_NOTES.md) | [Audit](v7.5.0/AUDIT_REPORT.md) | [Validation](v7.5.0/VALIDATION_REPORT.md) | Tagged candidate not published; contention timing assumption corrected in 7.5.1 | [JSON](v7.5.0/BUILD_INFO.json) | [JSON](v7.5.0/PACKAGE_VALIDATION.json) |
 | 7.4.6 | [Open](v7.4.6/RELEASE_NOTES.en.md) | [Open](v7.4.6/AUDIT_REPORT.en.md) | [Open](v7.4.6/VALIDATION_REPORT.en.md) | Windows 0.153.4 transactional install, Plugin readback, and isolated 0.153.4 cell pass; full matrix/tag/Release require separate readback | [JSON](v7.4.6/BUILD_INFO.json) | [JSON](v7.4.6/PACKAGE_VALIDATION.json) |
 | 7.4.5 | [Open](v7.4.5/RELEASE_NOTES.en.md) | [Open](v7.4.5/AUDIT_REPORT.en.md) | [Open](v7.4.5/VALIDATION_REPORT.en.md) | Windows 0.153.3 transactional install, Plugin readback, isolated 0.153.3 cell, and package validation pass; full matrix/tag/Release require separate readback | [JSON](v7.4.5/BUILD_INFO.json) | [JSON](v7.4.5/PACKAGE_VALIDATION.json) |
 | 7.4.4 | [Open](v7.4.4/RELEASE_NOTES.en.md) | [Open](v7.4.4/AUDIT_REPORT.en.md) | [Open](v7.4.4/VALIDATION_REPORT.en.md) | Local package-only validation and logical-readonly review passed; remote CI/tag/Release readback pending; historical title backfill complete | [JSON](v7.4.4/BUILD_INFO.json) | [JSON](v7.4.4/PACKAGE_VALIDATION.json) |

@@ -5,6 +5,10 @@
 None.
 
 
+## 7.5.1 - 2026-09-06
+
+- Correct the concurrent acceptance timing assumption: retry a bounded two-second lock timeout after the other call finishes, and verify a single committed transaction. Add forced-contention coverage for unchanged watermarks and idempotent worker recovery. The lock bound and runtime watermark protocol retain their existing contract.
+
 ## 7.5.0 - 2026-09-06
 
 - Windows CI exposed mixed short-path aliases (such as RUNNER~1) and full paths in relative references. Feedback and regression enumeration now use fixed references beneath checked directories, and project identity uses the canonical name of the verified Profile path. A real Windows short-path regression passed. Post-fix focused tests and installation readback are recorded separately; the first complete package run belongs to the preceding candidate, and final full-suite evidence comes from CI for the fix commit.
