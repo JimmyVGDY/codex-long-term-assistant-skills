@@ -12,6 +12,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.6.2 | [Notes](v7.6.2/RELEASE_NOTES.md) | [Audit](v7.6.2/AUDIT_REPORT.md) | [Validation](v7.6.2/VALIDATION_REPORT.md) | 当前仅记录实现与定向测试；完整验证与发布后读回待执行 | [JSON](v7.6.2/BUILD_INFO.json) | [JSON](v7.6.2/PACKAGE_VALIDATION.json) |
 | 7.6.1 | [Notes](v7.6.1/RELEASE_NOTES.md) | [Audit](v7.6.1/AUDIT_REPORT.md) | [Validation](v7.6.1/VALIDATION_REPORT.md) | 构建时验证与发布后读回分列 | [JSON](v7.6.1/BUILD_INFO.json) | [JSON](v7.6.1/PACKAGE_VALIDATION.json) |
 | 7.6.0 | [Notes](v7.6.0/RELEASE_NOTES.md) | [Audit](v7.6.0/AUDIT_REPORT.md) | [Validation](v7.6.0/VALIDATION_REPORT.md) | 限定候选验收已完成；正式版本发布单独核验 | [JSON](v7.6.0/BUILD_INFO.json) | [JSON](v7.6.0/PACKAGE_VALIDATION.json) |
 | 7.5.1 | [Notes](v7.5.1/RELEASE_NOTES.md) | [Audit](v7.5.1/AUDIT_REPORT.md) | [Validation](v7.5.1/VALIDATION_REPORT.md) | 6 项锁竞争及恢复定向回归通过；完整验证与安装记录见报告 | [JSON](v7.5.1/BUILD_INFO.json) | [JSON](v7.5.1/PACKAGE_VALIDATION.json) |

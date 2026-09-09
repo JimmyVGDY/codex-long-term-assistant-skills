@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.6.1"
+VERSION = "7.6.2"
 MARKETPLACE = "cp-assistant-local"
 COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, VERSION)
@@ -487,10 +487,22 @@ def managed_global_text(existing: str) -> str:
     return ((prefix + "\n\n") if prefix else "") + managed + "\n"
 
 
-def hook_fragment(script_path: Path) -> Dict[str, Any]:
+def _native_async_user_prompt_submit_supported(profile: Optional[Mapping[str, Any]]) -> bool:
+    """中文：只有注册表明确给出官方证据时才启用可选 async Hook。
+
+    English: Enable the optional async Hook only with explicit official registry evidence.
+    """
+    capability = (profile or {}).get("native_async_user_prompt_submit")
+    return (
+        isinstance(capability, Mapping)
+        and capability.get("status") == "SUPPORTED"
+        and capability.get("evidence") in {"OFFICIAL_SOURCE_TAG", "OFFICIAL_DOCS_CURRENT"}
+    )
+
+
+def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     command = '"%s" "%s"' % (sys.executable.replace('"', '\\"'), str(script_path).replace('"', '\\"'))
-    return {
-        "UserPromptSubmit": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
+    fragment = {
         "PreToolUse": [{"matcher": "Agent|spawn_agent|apply_patch|Edit|Write", "hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStart": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
@@ -498,16 +510,23 @@ def hook_fragment(script_path: Path) -> Dict[str, Any]:
         "Interrupt": [{"hooks": [{"type": "command", "command": command, "timeout": 3}]}],
         "SessionEnd": [{"hooks": [{"type": "command", "command": command, "timeout": 3}]}],
     }
+    # 中文：UserPromptSubmit 是可选能力；没有可验证的宿主 profile 时完全不注册。
+    # English: UserPromptSubmit is optional; omit it entirely without a verified host profile.
+    if _native_async_user_prompt_submit_supported(profile):
+        fragment["UserPromptSubmit"] = [{"hooks": [{
+            "type": "command", "command": command, "timeout": 5, "async": True,
+        }]}]
+    return fragment
 
 
-def merge_hooks(path: Path, script_path: Path) -> None:
+def merge_hooks(path: Path, script_path: Path, profile: Optional[Mapping[str, Any]] = None) -> None:
     data = load_json(path, {}) or {}
     if not isinstance(data, dict):
         raise InstallError("现有 hooks.json 不是 JSON 对象")
     hooks = data.setdefault("hooks", {})
     if not isinstance(hooks, dict):
         raise InstallError("现有 hooks.json 的 hooks 不是对象")
-    fragment = hook_fragment(script_path)
+    fragment = hook_fragment(script_path, profile)
     # 中文：先移除本包旧命令，避免重复安装。
     # English: Remove commands from earlier package versions before adding new entries.
     for event, entries in list(hooks.items()):
@@ -909,6 +928,18 @@ def _codex_version_text() -> str:
     return (result.stdout or result.stderr or "").rstrip("\r\n")
 
 
+def _standalone_hook_profile() -> Optional[Dict[str, Any]]:
+    """中文：仅用 ``codex --version`` 解析 standalone Hook 能力，不触发 Plugin CLI。
+
+    English: Resolve standalone Hook capability only from ``codex --version`` without invoking Plugin CLI.
+    """
+    try:
+        version = parse_codex_version_output(_codex_version_text())
+        return profile_for_version(COMPATIBILITY_REGISTRY, version)
+    except (CompatibilityError, InstallError, OSError):
+        return None
+
+
 def _plugin_activation_status(expected_version: Optional[str] = None) -> Tuple[bool, str]:
     result = _run_codex(["plugin", "list", "--json"], check=False)
     if result.returncode != 0:
@@ -1254,6 +1285,12 @@ def _require_plugin_host() -> Dict[str, Any]:
         raise InstallError("Plugin 模式仅支持已验证的 Codex CLI %s；当前: %s" %
                            (", ".join(SUPPORTED_CODEX_VERSIONS),
                             profile["codex_version_output"] or "未知"))
+    try:
+        version_profile = profile_for_version(COMPATIBILITY_REGISTRY, str(profile["codex_version"]))
+    except CompatibilityError as exc:
+        raise InstallError("Plugin 宿主兼容档案无效，拒绝静态 async Hook 安装") from exc
+    if not _native_async_user_prompt_submit_supported(version_profile):
+        raise InstallError("当前 Codex 版本缺少已验证的 UserPromptSubmit async 能力，拒绝 Plugin 安装")
     if not profile["version_contract_ok"] or profile["command_contract_errors"]:
         raise InstallError(
             "Codex CLI 版本或 Plugin 子命令摘要与冻结兼容注册表不一致，拒绝安装: %s" %
@@ -1391,7 +1428,10 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             dst = ch / "runtime" / "cp_runtime"; copy_atomic(ROOT / "runtime" / "cp_runtime", dst); _record_applied(journal, "runtime", dst)
             dst = ch / "cp-assistant-hooks" / "cp_hook.py"; copy_atomic(ROOT / "hooks" / "cp_hook.py", dst); _record_applied(journal, "hook-script", dst)
             dst = ch / "cp-assistant-hooks" / "cp_gate.py"; copy_atomic(ROOT / "hooks" / "cp_gate.py", dst); _record_applied(journal, "gate-worker", dst)
-            merge_hooks(ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py")
+            merge_hooks(
+                ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py",
+                _standalone_hook_profile(),
+            )
             _record_applied(journal, "hooks-json", ch / "hooks.json")
         else:
             market = plugin_marketplace_root()

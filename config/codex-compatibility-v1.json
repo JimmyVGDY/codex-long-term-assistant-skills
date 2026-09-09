@@ -1,6 +1,6 @@
 {
     "schema_version": 1,
-    "package_version": "7.6.1",
+  "package_version": "7.6.2",
     "window_policy": {
         "anchor": "0.153.4",
         "preceding_stable_releases": 10,
@@ -182,6 +182,7 @@
             "plugin_cli_profile": "remote-capable-v2",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.153.4", "commit_sha": "3d2ee51ca2d5db578f328aa75e20aa22c0197c9a", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "fd05ee932079df2b5128f170beaf0d8e5c8630a56eadbcf9de9f25806e772b04", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.153.4.tgz",
                 "npm_integrity": "sha512-wbHDmit7S/YvBGVX1DQmk13xtWblZ2cApeJ/pB7xDZ10Cna+DZc5ij7f0F4OxdsXN4FW1oLT48OpogUI1+8Y2w==",
@@ -208,6 +209,7 @@
             "plugin_cli_profile": "remote-capable-v2",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.153.3", "commit_sha": "b1a547b1f73ce86205d9222ac19cff334b3b7a2e", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "fd05ee932079df2b5128f170beaf0d8e5c8630a56eadbcf9de9f25806e772b04", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.153.3.tgz",
                 "npm_integrity": "sha512-SwQns+YIXvaXV4a6RUd9twgTPJkkfZpuTNEkTtIkwBnfw6fpT61+d6gU1WHZxK6vWFNqJCBoJEP69FIAsoPduA==",
@@ -234,6 +236,7 @@
             "plugin_cli_profile": "remote-capable-v2",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.153.2", "commit_sha": "657a993cbee87acf52d14b758ce49dbd46d1b8eb", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "fd05ee932079df2b5128f170beaf0d8e5c8630a56eadbcf9de9f25806e772b04", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.153.2.tgz",
                 "npm_integrity": "sha512-IRocJlE+jCZGYHwIJWBja2nDswTSZY4sNddQgU5xiR/mVWxo5WcO8pqcajXJea1XDoNK9CaVzizVhUxDhFkU6g==",
@@ -260,6 +263,7 @@
             "plugin_cli_profile": "remote-capable-v2",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.153.1", "commit_sha": "985641272869835d01d025ed2a218fbbce35fa9f", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "fd05ee932079df2b5128f170beaf0d8e5c8630a56eadbcf9de9f25806e772b04", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.153.1.tgz",
                 "npm_integrity": "sha512-d5txIVzNIkZnAmCiqxksAACqm+xUvq83YGKd3YYAF9ISXWkC7hsiPXpSD24ypKOqpvbZiScMSq0e0p4TycczNw==",
@@ -286,6 +290,7 @@
             "plugin_cli_profile": "remote-capable-v2",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.153.0", "commit_sha": "41e22fee981a63b3698df7ed36bad393cda24715", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "fd05ee932079df2b5128f170beaf0d8e5c8630a56eadbcf9de9f25806e772b04", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.153.0.tgz",
                 "npm_integrity": "sha512-k55kUZaclNi5ceUStSVuyW834ruA6AEdzTK7Xi3M1mOyXokUmq1sJLXm1RJ3XD2S7bRPeF1EXNsYB5Qxwus0mw==",
@@ -312,6 +317,7 @@
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.152.1", "commit_sha": "5adb68a49933ae446bf11935662c83dba55a0804", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "ddc6515359e6e278355cef6a7a9bb89e2677dfe9d7744f64add5518dff20b5b4", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.152.1.tgz",
                 "npm_integrity": "sha512-dSwQzl6JgsFe8L9i8xUnwRz9Vy8gn4UvXFU9xq2IJ1eC7zsSttqQ2SGq49ZZIjEyZQ0LZjCs6Bvtxort2Iyebg==",
@@ -338,6 +344,7 @@
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.152.0", "commit_sha": "316795b3cf2a45e90d121d9f46499d4658b2645c", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "ddc6515359e6e278355cef6a7a9bb89e2677dfe9d7744f64add5518dff20b5b4", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.152.0.tgz",
                 "npm_integrity": "sha512-Vx0tg/J5SbxYYGJazTtL/XySK9Dlqc5KW1MZM71NMwVci/4F1ap+FfSKPFTlrICEtOTuq3KNcWSdv9oMGdPuRw==",
@@ -364,6 +371,7 @@
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.151.0", "commit_sha": "78c290807ce710180111df227df3b7a4fe845452", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "ddc6515359e6e278355cef6a7a9bb89e2677dfe9d7744f64add5518dff20b5b4", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.151.0.tgz",
                 "npm_integrity": "sha512-mhtWmOZRdmWD1jPbLDnQb59BsaVP/V+lXe/OFNR9ZcLZU0UCiBwn98Fcav1ss7sDIlHkuqj6nWd44IPeXoOhJA==",
@@ -390,6 +398,7 @@
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.150.1", "commit_sha": "90854393966b21e9ebfd21b122334eb09a20c93d", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "ddc6515359e6e278355cef6a7a9bb89e2677dfe9d7744f64add5518dff20b5b4", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.150.1.tgz",
                 "npm_integrity": "sha512-knrbhpJH3mEULAVStcZW4F5WEt9MQhBj6KFOonBSIUGTLcHlu9CE7FRmr95E33y94+sWNZSeVBBV/kYvlfgxkQ==",
@@ -416,6 +425,7 @@
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.150.0", "commit_sha": "3b3b4f8fb3f6403e72c2d0533ed0d2f309c59717", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "ddc6515359e6e278355cef6a7a9bb89e2677dfe9d7744f64add5518dff20b5b4", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.150.0.tgz",
                 "npm_integrity": "sha512-AWrJENpRsvowLZeCEicYEmt4xD7EvSIX34+1DmFn7ZUwuX0Ku0/DMgouPHu5YKxJJF7/ixC1cIAu3oLSd8/H2g==",
@@ -442,6 +452,7 @@
             "plugin_cli_profile": "snapshot-v1",
             "plugin_json_profile": "plugin-list-v1",
             "hook_profile": "hook-json-v1",
+            "native_async_user_prompt_submit": {"status": "SUPPORTED", "evidence": "OFFICIAL_SOURCE_TAG", "registration": "OPTIONAL_USER_PROMPT_SUBMIT", "repository": "https://github.com/openai/codex", "tag": "rust-v0.149.1", "commit_sha": "ff29a44391deccde0aba0f8390337d7f3c319ea4", "source_path": "codex-rs/hooks/src/engine/discovery.rs", "source_sha256": "1749e808881f4e33c4b72e4a430f4837dfffed1439c64bec69af88f3a416b713", "verified_assertions": ["USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"]},
             "artifact": {
                 "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.149.1.tgz",
                 "npm_integrity": "sha512-6q5pbcpFbJbqOpkubSDBwXmktQ55aD8eUzGzBF1zASob2DjwhBKDSNGtdZKalfrNJUdTDTPDMmzCXEXs5tMBYA==",

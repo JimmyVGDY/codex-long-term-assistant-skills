@@ -2,7 +2,7 @@
 
 # V7.6 Current System Architecture and Security Boundaries
 
-> Status: `active`. This page describes the current V7.6.1 package architecture. Earlier design and release evidence is retained only for historical traceability.
+> Status: `active`. This page describes the current V7.6.2 package architecture. Earlier design and release evidence is retained only for historical traceability.
 
 ## 1. Layers
 
@@ -24,7 +24,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-The package version is V7.6.1. Names such as `TaskOutcomeEvent V3` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
+The package version is V7.6.2. Names such as `TaskOutcomeEvent V3` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
 
 ## 2. Skill routing
 
@@ -50,7 +50,7 @@ Observation first verifies the hash chain or HMAC, checks `project_id + repo_fin
 
 ## 4. Hook and model boundaries
 
-`PreToolUse` checks the automatic sub-agent model ceiling before dispatch. `SubagentStart` and `SubagentStop` record minimal runtime facts, while the other original observation Hooks form lifecycle events; the additional `Interrupt` entry handles optional-gate cancellation. The Hook guard is a workflow protection, not an unbypassable platform security boundary.
+`PreToolUse` checks the automatic sub-agent model ceiling before dispatch. `SubagentStart` and `SubagentStop` record minimal runtime facts, while the other observation Hooks form lifecycle events; `Interrupt` remains host-controlled and does not write legacy gate-cancellation state. The Hook guard is a workflow protection, not an unbypassable platform security boundary.
 
 Model evidence keeps three meanings separate:
 
@@ -99,15 +99,14 @@ A proposal superseded by newer evidence may become `SUPERSEDED`. No state change
 
 ## Optional project gate and effective loading
 
-The registration contains seven entry points, while project gates default to disabled. Once enabled, `UserPromptSubmit` establishes the real task origin, `PreToolUse` checks preparation for controlled writes, `Stop` rechecks current finish evidence, and `Interrupt` records cancellation. The six-event observation chain remains separate.
+The registration contains seven entry points, while project gates default to disabled. In V7.6.2, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains entirely host-controlled; none of them reads or mutates a legacy GateTask. `PreToolUse` returns `LEGACY_WRITE_ORIGIN_UNAVAILABLE` only when a native write tool is used while the legacy policy remains `enabled=true`; unconfigured or disabled policies remain neutral.
 
 ```text
-Explicit project opt-in → host loading → real task origin
-                                         ↓
-Bounded scan / query → prepare → development and validation → finish → check
-                        └─ Interrupt → CANCELLED
+Unconfigured or disabled ───────────────→ native writes preserve host behavior
+Legacy enabled + native write tool ────→ deny LEGACY_WRITE_ORIGIN_UNAVAILABLE
+UserPromptSubmit / Stop / Interrupt ───→ do not consume legacy GateTask control state
 ```
 
-Configured `enabled=true`, loaded Plugin, workflow PASS, and semantic suitability are separate conclusions. An already-open session can retain an older snapshot. A missing real session/turn origin cannot be fabricated by CLI or borrowed from another task. Cancellation is terminal for that task. Entry points outside controlled write tools do not have guaranteed pre-write interception.
+Configured `enabled=true`, a loaded Plugin, and semantic suitability are separate conclusions. Legacy `prepare/finish/check` receipts cannot authorize native writes in V7.6.2. An already-open session can retain an older Plugin snapshot, so verify actual behavior in a new task after upgrade. Entry points outside controlled write tools do not have guaranteed pre-write interception.
 
-Codex CLI 0.153.4 has real UserPromptSubmit/Interrupt acceptance evidence; the observed 0.149.1 configuration path ignores Interrupt. Six-event compatibility evidence does not prove cancellation support, and Desktop or other hosts require separate readback. See the [capability index and workflow entry](../CAPABILITY_INDEX.en.md) for enable, disable, prepare, and finish operations.
+All 11 Codex CLI versions in the frozen window have per-version official source evidence for UserPromptSubmit async behavior; Desktop and other real hosts still require separate readback. See the [capability index and workflow entry](../CAPABILITY_INDEX.en.md) for legacy gate enable/disable entry points, but this patch does not restore the legacy task lifecycle as write authorization.

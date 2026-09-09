@@ -12,6 +12,7 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.md) for vers
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.6.2 | [Notes](v7.6.2/RELEASE_NOTES.md) | [Audit](v7.6.2/AUDIT_REPORT.md) | [Validation](v7.6.2/VALIDATION_REPORT.md) | Implementation and focused tests only; full validation and post-publication readback pending | [JSON](v7.6.2/BUILD_INFO.json) | [JSON](v7.6.2/PACKAGE_VALIDATION.json) |
 | 7.6.1 | [Notes](v7.6.1/RELEASE_NOTES.md) | [Audit](v7.6.1/AUDIT_REPORT.md) | [Validation](v7.6.1/VALIDATION_REPORT.md) | Build-time checks and post-publication readbacks are separate | [JSON](v7.6.1/BUILD_INFO.json) | [JSON](v7.6.1/PACKAGE_VALIDATION.json) |
 | 7.6.0 | [Notes](v7.6.0/RELEASE_NOTES.md) | [Audit](v7.6.0/AUDIT_REPORT.md) | [Validation](v7.6.0/VALIDATION_REPORT.md) | Bounded candidate acceptance; exact-version publication checked separately | [JSON](v7.6.0/BUILD_INFO.json) | [JSON](v7.6.0/PACKAGE_VALIDATION.json) |
 | 7.5.1 | [Notes](v7.5.1/RELEASE_NOTES.md) | [Audit](v7.5.1/AUDIT_REPORT.md) | [Validation](v7.5.1/VALIDATION_REPORT.md) | Six focused contention/recovery tests passed; see reports for full validation and installation | [JSON](v7.5.1/BUILD_INFO.json) | [JSON](v7.5.1/PACKAGE_VALIDATION.json) |

@@ -4,6 +4,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.6.2 - 2026-09-09
+
+- Fix asynchronous UserPromptSubmit Hook registration and require explicit compatibility evidence; optional feedback no longer blocks ordinary prompts.
+- Isolate legacy capability-gate state: native writes fail closed when an old policy is enabled, while unconfigured or disabled policies remain neutral; Stop/UserPrompt no longer read or mutate legacy task state.
+- Focused checks cover Hook registration, legacy-gate isolation, fail-closed behavior, and state immutability. Full release validation, independent review, commit, push, publication, installation, and effective-state readback remain separate.
+
 ## 7.6.1 - 2026-09-09
 
 - Correct Hook, migration, budget-owner and format guidance; unify English sources and deterministic fact checks.

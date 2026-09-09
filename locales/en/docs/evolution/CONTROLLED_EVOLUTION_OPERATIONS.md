@@ -1,10 +1,10 @@
 # Controlled Evolution Operations
 
-Status: `active`, package V<!-- cp-fact:package-version -->7.6.1<!-- /cp-fact -->. Default and explicit policy entrypoints use `v7.4.3-default-1`. Every proposal retains `execution_authorization=NONE`.
+Status: `active`, package V<!-- cp-fact:package-version -->7.6.2<!-- /cp-fact -->. Default and explicit policy entrypoints use `v7.4.3-default-1`. Every proposal retains `execution_authorization=NONE`.
 
 ## 1. Task feedback
 
-After project onboarding, UserPromptSubmit supplies `context_root/project_id/session_id/turn_id/task_id/cli_path` when the host provides complete identity. Route validations already required by the engineering task through the following entrypoint; do not add meaningless tests solely for feedback. Replace placeholders with this prompt's actual binding, never the most recent unrelated task.
+Starting with V7.6.2, `UserPromptSubmit` is an asynchronous, nonblocking observation Hook and no longer injects feedback bindings or control instructions through `additionalContext`. Engineering tasks that need feedback evidence must take `context_root/project_id/session_id/turn_id/task_id` from the current repository-external execution envelope and pass them explicitly to the following entrypoint. Never infer identity from the most recent task, and do not add meaningless tests solely for feedback. Use the `evolution.py` entrypoint from the currently installed package as `cli_path`.
 
 ```text
 python scripts/evolution.py validate-task --context-root CONTEXT --project-id PROJECT --session-id SESSION --turn-id TURN --task-id TASK -- python -m unittest tests.test_target

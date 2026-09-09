@@ -11,14 +11,15 @@ import subprocess
 import sys
 import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import test_capability_store as fixtures
 import test_capability_gate_workflow as workflow_fixtures
 from cp_runtime import capability_gate_hook as hook
-from cp_runtime.capability_gate import GatePolicy, GateTask
-from cp_runtime.capability_gate_workflow import GateWorkflow
+from cp_runtime.capability_gate import GatePolicy
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -37,8 +38,6 @@ class CapabilityGateHookTests(unittest.TestCase):
         self.env.pop("CP_DELEGATION_BUDGET_PATH", None)
 
     tearDown = workflow_fixtures.CapabilityGateWorkflowTests.tearDown
-    choices = workflow_fixtures.CapabilityGateWorkflowTests.choices
-    edit = workflow_fixtures.CapabilityGateWorkflowTests.edit
 
     def invoke(self, event, **values):
         data = {"hook_event_name": event, "session_id": "session", "turn_id": "turn",
@@ -51,113 +50,117 @@ class CapabilityGateHookTests(unittest.TestCase):
         self.assertLess(elapsed, 3 if event == "Interrupt" else 5, result.stdout)
         return json.loads(result.stdout) if result.stdout.strip() else None
 
-    def start(self):
-        self.policy.set_enabled(True, None)
-        response = self.invoke("UserPromptSubmit", prompt="PRIVATE_PROMPT_MARKER")
-        self.assertIn("capability-task-prepare", response.get("hookSpecificOutput", {}).get("additionalContext", ""), response)
-        self.task = GateTask(self.policy, "session", "turn")
-        self.flow = GateWorkflow(self.task)
-        self.assertEqual("NEW", self.task.read()["phase"])
-        return response
+    def legacy_task(self, phase):
+        policy = self.policy.read() if self.policy.path.exists() else None
+        self.policy.set_enabled(True, None if policy is None else policy["revision"])
+        session_id = "legacy-session-" + phase
+        turn_id = "legacy-turn-" + phase
+        state_path = self.policy.state_root / (phase.lower() + ".json")
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text(json.dumps({"phase": phase, "legacy": True}, sort_keys=True), encoding="utf-8")
+        return SimpleNamespace(session_id=session_id, turn_id=turn_id, path=state_path)
 
-    def test_unconfigured_and_disabled_writes_remain_neutral_without_task_state(self):
+    @staticmethod
+    def legacy_snapshot(task):
+        return task.path.read_bytes()
+
+    def invoke_legacy(self, task, event, **values):
+        return self.invoke(event, session_id=task.session_id, turn_id=task.turn_id,
+                           task_id=task.turn_id, **values)
+
+    def handle_legacy(self, task, event, **values):
+        with patch.dict(os.environ, {"CP_CAPABILITY_GATE_ROOT": str(self.gate_root)}):
+            return hook.handle(ROOT, {"hook_event_name": event, "cwd": str(self.repo),
+                                      "session_id": task.session_id, "turn_id": task.turn_id,
+                                      "task_id": task.turn_id, **values})["response"]
+
+    def test_unconfigured_and_disabled_native_writes_remain_neutral_without_task_state(self):
         self.assertIsNone(self.invoke("PreToolUse", tool_name="apply_patch", tool_input={"command": "PRIVATE_DIFF"}))
         self.assertEqual({}, self.invoke("Stop"))
         self.assertFalse(self.gate_root.exists())
         self.policy.set_enabled(True, None)
         self.policy.set_enabled(False, 0)
-        self.assertEqual({}, self.invoke("PreToolUse", tool_name="Write"))
+        self.assertIsNone(self.invoke("PreToolUse", tool_name="Write"))
         self.assertEqual({}, self.invoke("Stop"))
         self.assertFalse(self.policy.state_root.exists())
         self.assertFalse(self.store.current.exists())
 
-    def test_missing_preparation_denies_native_write_and_stop_repair_is_bounded(self):
-        self.start()
-        denied = self.invoke("PreToolUse", tool_name="apply_patch", tool_input={"command": "PRIVATE_DIFF"})
-        self.assertEqual({"hookSpecificOutput"}, set(denied))
-        self.assertEqual("deny", denied["hookSpecificOutput"]["permissionDecision"])
-        first = self.invoke("Stop", stop_hook_active=False, terminal_outcome="PASS")
-        self.assertEqual("block", first["decision"])
-        second = self.invoke("Stop", stop_hook_active=True)
-        self.assertEqual("block", second["decision"])
-        final = self.invoke("Stop", stop_hook_active=True)
-        self.assertFalse(final["continue"])
-        self.assertEqual(2, self.task.read()["repair_count"])
-        self.assertEqual("BLOCKED", self.task.read()["phase"])
+    def test_user_prompt_submission_is_observation_only_without_gate_task_or_context_injection(self):
+        self.policy.set_enabled(True, None)
+        response = self.invoke("UserPromptSubmit", prompt="PRIVATE_PROMPT_MARKER")
+        self.assertIsNone(response)
+        self.assertFalse(self.policy.state_root.exists())
+        observed = list((self.base / "observations").rglob("task-outcome-v3.jsonl"))
+        self.assertEqual(1, len(observed))
+        raw = observed[0].read_bytes()
+        self.assertIn(b"TURN_OPENED", raw)
+        self.assertNotIn(b"PRIVATE_PROMPT_MARKER", raw)
+        with patch.object(hook, "locate_policy", side_effect=AssertionError("policy lookup is forbidden")):
+            result = hook.handle(ROOT, {"hook_event_name": "UserPromptSubmit", "cwd": str(self.repo)})
+        self.assertEqual({}, result["response"])
+        self.assertTrue(result["observe"])
 
-    def test_prepared_edit_requires_finish_and_success_is_rechecked(self):
-        self.start()
-        prepared = self.flow.prepare(["app.py"], "public")
-        self.assertEqual({}, self.invoke("PreToolUse", tool_name="apply_patch"))
-        self.edit()
-        self.assertEqual("block", self.invoke("Stop", stop_hook_active=False)["decision"])
-        self.flow.finish(self.choices(prepared))
-        self.assertEqual({}, self.invoke("Stop", stop_hook_active=True, terminal_outcome="PASS"))
-        self.assertEqual("PASS", self.task.read()["phase"])
-        (self.repo / "app.py").write_text("def public():\n    return 99\n", encoding="utf-8")
-        self.assertFalse(self.invoke("Stop", stop_hook_active=True)["continue"])
-        self.assertEqual("BLOCKED", self.task.read()["phase"])
+    def test_legacy_native_writes_never_reuse_prepared_or_pass_states(self):
+        for phase in ("PREPARED", "PASS", "REPAIR_REQUESTED", "CANCELLED"):
+            with self.subTest(phase=phase):
+                task = self.legacy_task(phase)
+                before = self.legacy_snapshot(task)
+                for tool_name in ("apply_patch", "Edit", "Write"):
+                    denied = self.handle_legacy(task, "PreToolUse", tool_name=tool_name)
+                    self.assertEqual("deny", denied["hookSpecificOutput"]["permissionDecision"])
+                    self.assertIn("LEGACY_WRITE_ORIGIN_UNAVAILABLE",
+                                  denied["hookSpecificOutput"]["permissionDecisionReason"])
+                self.assertEqual(before, self.legacy_snapshot(task))
 
-    def test_new_controlled_write_invalidates_previous_pass_before_execution(self):
-        self.start()
-        prepared = self.flow.prepare(["app.py"], "public")
-        self.edit()
-        self.flow.finish(self.choices(prepared))
-        self.assertEqual({}, self.invoke("PreToolUse", tool_name="Edit"))
-        state = self.task.read()
-        self.assertEqual("PREPARED", state["phase"])
-        self.assertIsNone(state["evidence"]["finish_sha256"])
-        self.assertFalse(self.flow.check()["valid"])
+    def test_stop_is_neutral_and_never_changes_any_legacy_state(self):
+        for phase in ("PREPARED", "PASS", "REPAIR_REQUESTED", "CANCELLED"):
+            with self.subTest(phase=phase):
+                task = self.legacy_task(phase)
+                before = self.legacy_snapshot(task)
+                response = self.handle_legacy(task, "Stop", stop_hook_active=True, terminal_outcome="PASS")
+                self.assertEqual({}, response)
+                self.assertEqual(before, self.legacy_snapshot(task))
 
-    def test_unprepared_external_edit_cannot_be_retroactively_approved(self):
-        self.start()
-        self.edit()
-        self.assertFalse(self.invoke("Stop", terminal_outcome="PASS")["continue"])
-        self.assertEqual("BLOCKED", self.task.read()["phase"])
-        self.assertEqual(0, self.task.read()["repair_count"])
+    def test_interrupt_keeps_host_control_and_never_changes_legacy_state(self):
+        task = self.legacy_task("PREPARED")
+        before = self.legacy_snapshot(task)
+        self.assertIsNone(self.invoke_legacy(task, "Interrupt"))
+        self.assertEqual(before, self.legacy_snapshot(task))
+        self.assertEqual({}, hook.failure_response("Stop", "GATE_WORKER_FAILED"))
+        self.assertEqual({}, hook.failure_response("UserPromptSubmit", "GATE_WORKER_FAILED"))
+        self.assertEqual({"systemMessage"}, set(hook.failure_response("Interrupt", "GATE_WORKER_FAILED")))
 
-    def test_readonly_no_change_does_not_scan_or_authorize_later_write(self):
-        self.start()
-        response = self.invoke("Stop", last_assistant_message="PRIVATE_ANSWER_MARKER", terminal_outcome="PASS")
-        self.assertIn("NO_CHANGE", response.get("systemMessage", ""), response)
-        self.assertEqual("NO_CHANGE", self.task.read()["phase"])
-        self.assertTrue(self.flow.check()["valid"])
-        self.assertFalse(self.store.current.exists())
-        self.assertEqual("deny", self.invoke("PreToolUse", tool_name="Write")["hookSpecificOutput"]["permissionDecision"])
-        self.assertEqual("NEW", self.task.read()["phase"])
-        for path in self.policy.state_root.rglob("*.json"):
-            from cp_runtime.atomic_io import native_path
-            raw = native_path(path).read_bytes()
-            self.assertNotIn(b"PRIVATE_PROMPT_MARKER", raw)
-            self.assertNotIn(b"PRIVATE_ANSWER_MARKER", raw)
-
-    def test_interrupt_cancels_and_subsequent_write_and_stop_cannot_revive(self):
-        self.start()
-        self.assertEqual({}, self.invoke("Interrupt"))
-        self.assertEqual("CANCELLED", self.task.read()["phase"])
-        self.assertEqual("deny", self.invoke("PreToolUse", tool_name="Write")["hookSpecificOutput"]["permissionDecision"])
-        self.assertFalse(self.invoke("Stop")["continue"])
-        self.assertEqual("CANCELLED", self.task.read()["phase"])
+    def test_concurrent_and_sequential_legacy_writes_never_allow(self):
+        task = self.legacy_task("PASS")
+        before = self.legacy_snapshot(task)
+        tools = ["apply_patch", "Edit", "Write"] * 3
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            responses = list(executor.map(lambda name: self.handle_legacy(task, "PreToolUse", tool_name=name), tools))
+        for response in responses:
+            self.assertEqual("deny", response["hookSpecificOutput"]["permissionDecision"])
+            self.assertNotIn("allow", json.dumps(response).lower())
+        self.assertEqual(before, self.legacy_snapshot(task))
 
     def test_worker_timeout_never_emits_pass_or_invalid_pretool_protocol(self):
         for event in ("UserPromptSubmit", "PreToolUse", "Stop", "Interrupt"):
             with self.subTest(event=event), patch.object(hook.subprocess, "run", side_effect=subprocess.TimeoutExpired("worker", 4)):
                 response = hook.supervise(ROOT, {"hook_event_name": event})
-                self.assertIn("GATE_HOST_DEADLINE", json.dumps(response))
                 if event == "PreToolUse":
                     self.assertEqual({"hookSpecificOutput"}, set(response))
                     self.assertEqual("deny", response["hookSpecificOutput"]["permissionDecision"])
+                    self.assertIn("GATE_HOST_DEADLINE", json.dumps(response))
                 elif event == "Interrupt":
                     self.assertEqual({"systemMessage"}, set(response))
+                    self.assertIn("GATE_HOST_DEADLINE", json.dumps(response))
                 else:
-                    self.assertFalse(response["continue"])
+                    self.assertEqual({}, response)
 
-    def test_corrupt_policy_and_missing_host_identity_cannot_silently_disable_gate(self):
-        self.start()
+    def test_corrupt_policy_and_missing_host_identity_cannot_permit_legacy_writes(self):
+        self.policy.set_enabled(True, None)
         response = self.invoke("PreToolUse", tool_name="Write", turn_id="")
         self.assertEqual("deny", response["hookSpecificOutput"]["permissionDecision"])
         self.policy.path.write_bytes(b"{broken")
-        self.assertFalse(self.invoke("Stop")["continue"])
+        self.assertEqual({}, self.invoke("Stop"))
         self.assertEqual("deny", self.invoke("PreToolUse", tool_name="Write")["hookSpecificOutput"]["permissionDecision"])
 
     def test_actual_slow_worker_is_killed_before_interrupt_host_deadline(self):
@@ -173,13 +176,16 @@ class CapabilityGateHookTests(unittest.TestCase):
         self.assertIn("GATE_HOST_DEADLINE", response["systemMessage"])
         self.assertFalse(marker.exists())
 
-    def test_invalid_worker_schema_becomes_valid_host_specific_denial(self):
+    def test_invalid_worker_schema_becomes_event_legal_response(self):
         for event, invalid in (("PreToolUse", {"continue": False}), ("Interrupt", {"decision": "block"}),
-                               ("Stop", {"continue": True}), ("UserPromptSubmit", {"pass": True})):
+                               ("Stop", {"continue": True}), ("UserPromptSubmit", {"hookSpecificOutput": {}})):
             result = subprocess.CompletedProcess([], 0, json.dumps(invalid).encode())
             with self.subTest(event=event), patch.object(hook.subprocess, "run", return_value=result):
                 response = hook.supervise(ROOT, {"hook_event_name": event})
-                self.assertIn("GATE_WORKER_FAILED", json.dumps(response))
+                if event in {"PreToolUse", "Interrupt"}:
+                    self.assertIn("GATE_WORKER_FAILED", json.dumps(response))
+                else:
+                    self.assertEqual({}, response)
                 hook.validate_response(event, response)
 
     def test_installed_runtime_entries_require_matching_account_binding(self):

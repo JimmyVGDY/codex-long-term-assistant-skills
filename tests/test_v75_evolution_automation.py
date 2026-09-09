@@ -241,7 +241,7 @@ class HookFeedbackIntegrationTests(EvolutionProjectCase):
         self.assertEqual(0, second.returncode, second.stderr)
         self.assertEqual(1, len(list((self.project / "evolution/transactions").glob("*.json"))))
 
-    def test_host_prompt_binding_validation_cli_and_stop_consume_same_feedback(self):
+    def test_async_prompt_observation_and_explicit_identity_validation_share_feedback(self):
         env = {**os.environ, "PLUGIN_ROOT": str(ROOT), "CP_PROJECT_ID": self.project.name,
                "CP_ASSISTANT_DATA": str(self.project.parent), "CODEX_HOME": str(self.project.parent / "codex")}
         common = ["--context-root", str(self.project.parent), "--project-id", self.project.name,
@@ -250,7 +250,7 @@ class HookFeedbackIntegrationTests(EvolutionProjectCase):
         prompt = subprocess.run([sys.executable, "-B", str(ROOT / "hooks/cp_hook.py"), "UserPromptSubmit"],
                                 input=json.dumps(payload), text=True, capture_output=True, env=env, timeout=5)
         self.assertEqual(0, prompt.returncode, prompt.stderr)
-        self.assertIn('"task_id": "TASK1"', json.loads(prompt.stdout)["hookSpecificOutput"]["additionalContext"])
+        self.assertEqual("", prompt.stdout)
         command = [sys.executable, "-B", str(ROOT / "scripts/evolution.py"), "validate-task", *common,
                    "--", sys.executable, "-c", "raise SystemExit(1)"]
         failed = subprocess.run(command, text=True, capture_output=True, env=env, timeout=8)

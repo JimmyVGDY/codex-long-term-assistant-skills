@@ -79,7 +79,7 @@ A hard-coded model overrides bounded scheduling and `[agents]` defaults, breakin
 
 ## 6. Plugin and Hooks
 
-V7.6.1 uses a frozen registry for the Plugin and Marketplace interfaces in Codex CLI 0.153.4 and the ten preceding stable releases. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.6.1`, and the schema-3 host snapshot is `HOST_COMPATIBLE`. Files present on disk do not establish installation or enablement.
+V7.6.2 uses a frozen registry for the Plugin and Marketplace interfaces in Codex CLI 0.153.4 and the ten preceding stable releases. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.6.2`, and the schema-3 host snapshot is `HOST_COMPATIBLE`. Files present on disk do not establish installation or enablement.
 
 The Plugin supplies seven registered Hook entry points through `hooks/hooks.json`. On Windows, `hooks\cp_hook.cmd` selects an available Python launcher without an extra `python3.exe` shim. SessionEnd keeps a three-second host budget: the Hook only constructs a capped, body-free sanitized Event V3 and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe. It neither scans nor writes the event chain. Outside the Hook budget, the worker validates stable lifecycle identity, semantically deduplicates, persists the terminal event, creates the signed job, and seals the chain. Every queue entry point rejects missing stable lifecycle IDs, and an unsealed `seal_required` chain cannot enter Evolution.
 
@@ -108,15 +108,14 @@ See [installation and recovery](operations/INSTALLATION_RECOVERY.md) for the com
 
 ## Optional project gate and effective loading
 
-The registration contains seven entry points, while project gates default to disabled. Once enabled, `UserPromptSubmit` establishes the real task origin, `PreToolUse` checks preparation for controlled writes, `Stop` rechecks current finish evidence, and `Interrupt` records cancellation. The six-event observation chain remains separate.
+The registration contains seven entry points, while project gates default to disabled. In V7.6.2, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains entirely host-controlled; none of them reads or mutates a legacy GateTask. `PreToolUse` returns `LEGACY_WRITE_ORIGIN_UNAVAILABLE` only when a native write tool is used while the legacy policy remains `enabled=true`; unconfigured or disabled policies remain neutral.
 
 ```text
-Explicit project opt-in → host loading → real task origin
-                                         ↓
-Bounded scan / query → prepare → development and validation → finish → check
-                        └─ Interrupt → CANCELLED
+Unconfigured or disabled ───────────────→ native writes preserve host behavior
+Legacy enabled + native write tool ────→ deny LEGACY_WRITE_ORIGIN_UNAVAILABLE
+UserPromptSubmit / Stop / Interrupt ───→ do not consume legacy GateTask control state
 ```
 
-Configured `enabled=true`, loaded Plugin, workflow PASS, and semantic suitability are separate conclusions. An already-open session can retain an older snapshot. A missing real session/turn origin cannot be fabricated by CLI or borrowed from another task. Cancellation is terminal for that task. Entry points outside controlled write tools do not have guaranteed pre-write interception.
+Configured `enabled=true`, a loaded Plugin, and semantic suitability are separate conclusions. Legacy `prepare/finish/check` receipts cannot authorize native writes in V7.6.2. An already-open session can retain an older Plugin snapshot, so verify actual behavior in a new task after upgrade. Entry points outside controlled write tools do not have guaranteed pre-write interception.
 
-Codex CLI 0.153.4 has real UserPromptSubmit/Interrupt acceptance evidence; the observed 0.149.1 configuration path ignores Interrupt. Six-event compatibility evidence does not prove cancellation support, and Desktop or other hosts require separate readback. See the [capability index and workflow entry](CAPABILITY_INDEX.md) for enable, disable, prepare, and finish operations.
+All 11 Codex CLI versions in the frozen window have per-version official source evidence for UserPromptSubmit async behavior; Desktop and other real hosts still require separate readback. See the [capability index and workflow entry](CAPABILITY_INDEX.md) for legacy gate enable/disable entry points, but this patch does not restore the legacy task lifecycle as write authorization.

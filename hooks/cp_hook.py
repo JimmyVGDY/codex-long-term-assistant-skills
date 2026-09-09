@@ -404,51 +404,21 @@ def _observe(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[st
     return event
 
 
-def _feedback_context(event: Mapping[str, Any] | None) -> str:
-    if event is None or not all(event.get(key) for key in ("session_id", "turn_id", "task_id")):
-        return ""
-    try:
-        from cp_runtime.evolution.artifacts import identifier, project_identity
-        from cp_runtime.capability_gate_hook import runtime_entry
-        project_dir = _data_path(event).parent.parent
-        identity = project_identity(project_dir)
-        if all(identity[key] == event[key] for key in ("project_id", "repo_fingerprint")):
-            binding = {key: identifier(event[key]) for key in ("session_id", "turn_id", "task_id")}
-            binding.update(project_id=identity["project_id"], context_root=str(project_dir.parent),
-                           cli_path=str(runtime_entry(ROOT, "evolution.py")))
-            return ("Engineering task feedback binding: " + json.dumps(binding, ensure_ascii=False, sort_keys=True)
-                    + ". When validation is already required, use the Python cli_path entrypoint validate-task and finalize-task before the final reply. "
-                    + "The parent confirms outcome and routing; missing evidence remains UNKNOWN. Do not add validation solely for feedback.")
-    except Exception:
-        pass
-    return ""
-
-
 def _optional_gate(data: Mapping[str, Any], hook_name: str) -> Dict[str, Any] | None:
-    from cp_runtime.capability_gate_hook import EVENTS, WRITE_TOOLS, failure_response, locate_policy, supervise
+    from cp_runtime.capability_gate_hook import WRITE_TOOLS, _legacy_write_is_enabled, legacy_write_response
     tool = str(_lookup(data, *HOOK_ALIASES["tool_name"]) or "").lower()
-    if hook_name not in EVENTS or hook_name == "PreToolUse" and tool not in WRITE_TOOLS:
-        return None
-    try:
-        cwd = _lookup_strict(data, *HOOK_ALIASES["cwd"]) or os.getcwd()
-        if locate_policy(cwd) is None:
-            return None
-        payload: Dict[str, Any] = {"hook_event_name": hook_name, "cwd": cwd}
-        for key in ("session_id", "turn_id", "task_id", "tool_name", "terminal_outcome"):
-            value = _lookup_strict(data, *HOOK_ALIASES[key])
-            if value is not None:
-                if not isinstance(value, str) or len(value) > 256:
-                    raise ValueError("GATE_HOST_IDENTITY")
-                payload[key] = value
-        if "stop_hook_active" in data:
-            if type(data["stop_hook_active"]) is not bool:
-                raise ValueError("GATE_STOP_IDENTITY")
-            payload["stop_hook_active"] = data["stop_hook_active"]
-        # 中文：子进程只接收有界身份元数据，不传Prompt、回答、源码、Diff或工具正文。
-        # English: Send only bounded identity metadata, never prompts, answers, code, diffs, or tool bodies.
-        return supervise(ROOT, payload)
-    except Exception:
-        return failure_response(hook_name, "GATE_UNAVAILABLE")
+    if hook_name == "PreToolUse" and tool in WRITE_TOOLS:
+        try:
+            # 中文：有界策略读取绝不打开 GateTask 或使用 PREPARED/PASS 证据；未配置或已停用策略保留宿主既有权限行为。
+            # English: This bounded policy read never opens a GateTask or consults PREPARED/PASS evidence; unconfigured or disabled policy preserves host permissions.
+            cwd = str(_lookup_strict(data, *HOOK_ALIASES["cwd"]) or os.getcwd())
+            return legacy_write_response() if _legacy_write_is_enabled(cwd) else None
+        except Exception:
+            # 中文：已配置但不可读的策略不得静默放行旧版原生写入。
+            # English: A configured but unreadable policy cannot silently permit a legacy native write.
+            from cp_runtime.capability_gate_hook import failure_response
+            return failure_response("PreToolUse", "GATE_UNAVAILABLE")
+    return None
 
 
 def main() -> int:
@@ -485,10 +455,6 @@ def main() -> int:
     # English: Normal Stop handling returns the host-defined neutral response; the recovery above preserves this branch when Windows truncates a non-ASCII last_assistant_message.
     if hook_name in {"Stop", "SubagentStop"}:
         print("{}")
-    elif hook_name == "UserPromptSubmit":
-        context = _feedback_context(event)
-        if context:
-            print(json.dumps({"hookSpecificOutput": {"hookEventName": hook_name, "additionalContext": context}}, ensure_ascii=False))
     return 0
 
 

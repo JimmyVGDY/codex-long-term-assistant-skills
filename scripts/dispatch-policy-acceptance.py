@@ -91,7 +91,7 @@ def evaluate() -> Dict[str, object]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.6.1 dispatch-policy acceptance")
+    parser = argparse.ArgumentParser(description="V7.6.2 dispatch-policy acceptance")
     parser.add_argument("--output")
     args = parser.parse_args()
     report = evaluate()

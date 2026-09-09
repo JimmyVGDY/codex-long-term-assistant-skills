@@ -17,7 +17,7 @@ Each fact has one authoritative owner. Other files may reference or project it b
 | Hook registration | `hooks/hooks.json` | Configuration guide, architecture |
 | Worktree capability locations and coverage | Profile-adjacent `capability-index/<worktree_id>` managed by CapabilityStore | Query results, decision references |
 | Project gate opt-in and binding | Account-external `capability-gates/<worktree_id>.json` managed by GatePolicy | Status readback |
-| Gate task state and current receipts | Profile-adjacent `capability-gate/<worktree_id>` managed by GateTask/Workflow | Prepare/finish/check results |
+| Legacy gate task state and current receipts | Profile-adjacent `capability-gate/<worktree_id>` managed by GateTask/Workflow | Prepare/finish/check results; in V7.6.2 these are legacy state facts only and do not grant native-write permission |
 | Frozen review input | Review Packet `manifest.json` | Packet summary |
 | Current task recovery | `CURRENT_TASK.md` + `PROGRESS.md` | Recovery summary |
 | Long-lived project facts | `project-memory.md` | Project-document references |

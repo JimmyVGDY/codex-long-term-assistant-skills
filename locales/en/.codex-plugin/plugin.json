@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.6.1",
-  "description": "Cross-project engineering assistant V7.6.1: external capability indexing, reuse and maintenance decisions, and project-opt-in workflow gates.",
+  "version": "7.6.2",
+  "description": "Cross-project engineering assistant V7.6.2: non-blocking Hook hotfixes and isolation from legacy gates.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

@@ -17,7 +17,7 @@
 | Hook 注册入口 | `hooks/hooks.json` | 配置指南、架构说明 |
 | 工作区能力定位与覆盖 | Profile 同级 `capability-index/<worktree_id>`；CapabilityStore 管理 | query 结果、任务决策引用 |
 | 项目门禁启用与绑定 | 账户外部 `capability-gates/<worktree_id>.json`；GatePolicy 管理 | status 读回 |
-| 门禁任务与当前回执 | Profile 同级 `capability-gate/<worktree_id>`；GateTask/Workflow 管理 | prepare/finish/check 结果 |
+| 旧门禁任务与当前回执 | Profile 同级 `capability-gate/<worktree_id>`；GateTask/Workflow 管理 | prepare/finish/check 结果；V7.6.2 中仅为旧状态事实，不授予原生写入权限 |
 | Review 冻结输入 | Review Packet `manifest.json` | Packet Summary |
 | 当前任务恢复 | `CURRENT_TASK.md` + `PROGRESS.md` | Recovery Summary |
 | 项目长期事实 | `project-memory.md` | 项目文档引用 |

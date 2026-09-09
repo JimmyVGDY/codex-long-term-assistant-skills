@@ -13,9 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from .atomic_io import native_path
-from .capability_gate import ACTIVE, POLICY_LIMIT, GatePolicy, GateTask, _read, worktree_key
-from .capability_gate_evidence import capture_worktree, changed_paths
-from .capability_gate_workflow import GateWorkflow
+from .capability_gate import POLICY_LIMIT, GatePolicy, _read, worktree_key
 from .capability_store import CapabilityError, CapabilityStore, bounded_read, fields, require, safe_path, unique_json_object
 from .common import resolve_codex_home
 
@@ -87,7 +85,29 @@ def failure_response(event: str, reason: str) -> dict[str, Any]:
         return {"hookSpecificOutput": {"hookEventName": event, "permissionDecision": "deny", "permissionDecisionReason": message}}
     if event == "Interrupt":
         return {"systemMessage": message + " Host interruption remains in control."}
-    return {"continue": False, "stopReason": message, "systemMessage": message}
+    # 中文：R1 将提示提交和 Stop 留给宿主控制；门禁失败不得合成续跑或控制上下文响应。
+    # English: R1 keeps prompt submission and Stop under host control; gate failure must not synthesize continuation or control context.
+    return {}
+
+
+def legacy_write_response() -> dict[str, Any]:
+    """中文：不查询旧门禁任务状态，直接拒绝旧版原生写入。
+
+    English: Deny legacy native writes without consulting prior gate-task state.
+    """
+    return failure_response("PreToolUse", "LEGACY_WRITE_ORIGIN_UNAVAILABLE")
+
+
+def _legacy_write_is_enabled(cwd: str) -> bool:
+    """中文：只读取有界策略记录，绝不打开旧版 GateTask。
+
+    English: Read only the bounded policy record; never open a legacy GateTask.
+    """
+    path = locate_policy(cwd)
+    if path is None:
+        return False
+    policy = load_policy(path)
+    return bool(policy.read()["enabled"])
 
 
 def supervise(root: Path, payload: dict[str, Any]) -> dict[str, Any]:
@@ -135,99 +155,33 @@ def validate_response(event: str, output: dict[str, Any]) -> None:
     elif event == "Interrupt":
         fields(output, {"systemMessage"})
         require(isinstance(output["systemMessage"], str), "GATE_WORKER_FAILED")
-    elif "continue" in output:
-        fields(output, {"continue", "stopReason", "systemMessage"})
-        require(output["continue"] is False and isinstance(output["stopReason"], str)
-                and isinstance(output["systemMessage"], str), "GATE_WORKER_FAILED")
-    elif event == "Stop":
-        if "decision" in output:
-            fields(output, {"decision", "reason"})
-            require(output["decision"] == "block" and isinstance(output["reason"], str), "GATE_WORKER_FAILED")
-        else:
-            fields(output, {"systemMessage"})
-            require(isinstance(output["systemMessage"], str), "GATE_WORKER_FAILED")
     else:
-        require(event == "UserPromptSubmit", "GATE_WORKER_FAILED")
-        fields(output, {"hookSpecificOutput"})
-        specific = output["hookSpecificOutput"]
-        fields(specific, {"hookEventName", "additionalContext"})
-        require(specific["hookEventName"] == event and isinstance(specific["additionalContext"], str),
-                "GATE_WORKER_FAILED")
-
-
-def task_context(root: Path, task: GateTask) -> str:
-    args = {"entry": str(runtime_entry(root)), "profile": str(task.policy.store.profile_path),
-            "repo_path": str(task.policy.store.repo_path), "gate_root": str(task.policy.root),
-            "index_root": str(task.policy.store.root), "session_id": task.session_id, "turn_id": task.turn_id}
-    return ("Project capability gate is enabled. Runtime binding: " + json.dumps(args, ensure_ascii=True) +
-            ". Before editing, call capability-task-prepare with the binding arguments, explicit --scope file(s) and --term. "
-            "Only a local implementation fix in one existing file may use --local-only-reason; "
-            "public API extensions, new features, or coordinated caller changes require initial scanning even when small. "
-            "Prepare all intended files before editing; expanding a cold local exception after edits cannot retroactively prove initial scanning. "
-            "After editing, call capability-task-finish with --decisions pointing to a JSON list covering every required_decisions ID: "
-            "{id,choice,reason}, choice reuse/extend/extract/independent/unused. "
-            "Keep this JSON and other task-only helper files in the already-authorized external context containing the profile, with task-specific names. "
-            "Do not create them in the repository or overwrite runtime-managed profile, index, gate, or receipt files. "
-            "Declare actual adopted candidates; finish refreshes adopted stale sources. "
-            "Call capability-task-check for current evidence. PARTIAL/BLOCKED/NO_CHANGE are distinct from PASS; semantic suitability still requires source checks and tests.")
+        # 中文：R1 中 UserPromptSubmit/Stop 只观察；拒绝旧 decision/block/continue 或 additionalContext 注入。
+        # English: UserPromptSubmit and Stop are observation-only in R1; reject legacy control fields and additionalContext injection.
+        require(event in {"UserPromptSubmit", "Stop"}, "GATE_WORKER_FAILED")
+        require(not output, "GATE_WORKER_FAILED")
 
 
 def handle(root: Path, data: dict[str, Any]) -> dict[str, Any]:
-    event = data["hook_event_name"]
-    path = locate_policy(data["cwd"])
-    require(path is not None, "GATE_POLICY_CHANGED")
-    policy = load_policy(path)
-    with policy.store.bounded_identity_session():
-        return _handle_policy(root, data, policy)
-
-
-def _handle_policy(root: Path, data: dict[str, Any], policy: GatePolicy) -> dict[str, Any]:
-    event = data["hook_event_name"]
-    if not policy.read()["enabled"]:
-        return {"enabled": False, "response": {}, "observe": True, "allow_feedback": True}
-    task = GateTask(policy, data.get("session_id", ""), data.get("turn_id", ""))
-    flow = GateWorkflow(task)
+    event = data.get("hook_event_name")
+    require(event in EVENTS, "GATE_HOOK_EVENT")
     if event == "UserPromptSubmit":
-        state = flow.begin()
-        return {"enabled": True, "response": {"hookSpecificOutput": {"hookEventName": event,
-                "additionalContext": task_context(root, task)}}, "observe": True, "allow_feedback": False}
+        # 中文：提示提交期间不构造 GateTask、不查询策略或索引、不扫描源码，也不注入旧控制指令。
+        # English: During prompt submission, do not construct GateTask, query policy/index, scan source, or inject legacy control instructions.
+        return {"enabled": False, "response": {}, "observe": True, "allow_feedback": False}
     if event == "Interrupt":
-        task.cancel()
-        return {"enabled": True, "response": {}, "observe": False, "allow_feedback": False}
-    state = task.read()
+        # 中文：取消完全由宿主控制；此路径不得修改旧 GateTask 或伪造取消结果。
+        # English: Cancellation remains with the host; this path must not mutate legacy GateTask or manufacture a cancellation outcome.
+        return {"enabled": False, "response": {}, "observe": False, "allow_feedback": False}
     if event == "PreToolUse":
-        preparation = flow._preparation(state)
-        decision = task.before_write(has_scope=bool(preparation and preparation["files"]))
-        response = {} if decision["allowed"] else failure_response(event, "NEEDS_PREPARE: " + task_context(root, task))
-        return {"enabled": True, "response": response, "observe": False, "allow_feedback": False}
-    require(event == "Stop", "GATE_HOOK_EVENT")
-    if state["phase"] in {"PASS", "NO_CHANGE"}:
-        checked = flow.check()
-        phase = checked["state"]["phase"]
-        response = {} if checked["valid"] else failure_response(event, phase)
-        return {"enabled": True, "response": response, "observe": True,
-                "allow_feedback": checked["valid"] and phase == "PASS"}
-    if state["phase"] not in ACTIVE:
-        return {"enabled": True, "response": failure_response(event, state["phase"]), "observe": True, "allow_feedback": False}
-    if state["evidence"]["prepare_sha256"] is None:
-        if "NEEDS_PREPARE" not in state["reason_codes"]:
-            try:
-                flow.no_change()
-                return {"enabled": True, "response": {"systemMessage": "Capability gate: NO_CHANGE in the bounded Git-visible scope."},
-                        "observe": True, "allow_feedback": False}
-            except CapabilityError as exc:
-                flow.record_failure(str(exc), state["revision"])
-                return {"enabled": True, "response": failure_response(event, str(exc)), "observe": True, "allow_feedback": False}
-        start = flow._get("baseline", state["evidence"]["baseline_sha256"])
-        current = capture_worktree(flow.repo, sorted(start["files"]))
-        if changed_paths(start, current):
-            flow.record_failure("GATE_MODIFIED_BEFORE_PREPARE", state["revision"])
-            return {"enabled": True, "response": failure_response(event, "GATE_MODIFIED_BEFORE_PREPARE"), "observe": True, "allow_feedback": False}
-        reason = "NEEDS_PREPARE"
-    else:
-        flow._preparation(state)
-        reason = "NEEDS_FINISH"
-    decision = task.request_repair(data.get("stop_hook_active", False), [reason])
-    response = ({"decision": "block", "reason": reason + ": " + task_context(root, task)}
-                if decision["action"] == "CONTINUE" else failure_response(event, decision["state"]["phase"]))
-    return {"enabled": True, "response": response, "observe": decision["action"] != "CONTINUE", "allow_feedback": False}
+        tool = str(data.get("tool_name") or "").lower()
+        if tool in WRITE_TOOLS:
+            # 中文：绝不复用 v1 遗留的 PREPARED/PASS；迁移期策略缺失或停用时保持中性。
+            # English: Never reuse v1 PREPARED/PASS; an absent or disabled policy remains neutral during transition.
+            enabled = _legacy_write_is_enabled(str(data.get("cwd") or ""))
+            return {"enabled": enabled, "response": legacy_write_response() if enabled else {},
+                    "observe": False, "allow_feedback": False}
+        return {"enabled": False, "response": {}, "observe": True, "allow_feedback": False}
+    # 中文：Stop 只观察；不读取或修改旧状态，不检查证据、记录失败或请求修复。
+    # English: Stop is observation-only; do not read or alter legacy state, check evidence, record failure, or request repair.
+    return {"enabled": False, "response": {}, "observe": True, "allow_feedback": True}

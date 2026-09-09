@@ -17,7 +17,7 @@
 
 ## 1. 委派预算与隐私边界
 
-V7.6.1 保留 Reviewer、Explorer、Worker 的同一个根任务加权预算，并把模型身份隐私边界收紧到派发之前。Task Envelope 声明预算档位，`delegation-budget.py` 维护仓库外追加式 Budget V2 账本，PreToolUse Hook 在派发前按批准档位原子预占，Reviewer 控制器只维护复审轮次与 Finding，不再重复计费，也不接收宿主运行时模型身份。
+V7.6.2 保留 Reviewer、Explorer、Worker 的同一个根任务加权预算，并把模型身份隐私边界收紧到派发之前。Task Envelope 声明预算档位，`delegation-budget.py` 维护仓库外追加式 Budget V2 账本，PreToolUse Hook 在派发前按批准档位原子预占，Reviewer 控制器只维护复审轮次与 Finding，不再重复计费，也不接收宿主运行时模型身份。
 
 模型权重固定为：`luna-low=1`、`luna-medium=2`、`terra-medium=4`、`terra-high=8`。初始预算为：
 
@@ -43,7 +43,7 @@ python scripts\delegation-budget.py init --ledger C:\safe-state\budget.jsonl --b
 python scripts\delegation-budget.py decide --ledger C:\safe-state\budget.jsonl --dispatch-key review-data-1 --decision DELEGATE --role reviewer --requested-profile luna-medium --reason-code INDEPENDENT_EVIDENCE_GAIN
 ```
 
-V7.6.1 不会自动为每个根任务创建账本。统一预算采用任务级显式激活；未设置上述两个环境变量时，Hook 仍执行自动派发档位上限，但不得把该任务记录为“统一预算门禁已通过”。
+V7.6.2 不会自动为每个根任务创建账本。统一预算采用任务级显式激活；未设置上述两个环境变量时，Hook 仍执行自动派发档位上限，但不得把该任务记录为“统一预算门禁已通过”。
 
 ## 3. 路由原因
 
@@ -64,14 +64,14 @@ V7.4.2 及更早版本的 Event V2 与 Budget V1 链保持原始字节级验签�
 
 ## 5. Codex 0.153.4 边界
 
-V7.6.1 的 Plugin 窗口是 Codex CLI 0.153.4 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.153.4 修复 Astra 在内置模型选择器中的可见性，在未显式配置模型时将其设为内置默认，并把异步提问说明约束为仅在相关工具可用时适用；这些变化不修改本包已冻结的 Plugin/Hook 合同，也不改变自动子 Agent 仅使用 Luna/Terra 档位的策略。
+V7.6.2 的 Plugin 窗口是 Codex CLI 0.153.4 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.153.4 修复 Astra 在内置模型选择器中的可见性，在未显式配置模型时将其设为内置默认，并把异步提问说明约束为仅在相关工具可用时适用；这些变化不修改本包已冻结的 Plugin/Hook 合同，也不改变自动子 Agent 仅使用 Luna/Terra 档位的策略。
 
-安装完成必须读回 `installed=true`、`enabled=true`、`version=7.6.1`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`。磁盘已有文件不等于 Plugin 已注册或已启用。
+安装完成必须读回 `installed=true`、`enabled=true`、`version=7.6.2`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`。磁盘已有文件不等于 Plugin 已注册或已启用。
 
 ## 任务反馈与优化收益
 
-沿用 V7.5 引入的任务绑定验证反馈、观察健康门禁、显式启用的增量分析、逐账本场景校准、可检验假设和收益验证关闭。按[受控演进操作手册](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)执行；项目自动化默认关闭。
+沿用 V7.5 引入的验证反馈、观察健康门禁、显式启用的增量分析、逐账本场景校准、可检验假设和收益验证关闭；V7.6.2 不再从异步 UserPromptSubmit 注入绑定，身份改由当前仓库外执行信封显式提供。按[受控演进操作手册](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)执行；项目自动化默认关闭。
 
 ## 能力复用与可选门禁
 
-通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭，显式启用后检查写前准备与结束时的当前证据；流程 PASS 不批准业务语义。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.6.1/VALIDATION_REPORT.md)。
+通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭；V7.6.2 中旧 GateTask 及 prepare/finish/check 回执不授予原生写入权限，策略启用时原生写入安全拒绝，未配置或停用时保持中性。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.6.2/VALIDATION_REPORT.md)。
