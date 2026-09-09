@@ -192,13 +192,13 @@ class CapabilityGateHookTests(unittest.TestCase):
         state = home / "cp-assistant-v6-state.json"
         state.write_text(json.dumps({"mode": "plugin", "version": "7.6.0"}), encoding="utf-8")
         with patch.dict(os.environ, {"CODEX_HOME": str(home)}):
-            self.assertEqual(home / "tools/cp-runtime.py", hook.runtime_entry(installed))
-            self.assertEqual(home / "tools/evolution.py", hook.runtime_entry(installed, "evolution.py"))
+            self.assertEqual((home / "tools/cp-runtime.py").resolve(), hook.runtime_entry(installed))
+            self.assertEqual((home / "tools/evolution.py").resolve(), hook.runtime_entry(installed, "evolution.py"))
             from cp_runtime.capability_store import CapabilityError
             with self.assertRaisesRegex(CapabilityError, "GATE_RUNTIME_ENTRY_UNAVAILABLE"):
                 hook.runtime_entry(installed.with_name("other-version"))
             state.write_text(json.dumps({"mode": "standalone"}), encoding="utf-8")
-            self.assertEqual(home / "tools/cp-runtime.py", hook.runtime_entry(home))
+            self.assertEqual((home / "tools/cp-runtime.py").resolve(), hook.runtime_entry(home))
             (home / "cp-assistant-hooks").mkdir()
             (home / "cp-assistant-hooks/cp_gate.py").write_text("print('{}')\n", encoding="utf-8")
             self.assertEqual({}, hook.supervise(home, {"hook_event_name": "Stop"}))

@@ -39,10 +39,10 @@
   "delegation_hook_gate": "PASS (tests/test_v74_delegation_hook.py)",
   "delegation_calibration_replay": "PASS (tests/test_v74_delegation_calibration.py)",
   "event_archive_capacity_health": "PASS (tests/test_v66_runtime_deepening.py)",
-  "unit_regression_tests": "PASS (284 package + 142 runtime)",
+  "unit_regression_tests": "PASS (284 package + 144 runtime)",
   "validation_evidence": {
     "package_test_count": 284,
-    "runtime_test_count": 142,
+    "runtime_test_count": 144,
     "package_test_command": "python -m unittest discover -s tests -p test_*.py",
     "runtime_test_command": "python -m unittest discover -s runtime/tests -p test_*.py",
     "dispatch_policy_command": "python scripts/dispatch-policy-acceptance.py"

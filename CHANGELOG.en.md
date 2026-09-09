@@ -4,6 +4,8 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## 7.6.0 - 2026-09-09
 
+- Windows CI exposed short-path aliases being compared with canonical paths. Normalize ReadBudget through the existing link-rejecting safe_path helper, compare installed-entry tests against canonical paths, and add a real Windows short-path regression. Repository isolation and read/time budgets remain unchanged.
+
 - Add bounded, identity-bound external capability indexing with incremental maintenance, exact-revision updates, and recovery.
 - Connect reuse discovery, multidimensional suitability and maintenance-cost decisions to frontend/backend Skills and existing review roles.
 - Add project-opt-in workflow gates with host-bound starts, preparation, current finish receipts, cancellation and at most two repairs. Unenabled projects retain existing behavior.

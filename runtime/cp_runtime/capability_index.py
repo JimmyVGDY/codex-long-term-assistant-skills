@@ -61,6 +61,13 @@ class ReadBudget:
     context_probes: dict[str, bool] = field(default_factory=dict)
     context_probe_count: int = 0
 
+    def __post_init__(self) -> None:
+        """中文：拒绝链接后统一根路径，使短路径别名共享同一预算身份。
+
+        English: Reject links before normalizing the root so short aliases share one budget identity.
+        """
+        self.repo = safe_path(self.repo)
+
     def context_exists(self, relative: str) -> bool:
         if relative not in self.context_probes:
             require(self.context_probe_count + len(self.context_probes) + 2 <= MAX_PATHS, "BUDGET")

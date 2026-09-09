@@ -8,8 +8,8 @@
     "hooks",
     "runtime"
   ],
-  "file_count": 216,
-  "payload_digest": "5f5f03577637683252b7162e0215aba5b0c368d72e8adbec90d95fe31085c017",
+  "file_count": 217,
+  "payload_digest": "a675749f94b841790bf55d20c29f98429cdaf09fd1dd35a413681a64fdf16932",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -833,8 +833,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_index.py",
-      "sha256": "3e77b2ee7e7a663b27ed0858d829062ee4deb4eb63cfe981d4c97f6d61051e9d",
-      "size": 28934
+      "sha256": "be67f32cece609a0f00099fea0f3f142a16722d5370abc2ca289df826ca8d2b3",
+      "size": 29227
     },
     {
       "path": "runtime/cp_runtime/capability_store.py",
@@ -1027,6 +1027,11 @@
       "size": 19448
     },
     {
+      "path": "runtime/tests/test_capability_budget_paths.py",
+      "sha256": "9c77e1546038ad5b26de10996f4b8c13c0c47989e5df518a0fb824c7c6b38921",
+      "size": 2021
+    },
+    {
       "path": "runtime/tests/test_capability_gate.py",
       "sha256": "693c3bcc598af24389f0971b93d09390f00b677eb39c598c8abe740469e84ec4",
       "size": 10492
@@ -1048,8 +1053,8 @@
     },
     {
       "path": "runtime/tests/test_capability_gate_hook.py",
-      "sha256": "c991058a0fd5fa4b65f5b90539f2990e0c9ee3d09c0036208c1149c4b35d75b7",
-      "size": 11519
+      "sha256": "1f1cea610ba9e46bff345439e34b77dfe3f1a3349ee9e828a470f142c843b1b8",
+      "size": 11555
     },
     {
       "path": "runtime/tests/test_capability_gate_local_exception.py",
