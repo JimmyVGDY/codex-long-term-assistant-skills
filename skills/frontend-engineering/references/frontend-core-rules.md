@@ -19,6 +19,8 @@
 
 ## 二、组件、模块和状态边界
 
+新增、修复或重构前按 [组件与模块复用](../../engineering-quality-delivery/references/component-module-reuse.md) 检查已有能力。重点查看组件库、Hooks/Composables、API Client、表单规则及调用示例；比较 Props、事件、Slot、受控状态、可访问性和浏览器/SSR 边界。外观相似不能替代业务语义判断，共享 UI 改动须验证受影响页面的默认行为。
+
 区分页面容器、业务组件、展示组件、通用组件、API Client、领域适配层和纯函数。区分局部状态、URL 状态、跨组件状态、服务端状态、持久化状态和派生状态。
 
 主动检查：

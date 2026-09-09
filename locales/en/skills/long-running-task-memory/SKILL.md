@@ -13,6 +13,7 @@ description: Use for cross-session, multi-stage, multi-module, multi-repository,
 6. Recover from the current task, current plan stage, three recent checkpoints, Project Binding, live Git, and runtime state.
 7. Task checkpoints do not automatically become Project Memory; project records do not automatically become cross-project knowledge.
 8. Scan for credentials and maintain retention and access boundaries.
+9. For initial nontrivial development onboarding, index recovery, or shared-capability maintenance, follow the [capability-index workflow](../engineering-quality-delivery/references/capability-index-workflow.md). The index stores invalidatable factual locators; task summaries link IDs and evidence. The coordinator merges increments, while stable memory still requires projection and human review.
 
 Persist verified facts, evidence grade, authorization, state, blockers, risk, and next action—not hidden reasoning. This Skill normally uses Luna and does not create subagents by itself.
 

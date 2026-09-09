@@ -21,7 +21,8 @@ def native_path(path: str | Path) -> Path:
     absolute = os.path.abspath(os.fspath(path))
     if sys.platform == "win32":
         if not absolute.startswith("\\\\?\\"):
-            absolute = "\\\\?\\" + absolute
+            absolute = ("\\\\?\\UNC\\" + absolute[2:]
+                        if absolute.startswith("\\\\") else "\\\\?\\" + absolute)
         return WindowsPath(absolute)
     return PosixPath(absolute)
 

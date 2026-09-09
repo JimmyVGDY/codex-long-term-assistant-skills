@@ -1,4 +1,4 @@
-# V7.4 Installation, Validation, and Recovery
+# V7.6 Installation, Validation, and Recovery
 
 Chinese: [`INSTALLATION_RECOVERY.md`](INSTALLATION_RECOVERY.md)
 
@@ -7,7 +7,7 @@ Chinese: [`INSTALLATION_RECOVERY.md`](INSTALLATION_RECOVERY.md)
 - Native Windows Codex CLI 0.153.4.
 - Python 3.11 or later.
 - Extract the archive before running commands.
-- Supported managed upgrades: 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
+- Supported managed upgrades: 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, and 4.0.0.
 - A native Windows process uses a native Windows `CODEX_HOME`; WSL-style drive mappings are normalized before use.
 - Unknown Skills, agents, Hooks, MCP configuration, Plugin files, and `config.toml` content remain outside managed deletion scope.
 
@@ -31,7 +31,7 @@ Plugin acceptance requires:
 ```ini
 installed = true
 enabled = true
-version = 7.5.1
+version = 7.6.0
 ```
 
 SessionEnd keeps a three-second host timeout. The Hook only constructs a capped, body-free sanitized event and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe; it does not scan or write the event chain. Stable-identity validation, semantic deduplication, persistence, DPAPI decryption, v2 signed enqueue, and sealing run in the worker outside the Hook budget. Evolution rejects an unsealed `seal_required` chain.

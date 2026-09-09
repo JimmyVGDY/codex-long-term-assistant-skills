@@ -708,9 +708,9 @@
         "英文主界面缺失: ": "English primary surface is missing: ",
         "Codex 发行命中无关品牌: ": "Codex release contains an unrelated brand: ",
         "中性语言门禁命中 %s: %s": "Neutral-language gate matched %s: %s",
-        "[OK] V7.5.1 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致": "[OK] V7.5.1 semantic validation passed: the eleven-release registry, isolated Plugin preflight, unified delegation budget, dispatch policy, model-identity privacy, and legacy compatibility boundaries agree",
-        "manifest 版本不是 7.5.1": "manifest version must be 7.5.1",
-        "缺少 %s -> V7.5.1 升级声明": "Missing %s -> V7.5.1 upgrade path"
+        "[OK] V7.6.0 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致": "[OK] V7.6.0 semantic validation passed: the eleven-release registry, isolated Plugin preflight, unified delegation budget, dispatch policy, model-identity privacy, and legacy compatibility boundaries agree",
+        "manifest 版本不是 7.6.0": "manifest version must be 7.6.0",
+        "缺少 %s -> V7.6.0 升级声明": "Missing %s -> V7.6.0 upgrade path"
       },
       "preserve": [
         "用户",
@@ -741,7 +741,7 @@
         "派发策略门禁 cases 无效": "Invalid dispatch-policy gate cases",
         "派发策略报告的模型身份隐私声明无效": "Invalid model-identity privacy result in dispatch-policy evidence",
         "生命周期模型身份隐私声明无效": "Invalid lifecycle model-identity privacy result",
-        "V7.5.1 端到端发行验证": "V7.5.1 end-to-end release validation",
+        "V7.6.0 端到端发行验证": "V7.6.0 end-to-end release validation",
         "派发策略门禁存在失败用例": "Dispatch-policy gate contains a failed case",
         "派发策略门禁用例无效或冲突": "Dispatch-policy gate contains an invalid case conflict",
         "派发策略证据包含宿主模型身份字段": "Dispatch-policy evidence contains prohibited model-identity fields"
@@ -907,10 +907,12 @@
         "Plugin 遗留旧 Skill %s": "Legacy Skill remains in the Plugin: %s",
         "Skill 漂移 %s": "Skill drift: %s",
         "缺少 standalone Hook": "Missing standalone Hook",
+        "缺少 standalone 流程门禁 Worker": "Missing standalone process-gate Worker",
         "缺少 Codex Marketplace manifest": "Missing Codex Marketplace manifest",
         "缺少 Plugin": "Missing Plugin",
         "缺少 Plugin Hooks": "Missing Plugin Hooks",
         "缺少延迟封印 Worker": "Missing deferred-sealing Worker",
+        "缺少流程门禁 Worker": "Missing process-gate Worker",
         "缺少 Windows Hook 启动器": "Missing Windows Hook launcher",
         "Windows Hook 启动命令缺失 %s": "Windows Hook startup command is missing for %s",
         "Windows Hook 启动路径未完整引用 %s": "Windows Hook startup path is not fully quoted for %s",
@@ -1444,6 +1446,11 @@
       "plain": {
         "[OK] 活动代码、配置、当前文档和发布脚本不包含宿主实际模型身份字段": "[OK] Active code, configuration, current documentation, and release scripts contain no host runtime model-identity fields",
         "[FAIL] 宿主模型身份禁止项: ": "[FAIL] Model-identity privacy boundary violations: "
+      }
+    },
+    "runtime/cp_runtime/capability_index.py": {
+      "plain": {
+        "仅识别公开入口；业务适用性和完整依赖关系未核验": "Public entry location only; business suitability and complete dependencies are unverified"
       }
     }
   }

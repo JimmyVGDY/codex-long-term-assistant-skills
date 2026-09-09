@@ -19,6 +19,8 @@ Reviewer 读取顺序：摘要和统计 -> 分配范围的 hunk -> 改动文件�
 
 ## 三、第一轮并行审查
 
+涉及复用决策的改动，在现有任务摘要/验证摘要输入中加入“检索范围与候选、决策及理由、使用方影响、验证与未知项”，按 [组件与模块复用](../../engineering-quality-delivery/references/component-module-reuse.md) 关联文件/符号。沿用现有 packet 生成和哈希流程，不在生成后手改 packet，不新增运行时 Schema 必填字段。简单任务一句话即可；未触发复审时不为该摘要另开 Reviewer。
+
 每个 Reviewer 必须获得唯一职责、文件/调用链范围、排除范围、packet hash、轮次/深度、证据标准、模型档位、输出 Schema 和隔离等级。
 
 主协调 Agent 等待当前轮计划中的 Reviewer 返回后统一归并；不因一个 Reviewer 先返回问题就边审边改。Reviewer 失败时最多重试一次；相同 Reviewer 对相同 packet 的重复派发必须提供第二意见理由。

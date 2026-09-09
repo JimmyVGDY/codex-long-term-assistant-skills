@@ -19,6 +19,7 @@ description: >-
 9. Task Checkpoint 不能自动进入 Project Memory；先按 `references/memory-projection-governance.md` 生成 Projection Candidate，经明确审核后晋升。
 10. 单项目记忆不能自动成为跨项目知识；必须脱敏、声明适用范围、保留反例和来源证据，再形成待审 Knowledge Candidate。
 11. 记忆写入前后执行凭据扫描、权限检查和生命周期治理。
+12. 首次非简单开发接管、恢复已有能力索引或维护公共模块记录时，按[能力索引开发流程](../engineering-quality-delivery/references/capability-index-workflow.md)执行。索引只保存可失效的事实定位，任务摘要链接ID与证据；主协调者增量合并，稳定记忆仍须投影和人工审核。
 
 ## 模型与委派成本
 

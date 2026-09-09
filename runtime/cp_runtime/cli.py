@@ -163,6 +163,10 @@ def add_approval_common(parser: argparse.ArgumentParser) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Codex 跨项目技术助手 V5.0 项目治理运行时")
     sub = parser.add_subparsers(dest="command", required=True)
+    from .capability_cli import add_commands
+    add_commands(sub)
+    from .capability_gate_cli import add_commands as add_gate_commands
+    add_gate_commands(sub)
 
     item = sub.add_parser("project-onboard")
     item.add_argument("--repo-path", required=True)

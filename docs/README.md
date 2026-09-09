@@ -2,21 +2,21 @@
 
 English: [README.en.md](README.en.md)
 
-本页按使用阶段组织 V7.5.1 的规范文档。历版报告与构建信息按版本集中保存，历史校验路径、引用关系与可复现证据继续保留。
+本页按使用阶段组织 V7.6.0 的规范文档。历版报告与构建信息按版本集中保存，历史校验路径、引用关系与可复现证据继续保留。
 
-> 版本口径：V7.5.1 是当前包版本；TaskOutcomeEvent V3、组件 Manifest 和策略版本是协议或数据格式标识。旧包版本只在迁移说明和“发行与历史”中出现，不代表当前规则仍按旧版本运行。
+> 版本口径：V7.6.0 是当前包版本；TaskOutcomeEvent V3、组件 Manifest 和策略版本是协议或数据格式标识。旧包版本只在迁移说明和“发行与历史”中出现，不代表当前规则仍按旧版本运行。
 
 ## 开始使用
 
-- [V7.5 使用指南](USER_GUIDE_V7.5.md)
+- [V7.6 使用指南](USER_GUIDE_V7.6.md)
 - [安装、升级、回滚与恢复](INSTALLATION_RECOVERY.md)
 - [Codex 配置指南](CODEX_CONFIG_GUIDE.md)
 - [项目上下文与接入](PROJECT_CONTEXT_AND_ONBOARDING.md)
 
 ## 架构与策略
 
-- [V7.5 当前系统架构](SYSTEM_ARCHITECTURE.md)
-- [V7.5 领域 Skill 架构](V7_DOMAIN_SKILL_ARCHITECTURE.md)
+- [V7.6 当前系统架构](SYSTEM_ARCHITECTURE.md)
+- [V7.6 领域 Skill 架构](V7_DOMAIN_SKILL_ARCHITECTURE.md)
 - [模型路由与成本策略](MODEL_ROUTING_AND_COST_POLICY.md)
 - [Reviewer 运行时隔离](REVIEWER_RUNTIME_ISOLATION.md)
 - [子 Agent 独立上下文](SUBAGENT_INDEPENDENT_CONTEXT.md)
@@ -30,16 +30,19 @@ English: [README.en.md](README.en.md)
 - [受控演进操作](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [自演进架构](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [当前验证报告索引](VALIDATION_REPORT.md)
-- [V7.5.1 包内验证报告](releases/v7.5.1/VALIDATION_REPORT.md)
-- [V7.5.1 审计报告](releases/v7.5.1/AUDIT_REPORT.md)
+- [V7.6.0 包内验证报告](releases/v7.6.0/VALIDATION_REPORT.md)
+- [V7.6.0 审计报告](releases/v7.6.0/AUDIT_REPORT.md)
 
 ## 发行与历史
 
 - [历版发行资料索引](releases/README.md)
-- [V7.5.1 发行说明](releases/v7.5.1/RELEASE_NOTES.md)
+- [V7.6.0 发行说明](releases/v7.6.0/RELEASE_NOTES.md)
 - [版本记录](../CHANGELOG.md)
 - [公开重建资料索引](history/README.md)
 - [公开重建版本索引](history/RELEASE_ARCHIVES.md)
 - [公开重建历史](history/RECONSTRUCTED_HISTORY.zh-CN.md)
 
 历史资料记录当时版本的事实，不自动证明当前宿主或当前安装状态。
+
+- [能力索引与可选门禁](CAPABILITY_INDEX.md)
+- [组件复用验收](COMPONENT_REUSE_ACCEPTANCE.md)

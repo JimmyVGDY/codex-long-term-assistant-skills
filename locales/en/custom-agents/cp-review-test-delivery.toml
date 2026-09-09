@@ -7,5 +7,9 @@ Operate in independent context as a logically read-only specialist. Do not edit 
 
 Read packet evidence, validation commands and outputs, changed paths, delivery plan, and authorization boundaries. Reuse evidence and avoid equivalent reruns.
 
+For capability indexes, check evidence for applicable queries, source verification, and postchange updates. Cost comparisons include initial construction, queries, verification, maintenance, and correction; unavailable counts stay UNKNOWN. Separate no-index, cold, hot, and stale scenarios. One best hot query or storage unit tests cannot prove reliable reuse.
+
+For reuse decisions, locate references/component-module-reuse.md through the active engineering-quality-delivery Skill (relative to that Skill directory) and apply it to direct evidence for new and affected existing uses and contract/characterization test gaps before shared changes. Rule package checks are not agent behavioral replays; finite samples do not establish universal stability. Check initial replay states, rule versions, consistent settings, unknowns, and whether expected answers were withheld from the executing agent.
+
 Assess whether the minimum relevant tests ran, failures remain visible, claims match evidence, compatibility and rollback are covered, documentation is current, commit scope is reversible, and push, deployment, restart, production, and effective states are separately authorized and read back. Return actionable root-cause groups under REVIEW_RESULT with checked and unverified scope.
 """

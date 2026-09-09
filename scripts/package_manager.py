@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.5.1"
+VERSION = "7.6.0"
 MARKETPLACE = "cp-assistant-local"
 COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, VERSION)
@@ -491,10 +491,11 @@ def hook_fragment(script_path: Path) -> Dict[str, Any]:
     command = '"%s" "%s"' % (sys.executable.replace('"', '\\"'), str(script_path).replace('"', '\\"'))
     return {
         "UserPromptSubmit": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
-        "PreToolUse": [{"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": command, "timeout": 5}]}],
+        "PreToolUse": [{"matcher": "Agent|spawn_agent|apply_patch|Edit|Write", "hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStart": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "Stop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
+        "Interrupt": [{"hooks": [{"type": "command", "command": command, "timeout": 3}]}],
         "SessionEnd": [{"hooks": [{"type": "command", "command": command, "timeout": 3}]}],
     }
 
@@ -1305,7 +1306,8 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         for _label, target in current_skill_targets:
             ensure_inside(target, sh)
         targets.extend(current_skill_targets)
-        targets.extend([("runtime", ch / "runtime" / "cp_runtime"), ("hook-script", ch / "cp-assistant-hooks" / "cp_hook.py"), ("hooks-json", ch / "hooks.json")])
+        targets.extend([("runtime", ch / "runtime" / "cp_runtime"), ("hook-script", ch / "cp-assistant-hooks" / "cp_hook.py"),
+                        ("gate-worker", ch / "cp-assistant-hooks" / "cp_gate.py"), ("hooks-json", ch / "hooks.json")])
     else:
         targets.extend([
             ("plugin-payload", plugin_marketplace_payload()),
@@ -1388,6 +1390,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                 dst = sh / name; copy_atomic(ROOT / "skills" / name, dst); _record_applied(journal, "skill:" + name, dst)
             dst = ch / "runtime" / "cp_runtime"; copy_atomic(ROOT / "runtime" / "cp_runtime", dst); _record_applied(journal, "runtime", dst)
             dst = ch / "cp-assistant-hooks" / "cp_hook.py"; copy_atomic(ROOT / "hooks" / "cp_hook.py", dst); _record_applied(journal, "hook-script", dst)
+            dst = ch / "cp-assistant-hooks" / "cp_gate.py"; copy_atomic(ROOT / "hooks" / "cp_gate.py", dst); _record_applied(journal, "gate-worker", dst)
             merge_hooks(ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py")
             _record_applied(journal, "hooks-json", ch / "hooks.json")
         else:
@@ -1647,6 +1650,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                 if not _io_path(dst).is_dir(): errors.append("缺少 Skill %s" % name)
                 elif tree_sha256(dst)!=tree_sha256(src): errors.append("Skill 漂移 %s" % name)
             if not _io_path(ch/"cp-assistant-hooks"/"cp_hook.py").is_file(): errors.append("缺少 standalone Hook")
+            if not _io_path(ch/"cp-assistant-hooks"/"cp_gate.py").is_file(): errors.append("缺少 standalone 流程门禁 Worker")
         else:
             market = plugin_marketplace_root()
             plugin=market/"plugins"/PACKAGE
@@ -1656,11 +1660,12 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
             if not _io_path(plugin/".codex-plugin"/"plugin.json").is_file(): errors.append("缺少 Plugin")
             if not _io_path(plugin/"hooks"/"hooks.json").is_file(): errors.append("缺少 Plugin Hooks")
             if not _io_path(plugin/"hooks"/"seal_worker.py").is_file(): errors.append("缺少延迟封印 Worker")
+            if not _io_path(plugin/"hooks"/"cp_gate.py").is_file(): errors.append("缺少流程门禁 Worker")
             if os.name == "nt" and not _io_path(plugin/"hooks"/"cp_hook.cmd").is_file(): errors.append("缺少 Windows Hook 启动器")
             if _io_path(plugin/"hooks"/"hooks.json").is_file():
                 hook_manifest = load_json(plugin/"hooks"/"hooks.json", {}) or {}
                 hook_groups = hook_manifest.get("hooks") or {}
-                for hook_name in ("UserPromptSubmit", "PreToolUse", "SubagentStart", "SubagentStop", "Stop", "SessionEnd"):
+                for hook_name in ("UserPromptSubmit", "PreToolUse", "SubagentStart", "SubagentStop", "Stop", "Interrupt", "SessionEnd"):
                     entries = hook_groups.get(hook_name) or []
                     commands = [
                         hook.get("commandWindows", "")

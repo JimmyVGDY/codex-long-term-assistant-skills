@@ -27,13 +27,13 @@ The release workflow treats source validation, reproducible building, provenance
 After downloading a ZIP, use GitHub CLI to verify the actual file digest and provenance against this repository identity:
 
 ```shell
-gh attestation verify Codex-Skills-V7.4.6-zh-CN.zip --repo OWNER/REPOSITORY
-gh attestation verify Codex-Skills-V7.4.6-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.6.0-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.6.0-en.zip --repo OWNER/REPOSITORY
 ```
 
 Replace `OWNER/REPOSITORY` with the repository identity shown on the download page. `SHA256SUMS.txt` supports digest comparison, `witness-*.json` proves that two clean builds from the same commit were byte-identical, and the GitHub attestation binds ZIP digests to the workflow identity that produced them. These are distinct evidence layers and cannot substitute for one another.
 
-V7.4.6 English title segment: `Codex CLI 0.153.4 stable compatibility`; the complete bilingual title is assembled from the two manifest values.
+V7.6.0 English title segment: `Component reuse index and optional workflow gates`; the complete bilingual title is assembled from the two manifest values.
 
 ## Publish a new version
 

@@ -1,0 +1,16 @@
+{
+  "id": "cap-replace-with-stable-id",
+  "kind": "module",
+  "path": "relative/path.ext",
+  "symbol": "PublicEntry",
+  "summary": "",
+  "keywords": [],
+  "boundaries": [],
+  "references": {"callers": [], "tests": [], "context": []},
+  "file_sha256": null,
+  "observed_baseline": {"head": "", "branch": ""},
+  "observed_at": null,
+  "lifecycle": "candidate",
+  "freshness": "unknown",
+  "verification": {"scope": "", "evidence": [], "recorded_at": null}
+}

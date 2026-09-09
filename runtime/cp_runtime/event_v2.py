@@ -18,6 +18,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
+from .atomic_io import native_path as _native_path
+
 SCHEMA_VERSION = "3.0"
 LEGACY_SCHEMA_VERSION = "2.0"
 ZERO_HASH = "0" * 64
@@ -324,9 +326,9 @@ class OwnerTokenLock:
 
     def __enter__(self) -> "OwnerTokenLock":
         deadline = time.monotonic() + self.timeout
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        raw_path = str(self.path.absolute())
-        native_path = "\\\\?\\" + raw_path if os.name == "nt" and not raw_path.startswith("\\\\?\\") else raw_path
+        lock_path = _native_path(self.path)
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        native_path = str(lock_path)
         try:
             descriptor = os.open(native_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             try:

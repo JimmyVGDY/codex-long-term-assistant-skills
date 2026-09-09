@@ -5,6 +5,14 @@ description: Use when behavior changes or work includes validation, Git, approva
 
 # Engineering Quality and Delivery
 
+Before adding features, fixing bugs, refactoring, or changing shared implementations, read [Component and Module Reuse](references/component-module-reuse.md) and assess existing capabilities in proportion to the task. Read-only work and changes without behavioral impact do not trigger this rule.
+
+Follow the [shared capability-index workflow](references/capability-index-workflow.md) for applicable actions:
+
+- **Before editing**: with a bound Profile and verified runtime, first query a bounded scope to establish index state; neither a small task nor the absence of index files inside the workspace proves it is missing. Reliable missing-index evidence from this task permits source search when initial scanning does not apply. First-onboarding shared-interface or multi-consumer changes need a bounded initial scan; `INDEX_MISSING` does not waive that trigger, and LIGHT only narrows scope.
+- **Before closing**: the task coordinator invalidates changed paths, then scans inspected changed sources plus stale candidate sources actually checked and adopted after querying, and reads back the result. Refresh stale locations even when the reused source was not edited. Invalidation alone is not an update. Subagents return findings for the coordinator to merge.
+- A small local fix without an index may search source directly; unrelated tasks create no index. Do not add agents or repository-wide scans for this workflow.
+
 1. Select a proportionate `LIGHT`, `STANDARD`, or `STRICT` execution profile.
 2. Bind non-trivial work to project, branch, baseline, objective, non-goals, authorization, acceptance criteria, and stop conditions.
 3. Use one pre-implementation gate only when public contracts, migrations, access control, core state, cross-service behavior, or production risk needs independent judgment.

@@ -12,6 +12,8 @@ description: >-
 
 ## 最小充分加载
 
+行为修改同时使用[质量交付入口](../engineering-quality-delivery/SKILL.md)，其中的能力索引动作在修改前和结束前执行；不要只读取技术栈规则而遗漏共享组件的索引维护。
+
 1. 开始实质分析或修改前读取 `references/frontend-core-rules.md`。
 2. 优先运行只读脚本：
 

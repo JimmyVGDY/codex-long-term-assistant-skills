@@ -5,6 +5,8 @@ description: Use for browser, WebView, desktop renderer, JavaScript or TypeScrip
 
 # Frontend Engineering
 
+For behavior changes, also use the [quality-delivery entry](../engineering-quality-delivery/SKILL.md), including its capability-index actions before editing and before closing. Stack rules alone do not cover shared-component index maintenance.
+
 1. Identify framework, version, Node version, package manager, lock file, rendering mode, runtime carrier, and client/server boundary before applying framework semantics.
 2. Partition monorepos, migrations, and micro-frontends by application boundary. Do not mix Vue, React, Angular, Svelte, or other lifecycle and state semantics.
 3. Treat authentication, authorization, XSS, browser storage, files, SSR, streaming, PWA, WebView bridges, desktop renderers, and extensions as explicit security or runtime boundaries.

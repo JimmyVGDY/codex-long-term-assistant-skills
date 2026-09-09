@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "direct-component",
+      "task": "Implement renderSettings() in settings.mjs: a section titled Settings with a disabled Save button and an enabled Cancel button. Preserve existing UI behavior.",
+      "runtime": "node",
+      "files": {
+        "package.json": "{\"type\":\"module\",\"scripts\":{\"build\":\"node --check settings.mjs\",\"test\":\"node old.test.mjs\"}}\n",
+        "ui/action.mjs": "export function action(label, disabled = false) {\n  const escaped = label.replaceAll('&', '&amp;').replaceAll('<', '&lt;');\n  return `<button type=\"button\"${disabled ? ' disabled aria-disabled=\"true\"' : ''}>${escaped}</button>`;\n}\n",
+        "home.mjs": "import { action } from './ui/action.mjs';\nexport const renderHome = () => action('Open');\n",
+        "settings.mjs": "export function renderSettings() { throw new Error('Not implemented'); }\n",
+        "old.test.mjs": "import assert from 'node:assert/strict';\nimport { action } from './ui/action.mjs';\nimport { renderHome } from './home.mjs';\nassert.equal(renderHome(), '<button type=\"button\">Open</button>');\nassert.equal(action('<&', true), '<button type=\"button\" disabled aria-disabled=\"true\">&lt;&amp;</button>');\n"
+      }
+    },
+    {
+      "id": "different-name",
+      "task": "Implement invoice.total_label(cents) returning a dollar amount prefixed by Total: with two decimals and half-up rounding, matching the order display convention.",
+      "runtime": "python",
+      "files": {
+        "amounts.py": "from decimal import Decimal, ROUND_HALF_UP\n\ndef present_minor(value):\n    amount = (Decimal(str(value)) / 100).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)\n    return f'${amount:.2f}'\n",
+        "orders.py": "from amounts import present_minor\n\ndef label(cents):\n    return 'Order: ' + present_minor(cents)\n",
+        "invoice.py": "def total_label(cents):\n    raise NotImplementedError\n",
+        "test_old.py": "import unittest\nfrom orders import label\n\nclass OldTests(unittest.TestCase):\n    def test_rounding(self):\n        self.assertEqual(label('100.5'), 'Order: $1.01')\n        self.assertEqual(label('-100.5'), 'Order: $-1.01')\n"
+      }
+    },
+    {
+      "id": "similar-different",
+      "task": "Implement security.validate_access_code(value). Access codes must be exactly six ASCII digits supplied as a string. Return valid input unchanged; raise ValueError for anything else, including surrounding whitespace. Keep marketing signup behavior unchanged.",
+      "runtime": "python",
+      "files": {
+        "marketing.py": "def normalize_code(value):\n    text = str(value).strip()\n    if not text.isdigit() or len(text) != 6:\n        raise ValueError('invalid campaign code')\n    return text\n",
+        "security.py": "def validate_access_code(value):\n    raise NotImplementedError\n",
+        "test_old.py": "import unittest\nfrom marketing import normalize_code\n\nclass OldTests(unittest.TestCase):\n    def test_campaign_contract(self):\n        self.assertEqual(normalize_code(123456), '123456')\n        self.assertEqual(normalize_code(' 123456 '), '123456')\n        self.assertEqual(normalize_code('１２３４５６'), '１２３４５６')\n"
+      }
+    },
+    {
+      "id": "compatible-extension",
+      "task": "Add an optional compact display to badge(label, options) in ui/badge.mjs and use it from renderToolbar() for a Ready badge. Compact markup needs class=\"badge badge--compact\"; normal badges must stay byte-for-byte unchanged, including escaping. Keep the public function and old callers working.",
+      "runtime": "node",
+      "files": {
+        "package.json": "{\"type\":\"module\",\"scripts\":{\"build\":\"node --check ui/badge.mjs && node --check toolbar.mjs\",\"test\":\"node old.test.mjs\"}}\n",
+        "ui/badge.mjs": "export function badge(label) {\n  const safe = label.replaceAll('&', '&amp;').replaceAll('<', '&lt;');\n  return `<span class=\"badge\">${safe}</span>`;\n}\n",
+        "dashboard.mjs": "import { badge } from './ui/badge.mjs';\nexport const renderDashboard = () => badge('Ready');\n",
+        "toolbar.mjs": "export function renderToolbar() { throw new Error('Not implemented'); }\n",
+        "old.test.mjs": "import assert from 'node:assert/strict';\nimport { badge } from './ui/badge.mjs';\nimport { renderDashboard } from './dashboard.mjs';\nassert.equal(renderDashboard(), '<span class=\"badge\">Ready</span>');\nassert.equal(badge('<&'), '<span class=\"badge\">&lt;&amp;</span>');\n"
+      }
+    },
+    {
+      "id": "permission-state",
+      "task": "Implement portal.visible_documents(documents, tenant) for the public portal. Return only documents whose tenant matches the current caller on every invocation, including after other tenants or the admin screen have used the application. Do not change admin export behavior.",
+      "runtime": "python",
+      "files": {
+        "admin_export.py": "def all_documents(documents):\n    return list(documents)\n",
+        "legacy_preview.py": "_cached = None\n\ndef preview_documents(documents, tenant):\n    global _cached\n    if _cached is None:\n        _cached = [row for row in documents if row['tenant'] == tenant]\n    return list(_cached)\n",
+        "portal.py": "def visible_documents(documents, tenant):\n    raise NotImplementedError\n",
+        "test_old.py": "import unittest\nfrom admin_export import all_documents\n\nclass OldTests(unittest.TestCase):\n    def test_admin_export(self):\n        rows = [{'tenant': 'a'}, {'tenant': 'b'}]\n        self.assertEqual(all_documents(rows), rows)\n"
+      }
+    },
+    {
+      "id": "shared-extraction",
+      "task": "The cart and quote paths implement the same shipping charge policy. Update both so subtotal >= 5000 cents ships free, otherwise charge 499 cents; negative subtotals must raise ValueError. Keep this one policy maintainable across both paths and preserve the public cart.shipping and quote.shipping entrypoints.",
+      "runtime": "python",
+      "files": {
+        "cart.py": "def shipping(subtotal):\n    if subtotal < 0:\n        raise ValueError('negative subtotal')\n    return 0 if subtotal >= 6000 else 499\n",
+        "quote.py": "def shipping(subtotal):\n    if subtotal < 0:\n        raise ValueError('negative subtotal')\n    return 0 if subtotal >= 6000 else 499\n",
+        "test_old.py": "import unittest\nimport cart\nimport quote\n\nclass OldTests(unittest.TestCase):\n    def test_unaffected_contract(self):\n        for module in (cart, quote):\n            self.assertEqual(module.shipping(0), 499)\n            self.assertEqual(module.shipping(7000), 0)\n            with self.assertRaises(ValueError):\n                module.shipping(-1)\n"
+      }
+    },
+    {
+      "id": "stale-index",
+      "task": "Implement download.filename(name) using the application's current filename convention: trim whitespace, replace slashes and backslashes with underscores, and use untitled for an empty result. Preserve upload behavior.",
+      "runtime": "python",
+      "files": {
+        "CAPABILITIES.md": "# Historical capability index\nFilename normalization: old_utils.py normalize_filename. Last checked before the module move.\n",
+        "file_names.py": "def safe_name(value):\n    return value.strip().replace('/', '_').replace(chr(92), '_') or 'untitled'\n",
+        "upload.py": "from file_names import safe_name\n\ndef filename(name):\n    return safe_name(name)\n",
+        "download.py": "def filename(name):\n    raise NotImplementedError\n",
+        "test_old.py": "import unittest\nfrom upload import filename\n\nclass OldTests(unittest.TestCase):\n    def test_upload_names(self):\n        self.assertEqual(filename(' a/b '), 'a_b')\n        self.assertEqual(filename('  '), 'untitled')\n"
+      }
+    },
+    {
+      "id": "local-fix",
+      "task": "Fix pagination.page_count(total, size): an empty collection should have zero pages; preserve rounding up for positive totals and rejection of non-positive size. Keep the change local to this pagination behavior.",
+      "runtime": "python",
+      "files": {
+        "pagination.py": "def page_count(total, size):\n    if size <= 0:\n        raise ValueError('invalid size')\n    return max(1, (total + size - 1) // size)\n",
+        "unrelated.py": "def batches(total, size):\n    return (total + size - 1) // size\n",
+        "test_old.py": "import unittest\nfrom pagination import page_count\n\nclass OldTests(unittest.TestCase):\n    def test_old_pages(self):\n        self.assertEqual(page_count(11, 10), 2)\n        self.assertEqual(page_count(10, 10), 1)\n        with self.assertRaises(ValueError):\n            page_count(1, 0)\n"
+      }
+    }
+  ]
+}

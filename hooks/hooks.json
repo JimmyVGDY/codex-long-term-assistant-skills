@@ -14,7 +14,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Agent|spawn_agent",
+        "matcher": "Agent|spawn_agent|apply_patch|Edit|Write",
         "hooks": [
           {
             "type": "command",
@@ -57,6 +57,18 @@
             "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" Stop\"",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Interrupt": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
+            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" Interrupt\"",
+            "timeout": 3
           }
         ]
       }
