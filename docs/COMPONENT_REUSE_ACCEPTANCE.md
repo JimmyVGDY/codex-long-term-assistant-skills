@@ -1,6 +1,6 @@
 # 组件与模块复用验收
 
-本规程验证 [公共复用规则](../skills/engineering-quality-delivery/references/component-module-reuse.md)。适用于本包维护者；不由普通业务任务自动执行。
+本规程验证 [公共复用规则](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/v7.6.0/skills/engineering-quality-delivery/references/component-module-reuse.md)。适用于本包维护者；不由普通业务任务自动执行。
 
 ## 准备与执行
 
