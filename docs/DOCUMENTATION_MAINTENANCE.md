@@ -94,3 +94,5 @@ python scripts/build-release.py snapshot --output <仓库外的新目录> --requ
 | dist/ | 按版本和提交隔离的可重建产物 |
 
 任务状态、证据归档与下载工具放在仓库外。整理历史资料时保留当前 Profile、索引和门禁绑定；先校验归档文件哈希及恢复映射，再清理原件。
+
+当前包版本文字与验收报告链接使用 manifest 驱动的事实标记。与 manifest 版本相同的发行文档必须为 active，其他版本发行文档必须为 historical。发行索引链接到线上发布读回，不再手工保留易过期的“当前已发布版本”断言。

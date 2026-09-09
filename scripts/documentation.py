@@ -246,6 +246,9 @@ def fact_value(key: str, root: Path) -> str:
         ):
             raise DocumentationError("invalid package upgrade sources")
         return ", ".join(sorted(set(versions), key=lambda value: tuple(map(int, value.split("."))), reverse=True))
+    if key == "validation-report":
+        version = manifest["version"]
+        return f"[V{version}](releases/v{version}/VALIDATION_REPORT.md)"
     if key == "hooks.zh":
         return f"{len(hooks)} 个注册 Hook 入口：{names}。"
     if key == "hooks.en":
@@ -354,6 +357,11 @@ def audit(root: Path = ROOT, *, write: bool = False) -> dict:
                 problems.append({"code": "ENGLISH_PROJECTION_DRIFT", "path": item["target"]})
     current_series = ".".join(manifest["version"].split(".")[:2])
     for item in catalog["documents"]:
+        release = re.fullmatch(r"docs/releases/v(\d+\.\d+\.\d+)/[^/]+\.md", item["path"])
+        if release:
+            expected_status = "active" if release[1] == manifest["version"] else "historical"
+            if item["status"] != expected_status:
+                problems.append({"code": "RELEASE_DOCUMENT_STATUS", "path": item["path"]})
         if item["status"] == "historical":
             continue
         for name in (item["path"], item["english_source"]):

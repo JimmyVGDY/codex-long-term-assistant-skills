@@ -23,5 +23,12 @@
   "full_local_wrapper_rerun": "NOT_RUN",
   "publication": "NOT_EVALUATED",
   "account_installation": "NOT_EVALUATED",
-  "fresh_task": "NOT_EVALUATED"
+  "fresh_task": "NOT_EVALUATED",
+  "late_candidate_documentation_repair": {
+    "documentation_tests": 18,
+    "site_tests": 14,
+    "result": "PASS",
+    "prior_candidate": "9271828035cb7bcaf4d9f0d4343e46834f09558a",
+    "prior_unfinished_ci": "CANCELLED_SUPERSEDED"
+  }
 }

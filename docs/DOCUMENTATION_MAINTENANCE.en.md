@@ -96,3 +96,5 @@ Reuse existing checks and builders. Observe independent manual fact edits, check
 | dist/ | Rebuildable outputs isolated by version and commit |
 
 Task state, evidence archives and downloaded tools stay outside the repository. Preserve current Profile, index and gate bindings when archiving historical material. Archive files with hashes and a restoration map before removing originals.
+
+Current package labels and validation report links use manifest-backed fact markers. Release documents for the manifest version must be active; other versioned release documents must be historical. The release archive points to online publication readbacks instead of retaining a manually maintained current-release claim.

@@ -1,5 +1,5 @@
 # 验证报告索引
 
-当前版本的权威包内验证报告位于 `docs/releases/v7.6.0/VALIDATION_REPORT.md`；英文版本为同目录下的 `VALIDATION_REPORT.en.md`。
+当前包的构建时验收记录：<!-- cp-fact:validation-report -->[V7.6.1](releases/v7.6.1/VALIDATION_REPORT.md)<!-- /cp-fact -->。
 
-历史版本报告按版本保留在 `docs/releases/`，不作为 V7.6.0 正式宿主状态的证据。最终 ZIP、Plugin、payload 身份和真实生命周期状态以包外 V7.6.0 release attestation 及其绑定证据为准。
+历史报告保留各自基线，不证明当前宿主状态。公开发行、最终制品、账户安装与真实任务读回追加在对应 [GitHub Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases)；门禁配置本身不作为执行通过证据。

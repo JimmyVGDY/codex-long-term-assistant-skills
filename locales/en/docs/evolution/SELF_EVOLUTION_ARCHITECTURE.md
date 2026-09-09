@@ -1,6 +1,6 @@
 # Self-Observation and Controlled Evolution Architecture
 
-Status: `active`. Package V7.6.0 retains TaskOutcomeEvent V3 and uses default policy `v7.4.3-default-1`. The sole authoritative implementation is runtime/cp_runtime/evolution/.
+Status: `active`. Package V<!-- cp-fact:package-version -->7.6.1<!-- /cp-fact --> retains TaskOutcomeEvent V3 and uses default policy `v7.4.3-default-1`. The sole authoritative implementation is runtime/cp_runtime/evolution/.
 
 ```mermaid
 flowchart TD

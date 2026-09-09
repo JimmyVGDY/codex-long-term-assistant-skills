@@ -69,6 +69,31 @@ class DocumentationSourceTests(unittest.TestCase):
         self.write("config/documentation.json", self.catalog)
         self.assertIn("FACT_MARKER_MISSING", self.codes())
 
+    def test_version_change_invalidates_current_version_and_report_projection(self):
+        self.write("README.md", "<!-- cp-fact:package-version -->7.6.1<!-- /cp-fact -->\n"
+                   "<!-- cp-fact:validation-report -->old<!-- /cp-fact -->\n")
+        self.catalog["fact_files"]["README.md"] = ["package-version", "validation-report"]
+        self.write("config/documentation.json", self.catalog)
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        self.write("manifest.json", {"version": "7.6.2"})
+        self.assertIn("FACT_DRIFT", self.codes())
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        self.assertIn("releases/v7.6.2/VALIDATION_REPORT.md", (self.root / "README.md").read_text())
+
+    def test_release_status_must_follow_package_version(self):
+        for version, status in [("7.6.0", "active"), ("7.6.1", "reference")]:
+            name = f"docs/releases/v{version}/RELEASE_NOTES.md"
+            self.write(name, "# Release notes\n")
+            self.write("locales/en/" + name, "# Release notes\n")
+            self.catalog["documents"].append({"path": name, "status": status,
+                                             "english_source": "locales/en/" + name})
+        self.write("config/documentation.json", self.catalog)
+        self.assertIn("RELEASE_DOCUMENT_STATUS", self.codes())
+        self.catalog["documents"][-2]["status"] = "historical"
+        self.catalog["documents"][-1]["status"] = "active"
+        self.write("config/documentation.json", self.catalog)
+        self.assertTrue(audit(self.root, write=True)["ok"])
+
     def contract_fixture(self):
         manifest = {
             "version": "7.6.1",

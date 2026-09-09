@@ -418,17 +418,17 @@
     },
     {
       "path": "docs/releases/v7.6.0/AUDIT_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.6.0/AUDIT_REPORT.md"
     },
     {
       "path": "docs/releases/v7.6.0/RELEASE_NOTES.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.6.0/RELEASE_NOTES.md"
     },
     {
       "path": "docs/releases/v7.6.0/VALIDATION_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.6.0/VALIDATION_REPORT.md"
     },
     {
@@ -588,17 +588,17 @@
     },
     {
       "path": "docs/releases/v7.6.1/RELEASE_NOTES.md",
-      "status": "reference",
+      "status": "active",
       "english_source": "locales/en/docs/releases/v7.6.1/RELEASE_NOTES.md"
     },
     {
       "path": "docs/releases/v7.6.1/VALIDATION_REPORT.md",
-      "status": "reference",
+      "status": "active",
       "english_source": "locales/en/docs/releases/v7.6.1/VALIDATION_REPORT.md"
     },
     {
       "path": "docs/releases/v7.6.1/AUDIT_REPORT.md",
-      "status": "reference",
+      "status": "active",
       "english_source": "locales/en/docs/releases/v7.6.1/AUDIT_REPORT.md"
     }
   ],
@@ -1042,6 +1042,30 @@
     ],
     "locales/en/docs/operations/INSTALLATION_RECOVERY.md": [
       "upgrade-sources"
+    ],
+    "docs/README.md": [
+      "package-version"
+    ],
+    "docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md": [
+      "package-version"
+    ],
+    "docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md": [
+      "package-version"
+    ],
+    "docs/VALIDATION_REPORT.md": [
+      "validation-report"
+    ],
+    "locales/en/docs/README.md": [
+      "package-version"
+    ],
+    "locales/en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md": [
+      "package-version"
+    ],
+    "locales/en/docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md": [
+      "package-version"
+    ],
+    "locales/en/docs/VALIDATION_REPORT.md": [
+      "validation-report"
     ]
   },
   "aliases": [

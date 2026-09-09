@@ -1,8 +1,8 @@
 # 历版发行资料
 
-当前候选： [V7.6.1 发行说明](v7.6.1/RELEASE_NOTES.md) · [验收记录](v7.6.1/VALIDATION_REPORT.md)。下方旧版本记录保留原基线。
+本目录保留各版本构建时记录。公开发行和后续精确提交读回见 [GitHub Releases](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases)。
 
-V7.6.0 是当前版本，主题为“组件复用索引与可选流程门禁”。下表中的其他版本仅用于发行追溯；其详情页会显示历史资料提示并从默认站内搜索排除，不能作为当前安装或操作说明。
+当前操作说明从[文档中心](../README.md)进入。旧版发行页面作为历史资料保留，并从默认站内搜索排除。
 
 English: [README.en.md](README.en.md)
 
@@ -12,6 +12,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.6.1 | [Notes](v7.6.1/RELEASE_NOTES.md) | [Audit](v7.6.1/AUDIT_REPORT.md) | [Validation](v7.6.1/VALIDATION_REPORT.md) | 构建时验证与发布后读回分列 | [JSON](v7.6.1/BUILD_INFO.json) | [JSON](v7.6.1/PACKAGE_VALIDATION.json) |
 | 7.6.0 | [Notes](v7.6.0/RELEASE_NOTES.md) | [Audit](v7.6.0/AUDIT_REPORT.md) | [Validation](v7.6.0/VALIDATION_REPORT.md) | 限定候选验收已完成；正式版本发布单独核验 | [JSON](v7.6.0/BUILD_INFO.json) | [JSON](v7.6.0/PACKAGE_VALIDATION.json) |
 | 7.5.1 | [Notes](v7.5.1/RELEASE_NOTES.md) | [Audit](v7.5.1/AUDIT_REPORT.md) | [Validation](v7.5.1/VALIDATION_REPORT.md) | 6 项锁竞争及恢复定向回归通过；完整验证与安装记录见报告 | [JSON](v7.5.1/BUILD_INFO.json) | [JSON](v7.5.1/PACKAGE_VALIDATION.json) |
 | 7.5.0 | [Notes](v7.5.0/RELEASE_NOTES.md) | [Audit](v7.5.0/AUDIT_REPORT.md) | [Validation](v7.5.0/VALIDATION_REPORT.md) | 标签候选未公开；并发测试时序假设在 7.5.1 修正 | [JSON](v7.5.0/BUILD_INFO.json) | [JSON](v7.5.0/PACKAGE_VALIDATION.json) |
