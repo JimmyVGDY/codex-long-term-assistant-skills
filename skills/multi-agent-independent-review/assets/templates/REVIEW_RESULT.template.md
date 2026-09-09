@@ -15,11 +15,9 @@
 - 阅读的上游、下游和共享逻辑：
 - 请求模型档位：luna-low / luna-medium / terra-medium / terra-high
 - 最低可接受模型档位：luna-low / luna-medium / terra-medium / terra-high
-- 请求模型 / 推理强度：
-- 实际模型 / 推理强度：
-- 模型分配状态：declared_match / fallback_acceptable / underpowered / unverified / mismatch
-- 运行证据等级 / 来源：unavailable / declared；none / reviewer-result
-- 模型分配说明：
+- 派发 permit 引用：未激活根预算时为空
+- 策略状态：approved / legacy-unbound
+- 成本依据：批准派发档位；不采集宿主实际模型身份
 - 任务难度：LOW / MEDIUM / HIGH / CRITICAL / UNKNOWN
 - 耗时（毫秒）：
 - 估算成本 / 公式版本：profile-weight-v1

@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/CAPABILITY_INDEX.md; edit that source and run scripts/documentation.py sync. -->
+
 # Project capability index
 
 The capability index stores locations and verification clues for reusable project entry points. Source, configuration, and tests remain authoritative. Index records grant no execution permissions and are never automatically promoted to stable project memory.

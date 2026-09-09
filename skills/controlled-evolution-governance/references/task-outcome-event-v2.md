@@ -1,5 +1,6 @@
 # TaskOutcomeEvent V2
 
+> 本页仅说明历史格式。当前采集采用 [TaskOutcomeEvent V3](task-outcome-event-v3.md)，不得继续采集下述旧模型身份字段。
 V6 事件只保存生命周期元数据。核心键包括 `event_id/event_type/session_id/turn_id/task_id/project_id/repo_fingerprint/terminal_outcome/actual_model/actual_reasoning_effort`、三个事实来源字段和非负计数。
 
 - `event_id` 必须唯一。

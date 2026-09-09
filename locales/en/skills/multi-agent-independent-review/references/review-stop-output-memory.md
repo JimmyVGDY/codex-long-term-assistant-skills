@@ -20,7 +20,7 @@ Postimplementation review has at most two rounds by default. A third round is on
 Reviewers use `review-result.schema.json`, containing at least:
 
 - reviewer, round, functional boundary, and packet hash;
-- requested and actual model, reasoning effort, and assignment state;
+- approved profile, minimum acceptable profile, dispatch permit reference, and policy status; do not read or report host runtime model identity;
 - isolation level;
 - checked scope and unverified items;
 - conclusion;
@@ -32,7 +32,7 @@ Merge findings with one root cause and use at most eight root-cause groups by de
 
 Record reviewer responsibility, model tier, state, packet hash, deduplication relationships, root-cause groups, blockers, repair, validation, rereview, isolation evidence, and remaining budget. Store raw structured results under `reviews/<task>/round-N/`; store only indexes and consolidated conclusions in main progress.
 
-When actual tier exceeds the request or approved set, mark `mismatch`. Before closing, explicitly acknowledge the policy violation; never pass silently.
+Reject dispatch requests outside the approved profiles and retain the reason. The ledger checks approved profile, permit and result identity; it neither infers the host model nor requests a Reviewer model declaration.
 
 ## 4. Long-Running Task Memory
 

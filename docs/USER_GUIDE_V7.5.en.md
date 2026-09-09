@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/USER_GUIDE_V7.5.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.5 Operating Guide
 
-Chinese: [`USER_GUIDE_V7.5.md`](USER_GUIDE_V7.5.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.5/)
 
 ## 1. What changed
 
@@ -47,4 +49,6 @@ Installation is established only when Plugin readback reports `installed=true`, 
 
 ## Feedback and measured benefits
 
-V7.5 adds task-bound validation feedback, health gates, opt-in incremental analysis, per-ledger scenario calibration, testable hypotheses and verified benefit closure. Follow the [controlled evolution operations manual](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md). Automation remains disabled until explicitly enabled for the project.
+V7.5 adds task-bound validation feedback, health gates, opt-in incremental analysis, per-ledger scenario calibration, testable hypotheses and verified benefit closure. Follow the [controlled evolution operations manual](../locales/en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md). Automation remains disabled until explicitly enabled for the project.
+
+Erratum (2026-09-09): the V7.5.2 migration source above should read V7.4.2; Event V3 and Budget V2 were introduced in V7.4.3.

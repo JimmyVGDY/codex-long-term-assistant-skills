@@ -1,6 +1,6 @@
-# 源规则到 Codex V7.4 资源的映射
+# 源规则到 Codex 资源的映射
 
-| 规则或能力 | Codex V7.4 资源 |
+| 规则或能力 | 当前 Codex 资源 |
 |---|---|
 | 全局跨项目边界、授权和模型路由 | `global/AGENTS.md` |
 | 通用后端（含 Java/Python/Node.js/Go/.NET/Rust 专项） | `skills/backend-engineering/` |
@@ -17,7 +17,9 @@
 | 7 个窄职责 Reviewer | `custom-agents/*.toml` |
 | Reviewer 模型路由 | `skills/multi-agent-independent-review/references/reviewer-model-routing.md` |
 | 审查包与 freshness | `skills/multi-agent-independent-review/scripts/review_packet.py` |
-| 预算、重复派发和模型审计 | `skills/multi-agent-independent-review/scripts/review_controller.py` |
+| Reviewer 轮次、Finding 与重复审查控制 | `skills/multi-agent-independent-review/scripts/review_controller.py` |
+| 根任务预算、permit 与预占 | `scripts/delegation-budget.py`、`runtime/cp_runtime/delegation_budget.py` |
+| 能力索引、增量维护与可选门禁 | `docs/CAPABILITY_INDEX.md`、`skills/engineering-quality-delivery/references/capability-index-workflow.md` |
 | 检查点内容去重 | `skills/long-running-task-memory/scripts/checkpoint.py` |
 | 路由回归 | `tests/skill-routing-cases.json`、`scripts/routing-eval.py` |
 | 包结构、语义与隔离安装验证 | `scripts/validate-package.py`、`scripts/semantic-lint.py` |

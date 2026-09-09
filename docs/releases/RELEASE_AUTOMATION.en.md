@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/releases/RELEASE_AUTOMATION.md; edit that source and run scripts/documentation.py sync. -->
+
 # Release automation and artifact provenance
 
-Chinese: [RELEASE_AUTOMATION.md](RELEASE_AUTOMATION.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/RELEASE_AUTOMATION/)
 
 ## Objective
 

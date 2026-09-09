@@ -1,4 +1,4 @@
-# V7.4 当前权威事实源注册表
+# 当前权威事实源注册表
 
 > 状态：`active`。表中的文件名是当前事实 Owner；其最初引入版本不决定当前适用范围。
 
@@ -12,7 +12,12 @@
 | 项目身份和稳定边界 | `project-profile.json` | Onboarding 报告、任务信封引用 |
 | 项目当前阶段和基线 | `project-state.json` | 状态摘要 |
 | 任务阶段、门禁、Evidence、动作 | `execution-state.json` | Finalization Report、Handoff |
-| Reviewer 调度和预算 | `review-state.json` | Review Ledger |
+| Reviewer 轮次、Finding 与复审状态 | `review-state.json` | Review Ledger |
+| 根任务统一预算、permit 与预占 | 仓库外 DelegationBudget V2 账本；`scripts/delegation-budget.py` 管理 | 任务信封引用、成本摘要 |
+| Hook 注册入口 | `hooks/hooks.json` | 配置指南、架构说明 |
+| 工作区能力定位与覆盖 | Profile 同级 `capability-index/<worktree_id>`；CapabilityStore 管理 | query 结果、任务决策引用 |
+| 项目门禁启用与绑定 | 账户外部 `capability-gates/<worktree_id>.json`；GatePolicy 管理 | status 读回 |
+| 门禁任务与当前回执 | Profile 同级 `capability-gate/<worktree_id>`；GateTask/Workflow 管理 | prepare/finish/check 结果 |
 | Review 冻结输入 | Review Packet `manifest.json` | Packet Summary |
 | 当前任务恢复 | `CURRENT_TASK.md` + `PROGRESS.md` | Recovery Summary |
 | 项目长期事实 | `project-memory.md` | 项目文档引用 |
@@ -36,3 +41,8 @@
 - `generated`：由机器状态生成，可重新生成。
 
 历史文档不得覆盖 Active 规则，Generated 文档不得被当作独立事实源手工维护。
+
+## 机器事实来源引用
+
+- <!-- cp-fact:owner.budget -->repository-external DelegationBudget V2 JSONL via delegation-budget.py<!-- /cp-fact -->
+- <!-- cp-fact:owner.review -->review-state.json via review_controller.py<!-- /cp-fact -->

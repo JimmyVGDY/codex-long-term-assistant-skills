@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.2/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.2 Independent Review Report
 
 Status: the post-implementation logical-readonly independent review is complete with one expected nonblocking delivery gate.

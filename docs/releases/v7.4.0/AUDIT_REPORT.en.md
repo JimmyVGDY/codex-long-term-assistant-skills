@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.0/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.0 Independent Review Report
 
 Status: pre-implementation and two post-implementation logical-readonly review rounds completed with no open blocking finding.

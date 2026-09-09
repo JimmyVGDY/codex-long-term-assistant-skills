@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v6.5.0/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.5 In-Package Validation Report
 
 Version: 6.5.0

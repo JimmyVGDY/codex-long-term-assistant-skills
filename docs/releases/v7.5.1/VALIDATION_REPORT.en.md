@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.5.1/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.5.1 Validation
 
 Full local package validation passed: 278 package tests and 6 runtime tests on Python 3.13.15. Coverage includes real lock contention, unchanged watermarks, quiet repeated failures, and single-transaction recovery after release. An independent reviewer also passed both concurrency tests. Subsequent changes preserve original text line endings and record evidence; the runtime protocol is unchanged.

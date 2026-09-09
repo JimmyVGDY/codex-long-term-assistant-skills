@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/.github/docs-site/index.md; edit that source and run scripts/documentation.py sync. -->
+
 ---
 hide:
   - navigation
@@ -7,7 +9,7 @@ hide:
 <div class="landing-page">
   <section class="landing-hero" aria-labelledby="landing-title">
     <div class="landing-hero__copy">
-      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.6.0</p>
+      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.6.1</p>
       <h1 id="landing-title">Codex Cross-Project Engineering Assistant</h1>
       <p class="landing-lead">A verifiable, recoverable engineering workflow built around language-neutral backend, frontend, AI, and data-infrastructure Skills.</p>
       <div class="landing-actions" aria-label="Language selection">
@@ -30,7 +32,7 @@ hide:
     <div class="landing-stat-grid">
       <article class="landing-stat"><strong>10</strong><span>Skills</span></article>
       <article class="landing-stat"><strong>7</strong><span>Reviewers</span></article>
-      <article class="landing-stat"><strong>6</strong><span>Hooks</span></article>
+      <article class="landing-stat"><strong><!-- cp-fact:hook-count -->7<!-- /cp-fact --></strong><span>Hooks</span></article>
       <article class="landing-stat"><strong>3.0</strong><span>TaskOutcomeEvent</span></article>
     </div>
   </section>
@@ -43,7 +45,7 @@ hide:
     <div class="landing-resource-grid">
       <a class="landing-resource-card" href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases"><span aria-hidden="true">↓</span><strong>Releases</strong><small>Release notes and packages</small></a>
       <a class="landing-resource-card" href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills"><span aria-hidden="true">&lt;/&gt;</span><strong>Source repository</strong><small>Source and public history</small></a>
-      <a class="landing-resource-card" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/en/docs/USER_GUIDE_V7.6/"><span aria-hidden="true">◇</span><strong>Quick start</strong><small>Installation through first verification</small></a>
+      <a class="landing-resource-card" href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/en/docs/USER_GUIDE/"><span aria-hidden="true">◇</span><strong>Quick start</strong><small>Installation through first verification</small></a>
     </div>
   </section>
 </div>

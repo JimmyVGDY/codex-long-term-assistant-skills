@@ -1,6 +1,10 @@
-# V7.4 Codex 配置指南
+<!-- Generated compatibility copy from docs/operations/CODEX_CONFIG_GUIDE.md; edit that source and run scripts/documentation.py sync. -->
 
-> 状态：`active`。本页只说明 V7.4 当前配置；安装、升级和恢复步骤以[安装与恢复](INSTALLATION_RECOVERY.md)为准。
+[当前入口](operations/CODEX_CONFIG_GUIDE.md)
+
+# Codex 配置指南
+
+> 状态：`active`。本页说明当前包配置；安装、升级和恢复步骤以[安装与恢复](operations/INSTALLATION_RECOVERY.md)为准。
 
 ## 1. 配置边界
 
@@ -75,9 +79,9 @@ model_reasoning_effort = "high"
 
 ## 6. Plugin 与 Hook
 
-V7.6.0 使用冻结注册表适配 Codex CLI 0.153.4 与此前十个稳定发行版的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.6.0`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
+V7.6.1 使用冻结注册表适配 Codex CLI 0.153.4 与此前十个稳定发行版的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.6.1`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
 
-Plugin 通过 `hooks/hooks.json` 提供六个 Hook。Windows 入口 `hooks\cp_hook.cmd` 会选择可用的 Python 启动器，不需要额外创建 `python3.exe` 垫片。SessionEnd 的宿主预算保持三秒：Hook 只构造有上限且不含正文的净化 Event V3，并以命令参数无等待派发 detached worker；不再扫描或写入事件链，也不再同步写管道。Worker 在 Hook 预算外完成稳定生命周期身份校验、语义去重、终态持久化、签名入队和封印。所有入口都会拒绝缺失稳定生命周期 ID 的事件，带 `seal_required` 的未封印链不得进入 Evolution。
+Plugin 通过 `hooks/hooks.json` 提供七个注册 Hook 入口。Windows 入口 `hooks\cp_hook.cmd` 会选择可用的 Python 启动器，不需要额外创建 `python3.exe` 垫片。SessionEnd 的宿主预算保持三秒：Hook 只构造有上限且不含正文的净化 Event V3，并以命令参数无等待派发 detached worker；不再扫描或写入事件链，也不再同步写管道。Worker 在 Hook 预算外完成稳定生命周期身份校验、语义去重、终态持久化、签名入队和封印。所有入口都会拒绝缺失稳定生命周期 ID 的事件，带 `seal_required` 的未封印链不得进入 Evolution。
 
 ## 7. 自动模型上限
 
@@ -96,8 +100,23 @@ gpt-5.6-terra / high
 
 1. `/model` 仍显示请求方选择的主模型；
 2. `codex plugin list --json` 读回目标 Plugin 的安装、启用和版本；
-3. 新任务能够发现十个 V7.4 Skill 和七个 Reviewer；
+3. 新任务能够发现十个当前 Skill 和七个 Reviewer；
 4. 小型只读复审没有无理由启动大量 Reviewer；
 5. 复审结果只记录批准派发档位、permit 引用、预留单位、结果指标与隔离等级。
 
-完整安装、`doctor`、dry-run、verify 和恢复流程见[安装与恢复](INSTALLATION_RECOVERY.md)。
+完整安装、`doctor`、dry-run、verify 和恢复流程见[安装与恢复](operations/INSTALLATION_RECOVERY.md)。
+
+## 可选项目门禁与实际加载
+
+注册配置包含七个入口，但门禁默认关闭。显式启用后，`UserPromptSubmit` 建立真实任务起点，`PreToolUse` 检查受控写入准备，`Stop` 复核当前结束证据，`Interrupt` 记录取消；六事件观察链保持独立。
+
+```text
+项目显式启用 → 宿主实际加载 → 真实任务起点
+                              ↓
+有界初扫 / 候选查询 → prepare → 开发与验证 → finish → check
+                              └─ Interrupt → CANCELLED
+```
+
+配置 `enabled=true`、Plugin 已加载、流程 PASS 和业务语义适用是不同结论。已打开会话可能仍使用旧快照；缺少真实 session/turn 起点不能借用其他任务回执或通过 CLI 补造。取消后的同任务不能恢复 PASS。受控写工具以外的入口不能保证全部写前拦截。
+
+Codex CLI 0.153.4 已有真实 UserPromptSubmit/Interrupt 验收；0.149.1 的已观察配置路径忽略 Interrupt。旧六事件兼容证据不证明取消支持，Desktop 与其他宿主需各自读回。启用、禁用、准备和结束的操作见[能力索引与流程入口](CAPABILITY_INDEX.md)。

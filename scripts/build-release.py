@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：构建并验证字节级可复现的 V7.6.0 语言发行包。
+"""中文：构建并验证字节级可复现的 V7.6.1 语言发行包。
 
-English: Build and verify byte-reproducible V7.6.0 locale-specific archives.
+English: Build and verify byte-reproducible V7.6.1 locale-specific archives.
 """
 from __future__ import annotations
 
@@ -18,9 +18,10 @@ from typing import Any, Dict, List
 
 from payload_integrity import write_manifest as write_payload_manifest
 from runtime_localization import RuntimeLocalizationError, load_mapping, localize_tree
+from release_source import MANIFEST_NAME as SOURCE_MANIFEST, SourceError, capture, relative_path
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "7.6.0"
+VERSION = "7.6.1"
 PACKAGE = "codex-cross-project-engineering-assistant"
 SUPPORTED_LOCALES = ("zh-CN", "en")
 FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)
@@ -29,7 +30,7 @@ EXCLUDED_DIRS = {
     "project-context",
 }
 EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".zip"}
-EXCLUDED_NAMES = {"cp-assistant-v6.lock"}
+EXCLUDED_NAMES = {"cp-assistant-v6.lock", SOURCE_MANIFEST}
 CHECKSUM_FILE = "CHECKSUMS.sha256"
 
 
@@ -89,18 +90,18 @@ def _copy_source(source: Path, target: Path) -> None:
         shutil.copyfile(path, destination)
 
 
-def _apply_overlay(staging: Path, locale: str) -> None:
+def _apply_overlay(staging: Path, locale: str, source_root: Path) -> None:
     locale_path = staging / "config" / "locale.json"
     locale_path.parent.mkdir(parents=True, exist_ok=True)
     locale_path.write_text(json.dumps({"schema_version": 1, "locale": locale}, indent=2) + "\n", encoding="utf-8")
     if locale == "zh-CN":
         return
-    localized_history = ROOT / "docs" / "history" / "RECONSTRUCTED_HISTORY.en.md"
+    localized_history = source_root / "docs" / "history" / "RECONSTRUCTED_HISTORY.en.md"
     if localized_history.is_file():
         history_root = staging / "docs" / "history"
         (history_root / "RECONSTRUCTED_HISTORY.zh-CN.md").unlink(missing_ok=True)
         shutil.copyfile(localized_history, history_root / "RECONSTRUCTED_HISTORY.md")
-    overlay = ROOT / "locales" / locale
+    overlay = source_root / "locales" / locale
     if not overlay.is_dir() or _is_link(overlay):
         raise BuildError("locale overlay is missing or unsafe: %s" % locale)
     for source in sorted(overlay.rglob("*")):
@@ -137,7 +138,15 @@ def _apply_overlay(staging: Path, locale: str) -> None:
     manifest["breaking_changes"] = localization["breaking_changes"]
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     try:
-        localize_tree(staging, load_mapping(overlay / "runtime-strings.json"))
+        mapping = load_mapping(overlay / "runtime-strings.json")
+        for name in mapping["files"]:
+            relative_path(name)
+            target = staging / name
+            if not target.is_file() or target.suffix != ".py" or any(
+                _is_link(path) for path in (target, *target.parents)
+            ):
+                raise BuildError("runtime mapping target is missing or unsafe: %s" % name)
+        localize_tree(staging, mapping)
     except RuntimeLocalizationError as exc:
         raise BuildError("runtime localization failed: %s" % exc) from exc
 
@@ -146,8 +155,10 @@ def _prepare_staging(locale: str, parent: Path) -> Path:
     if locale not in SUPPORTED_LOCALES:
         raise BuildError("unsupported locale: %s" % locale)
     staging = parent / ("Codex-Skills-V%s-%s" % (VERSION, locale))
-    _copy_source(ROOT, staging)
-    _apply_overlay(staging, locale)
+    source_root = parent / "captured-source"
+    capture(ROOT, source_root)
+    _copy_source(source_root, staging)
+    _apply_overlay(staging, locale, source_root)
     manifest = json.loads((staging / "manifest.json").read_text(encoding="utf-8-sig"))
     plugin = json.loads((staging / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8-sig"))
     if manifest.get("version") != VERSION or plugin.get("version") != VERSION:
@@ -246,7 +257,7 @@ def reproducible_build(output: Path, witness: Path, locale: str) -> Dict[str, An
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.6.0 deterministic bilingual release builder")
+    parser = argparse.ArgumentParser(description="V7.6.1 deterministic bilingual release builder")
     subparsers = parser.add_subparsers(dest="command", required=True)
     build_parser = subparsers.add_parser("build")
     build_parser.add_argument("--output", required=True)
@@ -258,11 +269,18 @@ def main() -> None:
     reproducible_parser.add_argument("--output", required=True)
     reproducible_parser.add_argument("--witness", required=True)
     reproducible_parser.add_argument("--locale", choices=SUPPORTED_LOCALES, required=True)
+    snapshot_parser = subparsers.add_parser("snapshot")
+    snapshot_parser.add_argument("--output", required=True)
+    snapshot_parser.add_argument("--require-clean", action="store_true")
     arguments = parser.parse_args()
     if arguments.command == "build":
         result = build_release(Path(arguments.output), arguments.locale)
     elif arguments.command == "verify":
         result = verify_release(Path(arguments.archive), arguments.locale)
+    elif arguments.command == "snapshot":
+        manifest = capture(ROOT, Path(arguments.output), require_clean=arguments.require_clean)
+        result = {key: value for key, value in manifest.items() if key != "files"}
+        result["ok"] = True
     else:
         result = reproducible_build(Path(arguments.output), Path(arguments.witness), arguments.locale)
     print(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2))
@@ -271,6 +289,6 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except (BuildError, json.JSONDecodeError, OSError) as exc:
+    except (BuildError, SourceError, json.JSONDecodeError, OSError) as exc:
         print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False), file=os.sys.stderr)
         raise SystemExit(2)

@@ -14,5 +14,5 @@ Cost tiers control reviewer count, reading scope, and maximum workload. They do 
 - Every reviewer needs a unique responsibility. Merge or remove overlapping roles instead of adding people.
 - `deep` uses `terra-medium` by default and upgrades only one critical dimension that meets high-risk conditions to `terra-high`.
 - Round two rereviews only dimensions affected by centralized repairs and normally uses at most two reviewers. Round three is not a default flow; after explicit hard-limit relaxation, it may use one reviewer for one blocking adjudication.
-- A subagent receives only the minimum review packet and returns structured findings, checked scope, unverified items, and model runtime evidence.
+- A subagent receives only the minimum review packet and returns structured findings, checked scope, unverified items, and dispatch assignment evidence.
 - Cost tiers cannot lower evidence standards. Insufficient evidence produces an unverified result, not false certainty.

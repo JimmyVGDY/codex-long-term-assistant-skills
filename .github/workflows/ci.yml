@@ -29,6 +29,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "${{ matrix.python }}"
+      - name: Check documentation source consistency
+        run: python scripts/documentation.py check
       - name: 审计双语覆盖 / Audit bilingual coverage
         run: python scripts/localization-audit.py --strict
       - name: 检查全仓库链接 / Check repository-wide links

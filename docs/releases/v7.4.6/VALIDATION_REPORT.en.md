@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.6/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.6 Validation Report
 
 Status: local validation and logical-readonly independent review complete; remote delivery awaits readback.

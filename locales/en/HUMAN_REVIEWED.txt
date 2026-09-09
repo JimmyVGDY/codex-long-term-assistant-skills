@@ -323,3 +323,18 @@ docs/releases/v7.6.0/VALIDATION_REPORT.md
 docs/releases/v7.6.0/AUDIT_REPORT.md
 
 docs/USER_GUIDE_V7.5.md
+
+# Path-only catalog and projections reviewed during documentation maintenance.
+config/documentation.json
+
+# Maintenance guide bilingual requirements compared by the implementing agent.
+docs/DOCUMENTATION_MAINTENANCE.md
+
+# Canonical document moves preserve reviewed text; links compared by the implementing agent.
+docs/USER_GUIDE.md
+docs/operations/CODEX_CONFIG_GUIDE.md
+docs/operations/INSTALLATION_RECOVERY.md
+docs/architecture/SYSTEM_ARCHITECTURE.md
+docs/releases/v7.6.1/AUDIT_REPORT.md
+docs/releases/v7.6.1/RELEASE_NOTES.md
+docs/releases/v7.6.1/VALIDATION_REPORT.md

@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.3/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.3 Independent Audit Report
 
 Status: post-implementation independent review is complete. Every blocking root cause was repaired and closed, with no blocking finding remaining.

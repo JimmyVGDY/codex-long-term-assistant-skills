@@ -1,6 +1,12 @@
+<!-- Generated from locales/en/docs/architecture/SYSTEM_ARCHITECTURE.md; edit that source and run scripts/documentation.py sync. -->
+
+<!-- Generated compatibility copy from locales/en/docs/architecture/SYSTEM_ARCHITECTURE.md; edit that source and run scripts/documentation.py sync. -->
+
+[Current location](architecture/SYSTEM_ARCHITECTURE.en.md)
+
 # V7.6 Current System Architecture and Security Boundaries
 
-> Status: `active`. This page describes the current V7.6.0 package architecture. Earlier design and release evidence is retained only for historical traceability.
+> Status: `active`. This page describes the current V7.6.1 package architecture. Earlier design and release evidence is retained only for historical traceability.
 
 ## 1. Layers
 
@@ -11,7 +17,7 @@ Global AGENTS (minimal cross-project rules)
         ↓
 Main Agent / 7 Reviewers
         ↓
-6 Lifecycle Hooks
+Observation / governance: 6 existing Hook events
         ↓
 TaskOutcomeEvent V3
         ↓
@@ -22,7 +28,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-The package version is V7.6.0. Names such as `TaskOutcomeEvent V3` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
+The package version is V7.6.1. Names such as `TaskOutcomeEvent V3` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
 
 ## 2. Skill routing
 
@@ -33,7 +39,7 @@ Choose one primary domain Skill per phase:
 - `ai-engineering`: model calls, RAG, agents, evaluation, inference, and multimodal generation;
 - `data-middleware-infrastructure`: databases, caches, messaging, search, storage, GPU resources, containers, and networks.
 
-Logging, quality delivery, independent review, technical documentation, long-running memory, and controlled evolution are supporting capabilities loaded by phase. See the [V7.6 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md) and [V7.6 Skill trigger matrix](SKILL_TRIGGER_MATRIX.md) for detailed boundaries.
+Logging, quality delivery, independent review, technical documentation, long-running memory, and controlled evolution are supporting capabilities loaded by phase. See the [V7.6 domain Skill architecture](../locales/en/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md) and [V7.6 Skill trigger matrix](../locales/en/docs/SKILL_TRIGGER_MATRIX.md) for detailed boundaries.
 
 ## 3. Project and data isolation
 
@@ -48,7 +54,7 @@ Observation first verifies the hash chain or HMAC, checks `project_id + repo_fin
 
 ## 4. Hook and model boundaries
 
-`PreToolUse` checks the automatic sub-agent model ceiling before dispatch. `SubagentStart` and `SubagentStop` record minimal runtime facts, while the remaining Hooks form lifecycle events. The Hook guard is a workflow protection, not an unbypassable platform security boundary.
+`PreToolUse` checks the automatic sub-agent model ceiling before dispatch. `SubagentStart` and `SubagentStop` record minimal runtime facts, while the other original observation Hooks form lifecycle events; the additional `Interrupt` entry handles optional-gate cancellation. The Hook guard is a workflow protection, not an unbypassable platform security boundary.
 
 Model evidence keeps three meanings separate:
 
@@ -90,7 +96,22 @@ A proposal superseded by newer evidence may become `SUPERSEDED`. No state change
 
 ## 8. Current and historical documentation
 
-- Enter current guidance through the [documentation hub](README.md), where it is marked V7.6.
+- Enter current guidance through the [documentation hub](README.en.md), where it is marked V7.6.
 - Upgrade-source versions, migration mappings, and component-contract versions may appear in current guidance only when their purpose is explicit.
 - Earlier release notes, validation reports, and design documents remain available for traceability but do not establish current installation, runtime, or acceptance state.
 - Historical detail pages are excluded from default site search so outdated commands cannot be confused with current operating instructions.
+
+## Optional project gate and effective loading
+
+The registration contains seven entry points, while project gates default to disabled. Once enabled, `UserPromptSubmit` establishes the real task origin, `PreToolUse` checks preparation for controlled writes, `Stop` rechecks current finish evidence, and `Interrupt` records cancellation. The six-event observation chain remains separate.
+
+```text
+Explicit project opt-in → host loading → real task origin
+                                         ↓
+Bounded scan / query → prepare → development and validation → finish → check
+                        └─ Interrupt → CANCELLED
+```
+
+Configured `enabled=true`, loaded Plugin, workflow PASS, and semantic suitability are separate conclusions. An already-open session can retain an older snapshot. A missing real session/turn origin cannot be fabricated by CLI or borrowed from another task. Cancellation is terminal for that task. Entry points outside controlled write tools do not have guaranteed pre-write interception.
+
+Codex CLI 0.153.4 has real UserPromptSubmit/Interrupt acceptance evidence; the observed 0.149.1 configuration path ignores Interrupt. Six-event compatibility evidence does not prove cancellation support, and Desktop or other hosts require separate readback. See the [capability index and workflow entry](CAPABILITY_INDEX.en.md) for enable, disable, prepare, and finish operations.

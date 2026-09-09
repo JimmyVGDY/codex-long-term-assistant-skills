@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.4/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.4 Validation Report
 
 Status: local package-only validation passed. Remote push, tag, CI, Draft, and publication have not occurred yet. No real-account installation was run for V7.4.4.

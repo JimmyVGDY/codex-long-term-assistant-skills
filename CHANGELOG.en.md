@@ -1,6 +1,15 @@
+<!-- Generated from locales/en/CHANGELOG.md; edit that source and run scripts/documentation.py sync. -->
+
 # Changelog — English current-release summary
 
-Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
+Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
+
+## 7.6.1 - 2026-09-09
+
+- Correct Hook, migration, budget-owner and format guidance; unify English sources and deterministic fact checks.
+- Add stable documentation entries while retaining old paths and anchors; archive historical outputs with manifests.
+- Capture tracked release sources or explicit hashed snapshots; reject missing, tampered, conflicting or linked inputs and use captured locale overlays.
+- See the V7.6.1 validation record for current evidence; earlier results do not validate the final candidate.
 
 ## 7.6.0 - 2026-09-09
 
@@ -29,7 +38,7 @@ Chinese full history: [`CHANGELOG.md`](CHANGELOG.md)
 
 The frozen Codex CLI 0.153.4 plus ten preceding stable-release window is retained; no broader host support is claimed. Automation defaults to disabled. Historical event/proposal hashes remain unchanged. Analysis without valid project identity now returns a blocked state.
 
-See the [validation report](docs/releases/v7.5.0/VALIDATION_REPORT.md) and [audit report](docs/releases/v7.5.0/AUDIT_REPORT.md) for delivery evidence.
+See the [validation report](docs/releases/v7.5.0/VALIDATION_REPORT.en.md) and [audit report](docs/releases/v7.5.0/AUDIT_REPORT.en.md) for delivery evidence.
 ## 7.4.6 - 2026-09-05
 
 ### Changed

@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v6.5.0/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.5 Audit Report
 
 Status: in-package static and automated audits are complete. Official host state is governed by the external upgrade report and attestation.

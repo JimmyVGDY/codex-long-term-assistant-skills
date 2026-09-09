@@ -1,5 +1,7 @@
 # V7.1 Operating Guide
 
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.1/)
+
 ## Four primary domains
 
 V7 retains ten progressively discovered Skills, with four primary domains classified by engineering responsibility rather than implementation language:
@@ -13,13 +15,17 @@ Six supporting and workflow Skills remain separate: `$log-observability-analysis
 
 Use one primary domain and at most two supporting Skills per phase by default. A cross-phase task can change its primary domain instead of loading every domain at once.
 
-## General backend and AI
+## General backend
 
-`backend-engineering` reads shared server guidance, then loads one primary stack specialization from project evidence: Java/Spring/JVM, Python Web/async, Node.js, Go, .NET, Rust, or another backend. Python is no longer coupled to AI.
+`backend-engineering` reads shared interface, business, security, transaction, concurrency, job, and resource guidance, then loads one primary stack specialization from project evidence: Java/Spring/JVM, Python Web/async, Node.js, Go, .NET, Rust, or another backend.
 
-`ai-engineering` is independent of implementation language and provider. It covers model calls and streaming, structured output, prompt injection, untrusted output, RAG, retrieval access and evaluation, agent tools, GPU and multimodal task state, quality, cost, safety, and observability.
+Python is no longer coupled to AI. Ordinary Django, FastAPI, Celery, and Python API work uses general backend only. Add AI only when the task actually involves models, RAG, agents, or generation semantics.
 
-Combine general backend for SDK, Web API, and Worker mechanics. Combine data infrastructure for vector engines, messaging, storage, GPU resources, and orchestration.
+## General AI
+
+`ai-engineering` is independent of implementation language and model provider. It covers model calls and streaming, structured output, prompt injection, untrusted output, RAG, embeddings, retrieval access and evaluation, agent tools and confirmation, GPU and multimodal generation state, quality, cost, safety, and observability.
+
+Combine general backend for language SDK, Web API, and Worker mechanics. Combine data infrastructure for vector engines, messaging, object storage, GPU resources, and orchestration.
 
 ## V6 to V7 migration
 
@@ -30,7 +36,7 @@ Combine general backend for SDK, Web API, and Worker mechanics. Combine data inf
 | `$data-middleware-ai-infrastructure` | `$data-middleware-infrastructure`; use `$ai-engineering` for AI semantics |
 | `$vue-frontend-engineering` | `$frontend-engineering` |
 
-V7 installs no compatibility alias. The installer backs up and removes only Manifest-declared managed legacy Skills. Unknown third-party Skills remain untouched.
+V7 installs no compatibility alias. The installer backs up and removes only managed legacy Skills declared by the Manifest; unknown third-party Skills remain untouched. Discovery of both old and new names after upgrade is a failure.
 
 ## Installation readback
 
@@ -46,6 +52,6 @@ Upgrade is proven only when the Plugin reports `installed=true`, `enabled=true`,
 
 ## Reviewer, lifecycle, and authorization
 
-Automatic model selection remains bounded by `luna-low -> luna-medium -> terra-medium -> terra-high`. V7 retains TaskOutcomeEvent 2.0, `project_id + repo_fingerprint` isolation, signed event chains, delayed SessionEnd sealing, and `execution_authorization=NONE` proposals.
+Reviewer TOML files keep model and effort unset. Automatic selection remains bounded by `luna-low -> luna-medium -> terra-medium -> terra-high`; file count and Skill count do not justify escalation.
 
-Evidence cannot authorize commit, push, deployment, restart, production operations, or data writes. Final delivery reports modified, validated, reviewed, committed, pushed, deployed, restarted, and effective separately.
+V7 retains TaskOutcomeEvent 2.0, `project_id + repo_fingerprint` isolation, signed event chains, delayed SessionEnd sealing, and `execution_authorization=NONE` proposals. Evidence cannot authorize commit, push, deployment, restart, production operations, or data writes. Final delivery reports modified, validated, reviewed, committed, pushed, deployed, restarted, and effective separately.

@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v6.3.0/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # Codex Cross-Project Long-Term Engineering Assistant V6.3 Release Notes
 
 ## Release Scope

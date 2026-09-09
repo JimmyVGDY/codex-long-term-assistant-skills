@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v6.0.0/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.0 Release Notes — Deterministic Observation and Plugin Architecture
 
 ## Release Objective

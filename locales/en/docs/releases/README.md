@@ -1,10 +1,14 @@
 # Release evidence archive
 
+Current candidate: [V7.6.1 release notes](v7.6.1/RELEASE_NOTES.md) · [validation record](v7.6.1/VALIDATION_REPORT.md). Earlier records below retain their original baselines.
+
 V7.6.0 is the current release, themed “Component reuse index and optional workflow gates”. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
 
-Chinese source: [README.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/releases/README.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/README/)
 
 Release evidence is grouped by semantic version. Each directory contains only the notes, build metadata, audit, and validation material that actually exists for that release; absent evidence is not replaced with empty placeholders.
+
+See [Release automation and artifact provenance](RELEASE_AUTOMATION.md) for version tags, reproducible builds, signed provenance, and maintainer publication gates.
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |

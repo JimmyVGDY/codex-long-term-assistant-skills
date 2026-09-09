@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/releases/v7.1.0/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.1.0 Audit Report
 
-Chinese: [AUDIT_REPORT.md](AUDIT_REPORT.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v7.1.0/AUDIT_REPORT/)
 
 ## Current conclusion
 

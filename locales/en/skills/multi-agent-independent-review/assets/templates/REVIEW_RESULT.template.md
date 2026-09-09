@@ -15,11 +15,9 @@
 - Upstream, downstream, and shared logic read:
 - Requested model tier: luna-low / luna-medium / terra-medium / terra-high
 - Minimum acceptable model tier: luna-low / luna-medium / terra-medium / terra-high
-- Requested model / reasoning effort:
-- Actual model / reasoning effort:
-- Model-assignment status: declared_match / fallback_acceptable / underpowered / unverified / mismatch
-- Runtime evidence level / source: unavailable / declared; none / reviewer-result
-- Model-assignment notes:
+- Dispatch permit reference: empty when the root budget is inactive
+- Policy status: approved / legacy-unbound
+- Cost basis: approved dispatch profile; do not collect runtime model identity
 - Task difficulty: LOW / MEDIUM / HIGH / CRITICAL / UNKNOWN
 - Duration (milliseconds):
 - Estimated cost / formula version: profile-weight-v1

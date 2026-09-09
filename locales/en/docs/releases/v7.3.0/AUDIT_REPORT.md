@@ -1,6 +1,6 @@
 # V7.3.0 Audit Report
 
-Chinese: [AUDIT_REPORT.md](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v7.3.0/AUDIT_REPORT/)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v7.3.0/AUDIT_REPORT/)
 
 ## Current conclusion
 

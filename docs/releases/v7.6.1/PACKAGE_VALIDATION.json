@@ -1,0 +1,27 @@
+{
+  "ok": false,
+  "status": "LOCAL_COMPONENT_CHECKS_PASS_EXACT_COMMIT_CI_PENDING",
+  "version": "7.6.1",
+  "evidence_scope": "local-candidate",
+  "checked_on": "2026-09-09",
+  "first_package_run": {
+    "tests": 317,
+    "failures": 2,
+    "skipped": 1
+  },
+  "repairs": {
+    "delegation_hook_tests": 10,
+    "docs_site_tests": 14,
+    "documentation_tests": 16,
+    "result": "PASS"
+  },
+  "runtime": {
+    "tests": 144,
+    "seconds": 844.701,
+    "result": "PASS"
+  },
+  "full_local_wrapper_rerun": "NOT_RUN",
+  "publication": "NOT_EVALUATED",
+  "account_installation": "NOT_EVALUATED",
+  "fresh_task": "NOT_EVALUATED"
+}

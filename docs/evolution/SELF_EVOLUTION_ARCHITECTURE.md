@@ -1,4 +1,4 @@
-# V7.5 自观察与受控演进架构
+# 自观察与受控演进架构
 
 状态：`active`。包版本 V7.6.0；事件继续使用 TaskOutcomeEvent V3；默认策略为 `v7.4.3-default-1`。源码 `runtime/cp_runtime/evolution/` 是唯一权威实现。
 

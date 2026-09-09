@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.5.1/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.5.1 Audit
 
 The V7.5 features, Windows path repair, and bounded-contention acceptance patch passed independent logical-readonly review. The patch reviewer executed both concurrency tests successfully in 7.102 seconds, with no blocking findings.

@@ -1,5 +1,6 @@
 # TaskOutcomeEvent V2
 
+> Historical format reference only. Current collection uses [TaskOutcomeEvent V3](task-outcome-event-v3.md) and must not collect the legacy model-identity fields below.
 V6 events retain lifecycle metadata only. Core keys include `event_id/event_type/session_id/turn_id/task_id/project_id/repo_fingerprint/terminal_outcome/actual_model/actual_reasoning_effort`, three fact-source fields, and non-negative counters.
 
 - `event_id` must be unique.

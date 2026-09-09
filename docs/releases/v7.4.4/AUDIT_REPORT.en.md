@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.4/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.4 Independent Audit Report
 
 Status: PASS (logical-readonly). No code or documentation finding remains on the current baseline. Remote delivery state still requires separate readback after the tag workflow and publication.

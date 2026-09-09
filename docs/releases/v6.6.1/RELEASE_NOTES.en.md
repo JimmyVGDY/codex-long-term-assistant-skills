@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/releases/v6.6.1/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.6.1 Release Notes
 
-Chinese: [RELEASE_NOTES.md](RELEASE_NOTES.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v6.6.1/RELEASE_NOTES/)
 
 ## Delivered
 

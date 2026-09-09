@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/history/GITHUB_RELEASES.md; edit that source and run scripts/documentation.py sync. -->
+
 # Historical GitHub Release pages
 
-Chinese: [GITHUB_RELEASES.md](GITHUB_RELEASES.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/history/GITHUB_RELEASES/)
 
 The GitHub Release pages for V1.0.0 through V6.6.0 correspond to sanitized reconstructed tags. They are not contemporaneous records of the original development process.
 

@@ -1,6 +1,6 @@
 # V7.3.0 Release Notes
 
-Chinese: [RELEASE_NOTES.md](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v7.3.0/RELEASE_NOTES/)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v7.3.0/RELEASE_NOTES/)
 
 Version: 7.3.0
 

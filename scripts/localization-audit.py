@@ -82,6 +82,12 @@ def structured_pair_exists(relative: Path) -> bool:
     """
     if relative.as_posix() == "manifest.json":
         return (ROOT / "locales" / "en" / "manifest-localization.json").is_file()
+    if relative.as_posix() == "config/documentation.json":
+        # 中文：目录仅含经验证的路径与枚举，不复制另一套英文元数据。
+        # English: This validated path/enum catalog has no separately translated metadata.
+        from documentation import load_catalog
+        load_catalog(ROOT)
+        return True
     return (ROOT / "locales" / "en" / relative).is_file()
 
 

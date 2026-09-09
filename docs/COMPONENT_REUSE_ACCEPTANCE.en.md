@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/COMPONENT_REUSE_ACCEPTANCE.md; edit that source and run scripts/documentation.py sync. -->
+
 # Component and Module Reuse Acceptance
 
 This procedure evaluates the [shared reuse rules](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/v7.6.0/locales/en/skills/engineering-quality-delivery/references/component-module-reuse.md). It is for package maintainers, not an automatic step in ordinary application tasks.

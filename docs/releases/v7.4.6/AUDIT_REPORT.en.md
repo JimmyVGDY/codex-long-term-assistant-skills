@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.6/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.6 Independent Review Report
 
 Status: PASS (logical-readonly). The three findings from the original two rounds and one additional finding from the recovered pre-release review were repaired centrally, leaving no blocking finding on the current baseline. CI, tag, asset provenance, and public Release still require independent readback.

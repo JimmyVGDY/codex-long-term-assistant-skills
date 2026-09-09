@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/releases/v7.2.0/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.2.0 Release Notes
 
-Chinese: [RELEASE_NOTES.md](RELEASE_NOTES.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v7.2.0/RELEASE_NOTES/)
 
 Version: 7.2.0
 

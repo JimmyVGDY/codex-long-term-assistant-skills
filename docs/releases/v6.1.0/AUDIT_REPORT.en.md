@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v6.1.0/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.1 Review and Repair Report
 
 ## Baseline

@@ -2,6 +2,8 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
+V7.6.1 统一当前中英文文档来源，修正文档事实和稳定入口，并以 Git 受管文件或显式源码快照约束发行内容。组件复用门禁沿用 V7.6.0 的项目可选行为。新版本发布、安装和新任务验证状态见对应验收记录。
+
 # Codex 跨项目长期技术助手
 
 <p align="center">
@@ -29,8 +31,8 @@ V7.6.0 增加有界外部能力索引、多维度复用与维护成本判断，�
 
 | 发行包 | 适用界面 | 下载 |
 | --- | --- | --- |
-| `Codex-Skills-V7.6.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.0/Codex-Skills-V7.6.0-zh-CN.zip) |
-| `Codex-Skills-V7.6.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.0/Codex-Skills-V7.6.0-en.zip) |
+| `Codex-Skills-V7.6.1-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.1/Codex-Skills-V7.6.1-zh-CN.zip) |
+| `Codex-Skills-V7.6.1-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.1/Codex-Skills-V7.6.1-en.zip) |
 
 [查看最新 Release、校验和与构建见证](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -39,7 +41,7 @@ V7.6.0 增加有界外部能力索引、多维度复用与维护成本判断，�
 - 10 个工程 Skill，按当前任务最小充分路由并渐进加载。
 - 4 个稳定主领域：通用后端、通用前端、通用 AI、数据中间件基础设施；语言和框架作为按需 Reference。
 - 7 个逻辑只读 Reviewer，定义文件不写死模型或推理强度。
-- 6 个生命周期 Hook：`UserPromptSubmit`、`PreToolUse`、`SubagentStart`、`SubagentStop`、`Stop`、`SessionEnd`。
+- <!-- cp-fact:hooks.zh -->7 个注册 Hook 入口：`UserPromptSubmit`、`PreToolUse`、`SubagentStart`、`SubagentStop`、`Stop`、`Interrupt`、`SessionEnd`。<!-- /cp-fact -->其中原有六事件用于观察与治理，`Interrupt` 用于已启用项目门禁的取消处理。
 - TaskOutcomeEvent 3.0、`project_id + repo_fingerprint` 双重隔离与独立连续哈希链。
 - 可恢复检查点、延迟 SessionEnd 封印、事件归档与跨项目健康概览。
 - 包级路由回归与真实宿主路由验收分层记录；宿主证据绑定原始最终报告的 SHA-256。
@@ -88,8 +90,8 @@ flowchart LR
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
 | Windows 原生 Codex CLI 0.153.4 + Plugin | 当前实机锚点 | 候选账户安装、载荷读回及 CLI/Desktop 二进制新任务通过；正式版本加载单独读回 | 宿主模型身份不属于验收信息；实际卸载/回滚和父子 Agent 生命周期旅程未在本次发布中执行 |
-| Windows + 11 个固定 Codex 稳定版 | 隔离矩阵 | 当前冻结兼容窗口为 11 个稳定版；本地 0.153.4 Plugin 安装读回通过 | 完整 11 版本矩阵尚须在候选提交 CI 读回 |
-| Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 11 个稳定版逐版重放 | CI 尚须在候选提交上读回 |
+| Windows + 11 个固定 Codex 稳定版 | 隔离矩阵 | 当前冻结兼容窗口为 11 个稳定版；本地 0.153.4 Plugin 安装读回通过 | V7.6.0 精确标签矩阵已通过；取消能力按宿主另行核验 |
+| Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 11 个稳定版逐版重放 | V7.6.0 标签的 22 个系统/宿主组合通过；后续修改需重验 |
 | standalone 模式 | 显式兼容模式 | 安装结构与回归测试覆盖 | 不宣称 Plugin 宿主兼容 |
 | macOS | 未验证 | 无当前 CI 或宿主验收证据 | 状态保持 `UNVERIFIED` |
 
@@ -110,9 +112,9 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=7.6.0`，schema 3 宿主状态为 `HOST_COMPATIBLE`，且旧领域 Skill 不再发现时，升级状态才成立。
+3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=7.6.1`，schema 3 宿主状态为 `HOST_COMPATIBLE`，且旧领域 Skill 不再发现时，升级状态才成立。
 
-安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/INSTALLATION_RECOVERY.md) 和 [V7.6 使用指南](docs/USER_GUIDE_V7.6.md)。
+安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/operations/INSTALLATION_RECOVERY.md) 和 [V7.6 使用指南](docs/USER_GUIDE.md)。
 
 ## 派发策略与模型身份隐私边界
 
@@ -130,7 +132,7 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 - [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
 - [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
 - [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · [V7.6.0 发行说明](docs/releases/v7.6.0/RELEASE_NOTES.md)
+- [版本记录](CHANGELOG.md) · [V7.6.1 发行说明](docs/releases/v7.6.1/RELEASE_NOTES.md)
 
 ## 本地验证
 
@@ -146,7 +148,7 @@ python scripts\validate-package.py
 `Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。标签流程只创建草稿，不会自动公开发布或覆盖既有 Release。
 
 ```shell
-gh attestation verify Codex-Skills-V7.6.0-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.6.1-zh-CN.zip --repo OWNER/REPOSITORY
 ```
 
 完整门禁和新版本发布步骤见 [Release 自动化与制品来源证明](docs/releases/RELEASE_AUTOMATION.md)。
@@ -162,3 +164,5 @@ gh attestation verify Codex-Skills-V7.6.0-zh-CN.zip --repo OWNER/REPOSITORY
 Apache-2.0 许可，见 [LICENSE](LICENSE)。
 
 复用入口：[能力索引与可选门禁](docs/CAPABILITY_INDEX.md) · [复用验收规程](docs/COMPONENT_REUSE_ACCEPTANCE.md)。
+
+V7.6.0 发布后读回（核验时间：2026-09-09 04:04:02 UTC）：提交 `26d013fa824fa148a839d30aaedd22f3744e8bbf` 的[发行工作流](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304636222)、[主分支 CI](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304540318)和[文档站部署](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304540320)均通过。此记录绑定该标签及上述核验时间，不替代后续修改的验证，也不证明所有宿主都支持取消。

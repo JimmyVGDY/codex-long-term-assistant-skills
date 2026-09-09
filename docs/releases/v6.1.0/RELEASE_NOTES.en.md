@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v6.1.0/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.1 Official Plugin Installation Compatibility Release
 
 V6.1 builds on V6.0 and fixes compatibility with the actual Plugin, Marketplace, and Hook loading mechanisms in Codex CLI 0.150.1.

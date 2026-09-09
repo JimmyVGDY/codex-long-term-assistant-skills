@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.2/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.2 Validation Report
 
 Status: the final candidate passes package validation, user-level installation, GitHub cross-platform validation, real-account lifecycle, and independent review. The final evidence commit on main, tag, and public Release still require post-publication readback.

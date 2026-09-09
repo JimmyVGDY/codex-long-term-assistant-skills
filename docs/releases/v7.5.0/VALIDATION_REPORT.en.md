@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.5.0/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.5.0 Validation Report
 
 The first local candidate passed complete validation on 2026-09-06: 276 package + 6 runtime. Package validation includes semantic, privacy, routing, payload identity and worktree side-effect gates. Bilingual coverage and link checks reported zero findings.

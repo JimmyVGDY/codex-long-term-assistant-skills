@@ -1,6 +1,6 @@
-# Mapping Source Rules to Codex V7.4 Resources
+# Mapping Source Rules to Codex Resources
 
-| Rule or Capability | Codex V7.4 Resource |
+| Rule or Capability | Current Codex Resource |
 |---|---|
 | Global cross-project boundaries, authorization, and model routing | `global/AGENTS.md` |
 | General backend, including Java/Python/Node.js/Go/.NET/Rust guidance | `skills/backend-engineering/` |
@@ -17,7 +17,9 @@
 | Seven narrow Reviewers | `custom-agents/*.toml` |
 | Reviewer model routing | `skills/multi-agent-independent-review/references/reviewer-model-routing.md` |
 | Review packet and freshness | `skills/multi-agent-independent-review/scripts/review_packet.py` |
-| Budgets, duplicate dispatch, and model audit | `skills/multi-agent-independent-review/scripts/review_controller.py` |
+| Reviewer rounds, findings, and duplicate review control | `skills/multi-agent-independent-review/scripts/review_controller.py` |
+| Root-task budget, permits, and reservations | `scripts/delegation-budget.py`, `runtime/cp_runtime/delegation_budget.py` |
+| Capability index, incremental maintenance, and optional gate | `docs/CAPABILITY_INDEX.md`, `skills/engineering-quality-delivery/references/capability-index-workflow.md` |
 | Checkpoint-content deduplication | `skills/long-running-task-memory/scripts/checkpoint.py` |
 | Routing regression | `tests/skill-routing-cases.json`, `scripts/routing-eval.py` |
 | Package structure, semantics, and isolated-install validation | `scripts/validate-package.py`, `scripts/semantic-lint.py` |

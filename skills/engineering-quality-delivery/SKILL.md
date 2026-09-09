@@ -41,7 +41,7 @@ description: >-
 
 ## 工具
 
-- Task Envelope V2、门禁、Approval 消费与 Finalization：`scripts/execution_guard.py`
+- Task Envelope、门禁、Approval 消费与 Finalization：`scripts/execution_guard.py`
 - 项目 Onboarding、Approval、Evidence、记忆晋升和 Finalization：安装后的 `cp-runtime.py`，源码入口为包根目录 `scripts/cp-runtime.py`
 - 模板：`assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml`
 

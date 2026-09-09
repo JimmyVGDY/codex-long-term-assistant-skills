@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.6.0/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.6.0 Release Notes
 
 V7.6.0 introduces an external capability index and optional workflow gates. Development Skills search existing modules, check semantic compatibility, permissions, state, performance, test burden and maintenance cost, then record justified reuse or independent implementation.

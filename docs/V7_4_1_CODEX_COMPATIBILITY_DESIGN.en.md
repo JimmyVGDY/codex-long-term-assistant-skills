@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/V7_4_1_CODEX_COMPATIBILITY_DESIGN.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.1 Codex Ten-Version Compatibility Design
 
 ## Document information

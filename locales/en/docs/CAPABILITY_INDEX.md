@@ -78,4 +78,4 @@ Normally omit `--index-root`. The reserved `<Profile directory>/capability-index
 
 The cold-index scan exception is limited to one existing file. Multiple or new prepared files require bounded scanning; every previously prepared file must remain unchanged before an exception expands. Current checks invalidate nonqualifying legacy no-index PASS receipts as BLOCKED with INITIAL_SCAN_NOT_PROVEN, while valid single-file receipts remain usable. This predicate does not approve single-file business semantics; projects without the gate retain their behavior.
 
-Related: [Capability index](CAPABILITY_INDEX.en.md) · [Acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.en.md) · [V7.6.0 validation](releases/v7.6.0/VALIDATION_REPORT.en.md).
+Related: [Capability index](CAPABILITY_INDEX.md) · [Acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) · [V7.6.0 validation](releases/v7.6.0/VALIDATION_REPORT.md).

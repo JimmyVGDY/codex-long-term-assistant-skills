@@ -1,11 +1,15 @@
-# V7.4 安装、验证与事务恢复
+<!-- Generated compatibility copy from docs/operations/INSTALLATION_RECOVERY.md; edit that source and run scripts/documentation.py sync. -->
+
+[当前入口](operations/INSTALLATION_RECOVERY.md)
+
+# 安装、验证与事务恢复
 
 ## 适用范围
 
 - 目标宿主：Windows 原生 Codex CLI 0.153.4。
 - Python：3.11 或更高版本。
 - 推荐形态：账户级 Plugin。
-- 可升级版本：7.5.1、7.5.0、7.4.6、7.4.5、7.4.4、7.4.3、7.4.2、7.4.1、7.4.0、7.3.0、7.2.0、7.1.0、7.0.0、6.6.1、6.6.0、6.5.0、6.4.0、6.3.0、6.2.0、6.1.0、6.0.0、5.1.0、5.0.0、4.2.0、4.1.0、4.0.0。
+- 可升级版本：<!-- cp-fact:upgrade-sources -->7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->。
 - 受管对象：本包 Marketplace payload、manifest 条目、Plugin cache、Reviewer、全局规则和安装状态。
 
 安装器不改写 `config.toml`，不删除未知 Skill、Agent、Hook、MCP、项目上下文、Event、Snapshot、Assessment、Proposal 或历史备份。
@@ -22,7 +26,7 @@ Windows 原生进程若继承 `/mnt/c/.../.codex`，必须转换为盘符路径�
 
 ## 标准升级
 
-在解压后的 V7.6.0 语言包根目录依次执行：
+在解压后的 V7.6.1 语言包根目录依次执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -34,7 +38,7 @@ codex plugin list --json
 
 dry-run 应明确显示：
 
-- 当前升级应读回已安装版本与 `to_version=7.6.0`；V7.5.1 升级路径必须被识别；
+- 当前升级应读回已安装版本与 `to_version=7.6.1`；V7.5.1 升级路径必须被识别；
 - schema 3 保持不变，旧 schema 1/2 迁移到 3 后重新核验宿主；
 - 新升级备份路径；
 - Marketplace payload、manifest 和 Plugin cache 分离目标；
@@ -44,13 +48,13 @@ dry-run 应明确显示：
 
 Codex 0.153.4 的本地 Marketplace manifest 必须包含顶层 `interface.displayName`。升级器会在备份后移除旧 `owner`、生成受控的 `interface.displayName`，并保留其他未知外部字段；`codex plugin list --json` 恢复正常后才继续激活。
 
-完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.6.0`，schema 3 宿主状态为 `HOST_COMPATIBLE`，并且 10 个 Skill、7 个 Reviewer、7 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。`java-backend-engineering`、`python-backend-ai-engineering`、`data-middleware-ai-infrastructure` 和此前废弃的 `vue-frontend-engineering` 不得残留；文件复制完成不构成 Plugin 成功状态。
+完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.6.1`，schema 3 宿主状态为 `HOST_COMPATIBLE`，并且 10 个 Skill、7 个 Reviewer、7 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。`java-backend-engineering`、`python-backend-ai-engineering`、`data-middleware-ai-infrastructure` 和此前废弃的 `vue-frontend-engineering` 不得残留；文件复制完成不构成 Plugin 成功状态。
 
 ## 事务与能力探测
 
 安装前 `doctor` 检查：
 
-- Codex 版本精确为 0.153.4；
+- Codex 版本属于当前冻结注册表的 11 个稳定版之一，锚点为 0.153.4；
 - `plugin list --json` 可执行；
 - Marketplace add/remove 与 Plugin add/remove 命令存在；
 - state schema 可识别；
@@ -107,10 +111,12 @@ python scripts\package_manager.py uninstall --scope user --mode plugin
 
 ## 正式制品验证
 
+`validate-package.py` 在完整 Git 源码仓库运行；语言安装包用于安装及制品验证，不包含双语源码快照。以下 `verify` 命令可核对对应发行制品。
+
 ```powershell
 python scripts\validate-package.py
-python scripts\build-release.py verify --archive ..\Codex-Skills-V7.6.0-zh-CN.zip --locale zh-CN
-python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.6.0.json --artifact ..\Codex-Skills-V7.6.0-zh-CN.zip
+python scripts\build-release.py verify --archive ..\Codex-Skills-V7.6.1-zh-CN.zip --locale zh-CN
+python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.6.1.json --artifact ..\Codex-Skills-V7.6.1-zh-CN.zip
 ```
 
 `validate-package.py` 调用当前 `validate-v74.py`，检查执行前后的 Git index、受管与未跟踪文件内容、删除状态和链接类型；`--output` 只能写到仓库外。其 `routing_host_observation` 固定为 `NOT_EVALUATED`，不能替代真实宿主路由验收。
@@ -119,6 +125,21 @@ python scripts\release-attestation.py verify --attestation ..\release-attestatio
 
 ## Windows Hook
 
-六个 Hook 通过 `cp_hook.cmd` 启动，优先使用可用的账户 CPython，再回退 `python.exe` 或 `py.exe -3`。无需额外创建 `python3.exe`。SessionEnd timeout 为 3 秒；Hook 只构造有上限且不含正文的净化事件，并以命令参数无等待派发 detached worker，不扫描或写入事件链，也不做同步管道写入。Worker 在 Hook 预算外完成稳定身份校验、语义去重、持久化、DPAPI 解密、v2 签名入列和封印；未封印的 `seal_required` 链不会被 Evolution 消费。
+七个注册 Hook 入口通过 `cp_hook.cmd` 启动，优先使用可用的账户 CPython，再回退 `python.exe` 或 `py.exe -3`。无需额外创建 `python3.exe`。SessionEnd timeout 为 3 秒；Hook 只构造有上限且不含正文的净化事件，并以命令参数无等待派发 detached worker，不扫描或写入事件链，也不做同步管道写入。Worker 在 Hook 预算外完成稳定身份校验、语义去重、持久化、DPAPI 解密、v2 签名入列和封印；未封印的 `seal_required` 链不会被 Evolution 消费。
 
 升级前已打开的任务可能继续使用旧 Plugin 快照；升级后新建任务完成最终发现验证。不自动重启 Codex。
+
+## 可选项目门禁与实际加载
+
+注册配置包含七个入口，但门禁默认关闭。显式启用后，`UserPromptSubmit` 建立真实任务起点，`PreToolUse` 检查受控写入准备，`Stop` 复核当前结束证据，`Interrupt` 记录取消；六事件观察链保持独立。
+
+```text
+项目显式启用 → 宿主实际加载 → 真实任务起点
+                              ↓
+有界初扫 / 候选查询 → prepare → 开发与验证 → finish → check
+                              └─ Interrupt → CANCELLED
+```
+
+配置 `enabled=true`、Plugin 已加载、流程 PASS 和业务语义适用是不同结论。已打开会话可能仍使用旧快照；缺少真实 session/turn 起点不能借用其他任务回执或通过 CLI 补造。取消后的同任务不能恢复 PASS。受控写工具以外的入口不能保证全部写前拦截。
+
+Codex CLI 0.153.4 已有真实 UserPromptSubmit/Interrupt 验收；0.149.1 的已观察配置路径忽略 Interrupt。旧六事件兼容证据不证明取消支持，Desktop 与其他宿主需各自读回。启用、禁用、准备和结束的操作见[能力索引与流程入口](CAPABILITY_INDEX.md)。

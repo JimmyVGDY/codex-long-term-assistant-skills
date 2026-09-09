@@ -708,9 +708,9 @@
         "英文主界面缺失: ": "English primary surface is missing: ",
         "Codex 发行命中无关品牌: ": "Codex release contains an unrelated brand: ",
         "中性语言门禁命中 %s: %s": "Neutral-language gate matched %s: %s",
-        "[OK] V7.6.0 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致": "[OK] V7.6.0 semantic validation passed: the eleven-release registry, isolated Plugin preflight, unified delegation budget, dispatch policy, model-identity privacy, and legacy compatibility boundaries agree",
-        "manifest 版本不是 7.6.0": "manifest version must be 7.6.0",
-        "缺少 %s -> V7.6.0 升级声明": "Missing %s -> V7.6.0 upgrade path"
+        "[OK] V7.6.1 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致": "[OK] V7.6.1 semantic validation passed: the eleven-release registry, isolated Plugin preflight, unified delegation budget, dispatch policy, model-identity privacy, and legacy compatibility boundaries agree",
+        "manifest 版本不是 7.6.1": "manifest version must be 7.6.1",
+        "缺少 %s -> V7.6.1 升级声明": "Missing %s -> V7.6.1 upgrade path"
       },
       "preserve": [
         "用户",
@@ -741,7 +741,7 @@
         "派发策略门禁 cases 无效": "Invalid dispatch-policy gate cases",
         "派发策略报告的模型身份隐私声明无效": "Invalid model-identity privacy result in dispatch-policy evidence",
         "生命周期模型身份隐私声明无效": "Invalid lifecycle model-identity privacy result",
-        "V7.6.0 端到端发行验证": "V7.6.0 end-to-end release validation",
+        "V7.6.1 端到端发行验证": "V7.6.1 end-to-end release validation",
         "派发策略门禁存在失败用例": "Dispatch-policy gate contains a failed case",
         "派发策略门禁用例无效或冲突": "Dispatch-policy gate contains an invalid case conflict",
         "派发策略证据包含宿主模型身份字段": "Dispatch-policy evidence contains prohibited model-identity fields"
@@ -1420,11 +1420,9 @@
         "Project Profile 已变化，必须重新绑定任务信封": "Project Profile changed; rebind the Task Envelope",
         "执行状态默认必须保存在仓库外；需要时显式使用 --allow-inside-repo": "Execution state must remain outside the repository by default; use explicit --allow-inside-repo when necessary",
         "状态已存在": "State already exists",
-        "[OK] 已初始化 Task Envelope V2:": "[OK] Task Envelope V2 initialized:",
         "STRICT 进入 IMPLEMENT 前必须完成实施前审查": "STRICT must complete pre-implementation review before entering IMPLEMENT",
         "DELIVER 前门禁未完成: ": "Gates are incomplete before DELIVER: ",
         "authorization 使用 key=true|false": "authorization must use key=true|false",
-        "[OK] 已更新 Task Envelope V2": "[OK] Task Envelope V2 updated",
         "[OK] 已记录门禁": "[OK] Gate recorded",
         "[OK] 已记录": "[OK] Recorded",
         "受保护动作必须先绑定 Project Profile": "Protected actions must bind a Project Profile first",
@@ -1436,7 +1434,9 @@
         "[OK] 已记录动作读回": "[OK] Action readback recorded",
         "[WARN] 失效证据:": "[WARN] Stale evidence:",
         "缺少门禁: ": "Missing gates: ",
-        "[OK] 状态有效; phase={} profile={} project={} stale={} missing={}": "[OK] State is valid; phase={} profile={} project={} stale={} missing={}"
+        "[OK] 状态有效; phase={} profile={} project={} stale={} missing={}": "[OK] State is valid; phase={} profile={} project={} stale={} missing={}",
+        "[OK] 已初始化 Task Envelope:": "[OK] Task Envelope initialized:",
+        "[OK] 已更新 Task Envelope": "[OK] Task Envelope updated"
       },
       "fstring": {
         "f\"不允许阶段转换 {current} -> {target}\"": "f\"Phase transition is not allowed: {current} -> {target}\""
@@ -1452,6 +1452,13 @@
       "plain": {
         "仅识别公开入口；业务适用性和完整依赖关系未核验": "Public entry location only; business suitability and complete dependencies are unverified"
       }
+    },
+    "scripts/documentation.py": {
+      "preserve": [
+        "f\"{len(hooks)} 个注册 Hook 入口：{names}。\"",
+        "V7\\.(?:5|6)\\.2 (?:及更早版本|and earlier)",
+        "当前入口"
+      ]
     }
   }
 }

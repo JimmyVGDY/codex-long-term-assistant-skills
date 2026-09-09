@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/.github/SECURITY.md; edit that source and run scripts/documentation.py sync. -->
+
 # Security policy
 
 Chinese version: [SECURITY.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.md)
@@ -6,6 +8,7 @@ Chinese version: [SECURITY.md](https://github.com/JimmyVGDY/codex-long-term-assi
 
 | Version | Status |
 | --- | --- |
+| <!-- cp-fact:package-version -->7.6.1<!-- /cp-fact --> | Currently maintained |
 | 7.6.0 | Currently maintained |
 | 7.4.4 | Security fixes only |
 | 7.4.3 | Security fixes only |

@@ -256,7 +256,7 @@ def command_init(args: argparse.Namespace) -> None:
         "history": [{"at": utc_now(), "event": "init", "phase": "IDENTIFY"}],
     }
     save_state(directory, state)
-    print("[OK] 已初始化 Task Envelope V2:", directory / STATE)
+    print("[OK] 已初始化 Task Envelope:", directory / STATE)
 
 
 def command_transition(args: argparse.Namespace) -> None:
@@ -320,7 +320,7 @@ def command_set_envelope(args: argparse.Namespace) -> None:
     if args.environment:
         state["environment"] = args.environment
     save_state(directory, state)
-    print("[OK] 已更新 Task Envelope V2")
+    print("[OK] 已更新 Task Envelope")
 
 
 def command_gate(args: argparse.Namespace) -> None:

@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/history/RELEASE_ARCHIVES.md; edit that source and run scripts/documentation.py sync. -->
+
 # Release Archive Provenance
 
 Original archives remain local and are not committed. Public tree digests cover package files after the approved sanitization process.

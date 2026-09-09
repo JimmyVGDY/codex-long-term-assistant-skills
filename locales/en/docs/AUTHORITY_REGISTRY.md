@@ -1,4 +1,4 @@
-# V7.4 Current Authoritative Source Registry
+# Current Authoritative Source Registry
 
 > Status: `active`. The files below are the current fact owners; the version that first introduced them does not limit their current scope.
 
@@ -12,7 +12,12 @@ Each fact has one authoritative owner. Other files may reference or project it b
 | Project identity and stable boundaries | `project-profile.json` | Onboarding report, envelope references |
 | Current project phase and baseline | `project-state.json` | State summary |
 | Task phase, gates, evidence, and actions | `execution-state.json` | Finalization report, handoff |
-| Reviewer scheduling and budget | `review-state.json` | Review ledger |
+| Reviewer rounds, findings, and review state | `review-state.json` | Review ledger |
+| Root-task budget, permits, and reservations | External DelegationBudget V2 ledger managed by `scripts/delegation-budget.py` | Envelope references, cost summary |
+| Hook registration | `hooks/hooks.json` | Configuration guide, architecture |
+| Worktree capability locations and coverage | Profile-adjacent `capability-index/<worktree_id>` managed by CapabilityStore | Query results, decision references |
+| Project gate opt-in and binding | Account-external `capability-gates/<worktree_id>.json` managed by GatePolicy | Status readback |
+| Gate task state and current receipts | Profile-adjacent `capability-gate/<worktree_id>` managed by GateTask/Workflow | Prepare/finish/check results |
 | Frozen review input | Review Packet `manifest.json` | Packet summary |
 | Current task recovery | `CURRENT_TASK.md` + `PROGRESS.md` | Recovery summary |
 | Long-lived project facts | `project-memory.md` | Project-document references |
@@ -36,3 +41,8 @@ Recommended labels:
 - `generated`: projected from machine state and regenerable.
 
 Historical documents do not override active rules. Generated documents must not become manually maintained independent sources of truth.
+
+## Machine source references
+
+- <!-- cp-fact:owner.budget -->repository-external DelegationBudget V2 JSONL via delegation-budget.py<!-- /cp-fact -->
+- <!-- cp-fact:owner.review -->review-state.json via review_controller.py<!-- /cp-fact -->

@@ -8,14 +8,15 @@ English: [README.en.md](README.en.md)
 
 ## 开始使用
 
-- [V7.6 使用指南](USER_GUIDE_V7.6.md)
-- [安装、升级、回滚与恢复](INSTALLATION_RECOVERY.md)
-- [Codex 配置指南](CODEX_CONFIG_GUIDE.md)
+- [V7.6 使用指南](USER_GUIDE.md)
+- [安装、升级、回滚与恢复](operations/INSTALLATION_RECOVERY.md)
+- [Codex 配置指南](operations/CODEX_CONFIG_GUIDE.md)
 - [项目上下文与接入](PROJECT_CONTEXT_AND_ONBOARDING.md)
+- [能力索引与可选门禁](CAPABILITY_INDEX.md)
 
 ## 架构与策略
 
-- [V7.6 当前系统架构](SYSTEM_ARCHITECTURE.md)
+- [V7.6 当前系统架构](architecture/SYSTEM_ARCHITECTURE.md)
 - [V7.6 领域 Skill 架构](V7_DOMAIN_SKILL_ARCHITECTURE.md)
 - [模型路由与成本策略](MODEL_ROUTING_AND_COST_POLICY.md)
 - [Reviewer 运行时隔离](REVIEWER_RUNTIME_ISOLATION.md)
@@ -32,6 +33,8 @@ English: [README.en.md](README.en.md)
 - [当前验证报告索引](VALIDATION_REPORT.md)
 - [V7.6.0 包内验证报告](releases/v7.6.0/VALIDATION_REPORT.md)
 - [V7.6.0 审计报告](releases/v7.6.0/AUDIT_REPORT.md)
+- [组件复用验收](COMPONENT_REUSE_ACCEPTANCE.md)
+- [文档维护与事实校验](DOCUMENTATION_MAINTENANCE.md)
 
 ## 发行与历史
 
@@ -43,6 +46,3 @@ English: [README.en.md](README.en.md)
 - [公开重建历史](history/RECONSTRUCTED_HISTORY.zh-CN.md)
 
 历史资料记录当时版本的事实，不自动证明当前宿主或当前安装状态。
-
-- [能力索引与可选门禁](CAPABILITY_INDEX.md)
-- [组件复用验收](COMPONENT_REUSE_ACCEPTANCE.md)

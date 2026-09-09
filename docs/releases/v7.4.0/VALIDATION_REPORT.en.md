@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.0/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.0 Validation Report
 
 Status: local package validation, real user-level installation, and post-implementation review passed.

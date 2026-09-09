@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/releases/v7.0.0/IMPLICIT_TRIGGER_OBSERVATION.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.0.0 Real Implicit-Trigger Observation
 
-Chinese: [IMPLICIT_TRIGGER_OBSERVATION.md](IMPLICIT_TRIGGER_OBSERVATION.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v7.0.0/IMPLICIT_TRIGGER_OBSERVATION/)
 
 Observation date: 2026-09-01
 

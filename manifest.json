@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.6.0",
-  "release_name": "组件复用索引与可选流程门禁",
+  "version": "7.6.1",
+  "release_name": "文档事实统一与发行来源校验",
   "generated_for": "Codex Plugin-first engineering assistance with bounded external capability indexing, multidimensional reuse decisions, project-opt-in workflow gates, and the frozen eleven-release host compatibility window",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -433,7 +433,7 @@
         "MISSING_EVIDENCE",
         "INLINE_SUFFICIENT"
       ],
-      "accounting_owner": "delegation-budget-v1",
+      "accounting_owner": "delegation-budget-v2",
       "association_mode": "explicit-dispatch-permit",
       "activation_mode": "task-scoped-explicit-ledger",
       "required_mode_environment": "CP_DELEGATION_BUDGET_REQUIRED=1",
@@ -485,7 +485,7 @@
     "project_runtime_state": "project-state.json",
     "task_execution_state": "execution-state.json via execution_guard.py",
     "review_dispatch_state": "review-state.json via review_controller.py",
-    "delegation_budget": "repository-external DelegationBudget V1 JSONL via delegation-budget.py",
+    "delegation_budget": "repository-external DelegationBudget V2 JSONL via delegation-budget.py",
     "delegation_calibration": "parent-finalized samples and offline proposals via delegation-calibration.py",
     "review_input_baseline": "review packet manifest via review_packet.py",
     "task_recovery_state": "CURRENT_TASK.md + PROGRESS.md via checkpoint.py",
@@ -496,7 +496,12 @@
     "evolution_assessment": "evolution/assessments/*.json via runtime/cp_runtime/evolution",
     "evolution_proposals": "evolution/proposals.jsonl append-only hash chain",
     "evolution_decisions": "evolution/decisions.jsonl append-only hash chain",
-    "evolution_lifecycle": "evolution/lifecycle.jsonl append-only hash chain"
+    "evolution_lifecycle": "evolution/lifecycle.jsonl append-only hash chain",
+    "hook_registration": "hooks/hooks.json",
+    "capability_index": "capability-index/<worktree_id> via CapabilityStore",
+    "capability_gate_policy": "capability-gates/<worktree_id>.json via GatePolicy",
+    "capability_gate_task": "capability-gate/<worktree_id> via GateTask and Workflow",
+    "task_feedback": "task-bound feedback via runtime/cp_runtime/evolution"
   },
   "approval_evidence_finalization": {
     "approval_schema_version": 1,
@@ -555,7 +560,8 @@
     "4.0.0",
     "7.4.6",
     "7.5.0",
-    "7.5.1"
+    "7.5.1",
+    "7.6.0"
   ],
   "release_validation": {
     "python_syntax": true,

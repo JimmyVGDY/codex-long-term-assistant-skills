@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/releases/v6.6.1/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.6.1 Package Validation Report
 
-Chinese: [VALIDATION_REPORT.md](VALIDATION_REPORT.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v6.6.1/VALIDATION_REPORT/)
 
 Version: 6.6.1
 

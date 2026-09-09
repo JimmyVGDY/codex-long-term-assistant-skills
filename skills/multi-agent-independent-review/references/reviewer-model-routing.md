@@ -70,20 +70,20 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 - 上一轮已对相同 packet 无问题通过；
 - 继续扩大范围不会改变门禁结论。
 
-## 六、运行时确认
+## 六、派发约束
 
-- 自定义 Reviewer TOML 有意不固定 `model` 和 `model_reasoning_effort`，避免高优先级静态配置阻断动态路由。
-- 派发前由 `review_controller.py` 同时记录请求档位与 `minimum_acceptable_profile`；最低档位默认等于请求档位，只能显式下调，不能高于请求档位。
-- Reviewer 自报与请求一致记为 `declared_match`；低于请求但不低于最低档位记为 `fallback_acceptable`；低于最低档位记为 `underpowered`，只能登记为 `incomplete`，不得正常归并或关闭。
-- 高于请求或超出四级批准档位记为 `mismatch`。Reviewer 自报不得产生 `verified`；只有未来可信宿主适配器才能提供该等级证据。
-- 控制器只约束本 Skill 的派发台账，不能替代 Codex 平台级 allowlist；主协调 Agent 必须显式按台账档位启动子 Agent。
+- Reviewer TOML 保持模型和强度未固定；协调者按控制器记录的批准档位派发。
+- 派发前记录批准档位、最低可接受档位和 permit 引用；最低档位不能高于批准档位。
+- 结果必须匹配任务、边界、轮次、packet 和派发约束。请求档位是策略约束，不证明实际运行模型。
+- 不读取、推断、保存或导出宿主模型身份，不请求 Reviewer 自报模型。
+- 根任务 DelegationBudget 管理预占与成本；未激活账本时只有模型上限生效，不宣称预算门禁通过。
 
 ## 七、INLINE 决策与校准
 
 - 无需子 Agent 时，先用 `route --decision INLINE` 追加阶段决策。它不创建轮次、不增加 Reviewer 计数，也不消耗模型预算。
-- 新建 v5 台账在 `plan` 前必须先记录 `INLINE` 或 `DELEGATE`；迁移自 v4 及更早版本的台账保留无决策兼容路径。
+- 新建台账在 `plan` 前必须先记录 `INLINE` 或 `DELEGATE`；迁移自 v4 及更早版本的台账保留无决策兼容路径。
 - 最新决策为 `INLINE` 时，`plan` 与 `dispatch` 都会失败。只有首轮计划前，提供前一 decision id、改判原因和新证据，才能追加 `DELEGATE` 改判；历史决策不可覆盖。
-- Reviewer v3 结果包含任务难度、耗时、待定归因和版本化估算成本，并拒绝 schema 外字段；Reviewer 文件中的 `calibration_finalized` 必须为 `false`。主协调 Agent 在修复和验证后，使用 `finalize-calibration` 携带证据单独最终化归因。
-- 控制器以 `task_id + reviewer + result_id` 投影到 `review-results.jsonl`，并分开保存请求档位、声明运行档位、运行证据等级和成本依据档位；没有可信宿主证据时，成本依据保持批准的请求档位。
+- Reviewer v4 结果包含任务难度、耗时、待定归因和版本化估算成本，并拒绝 schema 外字段；Reviewer 文件中的 `calibration_finalized` 必须为 `false`。主协调 Agent 在修复和验证后，使用 `finalize-calibration` 携带证据单独最终化归因。
+- 控制器以 `task_id + reviewer + result_id` 投影到 `review-results.jsonl`；估算成本由批准派发档位确定，投影不包含宿主实际模型身份。
 - `validate` 会核对投影台账与 `review-state`；若进程中断造成不一致，使用 `sync-calibration` 从权威状态确定性重建。
 - `profile-weight-v1` 权重为 1/2/4/8。缺失或非法成本保持 unknown；只有控制器最终化后的记录才参与低收益判断。

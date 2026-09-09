@@ -74,10 +74,12 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path dist\release | Out-Null
           python scripts/release-workflow.py notes --output dist\release\GITHUB_RELEASE_NOTES.md
+      - name: Capture clean release source
+        run: python scripts/build-release.py snapshot --require-clean --output "${{ runner.temp }}/release-source"
       - name: 构建中文可复现包 / Build reproducible zh-CN package
-        run: python scripts/build-release.py reproducible --locale zh-CN --output "dist\release\${{ steps.metadata.outputs.archive_zh }}" --witness "dist\release\${{ steps.metadata.outputs.witness_zh }}"
+        run: python "${{ runner.temp }}/release-source/scripts/build-release.py" reproducible --locale zh-CN --output "dist\release\${{ steps.metadata.outputs.archive_zh }}" --witness "dist\release\${{ steps.metadata.outputs.witness_zh }}"
       - name: 构建英文可复现包 / Build reproducible English package
-        run: python scripts/build-release.py reproducible --locale en --output "dist\release\${{ steps.metadata.outputs.archive_en }}" --witness "dist\release\${{ steps.metadata.outputs.witness_en }}"
+        run: python "${{ runner.temp }}/release-source/scripts/build-release.py" reproducible --locale en --output "dist\release\${{ steps.metadata.outputs.archive_en }}" --witness "dist\release\${{ steps.metadata.outputs.witness_en }}"
       - name: 生成 GitHub 构建来源证明 / Generate GitHub build provenance
         id: attest
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4

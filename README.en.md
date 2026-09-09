@@ -1,6 +1,10 @@
+<!-- Generated from locales/en/README.md; edit that source and run scripts/documentation.py sync. -->
+
 <p align="right">
-  <a href="README.md">Chinese</a> · <strong>English</strong>
+  <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
+
+V7.6.1 unifies bilingual documentation sources, corrects current facts and stable entry points, and builds releases from Git-tracked files or explicit source snapshots. Component reuse gates retain the project-opt-in behavior introduced in V7.6.0. See the versioned validation record for release, installation and fresh-task status.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -29,8 +33,8 @@ V7.6.0 adds bounded external capability indexing, multidimensional reuse and mai
 
 | Distribution | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V7.6.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.0/Codex-Skills-V7.6.0-zh-CN.zip) |
-| `Codex-Skills-V7.6.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.0/Codex-Skills-V7.6.0-en.zip) |
+| `Codex-Skills-V7.6.1-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.1/Codex-Skills-V7.6.1-zh-CN.zip) |
+| `Codex-Skills-V7.6.1-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.1/Codex-Skills-V7.6.1-en.zip) |
 
 [Open the latest Release, checksums, and build witnesses](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -38,7 +42,7 @@ V7.6.0 adds bounded external capability indexing, multidimensional reuse and mai
 
 - Ten engineering Skills with minimal, progressive routing for the active task.
 - Seven logically read-only Reviewers with no hard-coded model or reasoning effort.
-- Six lifecycle Hooks: `UserPromptSubmit`, `PreToolUse`, `SubagentStart`, `SubagentStop`, `Stop`, and `SessionEnd`.
+- <!-- cp-fact:hooks.en -->7 registered Hook entry points: `UserPromptSubmit`, `PreToolUse`, `SubagentStart`, `SubagentStop`, `Stop`, `Interrupt`, `SessionEnd`.<!-- /cp-fact --> The original six events serve observation and governance; `Interrupt` handles cancellation for an enabled project gate.
 - TaskOutcomeEvent 3.0 with `project_id + repo_fingerprint` isolation and a separate continuous hash chain.
 - Recoverable checkpoints, delayed SessionEnd sealing, event archives, and cross-project health summaries.
 - Separate package routing regression from real-host routing acceptance, binding host evidence to raw final-report SHA-256 digests.
@@ -95,8 +99,8 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
 | Native Windows Codex CLI 0.153.4 + Plugin | Current real-host anchor | Candidate account installation, payload readback, and two fresh CLI/Desktop-binary tasks passed; versioned release loading is checked separately | Host model identity is outside the acceptance contract; actual uninstall/rollback and a parent/child Agent lifecycle journey were not exercised by this release |
-| Windows + eleven pinned stable Codex releases | Isolated matrix | The frozen window contains eleven stable releases; local 0.153.4 Plugin installation readback passes | The complete eleven-version matrix awaits candidate-commit CI readback |
-| Windows / Ubuntu GitHub matrix | Release gate | Replay every stable release in the window | Must be read back on the candidate commit |
+| Windows + eleven pinned stable Codex releases | Isolated matrix | The frozen window contains eleven stable releases; local 0.153.4 Plugin installation readback passes | The V7.6.0 tagged matrix passed; cancellation support is verified separately per host |
+| Windows / Ubuntu GitHub matrix | Release gate | Replay every stable release in the window | V7.6.0 tagged matrix passed; subsequent changes require fresh validation |
 | standalone mode | Explicit fallback | Installation structure and regression coverage | Does not claim Plugin host compatibility |
 | macOS | Unverified | No current CI or host-acceptance evidence | Status remains `UNVERIFIED` |
 
@@ -117,9 +121,9 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. The upgrade is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.6.0`, schema-3 host state is `HOST_COMPATIBLE`, and every Manifest-declared legacy Skill directory is absent.
+3. The upgrade is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.6.1`, schema-3 host state is `HOST_COMPATIBLE`, and every Manifest-declared legacy Skill directory is absent.
 
-The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, preserves unknown files, and removes only Manifest-declared legacy Skill directories: the three V7 domain replacements plus the previously deprecated Vue Skill. See [Installation and recovery](docs/INSTALLATION_RECOVERY.en.md) and the [User guide](docs/USER_GUIDE_V7.6.en.md).
+The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, preserves unknown files, and removes only Manifest-declared legacy Skill directories: the three V7 domain replacements plus the previously deprecated Vue Skill. See [Installation and recovery](docs/operations/INSTALLATION_RECOVERY.en.md) and the [User guide](docs/USER_GUIDE.en.md).
 
 ## Model evidence boundary
 
@@ -142,7 +146,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V7.6.0 release notes](docs/releases/v7.6.0/RELEASE_NOTES.en.md)
+- [Changelog](CHANGELOG.en.md) · [V7.6.1 release notes](docs/releases/v7.6.1/RELEASE_NOTES.en.md)
 
 ## Local validation
 
@@ -158,7 +162,7 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. Tag runs create drafts only; they never publish automatically or overwrite an existing Release.
 
 ```shell
-gh attestation verify Codex-Skills-V7.6.0-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.6.1-en.zip --repo OWNER/REPOSITORY
 ```
 
 See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.en.md) for the complete gates and new-version procedure.
@@ -174,3 +178,5 @@ See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATIO
 Licensed under Apache-2.0. See [LICENSE](LICENSE).
 
 Reuse guidance: [Capability index](docs/CAPABILITY_INDEX.en.md) · [Acceptance protocol](docs/COMPONENT_REUSE_ACCEPTANCE.en.md).
+
+V7.6.0 post-release readback (checked at 2026-09-09 04:04:02 UTC): the [release workflow](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304636222), [main-branch CI](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304540318), and [documentation deployment](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304540320) passed for commit `26d013fa824fa148a839d30aaedd22f3744e8bbf`. This record belongs to that tag and verification time, not subsequent changes, and does not establish cancellation support on every host.

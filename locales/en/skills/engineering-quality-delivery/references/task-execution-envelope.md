@@ -1,4 +1,4 @@
-# Task Execution Envelope V2
+# Task Execution Envelope
 
 The Task Envelope is the minimum deterministic control object for a nontrivial task. It carries consistent facts among the coordinating session, independent-context subagents, external memory, and recovery.
 
@@ -20,3 +20,14 @@ The Task Envelope is the minimum deterministic control object for a nontrivial t
 4. Send a subagent only the envelope fields relevant to its responsibility and the common review packet, not the full chat history.
 5. Update the envelope when permissions, scope, phase, baseline, or evidence freshness changes. Do not reuse old approval, evidence, or review packets.
 6. The envelope cannot override actual code, Git, configuration, or runtime results; conflicts enter `RECOVER` or `BLOCKED`.
+
+## Format versions and ownership
+
+| Object | Current format | Source |
+|---|---|---|
+| Task Envelope template | schema <!-- cp-fact:schema.envelope -->3<!-- /cp-fact --> | `../assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml` and package manifest |
+| execution-state | schema <!-- cp-fact:schema.execution-state -->4<!-- /cp-fact --> | SCHEMA in `../scripts/execution_guard.py` |
+| Embedded delegation_budget binding | schema 1 | execution_guard routing declaration |
+| External DelegationBudget ledger | <!-- cp-fact:schema.budget -->2.0<!-- /cp-fact --> | Root-task budget runtime |
+
+These objects have distinct format versions, independent of the package version. Reviewer state owns reviews, not the root-task budget.

@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/.github/PULL_REQUEST_TEMPLATE.md; edit that source and run scripts/documentation.py sync. -->
+
 <!-- Chinese template: .github/PULL_REQUEST_TEMPLATE.md -->
 
 ## Purpose

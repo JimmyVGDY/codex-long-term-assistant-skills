@@ -1,5 +1,6 @@
 # Cross-Project Engineering Assistant Core Rules (V7.4)
 
+> V7.4 identifies the core-rule revision, not the installed package version; current capabilities are defined by the package manifest and matching Skills.
 Global context retains only non-bypassable cross-project boundaries. Domain procedures load progressively from the matching Skill.
 
 ## 1. Core priorities

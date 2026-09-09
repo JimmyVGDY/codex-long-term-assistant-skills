@@ -187,10 +187,10 @@ class CapabilityGateHookTests(unittest.TestCase):
         (home / "tools").mkdir(parents=True)
         for name in ("cp-runtime.py", "evolution.py"):
             (home / "tools" / name).write_text("# installed wrapper\n", encoding="utf-8")
-        installed = home / "plugins/cache/cp-assistant-local/codex-cross-project-engineering-assistant/7.6.0"
+        installed = home / "plugins/cache/cp-assistant-local/codex-cross-project-engineering-assistant/7.6.1"
         installed.mkdir(parents=True)
         state = home / "cp-assistant-v6-state.json"
-        state.write_text(json.dumps({"mode": "plugin", "version": "7.6.0"}), encoding="utf-8")
+        state.write_text(json.dumps({"mode": "plugin", "version": "7.6.1"}), encoding="utf-8")
         with patch.dict(os.environ, {"CODEX_HOME": str(home)}):
             self.assertEqual((home / "tools/cp-runtime.py").resolve(), hook.runtime_entry(installed))
             self.assertEqual((home / "tools/evolution.py").resolve(), hook.runtime_entry(installed, "evolution.py"))

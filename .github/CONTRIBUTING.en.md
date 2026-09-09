@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/.github/CONTRIBUTING.md; edit that source and run scripts/documentation.py sync. -->
+
 # Contributing guide
 
 Chinese version: [CONTRIBUTING.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CONTRIBUTING.md)

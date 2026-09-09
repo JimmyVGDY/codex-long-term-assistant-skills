@@ -28,6 +28,9 @@ class DelegationHookTests(unittest.TestCase):
         self.env = os.environ.copy()
         self.env["CP_DELEGATION_BUDGET_PATH"] = str(self.ledger)
         self.env["CP_ASSISTANT_DATA"] = str(Path(self.temp.name) / "events")
+        # 中文：委派夹具不继承账户或项目的门禁策略。
+        # English: Delegation fixtures do not inherit account or project gate policies.
+        self.env["CP_CAPABILITY_GATE_ROOT"] = str(Path(self.temp.name) / "gate-policies")
 
     def tearDown(self) -> None:
         self.temp.cleanup()

@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/releases/v7.4.0/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.0 Release Notes
 
-Version: 7.4.0  
+Version: 7.4.0
 Target host: Codex CLI 0.153.0
 
 ## Highlights

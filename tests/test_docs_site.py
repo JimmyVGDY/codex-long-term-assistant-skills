@@ -83,7 +83,7 @@ class DocumentationSiteTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="cp-docs-history-") as temporary:
             output = Path(temporary) / "docs-source"
             self.builder.prepare(output)
-            current = (output / "zh-CN" / "docs" / "SYSTEM_ARCHITECTURE.md").read_text(
+            current = (output / "zh-CN" / "docs" / "architecture" / "SYSTEM_ARCHITECTURE.md").read_text(
                 encoding="utf-8")
             legacy = (output / "zh-CN" / "docs" / "V6_ARCHITECTURE.md").read_text(
                 encoding="utf-8")
@@ -101,6 +101,26 @@ class DocumentationSiteTests(unittest.TestCase):
         self.assertIn("Historical version", legacy_en)
         self.assertIn("历史版本资料", release_archive)
         self.assertNotIn("search:\n  exclude: true", archive_index)
+
+    def test_compatibility_pages_preserve_current_sections_without_duplicate_search(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cp-docs-alias-") as temporary:
+            output = Path(temporary) / "docs-source"
+            self.builder.prepare(output)
+            aliases = self.builder.load_catalog(ROOT)["aliases"]
+            for row in aliases:
+                if not row["source"].startswith("docs/"):
+                    continue
+                for language in ("zh-CN", "en"):
+                    old = output / language / row["source"]
+                    current = output / language / row["target"]
+                    old_text = old.read_text(encoding="utf-8")
+                    new_text = current.read_text(encoding="utf-8")
+                    self.assertIn("Generated compatibility copy", old_text)
+                    self.assertIn("search:\n  exclude: true", old_text)
+                    self.assertNotIn("Historical version", old_text)
+                    self.assertNotIn("历史版本资料", old_text)
+                    self.assertEqual(re.findall(r"^#{1,6} .+$", new_text, re.MULTILINE),
+                                     re.findall(r"^#{1,6} .+$", old_text, re.MULTILINE))
 
     def test_current_document_inventory_is_bilingual_and_not_archived(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cp-docs-current-") as temporary:
@@ -210,14 +230,14 @@ class DocumentationSiteTests(unittest.TestCase):
         self.assertIn("10</strong><span>Skills", root)
         self.assertIn("3.0</strong><span>TaskOutcomeEvent", root)
         self.assertIn("social-preview.jpg", root)
-        self.assertIn("V7.6.0", root)
+        self.assertIn("V7.6.1", root)
         self.assertNotIn("V6.6.1", root)
-        self.assertIn("USER_GUIDE_V7.6", root)
+        self.assertIn("docs/USER_GUIDE/", root)
         self.assertIn("/codex-long-term-assistant-skills/zh-CN/", root)
         self.assertIn("/codex-long-term-assistant-skills/en/", root)
-        self.assertIn("V7.6.0", english_pair)
+        self.assertIn("V7.6.1", english_pair)
         self.assertNotIn("V6.6.1", english_pair)
-        self.assertIn("USER_GUIDE_V7.6", english_pair)
+        self.assertIn("docs/USER_GUIDE/", english_pair)
         self.assertIsNone(re.search(r"[\u4e00-\u9fff]", english_pair))
         self.assertIn("@media (max-width: 640px)", stylesheet)
         self.assertIn(":focus-visible", stylesheet)
@@ -251,10 +271,12 @@ class DocumentationSiteTests(unittest.TestCase):
             ROOT / "locales" / "en" / ".github" / "mkdocs.yml"
         ).read_text(encoding="utf-8")
         for text in (navigation, localized_navigation):
-            self.assertIn("USER_GUIDE_V7.6.md", text)
+            self.assertIn("docs/USER_GUIDE.md", text)
+            self.assertIn("docs/operations/CODEX_CONFIG_GUIDE.md", text)
+            self.assertIn("docs/architecture/SYSTEM_ARCHITECTURE.md", text)
             self.assertIn("V7_DOMAIN_SKILL_ARCHITECTURE.md", text)
             self.assertIn("SYSTEM_ARCHITECTURE.md", text)
-            self.assertIn("releases/v7.6.0/RELEASE_NOTES.md", text)
+            self.assertIn("releases/v7.6.1/RELEASE_NOTES.md", text)
             self.assertNotIn("V6_ARCHITECTURE.md", text)
             self.assertIn("pymdownx.slugs.slugify", text)
 
@@ -290,7 +312,7 @@ class DocumentationSiteTests(unittest.TestCase):
             ROOT / ".github" / "SECURITY.en.md",
             ROOT / "locales" / "en" / ".github" / "SECURITY.md",
         ):
-            self.assertIn("7.6.0", path.read_text(encoding="utf-8"))
+            self.assertIn("7.6.1", path.read_text(encoding="utf-8"))
 
     def test_social_preview_is_reusable_1280_by_640_and_below_one_megabyte(self) -> None:
         image = (ROOT / "docs" / "assets" / "social-preview.jpg").read_bytes()

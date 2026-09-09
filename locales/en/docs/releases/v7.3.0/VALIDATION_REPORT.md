@@ -1,6 +1,6 @@
 # V7.3.0 Package and Local Installation Validation Report
 
-Chinese: [VALIDATION_REPORT.md](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v7.3.0/VALIDATION_REPORT/)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/releases/v7.3.0/VALIDATION_REPORT/)
 
 Version: 7.3.0
 

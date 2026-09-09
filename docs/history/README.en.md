@@ -1,11 +1,13 @@
+<!-- Generated from locales/en/docs/history/README.md; edit that source and run scripts/documentation.py sync. -->
+
 # Public reconstruction material
 
-Chinese: [README.md](README.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/history/README/)
 
 The V1.0.0 through V6.6.0 Git history was reconstructed from retained official ZIP archives after approved sanitization. It does not claim to reproduce the original development-commit sequence.
 
 - [Reconstructed history notice](RECONSTRUCTED_HISTORY.en.md)
-- [Original archive and public-tree digests](RELEASE_ARCHIVES.md)
+- [Original archive and public-tree digests](RELEASE_ARCHIVES.en.md)
 - [Historical GitHub Release pages and zero-asset policy](GITHUB_RELEASES.en.md)
 - [V6.6.0 public-tree file checksums](PUBLIC_TREE_CHECKSUMS_V6.6.0.sha256)
 

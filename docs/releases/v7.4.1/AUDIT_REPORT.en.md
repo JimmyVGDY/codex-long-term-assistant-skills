@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.1/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.1 Independent Review Report
 
 Status: preimplementation and postimplementation logical-readonly reviews are complete. This file is not native-account, remote-CI, or publication approval evidence.

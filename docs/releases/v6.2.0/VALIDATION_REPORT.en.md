@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v6.2.0/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.2 Validation Report
 
 Validation date: 2026-08-28

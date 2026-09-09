@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.5/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.5 Release Notes
 
 Version: 7.4.5

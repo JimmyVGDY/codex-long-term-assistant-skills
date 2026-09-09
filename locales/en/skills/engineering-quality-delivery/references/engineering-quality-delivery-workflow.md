@@ -9,7 +9,7 @@
 | [component-module-reuse.md](component-module-reuse.md) | Existing capability discovery, reuse decisions, consumer compatibility, and evidence | Before features, fixes, refactoring, or shared implementation changes |
 | `quality-task-planning.md` | Task classification, prechange planning, and preimplementation gates | Task start, scope confirmation, implementation planning, or high-risk design review |
 | `execution-profiles-and-phases.md` | `LIGHT/STANDARD/STRICT` and execution phases | Selecting gates and phase transitions |
-| `task-execution-envelope.md` | Task Envelope V2, Project Binding, and six-dimensional routing | Nontrivial, cross-session, or protected-operation work |
+| `task-execution-envelope.md` | Task Envelope, Project Binding, and six-dimensional routing | Nontrivial, cross-session, or protected-operation work |
 | `evidence-fingerprint-protocol.md` | Repository fingerprints, evidence freshness, and invalidation | Validation, review, baseline change, and delivery decisions |
 | `project-binding-approval-finalization.md` | Project binding, approval, action readback, and finalization | Commit, push, deploy, restart, data writes, and final reporting |
 | `quality-validation-gates.md` | Test selection, minimum validation, adversarial and performance gates | Validation after code, script, frontend, or migration changes |

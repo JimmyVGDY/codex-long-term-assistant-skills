@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v6.1.0/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.1 Final Validation Report
 
 - Target version: 6.1.0

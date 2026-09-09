@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v6.2.0/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # V6.2 Native Windows Compatibility Hardening Release
 
 V6.2 builds on V6.1 and incorporates the compatibility issues discovered, fixed, and verified during a real upgrade and lifecycle acceptance run with native Windows Codex CLI 0.150.1. It is not a version-only repackaging.

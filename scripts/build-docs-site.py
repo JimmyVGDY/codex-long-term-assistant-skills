@@ -11,46 +11,24 @@ import os
 import re
 import shutil
 import stat
+import sys
 from pathlib import Path
 from typing import Callable
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+from documentation import audit as audit_documentation, current_documents, load_catalog, rewrite_links
 DEFAULT_OUTPUT = ROOT / "dist" / "docs-source"
 SITE_TEMPLATE = ROOT / ".github" / "docs-site"
 REPOSITORY_BLOB = "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/"
-MARKDOWN_LINK = re.compile(r"(!?\[[^\]\n]*\]\()([^)\n]+)(\))")
-HTML_LINK = re.compile(r"((?:href|src)=[\"'])([^\"']+)([\"'])", re.IGNORECASE)
 PACKAGE_VERSION = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"]
 CURRENT_RELEASE_DIRECTORY = f"v{PACKAGE_VERSION}"
 CURRENT_VERSION_SERIES = ".".join(PACKAGE_VERSION.split(".")[:2])
-CURRENT_DOCUMENTS = frozenset({
-    "README.md",
-    "CAPABILITY_INDEX.md",
-    "COMPONENT_REUSE_ACCEPTANCE.md",
-    f"USER_GUIDE_V{CURRENT_VERSION_SERIES}.md",
-    "INSTALLATION_RECOVERY.md",
-    "CODEX_CONFIG_GUIDE.md",
-    "PROJECT_CONTEXT_AND_ONBOARDING.md",
-    "SYSTEM_ARCHITECTURE.md",
-    "V7_DOMAIN_SKILL_ARCHITECTURE.md",
-    "MODEL_ROUTING_AND_COST_POLICY.md",
-    "REVIEWER_RUNTIME_ISOLATION.md",
-    "SUBAGENT_INDEPENDENT_CONTEXT.md",
-    "SKILL_TRIGGER_MATRIX.md",
-    "SKILL_ROUTING_EVAL.md",
-    "SOURCE_MAPPING.md",
-    "APPROVAL_EVIDENCE_FINALIZATION.md",
-    "AUTHORITY_REGISTRY.md",
-    "evolution/CONTROLLED_EVOLUTION_OPERATIONS.md",
-    "evolution/SELF_EVOLUTION_ARCHITECTURE.md",
-    "VALIDATION_REPORT.md",
-    "releases/README.md",
-    "releases/RELEASE_AUTOMATION.md",
-    "history/README.md",
-    "history/RELEASE_ARCHIVES.md",
-    "history/GITHUB_RELEASES.md",
-})
+CURRENT_DOCUMENTS = current_documents(ROOT)
+COMPATIBILITY_DOCUMENTS = frozenset(row["source"].removeprefix("docs/") for row in load_catalog(ROOT)["aliases"]
+                                    if row["source"].startswith("docs/"))
 
 
 class DocumentationBuildError(RuntimeError):
@@ -64,22 +42,22 @@ def validate_version_bound_sources() -> None:
     """
     expected = {
         ROOT / ".github" / "mkdocs.yml": (
-            f"USER_GUIDE_V{CURRENT_VERSION_SERIES}.md",
+            "docs/USER_GUIDE.md",
             f"releases/{CURRENT_RELEASE_DIRECTORY}/RELEASE_NOTES.md",
             f"V{CURRENT_VERSION_SERIES} current system architecture",
         ),
         ROOT / "locales" / "en" / ".github" / "mkdocs.yml": (
-            f"USER_GUIDE_V{CURRENT_VERSION_SERIES}.md",
+            "docs/USER_GUIDE.md",
             f"releases/{CURRENT_RELEASE_DIRECTORY}/RELEASE_NOTES.md",
             f"V{CURRENT_VERSION_SERIES} current system architecture",
         ),
         SITE_TEMPLATE / "index.md": (
             f"V{PACKAGE_VERSION}",
-            f"USER_GUIDE_V{CURRENT_VERSION_SERIES}/",
+            "docs/USER_GUIDE/",
         ),
         SITE_TEMPLATE / "index.en.md": (
             f"V{PACKAGE_VERSION}",
-            f"USER_GUIDE_V{CURRENT_VERSION_SERIES}/",
+            "docs/USER_GUIDE/",
         ),
         SITE_TEMPLATE / "javascripts" / "repository-facts.js": (
             f'const RELEASE_VERSION = "v{PACKAGE_VERSION}";',
@@ -145,21 +123,6 @@ def copy_files(source: Path, destination: Path, include: Callable[[Path], bool])
         shutil.copyfile(path, target)
 
 
-def copy_english_pairs(source: Path, destination: Path) -> None:
-    """中文：把源码树中的同级英文文档复制为站点规范路径。
-
-    English: Copy sibling English documents to their canonical site paths.
-    """
-    for path in sorted(source.rglob("*.en.md")):
-        if is_link(path):
-            raise DocumentationBuildError(f"documentation source contains a link: {path}")
-        relative = path.relative_to(source)
-        normalized = relative.with_name(relative.name[:-6] + ".md")
-        target = destination / normalized
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(path, target)
-
-
 def normalized_document_path(relative: Path) -> str:
     """中文：把同级英文文件名归一为站点内的规范文档路径。
 
@@ -172,9 +135,9 @@ def normalized_document_path(relative: Path) -> str:
 
 
 def is_current_document(relative: Path) -> bool:
-    """中文：区分当前 V7.4 文档与只用于追溯的历史资料。
+    """中文：按统一目录清单区分当前文档与历史资料。
 
-    English: Separate current V7.4 documentation from historical reference material.
+    English: Separate current guidance from history using the shared catalog.
     """
     value = normalized_document_path(relative)
     return value in CURRENT_DOCUMENTS or value.startswith(
@@ -204,6 +167,10 @@ def mark_historical_pages(output: Path) -> int:
         docs_root = output / language / "docs"
         for path in sorted(docs_root.rglob("*.md")):
             relative = path.relative_to(docs_root)
+            if relative.as_posix() in COMPATIBILITY_DOCUMENTS:
+                original = path.read_text(encoding="utf-8-sig")
+                path.write_text(metadata + original, encoding="utf-8", newline="\n")
+                continue
             if is_current_document(relative):
                 continue
             original = path.read_text(encoding="utf-8-sig")
@@ -258,27 +225,8 @@ def rewrite_site_links(output: Path) -> None:
     """
     for path in sorted(output.rglob("*.md")):
         text = path.read_text(encoding="utf-8-sig")
-        lines: list[str] = []
-        fence: str | None = None
-        for line in text.splitlines(keepends=True):
-            stripped = line.lstrip()
-            marker = stripped[:3] if stripped.startswith(("```", "~~~")) else None
-            if marker:
-                fence = None if fence == marker else marker if fence is None else fence
-                lines.append(line)
-                continue
-            if fence:
-                lines.append(line)
-                continue
-            rewritten_line = MARKDOWN_LINK.sub(
-                lambda match: match.group(1) + rewrite_target(path, output, match.group(2)) + match.group(3),
-                line,
-            )
-            lines.append(HTML_LINK.sub(
-                lambda match: match.group(1) + rewrite_target(path, output, match.group(2)) + match.group(3),
-                rewritten_line,
-            ))
-        path.write_text("".join(lines), encoding="utf-8", newline="\n")
+        rendered = rewrite_links(text, lambda target: rewrite_target(path, output, target))
+        path.write_text(rendered, encoding="utf-8", newline="\n")
 
 
 def prepare(output: Path = DEFAULT_OUTPUT) -> dict[str, object]:
@@ -287,6 +235,9 @@ def prepare(output: Path = DEFAULT_OUTPUT) -> dict[str, object]:
     English: Generate Chinese and English site sources containing only formal documentation.
     """
     validate_version_bound_sources()
+    documentation = audit_documentation(ROOT)
+    if not documentation["ok"]:
+        raise DocumentationBuildError("documentation sources drifted: " + str(documentation["findings"]))
     output = output.resolve()
     reset_output(output)
     shutil.copyfile(SITE_TEMPLATE / "index.md", output / "index.md")
@@ -298,18 +249,17 @@ def prepare(output: Path = DEFAULT_OUTPUT) -> dict[str, object]:
     chinese.mkdir()
     english.mkdir()
     shutil.copyfile(ROOT / "README.md", chinese / "index.md")
-    shutil.copyfile(ROOT / "README.en.md", english / "index.md")
+    shutil.copyfile(ROOT / "locales/en/README.md", english / "index.md")
     shutil.copyfile(ROOT / "CHANGELOG.md", chinese / "CHANGELOG.md")
-    shutil.copyfile(ROOT / "CHANGELOG.en.md", english / "CHANGELOG.md")
+    shutil.copyfile(ROOT / "locales/en/CHANGELOG.md", english / "CHANGELOG.md")
     for name in ("LICENSE", "NOTICE"):
         shutil.copyfile(ROOT / name, chinese / name)
         shutil.copyfile(ROOT / name, english / name)
 
     copy_files(ROOT / "docs", chinese / "docs", lambda path: not path.name.endswith(".en.md"))
     copy_files(ROOT / "docs", english / "docs", lambda path: path.suffix.lower() != ".md")
-    copy_english_pairs(ROOT / "docs", english / "docs")
     copy_files(ROOT / "locales" / "en" / "docs", english / "docs", lambda _: True)
-    reconstructed = ROOT / "docs" / "history" / "RECONSTRUCTED_HISTORY.en.md"
+    reconstructed = ROOT / "locales/en/docs/history/RECONSTRUCTED_HISTORY.md"
     if reconstructed.is_file():
         target = english / "docs" / "history" / "RECONSTRUCTED_HISTORY.md"
         target.parent.mkdir(parents=True, exist_ok=True)

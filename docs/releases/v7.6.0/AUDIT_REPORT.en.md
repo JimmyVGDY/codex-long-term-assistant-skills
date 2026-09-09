@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.6.0/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.6.0 Audit
 
 The release adds capability index storage, CLI maintenance and project-opt-in gates, plus bilingual Skills and acceptance fixtures. Existing lock, atomic-write and identity utilities are reused. Default project behavior, dispatch budget, authorization and delayed SessionEnd ownership remain intact.

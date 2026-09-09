@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/history/RECONSTRUCTED_HISTORY.md; edit that source and run scripts/documentation.py sync. -->
+
 # Reconstructed History Notice
 
 The V1.0.0 through V6.6.0 history in this repository was reconstructed on 2026-08-31 from official release ZIP archives retained locally.

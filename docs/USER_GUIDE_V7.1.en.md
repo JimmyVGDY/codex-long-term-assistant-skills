@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/USER_GUIDE_V7.1.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.1 Operating Guide
 
-Chinese: [`USER_GUIDE_V7.1.md`](USER_GUIDE_V7.1.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.1/)
 
 ## Four primary domains
 

@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.5.1/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.5.1 Release Notes
 
 Correct the concurrent acceptance timing assumption: retry a bounded two-second lock timeout after the other call finishes, and verify a single committed transaction. Add forced-contention coverage for unchanged watermarks and idempotent worker recovery. The lock bound and runtime watermark protocol retain their existing contract.
@@ -13,4 +15,4 @@ Theme: task feedback and measured optimization benefits.
 
 The frozen Codex CLI 0.153.4 plus ten preceding stable-release window is retained; no broader host support is claimed. Automation defaults to disabled. Historical event/proposal hashes remain unchanged. Analysis without valid project identity now returns a blocked state.
 
-See the [validation report](VALIDATION_REPORT.md) and [audit report](AUDIT_REPORT.md) for delivery evidence.
+See the [validation report](VALIDATION_REPORT.en.md) and [audit report](AUDIT_REPORT.en.md) for delivery evidence.

@@ -1,6 +1,8 @@
+<!-- Generated from locales/en/docs/USER_GUIDE_V7.3.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.3 Operating Guide
 
-Chinese: [`USER_GUIDE_V7.3.md`](USER_GUIDE_V7.3.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.3/)
 
 ## V7.3 hardening
 

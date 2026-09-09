@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/docs/releases/v7.4.5/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.4.5 Independent Review Report
 
 Status: PASS (logical-readonly). No findings remain on the current baseline. CI, tag, asset provenance, and public Release still require independent readback.

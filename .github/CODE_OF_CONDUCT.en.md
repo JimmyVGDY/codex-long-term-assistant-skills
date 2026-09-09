@@ -1,3 +1,5 @@
+<!-- Generated from locales/en/.github/CODE_OF_CONDUCT.md; edit that source and run scripts/documentation.py sync. -->
+
 # Code of conduct
 
 Chinese version: [CODE_OF_CONDUCT.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CODE_OF_CONDUCT.md)

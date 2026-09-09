@@ -164,7 +164,7 @@ def verify_lifecycle(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.6.0 real lifecycle verifier")
+    parser = argparse.ArgumentParser(description="V7.6.1 real lifecycle verifier")
     parser.add_argument("--event-file", required=True)
     parser.add_argument("--session-id", required=True)
     parser.add_argument("--project-id", required=True)

@@ -1,6 +1,10 @@
+<!-- Generated compatibility copy from docs/architecture/SYSTEM_ARCHITECTURE.md; edit that source and run scripts/documentation.py sync. -->
+
+[当前入口](architecture/SYSTEM_ARCHITECTURE.md)
+
 # V7.6 当前系统架构与安全边界
 
-> 状态：`active`。本页描述 V7.6.0 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
+> 状态：`active`。本页描述 V7.6.1 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
 
 ## 1. 分层
 
@@ -11,7 +15,7 @@ Global AGENTS（最小跨项目规则）
         ↓
 Main Agent / 7 Reviewers
         ↓
-6 Lifecycle Hooks
+Observation / governance: 6 existing Hook events
         ↓
 TaskOutcomeEvent V3
         ↓
@@ -22,7 +26,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-包版本是 V7.6.0；`TaskOutcomeEvent V3`、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
+包版本是 V7.6.1；`TaskOutcomeEvent V3`、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
 
 ## 2. Skill 路由
 
@@ -48,7 +52,7 @@ Human Decision + Independent Implementation Task
 
 ## 4. Hook 与模型边界
 
-`PreToolUse` 对自动子 Agent 的模型上限做前置检查；`SubagentStart` 和 `SubagentStop` 记录最小运行事实，其余 Hook 形成生命周期事件。Hook Guard 是工作流保护，不是平台级不可绕过安全边界。
+`PreToolUse` 对自动子 Agent 的模型上限做前置检查；`SubagentStart` 和 `SubagentStop` 记录最小运行事实，其他原有观察 Hook 形成生命周期事件；新增的 `Interrupt` 单独处理可选门禁取消。Hook Guard 是工作流保护，不是平台级不可绕过安全边界。
 
 系统只验证派发前的批准档位、permit 和预算预占。宿主实际模型身份与推理强度不读取、不推断，也不进入生命周期、Reviewer、演进或发布证明。
 
@@ -87,3 +91,18 @@ CLOSED
 - 升级来源版本、迁移映射和组件合同版本可以在当前文档中出现，但必须说明其用途；
 - 历版发行说明、验证报告和设计文档保留用于追溯，不作为当前安装、运行或验收结论；
 - 历史详情页不进入默认站内搜索，避免旧命令与当前操作说明混淆。
+
+## 可选项目门禁与实际加载
+
+注册配置包含七个入口，但门禁默认关闭。显式启用后，`UserPromptSubmit` 建立真实任务起点，`PreToolUse` 检查受控写入准备，`Stop` 复核当前结束证据，`Interrupt` 记录取消；六事件观察链保持独立。
+
+```text
+项目显式启用 → 宿主实际加载 → 真实任务起点
+                              ↓
+有界初扫 / 候选查询 → prepare → 开发与验证 → finish → check
+                              └─ Interrupt → CANCELLED
+```
+
+配置 `enabled=true`、Plugin 已加载、流程 PASS 和业务语义适用是不同结论。已打开会话可能仍使用旧快照；缺少真实 session/turn 起点不能借用其他任务回执或通过 CLI 补造。取消后的同任务不能恢复 PASS。受控写工具以外的入口不能保证全部写前拦截。
+
+Codex CLI 0.153.4 已有真实 UserPromptSubmit/Interrupt 验收；0.149.1 的已观察配置路径忽略 Interrupt。旧六事件兼容证据不证明取消支持，Desktop 与其他宿主需各自读回。启用、禁用、准备和结束的操作见[能力索引与流程入口](CAPABILITY_INDEX.md)。

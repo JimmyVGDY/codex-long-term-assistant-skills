@@ -1,21 +1,22 @@
 # Documentation hub
 
-Chinese source: [README.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/README.md)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/README/)
 
-This page organizes the V7.6.0 documentation by adoption stage. Historical reports and build metadata are grouped by version to preserve validation paths, historical references, and reproducibility.
+This page organizes the V7.6.0 documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
 
 > Version scope: V7.6.0 is the current package version. TaskOutcomeEvent V3, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
 
 ## Getting started
 
-- [V7.6 user guide](USER_GUIDE_V7.6.md)
-- [Installation, upgrade, rollback, and recovery](INSTALLATION_RECOVERY.md)
-- [Codex configuration guide](CODEX_CONFIG_GUIDE.md)
+- [V7.6 user guide](USER_GUIDE.md)
+- [Installation, upgrade, rollback, and recovery](operations/INSTALLATION_RECOVERY.md)
+- [Codex configuration guide](operations/CODEX_CONFIG_GUIDE.md)
 - [Project context and onboarding](PROJECT_CONTEXT_AND_ONBOARDING.md)
+- [Capability index and optional gates](CAPABILITY_INDEX.md)
 
 ## Architecture and policy
 
-- [V7.6 current system architecture](SYSTEM_ARCHITECTURE.md)
+- [V7.6 current system architecture](architecture/SYSTEM_ARCHITECTURE.md)
 - [V7.6 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md)
 - [Model routing and cost policy](MODEL_ROUTING_AND_COST_POLICY.md)
 - [Reviewer runtime isolation](REVIEWER_RUNTIME_ISOLATION.md)
@@ -32,6 +33,8 @@ This page organizes the V7.6.0 documentation by adoption stage. Historical repor
 - [Current validation report index](VALIDATION_REPORT.md)
 - [V7.6.0 package validation report](releases/v7.6.0/VALIDATION_REPORT.md)
 - [V7.6.0 audit report](releases/v7.6.0/AUDIT_REPORT.md)
+- [Component reuse acceptance](COMPONENT_REUSE_ACCEPTANCE.md)
+- [Documentation maintenance and fact checks](DOCUMENTATION_MAINTENANCE.md)
 
 ## Release and history
 
@@ -43,6 +46,3 @@ This page organizes the V7.6.0 documentation by adoption stage. Historical repor
 - [Public reconstruction history](history/RECONSTRUCTED_HISTORY.md)
 
 Historical material records the state of its original release. It does not establish the current host or installation state.
-
-- [Capability index and optional gates](CAPABILITY_INDEX.md)
-- [Component reuse acceptance](COMPONENT_REUSE_ACCEPTANCE.md)

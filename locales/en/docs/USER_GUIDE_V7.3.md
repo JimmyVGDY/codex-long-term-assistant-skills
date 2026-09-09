@@ -1,6 +1,6 @@
 # V7.3 Operating Guide
 
-Chinese: [`USER_GUIDE_V7.3.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.3/)
+Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.3/)
 
 ## V7.3 hardening
 

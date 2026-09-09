@@ -9,7 +9,7 @@
 | [component-module-reuse.md](component-module-reuse.md) | 已有能力检索、复用决策、使用方兼容与证据 | 新增功能、修复、重构或共享实现改动前 |
 | `quality-task-planning.md` | 任务分类、修改前计划与实施前门禁 | 任务开始、范围确认、实施计划或高风险设计审查 |
 | `execution-profiles-and-phases.md` | `LIGHT/STANDARD/STRICT` 与执行阶段 | 选择执行门禁和阶段转换 |
-| `task-execution-envelope.md` | Task Envelope V2、Project Binding 与六维路由 | 非简单、跨会话或受保护操作任务 |
+| `task-execution-envelope.md` | Task Envelope、Project Binding 与六维路由 | 非简单、跨会话或受保护操作任务 |
 | `evidence-fingerprint-protocol.md` | 仓库指纹、Evidence freshness 与失效规则 | 验证、复审、基线变化和交付判断 |
 | `project-binding-approval-finalization.md` | 项目绑定、Approval、动作读回和 Finalization | Commit、Push、Deploy、Restart、数据写入和最终报告 |
 | `quality-validation-gates.md` | 测试选择、最低验证、对抗与性能门禁 | 代码/脚本/前端/迁移修改后的验证阶段 |
