@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.5.1",
+  "version": "7.6.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 192,
-  "payload_digest": "3bf2777c9e52d9fb35a56fd53f7d5867d700e44700b98c815334192563d95ca7",
+  "file_count": 216,
+  "payload_digest": "5f5f03577637683252b7162e0215aba5b0c368d72e8adbec90d95fe31085c017",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "f6cb0c7a1c5c8a11b02963f28e02f9562dd41d73d74fec13bcb6dbd11c2db479",
-      "size": 298
+      "sha256": "1b3df9efc0a615a9731c8ed05a41f33dabc27d543116a78b51e98afe6bd5b86c",
+      "size": 274
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -58,8 +58,8 @@
     },
     {
       "path": "skills/backend-engineering/SKILL.md",
-      "sha256": "703e733ae116c07a836f91572f356329c19a07b89bfa9631c64b79304dcb5422",
-      "size": 3431
+      "sha256": "f69facdb17621ad266b9f34c2df7e763e34e79c560274c16cb2f6673ba414f26",
+      "size": 3651
     },
     {
       "path": "skills/backend-engineering/agents/openai.yaml",
@@ -68,8 +68,8 @@
     },
     {
       "path": "skills/backend-engineering/references/backend-core-rules.md",
-      "sha256": "8080a014ab5d11027658c420bb93664b180d98c5a6c6d9a7dd7180fc23d429c1",
-      "size": 4361
+      "sha256": "056df043eafcd678df2ee1d342ac9fe609873d58ecd527b4994aa534665acc39",
+      "size": 4769
     },
     {
       "path": "skills/backend-engineering/references/backend-stack-routing.md",
@@ -208,8 +208,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/SKILL.md",
-      "sha256": "ce1fde23cdf4fa5aa23b7f48585069b0898553924986aa20763f78a44d2dd128",
-      "size": 3814
+      "sha256": "74e15fffcc71e62222413a3fae4c8ff79e9be71cc321962be60d9652ac320165",
+      "size": 4973
     },
     {
       "path": "skills/engineering-quality-delivery/agents/openai.yaml",
@@ -217,14 +217,29 @@
       "size": 408
     },
     {
+      "path": "skills/engineering-quality-delivery/assets/templates/CAPABILITY_ENTRY.template.json",
+      "sha256": "cf3daebfbbf7b3887f9406e2ccd88bf587af5493e7a87d8897ec6b2d01fad965",
+      "size": 456
+    },
+    {
       "path": "skills/engineering-quality-delivery/assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml",
       "sha256": "008fa5b91bdfd634bfa867ed4e9f77ced3c1c52730d85a5fec7a6dc443a6d711",
       "size": 1983
     },
     {
+      "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
+      "sha256": "4fbe5b098ab5b7aef452ceadd520039badad4b16d3a4551dda69d0d12aa0bf55",
+      "size": 9876
+    },
+    {
+      "path": "skills/engineering-quality-delivery/references/component-module-reuse.md",
+      "sha256": "22c82e9084cc531eacb316ed64ea831875dc6660cbb122bfdd5a30d0a7249289",
+      "size": 6157
+    },
+    {
       "path": "skills/engineering-quality-delivery/references/engineering-quality-delivery-workflow.md",
-      "sha256": "8c63399569103b453ea079739be0ffdb9965482c8d8694f43be0a5afcf4accb1",
-      "size": 1922
+      "sha256": "60404e0774fc4bcba8e5158d9281a703c6cb8cf4c66c4cfa0e6d35c59fe230dd",
+      "size": 2101
     },
     {
       "path": "skills/engineering-quality-delivery/references/evidence-fingerprint-protocol.md",
@@ -258,13 +273,13 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/quality-task-planning.md",
-      "sha256": "bad467f5e12e65e10237fb1489b55ff51dd0a5e3b2f3334290efc5029aeed1fe",
-      "size": 2901
+      "sha256": "295375136584bb6d97bd72477c0add1f2550cc5306bca2d334b8c6f559897bc8",
+      "size": 3414
     },
     {
       "path": "skills/engineering-quality-delivery/references/quality-validation-gates.md",
-      "sha256": "f8b2133e7105401002a81634a26ea979343253d9f024952c15d1d5bfac88e06b",
-      "size": 5264
+      "sha256": "b60c45256e9ff671efc5ca99133a96eda654e7cbce14445f40ba7f4657997670",
+      "size": 5847
     },
     {
       "path": "skills/engineering-quality-delivery/references/task-execution-envelope.md",
@@ -288,8 +303,8 @@
     },
     {
       "path": "skills/frontend-engineering/SKILL.md",
-      "sha256": "fa6cf1dede8ea724d8799b7203f5dbe28d1b81c62b9ca15e5685fb435faacab0",
-      "size": 6061
+      "sha256": "d096f12eaef8eb1780a0906ddf3948af701b4bdddb56b6e0751b9fb61209a7e3",
+      "size": 6281
     },
     {
       "path": "skills/frontend-engineering/agents/openai.yaml",
@@ -323,8 +338,8 @@
     },
     {
       "path": "skills/frontend-engineering/references/frontend-core-rules.md",
-      "sha256": "116cba4d8847c03722ab009f5a34f14ed28d78738f2bc0a6f4f64eb64fe3ae1a",
-      "size": 4446
+      "sha256": "f877f94dbf719df1026d1cfc312565093d5a69e855a90d6eb327f2dceea186aa",
+      "size": 4871
     },
     {
       "path": "skills/frontend-engineering/references/frontend-quality-performance-rules.md",
@@ -443,8 +458,8 @@
     },
     {
       "path": "skills/long-running-task-memory/SKILL.md",
-      "sha256": "d229c803127aeafbad5c2cffc8f5eb47745498fcfcde99c8d62005f6c8c0f205",
-      "size": 2888
+      "sha256": "cebc3b85bed7f673a72ab076dcf14ca15c9f116d47912d3400a6cb3f67520e77",
+      "size": 3234
     },
     {
       "path": "skills/long-running-task-memory/agents/openai.yaml",
@@ -603,8 +618,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/references/review-postimplementation.md",
-      "sha256": "78cd96943f5bb97a376f715bfa383affdd0c1004428dda15aa3d9711fd250989",
-      "size": 2736
+      "sha256": "26f3472725c629f462f244470f45b894c1fa63a87053c395a1db58eb6ee440aa",
+      "size": 3224
     },
     {
       "path": "skills/multi-agent-independent-review/references/review-preimplementation-controller.md",
@@ -747,19 +762,24 @@
       "size": 1182
     },
     {
+      "path": "hooks/cp_gate.py",
+      "sha256": "e0fdd49815feaafddf8fca40c5b9709c773f2dfdb37c44bb1ec605482c0d3fc5",
+      "size": 2087
+    },
+    {
       "path": "hooks/cp_hook.cmd",
       "sha256": "db370fdf2b0309e06ca9cf66517d7d40f672a7c52d67a9ee0e4379c880c2c16d",
       "size": 1398
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "a349d9d5b683cc1c3e7d22cc3cbb7e685e9523accd79c90c884a34464d981931",
-      "size": 25939
+      "sha256": "7870a1200f1120d236a36b8de84f303d18acb38c986d33124087263e750046e5",
+      "size": 27966
     },
     {
       "path": "hooks/hooks.json",
-      "sha256": "7563e5facf9ff9a1e2aa68bd6e97536d5fc7c43ed00d378fdd55d67c6bbdd09c",
-      "size": 2020
+      "sha256": "ed95a135a9f334a56b6fb87f135d8184662b9a8252216dbe06f259df227d799b",
+      "size": 2366
     },
     {
       "path": "hooks/seal_worker.py",
@@ -778,18 +798,58 @@
     },
     {
       "path": "runtime/cp_runtime/atomic_io.py",
-      "sha256": "f6a30e5b4209d4eda8f441450b0a3e1435d7c9ee385eb63c88d753151afbe579",
-      "size": 1480
+      "sha256": "5ab0b7c1316f313e9b5fb847ad73531354c8308ba3a83f21dccf4167c90bed60",
+      "size": 1572
+    },
+    {
+      "path": "runtime/cp_runtime/capability_cli.py",
+      "sha256": "d2c786072376caf3ccf1c70ddd51b4a11ce41b0c37a770b634b90f93f58cab81",
+      "size": 4046
+    },
+    {
+      "path": "runtime/cp_runtime/capability_gate.py",
+      "sha256": "67c7bc6e9a6204443b714d35dd99c9397732c611d031db5122fc9ac4d03aa46c",
+      "size": 15522
+    },
+    {
+      "path": "runtime/cp_runtime/capability_gate_cli.py",
+      "sha256": "0501ec626644025b56da17a08c903072a31aa3b641e0162898360f064aeb7f03",
+      "size": 4268
+    },
+    {
+      "path": "runtime/cp_runtime/capability_gate_evidence.py",
+      "sha256": "e822a04e02012b3aa8aedf678b601eed102561a1f166c6da9a815bcc27f40c0e",
+      "size": 12056
+    },
+    {
+      "path": "runtime/cp_runtime/capability_gate_hook.py",
+      "sha256": "8e3d7f779ea22a8fa19f4ba3ee86b49fe4a36cfa230a709b03277d770e9522d0",
+      "size": 13217
+    },
+    {
+      "path": "runtime/cp_runtime/capability_gate_workflow.py",
+      "sha256": "e2915da16a9cc69b263e985dd5c2b1d7d69be6696eef5885f2cf204a0315d126",
+      "size": 20781
+    },
+    {
+      "path": "runtime/cp_runtime/capability_index.py",
+      "sha256": "3e77b2ee7e7a663b27ed0858d829062ee4deb4eb63cfe981d4c97f6d61051e9d",
+      "size": 28934
+    },
+    {
+      "path": "runtime/cp_runtime/capability_store.py",
+      "sha256": "f2a77649861ecc0a1975819fdf7f2eeaafb2e57b3dfd95fe91101551cb016eb7",
+      "size": 20944
     },
     {
       "path": "runtime/cp_runtime/cli.py",
-      "sha256": "57db9d20f769dd97b965660a50b7eda9340c1c8778f6a2432331b43ca22d7f53",
-      "size": 12366
+      "sha256": "0163d1ef8da6731519d7dce91e5a3e1ebc0cb41f62196d35d4c70a2b5f2d226f",
+      "size": 12531
     },
     {
       "path": "runtime/cp_runtime/common.py",
-      "sha256": "07761d47d6dbf06a4c057da20cde440a9cff03aca781b4169248df66b8f816f3",
-      "size": 12922
+      "sha256": "f7b86df1021a770a42c453c3598d0666fe48f9ffcd0ffa1f29113552aa437fc3",
+      "size": 12987
     },
     {
       "path": "runtime/cp_runtime/contracts.py",
@@ -813,8 +873,8 @@
     },
     {
       "path": "runtime/cp_runtime/event_v2.py",
-      "sha256": "be672f69766d4691430031de6dff65425bf6e87a63fa1d60b5e61d33d0697419",
-      "size": 34445
+      "sha256": "d478cfd7ae694a7c428e5f56cb479904ba90b1d9994fcb39757f78115a2ce8d1",
+      "size": 34418
     },
     {
       "path": "runtime/cp_runtime/event_v3.py",
@@ -965,6 +1025,66 @@
       "path": "runtime/cp_runtime/seal_queue.py",
       "sha256": "718c003aef75db316c746c58e54a0bbd39d7e22dd167ba4bd4d39f05937042c5",
       "size": 19448
+    },
+    {
+      "path": "runtime/tests/test_capability_gate.py",
+      "sha256": "693c3bcc598af24389f0971b93d09390f00b677eb39c598c8abe740469e84ec4",
+      "size": 10492
+    },
+    {
+      "path": "runtime/tests/test_capability_gate_budget.py",
+      "sha256": "965024558c2dbdfc5458cc41c69791c589ec50eb302c876e2060f2bebdb0ef93",
+      "size": 3610
+    },
+    {
+      "path": "runtime/tests/test_capability_gate_cli.py",
+      "sha256": "faca8bc993f328738c11390635235e578228a6dd1e5dd2f992f918316d0225b7",
+      "size": 6079
+    },
+    {
+      "path": "runtime/tests/test_capability_gate_evidence.py",
+      "sha256": "0aac4f78b14b4e88a72418adac4d7318078337ce8c4fd2f4a6730622905454dd",
+      "size": 8831
+    },
+    {
+      "path": "runtime/tests/test_capability_gate_hook.py",
+      "sha256": "c991058a0fd5fa4b65f5b90539f2990e0c9ee3d09c0036208c1149c4b35d75b7",
+      "size": 11519
+    },
+    {
+      "path": "runtime/tests/test_capability_gate_local_exception.py",
+      "sha256": "49eccac43071597671c4938a6359d87fe2feb67dc2fd2179d1ad2a39aaafe853",
+      "size": 7263
+    },
+    {
+      "path": "runtime/tests/test_capability_gate_long_path.py",
+      "sha256": "e7d8ab772e420987d1eacd544fb65b157f93edac4b1c746459786dd6ac6335f0",
+      "size": 3255
+    },
+    {
+      "path": "runtime/tests/test_capability_gate_workflow.py",
+      "sha256": "f932d132c489da860935c8cbdf859b57ff248a98386ac310a09e8cd75989d5b8",
+      "size": 9839
+    },
+    {
+      "path": "runtime/tests/test_capability_identity_session.py",
+      "sha256": "be8136e7b717ba6e93c3c04a8a0320a78b4a98866c699475635a9a7895ac6d5f",
+      "size": 2620
+    },
+    {
+      "path": "runtime/tests/test_capability_index.py",
+      "sha256": "d2d5bfb4e3b8ccea58f9c3bf1039a2435f38e350339e051a12c13cfbee256b4c",
+      "size": 15779
+    },
+    {
+      "path": "runtime/tests/test_capability_maintenance.py",
+      "sha256": "183eb90d6cc0c1a87007c01760ddaff13fd8c4a9fbd7da0243b825f8774cdd1a",
+      "size": 8907
+    },
+    {
+      "path": "runtime/tests/test_capability_store.py",
+      "sha256": "56479d47260a295f81e3fe1f07c0d7474f319f9e47360c9ca4f8a35c3a95ba14",
+      "size": 20152
     },
     {
       "path": "runtime/tests/test_cp_runtime.py",

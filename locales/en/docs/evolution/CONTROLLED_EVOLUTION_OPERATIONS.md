@@ -1,6 +1,6 @@
 # V7.5 Controlled Evolution Operations
 
-Status: `active`, package V7.5.1. Default and explicit policy entrypoints use `v7.4.3-default-1`. Every proposal retains `execution_authorization=NONE`.
+Status: `active`, package V7.6.0. Default and explicit policy entrypoints use `v7.4.3-default-1`. Every proposal retains `execution_authorization=NONE`.
 
 ## 1. Task feedback
 

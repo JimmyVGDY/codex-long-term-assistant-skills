@@ -1,4 +1,7 @@
 # One canonical source path per line. Machine drafts are intentionally absent.
+# Reuse additions were compared by the implementing agent; this is not a human-review attestation.
+docs/COMPONENT_REUSE_ACCEPTANCE.md
+skills/engineering-quality-delivery/references/component-module-reuse.md
 # V7.5 additions are agent-reviewed under authorized publication; this legacy filename does not attest human linguistic review.
 docs/releases/v7.5.0/RELEASE_NOTES.md
 docs/releases/v7.5.0/VALIDATION_REPORT.md
@@ -305,7 +308,18 @@ docs/releases/v7.4.6/VALIDATION_REPORT.md
 docs/releases/RELEASE_AUTOMATION.en.md
 skills/controlled-evolution-governance/references/task-outcome-event-v3.md
 
-docs/USER_GUIDE_V7.5.md
+docs/USER_GUIDE_V7.6.md
 docs/releases/v7.5.1/RELEASE_NOTES.md
 docs/releases/v7.5.1/VALIDATION_REPORT.md
 docs/releases/v7.5.1/AUDIT_REPORT.md
+docs/CAPABILITY_INDEX.md
+skills/engineering-quality-delivery/references/capability-index-workflow.md
+
+docs/USER_GUIDE_V7.6.md
+docs/CAPABILITY_INDEX.md
+docs/COMPONENT_REUSE_ACCEPTANCE.md
+docs/releases/v7.6.0/RELEASE_NOTES.md
+docs/releases/v7.6.0/VALIDATION_REPORT.md
+docs/releases/v7.6.0/AUDIT_REPORT.md
+
+docs/USER_GUIDE_V7.5.md

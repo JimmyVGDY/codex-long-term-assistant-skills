@@ -1,6 +1,6 @@
 # Release evidence archive
 
-V7.5.1 is the current release, themed “Task feedback and measured optimization benefits”. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
+V7.6.0 is the current release, themed “Component reuse index and optional workflow gates”. Every other version in this table is retained only for release traceability. Its detail pages display a historical-material warning and are excluded from default site search; they are not current installation or operating guidance.
 
 Chinese source: [README.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/docs/releases/README.md)
 
@@ -8,6 +8,7 @@ Release evidence is grouped by semantic version. Each directory contains only th
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.6.0 | [Notes](v7.6.0/RELEASE_NOTES.md) | [Audit](v7.6.0/AUDIT_REPORT.md) | [Validation](v7.6.0/VALIDATION_REPORT.md) | Bounded candidate acceptance; exact-version publication checked separately | [JSON](v7.6.0/BUILD_INFO.json) | [JSON](v7.6.0/PACKAGE_VALIDATION.json) |
 | 7.5.1 | [Notes](v7.5.1/RELEASE_NOTES.md) | [Audit](v7.5.1/AUDIT_REPORT.md) | [Validation](v7.5.1/VALIDATION_REPORT.md) | Six focused contention/recovery tests passed; see reports for full validation and installation | [JSON](v7.5.1/BUILD_INFO.json) | [JSON](v7.5.1/PACKAGE_VALIDATION.json) |
 | 7.5.0 | [Notes](v7.5.0/RELEASE_NOTES.md) | [Audit](v7.5.0/AUDIT_REPORT.md) | [Validation](v7.5.0/VALIDATION_REPORT.md) | Tagged candidate not published; contention timing assumption corrected in 7.5.1 | [JSON](v7.5.0/BUILD_INFO.json) | [JSON](v7.5.0/PACKAGE_VALIDATION.json) |
 | 7.4.6 | [Open](v7.4.6/RELEASE_NOTES.md) | [Open](v7.4.6/AUDIT_REPORT.md) | [Open](v7.4.6/VALIDATION_REPORT.md) | Windows 0.153.4 transactional install, Plugin readback, and isolated 0.153.4 cell pass; full matrix/tag/Release require separate readback | [JSON](v7.4.6/BUILD_INFO.json) | [JSON](v7.4.6/PACKAGE_VALIDATION.json) |

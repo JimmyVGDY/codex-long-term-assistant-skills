@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from .atomic_io import native_path
+
 FULL_HASH_LIMIT = 4 * 1024 * 1024
 SAMPLE_BYTES = 1024 * 1024
 ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
@@ -111,6 +113,7 @@ def read_json(path: Path, verify: bool = False, label: str = "记录") -> Dict[s
 
 
 def atomic_write_bytes(path: Path, content: bytes) -> None:
+    path = native_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp_name = tempfile.mkstemp(prefix="." + path.name + ".", dir=str(path.parent))
     try:

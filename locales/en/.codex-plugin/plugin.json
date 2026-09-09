@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.5.1",
-  "description": "Cross-project engineering assistant V7.5.1: task feedback, observation health, incremental analysis, cross-ledger calibration and verifiable benefits.",
+  "version": "7.6.0",
+  "description": "Cross-project engineering assistant V7.6.0: external capability indexing, reuse and maintenance decisions, and project-opt-in workflow gates.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

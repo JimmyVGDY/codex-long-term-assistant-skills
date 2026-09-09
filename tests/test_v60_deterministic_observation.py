@@ -335,12 +335,13 @@ class V60DeterministicObservationTests(unittest.TestCase):
         self.assertIn('python.exe',launcher.lower())
         self.assertIn('py.exe',launcher.lower())
         hooks=json.loads((ROOT/'hooks'/'hooks.json').read_text(encoding='utf-8'))['hooks']
-        expected={'UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'}
+        expected={'UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','Interrupt','SessionEnd'}
         self.assertEqual(expected,set(hooks))
         for event in expected:
             command=hooks[event][0]['hooks'][0]['commandWindows']
             self.assertEqual(f'cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\cp_hook.cmd" {event}"',command)
         self.assertEqual(3,hooks['SessionEnd'][0]['hooks'][0]['timeout'])
+        self.assertEqual(3,hooks['Interrupt'][0]['hooks'][0]['timeout'])
 
     def test_proposal_lifecycle_requires_accept_task_baseline_validation_and_close(self):
         start=datetime(2026,7,1,tzinfo=timezone.utc)

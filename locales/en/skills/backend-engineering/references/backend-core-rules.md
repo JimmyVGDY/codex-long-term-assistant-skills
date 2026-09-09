@@ -8,6 +8,8 @@ Confirm the language, runtime, framework, process and concurrency model, persist
 
 ## Interface and business boundary
 
+Before additions, fixes, or refactoring, apply [Component and Module Reuse](../../engineering-quality-delivery/references/component-module-reuse.md) to existing services, domain rules, repositories, integration adapters, and utilities. Compare authorization/tenancy, transactions, idempotency, error mapping, client lifecycles, and process boundaries. Do not bypass service-layer business rules for reuse or share stateful implementations across requests as if they were pure functions.
+
 Protocol handlers parse requests and map responses. Application or business layers own rules, state, authorization, idempotency, and transaction orchestration. Persistence modules own queries and locking. Integration modules adapt external systems.
 
 Check input/output isolation from persistence models, required fields, defaults, enums, time, money, pagination, errors, compatibility, retries, idempotency, partial success, and whether business behavior hides in handlers, ORM hooks, or generic utilities. Do not impose elaborate layering on a simple system, and do not compress a complex system into one global module.

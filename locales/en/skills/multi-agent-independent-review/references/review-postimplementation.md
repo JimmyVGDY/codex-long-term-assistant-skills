@@ -19,6 +19,8 @@ Reviewer reading order: summary and statistics, assigned hunks, complete context
 
 ## 3. Parallel First Round
 
+For changes involving reuse decisions, include searched scope and candidates, decision and reason, consumer impact, validation, and unknowns in the existing task/validation summary input, linked to files/symbols under [Component and Module Reuse](../../engineering-quality-delivery/references/component-module-reuse.md). Use the existing packet generation and hashing flow; do not edit generated packets or add required runtime schema fields. One sentence suffices for simple work; do not dispatch a reviewer solely for this summary when review is otherwise unnecessary.
+
 Each reviewer receives a unique responsibility, file or call-chain scope, exclusions, packet hash, round and depth, evidence standard, model tier, output schema, and isolation level.
 
 The coordinator waits for all planned reviewers in the round and then consolidates. Do not repair findings one by one as they arrive. Retry a failed reviewer at most once. Redispatching the same reviewer against the same packet requires a second-opinion reason.

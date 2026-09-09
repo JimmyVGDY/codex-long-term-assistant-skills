@@ -6,6 +6,7 @@
 
 | Reference | Contents | When to Read |
 |---|---|---|
+| [component-module-reuse.md](component-module-reuse.md) | Existing capability discovery, reuse decisions, consumer compatibility, and evidence | Before features, fixes, refactoring, or shared implementation changes |
 | `quality-task-planning.md` | Task classification, prechange planning, and preimplementation gates | Task start, scope confirmation, implementation planning, or high-risk design review |
 | `execution-profiles-and-phases.md` | `LIGHT/STANDARD/STRICT` and execution phases | Selecting gates and phase transitions |
 | `task-execution-envelope.md` | Task Envelope V2, Project Binding, and six-dimensional routing | Nontrivial, cross-session, or protected-operation work |

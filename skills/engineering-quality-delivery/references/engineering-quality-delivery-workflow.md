@@ -6,6 +6,7 @@
 
 | Reference | 内容 | 何时读取 |
 |---|---|---|
+| [component-module-reuse.md](component-module-reuse.md) | 已有能力检索、复用决策、使用方兼容与证据 | 新增功能、修复、重构或共享实现改动前 |
 | `quality-task-planning.md` | 任务分类、修改前计划与实施前门禁 | 任务开始、范围确认、实施计划或高风险设计审查 |
 | `execution-profiles-and-phases.md` | `LIGHT/STANDARD/STRICT` 与执行阶段 | 选择执行门禁和阶段转换 |
 | `task-execution-envelope.md` | Task Envelope V2、Project Binding 与六维路由 | 非简单、跨会话或受保护操作任务 |

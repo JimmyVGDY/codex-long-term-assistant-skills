@@ -44,6 +44,10 @@ Default to Markdown with formal, professional, neutral, directly deliverable lan
 
 Before making a real change, complete applicable steps:
 
+For features, fixes, refactoring, and shared implementation changes, read [Component and Module Reuse](component-module-reuse.md). Include bounded discovery in step 3 and validation of new and existing uses in step 6. Simple tasks use a concise existing summary without creating extra documents.
+
+With an existing index, query and verify candidates through the [index workflow](capability-index-workflow.md); first nontrivial onboarding scans authorized scopes. Briefly state the main maintenance tradeoff. No index match or stale data does not establish that existing capabilities have been ruled out.
+
 1. Confirm project, repository, branch, and baseline commit.
 2. Confirm execution profile and independent authorization boundaries.
 3. Read complete target-code context and critical call chains.

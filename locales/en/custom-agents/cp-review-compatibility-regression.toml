@@ -7,5 +7,9 @@ Operate in independent context as a logically read-only specialist. No file, dat
 
 Read packet summary and changed paths before assigned diffs and direct callers. Expand only when evidence is insufficient and reuse existing validation.
 
+For capability indexes, check branch/worktree identity, per-entry observation baselines, old-consumer references, and dependency changes that invalidate earlier judgments. Migration IDs and deprecation replacements need evidence. Maintenance cost cannot override permissions, state boundaries, or old-use compatibility.
+
+For reuse decisions, locate references/component-module-reuse.md through the active engineering-quality-delivery Skill (relative to that Skill directory) and apply it to affected existing consumers, parameter/return/error defaults, shared state, lifecycles, and authorization boundaries. Separate confirmed callers from unknown dynamic/external consumers. Accept justified independent implementations rather than forcing consolidation.
+
 Assess old interfaces, old data, version coexistence, upgrade and rollback paths, defaults, serialization, configuration compatibility, shared components, and regression coverage. Cluster by root cause and return only actionable findings under the REVIEW_RESULT schema, including packet hash, model observation, effort observation, isolation, checked scope, and unverified items.
 """

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：Codex V7.5.1 生命周期 Hook：派发策略、统一委派预算与最小元数据观测。
+"""中文：Codex V7.6.0 生命周期 Hook：派发策略、统一委派预算与最小元数据观测。
 
-English: Codex V7.5.1 lifecycle Hook for dispatch policy, delegation budget, and minimal metadata observation.
+English: Codex V7.6.0 lifecycle Hook for dispatch policy, delegation budget, and minimal metadata observation.
 """
 from __future__ import annotations
 
@@ -218,7 +218,7 @@ def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
         mark_completed(ledger, reservation_id=reservation_id, outcome=outcome)
 
 
-def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
+def _event(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[str, Any] | None:
     hook = str(_lookup(data, *HOOK_ALIASES["hook_event_name"]) or "")
     event_map = {
         "UserPromptSubmit": "TURN_OPENED",
@@ -242,7 +242,7 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
             "project_id": project_id_for(fingerprint, cwd), "repo_fingerprint": fingerprint,
         }, "SESSION_END_IDENTITY_UNAVAILABLE")
         return None
-    terminal_value = _lookup(data, *HOOK_ALIASES["terminal_outcome"]) if event_type == "TASK_COMPLETED" else None
+    terminal_value = _lookup(data, *HOOK_ALIASES["terminal_outcome"]) if event_type == "TASK_COMPLETED" and allow_feedback else None
     terminal = str(terminal_value or "UNKNOWN").upper()
     metadata: Dict[str, Any] = {}
     for key in ("agent_id", "agent_type", "permission_mode", "tool_name", "stop_hook_active"):
@@ -281,7 +281,7 @@ def _event(data: Mapping[str, Any]) -> Dict[str, Any] | None:
         "reserved_units": reserved_units,
         "metadata": metadata,
     }
-    if event_type == "TASK_COMPLETED":
+    if event_type == "TASK_COMPLETED" and allow_feedback:
         try:
             report = consume_for_hook(_data_path(event).parent.parent, event, cwd)
             if report is not None:
@@ -370,33 +370,9 @@ def _enqueue_and_launch(event_path: Path, event: Mapping[str, Any]) -> None:
         _session_end_diagnostic(event, "SEAL_WORKER_LAUNCH_FAILED")
 
 
-def main() -> int:
-    data = _read()
-    expected_hook = sys.argv[1] if len(sys.argv) > 1 else ""
-    allowed_hooks = {"UserPromptSubmit", "PreToolUse", "SubagentStart", "SubagentStop", "Stop", "SessionEnd"}
-    if expected_hook not in allowed_hooks:
-        expected_hook = ""
-    hook_name = str(_lookup(data, *HOOK_ALIASES["hook_event_name"]) or expected_hook)
-    if hook_name and "hook_event_name" not in data:
-        data["hook_event_name"] = hook_name
-    if expected_hook == "PreToolUse" and not str(_lookup(data, *HOOK_ALIASES["tool_name"]) or ""):
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("invalid_input")}}, ensure_ascii=False))
-        return 0
-    guard = _guard(data)
-    if guard is not None:
-        print(json.dumps(guard, ensure_ascii=False))
-        return 0
+def _observe(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[str, Any] | None:
     try:
-        _budget_lifecycle(data, hook_name)
-    except (DelegationBudgetError, OSError, TimeoutError) as exc:
-        # 中文：启停 Hook 无权回滚已发生的宿主动作；保留预占并输出无正文诊断。
-        # English: Lifecycle hooks cannot roll back a host action that already occurred; retain the reservation and emit a body-free diagnostic.
-        diagnostic = {"schema_version": "1.0", "component": "delegation-budget",
-                      "status": "RECONCILIATION_FAILED", "hook": hook_name,
-                      "error_ref": "sha256:" + hashlib.sha256(str(exc).encode("utf-8")).hexdigest()}
-        print(json.dumps(diagnostic, ensure_ascii=False, sort_keys=True), file=sys.stderr)
-    try:
-        event = _event(data)
+        event = _event(data, allow_feedback=allow_feedback)
     except Exception:
         # 中文：部分 Windows 原生宿主路径可能产生不完整或异常的观察元数据；事件构造失败不得阻止 Stop 返回有效中性响应，PreToolUse 模型门禁仍失败关闭。
         # English: Some native Windows host paths may yield incomplete or malformed observation metadata; event-construction failure must not block Stop's neutral response, while the PreToolUse model guard remains fail-closed.
@@ -425,25 +401,94 @@ def main() -> int:
             # English: Data corruption or hash-chain failure must not be bypassed by creating a fresh chain.
             if event["event_type"] == "SESSION_ENDED":
                 _session_end_diagnostic(event, "SESSION_END_ENQUEUE_FAILED")
+    return event
+
+
+def _feedback_context(event: Mapping[str, Any] | None) -> str:
+    if event is None or not all(event.get(key) for key in ("session_id", "turn_id", "task_id")):
+        return ""
+    try:
+        from cp_runtime.evolution.artifacts import identifier, project_identity
+        from cp_runtime.capability_gate_hook import runtime_entry
+        project_dir = _data_path(event).parent.parent
+        identity = project_identity(project_dir)
+        if all(identity[key] == event[key] for key in ("project_id", "repo_fingerprint")):
+            binding = {key: identifier(event[key]) for key in ("session_id", "turn_id", "task_id")}
+            binding.update(project_id=identity["project_id"], context_root=str(project_dir.parent),
+                           cli_path=str(runtime_entry(ROOT, "evolution.py")))
+            return ("Engineering task feedback binding: " + json.dumps(binding, ensure_ascii=False, sort_keys=True)
+                    + ". When validation is already required, use the Python cli_path entrypoint validate-task and finalize-task before the final reply. "
+                    + "The parent confirms outcome and routing; missing evidence remains UNKNOWN. Do not add validation solely for feedback.")
+    except Exception:
+        pass
+    return ""
+
+
+def _optional_gate(data: Mapping[str, Any], hook_name: str) -> Dict[str, Any] | None:
+    from cp_runtime.capability_gate_hook import EVENTS, WRITE_TOOLS, failure_response, locate_policy, supervise
+    tool = str(_lookup(data, *HOOK_ALIASES["tool_name"]) or "").lower()
+    if hook_name not in EVENTS or hook_name == "PreToolUse" and tool not in WRITE_TOOLS:
+        return None
+    try:
+        cwd = _lookup_strict(data, *HOOK_ALIASES["cwd"]) or os.getcwd()
+        if locate_policy(cwd) is None:
+            return None
+        payload: Dict[str, Any] = {"hook_event_name": hook_name, "cwd": cwd}
+        for key in ("session_id", "turn_id", "task_id", "tool_name", "terminal_outcome"):
+            value = _lookup_strict(data, *HOOK_ALIASES[key])
+            if value is not None:
+                if not isinstance(value, str) or len(value) > 256:
+                    raise ValueError("GATE_HOST_IDENTITY")
+                payload[key] = value
+        if "stop_hook_active" in data:
+            if type(data["stop_hook_active"]) is not bool:
+                raise ValueError("GATE_STOP_IDENTITY")
+            payload["stop_hook_active"] = data["stop_hook_active"]
+        # 中文：子进程只接收有界身份元数据，不传Prompt、回答、源码、Diff或工具正文。
+        # English: Send only bounded identity metadata, never prompts, answers, code, diffs, or tool bodies.
+        return supervise(ROOT, payload)
+    except Exception:
+        return failure_response(hook_name, "GATE_UNAVAILABLE")
+
+
+def main() -> int:
+    data = _read()
+    expected_hook = sys.argv[1] if len(sys.argv) > 1 else ""
+    allowed_hooks = {"UserPromptSubmit", "PreToolUse", "SubagentStart", "SubagentStop", "Stop", "SessionEnd", "Interrupt"}
+    if expected_hook not in allowed_hooks:
+        expected_hook = ""
+    hook_name = str(_lookup(data, *HOOK_ALIASES["hook_event_name"]) or expected_hook)
+    if hook_name and "hook_event_name" not in data:
+        data["hook_event_name"] = hook_name
+    if expected_hook == "PreToolUse" and not str(_lookup(data, *HOOK_ALIASES["tool_name"]) or ""):
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("invalid_input")}}, ensure_ascii=False))
+        return 0
+    guard = _guard(data)
+    if guard is not None:
+        print(json.dumps(guard, ensure_ascii=False))
+        return 0
+    gate = _optional_gate(data, hook_name)
+    if gate is not None:
+        print(json.dumps(gate, ensure_ascii=True))
+        return 0
+    if hook_name == "Interrupt" or (hook_name == "PreToolUse" and str(_lookup(data, *HOOK_ALIASES["tool_name"]) or "").lower() in {"apply_patch", "edit", "write"}):
+        return 0
+    try:
+        _budget_lifecycle(data, hook_name)
+    except (DelegationBudgetError, OSError, TimeoutError) as exc:
+        diagnostic = {"schema_version": "1.0", "component": "delegation-budget",
+                      "status": "RECONCILIATION_FAILED", "hook": hook_name,
+                      "error_ref": "sha256:" + hashlib.sha256(str(exc).encode("utf-8")).hexdigest()}
+        print(json.dumps(diagnostic, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+    event = _observe(data)
     # 中文：正常 Stop 处理返回宿主规定的中性响应；上方恢复逻辑确保 Windows 截断非 ASCII last_assistant_message 时仍能进入该分支。
     # English: Normal Stop handling returns the host-defined neutral response; the recovery above preserves this branch when Windows truncates a non-ASCII last_assistant_message.
     if hook_name in {"Stop", "SubagentStop"}:
         print("{}")
-    elif hook_name == "UserPromptSubmit" and event is not None and all(event.get(key) for key in ("session_id", "turn_id", "task_id")):
-        try:
-            from cp_runtime.evolution.artifacts import identifier, project_identity
-            project_dir = _data_path(event).parent.parent
-            identity = project_identity(project_dir)
-            if all(identity[key] == event[key] for key in ("project_id", "repo_fingerprint")):
-                binding = {key: identifier(event[key]) for key in ("session_id", "turn_id", "task_id")}
-                binding.update(project_id=identity["project_id"], context_root=str(project_dir.parent),
-                               cli_path=str(ROOT / "scripts" / "evolution.py"))
-                print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext":
-                    "Engineering task feedback binding: " + json.dumps(binding, ensure_ascii=False, sort_keys=True)
-                    + ". When validation is already required, use the Python cli_path entrypoint validate-task and finalize-task before the final reply. "
-                    + "The parent confirms outcome and routing; missing evidence remains UNKNOWN. Do not add validation solely for feedback."}}, ensure_ascii=False))
-        except Exception:
-            pass
+    elif hook_name == "UserPromptSubmit":
+        context = _feedback_context(event)
+        if context:
+            print(json.dumps({"hookSpecificOutput": {"hookEventName": hook_name, "additionalContext": context}}, ensure_ascii=False))
     return 0
 
 

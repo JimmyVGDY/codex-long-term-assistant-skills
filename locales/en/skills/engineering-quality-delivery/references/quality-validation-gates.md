@@ -9,6 +9,10 @@
 
 ## 3. Test Selection Principles
 
+When reusing, extending, or extracting shared implementations, validate new and affected existing uses under [Component and Module Reuse](component-module-reuse.md). Retain valid evidence and fill real risk gaps. List unconfirmed dynamic or external consumers as unverified; a successful build does not replace compatibility validation.
+
+When indexed capabilities or related context change, merge invalidation and updates at a recoverable node using the [index workflow](capability-index-workflow.md), read back the result, and distinguish location, semantic, and runtime verification. Unrelated changes do not refresh the index; valid format or matching hashes do not establish suitability.
+
 Select tests from the actual change, impact, and risk. Do not run every test mechanically, and do not skip directly related minimum validation merely because the full suite is slow or has historical failures.
 
 ### 3.1 Utility Methods

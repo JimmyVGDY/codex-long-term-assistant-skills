@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.5.1",
-  "description": "跨项目长期技术助手 V7.5.1：结构化任务反馈、观察健康门禁、增量分析、跨账本校准与可验证收益闭环。",
+  "version": "7.6.0",
+  "description": "跨项目长期技术助手 V7.6.0：外部能力索引、复用与维护成本判断、项目可选流程门禁。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

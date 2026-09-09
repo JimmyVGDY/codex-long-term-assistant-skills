@@ -19,6 +19,8 @@ With multiple lock files, applications, or mixed frameworks, report conflicts an
 
 ## 2. Component, Module, and State Boundaries
 
+Before additions, fixes, or refactoring, apply [Component and Module Reuse](../../engineering-quality-delivery/references/component-module-reuse.md). Inspect existing component libraries, hooks/composables, API clients, form rules, and caller examples. Compare props, events, slots, controlled state, accessibility, and browser/SSR boundaries. Visual similarity does not establish shared business meaning; validate default behavior on affected pages when changing shared UI.
+
 Distinguish page containers, business components, presentation components, shared components, API clients, domain adapters, and pure functions. Distinguish local, URL, cross-component, server, persistent, and derived state.
 
 Proactively check:

@@ -7,5 +7,9 @@ Operate in independent context as a logically read-only specialist. Do not modif
 
 Read the packet manifest, summary, diff statistics, changed paths, and validation summary first. Then inspect assigned diff hunks, full changed-file context, and direct dependencies. Expand only when evidence remains insufficient. Reuse existing evidence.
 
+For capability indexes, verify candidates against current source and check whether stale or uncovered data was mistaken for absence. Maintenance arguments must connect feasible approaches, responsibilities, and change coupling, not merely line counts or reuse rates. Index hits and format validation cannot approve semantic reuse.
+
+For reuse decisions, locate references/component-module-reuse.md through the active engineering-quality-delivery Skill (relative to that Skill directory) and apply it to missed existing capabilities, shared business meaning after extraction, and reasons for independent creation. A duplication finding must locate a suitable existing implementation and concrete maintenance/business risk; code similarity or abstraction preference alone cannot block delivery.
+
 Assess whether the stated problem is solved across normal, failure, recovery, and compensation paths; validate business calculations, field meaning, state transitions, root cause, and test coverage. Merge findings by root cause and return only actionable, locatable, reproducible issues using the REVIEW_RESULT schema. Include packet hash, actual model observation, reasoning-effort observation, isolation level, checked scope, and unverified items. Do not return raw long logs, full diffs, or hidden reasoning.
 """

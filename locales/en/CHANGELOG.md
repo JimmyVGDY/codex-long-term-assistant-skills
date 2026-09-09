@@ -1,9 +1,12 @@
 # Changelog
 
-## Unreleased
+## 7.6.0 - 2026-09-09
 
-None.
-
+- Add bounded, identity-bound external capability indexing with incremental maintenance, exact-revision updates, and recovery.
+- Connect reuse discovery, multidimensional suitability and maintenance-cost decisions to frontend/backend Skills and existing review roles.
+- Add project-opt-in workflow gates with host-bound starts, preparation, current finish receipts, cancellation and at most two repairs. Unenabled projects retain existing behavior.
+- Restrict the cold-index exemption to one existing local file; scope expansion requires a pre-edit scan. Keep temporary decision JSON outside the repository.
+- Candidate behavior, host and installed-task acceptance completed with explicit limits; net cost savings are not established. See [validation](docs/releases/v7.6.0/VALIDATION_REPORT.en.md) and [capability index](docs/CAPABILITY_INDEX.en.md).
 
 ## 7.5.1 - 2026-09-06
 

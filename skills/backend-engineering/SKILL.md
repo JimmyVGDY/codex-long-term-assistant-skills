@@ -12,6 +12,8 @@ description: >-
 
 ## 最小充分加载
 
+行为修改同时使用[质量交付入口](../engineering-quality-delivery/SKILL.md)，其中的能力索引动作在修改前和结束前执行；不要只读取技术栈规则而遗漏共享模块的索引维护。
+
 1. 开始实质分析或修改前读取 `references/backend-core-rules.md`。
 2. 读取 `references/backend-stack-routing.md`，从构建文件、锁文件、入口、容器、CI 和运行环境确认语言、版本、框架、数据访问、任务系统与部署方式。
 3. 每个独立应用默认只读取一个主要技术栈索引：

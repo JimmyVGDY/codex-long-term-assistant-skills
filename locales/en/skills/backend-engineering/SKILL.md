@@ -11,6 +11,8 @@ Use this Skill for server-side application engineering across languages. Shared 
 
 ## Minimum loading
 
+For behavior changes, also use the [quality-delivery entry](../engineering-quality-delivery/SKILL.md), including its capability-index actions before editing and before closing. Stack rules alone do not cover shared-module index maintenance.
+
 1. Read `references/backend-core-rules.md` before substantive analysis or changes.
 2. Read `references/backend-stack-routing.md` and identify the language, version, framework, persistence, job system, process, and deployment model from current evidence.
 3. Load one primary stack index per independent application:
