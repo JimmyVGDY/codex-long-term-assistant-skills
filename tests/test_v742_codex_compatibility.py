@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：V7.6.1 稳定版兼容注册表契约测试。
+"""中文：V7.6.2 稳定版兼容注册表契约测试。
 
-English: V7.6.1 stable-release compatibility registry contract tests.
+English: V7.6.2 stable-release compatibility registry contract tests.
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ EXPECTED_VERSIONS = [
 
 class RegistryTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.registry = load_registry(REGISTRY_PATH, "7.6.1")
+        self.registry = load_registry(REGISTRY_PATH, "7.6.2")
 
     def test_registry_is_exact_frozen_stable_window(self) -> None:
         self.assertEqual(EXPECTED_VERSIONS, [item["version"] for item in self.registry["versions"]])
@@ -53,6 +53,22 @@ class RegistryTests(unittest.TestCase):
                 profile = profile_for_version(self.registry, version)
                 self.assertEqual(version, profile["version"])
                 self.assertEqual(canonical_digest(self.registry), profile["registry_digest"])
+                self.assertEqual("SUPPORTED", profile["native_async_user_prompt_submit"]["status"])
+                self.assertEqual("OFFICIAL_SOURCE_TAG", profile["native_async_user_prompt_submit"]["evidence"])
+                capability = profile["native_async_user_prompt_submit"]
+                self.assertEqual("https://github.com/openai/codex", capability["repository"])
+                self.assertEqual(f"rust-v{version}", capability["tag"])
+                self.assertRegex(capability["commit_sha"], r"^[0-9a-f]{40}$")
+                self.assertEqual("codex-rs/hooks/src/engine/discovery.rs", capability["source_path"])
+                self.assertRegex(capability["source_sha256"], r"^[0-9a-f]{64}$")
+                self.assertEqual(
+                    {
+                        "USER_PROMPT_SUBMIT_EVENT",
+                        "ASYNC_FIELD_PARSED",
+                        "ASYNC_PROPAGATED_TO_COMMAND_HANDLER",
+                    },
+                    set(capability["verified_assertions"]),
+                )
 
     def test_unknown_and_prerelease_versions_fail_closed(self) -> None:
         with self.assertRaises(CompatibilityError):
@@ -85,6 +101,22 @@ class RegistryTests(unittest.TestCase):
         invalid["versions"][0]["hook_profile"] = "future-hook"
         with self.assertRaises(CompatibilityError):
             validate_registry(invalid)
+
+    def test_native_async_source_evidence_fails_closed(self) -> None:
+        mutations = {
+            "repository": "https://example.invalid/codex",
+            "tag": "rust-v0.0.0",
+            "commit_sha": "0" * 39,
+            "source_path": "future/path.rs",
+            "source_sha256": "0" * 63,
+            "verified_assertions": ["ASYNC_FIELD_PARSED"],
+        }
+        for field, value in mutations.items():
+            with self.subTest(field=field):
+                invalid = copy.deepcopy(self.registry)
+                invalid["versions"][0]["native_async_user_prompt_submit"][field] = value
+                with self.assertRaises(CompatibilityError):
+                    validate_registry(invalid)
 
     def test_profile_values_and_types_fail_closed(self) -> None:
         mutations = [
@@ -150,7 +182,7 @@ class RegistryTests(unittest.TestCase):
 class PluginListNormalizerTests(unittest.TestCase):
     PACKAGE = "codex-cross-project-engineering-assistant"
     MARKETPLACE = "cp-assistant-local"
-    VERSION = "7.6.1"
+    VERSION = "7.6.2"
 
     def setUp(self) -> None:
         registry = load_registry(REGISTRY_PATH)

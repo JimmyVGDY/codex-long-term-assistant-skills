@@ -1,10 +1,10 @@
 # 受控演进操作手册
 
-状态：`active`，适用于 V<!-- cp-fact:package-version -->7.6.1<!-- /cp-fact -->。默认与显式策略统一为 `v7.4.3-default-1`。所有提案始终保持 `execution_authorization=NONE`。
+状态：`active`，适用于 V<!-- cp-fact:package-version -->7.6.2<!-- /cp-fact -->。默认与显式策略统一为 `v7.4.3-default-1`。所有提案始终保持 `execution_authorization=NONE`。
 
 ## 1. 任务反馈
 
-完成项目 Onboarding 后，`UserPromptSubmit` 在宿主提供完整身份时输出反馈绑定：`context_root/project_id/session_id/turn_id/task_id/cli_path`。工程任务把本来需要执行的验证交给下列入口；不要为了反馈另跑无意义的测试。以下占位值使用本次 Hook 的真实绑定，不能从最近一个任务猜取。
+从 V7.6.2 起，`UserPromptSubmit` 是异步、非阻断的观察 Hook，不再通过 `additionalContext` 注入反馈绑定或控制指令。需要反馈证据的工程任务必须从当前仓库外执行信封取得 `context_root/project_id/session_id/turn_id/task_id`，并显式传给下列入口；不要从最近任务猜取身份，也不要为了反馈另跑无意义的测试。`cli_path` 使用当前已安装包的 `evolution.py` 入口。
 
 ```text
 python scripts/evolution.py validate-task --context-root CONTEXT --project-id PROJECT --session-id SESSION --turn-id TURN --task-id TASK -- python -m unittest tests.test_target

@@ -74,7 +74,7 @@ Python使用AST识别顶层公开定义，以及静态`__all__`声明的入口�
 
 ## 验证入口
 
-项目可显式启用流程门禁，使用`capability-gate-enable/status/disable`管理；开发使用`capability-task-prepare/finish/check`。默认关闭，不改变未启用项目的观察与预算流程。起点由真实宿主建立，不能从CLI补造；PASS证明当前流程证据有效，不批准语义复用。启用条件、精确revision、宿主身份、取消与状态限制见[完整操作流程](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/v7.6.0/skills/engineering-quality-delivery/references/capability-index-workflow.md#项目显式启用的流程门禁)。源码实现、包验证、安装加载和真实新任务验收须分别确认。
+项目可使用`capability-gate-enable/status/disable`管理旧流程门禁，`capability-task-prepare/finish/check`仍可读写旧任务回执。门禁默认关闭，不改变未启用项目的观察与预算流程。V7.6.2 迁移补丁不把旧 GateTask、PREPARED、PASS 或 prepare/finish/check 回执视为原生写入授权：策略启用时原生写入统一拒绝`LEGACY_WRITE_ORIGIN_UNAVAILABLE`，未配置或停用时保持中性；UserPromptSubmit、Stop 与 Interrupt 不消费旧任务控制状态。源码实现、包验证、安装加载和真实新任务验收须分别确认。
 
 在源仓库根运行：
 

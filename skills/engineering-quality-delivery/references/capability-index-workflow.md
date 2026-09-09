@@ -42,17 +42,12 @@
 
 读取默认候选数量，完整索引不进入每个任务上下文。只在具体缺口需要时扩大关键词或范围；不新增固定Reviewer、模型调用或后台周期扫描。成本优先复用命令输出的枚举、读取、字节和耗时计数；无法取得的工具调用/Token记UNKNOWN。索引本身不修改Hook或预算协议；下述显式可选门禁单独接入宿主。
 
-## 项目显式启用的流程门禁
+## V7.6.2 旧流程门禁过渡边界
 
-默认未启用。只有项目明确选择门禁后，使用已核验入口执行`capability-gate-enable`；首次创建不传revision，已有配置须先`capability-gate-status`读回，再传精确`--expected-revision`。禁用使用`capability-gate-disable --expected-revision <当前值>`，保留索引及历史回执。启用不授予业务写入、提交或部署权限，不会自动建立索引。
+门禁默认未启用。V7.6.2 只修复 Hook 阻断风险并隔离旧 GateTask，不提供新的原生写入授权协议。已启用旧策略的项目应先用`capability-gate-status`读回精确 revision，再执行`capability-gate-disable --expected-revision <当前值>`；索引和历史回执会保留。启用状态不授予业务写入、提交或部署权限，也不会自动建立索引。
 
-宿主必须实际加载并信任本包相关Hook，提供稳定session/turn身份。配置显示enabled不证明门禁已运行。使用真实UserPromptSubmit建立任务起点；不能用CLI或虚构ID补造起点。使用宿主注入的绑定参数，不复制另一任务的session/turn。自定义`--gate-root`须与宿主启动环境`CP_CAPABILITY_GATE_ROOT`一致。
+UserPromptSubmit 是异步观察，不再注入任务绑定；Stop 是中性观察；Interrupt 完全由宿主控制。三者都不读取、创建或修改旧 GateTask。原生写工具命中`PreToolUse`时，未配置或 disabled 策略保持中性；旧策略仍为 enabled 时统一拒绝`LEGACY_WRITE_ORIGIN_UNAVAILABLE`，不得复用 PREPARED、PASS 或其他历史回执。
 
-1. 写入前调用`capability-task-prepare --scope <文件> --term <关键词>`，scope可重复。冷索引默认执行限定初扫。只有单个既有文件的局部实现修复可提供有源码依据的`--local-only-reason`；公共接口扩展、新功能或使用方协同修改不适用，文件少不构成豁免。门禁按累积准备范围核对单既有文件上限，多文件或新增文件改走有界初扫；扩大免初扫范围前必须仍未修改任何已准备文件，不能事后追认。单文件数量不证明业务语义，这一判断仍需源码及测试。
-2. 阅读返回候选的源码、使用方和测试，按复用规则选择方案。受控原生写工具在缺少准备时被拒绝；其他执行入口仍需完成当前证据检查，不能宣称所有写入都能被预先拦截。
-3. 将决策JSON及其他仅服务本任务的临时辅助文件保存在已授权、包含Profile的仓库外上下文，使用任务专属文件名；不要放进项目仓库，也不要覆盖Profile、索引、门禁状态或回执等运行工具管理的文件。新增项目测试属于业务修改，仍须写入前纳入scope。修改后调用`capability-task-finish --decisions <仓库外JSON文件的绝对路径>`。列表逐一覆盖`required_decisions`中的ID，每项为`{id,choice,reason}`；choice为reuse/extend/extract/independent/unused。如实登记采用的候选，finish会刷新已采用的过期源码，即使其未改动。
-4. 调用`capability-task-check`读取当前证据。Stop还会重读回执，缺步骤最多触发两次补救；无进展或硬限制时停止，不无限驱动模型。修改前证据缺失不能通过事后签名补造。
+`capability-task-prepare/finish/check`在本补丁中仅用于读取或维护旧状态，不能授权原生写入，也不能通过事后回执补造修改前证据。需要能力定位时继续按本页前述有界 scan/query、源码检查、复用决策和增量索引维护执行；业务适用性与兼容性仍由源码、调用方和测试证明。
 
-PASS仅表示当前受控流程证据有效，`semantic_reuse_approved`始终为false；业务适用性和旧用途兼容仍靠源码与测试。NO_CHANGE仅表示有限Git可见范围未变；PARTIAL、BLOCKED、FAILED、CANCELLED分别保留。取消后的同任务不能恢复PASS，需新的真实任务起点。门禁不能撤回已经显示的模型回答，也不能用其声明证明已完成。
-
-当前源码已对Codex CLI 0.153.4验证真实UserPromptSubmit及Interrupt；0.149.1配置读取保留Stop但忽略Interrupt。其他宿主、Desktop加载、插件安装及各写工具仍需各自验收，未验证不能报告同等保障。旧六事件兼容证据不升级为取消支持证据。
+仓库外 Profile、索引、门禁策略和历史回执继续保持项目隔离。安装加载、真实新任务行为及各写工具仍需分别验收；包验证不替代宿主生效证据。

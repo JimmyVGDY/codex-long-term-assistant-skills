@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.6.1",
-  "description": "跨项目长期技术助手 V7.6.1：外部能力索引、复用与维护成本判断、项目可选流程门禁。",
+  "version": "7.6.2",
+  "description": "跨项目长期技术助手 V7.6.2：Hook 非阻断热修复与旧门禁隔离。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

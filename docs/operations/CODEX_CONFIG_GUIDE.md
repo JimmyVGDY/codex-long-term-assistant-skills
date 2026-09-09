@@ -75,7 +75,7 @@ model_reasoning_effort = "high"
 
 ## 6. Plugin 与 Hook
 
-V7.6.1 使用冻结注册表适配 Codex CLI 0.153.4 与此前十个稳定发行版的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.6.1`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
+V7.6.2 使用冻结注册表适配 Codex CLI 0.153.4 与此前十个稳定发行版的 Plugin 和 Marketplace 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.6.2`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
 
 Plugin 通过 `hooks/hooks.json` 提供七个注册 Hook 入口。Windows 入口 `hooks\cp_hook.cmd` 会选择可用的 Python 启动器，不需要额外创建 `python3.exe` 垫片。SessionEnd 的宿主预算保持三秒：Hook 只构造有上限且不含正文的净化 Event V3，并以命令参数无等待派发 detached worker；不再扫描或写入事件链，也不再同步写管道。Worker 在 Hook 预算外完成稳定生命周期身份校验、语义去重、终态持久化、签名入队和封印。所有入口都会拒绝缺失稳定生命周期 ID 的事件，带 `seal_required` 的未封印链不得进入 Evolution。
 
@@ -104,15 +104,14 @@ gpt-5.6-terra / high
 
 ## 可选项目门禁与实际加载
 
-注册配置包含七个入口，但门禁默认关闭。显式启用后，`UserPromptSubmit` 建立真实任务起点，`PreToolUse` 检查受控写入准备，`Stop` 复核当前结束证据，`Interrupt` 记录取消；六事件观察链保持独立。
+注册配置包含七个入口，项目门禁默认关闭。V7.6.2 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 完全由宿主控制；三者都不读取或修改旧 GateTask。`PreToolUse` 只在原生写工具命中且旧策略仍为 `enabled=true` 时返回 `LEGACY_WRITE_ORIGIN_UNAVAILABLE`，未配置或停用策略保持中性。
 
 ```text
-项目显式启用 → 宿主实际加载 → 真实任务起点
-                              ↓
-有界初扫 / 候选查询 → prepare → 开发与验证 → finish → check
-                              └─ Interrupt → CANCELLED
+未配置或 disabled ───────────────→ 原生写入保持宿主既有行为
+旧策略 enabled + 原生写工具 ───→ 拒绝 LEGACY_WRITE_ORIGIN_UNAVAILABLE
+UserPromptSubmit / Stop / Interrupt → 不消费旧 GateTask 控制状态
 ```
 
-配置 `enabled=true`、Plugin 已加载、流程 PASS 和业务语义适用是不同结论。已打开会话可能仍使用旧快照；缺少真实 session/turn 起点不能借用其他任务回执或通过 CLI 补造。取消后的同任务不能恢复 PASS。受控写工具以外的入口不能保证全部写前拦截。
+配置 `enabled=true`、Plugin 已加载和业务语义适用是不同结论。V7.6.2 的旧 `prepare/finish/check` 回执不能授权原生写入；已打开会话可能仍使用旧 Plugin 快照，升级后应在新任务中读回实际行为。受控写工具以外的入口不能保证全部写前拦截。
 
-Codex CLI 0.153.4 已有真实 UserPromptSubmit/Interrupt 验收；0.149.1 的已观察配置路径忽略 Interrupt。旧六事件兼容证据不证明取消支持，Desktop 与其他宿主需各自读回。启用、禁用、准备和结束的操作见[能力索引与流程入口](../CAPABILITY_INDEX.md)。
+冻结窗口内 11 个 Codex CLI 版本具有逐版本官方 UserPromptSubmit async 源码证据；真实 Desktop 与其他宿主仍需各自读回。旧门禁启用与停用入口见[能力索引与流程入口](../CAPABILITY_INDEX.md)，但本补丁不把旧任务生命周期恢复为写入授权。

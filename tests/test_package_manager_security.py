@@ -69,7 +69,7 @@ if args[:2] == ['plugin','add']:
     if len(args) > 2 and args[2] == '--help': emit_help('plugin_add'); raise SystemExit(0)
     home.mkdir(parents=True,exist_ok=True)
     state.write_text(json.dumps({'installed':True}),encoding='utf-8')
-    version=os.environ.get('FAKE_PLUGIN_VERSION','7.6.1')
+    version=os.environ.get('FAKE_PLUGIN_VERSION','7.6.2')
     source=Path(market_file.read_text(encoding='utf-8'))/'plugins'/'codex-cross-project-engineering-assistant'
     cache=home/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/version
     if io_path(cache).exists(): shutil.rmtree(io_path(cache))
@@ -84,7 +84,7 @@ if args == ['plugin','list','--json']:
         print('configured marketplace manifest is invalid',file=sys.stderr); raise SystemExit(2)
     installed=[]
     if state.exists():
-        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','7.6.1'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
+        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','7.6.2'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
     print(json.dumps({'installed':installed,'available':[]})); raise SystemExit(0)
 print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemExit(2)
 """,encoding='utf-8')
@@ -133,6 +133,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertTrue((self.home/'.agents'/'skills'/'controlled-evolution-governance'/'SKILL.md').is_file())
         hooks=json.loads((self.codex/'hooks.json').read_text(encoding='utf-8'))
         self.assertIn('PreToolUse',hooks['hooks'])
+        self.assertTrue(hooks['hooks']['UserPromptSubmit'][0]['hooks'][0]['async'])
         self.assertEqual(hooks['hooks']['SessionEnd'][0]['hooks'][0]['timeout'],3)
         run(['uninstall','--scope','user','--mode','standalone'],self.env)
         self.assertFalse((self.home/'.agents'/'skills'/'controlled-evolution-governance').exists())
@@ -189,6 +190,8 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         p=self.home/'.agents'/'plugins'/'cp-assistant-marketplace'/'plugins'/'codex-cross-project-engineering-assistant'
         self.assertTrue((p/'.codex-plugin'/'plugin.json').is_file())
         self.assertTrue((p/'hooks'/'hooks.json').is_file())
+        plugin_hooks=json.loads((p/'hooks'/'hooks.json').read_text(encoding='utf-8'))['hooks']
+        self.assertIs(plugin_hooks['UserPromptSubmit'][0]['hooks'][0]['async'],True)
         self.assertTrue((self.codex/'fake-codex-plugin-state.json').is_file())
         state=json.loads((self.codex/'cp-assistant-v6-state.json').read_text(encoding='utf-8'))
         self.assertEqual(3,state['schema_version'])
@@ -197,6 +200,13 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['uninstall','--scope','user','--mode','plugin'],self.env)
         self.assertFalse((self.codex/'tools'/'cp-runtime.py').exists())
         self.assertFalse((self.codex/'tools'/'evolution.py').exists())
+
+    def test_plugin_unknown_host_rejects_static_async_payload_before_account_write(self):
+        unknown={**self.env,'FAKE_CODEX_VERSION':'codex-cli 0.154.0'}
+        result=run(['install','--scope','user','--mode','plugin'],unknown,2)
+        self.assertIn('仅支持已验证的 Codex CLI',result.stderr)
+        self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
+        self.assertFalse((self.home/'.agents'/'plugins'/'cp-assistant-marketplace').exists())
 
     def test_plugin_payload_excludes_python_bytecode(self):
         source=Path(self.tmp.name)/'payload-source'
@@ -250,7 +260,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['install','--scope','user','--mode','plugin'],self.env)
         state_path=self.codex/'cp-assistant-v6-state.json'
         state_bytes=state_path.read_bytes()
-        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.6.1'
+        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.6.2'
 
         def assert_tools_fail_closed():
             for name in ('cp-runtime.py','evolution.py'):
@@ -370,7 +380,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_install_rejects_wrong_registered_version(self):
         env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
         result=run(['install','--scope','user','--mode','plugin'],env,2)
-        self.assertIn('version=7.6.1',result.stderr)
+        self.assertIn('version=7.6.2',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
@@ -456,7 +466,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['doctor','--recover'],self.env)
         self.assertFalse(journal.exists())
         status=json.loads(run(['status','--json'],self.env).stdout)
-        self.assertEqual('7.6.1',status['version'])
+        self.assertEqual('7.6.2',status['version'])
         self.assertIn('live_transaction',status)
 
     def test_mode_switch_is_refused_without_force(self):

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.6.1",
+  "version": "7.6.2",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,12 +9,12 @@
     "runtime"
   ],
   "file_count": 217,
-  "payload_digest": "18d34e88bdc7a8639f93d4c348dcebafebf499eef07ea0ba70721817b01832f7",
+  "payload_digest": "365491e37b937b2f9da9c00002560741296393f00139a8476cd1d2f1d514b5e3",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "02b659d37c993c7c65c18c6f852264c0edcc989f22f6ac437cf5ac9255421fd9",
-      "size": 274
+      "sha256": "8481b066d5093d8e6aac2e12e52944613e0216d3029012c231075ad92943bc41",
+      "size": 240
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -228,8 +228,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
-      "sha256": "4fbe5b098ab5b7aef452ceadd520039badad4b16d3a4551dda69d0d12aa0bf55",
-      "size": 9876
+      "sha256": "a4ec2085b26c8082e8e17d773b76405c06552046e0dd2a06aa377163acd46cde",
+      "size": 8020
     },
     {
       "path": "skills/engineering-quality-delivery/references/component-module-reuse.md",
@@ -763,8 +763,8 @@
     },
     {
       "path": "hooks/cp_gate.py",
-      "sha256": "e0fdd49815feaafddf8fca40c5b9709c773f2dfdb37c44bb1ec605482c0d3fc5",
-      "size": 2087
+      "sha256": "ff26503ab0183e1ca9f47c1ed4d0d9bb0b72d90c04e15cecac503c88ead23a6d",
+      "size": 1750
     },
     {
       "path": "hooks/cp_hook.cmd",
@@ -773,13 +773,13 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "38df8c18d74cf84d01464f5af6634ea244e3d89288d4180f3383b69adcca86e2",
-      "size": 27952
+      "sha256": "7aa20c676496b66fb7cf81e22c88bbba7b1f71536b2a18ec41f90db38cf134c2",
+      "size": 26135
     },
     {
       "path": "hooks/hooks.json",
-      "sha256": "ed95a135a9f334a56b6fb87f135d8184662b9a8252216dbe06f259df227d799b",
-      "size": 2366
+      "sha256": "103c29e1e32844a2dbb41a65be602cef329d76974b2b6eab26f39e60da6cbd3b",
+      "size": 2393
     },
     {
       "path": "hooks/seal_worker.py",
@@ -823,8 +823,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_gate_hook.py",
-      "sha256": "8e3d7f779ea22a8fa19f4ba3ee86b49fe4a36cfa230a709b03277d770e9522d0",
-      "size": 13217
+      "sha256": "fc56ec06d5d48699e62be9b7b3601cbc8beaccda284ddec3171854f0679c17cd",
+      "size": 9924
     },
     {
       "path": "runtime/cp_runtime/capability_gate_workflow.py",
@@ -1053,8 +1053,8 @@
     },
     {
       "path": "runtime/tests/test_capability_gate_hook.py",
-      "sha256": "04a193af4c6bb676d95a4a9066e31c5fa2d71adf25914173ee7e2e4504b3fc44",
-      "size": 11555
+      "sha256": "97bc521c129c490d5b539d553ff0f09ed1a4c155ce562578b2ad4c9dde3b0b19",
+      "size": 12046
     },
     {
       "path": "runtime/tests/test_capability_gate_local_exception.py",

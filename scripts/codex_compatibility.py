@@ -23,6 +23,7 @@ class CompatibilityError(ValueError):
 _SEMVER = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 _VERSION_OUTPUT = re.compile(r"^codex-cli ((?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
+_GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 
 _TOP_LEVEL = {"schema_version", "package_version", "window_policy", "profiles", "versions"}
 _WINDOW_FIELDS = {
@@ -33,7 +34,7 @@ _WINDOW_FIELDS = {
 _PROFILE_GROUPS = {"marketplace", "plugin_cli", "plugin_json", "hook"}
 _VERSION_FIELDS = {
     "version", "stable_release_ordinal", "marketplace_profile", "plugin_cli_profile",
-    "plugin_json_profile", "hook_profile", "artifact", "probe_evidence",
+    "plugin_json_profile", "hook_profile", "native_async_user_prompt_submit", "artifact", "probe_evidence",
 }
 _ARTIFACT_FIELDS = {"tarball", "npm_integrity", "tarball_sha256"}
 _EVIDENCE_FIELDS = {
@@ -51,6 +52,13 @@ _HOOK_ALIAS_FIELDS = {
     "hook_event_name", "tool_name", "tool_input", "tool_use_id", "task_name",
     "agent_type", "model", "reasoning_effort", "reservation_id", "agent_id",
     "session_id", "turn_id", "task_id", "cwd", "terminal_outcome",
+}
+_ASYNC_SOURCE_FIELDS = {
+    "status", "evidence", "registration", "repository", "tag", "commit_sha",
+    "source_path", "source_sha256", "verified_assertions",
+}
+_ASYNC_ASSERTIONS = {
+    "USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER",
 }
 
 
@@ -285,6 +293,46 @@ def validate_registry(registry: Mapping[str, Any], expected_package_version: Opt
             if not isinstance(name, str) or name not in profiles[group]:
                 raise CompatibilityError(f"{version} 引用了未知 {group} profile: {name!r}")
             referenced[group].add(name)
+        async_capability = _require_object(
+            item["native_async_user_prompt_submit"],
+            f"versions[{index}].native_async_user_prompt_submit",
+        )
+        _require_exact_keys(
+            async_capability,
+            _ASYNC_SOURCE_FIELDS,
+            f"versions[{index}].native_async_user_prompt_submit",
+        )
+        if async_capability["status"] not in {"SUPPORTED", "UNKNOWN"}:
+            raise CompatibilityError(f"{version} native async status 无效")
+        if async_capability["evidence"] not in {
+            "OFFICIAL_SOURCE_TAG", "OFFICIAL_DOCS_CURRENT", "NOT_EVALUATED",
+        }:
+            raise CompatibilityError(f"{version} native async evidence 无效")
+        if async_capability["registration"] != "OPTIONAL_USER_PROMPT_SUBMIT":
+            raise CompatibilityError(f"{version} native async registration 策略无效")
+        assertions = async_capability["verified_assertions"]
+        if not isinstance(assertions, list) or any(not isinstance(value, str) for value in assertions):
+            raise CompatibilityError(f"{version} native async assertions 无效")
+        if async_capability["status"] == "SUPPORTED":
+            if async_capability["evidence"] != "OFFICIAL_SOURCE_TAG":
+                raise CompatibilityError(f"{version} 无充分证据声明支持 native async")
+            if async_capability["repository"] != "https://github.com/openai/codex":
+                raise CompatibilityError(f"{version} native async 官方仓库无效")
+            if async_capability["tag"] != f"rust-v{version}":
+                raise CompatibilityError(f"{version} native async tag 无效")
+            if not isinstance(async_capability["commit_sha"], str) or not _GIT_SHA.fullmatch(async_capability["commit_sha"]):
+                raise CompatibilityError(f"{version} native async commit 无效")
+            if async_capability["source_path"] != "codex-rs/hooks/src/engine/discovery.rs":
+                raise CompatibilityError(f"{version} native async 源码路径无效")
+            if not isinstance(async_capability["source_sha256"], str) or not _SHA256.fullmatch(async_capability["source_sha256"]):
+                raise CompatibilityError(f"{version} native async 源码摘要无效")
+            if set(assertions) != _ASYNC_ASSERTIONS or len(assertions) != len(_ASYNC_ASSERTIONS):
+                raise CompatibilityError(f"{version} native async 源码断言不完整")
+        else:
+            if async_capability["evidence"] != "NOT_EVALUATED":
+                raise CompatibilityError(f"{version} 未知 native async 必须标记未评估")
+            if any(async_capability[field] for field in ("repository", "tag", "commit_sha", "source_path", "source_sha256")) or assertions:
+                raise CompatibilityError(f"{version} 未知 native async 不得携带已验证源码证据")
         _validate_artifact(version, _require_object(item["artifact"], f"artifact[{version}]"))
         _validate_evidence(version, _require_object(item["probe_evidence"], f"probe_evidence[{version}]"))
 

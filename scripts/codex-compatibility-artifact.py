@@ -6,6 +6,8 @@ English: Download one frozen official Codex tarball and verify both registered d
 from __future__ import annotations
 
 import argparse
+import hashlib
+import hmac
 import json
 import os
 import sys
@@ -21,10 +23,120 @@ from codex_compatibility import (  # noqa: E402
 )
 
 MAX_ARTIFACT_BYTES = 256 * 1024 * 1024
+MAX_SOURCE_BYTES = 2 * 1024 * 1024
+OFFICIAL_REPOSITORY = "https://github.com/openai/codex"
+SOURCE_ASSERTIONS = {
+    "USER_PROMPT_SUBMIT_EVENT": "UserPromptSubmit",
+    "ASYNC_FIELD_PARSED": "let runs_async",
+    "ASYNC_PROPAGATED_TO_COMMAND_HANDLER": "r#async: runs_async",
+}
+
+
+def _read_url(url: str, limit: int) -> bytes:
+    request = urllib.request.Request(
+        url, headers={"User-Agent": "codex-long-term-assistant-skills/7.6.2"},
+    )
+    chunks: list[bytes] = []
+    total = 0
+    with urllib.request.urlopen(request, timeout=120) as response:
+        while True:
+            chunk = response.read(min(1024 * 1024, limit + 1 - total))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            total += len(chunk)
+            if total > limit:
+                raise CompatibilityError("Codex 官方源码证据超过大小上限")
+    return b"".join(chunks)
+
+
+def _official_tag_commit(tag: str) -> str:
+    ref_url = "https://api.github.com/repos/openai/codex/git/ref/tags/" + tag
+    try:
+        current = json.loads(_read_url(ref_url, MAX_SOURCE_BYTES).decode("utf-8"))["object"]
+        for _ in range(3):
+            object_type = current.get("type")
+            object_sha = current.get("sha")
+            if object_type == "commit" and isinstance(object_sha, str):
+                return object_sha
+            if object_type != "tag" or not isinstance(object_sha, str):
+                break
+            tag_url = "https://api.github.com/repos/openai/codex/git/tags/" + object_sha
+            current = json.loads(_read_url(tag_url, MAX_SOURCE_BYTES).decode("utf-8"))["object"]
+    except (KeyError, TypeError, ValueError, UnicodeError, json.JSONDecodeError) as exc:
+        raise CompatibilityError("Codex 官方 tag 证据无效") from exc
+    raise CompatibilityError("Codex 官方 tag 未解析到 commit")
+
+
+def verify_native_async_sources() -> dict:
+    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.6.2")
+    verified = []
+    for item in registry["versions"]:
+        version = item["version"]
+        evidence = item["native_async_user_prompt_submit"]
+        if evidence["status"] != "SUPPORTED" or evidence["repository"] != OFFICIAL_REPOSITORY:
+            raise CompatibilityError("Codex native async 官方源码证据未声明支持")
+        resolved_commit = _official_tag_commit(evidence["tag"])
+        if not hmac.compare_digest(resolved_commit, evidence["commit_sha"]):
+            raise CompatibilityError("Codex native async tag 与 commit 不匹配")
+        source_url = (
+            "https://raw.githubusercontent.com/openai/codex/"
+            + evidence["commit_sha"] + "/" + evidence["source_path"]
+        )
+        source = _read_url(source_url, MAX_SOURCE_BYTES)
+        source_digest = hashlib.sha256(source).hexdigest()
+        if not hmac.compare_digest(source_digest, evidence["source_sha256"]):
+            raise CompatibilityError("Codex native async 官方源码摘要不匹配")
+        try:
+            source_text = source.decode("utf-8")
+        except UnicodeError as exc:
+            raise CompatibilityError("Codex native async 官方源码不是 UTF-8") from exc
+        expected_assertions = set(evidence["verified_assertions"])
+        observed_assertions = {
+            name for name, marker in SOURCE_ASSERTIONS.items() if marker in source_text
+        }
+        if observed_assertions != expected_assertions:
+            raise CompatibilityError("Codex native async 官方源码断言不匹配")
+        verified.append({
+            "version": version,
+            "tag": evidence["tag"],
+            "commit_sha": resolved_commit,
+            "source_path": evidence["source_path"],
+            "source_sha256": source_digest,
+            "source_size": len(source),
+            "verified_assertions": sorted(observed_assertions),
+        })
+    return {"status": "PASS", "repository": OFFICIAL_REPOSITORY, "verified_versions": verified}
+
+
+def _write_external_report(path: Path, payload: dict) -> None:
+    target = path.resolve()
+    try:
+        target.relative_to(ROOT.resolve())
+    except ValueError:
+        pass
+    else:
+        raise CompatibilityError("官方源码证据报告必须写到仓库外")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            prefix=target.name + ".", suffix=".tmp", dir=target.parent,
+            mode="w", encoding="utf-8", newline="\n", delete=False,
+        ) as handle:
+            temporary = Path(handle.name)
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, target)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
 
 
 def download(version: str, output: Path) -> dict:
-    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.6.1")
+    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.6.2")
     profile = profile_for_version(registry, version)
     output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -36,7 +148,7 @@ def download(version: str, output: Path) -> dict:
             temporary = Path(handle.name)
             request = urllib.request.Request(
                 profile["artifact"]["tarball"],
-                headers={"User-Agent": "codex-long-term-assistant-skills/7.6.1"},
+                headers={"User-Agent": "codex-long-term-assistant-skills/7.6.2"},
             )
             with urllib.request.urlopen(request, timeout=120) as response:
                 total = 0
@@ -61,15 +173,27 @@ def download(version: str, output: Path) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--version", required=True)
-    parser.add_argument("--output", required=True)
+    parser.add_argument("--version")
+    parser.add_argument("--output")
+    parser.add_argument("--verify-native-async-sources", action="store_true")
+    parser.add_argument("--report-output")
     args = parser.parse_args()
     try:
-        report = download(args.version, Path(args.output))
+        if args.verify_native_async_sources:
+            if args.version or args.output:
+                raise CompatibilityError("官方源码证据复核不能同时下载 npm 制品")
+            report = verify_native_async_sources()
+        else:
+            if not args.version or not args.output:
+                raise CompatibilityError("下载固定制品必须同时提供 --version 与 --output")
+            report = download(args.version, Path(args.output))
+        payload = {"ok": True, **report}
+        if args.report_output:
+            _write_external_report(Path(args.report_output), payload)
     except Exception as exc:
         print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 2
-    print(json.dumps({"ok": True, **report}, ensure_ascii=False, indent=2))
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
 

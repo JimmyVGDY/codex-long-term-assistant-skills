@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "status": "FULL_LOCAL_CANDIDATE_PASS",
+  "version": "7.6.2",
+  "evidence_scope": "local-candidate",
+  "checked_on": "2026-09-09",
+  "focused_package_tests": {
+    "tests": 40,
+    "result": "PASS"
+  },
+  "focused_evolution_tests": {
+    "tests": 16,
+    "result": "PASS"
+  },
+  "focused_runtime_tests": {
+    "tests": 11,
+    "result": "PASS"
+  },
+  "full_local_wrapper_rerun": {
+    "result": "PASS",
+    "package_tests": 325,
+    "runtime_tests": 143,
+    "python": "3.13.15",
+    "report_sha256": "f75d0ded1012ff7cd91c2538cc4f46f833b55150b8c24fb5028754a3284fb1aa"
+  },
+  "native_async_source_evidence": {
+    "result": "PASS",
+    "verified_versions": 11,
+    "report_sha256": "63e68628f185b6324bee048d66377f224a065146e01b6165e66d76485ec67336"
+  },
+  "independent_review": "LOGICAL_READONLY_SEMANTIC_PASS",
+  "publication": "NOT_EVALUATED",
+  "account_installation": "NOT_EVALUATED",
+  "fresh_task": "NOT_EVALUATED"
+}

@@ -7,7 +7,8 @@
             "type": "command",
             "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" UserPromptSubmit\"",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           }
         ]
       }

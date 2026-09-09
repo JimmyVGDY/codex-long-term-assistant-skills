@@ -31,11 +31,6 @@ def main() -> int:
         observation = None
         if result["observe"] and event not in {"PreToolUse", "Interrupt"}:
             observation = observer._observe(data, allow_feedback=result["allow_feedback"])
-        if event == "UserPromptSubmit":
-            feedback = observer._feedback_context(observation)
-            if feedback:
-                specific = response.setdefault("hookSpecificOutput", {"hookEventName": event})
-                specific["additionalContext"] = (specific.get("additionalContext", "") + "\n" + feedback).strip()
     except CapabilityError as exc:
         response = failure_response(event, str(exc))
     except Exception:

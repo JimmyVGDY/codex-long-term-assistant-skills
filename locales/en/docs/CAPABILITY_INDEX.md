@@ -64,7 +64,7 @@ To rebuild a corrupt index without a valid previous snapshot, scan authorized sc
 
 ## Targeted validation
 
-Projects may explicitly opt into the process gate with `capability-gate-enable/status/disable`; development uses `capability-task-prepare/finish/check`. It defaults off and preserves observation and budget flows for unconfigured projects. Only the real host creates an origin; the CLI cannot fabricate it. PASS establishes current process evidence, not semantic reuse approval. See the [full workflow](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/v7.6.0/locales/en/skills/engineering-quality-delivery/references/capability-index-workflow.md#explicit-project-process-gate) for prerequisites, exact revisions, host identity, cancellation, and state limits. Source implementation, package validation, installed loading, and fresh-task acceptance require separate evidence.
+Projects may use `capability-gate-enable/status/disable` to manage the legacy process gate, while `capability-task-prepare/finish/check` can still read and write legacy task receipts. The gate defaults off and preserves observation and budget flows for unconfigured projects. The V7.6.2 transition patch does not treat a legacy GateTask, PREPARED, PASS, or prepare/finish/check receipt as native-write authorization: enabled policies always reject native writes with `LEGACY_WRITE_ORIGIN_UNAVAILABLE`, unconfigured or disabled policies remain neutral, and UserPromptSubmit, Stop, and Interrupt do not consume legacy task-control state. Source implementation, package validation, installed loading, and fresh-task acceptance require separate evidence.
 
 ```text
 python -m unittest discover -s runtime/tests -p "test_capability*.py" -v
