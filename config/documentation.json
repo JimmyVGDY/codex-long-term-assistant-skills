@@ -587,18 +587,33 @@
       "english_source": "locales/en/docs/architecture/SYSTEM_ARCHITECTURE.md"
     },
     {
-      "path": "docs/releases/v7.6.2/RELEASE_NOTES.md",
+      "path": "docs/releases/v7.7.0/RELEASE_NOTES.md",
       "status": "active",
+      "english_source": "locales/en/docs/releases/v7.7.0/RELEASE_NOTES.md"
+    },
+    {
+      "path": "docs/releases/v7.7.0/VALIDATION_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.7.0/VALIDATION_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.7.0/AUDIT_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.7.0/AUDIT_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.6.2/RELEASE_NOTES.md",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.6.2/RELEASE_NOTES.md"
     },
     {
       "path": "docs/releases/v7.6.2/VALIDATION_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.6.2/VALIDATION_REPORT.md"
     },
     {
       "path": "docs/releases/v7.6.2/AUDIT_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.6.2/AUDIT_REPORT.md"
     },
     {
@@ -1001,6 +1016,18 @@
     {
       "source": "locales/en/docs/architecture/SYSTEM_ARCHITECTURE.md",
       "target": "docs/architecture/SYSTEM_ARCHITECTURE.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.7.0/RELEASE_NOTES.md",
+      "target": "docs/releases/v7.7.0/RELEASE_NOTES.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.7.0/VALIDATION_REPORT.md",
+      "target": "docs/releases/v7.7.0/VALIDATION_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.7.0/AUDIT_REPORT.md",
+      "target": "docs/releases/v7.7.0/AUDIT_REPORT.en.md"
     },
     {
       "source": "locales/en/docs/releases/v7.6.2/RELEASE_NOTES.md",

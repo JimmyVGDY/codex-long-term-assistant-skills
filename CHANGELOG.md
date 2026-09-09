@@ -2,6 +2,13 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.7.0 - 2026-09-10
+
+- 新增仓库外 Operation v2 写前协议：首次 `apply_patch` A 只创建起点并拒绝，准备后由不同 B 原子领取 READY，真实 PostToolUse 回执后才允许完成验证。
+- `capability-task-prepare/finish/check/cancel` 新增 `--operation-ref` 路径；CLI 不创建宿主起点或 dispatch ID，旧 GateTask schema 1 保持隔离兼容。
+- 补齐 Add/Delete/Update/Move、多目标、UTF-8/路径/文件预算、并发领取、取消、过期、策略变化、缺失/错误回执、范围证据与索引维护回归。
+- 兼容注册表为 11 个冻结 Codex 版本新增官方 PreToolUse/PostToolUse schema 的 tag、commit、路径和 SHA-256；安装器只在该能力为 SUPPORTED 时注册强制 Hook。
+
 ## 7.6.2 - 2026-09-09
 
 - 修复 UserPromptSubmit 的异步 Hook 注册，并将对应宿主能力证据纳入兼容性合同；不再把可选反馈流程作为普通提示的前置阻断。

@@ -15,12 +15,36 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Agent|spawn_agent|apply_patch|Edit|Write",
+        "matcher": "Agent|spawn_agent",
         "hooks": [
           {
             "type": "command",
             "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_hook.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd\" PreToolUse\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_gate.py\" PreToolUse",
+            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_gate.cmd\" PreToolUse\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -B \"${PLUGIN_ROOT}/hooks/cp_gate.py\" PostToolUse",
+            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\cp_gate.cmd\" PostToolUse\"",
             "timeout": 5
           }
         ]

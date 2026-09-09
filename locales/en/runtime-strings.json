@@ -689,6 +689,8 @@
         "Manifest Codex 兼容窗口与注册表不一致": "Manifest Codex compatibility window does not match the registry",
         "生命周期 Hooks 不完整": "Lifecycle Hooks are incomplete",
         "缺少 Windows Hook 启动器": "Missing Windows Hook launcher",
+        "缺少 Windows 文件门禁启动器": "Missing Windows file-gate launcher",
+        "PreToolUse 缺少 Windows 文件门禁启动器": "PreToolUse is missing the Windows file-gate launcher",
         "Windows Hook 启动命令缺失: ": "Windows Hook startup command is missing: ",
         "Windows Hook 必须完整引用 Plugin 启动路径: ": "Windows Hook must quote the complete Plugin startup path: ",
         "V7 应包含 10 个唯一 Skill": "V7 must contain 10 unique Skills",
@@ -711,9 +713,9 @@
         "[OK] V7.6.1 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致": "[OK] V7.6.1 semantic validation passed: the eleven-release registry, isolated Plugin preflight, unified delegation budget, dispatch policy, model-identity privacy, and legacy compatibility boundaries agree",
         "manifest 版本不是 7.6.1": "manifest version must be 7.6.1",
         "缺少 %s -> V7.6.1 升级声明": "Missing %s -> V7.6.1 upgrade path",
-        "[OK] V7.6.2 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致": "[OK] V7.6.2 semantic validation passed: the eleven-release registry, isolated Plugin preflight, unified delegation budget, dispatch policy, model-identity privacy, and controlled-evolution boundaries agree",
-        "manifest 版本不是 7.6.2": "manifest version must be 7.6.2",
-        "缺少 %s -> V7.6.2 升级声明": "Missing %s -> V7.6.2 upgrade path"
+        "[OK] V7.7.0 语义校验通过：Operation v2、PostToolUse、11 个稳定版注册表、隔离 Plugin 预演和受控演进边界一致": "[OK] V7.7.0 semantic validation passed: Operation v2, PostToolUse, the eleven-release registry, isolated Plugin preflight, and controlled-evolution boundaries agree",
+        "manifest 版本不是 7.7.0": "manifest version must be 7.7.0",
+        "缺少 %s -> V7.7.0 升级声明": "Missing %s -> V7.7.0 upgrade path"
       },
       "preserve": [
         "用户",
@@ -745,7 +747,7 @@
         "派发策略报告的模型身份隐私声明无效": "Invalid model-identity privacy result in dispatch-policy evidence",
         "生命周期模型身份隐私声明无效": "Invalid lifecycle model-identity privacy result",
         "V7.6.1 端到端发行验证": "V7.6.1 end-to-end release validation",
-        "V7.6.2 端到端发行验证": "V7.6.2 end-to-end release validation",
+        "V7.7.0 端到端发行验证": "V7.7.0 end-to-end release validation",
         "派发策略门禁存在失败用例": "Dispatch-policy gate contains a failed case",
         "派发策略门禁用例无效或冲突": "Dispatch-policy gate contains an invalid case conflict",
         "派发策略证据包含宿主模型身份字段": "Dispatch-policy evidence contains prohibited model-identity fields"
@@ -808,6 +810,7 @@
         "f\"{prefix}.deny_wire_fields 契约漂移\"": "f\"{prefix}.deny_wire_fields contract drifted\"",
         "f\"{prefix}.alias_conflict_policy 契约漂移\"": "f\"{prefix}.alias_conflict_policy contract drifted\"",
         "f\"{prefix}.historical_real_host_evidence 无效\"": "f\"{prefix}.historical_real_host_evidence is invalid\"",
+        "f\"{prefix} apply_patch 结果来源证据无效\"": "f\"{prefix} apply_patch result-source evidence is invalid\"",
         "f\"hook alias {semantic} 必须以规范名开头\"": "f\"hook alias {semantic} must start with its canonical name\"",
         "f\"hook alias {semantic} 含无效或重复名称\"": "f\"hook alias {semantic} contains invalid or duplicate names\"",
         "f\"hook alias 在不同语义间重复: {sorted(overlap)}\"": "f\"hook aliases overlap across semantics: {sorted(overlap)}\"",
@@ -835,6 +838,13 @@
         "f\"{version} native async 源码断言不完整\"": "f\"{version} native async source assertions are incomplete\"",
         "f\"{version} 未知 native async 必须标记未评估\"": "f\"{version} unknown native async support must be marked not evaluated\"",
         "f\"{version} 未知 native async 不得携带已验证源码证据\"": "f\"{version} unknown native async support must not carry verified source evidence\"",
+        "f\"{version} apply_patch operation status 无效\"": "f\"{version} apply_patch operation status is invalid\"",
+        "f\"{version} apply_patch operation evidence 无效\"": "f\"{version} apply_patch operation evidence is invalid\"",
+        "f\"{version} apply_patch operation registration 无效\"": "f\"{version} apply_patch operation registration is invalid\"",
+        "f\"{version} apply_patch operation assertions 无效\"": "f\"{version} apply_patch operation assertions are invalid\"",
+        "f\"{version} apply_patch operation 源码证据不完整\"": "f\"{version} apply_patch operation source evidence is incomplete\"",
+        "f\"{version} 未知 apply_patch operation 必须标记未评估\"": "f\"{version} unknown apply_patch operation support must be marked not evaluated\"",
+        "f\"{version} 未知 apply_patch operation 不得携带源码证据\"": "f\"{version} unknown apply_patch operation support must not carry source evidence\"",
         "f\"profiles.{group} 存在未引用项: {sorted(unused)}\"": "f\"profiles.{group} contains unused entries: {sorted(unused)}\"",
         "f\"无法读取 Codex {version} 固定制品: {path}\"": "f\"Unable to read the frozen Codex {version} artifact: {path}\"",
         "f\"Codex {version} 固定制品摘要不匹配\"": "f\"The frozen Codex {version} artifact digest does not match\"",
@@ -856,6 +866,14 @@
         "Codex native async 官方源码摘要不匹配": "The official Codex native async source digest does not match",
         "Codex native async 官方源码不是 UTF-8": "The official Codex native async source is not UTF-8",
         "Codex native async 官方源码断言不匹配": "The official Codex native async source assertions do not match",
+        "Codex apply_patch operation 官方源码证据未声明支持": "Official Codex apply_patch operation source evidence does not declare support",
+        "Codex apply_patch operation tag 与 commit 不匹配": "The Codex apply_patch operation tag does not match the commit",
+        "Codex apply_patch operation 官方源码摘要不匹配": "The official Codex apply_patch operation source digest does not match",
+        "Codex apply_patch operation 官方源码不是 UTF-8": "The official Codex apply_patch operation source is not UTF-8",
+        "Codex apply_patch operation 官方源码断言不匹配": "The official Codex apply_patch operation source assertions do not match",
+        "Codex apply_patch 结果合同官方源码摘要不匹配": "The official Codex apply_patch result-contract source digest does not match",
+        "Codex apply_patch 结果合同官方源码不是 UTF-8": "The official Codex apply_patch result-contract source is not UTF-8",
+        "Codex apply_patch 结果合同官方源码断言不匹配": "The official Codex apply_patch result-contract source assertions do not match",
         "官方源码证据报告必须写到仓库外": "The official source evidence report must be written outside the repository",
         "官方源码证据复核不能同时下载 npm 制品": "Official source evidence verification cannot download an npm artifact at the same time",
         "下载固定制品必须同时提供 --version 与 --output": "Downloading a frozen artifact requires both --version and --output"
@@ -913,6 +931,7 @@
         "Plugin 模式仅支持已验证的 Codex CLI %s；当前: %s": "Plugin mode supports only verified Codex CLI versions %s; current: %s",
         "Plugin 宿主兼容档案无效，拒绝静态 async Hook 安装": "The Plugin host compatibility profile is invalid; refusing static async Hook installation",
         "当前 Codex 版本缺少已验证的 UserPromptSubmit async 能力，拒绝 Plugin 安装": "The current Codex version lacks verified UserPromptSubmit async capability; refusing Plugin installation",
+        "当前 Codex 版本缺少已验证的 apply_patch Pre/Post 能力，拒绝 Plugin 安装": "The current Codex version lacks verified apply_patch Pre/Post capability; refusing Plugin installation",
         "Codex CLI 版本或 Plugin 子命令摘要与冻结兼容注册表不一致，拒绝安装: %s": "The Codex CLI version or Plugin subcommand digest does not match the frozen compatibility registry; refusing installation: %s",
         "未知": "unknown",
         "codex plugin list --json schema 未知，拒绝 Plugin 安装": "Unknown codex plugin list --json schema; refusing Plugin installation",
@@ -938,6 +957,8 @@
         "Skill 漂移 %s": "Skill drift: %s",
         "缺少 standalone Hook": "Missing standalone Hook",
         "缺少 standalone 流程门禁 Worker": "Missing standalone process-gate Worker",
+        "缺少 Windows 文件门禁启动器": "Missing Windows file-gate launcher",
+        "Windows PreToolUse 缺少文件门禁启动命令": "Windows PreToolUse is missing the file-gate launch command",
         "缺少 Codex Marketplace manifest": "Missing Codex Marketplace manifest",
         "缺少 Plugin": "Missing Plugin",
         "缺少 Plugin Hooks": "Missing Plugin Hooks",
@@ -1476,6 +1497,11 @@
       "plain": {
         "[OK] 活动代码、配置、当前文档和发布脚本不包含宿主实际模型身份字段": "[OK] Active code, configuration, current documentation, and release scripts contain no host runtime model-identity fields",
         "[FAIL] 宿主模型身份禁止项: ": "[FAIL] Model-identity privacy boundary violations: "
+      }
+    },
+    "runtime/cp_runtime/capability_gate_hook.py": {
+      "plain": {
+        "副作用已可能发生；operation 已收敛为 OUTCOME_UNKNOWN。": "Side effects may already have occurred; the operation converged to OUTCOME_UNKNOWN."
       }
     },
     "runtime/cp_runtime/capability_index.py": {

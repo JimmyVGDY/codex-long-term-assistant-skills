@@ -42,12 +42,12 @@
 
 读取默认候选数量，完整索引不进入每个任务上下文。只在具体缺口需要时扩大关键词或范围；不新增固定Reviewer、模型调用或后台周期扫描。成本优先复用命令输出的枚举、读取、字节和耗时计数；无法取得的工具调用/Token记UNKNOWN。索引本身不修改Hook或预算协议；下述显式可选门禁单独接入宿主。
 
-## V7.6.2 旧流程门禁过渡边界
+## V7.7.0 Operation v2 写前协议
 
-门禁默认未启用。V7.6.2 只修复 Hook 阻断风险并隔离旧 GateTask，不提供新的原生写入授权协议。已启用旧策略的项目应先用`capability-gate-status`读回精确 revision，再执行`capability-gate-disable --expected-revision <当前值>`；索引和历史回执会保留。启用状态不授予业务写入、提交或部署权限，也不会自动建立索引。
+门禁默认未启用；普通对话、未配置项目和 disabled 策略保持中性。启用策略只约束官方已核验的规范 `apply_patch` 路径，不能把 shell、MCP 或未知写入口说成已保护，也不授予提交、推送、部署或业务数据操作权限。
 
-UserPromptSubmit 是异步观察，不再注入任务绑定；Stop 是中性观察；Interrupt 完全由宿主控制。三者都不读取、创建或修改旧 GateTask。原生写工具命中`PreToolUse`时，未配置或 disabled 策略保持中性；旧策略仍为 enabled 时统一拒绝`LEGACY_WRITE_ORIGIN_UNAVAILABLE`，不得复用 PREPARED、PASS 或其他历史回执。
+首次真实 `PreToolUse` 调用 A 完整解析 `tool_input.command`，保存不含 Patch 正文的目标、前态和摘要到仓库外 Operation v2，并拒绝 A。随后使用拒绝信息中的 `operation_ref` 调用 `capability-task-prepare --operation-ref ... --term ...`；CLI 只消费已有起点，不能创建宿主 ID。准备完成后必须发起不同 `tool_use_id` 的调用 B；Hook 在策略、项目、工作区、会话、回合、意图、目标与前态仍匹配时原子领取 READY，再返回中性许可响应。
 
-`capability-task-prepare/finish/check`在本补丁中仅用于读取或维护旧状态，不能授权原生写入，也不能通过事后回执补造修改前证据。需要能力定位时继续按本页前述有界 scan/query、源码检查、复用决策和增量索引维护执行；业务适用性与兼容性仍由源码、调用方和测试证明。
+B 执行后只接受匹配 B 的 `PostToolUse` 回执。完成命令从 Operation 读出 B，不允许调用者填写 dispatch ID；决策 JSON 必须逐项覆盖准备阶段返回的候选 ID，并使用 `reuse/extend/extract/independent/unused` 与非空理由。完成检查必须确认目标范围内确有变化、PostTool 已对账、索引维护和仓库外回执均可重读；缺回执、策略变化、许可后取消或证据失效收敛为 `OUTCOME_UNKNOWN`，不能从文件变化猜成 PASS。
 
-仓库外 Profile、索引、门禁策略和历史回执继续保持项目隔离。安装加载、真实新任务行为及各写工具仍需分别验收；包验证不替代宿主生效证据。
+旧 GateTask schema 1 继续只读兼容，永不转换为 Operation v2 许可。UserPromptSubmit 保持异步观察，Stop 中性，Interrupt 由宿主控制。Hook 许可与真实文件写入不是一个跨进程原子事务；许可后外部修改窗口和未覆盖工具入口必须如实保留为限制。

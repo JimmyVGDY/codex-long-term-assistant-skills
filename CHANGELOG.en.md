@@ -4,6 +4,13 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.7.0 - 2026-09-10
+
+- Add repository-external Operation v2: the first `apply_patch` attempt A only creates an origin and is denied; after preparation, a different B atomically claims READY, and only its real PostToolUse receipt can proceed to completion verification.
+- Add the `--operation-ref` path to `capability-task-prepare/finish/check/cancel`. The CLI creates neither host origins nor dispatch IDs, while legacy GateTask schema 1 remains isolated and compatible.
+- Cover Add/Delete/Update/Move, multiple targets, UTF-8/path/file budgets, concurrent claims, cancellation, expiry, policy changes, missing or invalid receipts, scoped evidence, and index maintenance.
+- Bind the eleven frozen Codex versions to official PreToolUse/PostToolUse schema tags, commits, paths, and SHA-256 digests. The installer registers the enforcing Hook only when that capability is SUPPORTED.
+
 ## 7.6.2 - 2026-09-09
 
 - Fix asynchronous UserPromptSubmit Hook registration and require explicit compatibility evidence; optional feedback no longer blocks ordinary prompts.

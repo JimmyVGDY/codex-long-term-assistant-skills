@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.6.2",
-  "release_name": "Hook 非阻断热修复与旧门禁隔离",
-  "generated_for": "Codex Plugin-first engineering assistance with bounded external capability indexing, multidimensional reuse decisions, project-opt-in workflow gates, and the frozen eleven-release host compatibility window",
+  "version": "7.7.0",
+  "release_name": "Operation v2 写前协议与结果对账",
+  "generated_for": "Codex Plugin-first engineering assistance with bounded external capability indexing, Operation v2 write preparation and PostTool reconciliation, and the frozen eleven-release host compatibility window",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -535,6 +535,7 @@
     ]
   },
   "upgrade_from": [
+    "7.6.2",
     "7.6.1",
     "7.4.5",
     "7.4.4",

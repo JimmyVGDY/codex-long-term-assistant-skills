@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -20,6 +21,8 @@ import test_capability_store as fixtures
 import test_capability_gate_workflow as workflow_fixtures
 from cp_runtime import capability_gate_hook as hook
 from cp_runtime.capability_gate import GatePolicy
+from cp_runtime.capability_operation import CapabilityOperation
+from cp_runtime.capability_operation_workflow import OperationWorkflow
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -49,6 +52,14 @@ class CapabilityGateHookTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertLess(elapsed, 3 if event == "Interrupt" else 5, result.stdout)
         return json.loads(result.stdout) if result.stdout.strip() else None
+
+    def invoke_gate(self, event, **values):
+        data = {"hook_event_name": event, "session_id": "session", "turn_id": "turn",
+                "task_id": "turn", "cwd": str(self.repo), **values}
+        result = subprocess.run([sys.executable, "-B", str(ROOT / "hooks" / "cp_gate.py"), event],
+            input=json.dumps(data), capture_output=True, encoding="utf-8", env=self.env, timeout=7)
+        self.assertEqual(0, result.returncode, result.stderr)
+        return json.loads(result.stdout)
 
     def legacy_task(self, phase):
         policy = self.policy.read() if self.policy.path.exists() else None
@@ -84,6 +95,126 @@ class CapabilityGateHookTests(unittest.TestCase):
         self.assertEqual({}, self.invoke("Stop"))
         self.assertFalse(self.policy.state_root.exists())
         self.assertFalse(self.store.current.exists())
+
+    def canonical_patch(self, tool_use_id="attempt-a", event="PreToolUse", command=None, **extra):
+        command = command or ("*** Begin Patch\n*** Update File: app.py\n@@\n"
+                              "-    return 1\n+    return 2\n*** End Patch\n")
+        return {"hook_event_name": event, "session_id": "session", "turn_id": "turn",
+                "cwd": str(self.repo), "tool_name": "apply_patch",
+                "tool_use_id": tool_use_id, "tool_input": {"command": command}, **extra}
+
+    def test_t24_t29_canonical_a_prepare_b_and_posttool_chain(self):
+        self.policy.set_enabled(True, None)
+        with patch.dict(os.environ, {"CP_CAPABILITY_GATE_ROOT": str(self.gate_root)}):
+            first = hook.handle(ROOT, self.canonical_patch())["response"]
+            reason = first["hookSpecificOutput"]["permissionDecisionReason"]
+            operation_ref = re.search(r"OP2-[0-9a-f]{16}-[0-9a-f]{32}", reason).group(0)
+            operation = CapabilityOperation.open(self.policy, operation_ref)
+            prepared = OperationWorkflow(operation).prepare(operation_ref, term="public")
+            allowed = hook.handle(ROOT, self.canonical_patch("attempt-b"))["response"]
+            self.assertEqual({}, allowed)
+            self.assertEqual("attempt-b", operation.check(operation_ref)["dispatch_tool_use_id"])
+            (self.repo / "app.py").write_text("def public():\n    return 2\n", encoding="utf-8")
+            post = hook.handle(ROOT, self.canonical_patch(
+                "attempt-b", "PostToolUse", tool_response="Done!",
+                model="gpt-test", permission_mode="default", transcript_path=None,
+            ))["response"]
+            self.assertEqual({}, post)
+            self.assertEqual("RESULT_PENDING", operation.check(operation_ref)["state"])
+            decisions = [{"id": item["id"], "choice": "extend", "reason": "保留公开入口"}
+                         for item in prepared["required_decisions"]]
+            result = OperationWorkflow(operation).finish(
+                operation_ref, tool_use_id="attempt-b", decisions=decisions,
+            )
+            self.assertEqual("VERIFIED", result["state"]["state"])
+
+    def test_real_static_file_gate_routes_pre_and_post(self):
+        self.policy.set_enabled(True, None)
+        command = self.canonical_patch()["tool_input"]["command"]
+        first = self.invoke_gate("PreToolUse", tool_name="apply_patch", tool_use_id="process-a",
+                                 tool_input={"command": command})
+        ref = re.search(r"OP2-[0-9a-f]{16}-[0-9a-f]{32}", json.dumps(first)).group(0)
+        operation = CapabilityOperation.open(self.policy, ref)
+        OperationWorkflow(operation).prepare(ref, term="public")
+        self.assertEqual({}, self.invoke_gate("PreToolUse", tool_name="apply_patch",
+                                              tool_use_id="process-b", tool_input={"command": command}))
+        (self.repo / "app.py").write_text("def public():\n    return 2\n", encoding="utf-8")
+        self.assertEqual({}, self.invoke_gate("PostToolUse", tool_name="apply_patch",
+                                              tool_use_id="process-b", tool_input={"command": command},
+                                              tool_response="Done!"))
+        self.assertEqual("RESULT_PENDING", operation.check(ref)["state"])
+
+    def test_t30_origin_replay_and_different_intent_get_distinct_operations(self):
+        self.policy.set_enabled(True, None)
+        with patch.dict(os.environ, {"CP_CAPABILITY_GATE_ROOT": str(self.gate_root)}):
+            first = hook.handle(ROOT, self.canonical_patch())["response"]
+            replay = hook.handle(ROOT, self.canonical_patch())["response"]
+            one = re.search(r"OP2-[0-9a-f]{16}-[0-9a-f]{32}", json.dumps(first)).group(0)
+            self.assertIn(one, json.dumps(replay))
+            changed_command = ("*** Begin Patch\n*** Update File: app.py\n@@\n"
+                               "-    return 1\n+    return 3\n*** End Patch\n")
+            second = hook.handle(ROOT, self.canonical_patch(
+                "attempt-c", command=changed_command))["response"]
+            two = re.search(r"OP2-[0-9a-f]{16}-[0-9a-f]{32}", json.dumps(second)).group(0)
+            self.assertNotEqual(one, two)
+
+    def test_patch_body_is_not_persisted_in_operation_origin(self):
+        self.policy.set_enabled(True, None)
+        marker = "PRIVATE_PATCH_BODY_MARKER_123"
+        command = ("*** Begin Patch\n*** Add File: created.py\n+"
+                   + marker + "\n*** End Patch\n")
+        with patch.dict(os.environ, {"CP_CAPABILITY_GATE_ROOT": str(self.gate_root)}):
+            response = hook.handle(ROOT, self.canonical_patch(command=command))["response"]
+        ref = re.search(r"OP2-[0-9a-f]{16}-[0-9a-f]{32}", json.dumps(response)).group(0)
+        operation = CapabilityOperation.open(self.policy, ref)
+        self.assertNotIn(marker.encode(), operation._path(ref).read_bytes())
+
+    def test_t32_bad_posttool_is_blocked_and_marks_outcome_unknown(self):
+        self.policy.set_enabled(True, None)
+        with patch.dict(os.environ, {"CP_CAPABILITY_GATE_ROOT": str(self.gate_root)}):
+            first = hook.handle(ROOT, self.canonical_patch())["response"]
+            ref = re.search(r"OP2-[0-9a-f]{16}-[0-9a-f]{32}", json.dumps(first)).group(0)
+            operation = CapabilityOperation.open(self.policy, ref)
+            OperationWorkflow(operation).prepare(ref, term="public")
+            self.assertEqual({}, hook.handle(ROOT, self.canonical_patch("attempt-b"))["response"])
+            bad = hook.handle(ROOT, self.canonical_patch(
+                "attempt-b", "PostToolUse", tool_response={"error": "failed"},
+            ))["response"]
+            self.assertEqual("block", bad["decision"])
+            self.assertEqual("OUTCOME_UNKNOWN", operation.check(ref)["state"])
+
+    def test_posttool_after_disable_uses_full_path_and_marks_unknown(self):
+        self.policy.set_enabled(True, None)
+        command = self.canonical_patch()["tool_input"]["command"]
+        with patch.dict(os.environ, {"CP_CAPABILITY_GATE_ROOT": str(self.gate_root)}):
+            first = hook.handle(ROOT, self.canonical_patch())["response"]
+            ref = re.search(r"OP2-[0-9a-f]{16}-[0-9a-f]{32}", json.dumps(first)).group(0)
+            operation = CapabilityOperation.open(self.policy, ref)
+            OperationWorkflow(operation).prepare(ref, term="public")
+            self.assertEqual({}, hook.handle(ROOT, self.canonical_patch("attempt-b"))["response"])
+        (self.repo / "app.py").write_text("def public():\n    return 2\n", encoding="utf-8")
+        self.policy.set_enabled(False, 0)
+        post = self.invoke_gate("PostToolUse", tool_name="apply_patch", tool_use_id="attempt-b",
+                                tool_input={"command": command}, tool_response="Done!")
+        self.assertEqual("block", post["decision"])
+        self.assertEqual("OUTCOME_UNKNOWN", operation.check(ref)["state"])
+
+    def test_missing_posttool_response_still_converges_dispatched_operation(self):
+        self.policy.set_enabled(True, None)
+        with patch.dict(os.environ, {"CP_CAPABILITY_GATE_ROOT": str(self.gate_root)}):
+            first = hook.handle(ROOT, self.canonical_patch())["response"]
+            ref = re.search(r"OP2-[0-9a-f]{16}-[0-9a-f]{32}", json.dumps(first)).group(0)
+            operation = CapabilityOperation.open(self.policy, ref)
+            OperationWorkflow(operation).prepare(ref, term="public")
+            self.assertEqual({}, hook.handle(ROOT, self.canonical_patch("attempt-b"))["response"])
+            payload = self.canonical_patch("attempt-b", "PostToolUse")
+            response = hook.handle(ROOT, payload)["response"]
+        self.assertEqual("block", response["decision"])
+        self.assertEqual("OUTCOME_UNKNOWN", operation.check(ref)["state"])
+
+    def test_canonical_adapter_rejects_aliases_and_unknown_fields(self):
+        with self.assertRaisesRegex(Exception, "OP_CANONICAL_INPUT"):
+            hook._canonical_patch({**self.canonical_patch(), "toolName": "apply_patch"})
 
     def test_user_prompt_submission_is_observation_only_without_gate_task_or_context_injection(self):
         self.policy.set_enabled(True, None)
@@ -142,7 +273,7 @@ class CapabilityGateHookTests(unittest.TestCase):
         self.assertEqual(before, self.legacy_snapshot(task))
 
     def test_worker_timeout_never_emits_pass_or_invalid_pretool_protocol(self):
-        for event in ("UserPromptSubmit", "PreToolUse", "Stop", "Interrupt"):
+        for event in ("UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop", "Interrupt"):
             with self.subTest(event=event), patch.object(hook.subprocess, "run", side_effect=subprocess.TimeoutExpired("worker", 4)):
                 response = hook.supervise(ROOT, {"hook_event_name": event})
                 if event == "PreToolUse":
@@ -151,6 +282,9 @@ class CapabilityGateHookTests(unittest.TestCase):
                     self.assertIn("GATE_HOST_DEADLINE", json.dumps(response))
                 elif event == "Interrupt":
                     self.assertEqual({"systemMessage"}, set(response))
+                    self.assertIn("GATE_HOST_DEADLINE", json.dumps(response))
+                elif event == "PostToolUse":
+                    self.assertEqual("block", response["decision"])
                     self.assertIn("GATE_HOST_DEADLINE", json.dumps(response))
                 else:
                     self.assertEqual({}, response)
@@ -177,12 +311,13 @@ class CapabilityGateHookTests(unittest.TestCase):
         self.assertFalse(marker.exists())
 
     def test_invalid_worker_schema_becomes_event_legal_response(self):
-        for event, invalid in (("PreToolUse", {"continue": False}), ("Interrupt", {"decision": "block"}),
+        for event, invalid in (("PreToolUse", {"continue": False}), ("PostToolUse", {"continue": False}),
+                               ("Interrupt", {"decision": "block"}),
                                ("Stop", {"continue": True}), ("UserPromptSubmit", {"hookSpecificOutput": {}})):
             result = subprocess.CompletedProcess([], 0, json.dumps(invalid).encode())
             with self.subTest(event=event), patch.object(hook.subprocess, "run", return_value=result):
                 response = hook.supervise(ROOT, {"hook_event_name": event})
-                if event in {"PreToolUse", "Interrupt"}:
+                if event in {"PreToolUse", "PostToolUse", "Interrupt"}:
                     self.assertIn("GATE_WORKER_FAILED", json.dumps(response))
                 else:
                     self.assertEqual({}, response)

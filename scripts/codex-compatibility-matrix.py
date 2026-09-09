@@ -30,8 +30,9 @@ def digest(text: str) -> str:
 def run_hook(hook: str, payload: dict, data_root: Path) -> dict:
     env = os.environ.copy()
     env["CP_ASSISTANT_DATA"] = str(data_root)
+    entry = "cp_gate.py" if hook == "PostToolUse" else "cp_hook.py"
     result = subprocess.run(
-        [sys.executable, str(ROOT / "hooks" / "cp_hook.py"), hook],
+        [sys.executable, str(ROOT / "hooks" / entry), hook],
         input=json.dumps(payload), text=True, encoding="utf-8", errors="replace",
         capture_output=True, env=env, timeout=20,
     )
@@ -96,6 +97,16 @@ def main() -> int:
             for hook in ("Stop", "SubagentStop"):
                 if run_hook(hook, {"hook_event_name": hook, "cwd": str(ROOT)}, data_root) != {}:
                     raise RuntimeError(f"{hook} did not return neutral JSON")
+            post = run_hook(
+                "PostToolUse",
+                {"hook_event_name": "PostToolUse", "session_id": "matrix-session",
+                 "turn_id": "matrix-turn", "cwd": str(ROOT), "tool_name": "apply_patch",
+                 "tool_use_id": "matrix-tool", "tool_input": {"command": "*** Begin Patch\n*** End Patch\n"},
+                 "tool_response": {"ok": True}},
+                data_root,
+            )
+            if post != {}:
+                raise RuntimeError("unconfigured PostToolUse did not remain neutral")
         finally:
             if original_home is None:
                 os.environ.pop("CODEX_HOME", None)

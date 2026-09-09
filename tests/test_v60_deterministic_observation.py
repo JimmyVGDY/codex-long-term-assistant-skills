@@ -334,12 +334,18 @@ class V60DeterministicObservationTests(unittest.TestCase):
         self.assertNotIn('python3.exe',launcher.lower())
         self.assertIn('python.exe',launcher.lower())
         self.assertIn('py.exe',launcher.lower())
+        gate_launcher=(ROOT/'hooks'/'cp_gate.cmd').read_text(encoding='utf-8')
+        self.assertIn('python.exe',gate_launcher.lower())
+        self.assertIn('py.exe',gate_launcher.lower())
         hooks=json.loads((ROOT/'hooks'/'hooks.json').read_text(encoding='utf-8'))['hooks']
-        expected={'UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','Interrupt','SessionEnd'}
+        expected={'UserPromptSubmit','PreToolUse','PostToolUse','SubagentStart','SubagentStop','Stop','Interrupt','SessionEnd'}
         self.assertEqual(expected,set(hooks))
         for event in expected:
             command=hooks[event][0]['hooks'][0]['commandWindows']
-            self.assertEqual(f'cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\cp_hook.cmd" {event}"',command)
+            launcher_name='cp_gate.cmd' if event=='PostToolUse' else 'cp_hook.cmd'
+            self.assertEqual(f'cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\{launcher_name}" {event}"',command)
+        self.assertEqual('apply_patch|Edit|Write',hooks['PreToolUse'][1]['matcher'])
+        self.assertIn('cp_gate.cmd',hooks['PreToolUse'][1]['hooks'][0]['commandWindows'])
         self.assertEqual(3,hooks['SessionEnd'][0]['hooks'][0]['timeout'])
         self.assertEqual(3,hooks['Interrupt'][0]['hooks'][0]['timeout'])
 

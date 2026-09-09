@@ -4,7 +4,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-V7.6.2 removes Hook blocking risk and isolates legacy optional capability-gate state: UserPromptSubmit becomes asynchronous observation backed by host-compatibility evidence, Stop remains neutral, Interrupt stays host-controlled, enabled legacy policies reject native writes safely, and unconfigured or disabled policies remain neutral. See the versioned validation record for release, installation, and fresh-task status.
+V7.7.0 adds the Operation v2 write protocol. The first `apply_patch` attempt A creates an external origin and is denied; after preparation, a different attempt B atomically claims permission, and only its actual PostToolUse receipt can enter completion verification. Legacy GateTask state never becomes a v2 permit, while ordinary conversations and projects without an enabled policy remain neutral.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -25,7 +25,7 @@ V7.6.2 removes Hook blocking risk and isolates legacy optional capability-gate s
   <img alt="Codex CLI 0.153.4" src="https://img.shields.io/badge/Codex%20CLI-0.153.4-111827">
 </p>
 
-V7.6.0 added bounded external capability indexing and project-opt-in workflow gates. The V7.6.2 transition patch no longer treats legacy GateTask receipts as native-write authorization. Gates remain disabled by default, and workflow evidence does not establish semantic correctness. The frozen Codex CLI 0.153.4 compatibility window remains unchanged.
+V7.6.2 restored the non-blocking message and Stop boundary. V7.7.0 adds an independent Operation v2 state machine, the canonical `apply_patch/tool_input.command/tool_use_id` adapter, and PostToolUse reconciliation for explicitly enabled project policies. The gate still defaults off, and workflow evidence does not establish semantic correctness. The frozen Codex CLI 0.153.4 window remains unchanged.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Usage example](#reproducible-usage-example) · [Compatibility](#compatibility-matrix) · [Installation](#five-minute-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -33,8 +33,8 @@ V7.6.0 added bounded external capability indexing and project-opt-in workflow ga
 
 | Distribution | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V7.6.2-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.2/Codex-Skills-V7.6.2-zh-CN.zip) |
-| `Codex-Skills-V7.6.2-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.2/Codex-Skills-V7.6.2-en.zip) |
+| `Codex-Skills-V7.7.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.7.0/Codex-Skills-V7.7.0-zh-CN.zip) |
+| `Codex-Skills-V7.7.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.7.0/Codex-Skills-V7.7.0-en.zip) |
 
 [Open the latest Release, checksums, and build witnesses](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -42,7 +42,7 @@ V7.6.0 added bounded external capability indexing and project-opt-in workflow ga
 
 - Ten engineering Skills with minimal, progressive routing for the active task.
 - Seven logically read-only Reviewers with no hard-coded model or reasoning effort.
-- <!-- cp-fact:hooks.en -->7 registered Hook entry points: `UserPromptSubmit`, `PreToolUse`, `SubagentStart`, `SubagentStop`, `Stop`, `Interrupt`, `SessionEnd`.<!-- /cp-fact --> UserPromptSubmit is asynchronous observation, Stop is neutral, and Interrupt remains host-controlled; PreToolUse independently enforces model ceilings and legacy-policy write protection.
+- <!-- cp-fact:hooks.en -->8 registered Hook entry points: `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `SubagentStart`, `SubagentStop`, `Stop`, `Interrupt`, `SessionEnd`.<!-- /cp-fact --> UserPromptSubmit is asynchronous observation, Stop is neutral, and Interrupt remains host-controlled; PreToolUse/PostToolUse advance Operation v2 only for the verified canonical `apply_patch` contract.
 - TaskOutcomeEvent 3.0 with `project_id + repo_fingerprint` isolation and a separate continuous hash chain.
 - Recoverable checkpoints, delayed SessionEnd sealing, event archives, and cross-project health summaries.
 - Separate package routing regression from real-host routing acceptance, binding host evidence to raw final-report SHA-256 digests.
@@ -98,10 +98,10 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Native Windows Codex CLI 0.153.4 + Plugin | Current real-host anchor | V7.6.2 local isolated Plugin preflight and the full package regression passed | V7.6.2 account installation, restart, and fresh-task loading require separate post-release readback |
-| Windows + eleven pinned stable Codex releases | Frozen compatibility window | Online verification passed for 11/11 official tags, commits, source digests, and async semantic markers | The V7.6.2 cross-version real-host matrix has not run |
-| Windows / Ubuntu GitHub matrix | Release gate | The workflow is configured for both systems on Python 3.11/3.13 plus eleven-version replay | V7.6.2 CI results require readback after push and tag |
-| standalone mode | Explicit fallback | Local installation-structure and regression coverage passed | V7.6.2 account installation has not run and does not establish Plugin host compatibility |
+| Native Windows Codex CLI 0.153.4 + Plugin | Current real-host anchor | V7.7.0 local 327 package + 179 runtime tests, Operation v2, and round-two review pass | Account installation, restart, and fresh-task loading require separate post-release readback |
+| Windows + eleven pinned stable Codex releases | Frozen compatibility window | Online verification passes 11/11 official async, Pre/Post schema, and successful result-response sources | The V7.7.0 cross-version real-host matrix still requires CI readback |
+| Windows / Ubuntu GitHub matrix | Release gate | The workflow is configured for both systems on Python 3.11/3.13 plus eleven-version replay | V7.7.0 CI results require readback after push and tag |
+| standalone mode | Explicit fallback | Local installation-structure and regression coverage passed | V7.7.0 account installation has not run and does not establish Plugin host compatibility |
 | macOS | Unverified | No current CI or host-acceptance evidence | Status remains `UNVERIFIED` |
 
 The minimum Python version is 3.11; public CI is configured to validate both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
@@ -121,7 +121,7 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. The upgrade is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.6.2`, schema-3 host state is `HOST_COMPATIBLE`, and every Manifest-declared legacy Skill directory is absent.
+3. The upgrade is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.7.0`, schema-3 host state is `HOST_COMPATIBLE`, and every Manifest-declared legacy Skill directory is absent.
 
 The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, preserves unknown files, and removes only Manifest-declared legacy Skill directories: the three V7 domain replacements plus the previously deprecated Vue Skill. See [Installation and recovery](docs/operations/INSTALLATION_RECOVERY.en.md) and the [User guide](docs/USER_GUIDE.en.md).
 
@@ -146,7 +146,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V7.6.2 release notes](docs/releases/v7.6.2/RELEASE_NOTES.en.md)
+- [Changelog](CHANGELOG.en.md) · [V7.7.0 release notes](docs/releases/v7.7.0/RELEASE_NOTES.en.md)
 
 ## Local validation
 
@@ -162,7 +162,7 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. Tag runs create drafts only; they never publish automatically or overwrite an existing Release.
 
 ```shell
-gh attestation verify Codex-Skills-V7.6.2-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.7.0-en.zip --repo OWNER/REPOSITORY
 ```
 
 See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.en.md) for the complete gates and new-version procedure.

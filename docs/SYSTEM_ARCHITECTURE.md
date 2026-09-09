@@ -2,9 +2,9 @@
 
 [当前入口](architecture/SYSTEM_ARCHITECTURE.md)
 
-# V7.6 当前系统架构与安全边界
+# V7.7 当前系统架构与安全边界
 
-> 状态：`active`。本页描述 V7.6.2 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
+> 状态：`active`。本页描述 V7.7.0 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
 
 ## 1. 分层
 
@@ -26,7 +26,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-包版本是 V7.6.2；`TaskOutcomeEvent V3`、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
+包版本是 V7.7.0；`TaskOutcomeEvent V3`、Operation v2、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
 
 ## 2. Skill 路由
 
@@ -94,7 +94,7 @@ CLOSED
 
 ## 可选项目门禁与实际加载
 
-注册配置包含七个入口，项目门禁默认关闭。V7.6.2 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 完全由宿主控制；三者都不读取或修改旧 GateTask。`PreToolUse` 只在原生写工具命中且旧策略仍为 `enabled=true` 时返回 `LEGACY_WRITE_ORIGIN_UNAVAILABLE`，未配置或停用策略保持中性。
+注册配置包含八个入口，项目门禁默认关闭。V7.7.0 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 由宿主控制；规范 `apply_patch` 只在显式启用策略下由 PreToolUse/PostToolUse 推进仓库外 Operation v2。A 只建立起点并拒绝，B 在 READY 中原子绑定，完成只接受 B 的回执；未配置或停用策略保持中性。
 
 ```text
 未配置或 disabled ───────────────→ 原生写入保持宿主既有行为
@@ -102,6 +102,6 @@ CLOSED
 UserPromptSubmit / Stop / Interrupt → 不消费旧 GateTask 控制状态
 ```
 
-配置 `enabled=true`、Plugin 已加载和业务语义适用是不同结论。V7.6.2 的旧 `prepare/finish/check` 回执不能授权原生写入；已打开会话可能仍使用旧 Plugin 快照，升级后应在新任务中读回实际行为。受控写工具以外的入口不能保证全部写前拦截。
+配置 `enabled=true`、Plugin 已加载和业务语义适用是不同结论。旧 `prepare/finish/check` 与 GateTask v1 回执不能授权 Operation v2 写入；已打开会话可能仍使用旧 Plugin 快照，升级后应在新任务中读回实际行为。Hook 许可与工具副作用不是原子事务，shell/MCP 等入口也不保证写前拦截。
 
 冻结窗口内 11 个 Codex CLI 版本具有逐版本官方 UserPromptSubmit async 源码证据；真实 Desktop 与其他宿主仍需各自读回。旧门禁启用与停用入口见[能力索引与流程入口](CAPABILITY_INDEX.md)，但本补丁不把旧任务生命周期恢复为写入授权。
