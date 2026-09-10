@@ -96,7 +96,7 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Native Windows Codex CLI 0.154.0 + Plugin | Current real-host anchor | Official source/artifact, isolated Plugin, 329 package + 180 runtime, and round-two re-review pass | Account installation and fresh-task loading require separate readback |
+| Native Windows Codex CLI 0.154.0 + Plugin | Current real-host anchor | Official source/artifact, isolated Plugin, 329 package + 180 runtime, round-two re-review, account install, and fresh-task loading pass | Remote CI and the public Release still require separate readback |
 | Windows + eleven pinned stable Codex releases | Frozen compatibility window | Online verification passes 11/11 official async, Pre/Post schema, and successful result-response sources | The V7.7.1 cross-version real-host matrix still requires CI readback |
 | Windows / Ubuntu GitHub matrix | Release gate | The workflow is configured for both systems on Python 3.11/3.13 plus eleven-version replay | V7.7.1 CI results require readback after push and tag |
 | standalone mode | Explicit fallback | Local installation-structure and regression coverage passed | V7.7.1 account installation has not run and does not establish Plugin host compatibility |

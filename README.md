@@ -89,7 +89,7 @@ flowchart LR
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Windows 原生 Codex CLI 0.154.0 + Plugin | 当前实机锚点 | 官方源码/制品、隔离 Plugin、329 package + 180 runtime 与第 2 轮复核通过 | 账户安装和新任务实际加载需单独读回 |
+| Windows 原生 Codex CLI 0.154.0 + Plugin | 当前实机锚点 | 官方源码/制品、隔离 Plugin、329 package + 180 runtime、第 2 轮复核、账户安装与新任务加载通过 | 远端 CI 与正式 Release 仍需单独读回 |
 | Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 async、Pre/Post schema 与成功结果响应源码在线复核通过 | V7.7.1 跨版本真实宿主矩阵仍需在 CI 后读回 |
 | Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | V7.7.1 的 CI 结果需在推送和标签后读回 |
 | standalone 模式 | 显式兼容模式 | 本地安装结构与回归测试覆盖 | V7.7.1 账户安装尚未执行，不宣称 Plugin 宿主兼容 |

@@ -10,3 +10,4 @@ English: [AUDIT_REPORT.en.md](AUDIT_REPORT.en.md)
 
 - 实施后第一轮三位逻辑只读 Reviewer 发现正式源尚未提交、发行索引计数陈旧和兼容注册表 digest 未进入发行证明；集中修复同时处理了真实宿主暴露的停用策略 PostToolUse 错误阻断。
 - 第 2 轮定向逻辑只读复核基于 `d78f36d9f1b3eaf8b3a71e008735761f21c5237afefa51ebafdc5b28a95d6dff` 通过，无阻塞或非阻塞项。远端 CI、标签、资产与公开 Release 仍以完成后的独立证据为准。
+- 账户级事务安装和真实新任务加载已分别读回；提交、推送、CI、标签、制品和公开 Release 仍作为独立阶段继续验证。

@@ -10,3 +10,4 @@ Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-ass
 
 - The first postimplementation round used three logically read-only Reviewers and found that formal source was not yet committed, release-index counts were stale, and the compatibility-registry digest was absent from release evidence. The centralized repair also fixed the disabled-policy PostToolUse false block exposed by the live host.
 - A targeted round-two logical-readonly review passed on packet `d78f36d9f1b3eaf8b3a71e008735761f21c5237afefa51ebafdc5b28a95d6dff` with no blocking or nonblocking findings. Remote CI, tag, artifacts, and public Release remain subject to their own completion evidence.
+- Account-level transactional installation and fresh-task loading were read back separately. Commit, push, CI, tag, artifacts, and public Release continue as independent evidence stages.

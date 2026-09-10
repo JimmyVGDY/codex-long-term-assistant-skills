@@ -12,6 +12,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 - 修复后的完整包装器在 Python 3.13.15 上通过 329 项 package 与 180 项 runtime 测试；较早的 Windows 临时 keyring 权限波动和两处旧 attestation 夹具失败均已通过定向与完整复跑闭环记录。
 - 实施前两位逻辑只读 Reviewer 归并并关闭版本同步、回滚配对、矩阵边界和证据闭环问题；若需回滚，必须先恢复 CLI 0.153.4，再恢复 Plugin V7.7.0。
 - 实施后三位逻辑只读 Reviewer 的问题集中修复后，第 2 轮定向复核无阻塞或非阻塞项。
+- 账户级事务安装、Plugin 7.7.1 启用读回、`HOST_COMPATIBLE`、224 文件三方 payload 摘要和真实新任务 `V771_FRESH_HOST_PASS` 均通过。
 
 ## 7.7.0 - 2026-09-10
 

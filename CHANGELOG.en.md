@@ -14,6 +14,7 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 - The repaired full wrapper passes 329 package and 180 runtime tests on Python 3.13.15. An earlier transient Windows keyring permission failure and two legacy attestation-fixture failures are preserved with focused and full rerun evidence.
 - Two logically read-only preimplementation Reviewers reconciled and closed version fanout, paired rollback, matrix-boundary, and evidence-closure gaps. Rollback restores CLI 0.153.4 before Plugin V7.7.0.
 - After centralized repair of three postimplementation Reviewer findings, the targeted round-two re-review reported no blocking or nonblocking issues.
+- Account-level transactional installation, enabled Plugin 7.7.1 readback, `HOST_COMPATIBLE`, the three-way 224-file payload digest, and fresh-task `V771_FRESH_HOST_PASS` all pass.
 
 ## 7.7.0 - 2026-09-10
 

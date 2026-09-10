@@ -13,7 +13,7 @@
   "focused_post_review_repairs": {"runtime_hook_tests": 19, "release_verifier_tests": 5, "attestation_fixture_tests": 2, "result": "PASS"},
   "independent_postimplementation_review": "LOGICAL_READONLY_ROUND_2_PASS",
   "review_packet_sha256": "d78f36d9f1b3eaf8b3a71e008735761f21c5237afefa51ebafdc5b28a95d6dff",
-  "account_installation": "NOT_EVALUATED",
-  "fresh_task": "NOT_EVALUATED",
+  "account_installation": "PASS: Plugin 7.7.1 installed/enabled; HOST_COMPATIBLE; 224-file source/marketplace/cache payload match",
+  "fresh_task": "PASS: V771_FRESH_HOST_PASS; installed Skill and Plugin manifest readback; Stop Hook completed",
   "publication": "NOT_EVALUATED"
 }
