@@ -37,7 +37,7 @@ package_test_count=test_count(tests)
 runtime_test_count=test_count(runtime_tests)
 result={
  'ok':True,'evidence_scope':'package-only','version':'6.5.0','skill_count':10,'reviewer_count':7,
- 'hooks':['UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'],
+ 'hooks':['UserPromptSubmit','PreToolUse','PostToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'],
  'task_outcome_event':'2.0','execution_authorization':'NONE','automatic_self_modification':False,
  'semantic_lint':'PASS','routing_case_schema':'PASS (35 cases)','plugin_payload_manifest':'PASS',
  'unit_regression_tests':'PASS (%d package + %d runtime)' % (package_test_count,runtime_test_count),

@@ -7,7 +7,7 @@ hide:
 <div class="landing-page">
   <section class="landing-hero" aria-labelledby="landing-title">
     <div class="landing-hero__copy">
-      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.6.2</p>
+      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.7.0</p>
       <h1 id="landing-title">
         <span lang="zh-CN">Codex 跨项目长期技术助手</span>
         <span lang="en">Cross-Project Engineering Assistant</span>
@@ -68,7 +68,7 @@ hide:
     <div class="landing-stat-grid">
       <article class="landing-stat"><strong>10</strong><span>Skills</span></article>
       <article class="landing-stat"><strong>7</strong><span>Reviewers</span></article>
-      <article class="landing-stat"><strong><!-- cp-fact:hook-count -->7<!-- /cp-fact --></strong><span>Hooks</span></article>
+      <article class="landing-stat"><strong><!-- cp-fact:hook-count -->8<!-- /cp-fact --></strong><span>Hooks</span></article>
       <article class="landing-stat"><strong>3.0</strong><span>TaskOutcomeEvent</span></article>
     </div>
   </section>

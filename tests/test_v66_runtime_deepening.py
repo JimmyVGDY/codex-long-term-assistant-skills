@@ -519,7 +519,8 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
                    CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS="2000")
         for hook_name, entries in hooks.items():
             command = entries[0]["hooks"][0]["commandWindows"]
-            self.assertIn('"%PLUGIN_ROOT%\\hooks\\cp_hook.cmd"', command)
+            launcher = 'cp_gate.cmd' if hook_name == 'PostToolUse' else 'cp_hook.cmd'
+            self.assertIn(f'"%PLUGIN_ROOT%\\hooks\\{launcher}"', command)
             payload = {"hook_event_name": hook_name, "session_id": "S-HOOK",
                        "turn_id": "T-HOOK", "cwd": str(self.root)}
             if hook_name == "PreToolUse":

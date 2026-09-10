@@ -7,30 +7,34 @@ from documentation import audit as audit_documentation
 ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
-if manifest.get('version')!='7.6.2': errors.append('manifest 版本不是 7.6.2')
+if manifest.get('version')!='7.7.0': errors.append('manifest 版本不是 7.7.0')
 if manifest.get('user_skills_target')!='$HOME/.agents/skills': errors.append('账户 Skill 目标不是 $HOME/.agents/skills')
 plugin=json.loads((ROOT/'.codex-plugin'/'plugin.json').read_text(encoding='utf-8'))
-if plugin.get('version')!='7.6.2': errors.append('Plugin 版本不一致')
+if plugin.get('version')!='7.7.0': errors.append('Plugin 版本不一致')
 if manifest.get('default_locale')!='zh-CN' or manifest.get('supported_locales')!=['zh-CN','en']:
     errors.append('双语发行声明无效')
-for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','7.0.0','7.1.0','7.2.0','7.3.0','7.4.0','7.4.1','7.4.2','7.4.3','7.4.4','7.4.5','7.4.6','7.5.0','7.5.1','7.6.0','7.6.1'):
-    if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V7.6.2 升级声明' % previous)
-registry=load_registry(ROOT/'config'/'codex-compatibility-v1.json','7.6.2')
+for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','7.0.0','7.1.0','7.2.0','7.3.0','7.4.0','7.4.1','7.4.2','7.4.3','7.4.4','7.4.5','7.4.6','7.5.0','7.5.1','7.6.0','7.6.1','7.6.2'):
+    if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V7.7.0 升级声明' % previous)
+registry=load_registry(ROOT/'config'/'codex-compatibility-v1.json','7.7.0')
 registered=[item['version'] for item in registry['versions']]
 if manifest.get('codex_compatibility',{}).get('verified_versions')!=registered:
     errors.append('Manifest Codex 兼容窗口与注册表不一致')
 hooks=json.loads((ROOT/'hooks'/'hooks.json').read_text(encoding='utf-8')).get('hooks',{})
-required={'UserPromptSubmit','PreToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'}
+required={'UserPromptSubmit','PreToolUse','PostToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'}
 if not required.issubset(hooks): errors.append('生命周期 Hooks 不完整')
 required.add('Interrupt')
 if not required.issubset(hooks): errors.append('Interrupt Hook is missing')
 if not (ROOT/'hooks'/'cp_hook.cmd').is_file(): errors.append('缺少 Windows Hook 启动器')
+if not (ROOT/'hooks'/'cp_gate.cmd').is_file(): errors.append('缺少 Windows 文件门禁启动器')
 for hook_name in required:
     entries=hooks.get(hook_name) or []
     commands=[hook.get('commandWindows','') for entry in entries for hook in (entry.get('hooks') or []) if isinstance(hook,dict)]
-    if not any('cp_hook.cmd' in command for command in commands): errors.append('Windows Hook 启动命令缺失: '+hook_name)
-    quoted_prefix='cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\cp_hook.cmd" '
+    launcher='cp_gate.cmd' if hook_name=='PostToolUse' else 'cp_hook.cmd'
+    if not any(launcher in command for command in commands): errors.append('Windows Hook 启动命令缺失: '+hook_name)
+    quoted_prefix='cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\'+launcher+'" '
     if not any(command.startswith(quoted_prefix) and command.endswith('"') for command in commands): errors.append('Windows Hook 必须完整引用 Plugin 启动路径: '+hook_name)
+if not any('cp_gate.cmd' in hook.get('commandWindows','') for entry in hooks.get('PreToolUse',[]) for hook in (entry.get('hooks') or []) if isinstance(hook,dict)):
+    errors.append('PreToolUse 缺少 Windows 文件门禁启动器')
 skills=[x['name'] for x in manifest.get('skills',[])]
 if len(skills)!=10 or len(set(skills))!=10: errors.append('V7 应包含 10 个唯一 Skill')
 primary={'backend-engineering','frontend-engineering','ai-engineering','data-middleware-infrastructure'}
@@ -57,7 +61,7 @@ for phrase in ('user_skills_home','plugin_marketplace_root','reject_link_ancesto
 for release_script in ('build-release.py','lifecycle-acceptance.py','dispatch-policy-acceptance.py','privacy-boundary-lint.py','seal-worker.py','event-archive.py','release-attestation.py','verify-release.py','payload-integrity.py','validate-v74.py','delegation-budget.py','delegation-calibration.py'):
     if not (ROOT/'scripts'/release_script).is_file(): errors.append('缺少 V7.4 发布证明脚本: '+release_script)
 payload=json.loads((ROOT/'PLUGIN_PAYLOAD_MANIFEST.json').read_text(encoding='utf-8'))
-if payload.get('version')!='7.6.2' or payload.get('file_count',0)<1: errors.append('Plugin payload manifest 无效')
+if payload.get('version')!='7.7.0' or payload.get('file_count',0)<1: errors.append('Plugin payload manifest 无效')
 english_reviewers=ROOT/'locales'/'en'/'custom-agents'
 for reviewer in manifest.get('custom_agents',[]):
     candidate=english_reviewers/Path(reviewer['file']).name
@@ -68,9 +72,9 @@ for reviewer in manifest.get('custom_agents',[]):
         errors.append('英文 Reviewer 写死模型: '+reviewer['name'])
 for primary in ('README.md','CHANGELOG.md','global/AGENTS.md','docs/USER_GUIDE_V7.6.md',
                 'docs/INSTALLATION_RECOVERY.md','docs/CODEX_CONFIG_GUIDE.md',
-                'docs/releases/v7.6.2/RELEASE_NOTES.md',
-                'docs/releases/v7.6.2/VALIDATION_REPORT.md',
-                'docs/releases/v7.6.2/AUDIT_REPORT.md'):
+                'docs/releases/v7.7.0/RELEASE_NOTES.md',
+                'docs/releases/v7.7.0/VALIDATION_REPORT.md',
+                'docs/releases/v7.7.0/AUDIT_REPORT.md'):
     if not (ROOT/'locales'/'en'/primary).is_file(): errors.append('英文主界面缺失: '+primary)
 text_extensions={'.md','.json','.toml','.yaml','.py','.ps1','.sh','.cmd'}
 banned_natural_language={
@@ -104,4 +108,4 @@ errors.extend('Documentation drift: ' + str(item) for item in documentation['fin
 if errors:
     for e in errors: print('[FAIL]',e)
     raise SystemExit(1)
-print('[OK] V7.6.2 语义校验通过：11 个稳定版注册表、隔离 Plugin 预演、统一委派预算、派发策略、模型身份隐私和受控演进边界一致')
+print('[OK] V7.7.0 语义校验通过：Operation v2、PostToolUse、11 个稳定版注册表、隔离 Plugin 预演和受控演进边界一致')

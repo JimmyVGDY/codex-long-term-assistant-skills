@@ -30,11 +30,23 @@ SOURCE_ASSERTIONS = {
     "ASYNC_FIELD_PARSED": "let runs_async",
     "ASYNC_PROPAGATED_TO_COMMAND_HANDLER": "r#async: runs_async",
 }
+OPERATION_SOURCE_ASSERTIONS = {
+    "PRE_TOOL_USE_INPUT": "struct PreToolUseCommandInput",
+    "POST_TOOL_USE_INPUT": "struct PostToolUseCommandInput",
+    "TOOL_USE_ID": "pub tool_use_id: String",
+    "TOOL_RESPONSE": "pub tool_response: Value",
+    "POST_TOOL_BLOCK_OUTPUT": "struct PostToolUseCommandOutputWire",
+}
+RESULT_SOURCE_ASSERTIONS = {
+    "APPLY_PATCH_OUTPUT_ON_SUCCESS": "ApplyPatchToolOutput::from_text(content)",
+    "POST_TOOL_PAYLOAD_FROM_RESULT": "result.post_tool_use_response",
+    "POST_TOOL_RESPONSE_STRING": "Some(JsonValue::String(self.text.clone()))",
+}
 
 
 def _read_url(url: str, limit: int) -> bytes:
     request = urllib.request.Request(
-        url, headers={"User-Agent": "codex-long-term-assistant-skills/7.6.2"},
+        url, headers={"User-Agent": "codex-long-term-assistant-skills/7.7.0"},
     )
     chunks: list[bytes] = []
     total = 0
@@ -69,7 +81,7 @@ def _official_tag_commit(tag: str) -> str:
 
 
 def verify_native_async_sources() -> dict:
-    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.6.2")
+    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.7.0")
     verified = []
     for item in registry["versions"]:
         version = item["version"]
@@ -106,6 +118,71 @@ def verify_native_async_sources() -> dict:
             "source_size": len(source),
             "verified_assertions": sorted(observed_assertions),
         })
+        operation = item["native_apply_patch_operation"]
+        if operation["status"] != "SUPPORTED" or operation["repository"] != OFFICIAL_REPOSITORY:
+            raise CompatibilityError("Codex apply_patch operation 官方源码证据未声明支持")
+        if (operation["tag"] != evidence["tag"]
+                or operation["commit_sha"] != resolved_commit):
+            raise CompatibilityError("Codex apply_patch operation tag 与 commit 不匹配")
+        operation_url = (
+            "https://raw.githubusercontent.com/openai/codex/"
+            + operation["commit_sha"] + "/" + operation["source_path"]
+        )
+        operation_source = _read_url(operation_url, MAX_SOURCE_BYTES)
+        operation_digest = hashlib.sha256(operation_source).hexdigest()
+        if not hmac.compare_digest(operation_digest, operation["source_sha256"]):
+            raise CompatibilityError("Codex apply_patch operation 官方源码摘要不匹配")
+        try:
+            operation_text = operation_source.decode("utf-8")
+        except UnicodeError as exc:
+            raise CompatibilityError("Codex apply_patch operation 官方源码不是 UTF-8") from exc
+        observed_operation = {
+            name for name, marker in OPERATION_SOURCE_ASSERTIONS.items()
+            if marker in operation_text
+        }
+        if observed_operation != set(operation["verified_assertions"]):
+            raise CompatibilityError("Codex apply_patch operation 官方源码断言不匹配")
+        verified[-1]["apply_patch_operation"] = {
+            "source_path": operation["source_path"],
+            "source_sha256": operation_digest,
+            "source_size": len(operation_source),
+            "verified_assertions": sorted(observed_operation),
+        }
+        result_profile = registry["profiles"]["apply_patch_result"][
+            item["apply_patch_result_profile"]
+        ]
+        result_sources = {}
+        result_text = ""
+        for kind in ("handler", "context"):
+            source_path = result_profile[kind + "_path"]
+            source_url = (
+                "https://raw.githubusercontent.com/openai/codex/"
+                + operation["commit_sha"] + "/" + source_path
+            )
+            result_source = _read_url(source_url, MAX_SOURCE_BYTES)
+            result_digest = hashlib.sha256(result_source).hexdigest()
+            if not hmac.compare_digest(result_digest, result_profile[kind + "_sha256"]):
+                raise CompatibilityError("Codex apply_patch 结果合同官方源码摘要不匹配")
+            try:
+                result_text += result_source.decode("utf-8")
+            except UnicodeError as exc:
+                raise CompatibilityError("Codex apply_patch 结果合同官方源码不是 UTF-8") from exc
+            result_sources[kind] = {
+                "source_path": source_path,
+                "source_sha256": result_digest,
+                "source_size": len(result_source),
+            }
+        observed_result = {
+            name for name, marker in RESULT_SOURCE_ASSERTIONS.items()
+            if marker in result_text
+        }
+        if observed_result != set(result_profile["verified_assertions"]):
+            raise CompatibilityError("Codex apply_patch 结果合同官方源码断言不匹配")
+        verified[-1]["apply_patch_result"] = {
+            "profile": item["apply_patch_result_profile"],
+            "sources": result_sources,
+            "verified_assertions": sorted(observed_result),
+        }
     return {"status": "PASS", "repository": OFFICIAL_REPOSITORY, "verified_versions": verified}
 
 
@@ -136,7 +213,7 @@ def _write_external_report(path: Path, payload: dict) -> None:
 
 
 def download(version: str, output: Path) -> dict:
-    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.6.2")
+    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.7.0")
     profile = profile_for_version(registry, version)
     output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -148,7 +225,7 @@ def download(version: str, output: Path) -> dict:
             temporary = Path(handle.name)
             request = urllib.request.Request(
                 profile["artifact"]["tarball"],
-                headers={"User-Agent": "codex-long-term-assistant-skills/7.6.2"},
+                headers={"User-Agent": "codex-long-term-assistant-skills/7.7.0"},
             )
             with urllib.request.urlopen(request, timeout=120) as response:
                 total = 0

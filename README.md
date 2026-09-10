@@ -2,7 +2,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-V7.6.2 修复 Hook 阻断风险并隔离旧版可选能力门禁状态：UserPromptSubmit 改为经宿主兼容证据确认的异步观察，Stop 保持中性，Interrupt 由宿主控制；旧策略启用时原生写入安全拒绝，未配置或停用时保持中性。发布、安装和新任务验证状态见对应验收记录。
+V7.7.0 新增 Operation v2 写前协议：首次 `apply_patch` 调用 A 只创建仓库外起点并拒绝，准备后由不同调用 B 原子领取许可，实际 PostToolUse 回执再进入完成核验。旧 GateTask 永不转换为新许可，普通对话与未启用项目保持中性。
 
 # Codex 跨项目长期技术助手
 
@@ -23,7 +23,7 @@ V7.6.2 修复 Hook 阻断风险并隔离旧版可选能力门禁状态：UserPro
   <img alt="Codex CLI 0.153.4" src="https://img.shields.io/badge/Codex%20CLI-0.153.4-111827">
 </p>
 
-V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；门禁默认关闭，流程证据也不代表业务语义正确。沿用 Codex CLI 0.153.4 冻结兼容窗口；发行工作流只创建草稿。
+V7.6.2 已恢复消息与 Stop 非阻断边界。V7.7.0 在明确启用的项目策略下新增独立 Operation v2、规范 `apply_patch/tool_input.command/tool_use_id` 适配与 PostToolUse 对账；门禁仍默认关闭，流程证据也不代表业务语义正确。沿用 Codex CLI 0.153.4 冻结兼容窗口。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#五分钟升级) · [文档](#文档与协作)
 
@@ -31,8 +31,8 @@ V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁
 
 | 发行包 | 适用界面 | 下载 |
 | --- | --- | --- |
-| `Codex-Skills-V7.6.2-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.2/Codex-Skills-V7.6.2-zh-CN.zip) |
-| `Codex-Skills-V7.6.2-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.6.2/Codex-Skills-V7.6.2-en.zip) |
+| `Codex-Skills-V7.7.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.7.0/Codex-Skills-V7.7.0-zh-CN.zip) |
+| `Codex-Skills-V7.7.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.7.0/Codex-Skills-V7.7.0-en.zip) |
 
 [查看最新 Release、校验和与构建见证](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -41,7 +41,7 @@ V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁
 - 10 个工程 Skill，按当前任务最小充分路由并渐进加载。
 - 4 个稳定主领域：通用后端、通用前端、通用 AI、数据中间件基础设施；语言和框架作为按需 Reference。
 - 7 个逻辑只读 Reviewer，定义文件不写死模型或推理强度。
-- <!-- cp-fact:hooks.zh -->7 个注册 Hook 入口：`UserPromptSubmit`、`PreToolUse`、`SubagentStart`、`SubagentStop`、`Stop`、`Interrupt`、`SessionEnd`。<!-- /cp-fact -->其中 UserPromptSubmit 为异步观察，Stop 返回中性响应，Interrupt 保持宿主控制；PreToolUse 独立承担模型上限与旧策略写入保护。
+- <!-- cp-fact:hooks.zh -->8 个注册 Hook 入口：`UserPromptSubmit`、`PreToolUse`、`PostToolUse`、`SubagentStart`、`SubagentStop`、`Stop`、`Interrupt`、`SessionEnd`。<!-- /cp-fact -->其中 UserPromptSubmit 为异步观察，Stop 返回中性响应，Interrupt 保持宿主控制；PreToolUse/PostToolUse 只在已验证的规范 `apply_patch` 契约下推进 Operation v2。
 - TaskOutcomeEvent 3.0、`project_id + repo_fingerprint` 双重隔离与独立连续哈希链。
 - 可恢复检查点、延迟 SessionEnd 封印、事件归档与跨项目健康概览。
 - 包级路由回归与真实宿主路由验收分层记录；宿主证据绑定原始最终报告的 SHA-256。
@@ -89,10 +89,10 @@ flowchart LR
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Windows 原生 Codex CLI 0.153.4 + Plugin | 当前实机锚点 | V7.6.2 本地隔离 Plugin 预演与完整 package 回归通过 | V7.6.2 账户安装、重启和新任务实际加载需在发布后单独读回 |
-| Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 tag、commit、源码 SHA 与 async 语义标记在线核验通过 | V7.6.2 跨版本真实宿主矩阵尚未执行 |
-| Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | V7.6.2 的 CI 结果需在推送和标签后读回 |
-| standalone 模式 | 显式兼容模式 | 本地安装结构与回归测试覆盖 | V7.6.2 账户安装尚未执行，不宣称 Plugin 宿主兼容 |
+| Windows 原生 Codex CLI 0.153.4 + Plugin | 当前实机锚点 | V7.7.0 本地 327 package + 179 runtime、Operation v2 与第二轮复审通过 | 账户安装、重启和新任务实际加载需在发布后单独读回 |
+| Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 async、Pre/Post schema 与成功结果响应源码在线复核通过 | V7.7.0 跨版本真实宿主矩阵仍需在 CI 后读回 |
+| Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | V7.7.0 的 CI 结果需在推送和标签后读回 |
+| standalone 模式 | 显式兼容模式 | 本地安装结构与回归测试覆盖 | V7.7.0 账户安装尚未执行，不宣称 Plugin 宿主兼容 |
 | macOS | 未验证 | 无当前 CI 或宿主验收证据 | 状态保持 `UNVERIFIED` |
 
 Python 最低版本为 3.11；公开 CI 配置为在 Windows 与 Ubuntu 上验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
@@ -112,7 +112,7 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=7.6.2`，schema 3 宿主状态为 `HOST_COMPATIBLE`，且旧领域 Skill 不再发现时，升级状态才成立。
+3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=7.7.0`，schema 3 宿主状态为 `HOST_COMPATIBLE`，且旧领域 Skill 不再发现时，升级状态才成立。
 
 安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/operations/INSTALLATION_RECOVERY.md) 和 [V7.6 使用指南](docs/USER_GUIDE.md)。
 
@@ -132,7 +132,7 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 - [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
 - [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
 - [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · [V7.6.2 发行说明](docs/releases/v7.6.2/RELEASE_NOTES.md)
+- [版本记录](CHANGELOG.md) · [V7.7.0 发行说明](docs/releases/v7.7.0/RELEASE_NOTES.md)
 
 ## 本地验证
 
@@ -148,7 +148,7 @@ python scripts\validate-package.py
 `Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。标签流程只创建草稿，不会自动公开发布或覆盖既有 Release。
 
 ```shell
-gh attestation verify Codex-Skills-V7.6.2-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.7.0-zh-CN.zip --repo OWNER/REPOSITORY
 ```
 
 完整门禁和新版本发布步骤见 [Release 自动化与制品来源证明](docs/releases/RELEASE_AUTOMATION.md)。

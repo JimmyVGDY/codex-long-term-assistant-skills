@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const RELEASE_VERSION = "v7.6.2";
+  const RELEASE_VERSION = "v7.7.0";
   const SOURCE_CACHE_MARKER = "__source";
   const VERSION_SELECTOR = ".md-source__fact--version";
 

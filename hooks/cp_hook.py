@@ -34,6 +34,7 @@ from cp_runtime.delegation_budget import (  # noqa: E402
 )
 from cp_runtime.seal_queue import launch_worker  # noqa: E402
 from cp_runtime.evolution.task_feedback import consume_for_hook  # noqa: E402
+from cp_runtime.capability_gate_hook import INPUT_LIMIT, supervise  # noqa: E402
 
 ALLOWED_REASONING = {"", "none", "minimal", "low", "medium", "high"}
 ALLOWED_AUTOMATIC_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra"}
@@ -93,7 +94,9 @@ def _read() -> Dict[str, Any]:
     try:
         # 中文：由 json.loads 直接检查原始字节流及可选 UTF BOM，不依赖 Windows 重定向文本编码。
         # English: Let json.loads inspect the raw byte stream and optional UTF BOM instead of relying on Windows redirected-text encoding.
-        raw = sys.stdin.buffer.read()
+        raw = sys.stdin.buffer.read(INPUT_LIMIT + 1)
+        if len(raw) > INPUT_LIMIT:
+            raise ValueError("input limit")
         data = json.loads(raw) if raw.strip() else {}
         return data
     except Exception:
@@ -418,20 +421,35 @@ def _optional_gate(data: Mapping[str, Any], hook_name: str) -> Dict[str, Any] | 
             # English: A configured but unreadable policy cannot silently permit a legacy native write.
             from cp_runtime.capability_gate_hook import failure_response
             return failure_response("PreToolUse", "GATE_UNAVAILABLE")
+    if hook_name == "PostToolUse" and tool in WRITE_TOOLS:
+        from cp_runtime.capability_gate_hook import failure_response
+        return failure_response("PostToolUse", "OP_CANONICAL_INPUT")
     return None
 
 
 def main() -> int:
     data = _read()
     expected_hook = sys.argv[1] if len(sys.argv) > 1 else ""
-    allowed_hooks = {"UserPromptSubmit", "PreToolUse", "SubagentStart", "SubagentStop", "Stop", "SessionEnd", "Interrupt"}
+    allowed_hooks = {"UserPromptSubmit", "PreToolUse", "PostToolUse", "SubagentStart", "SubagentStop", "Stop", "SessionEnd", "Interrupt"}
     if expected_hook not in allowed_hooks:
         expected_hook = ""
     hook_name = str(_lookup(data, *HOOK_ALIASES["hook_event_name"]) or expected_hook)
     if hook_name and "hook_event_name" not in data:
         data["hook_event_name"] = hook_name
-    if expected_hook == "PreToolUse" and not str(_lookup(data, *HOOK_ALIASES["tool_name"]) or ""):
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("invalid_input")}}, ensure_ascii=False))
+    if expected_hook in {"PreToolUse", "PostToolUse"} and not str(_lookup(data, *HOOK_ALIASES["tool_name"]) or ""):
+        if expected_hook == "PreToolUse":
+            response = {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("invalid_input")}}
+        else:
+            from cp_runtime.capability_gate_hook import failure_response
+            response = failure_response("PostToolUse", "OP_CANONICAL_INPUT")
+        print(json.dumps(response, ensure_ascii=False))
+        return 0
+    if hook_name in {"PreToolUse", "PostToolUse"} and data.get("tool_name") == "apply_patch":
+        response = supervise(ROOT, data)
+        # 中文：空对象是宿主中性/许可响应；独立入口省略输出，受监督 Worker 仍输出 ``{}``。
+        # English: Empty is host-neutral/allow; omit it here while the supervised worker emits ``{}``.
+        if response:
+            print(json.dumps(response, ensure_ascii=False))
         return 0
     guard = _guard(data)
     if guard is not None:
@@ -469,6 +487,9 @@ if __name__ == "__main__":
         expected = sys.argv[1] if len(sys.argv) > 1 else ""
         if expected == "PreToolUse":
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": _policy_message("hook_failure")}}, ensure_ascii=False))
+        elif expected == "PostToolUse":
+            from cp_runtime.capability_gate_hook import failure_response
+            print(json.dumps(failure_response("PostToolUse", "GATE_WORKER_FAILED"), ensure_ascii=False))
         elif expected in {"Stop", "SubagentStop"}:
             print("{}")
         raise SystemExit(0)

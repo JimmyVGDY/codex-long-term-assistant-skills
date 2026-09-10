@@ -15,6 +15,8 @@ import test_capability_store as fixtures
 import test_capability_gate_workflow as workflow_fixtures
 from cp_runtime.capability_gate import GatePolicy, GateTask
 from cp_runtime.capability_gate_workflow import GateWorkflow
+from cp_runtime.capability_operation import CapabilityOperation
+from cp_runtime.patch_intent import parse_apply_patch
 
 ENTRY = Path(__file__).resolve().parents[2] / "scripts" / "cp-runtime.py"
 
@@ -38,6 +40,14 @@ class CapabilityGateCLITests(unittest.TestCase):
         self.flow = GateWorkflow(GateTask(GatePolicy(self.store, self.base / "gate-config"), "session", "turn"))
         self.flow.begin()
 
+    def operation_cli(self, action, operation_ref, *args, expected=0):
+        command = [sys.executable, str(ENTRY), action, "--profile", str(self.profile),
+                   "--repo-path", str(self.repo), "--gate-root", str(self.base / "gate-config"),
+                   "--operation-ref", operation_ref, *args]
+        result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", timeout=60)
+        self.assertEqual(expected, result.returncode, result.stderr)
+        return json.loads(result.stdout) if result.stdout.strip() else result.stderr
+
     def test_optional_policy_commands_preserve_profile_and_do_not_create_index(self):
         original = self.profile.read_bytes()
         self.assertFalse(self.cli("capability-gate-status")["configured"])
@@ -55,6 +65,33 @@ class CapabilityGateCLITests(unittest.TestCase):
         self.assertIn("GATE_TASK_MISSING", result)
         result = self.cli("capability-task-begin", expected=2)
         self.assertIn("invalid choice", result)
+
+    def test_operation_v2_cli_consumes_hook_origin_without_legacy_task(self):
+        self.policy = GatePolicy(self.store, self.base / "gate-config")
+        self.policy.set_enabled(True, None)
+        operation = CapabilityOperation(self.policy, "session", "turn")
+        command = ("*** Begin Patch\n*** Update File: app.py\n@@\n"
+                   "-    return 1\n+    return 2\n*** End Patch\n")
+        intent = parse_apply_patch(command, self.repo)
+        origin = operation.create_or_replay_origin(
+            "attempt-a", intent, intent["target_paths"], intent,
+        )
+        ref = origin["operation_ref"]
+        prepared = self.operation_cli("capability-task-prepare", ref, "--term", "public")
+        self.assertEqual("READY", prepared["state"]["state"])
+        self.assertFalse(self.policy.state_root.exists())
+        operation.find_and_claim(tool_use_id="attempt-b", intent=intent,
+                                 targets=intent["target_paths"], prestate=intent)
+        (self.repo / "app.py").write_text("def public():\n    return 2\n", encoding="utf-8")
+        operation.record_posttool(ref, "attempt-b", {"ok": True}, summary_code="RECEIVED")
+        decisions = self.base / "operation-decisions.json"
+        decisions.write_text(json.dumps([
+            {"id": item["id"], "choice": "extend", "reason": "保持公开入口兼容"}
+            for item in prepared["required_decisions"]
+        ]), encoding="utf-8")
+        finished = self.operation_cli("capability-task-finish", ref, "--decisions", str(decisions))
+        self.assertEqual("VERIFIED", finished["state"]["state"])
+        self.assertTrue(self.operation_cli("capability-task-check", ref)["valid"])
 
     def test_real_prepare_finish_check_updates_index_and_checks_all_decisions(self):
         self.host_start()

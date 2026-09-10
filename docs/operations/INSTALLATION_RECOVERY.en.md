@@ -1,6 +1,6 @@
 <!-- Generated from locales/en/docs/operations/INSTALLATION_RECOVERY.md; edit that source and run scripts/documentation.py sync. -->
 
-# V7.6 Installation, Validation, and Recovery
+# V7.7 Installation, Validation, and Recovery
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/INSTALLATION_RECOVERY/)
 
@@ -9,7 +9,7 @@ Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-ass
 - Native Windows Codex CLI 0.153.4.
 - Python 3.11 or later.
 - Extract the archive before running commands.
-- Supported managed upgrades: <!-- cp-fact:upgrade-sources -->7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->.
+- Supported managed upgrades: <!-- cp-fact:upgrade-sources -->7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->.
 - A native Windows process uses a native Windows `CODEX_HOME`; WSL-style drive mappings are normalized before use.
 - Unknown Skills, agents, Hooks, MCP configuration, Plugin files, and `config.toml` content remain outside managed deletion scope.
 
@@ -35,7 +35,7 @@ Plugin acceptance requires:
 ```ini
 installed = true
 enabled = true
-version = 7.6.2
+version = 7.7.0
 ```
 
 SessionEnd keeps a three-second host timeout. The Hook only constructs a capped, body-free sanitized event and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe; it does not scan or write the event chain. Stable-identity validation, semantic deduplication, persistence, DPAPI decryption, v2 signed enqueue, and sealing run in the worker outside the Hook budget. Evolution rejects an unsealed `seal_required` chain.
@@ -48,7 +48,7 @@ Run `validate-package.py` in the complete Git source checkout, not a single-lang
 
 ## Optional project gate and effective loading
 
-The registration contains seven entry points, while project gates default to disabled. In V7.6.2, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains entirely host-controlled; none of them reads or mutates a legacy GateTask. `PreToolUse` returns `LEGACY_WRITE_ORIGIN_UNAVAILABLE` only when a native write tool is used while the legacy policy remains `enabled=true`; unconfigured or disabled policies remain neutral.
+The registration contains eight entry points, while project gates default to disabled. In V7.7.0, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy; unconfigured or disabled policies remain neutral.
 
 ```text
 Unconfigured or disabled ───────────────→ native writes preserve host behavior
@@ -56,6 +56,6 @@ Legacy enabled + native write tool ────→ deny LEGACY_WRITE_ORIGIN_UNAV
 UserPromptSubmit / Stop / Interrupt ───→ do not consume legacy GateTask control state
 ```
 
-Configured `enabled=true`, a loaded Plugin, and semantic suitability are separate conclusions. Legacy `prepare/finish/check` receipts cannot authorize native writes in V7.6.2. An already-open session can retain an older Plugin snapshot, so verify actual behavior in a new task after upgrade. Entry points outside controlled write tools do not have guaranteed pre-write interception.
+Configured `enabled=true`, a loaded Plugin, and semantic suitability are separate conclusions. V7.7.0 accepts only a Hook-created Operation v2 origin, permission claimed by a different B, and B's matching PostTool receipt; legacy GateTask receipts cannot authorize native writes. An open session can retain an older Plugin snapshot, so verify a fresh task after upgrade. Shell, MCP, and other entry points do not have guaranteed pre-write interception.
 
 All 11 Codex CLI versions in the frozen window have per-version official source evidence for UserPromptSubmit async behavior; Desktop and other real hosts still require separate readback. See the [capability index and workflow entry](../CAPABILITY_INDEX.en.md) for legacy gate enable/disable entry points, but this patch does not restore the legacy task lifecycle as write authorization.

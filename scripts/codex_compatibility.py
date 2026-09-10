@@ -31,10 +31,11 @@ _WINDOW_FIELDS = {
     "include_prereleases", "frozen_at", "release_order_source",
     "frozen_release_order_sha256",
 }
-_PROFILE_GROUPS = {"marketplace", "plugin_cli", "plugin_json", "hook"}
+_PROFILE_GROUPS = {"marketplace", "plugin_cli", "plugin_json", "hook", "apply_patch_result"}
 _VERSION_FIELDS = {
     "version", "stable_release_ordinal", "marketplace_profile", "plugin_cli_profile",
-    "plugin_json_profile", "hook_profile", "native_async_user_prompt_submit", "artifact", "probe_evidence",
+    "plugin_json_profile", "hook_profile", "native_async_user_prompt_submit",
+    "native_apply_patch_operation", "apply_patch_result_profile", "artifact", "probe_evidence",
 }
 _ARTIFACT_FIELDS = {"tarball", "npm_integrity", "tarball_sha256"}
 _EVIDENCE_FIELDS = {
@@ -59,6 +60,15 @@ _ASYNC_SOURCE_FIELDS = {
 }
 _ASYNC_ASSERTIONS = {
     "USER_PROMPT_SUBMIT_EVENT", "ASYNC_FIELD_PARSED", "ASYNC_PROPAGATED_TO_COMMAND_HANDLER",
+}
+_OPERATION_SOURCE_FIELDS = set(_ASYNC_SOURCE_FIELDS)
+_OPERATION_ASSERTIONS = {
+    "PRE_TOOL_USE_INPUT", "POST_TOOL_USE_INPUT", "TOOL_USE_ID", "TOOL_RESPONSE",
+    "POST_TOOL_BLOCK_OUTPUT",
+}
+_RESULT_ASSERTIONS = {
+    "APPLY_PATCH_OUTPUT_ON_SUCCESS", "POST_TOOL_PAYLOAD_FROM_RESULT",
+    "POST_TOOL_RESPONSE_STRING",
 }
 
 
@@ -127,6 +137,10 @@ def _validate_profiles(profiles: Mapping[str, Any]) -> None:
             "events", "deny_wire_profile", "deny_wire_fields",
             "alias_conflict_policy", "historical_real_host_evidence", "aliases",
         },
+        "apply_patch_result": {
+            "handler_path", "handler_sha256", "context_path", "context_sha256",
+            "verified_assertions",
+        },
     }
     for group, profile_fields in expected_fields.items():
         declared = _require_object(profiles[group], f"profiles.{group}")
@@ -175,7 +189,7 @@ def _validate_profiles(profiles: Mapping[str, Any]) -> None:
     for name, profile in profiles["hook"].items():
         prefix = f"profiles.hook.{name}"
         events = set(_require_string_list(profile["events"], f"{prefix}.events"))
-        if events != {"UserPromptSubmit", "PreToolUse", "SubagentStart", "SubagentStop", "Stop", "SessionEnd"}:
+        if events != {"UserPromptSubmit", "PreToolUse", "PostToolUse", "SubagentStart", "SubagentStop", "Stop", "SessionEnd"}:
             raise CompatibilityError(f"{prefix}.events 契约漂移")
         if profile["deny_wire_profile"] != "hook-specific-output-v1":
             raise CompatibilityError(f"{prefix}.deny_wire_profile 契约漂移")
@@ -198,6 +212,18 @@ def _validate_profiles(profiles: Mapping[str, Any]) -> None:
             if overlap:
                 raise CompatibilityError(f"hook alias 在不同语义间重复: {sorted(overlap)}")
             seen_aliases.update(names)
+
+    for name, profile in profiles["apply_patch_result"].items():
+        prefix = f"profiles.apply_patch_result.{name}"
+        if (profile["handler_path"] != "codex-rs/core/src/tools/handlers/apply_patch.rs"
+                or profile["context_path"] != "codex-rs/core/src/tools/context.rs"
+                or not isinstance(profile["handler_sha256"], str)
+                or not _SHA256.fullmatch(profile["handler_sha256"])
+                or not isinstance(profile["context_sha256"], str)
+                or not _SHA256.fullmatch(profile["context_sha256"])
+                or set(_require_string_list(profile["verified_assertions"],
+                                            f"{prefix}.verified_assertions")) != _RESULT_ASSERTIONS):
+            raise CompatibilityError(f"{prefix} apply_patch 结果来源证据无效")
 
 
 def _validate_artifact(version: str, artifact: Mapping[str, Any]) -> None:
@@ -276,6 +302,7 @@ def validate_registry(registry: Mapping[str, Any], expected_package_version: Opt
         "plugin_cli": "plugin_cli_profile",
         "plugin_json": "plugin_json_profile",
         "hook": "hook_profile",
+        "apply_patch_result": "apply_patch_result_profile",
     }
     for index, raw in enumerate(versions):
         item = _require_object(raw, f"versions[{index}]")
@@ -333,6 +360,44 @@ def validate_registry(registry: Mapping[str, Any], expected_package_version: Opt
                 raise CompatibilityError(f"{version} 未知 native async 必须标记未评估")
             if any(async_capability[field] for field in ("repository", "tag", "commit_sha", "source_path", "source_sha256")) or assertions:
                 raise CompatibilityError(f"{version} 未知 native async 不得携带已验证源码证据")
+        operation_capability = _require_object(
+            item["native_apply_patch_operation"],
+            f"versions[{index}].native_apply_patch_operation",
+        )
+        _require_exact_keys(
+            operation_capability,
+            _OPERATION_SOURCE_FIELDS,
+            f"versions[{index}].native_apply_patch_operation",
+        )
+        if operation_capability["status"] not in {"SUPPORTED", "UNKNOWN"}:
+            raise CompatibilityError(f"{version} apply_patch operation status 无效")
+        if operation_capability["evidence"] not in {"OFFICIAL_SOURCE_TAG", "NOT_EVALUATED"}:
+            raise CompatibilityError(f"{version} apply_patch operation evidence 无效")
+        if operation_capability["registration"] != "REQUIRED_APPLY_PATCH_PRE_POST":
+            raise CompatibilityError(f"{version} apply_patch operation registration 无效")
+        operation_assertions = operation_capability["verified_assertions"]
+        if not isinstance(operation_assertions, list) or any(
+                not isinstance(value, str) for value in operation_assertions):
+            raise CompatibilityError(f"{version} apply_patch operation assertions 无效")
+        if operation_capability["status"] == "SUPPORTED":
+            if (operation_capability["evidence"] != "OFFICIAL_SOURCE_TAG"
+                    or operation_capability["repository"] != "https://github.com/openai/codex"
+                    or operation_capability["tag"] != f"rust-v{version}"
+                    or not isinstance(operation_capability["commit_sha"], str)
+                    or not _GIT_SHA.fullmatch(operation_capability["commit_sha"])
+                    or operation_capability["source_path"] != "codex-rs/hooks/src/schema.rs"
+                    or not isinstance(operation_capability["source_sha256"], str)
+                    or not _SHA256.fullmatch(operation_capability["source_sha256"])
+                    or set(operation_assertions) != _OPERATION_ASSERTIONS
+                    or len(operation_assertions) != len(_OPERATION_ASSERTIONS)):
+                raise CompatibilityError(f"{version} apply_patch operation 源码证据不完整")
+        else:
+            if operation_capability["evidence"] != "NOT_EVALUATED":
+                raise CompatibilityError(f"{version} 未知 apply_patch operation 必须标记未评估")
+            if (any(operation_capability[field] for field in
+                    ("repository", "tag", "commit_sha", "source_path", "source_sha256"))
+                    or operation_assertions):
+                raise CompatibilityError(f"{version} 未知 apply_patch operation 不得携带源码证据")
         _validate_artifact(version, _require_object(item["artifact"], f"artifact[{version}]"))
         _validate_evidence(version, _require_object(item["probe_evidence"], f"probe_evidence[{version}]"))
 

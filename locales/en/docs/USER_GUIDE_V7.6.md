@@ -2,7 +2,7 @@
 
 [Current location](USER_GUIDE.md)
 
-# V7.6 Operating Guide
+# V7.7 Operating Guide
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.6/)
 
@@ -66,4 +66,4 @@ V7.6 retains the validation feedback introduced in V7.5, health gates, opt-in in
 
 ## Capability reuse and optional gates
 
-Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. In V7.6.2, legacy GateTask and prepare/finish/check receipts do not grant native-write permission: enabled policies reject native writes safely, while unconfigured or disabled policies remain neutral. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.6.2/VALIDATION_REPORT.md).
+Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.7.0 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.7.0/VALIDATION_REPORT.md).

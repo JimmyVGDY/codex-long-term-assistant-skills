@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：V7.6.2 稳定版兼容注册表契约测试。
+"""中文：V7.7.0 稳定版兼容注册表契约测试。
 
-English: V7.6.2 stable-release compatibility registry contract tests.
+English: V7.7.0 stable-release compatibility registry contract tests.
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ EXPECTED_VERSIONS = [
 
 class RegistryTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.registry = load_registry(REGISTRY_PATH, "7.6.2")
+        self.registry = load_registry(REGISTRY_PATH, "7.7.0")
 
     def test_registry_is_exact_frozen_stable_window(self) -> None:
         self.assertEqual(EXPECTED_VERSIONS, [item["version"] for item in self.registry["versions"]])
@@ -68,6 +68,33 @@ class RegistryTests(unittest.TestCase):
                         "ASYNC_PROPAGATED_TO_COMMAND_HANDLER",
                     },
                     set(capability["verified_assertions"]),
+                )
+                operation = profile["native_apply_patch_operation"]
+                self.assertEqual("SUPPORTED", operation["status"])
+                self.assertEqual("OFFICIAL_SOURCE_TAG", operation["evidence"])
+                self.assertEqual("REQUIRED_APPLY_PATCH_PRE_POST", operation["registration"])
+                self.assertEqual(f"rust-v{version}", operation["tag"])
+                self.assertEqual(capability["commit_sha"], operation["commit_sha"])
+                self.assertEqual("codex-rs/hooks/src/schema.rs", operation["source_path"])
+                self.assertRegex(operation["source_sha256"], r"^[0-9a-f]{64}$")
+                self.assertEqual(
+                    {"PRE_TOOL_USE_INPUT", "POST_TOOL_USE_INPUT", "TOOL_USE_ID",
+                     "TOOL_RESPONSE", "POST_TOOL_BLOCK_OUTPUT"},
+                    set(operation["verified_assertions"]),
+                )
+                result_profile = self.registry["profiles"]["apply_patch_result"][
+                    profile["apply_patch_result_profile"]
+                ]
+                self.assertEqual("codex-rs/core/src/tools/handlers/apply_patch.rs",
+                                 result_profile["handler_path"])
+                self.assertEqual("codex-rs/core/src/tools/context.rs",
+                                 result_profile["context_path"])
+                self.assertRegex(result_profile["handler_sha256"], r"^[0-9a-f]{64}$")
+                self.assertRegex(result_profile["context_sha256"], r"^[0-9a-f]{64}$")
+                self.assertEqual(
+                    {"APPLY_PATCH_OUTPUT_ON_SUCCESS", "POST_TOOL_PAYLOAD_FROM_RESULT",
+                     "POST_TOOL_RESPONSE_STRING"},
+                    set(result_profile["verified_assertions"]),
                 )
 
     def test_unknown_and_prerelease_versions_fail_closed(self) -> None:
@@ -118,12 +145,29 @@ class RegistryTests(unittest.TestCase):
                 with self.assertRaises(CompatibilityError):
                     validate_registry(invalid)
 
+    def test_apply_patch_operation_source_evidence_fails_closed(self) -> None:
+        mutations = {
+            "repository": "https://example.invalid/codex",
+            "tag": "rust-v0.0.0",
+            "commit_sha": "0" * 39,
+            "source_path": "future/path.rs",
+            "source_sha256": "0" * 63,
+            "verified_assertions": ["TOOL_USE_ID"],
+        }
+        for field, value in mutations.items():
+            with self.subTest(field=field):
+                invalid = copy.deepcopy(self.registry)
+                invalid["versions"][0]["native_apply_patch_operation"][field] = value
+                with self.assertRaises(CompatibilityError):
+                    validate_registry(invalid)
+
     def test_profile_values_and_types_fail_closed(self) -> None:
         mutations = [
             ("marketplace", "local-interface-v2", "emit_owner", 0),
             ("plugin_cli", "remote-capable-v2", "required_commands", ["plugin_add"]),
             ("plugin_json", "plugin-list-v1", "top_level_fields", ["installed"]),
             ("hook", "hook-json-v1", "deny_wire_fields", ["permissionDecision"]),
+            ("apply_patch_result", "result-v153", "handler_sha256", "0" * 63),
         ]
         for group, name, field, value in mutations:
             with self.subTest(group=group, field=field):
@@ -182,7 +226,7 @@ class RegistryTests(unittest.TestCase):
 class PluginListNormalizerTests(unittest.TestCase):
     PACKAGE = "codex-cross-project-engineering-assistant"
     MARKETPLACE = "cp-assistant-local"
-    VERSION = "7.6.2"
+    VERSION = "7.7.0"
 
     def setUp(self) -> None:
         registry = load_registry(REGISTRY_PATH)

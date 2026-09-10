@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "status": "FULL_LOCAL_CANDIDATE_PASS",
+  "version": "7.7.0",
+  "evidence_scope": "local-candidate",
+  "checked_on": "2026-09-10",
+  "focused_operation_tests": {"tests": 16, "result": "PASS"},
+  "focused_hook_tests": {"tests": 19, "result": "PASS"},
+  "focused_installer_compatibility_tests": {"tests": 59, "result": "PASS"},
+  "full_local_wrapper_rerun": {
+    "result": "PASS",
+    "package_tests": 327,
+    "runtime_tests": 179,
+    "python": "3.13.15"
+  },
+  "official_hook_source_evidence": {
+    "result": "PASS",
+    "verified_versions": 11,
+    "coverage": "async, Pre/Post schema, successful ApplyPatchToolOutput, PostTool payload, string response",
+    "report_sha256": "b6663db0f194c8b58b698b05c95b7def2903bd22d73d39ee670a45dd77828591"
+  },
+  "disabled_hot_path_performance": {
+    "samples": 50,
+    "p50_ms": 82.15,
+    "p95_ms": 92.05,
+    "p99_ms": 269.76,
+    "result": "PASS"
+  },
+  "independent_review": "LOGICAL_READONLY_ROUND_2_PASS",
+  "review_packet_sha256": "dec00e6563dad6df998da4ad87c0e6ff5eb9c3795accbbca306dbdcb812d580e",
+  "publication": "NOT_EVALUATED",
+  "account_installation": "NOT_EVALUATED",
+  "fresh_task": "NOT_EVALUATED"
+}

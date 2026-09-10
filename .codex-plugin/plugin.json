@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.6.2",
-  "description": "跨项目长期技术助手 V7.6.2：Hook 非阻断热修复与旧门禁隔离。",
+  "version": "7.7.0",
+  "description": "跨项目长期技术助手 V7.7.0：Operation v2 写前协议、双 ID 许可与 PostTool 结果对账。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.6.2"
+VERSION = "7.7.0"
 MARKETPLACE = "cp-assistant-local"
 COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, VERSION)
@@ -500,10 +500,33 @@ def _native_async_user_prompt_submit_supported(profile: Optional[Mapping[str, An
     )
 
 
+def _native_apply_patch_operation_supported(profile: Optional[Mapping[str, Any]]) -> bool:
+    """中文：验证冻结的官方 apply_patch Pre/Post schema 证据。
+
+    English: Require frozen official Pre/Post apply_patch schema evidence.
+    """
+    capability = (profile or {}).get("native_apply_patch_operation")
+    return (
+        isinstance(capability, Mapping)
+        and capability.get("status") == "SUPPORTED"
+        and capability.get("evidence") == "OFFICIAL_SOURCE_TAG"
+        and capability.get("registration") == "REQUIRED_APPLY_PATCH_PRE_POST"
+        and isinstance((profile or {}).get("apply_patch_result_profile"), str)
+    )
+
+
 def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     command = '"%s" "%s"' % (sys.executable.replace('"', '\\"'), str(script_path).replace('"', '\\"'))
+    gate_path = script_path.with_name("cp_gate.py")
+    gate_command = '"%s" "%s"' % (
+        sys.executable.replace('"', '\\"'), str(gate_path).replace('"', '\\"'),
+    )
     fragment = {
-        "PreToolUse": [{"matcher": "Agent|spawn_agent|apply_patch|Edit|Write", "hooks": [{"type": "command", "command": command, "timeout": 5}]}],
+        "PreToolUse": [
+            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": command, "timeout": 5}]},
+            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_command + " PreToolUse", "timeout": 5}]},
+        ],
+        "PostToolUse": [{"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_command + " PostToolUse", "timeout": 5}]}],
         "SubagentStart": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "Stop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
@@ -563,7 +586,8 @@ def _is_managed_hook_entry(entry: Any) -> bool:
         if not isinstance(hook, dict):
             continue
         command = str(hook.get("command") or "").replace("\\", "/").lower()
-        if "cp-assistant-hooks/cp_hook.py" in command:
+        if ("cp-assistant-hooks/cp_hook.py" in command
+                or "cp-assistant-hooks/cp_gate.py" in command):
             return True
     return False
 
@@ -1044,6 +1068,7 @@ def _probe_plugin_host() -> Dict[str, Any]:
         "plugin_cli_profile": version_profile["plugin_cli_profile"] if version_profile else None,
         "plugin_json_profile": version_profile["plugin_json_profile"] if version_profile else None,
         "hook_profile": version_profile["hook_profile"] if version_profile else None,
+        "apply_patch_result_profile": version_profile["apply_patch_result_profile"] if version_profile else None,
         "commands": commands,
         "plugin_list_contract": list_ok,
     }
@@ -1091,7 +1116,7 @@ def _host_binding(profile: Mapping[str, Any]) -> Dict[str, Any]:
     keys = (
         "codex_version", "executable_path", "executable_sha256", "registry_schema",
         "registry_digest", "marketplace_profile", "plugin_cli_profile",
-        "plugin_json_profile", "hook_profile", "commands", "plugin_list_contract",
+        "plugin_json_profile", "hook_profile", "apply_patch_result_profile", "commands", "plugin_list_contract",
         "capability_digest",
     )
     return {key: profile.get(key) for key in keys}
@@ -1100,7 +1125,7 @@ def _host_binding(profile: Mapping[str, Any]) -> Dict[str, Any]:
 _HOST_BINDING_KEYS = {
     "codex_version", "executable_path", "executable_sha256", "registry_schema",
     "registry_digest", "marketplace_profile", "plugin_cli_profile",
-    "plugin_json_profile", "hook_profile", "commands", "plugin_list_contract",
+    "plugin_json_profile", "hook_profile", "apply_patch_result_profile", "commands", "plugin_list_contract",
     "capability_digest",
 }
 _HOST_COMMAND_KEYS = {
@@ -1132,7 +1157,8 @@ def _validate_host_binding(binding: Any) -> bool:
         return False
     if binding.get("registry_digest") != canonical_digest(COMPATIBILITY_REGISTRY):
         return False
-    for key in ("marketplace_profile", "plugin_cli_profile", "plugin_json_profile", "hook_profile"):
+    for key in ("marketplace_profile", "plugin_cli_profile", "plugin_json_profile",
+                "hook_profile", "apply_patch_result_profile"):
         if binding.get(key) != version_profile[key]:
             return False
     commands = binding.get("commands")
@@ -1291,6 +1317,8 @@ def _require_plugin_host() -> Dict[str, Any]:
         raise InstallError("Plugin 宿主兼容档案无效，拒绝静态 async Hook 安装") from exc
     if not _native_async_user_prompt_submit_supported(version_profile):
         raise InstallError("当前 Codex 版本缺少已验证的 UserPromptSubmit async 能力，拒绝 Plugin 安装")
+    if not _native_apply_patch_operation_supported(version_profile):
+        raise InstallError("当前 Codex 版本缺少已验证的 apply_patch Pre/Post 能力，拒绝 Plugin 安装")
     if not profile["version_contract_ok"] or profile["command_contract_errors"]:
         raise InstallError(
             "Codex CLI 版本或 Plugin 子命令摘要与冻结兼容注册表不一致，拒绝安装: %s" %
@@ -1702,10 +1730,11 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
             if not _io_path(plugin/"hooks"/"seal_worker.py").is_file(): errors.append("缺少延迟封印 Worker")
             if not _io_path(plugin/"hooks"/"cp_gate.py").is_file(): errors.append("缺少流程门禁 Worker")
             if os.name == "nt" and not _io_path(plugin/"hooks"/"cp_hook.cmd").is_file(): errors.append("缺少 Windows Hook 启动器")
+            if os.name == "nt" and not _io_path(plugin/"hooks"/"cp_gate.cmd").is_file(): errors.append("缺少 Windows 文件门禁启动器")
             if _io_path(plugin/"hooks"/"hooks.json").is_file():
                 hook_manifest = load_json(plugin/"hooks"/"hooks.json", {}) or {}
                 hook_groups = hook_manifest.get("hooks") or {}
-                for hook_name in ("UserPromptSubmit", "PreToolUse", "SubagentStart", "SubagentStop", "Stop", "Interrupt", "SessionEnd"):
+                for hook_name in ("UserPromptSubmit", "PreToolUse", "PostToolUse", "SubagentStart", "SubagentStop", "Stop", "Interrupt", "SessionEnd"):
                     entries = hook_groups.get(hook_name) or []
                     commands = [
                         hook.get("commandWindows", "")
@@ -1713,12 +1742,20 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                         for hook in (entry.get("hooks") or [])
                         if isinstance(hook, dict)
                     ]
-                    if os.name == "nt" and not any("cp_hook.cmd" in command for command in commands):
+                    launcher = "cp_gate.cmd" if hook_name == "PostToolUse" else "cp_hook.cmd"
+                    if os.name == "nt" and not any(launcher in command for command in commands):
                         errors.append("Windows Hook 启动命令缺失 %s" % hook_name)
-                    quoted_prefix = 'cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\cp_hook.cmd" '
+                    quoted_prefix = f'cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\{launcher}" '
                     if os.name == "nt" and not any(command.startswith(quoted_prefix) and command.endswith('"')
                                                      for command in commands):
                         errors.append("Windows Hook 启动路径未完整引用 %s" % hook_name)
+                pre_commands = [
+                    hook.get("commandWindows", "")
+                    for entry in (hook_groups.get("PreToolUse") or [])
+                    for hook in (entry.get("hooks") or []) if isinstance(hook, dict)
+                ]
+                if os.name == "nt" and not any("cp_gate.cmd" in command for command in pre_commands):
+                    errors.append("Windows PreToolUse 缺少文件门禁启动命令")
             active, detail = _plugin_activation_status(VERSION)
             if not active: errors.append("Plugin 未被 Codex 实际安装并启用: %s" % detail)
             try:

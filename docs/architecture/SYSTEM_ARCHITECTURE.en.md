@@ -1,8 +1,8 @@
 <!-- Generated from locales/en/docs/architecture/SYSTEM_ARCHITECTURE.md; edit that source and run scripts/documentation.py sync. -->
 
-# V7.6 Current System Architecture and Security Boundaries
+# V7.7 Current System Architecture and Security Boundaries
 
-> Status: `active`. This page describes the current V7.6.2 package architecture. Earlier design and release evidence is retained only for historical traceability.
+> Status: `active`. This page describes the current V7.7.0 package architecture. Earlier design and release evidence is retained only for historical traceability.
 
 ## 1. Layers
 
@@ -24,7 +24,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-The package version is V7.6.2. Names such as `TaskOutcomeEvent V3` and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
+The package version is V7.7.0. Names such as `TaskOutcomeEvent V3`, Operation v2, and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
 
 ## 2. Skill routing
 
@@ -99,7 +99,7 @@ A proposal superseded by newer evidence may become `SUPERSEDED`. No state change
 
 ## Optional project gate and effective loading
 
-The registration contains seven entry points, while project gates default to disabled. In V7.6.2, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains entirely host-controlled; none of them reads or mutates a legacy GateTask. `PreToolUse` returns `LEGACY_WRITE_ORIGIN_UNAVAILABLE` only when a native write tool is used while the legacy policy remains `enabled=true`; unconfigured or disabled policies remain neutral.
+The registration contains eight entry points, while project gates default to disabled. In V7.7.0, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances repository-external Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy. A creates an origin and is denied, B atomically binds READY, and completion accepts only B's receipt. Unconfigured or disabled policies remain neutral.
 
 ```text
 Unconfigured or disabled ───────────────→ native writes preserve host behavior
@@ -107,6 +107,6 @@ Legacy enabled + native write tool ────→ deny LEGACY_WRITE_ORIGIN_UNAV
 UserPromptSubmit / Stop / Interrupt ───→ do not consume legacy GateTask control state
 ```
 
-Configured `enabled=true`, a loaded Plugin, and semantic suitability are separate conclusions. Legacy `prepare/finish/check` receipts cannot authorize native writes in V7.6.2. An already-open session can retain an older Plugin snapshot, so verify actual behavior in a new task after upgrade. Entry points outside controlled write tools do not have guaranteed pre-write interception.
+Configured `enabled=true`, a loaded Plugin, and semantic suitability are separate conclusions. Legacy `prepare/finish/check` and GateTask v1 receipts cannot authorize Operation v2 writes. An open session can retain an older Plugin snapshot, so verify actual behavior in a fresh task after upgrade. Hook permission and tool side effects are not atomic, and shell/MCP entry points do not have guaranteed pre-write interception.
 
 All 11 Codex CLI versions in the frozen window have per-version official source evidence for UserPromptSubmit async behavior; Desktop and other real hosts still require separate readback. See the [capability index and workflow entry](../CAPABILITY_INDEX.en.md) for legacy gate enable/disable entry points, but this patch does not restore the legacy task lifecycle as write authorization.
