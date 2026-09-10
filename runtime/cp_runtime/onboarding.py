@@ -183,6 +183,10 @@ class OnboardingStore:
             require(current is not None and current["nonce"] == nonce, "ONBOARDING_NONCE_MISMATCH")
             now = self._now(current["last_observed_at"])
             if current["state"] == choice:
+                if choice == "DECLINED":
+                    # 中文：已持久化的拒绝也是取消意图；重复响应必须补偿上次未完成的 scan 取消。
+                    # English: A persisted decline is also a cancel intent; replay compensates an incomplete scan cancel.
+                    self._cancel_scan_locked("USER_DECLINED")
                 return current
             require(current["revision"] == expected_revision, "ONBOARDING_REVISION_CONFLICT")
             if current["state"] == "OFFERED":
@@ -224,49 +228,62 @@ class OnboardingStore:
     def scan_status(self) -> dict[str, Any] | None:
         return self._read(self.scan_path, "OnboardingScan")
 
+    @staticmethod
+    def _require_accepted_offer(offer: dict[str, Any] | None, scan: dict[str, Any]) -> None:
+        require(offer is not None and offer["state"] == "ACCEPTED"
+                and offer["persistence_status"] == "ACCEPTED_PERSISTED", "ONBOARDING_NOT_ACCEPTED")
+        require(scan["offer_ref"] == offer["offer_ref"] and scan["offer_revision"] == offer["revision"]
+                and scan["scope_digest"] == offer["scope_digest"], "ONBOARDING_SCAN_OFFER_STALE")
+
     def claim_scan(self, owner: str, lease_seconds: int = 120) -> dict[str, Any]:
         owner = validate_identifier(owner, "owner")
         require(type(lease_seconds) is int and 5 <= lease_seconds <= 300, "ONBOARDING_SCAN_LEASE")
-        with OwnerTokenLock(self.scan_path):
-            current = self._read(self.scan_path, "OnboardingScan")
-            require(current is not None, "ONBOARDING_SCAN_MISSING")
-            now = self._now(current["last_observed_at"])
-            takeover = current["state"] == "RUNNING" and now >= _time(current["lease"]["expires_at"])
-            require(current["state"] == "QUEUED" or takeover, "ONBOARDING_SCAN_NOT_CLAIMABLE")
-            require(current["attempts"] < 3, "ONBOARDING_SCAN_ATTEMPTS")
-            token = secrets.token_hex(24)
-            generation = (current["lease"]["generation"] + 1) if takeover else (current["attempts"] + 1)
-            value = {**{key: copy.deepcopy(current[key]) for key in current if key != "integrity"},
-                     "revision": current["revision"] + 1, "state": "RUNNING", "attempts": current["attempts"] + 1,
-                     "lease": {"token_sha256": _lease_hash(token), "generation": generation, "owner": owner,
-                               "expires_at": _iso(now + timedelta(seconds=lease_seconds))},
-                     "last_observed_at": _iso(now), "reason": ""}
-            result = _write(self.scan_path, value, STATE_LIMIT)
-            self._validate_scan(result)
-            return {"scan": result, "lease_token": token}
+        with OwnerTokenLock(self.offer_path):
+            offer = self._read(self.offer_path, "OnboardingOffer")
+            with OwnerTokenLock(self.scan_path):
+                current = self._read(self.scan_path, "OnboardingScan")
+                require(current is not None, "ONBOARDING_SCAN_MISSING")
+                self._require_accepted_offer(offer, current)
+                now = self._now(current["last_observed_at"])
+                takeover = current["state"] == "RUNNING" and now >= _time(current["lease"]["expires_at"])
+                require(current["state"] == "QUEUED" or takeover, "ONBOARDING_SCAN_NOT_CLAIMABLE")
+                require(current["attempts"] < 3, "ONBOARDING_SCAN_ATTEMPTS")
+                token = secrets.token_hex(24)
+                generation = (current["lease"]["generation"] + 1) if takeover else (current["attempts"] + 1)
+                value = {**{key: copy.deepcopy(current[key]) for key in current if key != "integrity"},
+                         "revision": current["revision"] + 1, "state": "RUNNING", "attempts": current["attempts"] + 1,
+                         "lease": {"token_sha256": _lease_hash(token), "generation": generation, "owner": owner,
+                                   "expires_at": _iso(now + timedelta(seconds=lease_seconds))},
+                         "last_observed_at": _iso(now), "reason": ""}
+                result = _write(self.scan_path, value, STATE_LIMIT)
+                self._validate_scan(result)
+                return {"scan": result, "lease_token": token}
 
     def checkpoint(self, lease_token: str, generation: int, cancel_epoch: int, cursor: str,
                    coverage: Mapping[str, Any], commit: Callable[[], Any] | None = None,
                    lease_seconds: int = 120) -> dict[str, Any]:
         cursor = validate_identifier(cursor, "scan cursor")
         require(isinstance(coverage, Mapping), "ONBOARDING_SCAN_COVERAGE")
-        with OwnerTokenLock(self.scan_path):
-            current = self._read(self.scan_path, "OnboardingScan")
-            require(current is not None and current["state"] == "RUNNING", "ONBOARDING_SCAN_NOT_RUNNING")
-            now = self._now(current["last_observed_at"])
-            lease = current["lease"]
-            require(lease["token_sha256"] == _lease_hash(lease_token) and lease["generation"] == generation,
-                    "LEASE_FENCED")
-            require(current["cancel_epoch"] == cancel_epoch, "SCAN_CANCELLED")
-            require(now < _time(lease["expires_at"]), "LEASE_EXPIRED")
-            projection = commit() if commit is not None else None
-            value = {**{key: copy.deepcopy(current[key]) for key in current if key != "integrity"},
-                     "revision": current["revision"] + 1, "cursor": cursor, "coverage": dict(coverage),
-                     "lease": {**lease, "expires_at": _iso(now + timedelta(seconds=lease_seconds))},
-                     "last_observed_at": _iso(now)}
-            result = _write(self.scan_path, value, STATE_LIMIT)
-            self._validate_scan(result)
-            return {"scan": result, "projection": projection}
+        with OwnerTokenLock(self.offer_path):
+            offer = self._read(self.offer_path, "OnboardingOffer")
+            with OwnerTokenLock(self.scan_path):
+                current = self._read(self.scan_path, "OnboardingScan")
+                require(current is not None and current["state"] == "RUNNING", "ONBOARDING_SCAN_NOT_RUNNING")
+                self._require_accepted_offer(offer, current)
+                now = self._now(current["last_observed_at"])
+                lease = current["lease"]
+                require(lease["token_sha256"] == _lease_hash(lease_token) and lease["generation"] == generation,
+                        "LEASE_FENCED")
+                require(current["cancel_epoch"] == cancel_epoch, "SCAN_CANCELLED")
+                require(now < _time(lease["expires_at"]), "LEASE_EXPIRED")
+                projection = commit() if commit is not None else None
+                value = {**{key: copy.deepcopy(current[key]) for key in current if key != "integrity"},
+                         "revision": current["revision"] + 1, "cursor": cursor, "coverage": dict(coverage),
+                         "lease": {**lease, "expires_at": _iso(now + timedelta(seconds=lease_seconds))},
+                         "last_observed_at": _iso(now)}
+                result = _write(self.scan_path, value, STATE_LIMIT)
+                self._validate_scan(result)
+                return {"scan": result, "projection": projection}
 
     def finish_scan(self, lease_token: str, generation: int, cancel_epoch: int, state: str,
                     coverage: Mapping[str, Any], reason: str = "") -> dict[str, Any]:
@@ -275,24 +292,27 @@ class OnboardingStore:
         reason = validate_identifier(reason, "scan reason") if reason else ""
         if state == "COMPLETED":
             require(coverage.get("complete") is True, "ONBOARDING_SCAN_INCOMPLETE")
-        with OwnerTokenLock(self.scan_path):
-            current = self._read(self.scan_path, "OnboardingScan")
-            require(current is not None, "ONBOARDING_SCAN_MISSING")
-            if current["state"] == state and current["coverage"] == dict(coverage):
-                return current
-            require(current["state"] == "RUNNING", "ONBOARDING_SCAN_NOT_RUNNING")
-            lease = current["lease"]
-            require(lease["token_sha256"] == _lease_hash(lease_token) and lease["generation"] == generation,
-                    "LEASE_FENCED")
-            require(current["cancel_epoch"] == cancel_epoch, "SCAN_CANCELLED")
-            now = self._now(current["last_observed_at"])
-            require(now < _time(lease["expires_at"]), "LEASE_EXPIRED")
-            value = {**{key: copy.deepcopy(current[key]) for key in current if key != "integrity"},
-                     "revision": current["revision"] + 1, "state": state, "coverage": dict(coverage),
-                     "lease": None, "reason": reason, "last_observed_at": _iso(now)}
-            result = _write(self.scan_path, value, STATE_LIMIT)
-            self._validate_scan(result)
-            return result
+        with OwnerTokenLock(self.offer_path):
+            offer = self._read(self.offer_path, "OnboardingOffer")
+            with OwnerTokenLock(self.scan_path):
+                current = self._read(self.scan_path, "OnboardingScan")
+                require(current is not None, "ONBOARDING_SCAN_MISSING")
+                self._require_accepted_offer(offer, current)
+                if current["state"] == state and current["coverage"] == dict(coverage):
+                    return current
+                require(current["state"] == "RUNNING", "ONBOARDING_SCAN_NOT_RUNNING")
+                lease = current["lease"]
+                require(lease["token_sha256"] == _lease_hash(lease_token) and lease["generation"] == generation,
+                        "LEASE_FENCED")
+                require(current["cancel_epoch"] == cancel_epoch, "SCAN_CANCELLED")
+                now = self._now(current["last_observed_at"])
+                require(now < _time(lease["expires_at"]), "LEASE_EXPIRED")
+                value = {**{key: copy.deepcopy(current[key]) for key in current if key != "integrity"},
+                         "revision": current["revision"] + 1, "state": state, "coverage": dict(coverage),
+                         "lease": None, "reason": reason, "last_observed_at": _iso(now)}
+                result = _write(self.scan_path, value, STATE_LIMIT)
+                self._validate_scan(result)
+                return result
 
     def _cancel_scan_locked(self, reason: str) -> dict[str, Any] | None:
         reason = validate_identifier(reason, "scan reason")

@@ -332,12 +332,23 @@ class OwnerTokenLock:
         try:
             descriptor = os.open(native_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             try:
-                os.write(descriptor, b"0"); os.fsync(descriptor)
+                try:
+                    os.write(descriptor, b"0"); os.fsync(descriptor)
+                except PermissionError:
+                    # 中文：Windows 安全软件可能在 O_EXCL 创建后短暂拒绝首写；锁句柄打开后补齐字节。
+                    # English: Windows security software may transiently deny the first write after O_EXCL creation.
+                    if os.name != "nt":
+                        raise
             finally:
                 os.close(descriptor)
         except FileExistsError:
             pass
-        self.handle = open(native_path, "r+b")
+        self.handle = open(native_path, "a+b")
+        self.handle.seek(0, os.SEEK_END)
+        if self.handle.tell() == 0:
+            self.handle.write(b"0")
+            self.handle.flush()
+            os.fsync(self.handle.fileno())
         while True:
             try:
                 self.handle.seek(0)

@@ -1,6 +1,6 @@
 # 受控演进操作手册
 
-状态：`active`，适用于 V<!-- cp-fact:package-version -->7.7.0<!-- /cp-fact -->。默认与显式策略统一为 `v7.4.3-default-1`。所有提案始终保持 `execution_authorization=NONE`。
+状态：`active`，适用于 V<!-- cp-fact:package-version -->7.8.0<!-- /cp-fact -->。默认与显式策略统一为 `v7.4.3-default-1`。所有提案始终保持 `execution_authorization=NONE`。
 
 ## 1. 任务反馈
 

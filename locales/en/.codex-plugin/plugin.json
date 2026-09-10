@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.7.0",
-  "description": "Cross-project engineering assistant V7.7.0: Operation v2 write preparation and PostTool result reconciliation.",
+  "version": "7.8.0",
+  "description": "Cross-project engineering assistant V7.8.0: AUTO capability registry, first-use onboarding, scoped review, and per-feature recovery.",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

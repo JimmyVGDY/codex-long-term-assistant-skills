@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：构建并验证字节级可复现的 V7.7.0 语言发行包。
+"""中文：构建并验证字节级可复现的 V7.8.0 语言发行包。
 
-English: Build and verify byte-reproducible V7.7.0 locale-specific archives.
+English: Build and verify byte-reproducible V7.8.0 locale-specific archives.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from runtime_localization import RuntimeLocalizationError, load_mapping, localiz
 from release_source import MANIFEST_NAME as SOURCE_MANIFEST, SourceError, capture, relative_path
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "7.7.0"
+VERSION = "7.8.0"
 PACKAGE = "codex-cross-project-engineering-assistant"
 SUPPORTED_LOCALES = ("zh-CN", "en")
 FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)
@@ -257,7 +257,7 @@ def reproducible_build(output: Path, witness: Path, locale: str) -> Dict[str, An
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.7.0 deterministic bilingual release builder")
+    parser = argparse.ArgumentParser(description="V7.8.0 deterministic bilingual release builder")
     subparsers = parser.add_subparsers(dest="command", required=True)
     build_parser = subparsers.add_parser("build")
     build_parser.add_argument("--output", required=True)

@@ -1,8 +1,8 @@
 <!-- Generated from locales/en/docs/architecture/SYSTEM_ARCHITECTURE.md; edit that source and run scripts/documentation.py sync. -->
 
-# V7.7 Current System Architecture and Security Boundaries
+# V7.8 Current System Architecture and Security Boundaries
 
-> Status: `active`. This page describes the current V7.7.0 package architecture. Earlier design and release evidence is retained only for historical traceability.
+> Status: `active`. This page describes the current V7.8.0 package architecture. Earlier design and release evidence is retained only for historical traceability.
 
 ## 1. Layers
 
@@ -24,7 +24,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-The package version is V7.7.0. Names such as `TaskOutcomeEvent V3`, Operation v2, and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
+The package version is V7.8.0. Names such as `TaskOutcomeEvent V3`, Operation v2, and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
 
 ## 2. Skill routing
 
@@ -99,7 +99,7 @@ A proposal superseded by newer evidence may become `SUPERSEDED`. No state change
 
 ## Optional project gate and effective loading
 
-The registration contains eight entry points, while project gates default to disabled. In V7.7.0, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances repository-external Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy. A creates an origin and is denied, B atomically binds READY, and completion accepts only B's receipt. Unconfigured or disabled policies remain neutral.
+The registration contains eight entry points, while project gates default to disabled. In V7.8.0, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances repository-external Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy. A creates an origin and is denied, B atomically binds READY, and completion accepts only B's receipt. Unconfigured or disabled policies remain neutral.
 
 ```text
 Unconfigured or disabled ───────────────→ native writes preserve host behavior

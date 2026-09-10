@@ -42,7 +42,7 @@ Before closing, check affected indexed entries and newly added public capabiliti
 
 Load the default candidate count, not the entire index. Expand terms or scopes only for specific evidence gaps. Add no fixed reviewers, model calls, or background scans. Prefer existing command counters for enumeration, reads, bytes, and time. Unavailable tool-call or token counts stay UNKNOWN. The index itself does not change hook or budget protocols; the explicit optional gate below integrates separately with the host.
 
-## V7.7.0 Operation v2 Write Protocol
+## V7.8.0 Operation v2 Write Protocol
 
 The gate is disabled by default; ordinary conversations, unconfigured projects, and disabled policies stay neutral. An enabled policy controls only the officially verified canonical `apply_patch` path. It does not claim coverage for shell, MCP, or unknown writers and grants no commit, push, deployment, or business-data authority.
 

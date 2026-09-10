@@ -2,7 +2,7 @@
 
 [当前入口](USER_GUIDE.md)
 
-# Codex 跨项目长期技术助手 V7.7 使用说明
+# Codex 跨项目长期技术助手 V7.8 使用说明
 
 ## 组件复用的使用顺序
 
@@ -74,4 +74,4 @@ V7.6.2 的 Plugin 窗口是 Codex CLI 0.153.4 与此前十个稳定发行版，�
 
 ## 能力复用与可选门禁
 
-通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭；V7.7.0 只在显式启用策略下把规范 `apply_patch` 接入 Operation v2：A 创建起点并拒绝，准备后由不同 B 领取许可，匹配的 PostToolUse 回执后才能完成核验。旧 GateTask 永不转换为新许可。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.7.0/VALIDATION_REPORT.md)。
+通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭；V7.8.0 只在显式启用策略下把规范 `apply_patch` 接入 Operation v2：A 创建起点并拒绝，准备后由不同 B 领取许可，匹配的 PostToolUse 回执后才能完成核验。旧 GateTask 永不转换为新许可。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.8.0/VALIDATION_REPORT.md)。

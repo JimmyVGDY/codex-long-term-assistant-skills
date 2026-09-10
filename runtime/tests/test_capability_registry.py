@@ -10,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import test_capability_store as fixtures
 from cp_runtime.capability_registry import (PreferenceStore, load_registry, migrate_legacy_classification,
-                                            read_install_migration, select_capability)
+                                            read_install_migration, select_capability, validate_registry_coverage)
 from cp_runtime.capability_store import CapabilityError
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -47,6 +47,8 @@ class CapabilityRegistryTests(unittest.TestCase):
             (lambda value: value["entries"].pop(), "REGISTRY_COUNT"),
             (lambda value: value["entries"][0].update(capability_id="C25"), "REGISTRY_ID_ORDER"),
             (lambda value: value["entries"][1].update(name=value["entries"][0]["name"]), "REGISTRY_NAME"),
+            (lambda value: value["entries"][1].update(name="renamed-ai-skill"), "REGISTRY_NAME"),
+            (lambda value: value["entries"][19].update(entrypoints=["scripts/missing-installer.py"]), "REGISTRY_ENTRYPOINT_MAPPING"),
         ):
             with self.subTest(code=code):
                 value = json.loads(REGISTRY.read_text(encoding="utf-8"))
@@ -55,6 +57,13 @@ class CapabilityRegistryTests(unittest.TestCase):
                 path.write_text(json.dumps(value), encoding="utf-8")
                 with self.assertRaisesRegex(CapabilityError, code):
                     load_registry(path)
+
+    def test_registry_coverage_validates_real_entrypoints_skills_reviewers_hooks_and_cli(self):
+        result = validate_registry_coverage(self.registry, ROOT)
+        self.assertEqual({"status": "VALID", "capability_count": 25, "skill_count": 10,
+                          "reviewer_count": 7, "hook_count": 8, "public_cli_families": 9}, result)
+        c20 = next(item for item in self.registry["entries"] if item["capability_id"] == "C20")
+        self.assertTrue(all((ROOT / entrypoint).is_file() for entrypoint in c20["entrypoints"]))
 
     def test_selector_full_degraded_max_and_explicit_off(self):
         c07 = next(entry for entry in self.registry["entries"] if entry["capability_id"] == "C07")

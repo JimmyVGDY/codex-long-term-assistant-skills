@@ -48,7 +48,7 @@ class PackageManagerUxTests(unittest.TestCase):
         text = MANAGER.read_text(encoding="utf-8")
         self.assertLess(text.index("MINIMUM_PYTHON = (3, 11)"), text.index("from codex_compatibility import"))
         self.assertIn("VERSION = release_version()", text)
-        self.assertNotIn('VERSION = "7.7.0"', text)
+        self.assertNotIn('VERSION = "7.8.0"', text)
         self.assertEqual(json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"],
                          package_manager.VERSION)
 

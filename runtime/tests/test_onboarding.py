@@ -56,6 +56,13 @@ class OnboardingTests(unittest.TestCase):
         self.assertEqual(("OFFERED", 0, "OFFER_PERSISTED"),
                          (first["state"], first["revision"], first["persistence_status"]))
 
+    def test_offer_owner_and_scope_are_single_and_unanswered_offer_cannot_queue(self):
+        self.offer()
+        with self.assertRaisesRegex(CapabilityError, "ONBOARDING_OWNER_CONFLICT"):
+            self.onboarding.create_offer(["runtime"], "other-owner", 120)
+        with self.assertRaisesRegex(CapabilityError, "ONBOARDING_NOT_ACCEPTED"):
+            self.onboarding.queue_scan()
+
     def test_expiry_equality_rejects_and_renewal_fences_old_nonce(self):
         offered = self.offer(60)
         self.clock.advance(60)
@@ -75,6 +82,13 @@ class OnboardingTests(unittest.TestCase):
         with self.assertRaisesRegex(CapabilityError, "CLOCK_ROLLBACK"):
             self.onboarding.respond("ACCEPTED", offered["nonce"], 0,
                                      "HOST_STRUCTURED_REPLY", "host-ref")
+
+    def test_wrong_nonce_never_accepts_and_does_not_change_offer(self):
+        offered = self.offer()
+        with self.assertRaisesRegex(CapabilityError, "ONBOARDING_NONCE_MISMATCH"):
+            self.onboarding.respond("ACCEPTED", "0" * 48, 0,
+                                     "HOST_STRUCTURED_REPLY", "host-ref")
+        self.assertEqual(offered, self.onboarding.offer_status())
 
     def test_same_choice_is_idempotent_and_different_reference_does_not_replace_fact(self):
         offered = self.offer()
@@ -113,6 +127,35 @@ class OnboardingTests(unittest.TestCase):
         with self.assertRaisesRegex(CapabilityError, "ONBOARDING_SCAN_NOT_RUNNING"):
             self.onboarding.checkpoint(claimed["lease_token"], scan["lease"]["generation"],
                                        scan["cancel_epoch"], "late", {"complete": True})
+
+    def test_decline_retry_compensates_scan_cancel_write_failure_and_fences_worker(self):
+        offered = self.offer()
+        self.accept(offered)
+        self.onboarding.queue_scan()
+        claimed = self.onboarding.claim_scan("scan-worker", 30)
+        scan = claimed["scan"]
+        original = onboarding_module._write
+        failed = {"value": False}
+
+        def fail_cancel_once(path, value, limit):
+            if path == self.onboarding.scan_path and value.get("state") == "CANCELLED" and not failed["value"]:
+                failed["value"] = True
+                raise CapabilityError("GATE_COMMIT_UNCERTAIN")
+            return original(path, value, limit)
+
+        with patch.object(onboarding_module, "_write", side_effect=fail_cancel_once):
+            with self.assertRaisesRegex(CapabilityError, "GATE_COMMIT_UNCERTAIN"):
+                self.onboarding.respond("DECLINED", offered["nonce"], 1,
+                                        "MODEL_INTERPRETED_USER_REPLY", "decline-ref")
+        self.assertEqual("DECLINED", self.onboarding.offer_status()["state"])
+        self.assertEqual("RUNNING", self.onboarding.scan_status()["state"])
+        with self.assertRaisesRegex(CapabilityError, "ONBOARDING_NOT_ACCEPTED"):
+            self.onboarding.finish_scan(claimed["lease_token"], scan["lease"]["generation"],
+                                        scan["cancel_epoch"], "COMPLETED", {"complete": True})
+        replay = self.onboarding.respond("DECLINED", offered["nonce"], 1,
+                                         "MODEL_INTERPRETED_USER_REPLY", "decline-ref")
+        self.assertEqual("DECLINED", replay["state"])
+        self.assertEqual("CANCELLED", self.onboarding.scan_status()["state"])
 
     def test_lease_takeover_fences_old_worker_and_resumes_cursor(self):
         self.accept()
@@ -184,6 +227,15 @@ class OnboardingTests(unittest.TestCase):
         self.assertEqual("OFFERED", self.onboarding.offer_status()["state"])
         with self.assertRaisesRegex(CapabilityError, "ONBOARDING_NOT_ACCEPTED"):
             self.onboarding.queue_scan()
+
+    def test_new_onboarding_state_never_changes_legacy_profile_state_or_index(self):
+        state_path = self.profile.with_name("project-state.json")
+        before = (self.profile.read_bytes(), state_path.read_bytes())
+        offered = self.offer()
+        self.accept(offered)
+        self.onboarding.queue_scan()
+        self.assertEqual(before, (self.profile.read_bytes(), state_path.read_bytes()))
+        self.assertFalse(self.store.current.exists())
 
     def test_cli_offer_and_structured_response_readback(self):
         def invoke(*args):

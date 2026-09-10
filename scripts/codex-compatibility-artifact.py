@@ -46,7 +46,7 @@ RESULT_SOURCE_ASSERTIONS = {
 
 def _read_url(url: str, limit: int) -> bytes:
     request = urllib.request.Request(
-        url, headers={"User-Agent": "codex-long-term-assistant-skills/7.7.0"},
+        url, headers={"User-Agent": "codex-long-term-assistant-skills/7.8.0"},
     )
     chunks: list[bytes] = []
     total = 0
@@ -81,7 +81,7 @@ def _official_tag_commit(tag: str) -> str:
 
 
 def verify_native_async_sources() -> dict:
-    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.7.0")
+    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.8.0")
     verified = []
     for item in registry["versions"]:
         version = item["version"]
@@ -213,7 +213,7 @@ def _write_external_report(path: Path, payload: dict) -> None:
 
 
 def download(version: str, output: Path) -> dict:
-    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.7.0")
+    registry = load_registry(ROOT / "config" / "codex-compatibility-v1.json", "7.8.0")
     profile = profile_for_version(registry, version)
     output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -225,7 +225,7 @@ def download(version: str, output: Path) -> dict:
             temporary = Path(handle.name)
             request = urllib.request.Request(
                 profile["artifact"]["tarball"],
-                headers={"User-Agent": "codex-long-term-assistant-skills/7.7.0"},
+                headers={"User-Agent": "codex-long-term-assistant-skills/7.8.0"},
             )
             with urllib.request.urlopen(request, timeout=120) as response:
                 total = 0

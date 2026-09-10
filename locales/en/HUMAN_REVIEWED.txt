@@ -344,3 +344,6 @@ docs/releases/v7.6.2/VALIDATION_REPORT.md
 docs/releases/v7.7.0/AUDIT_REPORT.md
 docs/releases/v7.7.0/RELEASE_NOTES.md
 docs/releases/v7.7.0/VALIDATION_REPORT.md
+docs/releases/v7.8.0/AUDIT_REPORT.md
+docs/releases/v7.8.0/RELEASE_NOTES.md
+docs/releases/v7.8.0/VALIDATION_REPORT.md

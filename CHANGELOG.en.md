@@ -4,6 +4,14 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.8.0 - 2026-09-10
+
+- Add the exact C01-C25 `capability-registry/1`, per-feature AUTO/BASIC/ASSISTED/FULL selection, and external explicit preferences while keeping levels, risk, and external authority independent.
+- Add `onboarding/1` and recoverable scan jobs with one offer, nonce/revision CAS, renewal, cancel epochs, lease fencing, cursor, and partial-coverage readback.
+- Add scoped-review dependency fingerprints. Unknown dynamic dependencies are `INCOMPLETE`, related changes are `STALE`, and release-wide audit remains separate.
+- Add actual Python 3.11+ preflight, per-feature doctor, read-only inventory, zero-delete state-less preview, non-Git BASIC guidance, and lazy preference migration.
+- Add exact contracts and discoverable tests for U02-U13, UX01-UX40, M01-M12, and T25-T28 while retaining V7.6.2 message-boundary and V7.7.0 Operation v2 regression coverage.
+
 ## 7.7.0 - 2026-09-10
 
 - Add repository-external Operation v2: the first `apply_patch` attempt A only creates an origin and is denied; after preparation, a different B atomically claims READY, and only its real PostToolUse receipt can proceed to completion verification.
