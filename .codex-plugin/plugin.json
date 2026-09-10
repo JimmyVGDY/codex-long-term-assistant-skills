@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
   "version": "7.8.0",
-  "description": "跨项目长期技术助手 V7.8.0：AUTO 能力注册、首次引导、范围复审与分功能自救。",
+  "description": "跨项目长期技术助手 V7.8.0：Codex 0.154.0、AUTO 能力注册、首次引导、范围复审与分功能自救。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

@@ -7,3 +7,4 @@
 - Dynamic or unresolved scoped dependencies are `INCOMPLETE`; release audit retains whole-repository freshness.
 - Postimplementation source review, cross-process fault injection, Windows/Ubuntu Python 3.11/3.13, public artifacts, and active installation still require separate evidence.
 - The initial postimplementation review found missing compensation after a persisted DECLINED response when scan cancellation failed, plus a nonexistent C20 entrypoint and incomplete registry coverage validation. After repair, 419+205 full tests, onboarding 15, registry 10, 30 lock-stress iterations, and an eight-process CAS stress passed; both Reviewers returned PASS.
+- Merging V7.7.1 main must preserve the Codex 0.154.0 registry, disabled-gate PostTool repair, compatibility tests, account-loading evidence, and complete history. V7.8.0 reruns affected validation instead of reusing pre-merge counts.

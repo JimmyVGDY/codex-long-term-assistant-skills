@@ -22,10 +22,10 @@ V7.8.0 adds the C01-C25 AUTO capability registry, one-time first-use onboarding,
   <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/github/license/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
-  <img alt="Codex CLI 0.153.4" src="https://img.shields.io/badge/Codex%20CLI-0.153.4-111827">
+  <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
-V7.6.2 restored the non-blocking message and Stop boundary, and V7.7.0 added Operation v2 write preparation and PostToolUse reconciliation. V7.8.0 adds AUTO/BASIC levels, first-scan consent, and open-source installation recovery. The gate remains off by default, and capability level is neither semantic correctness nor authority. The frozen Codex CLI 0.153.4 window remains unchanged.
+V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0 while fixing disabled-gate PostTool reconciliation. V7.8.0 adds AUTO/BASIC levels, first-scan consent, and open-source installation recovery. The gate remains off by default, and capability level is neither semantic correctness nor authority.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Usage example](#reproducible-usage-example) · [Compatibility](#compatibility-matrix) · [Installation](#five-minute-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -102,7 +102,7 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Native Windows Codex CLI 0.153.4 + Plugin | Current real-host anchor | The V7.8.0 source candidate covers AUTO, onboarding, migration, diagnostics, and Operation v2 regression | Account installation, restart, and fresh-task loading require separate post-release readback |
+| Native Windows Codex CLI 0.154.0 + Plugin | Current real-host anchor | The V7.8.0 source candidate covers AUTO, onboarding, migration, diagnostics, and Operation v2 regression | Account installation, restart, and fresh-task loading require separate post-release readback |
 | Windows + eleven pinned stable Codex releases | Frozen compatibility window | The 11/11 official async, Pre/Post schema, and result-response source evidence remains bound and requires release readback | The V7.8.0 cross-version real-host matrix still requires CI readback |
 | Windows / Ubuntu GitHub matrix | Release gate | The workflow is configured for both systems on Python 3.11/3.13 plus eleven-version replay | V7.8.0 CI results require readback after push and tag |
 | standalone mode | Explicit fallback | Local installation structure, inventory, non-Git BASIC, and regression coverage | V7.8.0 account installation has not run and does not establish Plugin host compatibility |
@@ -110,7 +110,7 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 
 The minimum Python version is 3.11; public CI is configured to validate both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
 
-The V7.6.0 window is `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, `0.150.0`, and `0.149.1`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
+The V7.8.0 window is `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
 ## Five-minute upgrade
 

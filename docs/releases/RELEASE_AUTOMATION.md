@@ -27,13 +27,13 @@ English: [RELEASE_AUTOMATION.en.md](RELEASE_AUTOMATION.en.md)
 下载 ZIP 后，使用 GitHub CLI 按仓库身份验证实际文件摘要及其来源证明：
 
 ```shell
-gh attestation verify Codex-Skills-V7.6.0-zh-CN.zip --repo OWNER/REPOSITORY
-gh attestation verify Codex-Skills-V7.6.0-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.7.1-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.7.1-en.zip --repo OWNER/REPOSITORY
 ```
 
 将 `OWNER/REPOSITORY` 替换为下载页面显示的仓库身份。`SHA256SUMS.txt` 用于摘要核对，`witness-*.json` 证明同一提交的两次干净构建字节一致，GitHub attestation 则把 ZIP 摘要关联到产生它的工作流身份。三者用途不同，不能互相冒充。
 
-V7.6.0 示例标题：`V7.6.0 | 组件复用索引与可选流程门禁 / Component reuse index and optional workflow gates`；实际标题以清单字段读回为准。
+V7.7.1 示例标题：`V7.7.1 | Codex CLI 0.154.0 稳定版适配 / Codex CLI 0.154.0 stable compatibility`；实际标题以清单字段读回为准。
 
 ## 发布新版本
 
@@ -56,4 +56,4 @@ V7.6.0 示例标题：`V7.6.0 | 组件复用索引与可选流程门禁 / Compon
 
 工作流不会上传历史原始 ZIP，不会自动替换既有附件，也不会绕过人工发布确认。
 
-检查清单还需确认标题来源与约束、job output/环境变量传递、Draft-only、既有 Release 不覆盖、双语资产与 provenance、Codex CLI 0.153.4 兼容边界，以及历史标题回填的独立授权和线上读回。
+检查清单还需确认标题来源与约束、job output/环境变量传递、Draft-only、既有 Release 不覆盖、双语资产与 provenance、Codex CLI 0.154.0 兼容边界，以及历史标题回填的独立授权和线上读回。

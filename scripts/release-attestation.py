@@ -27,7 +27,8 @@ from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 VERSION = "7.8.0"
-TARGET_CODEX_VERSION = "0.153.4"
+TARGET_CODEX_VERSION = "0.154.0"
+COMPATIBILITY_REGISTRY_DIGEST = "ce80bc04992bbd6d84b189966323fe00b7bb2abdf481d7366ba10114fd92f91a"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 
 
@@ -143,6 +144,7 @@ def create_attestation(
         raise AttestationError("deterministic build evidence is not bound to the target artifact")
     if unified.get("ok") is not True or unified.get("version") != VERSION \
             or unified.get("artifact_sha256") != artifact_sha256 \
+            or unified.get("compatibility_registry_digest") != COMPATIBILITY_REGISTRY_DIGEST \
             or set((unified.get("status") or {}).values()) != {"PASS"}:
         raise AttestationError("unified release verification is not valid or not artifact-bound")
     if lifecycle.get("required_sequence") != [
@@ -211,6 +213,7 @@ def create_attestation(
             "dispatch_policy": "PASS",
             "unified_release_verification": "PASS",
             "payload_identity": "PASS",
+            "compatibility_registry_digest": COMPATIBILITY_REGISTRY_DIGEST,
         },
         "security": {
             "execution_authorization": "NONE",

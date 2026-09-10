@@ -57,7 +57,7 @@ def emit_help(name):
     if os.environ.get('FAKE_HELP_DRIFT') == name: text += '\\nfuture option'
     print(text,end='')
 if args == ['--version']:
-    print(os.environ.get('FAKE_CODEX_VERSION', 'codex-cli 0.153.4')); raise SystemExit(0)
+    print(os.environ.get('FAKE_CODEX_VERSION', 'codex-cli 0.154.0')); raise SystemExit(0)
 if args[:3] == ['plugin','marketplace','add']:
     if len(args) > 3 and args[3] == '--help': emit_help('marketplace_add'); raise SystemExit(0)
     if len(args) > 3 and args[3] != '--help': market_file.write_text(args[3],encoding='utf-8')
@@ -202,7 +202,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertFalse((self.codex/'tools'/'evolution.py').exists())
 
     def test_plugin_unknown_host_rejects_static_async_payload_before_account_write(self):
-        unknown={**self.env,'FAKE_CODEX_VERSION':'codex-cli 0.154.0'}
+        unknown={**self.env,'FAKE_CODEX_VERSION':'codex-cli 0.154.1'}
         result=run(['install','--scope','user','--mode','plugin'],unknown,2)
         self.assertIn('仅支持已验证的 Codex CLI',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
@@ -450,13 +450,13 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_doctor_reads_codex_version(self):
         r=run(['doctor'],self.env)
         data=json.loads(r.stdout)
-        self.assertEqual(data['target_codex'],'0.153.4')
+        self.assertEqual(data['target_codex'],'0.154.0')
         self.assertEqual(
-            ['0.153.4','0.153.3','0.153.2','0.153.1','0.153.0','0.152.1',
-             '0.152.0','0.151.0','0.150.1','0.150.0','0.149.1'],
+            ['0.154.0','0.153.4','0.153.3','0.153.2','0.153.1','0.153.0',
+             '0.152.1','0.152.0','0.151.0','0.150.1','0.150.0'],
             data['supported_codex_versions'],
         )
-        self.assertIn('0.153.4',data['codex_version'])
+        self.assertIn('0.154.0',data['codex_version'])
 
     def test_crash_journal_recovers_and_status_is_json(self):
         crashed={**self.env, 'CP_ASSISTANT_TEST_CRASH_STAGE':'APPLYING'}
@@ -501,7 +501,12 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_host_unknown_version_fails_closed(self):
         bad={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.145.0'}
         result=run(['install','--scope','user','--mode','plugin'],bad,2)
-        self.assertIn('0.149.1',result.stderr)
+        self.assertIn('0.150.0',result.stderr)
+
+    def test_plugin_host_exited_0_149_1_fails_closed(self):
+        exited={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.149.1'}
+        result=run(['install','--scope','user','--mode','plugin'],exited,2)
+        self.assertIn('0.150.0',result.stderr)
 
     def test_plugin_host_previous_stable_version_is_supported(self):
         previous={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.152.1'}

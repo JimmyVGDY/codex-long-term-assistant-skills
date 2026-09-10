@@ -5,6 +5,8 @@ from pathlib import Path
 from codex_compatibility import load_registry
 from documentation import audit as audit_documentation
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/'runtime'))
+from cp_runtime.capability_registry import load_registry as load_capability_registry
 errors=[]
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
 if manifest.get('version')!='7.8.0': errors.append('manifest 版本不是 7.8.0')
@@ -13,12 +15,21 @@ plugin=json.loads((ROOT/'.codex-plugin'/'plugin.json').read_text(encoding='utf-8
 if plugin.get('version')!='7.8.0': errors.append('Plugin 版本不一致')
 if manifest.get('default_locale')!='zh-CN' or manifest.get('supported_locales')!=['zh-CN','en']:
     errors.append('双语发行声明无效')
-for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','7.0.0','7.1.0','7.2.0','7.3.0','7.4.0','7.4.1','7.4.2','7.4.3','7.4.4','7.4.5','7.4.6','7.5.0','7.5.1','7.6.0','7.6.1','7.6.2','7.7.0'):
+for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','7.0.0','7.1.0','7.2.0','7.3.0','7.4.0','7.4.1','7.4.2','7.4.3','7.4.4','7.4.5','7.4.6','7.5.0','7.5.1','7.6.0','7.6.1','7.6.2','7.7.0','7.7.1'):
     if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V7.8.0 升级声明' % previous)
 registry=load_registry(ROOT/'config'/'codex-compatibility-v1.json','7.8.0')
 registered=[item['version'] for item in registry['versions']]
 if manifest.get('codex_compatibility',{}).get('verified_versions')!=registered:
     errors.append('Manifest Codex 兼容窗口与注册表不一致')
+capability_registry=load_capability_registry(ROOT/'config'/'capability-registry-v1.json')
+if len(capability_registry.get('entries',[]))!=25:
+    errors.append('AUTO 能力注册表不是 C01-C25 完整映射')
+if manifest.get('authority_registry',{}).get('capability_registry')!='config/capability-registry-v1.json':
+    errors.append('Manifest 缺少 capability-registry/1 权威指针')
+acceptance=json.loads((ROOT/'config'/'r3-acceptance-v1.json').read_text(encoding='utf-8'))
+expected={'U':12,'UX':40,'M':12,'T':4}
+if acceptance.get('schema_version')!='r3-acceptance/1' or any(len(acceptance.get('groups',{}).get(key,[]))!=count for key,count in expected.items()):
+    errors.append('R3 U/UX/M/T 验收映射不完整')
 hooks=json.loads((ROOT/'hooks'/'hooks.json').read_text(encoding='utf-8')).get('hooks',{})
 required={'UserPromptSubmit','PreToolUse','PostToolUse','SubagentStart','SubagentStop','Stop','SessionEnd'}
 if not required.issubset(hooks): errors.append('生命周期 Hooks 不完整')
@@ -108,4 +119,4 @@ errors.extend('Documentation drift: ' + str(item) for item in documentation['fin
 if errors:
     for e in errors: print('[FAIL]',e)
     raise SystemExit(1)
-print('[OK] V7.8.0 语义校验通过：AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致')
+print('[OK] V7.8.0 语义校验通过：Codex 0.154.0、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致')

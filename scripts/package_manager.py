@@ -62,9 +62,9 @@ TARGET_CODEX_VERSION = str(COMPATIBILITY_REGISTRY["window_policy"]["anchor"])
 SUPPORTED_CODEX_VERSIONS = tuple(item["version"] for item in COMPATIBILITY_REGISTRY["versions"])
 REPAIRABLE_MARKETPLACE_STATE_VERSIONS = frozenset({
     "6.1.0", "6.2.0", "6.3.0", "7.2.0", "7.3.0", "7.4.0",
-    "7.6.0", "7.6.1", "7.6.2", "7.7.0",
+    "7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1",
 })
-AUTO_MIGRATION_SOURCES = frozenset({"7.6.0", "7.6.1", "7.6.2", "7.7.0"})
+AUTO_MIGRATION_SOURCES = frozenset({"7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1"})
 SKILL_DIR_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
 END = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:END -->"

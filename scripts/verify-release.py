@@ -15,10 +15,12 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, Mapping
 
+from codex_compatibility import canonical_digest, load_registry
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
 
 VERSION = "7.8.0"
-TARGET_CODEX_VERSION = "0.153.4"
+TARGET_CODEX_VERSION = "0.154.0"
+COMPATIBILITY_REGISTRY_DIGEST = "ce80bc04992bbd6d84b189966323fe00b7bb2abdf481d7366ba10114fd92f91a"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
@@ -65,9 +67,16 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
         try:
             manifest = load_manifest(package_root / MANIFEST_NAME)
             report = verify_payload(package_root, manifest, package=PACKAGE, version=VERSION)
+            registry = load_registry(
+                package_root / "config" / "codex-compatibility-v1.json", VERSION,
+            )
+            registry_digest = canonical_digest(registry)
+            if registry_digest != COMPATIBILITY_REGISTRY_DIGEST:
+                raise VerificationError("artifact compatibility registry digest mismatch")
+            report["compatibility_registry_digest"] = registry_digest
             report["locale"] = package_root.name.removeprefix("Codex-Skills-V%s-" % VERSION)
             return report
-        except PayloadIntegrityError as exc:
+        except (PayloadIntegrityError, ValueError) as exc:
             raise VerificationError("artifact payload 身份失败: %s" % exc) from exc
 
 
@@ -182,6 +191,7 @@ def verify_release(
         "version": VERSION,
         "artifact_sha256": artifact_hash,
         "payload_digest": artifact_payload["payload_digest"],
+        "compatibility_registry_digest": artifact_payload["compatibility_registry_digest"],
         "project_id": project_id,
         "repo_fingerprint": repo_fingerprint,
         "status": {

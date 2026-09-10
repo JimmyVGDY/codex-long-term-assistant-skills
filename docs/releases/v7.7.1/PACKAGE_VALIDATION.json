@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "status": "FULL_LOCAL_CANDIDATE_PASS",
+  "version": "7.7.1",
+  "evidence_scope": "local-candidate",
+  "checked_on": "2026-09-10",
+  "focused_compatibility_tests": {"tests": 19, "result": "PASS"},
+  "official_source_evidence": {"verified_versions": 11, "result": "PASS", "report_sha256": "3d1315a9576a8f938ddc5648bead8043fae4d0eb6d54e3a243efdf7f083f3d8b"},
+  "compatibility_registry_digest": "718e7b287a62a11e68dd364fafc413ed5840dd112da5491c2c9493aa7a75289d",
+  "isolated_codex_0_154_0": "PASS",
+  "full_local_validation": {"result": "PASS", "package_tests": 329, "runtime_tests": 180, "python": "3.13.15", "report_sha256": "f60201069ce0facf1e99bc2aabf6d685bfbe74124c96e60f611c21a0e596e1d4"},
+  "earlier_failures": ["TRANSIENT_WINDOWS_KEYRING_PERMISSION; focused and full reruns PASS", "TWO_LEGACY_ATTESTATION_FIXTURES; focused and final full reruns PASS"],
+  "focused_post_review_repairs": {"runtime_hook_tests": 19, "release_verifier_tests": 5, "attestation_fixture_tests": 2, "result": "PASS"},
+  "independent_postimplementation_review": "LOGICAL_READONLY_ROUND_2_PASS",
+  "review_packet_sha256": "d78f36d9f1b3eaf8b3a71e008735761f21c5237afefa51ebafdc5b28a95d6dff",
+  "account_installation": "PASS: Plugin 7.7.1 installed/enabled; HOST_COMPATIBLE; 224-file source/marketplace/cache payload match",
+  "fresh_task": "PASS: V771_FRESH_HOST_PASS; installed Skill and Plugin manifest readback; Stop Hook completed",
+  "publication": "NOT_EVALUATED"
+}

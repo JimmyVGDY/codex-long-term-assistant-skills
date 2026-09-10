@@ -15,7 +15,7 @@ from typing import Any
 
 from .atomic_io import native_path
 from .capability_gate import POLICY_LIMIT, GatePolicy, _read, worktree_key
-from .capability_operation import CapabilityOperation
+from .capability_operation import CapabilityOperation, _digest_json
 from .patch_intent import PatchIntentError, parse_apply_patch, revalidate_intent
 from .capability_store import CapabilityError, CapabilityStore, bounded_read, fields, require, safe_path, unique_json_object
 from .common import resolve_codex_home
@@ -170,6 +170,28 @@ def _trusted_repo(policy: GatePolicy, cwd: str) -> Path:
     return root
 
 
+def _disabled_post_has_inflight_operation(policy: GatePolicy, data: dict[str, Any]) -> bool:
+    """中文：停用策略保持中性，除非该 PostToolUse 必须收敛已派发的 B。
+
+    English: Keep a disabled policy neutral unless this PostToolUse must settle a dispatched B.
+    """
+    tool_use_id, session_id, turn_id, cwd = _post_recovery_binding(data)
+    _trusted_repo(policy, cwd)
+    scope = _digest_json([session_id, turn_id])[:16]
+    operation_root = safe_path(
+        policy.store.profile_path.parent / "capability-operation" /
+        policy.store.identity["worktree_id"] / scope,
+    )
+    if not native_path(operation_root).is_dir():
+        return False
+    operation = CapabilityOperation(policy, session_id, turn_id)
+    return any(
+        item["dispatch_tool_use_id"] == tool_use_id and
+        item["state"] not in {"VERIFIED", "DENIED", "CANCELLED", "EXPIRED", "OUTCOME_UNKNOWN"}
+        for item in operation._scan()
+    )
+
+
 def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
     """中文：通过 Operation v2 路由规范 apply_patch。
 
@@ -183,6 +205,12 @@ def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
         policy_record = policy.read()
         if event == "PreToolUse" and not policy_record["enabled"]:
             return {}
+        if event == "PostToolUse" and not policy_record["enabled"]:
+            try:
+                if not _disabled_post_has_inflight_operation(policy, data):
+                    return {}
+            except (CapabilityError, OSError, ValueError, KeyError):
+                return {}
         tool_use_id, session_id, turn_id, tool_input = _canonical_patch(data)
         repo = _trusted_repo(policy, str(data["cwd"]))
         operation = CapabilityOperation(policy, session_id, turn_id)

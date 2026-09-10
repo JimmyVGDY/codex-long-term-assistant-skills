@@ -2,10 +2,10 @@
 
 ## 适用范围
 
-- 目标宿主：Windows 原生 Codex CLI 0.153.4。
+- 目标宿主：Windows 原生 Codex CLI 0.154.0。
 - Python：3.11 或更高版本。
 - 推荐形态：账户级 Plugin。
-- 可升级版本：<!-- cp-fact:upgrade-sources -->7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->。
+- 可升级版本：<!-- cp-fact:upgrade-sources -->7.7.1, 7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->。
 - 受管对象：本包 Marketplace payload、manifest 条目、Plugin cache、Reviewer、全局规则和安装状态。
 
 安装器不改写 `config.toml`，不删除未知 Skill、Agent、Hook、MCP、项目上下文、Event、Snapshot、Assessment、Proposal 或历史备份。
@@ -46,7 +46,7 @@ codex plugin list --json
 
 dry-run 应明确显示：
 
-- 当前升级应读回已安装版本与 `to_version=7.6.2`；V7.6.1 升级路径必须被识别；
+- 当前升级应读回已安装版本与 `to_version=7.8.0`；V7.7.1、V7.7.0 及清单声明的更早升级路径必须被识别；
 - schema 3 保持不变，旧 schema 1/2 迁移到 3 后重新核验宿主；
 - 新升级备份路径；
 - Marketplace payload、manifest 和 Plugin cache 分离目标；
@@ -54,7 +54,7 @@ dry-run 应明确显示：
 - 完整回滚动作；
 - 无路径越界或链接型路径风险。
 
-Codex 0.153.4 的本地 Marketplace manifest 必须包含顶层 `interface.displayName`。升级器会在备份后移除旧 `owner`、生成受控的 `interface.displayName`，并保留其他未知外部字段；`codex plugin list --json` 恢复正常后才继续激活。
+Codex 0.154.0 的本地 Marketplace manifest 必须包含顶层 `interface.displayName`。升级器会在备份后移除旧 `owner`、生成受控的 `interface.displayName`，并保留其他未知外部字段；`codex plugin list --json` 恢复正常后才继续激活。
 
 Plugin payload 中的 UserPromptSubmit 是静态 `async=true` 注册，规范 `apply_patch` 还依赖 PreToolUse/PostToolUse，因此安装器必须先把当前 Codex CLI 精确匹配到冻结兼容窗口，并核验两类能力绑定的官方仓库、tag、提交、源码路径和 SHA-256。版本未知或任一证据不完整时，Plugin 安装在任何账户文件写入前失败关闭；standalone 模式按同一能力档案动态省略可选 UserPromptSubmit，但不伪造 Operation v2 宿主支持。
 
@@ -64,7 +64,7 @@ Plugin payload 中的 UserPromptSubmit 是静态 `async=true` 注册，规范 `a
 
 安装前 `doctor` 检查：
 
-- Codex 版本属于当前冻结注册表的 11 个稳定版之一，锚点为 0.153.4；
+- Codex 版本属于当前冻结注册表的 11 个稳定版之一，锚点为 0.154.0；
 - `plugin list --json` 可执行；
 - Marketplace add/remove 与 Plugin add/remove 命令存在；
 - state schema 可识别；

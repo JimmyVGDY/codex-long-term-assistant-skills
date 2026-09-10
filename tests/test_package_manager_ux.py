@@ -122,7 +122,7 @@ class PackageManagerUxTests(unittest.TestCase):
     def test_legacy_preference_classification_is_explicit_and_never_authorizes(self):
         cases = [
             ({"schema_version": 3, "package": package_manager.PACKAGE, "version": version}, "DEFAULT_OFF", "AUTO")
-            for version in ("7.6.0", "7.6.1", "7.6.2", "7.7.0")
+            for version in ("7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1")
         ] + [
             ({"capability_preference": {"source": "USER", "mode": "OFF"}}, "USER_OFF", "OFF"),
             ({"capability_preference": {"source": "MANAGED", "mode": "ON"}}, "LEGACY_ON", "AUTO"),

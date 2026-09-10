@@ -20,10 +20,10 @@ V7.8.0 新增 C01-C25 AUTO 能力注册、一次性首次引导、可取消恢�
   <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/github/license/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
-  <img alt="Codex CLI 0.153.4" src="https://img.shields.io/badge/Codex%20CLI-0.153.4-111827">
+  <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
-V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2 写前与 PostToolUse 对账。V7.8.0 在其上增加 AUTO/BASIC 分档、首次扫描同意和开源安装自救；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。沿用 Codex CLI 0.153.4 冻结兼容窗口。
+V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0，并修复停用门禁的 PostTool 对账。V7.8.0 在其上增加 AUTO/BASIC 分档、首次扫描同意和开源安装自救；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#五分钟升级) · [文档](#文档与协作)
 
@@ -93,7 +93,7 @@ flowchart LR
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Windows 原生 Codex CLI 0.153.4 + Plugin | 当前实机锚点 | V7.8.0 源码候选覆盖 AUTO、onboarding、迁移、诊断与 Operation v2 回归 | 账户安装、重启和新任务实际加载需在发布后单独读回 |
+| Windows 原生 Codex CLI 0.154.0 + Plugin | 当前实机锚点 | V7.8.0 源码候选覆盖 AUTO、onboarding、迁移、诊断与 Operation v2 回归 | 账户安装、重启和新任务实际加载需在发布后单独读回 |
 | Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 async、Pre/Post schema 与成功结果响应源码证据沿用并需发布读回 | V7.8.0 跨版本真实宿主矩阵仍需在 CI 后读回 |
 | Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | V7.8.0 的 CI 结果需在推送和标签后读回 |
 | standalone 模式 | 显式兼容模式 | 本地安装结构、inventory、非 Git BASIC 和回归测试覆盖 | V7.8.0 账户安装尚未执行，不宣称 Plugin 宿主兼容 |
@@ -101,7 +101,9 @@ flowchart LR
 
 Python 最低版本为 3.11；公开 CI 配置为在 Windows 与 Ubuntu 上验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
 
-V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；门禁默认关闭，流程证据也不代表业务语义正确。沿用 Codex CLI 0.153.4 冻结兼容窗口；发行工作流只创建草稿。
+V7.8.0 窗口为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`。未来版、预发布版和窗口外版本不会自动接纳。
+
+V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。门禁默认关闭，流程证据也不代表业务语义正确；发行工作流只创建草稿。
 
 ## 五分钟升级
 

@@ -6,6 +6,7 @@ import json
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,7 +57,7 @@ class V64ReleaseTests(unittest.TestCase):
                      "exit_code": 0, "pass": True}],
                 "privacy": {"host_model_information_collected": False,
                             "host_model_information_exported": False}}
-        host = {"codex_version": "codex-cli 0.153.4", "capability_profile": {"ok": True}}
+        host = {"codex_version": "codex-cli 0.154.0", "capability_profile": {"ok": True}}
         report = {key: {"ok": True, "payload_digest": digest} for key in ("source", "marketplace", "cache")}
         return package, witness, plugin, lifecycle, gate, host, report
 
@@ -80,6 +81,22 @@ class V64ReleaseTests(unittest.TestCase):
         evidence[4]["cases"][0]["observed"] = "deny"
         with self.assertRaises(self.verifier.VerificationError):
             self.verifier.verify_release(self.artifact, *evidence)
+
+    def test_unified_verifier_rejects_tampered_compatibility_registry(self) -> None:
+        tampered = self.root / "tampered-compatibility-registry.zip"
+        changed = False
+        with zipfile.ZipFile(self.artifact, "r") as source, zipfile.ZipFile(tampered, "w") as target:
+            for entry in source.infolist():
+                payload = source.read(entry.filename)
+                if entry.filename.endswith("/config/codex-compatibility-v1.json"):
+                    registry = json.loads(payload.decode("utf-8"))
+                    registry["window_policy"]["frozen_at"] = "2026-09-11"
+                    payload = (json.dumps(registry, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+                    changed = True
+                target.writestr(entry, payload)
+        self.assertTrue(changed)
+        with self.assertRaises(self.verifier.VerificationError):
+            self.verifier._artifact_payload(tampered)
 
     def test_manifest_schema_metadata_matches_current_runtime_contracts(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))

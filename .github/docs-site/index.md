@@ -24,7 +24,7 @@ hide:
       </div>
       <ul class="landing-meta" aria-label="项目元数据 / Project metadata">
         <li>Apache-2.0</li>
-        <li>Codex CLI 0.153.4</li>
+        <li>Codex CLI 0.154.0</li>
         <li>Windows</li>
       </ul>
     </div>

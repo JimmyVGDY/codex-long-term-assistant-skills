@@ -50,11 +50,11 @@ Role metrics differ. Child self-reports remain pending until the parent coordina
 
 Event V2 and Budget V1 chains from V7.4.2 and earlier remain byte-for-byte verifiable, but the new runtime opens them read-only and projects only allowed fields. Historical model-identity fields never reach V3 events, snapshots, assessments, proposals, or release reports. New records use separate V3/V2 chains and cannot be mixed with legacy chains.
 
-## 5. Codex 0.153.4 scope
+## 5. Codex 0.154.0 scope
 
-V7.6.2 supports Codex CLI 0.153.4 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.153.4 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract or the automatic subagent policy, which remains limited to Luna/Terra profiles. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
+V7.8.0 supports Codex CLI 0.154.0 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.154.0 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract or the automatic subagent policy, which remains limited to Luna/Terra profiles. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
-Installation is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.6.2`, and the schema-3 host snapshot is `HOST_COMPATIBLE`.
+Installation is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.8.0`, and the schema-3 host snapshot is `HOST_COMPATIBLE`.
 
 ## Feedback and measured benefits
 

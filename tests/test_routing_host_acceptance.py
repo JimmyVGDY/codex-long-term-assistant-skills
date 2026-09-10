@@ -73,7 +73,7 @@ class HostRoutingAcceptanceTests(unittest.TestCase):
             })
             self.seal_observation(observations[-1])
         host_readback = (
-            "CODEX_VERSION=0.153.4\n"
+            "CODEX_VERSION=0.154.0\n"
             "PLUGIN_ID=codex-cross-project-engineering-assistant\n"
             "PLUGIN_VERSION=7.8.0\n"
             "INSTALLED=true\nENABLED=true\n"
@@ -82,7 +82,7 @@ class HostRoutingAcceptanceTests(unittest.TestCase):
             "schema_version": 2,
             "observation_kind": "real_codex_host",
             "host": {
-                "codex_version": "0.153.4",
+                "codex_version": "0.154.0",
                 "plugin_id": "codex-cross-project-engineering-assistant",
                 "plugin_version": "7.8.0",
                 "installed": True,

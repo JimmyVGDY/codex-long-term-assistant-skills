@@ -9,12 +9,12 @@
     "runtime"
   ],
   "file_count": 231,
-  "payload_digest": "46ad32bb4b9ade1ce28d41ab86b950fec5630cd1636e40cbd1a00695a6207bbc",
+  "payload_digest": "04b328cdbbd00b11589af9d334bade096493f67c81b85647003c11bf12f0c2ce",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "b426390a73aa205411750e49be40f78ae6e1ae8a93c448174e6589264560c707",
-      "size": 264
+      "sha256": "6529294a053225847c70dc36eb523d0dd24ee945d54a1fdff55b1f38af720a82",
+      "size": 280
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -833,8 +833,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_gate_hook.py",
-      "sha256": "f63c695628d90218d209296707d61bdeb0fc59b5de85624a9978acda5a0dc262",
-      "size": 18917
+      "sha256": "8c0acf5b64eedb8ac886e22aa89f974c936a16be95ac27c10078c2b4f71f013f",
+      "size": 20175
     },
     {
       "path": "runtime/cp_runtime/capability_gate_workflow.py",
@@ -1098,8 +1098,8 @@
     },
     {
       "path": "runtime/tests/test_capability_gate_hook.py",
-      "sha256": "b217cf5cce1203c680e50d3ec828edb9bec298ef35114e39740ebc8870617c16",
-      "size": 21889
+      "sha256": "3faae499a2e7640c0b3556137e42860a82273faa264331b93f29b89d933e54d0",
+      "size": 22120
     },
     {
       "path": "runtime/tests/test_capability_gate_local_exception.py",

@@ -10,6 +10,13 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 - Add actual Python 3.11+ preflight, per-feature doctor, read-only inventory, zero-delete state-less preview, non-Git BASIC guidance, and lazy preference migration.
 - Add exact contracts and discoverable tests for U02-U13, UX01-UX40, M01-M12, and T25-T28 while retaining V7.6.2 message-boundary and V7.7.0 Operation v2 regression coverage.
 
+## 7.7.1 - 2026-09-10
+
+- Advance the closed compatibility registry to OpenAI Codex CLI 0.154.0, freezing `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`, and removing 0.149.1 from the active window.
+- Pin the official 0.154.0 Git tag/commit, Hook discovery, PreToolUse/PostToolUse schema, successful `apply_patch` sources, npm SRI, and SHA-256, with a 0.154.0-only `result-v154` profile.
+- Fix a configured-but-disabled capability gate incorrectly blocking PostToolUse when no operation is in flight; an already-dispatched B still converges after disablement.
+- Windows CLI, account Plugin 7.7.1, three-way payload digest, and a real fresh task were read back successfully; full evidence remains in the V7.7.1 release record.
+
 ## 7.7.0 - 2026-09-10
 
 - Add repository-external Operation v2: the first `apply_patch` attempt A only creates an origin and is denied; after preparation, a different B atomically claims READY, and only its real PostToolUse receipt can proceed to completion verification.

@@ -10,6 +10,13 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 - 安装器增加 Python 3.11+ 真实预检、分功能 doctor、只读 inventory、无 state 零删除预览、非 Git BASIC 指南及惰性偏好迁移。
 - U02-U13、UX01-UX40、M01-M12 与 T25-T28 建立逐项合同和可发现测试；V7.6.2 消息边界与 V7.7.0 Operation v2 保持回归覆盖。
 
+## 7.7.1 - 2026-09-10
+
+- 将闭合兼容注册表推进到 OpenAI Codex CLI 0.154.0，活动窗口固定为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`，并将 0.149.1 移出活动窗口。
+- 固定 0.154.0 的官方 Git tag/commit、Hook discovery、PreToolUse/PostToolUse schema、成功 `apply_patch` 结果源码、npm SRI 与 SHA-256；新增只绑定 0.154.0 的 `result-v154` profile。
+- 修复已配置但停用的能力门禁在不存在在途 Operation 时错误阻断 PostToolUse；停用后的既有在途 B 仍按原合同收敛。
+- Windows CLI、账户 Plugin 7.7.1、三方 payload 摘要与真实新任务均已读回通过；完整证据保留在 V7.7.1 发行记录。
+
 ## 7.7.0 - 2026-09-10
 
 - 新增仓库外 Operation v2 写前协议：首次 `apply_patch` A 只创建起点并拒绝，准备后由不同 B 原子领取 READY，真实 PostToolUse 回执后才允许完成验证。
