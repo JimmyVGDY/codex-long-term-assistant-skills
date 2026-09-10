@@ -265,8 +265,21 @@ class CapabilityGateHookTests(unittest.TestCase):
         task = self.legacy_task("PASS")
         before = self.legacy_snapshot(task)
         tools = ["apply_patch", "Edit", "Write"] * 3
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            responses = list(executor.map(lambda name: self.handle_legacy(task, "PreToolUse", tool_name=name), tools))
+        # 中文：环境变量属于进程全局状态；并发进入 patch.dict 会让 Python 3.13/Linux
+        # 在子进程读取环境时偶发 EFAULT。只在主线程设置一次，仍并发验证 Hook 本身。
+        # English: Environment variables are process-global. Concurrent patch.dict scopes can
+        # race with subprocess environment reads on Python 3.13/Linux, so patch once outside.
+        with patch.dict(os.environ, {"CP_CAPABILITY_GATE_ROOT": str(self.gate_root)}):
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                responses = list(executor.map(
+                    lambda name: hook.handle(
+                        ROOT,
+                        {"hook_event_name": "PreToolUse", "cwd": str(self.repo),
+                         "session_id": task.session_id, "turn_id": task.turn_id,
+                         "task_id": task.turn_id, "tool_name": name},
+                    )["response"],
+                    tools,
+                ))
         for response in responses:
             self.assertEqual("deny", response["hookSpecificOutput"]["permissionDecision"])
             self.assertNotIn("allow", json.dumps(response).lower())
