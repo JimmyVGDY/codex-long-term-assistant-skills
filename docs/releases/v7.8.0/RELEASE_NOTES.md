@@ -9,6 +9,7 @@
 - 新增范围复审伴随清单。目标、静态依赖、配置和权威文件指纹决定 freshness；动态依赖未知时为 `INCOMPLETE`，范围 PASS 不等于全仓发行 PASS。
 - 安装器在本地模块导入前检查 Python 3.11+；Windows 包装器和 Hook 启动器验证实际解释器版本。
 - `doctor` 增加总体与分功能检查、修复建议及 strict 行为；新增只读 `inventory`；无 state 卸载 dry-run 为零删除预览，真实卸载继续拒绝。
+- Windows inventory 在归属判断前规范化设备前缀、短路径与大小写别名，避免正常受管文件误报 `UNSAFE_PATH`；越界路径和重解析点仍失败关闭。
 - 安装状态保存来源分类，项目绑定后通过精确 CAS 惰性迁移偏好；旧门禁、GateTask 和 Operation 证据永不成为 AUTO、FULL、授权或扫描同意。
 
 首次全扫可以跳过。拒绝、未回答、缺 Profile/索引/Reviewer、辅助状态不可写或子 Agent 不可用时，普通任务仍走当前源码和 BASIC 路径；缺少必需独立复审时只把该交付门槛标为未完成。

@@ -9,6 +9,7 @@ This release makes direct use with conditionally available enhancements an execu
 - Add a scoped-review companion manifest for targets, statically discovered dependencies, configuration, and authority files. Unknown dynamic dependencies are `INCOMPLETE`; scoped PASS never means repository-wide release PASS.
 - Check Python 3.11+ before local installer imports. Windows wrappers and Hook launchers test the actual interpreter version.
 - Extend `doctor` with overall and per-feature checks, remediation, and strict behavior; add read-only `inventory`; make state-less uninstall dry-run a zero-delete preview while real uninstall still refuses.
+- Windows inventory normalizes device prefixes, short paths, and case aliases before containment checks so managed files are not misreported as `UNSAFE_PATH`; out-of-root paths and reparse points still fail closed.
 - Persist an installer-source classification and apply it lazily after project binding through exact CAS. Legacy gate, GateTask, and Operation evidence never becomes AUTO, FULL, authority, or scan consent.
 
 The first full scan is optional. A decline, no reply, missing Profile/index/Reviewer, unavailable auxiliary storage, or unavailable child agents keeps ordinary work on the current-source BASIC path. A mandatory independent-review gate remains explicitly incomplete when it cannot run.

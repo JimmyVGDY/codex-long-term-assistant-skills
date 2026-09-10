@@ -15,8 +15,8 @@ This record reports source-candidate, public-release, and active-account effecti
 
 ## Local candidate evidence
 
-- After integrating the independently reviewed and released V7.7.1 / Codex 0.154.0 compatibility fix, a full `python scripts/validate-package.py` rerun passed 421 package + 205 runtime tests on Python 3.13.15.
-- Focused results: capability registry 10, onboarding 15, scoped review 4, installer UX 12, installer security 40, and R3 traceability 76, all PASS.
+- After integrating the independently reviewed and released V7.7.1 / Codex 0.154.0 compatibility fix and correcting Windows path aliases, a full `python scripts/validate-package.py` rerun passed 422 package + 205 runtime tests on Python 3.13.15.
+- Focused results: capability registry 10, onboarding 15, scoped review 4, installer UX 13, installer security 40, and R3 traceability 76, all PASS. Three path-containment regressions also passed on the official portable Python 3.11.9 runtime.
 - Windows lock-file concurrent initialization passed 30 consecutive stress iterations. Documentation, localization, links, semantic, privacy, routing, delegation, and payload gates passed.
 - Fifty real disabled/unconfigured file-gate processes measured p50 82.22 ms, p95 87.35 ms, and p99/max 88.46 ms, within the p95 <= 300 ms and p99 <= 1 s budgets.
 - R3 postimplementation state/concurrency and test/delivery Reviewers passed premerge refreshed packet `f22009...a01402`. The decline-cancel compensation and false C20 entrypoint HIGH findings were repaired. V7.7.1 compatibility changes have their own independent review and release evidence. The combined baseline received the full local rerun above and is not represented as a new independent Reviewer pass.

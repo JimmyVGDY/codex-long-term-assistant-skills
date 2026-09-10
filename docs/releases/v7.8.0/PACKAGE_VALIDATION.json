@@ -10,7 +10,7 @@
     "capability_registry": {"tests": 10, "result": "PASS"},
     "onboarding": {"tests": 15, "result": "PASS"},
     "scoped_review": {"tests": 4, "result": "PASS"},
-    "installer_ux": {"tests": 12, "result": "PASS"},
+    "installer_ux": {"tests": 13, "result": "PASS"},
     "installer_security": {"tests": 40, "result": "PASS"},
     "r3_traceability": {"tests": 76, "result": "PASS"},
     "windows_lock_stress": {"iterations": 30, "result": "PASS"}
@@ -23,7 +23,7 @@
   },
   "full_local_wrapper_rerun": {
     "result": "PASS",
-    "package_tests": 421,
+    "package_tests": 422,
     "runtime_tests": 205,
     "python": "3.13.15"
   },

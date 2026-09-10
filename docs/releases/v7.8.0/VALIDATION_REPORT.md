@@ -13,8 +13,8 @@
 
 ## 本地候选证据
 
-- 合入已独立复审并发布的 V7.7.1 / Codex 0.154.0 兼容修复后，`python scripts/validate-package.py` 完整重跑：PASS，421 项 package + 205 项 runtime，Python 3.13.15。
-- 定向结果：能力注册 10、onboarding 15、范围复审 4、安装 UX 12、安装安全 40、R3 追踪 76，均 PASS。
+- 合入已独立复审并发布的 V7.7.1 / Codex 0.154.0 兼容修复并修正 Windows 路径别名后，`python scripts/validate-package.py` 完整重跑：PASS，422 项 package + 205 项 runtime，Python 3.13.15。
+- 定向结果：能力注册 10、onboarding 15、范围复审 4、安装 UX 13、安装安全 40、R3 追踪 76，均 PASS；官方 Python 3.11.9 便携运行时上的 3 项路径归属回归 PASS。
 - Windows 锁文件并发初始化压力测试连续 30 次 PASS；文档、本地化、链接、语义、隐私、路由、委派和 payload 门禁 PASS。
 - disabled/unconfigured 文件门禁 50 次真实进程：p50 82.22 ms、p95 87.35 ms、p99/max 88.46 ms，满足 p95 ≤ 300 ms、p99 ≤ 1 s。
 - R3 实施后状态/并发与测试/交付 Reviewer 在合并前刷新包 `f22009…a01402` 上 PASS。拒绝取消补偿与 C20 假入口两个 HIGH 已修复；V7.7.1 兼容补丁也有其独立复审与发布证据。合并后的组合基线执行了上述完整本地重验，但未把它表述成一次新的独立 Reviewer 复审。

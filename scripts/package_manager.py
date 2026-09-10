@@ -413,9 +413,29 @@ def reject_tree_links(path: Path) -> None:
                 raise InstallError("受管树内部不允许符号链接/Junction/Reparse Point: %s" % candidate)
 
 
+def _containment_path(path: Path) -> Path:
+    """中文：规范化 Windows 设备前缀、短路径和大小写后再做词法包含判断。
+
+    English: Normalize Windows device prefixes, short paths, and case before lexical containment checks.
+    """
+    value = str(path.absolute())
+    if os.name == "nt":
+        if value.startswith("\\\\?\\UNC\\"):
+            value = "\\\\" + value[8:]
+        elif value.startswith("\\\\?\\"):
+            value = value[4:]
+        value = os.path.realpath(value)
+        if value.startswith("\\\\?\\UNC\\"):
+            value = "\\\\" + value[8:]
+        elif value.startswith("\\\\?\\"):
+            value = value[4:]
+        value = os.path.normcase(os.path.normpath(value))
+    return Path(value)
+
+
 def ensure_inside(path: Path, root: Path) -> None:
-    p = path.absolute()
-    r = root.absolute()
+    p = _containment_path(path)
+    r = _containment_path(root)
     try:
         p.relative_to(r)
     except ValueError as exc:
@@ -424,7 +444,7 @@ def ensure_inside(path: Path, root: Path) -> None:
 
 def path_inside(path: Path, root: Path) -> bool:
     try:
-        path.absolute().relative_to(root.absolute())
+        _containment_path(path).relative_to(_containment_path(root))
         return True
     except ValueError:
         return False

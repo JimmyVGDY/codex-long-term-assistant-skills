@@ -8,6 +8,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 - 新增 `onboarding/1` 与可恢复扫描任务：一次询问、nonce/revision CAS、续期、取消 epoch、租约 fencing、游标与部分覆盖读回。
 - 新增范围复审依赖指纹；未知动态依赖为 `INCOMPLETE`，相关变化为 `STALE`，全仓发行审计保持独立。
 - 安装器增加 Python 3.11+ 真实预检、分功能 doctor、只读 inventory、无 state 零删除预览、非 Git BASIC 指南及惰性偏好迁移。
+- 修复 Windows 设备前缀、短路径和大小写别名导致受管文件被误判为 `UNSAFE_PATH`；规范化后再判断归属，越界路径和重解析点仍失败关闭。
 - U02-U13、UX01-UX40、M01-M12 与 T25-T28 建立逐项合同和可发现测试；V7.6.2 消息边界与 V7.7.0 Operation v2 保持回归覆盖。
 
 ## 7.7.1 - 2026-09-10

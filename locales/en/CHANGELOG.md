@@ -8,6 +8,7 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 - Add `onboarding/1` and recoverable scan jobs with one offer, nonce/revision CAS, renewal, cancel epochs, lease fencing, cursor, and partial-coverage readback.
 - Add scoped-review dependency fingerprints. Unknown dynamic dependencies are `INCOMPLETE`, related changes are `STALE`, and release-wide audit remains separate.
 - Add actual Python 3.11+ preflight, per-feature doctor, read-only inventory, zero-delete state-less preview, non-Git BASIC guidance, and lazy preference migration.
+- Fix Windows device-prefix, short-path, and case aliases incorrectly classifying managed files as `UNSAFE_PATH`; containment now normalizes aliases while out-of-root paths and reparse points still fail closed.
 - Add exact contracts and discoverable tests for U02-U13, UX01-UX40, M01-M12, and T25-T28 while retaining V7.6.2 message-boundary and V7.7.0 Operation v2 regression coverage.
 
 ## 7.7.1 - 2026-09-10

@@ -102,6 +102,21 @@ class PackageManagerUxTests(unittest.TestCase):
         missing = package_manager.inventory("repo", "standalone", str(repo))
         self.assertEqual("MISSING", missing["items"][0]["status"])
 
+    @unittest.skipUnless(os.name == "nt", "Windows path alias regression")
+    def test_inventory_accepts_extended_length_alias_inside_repo(self):
+        repo = self.repo()
+        state_path = repo / ".codex" / "cp-assistant-v6-state.json"
+        state_path.parent.mkdir()
+        target = repo / "file.txt"
+        extended_target = Path("\\\\?\\" + str(target))
+        state_path.write_text(json.dumps({
+            "managed_hashes": {str(extended_target): package_manager.tree_sha256(target)},
+        }), encoding="utf-8")
+
+        result = package_manager.inventory("repo", "standalone", str(repo))
+
+        self.assertEqual("MANAGED", result["items"][0]["status"], result)
+
     def test_inventory_does_not_read_state_path_outside_managed_root(self):
         repo = self.repo()
         state_path = repo / ".codex" / "cp-assistant-v6-state.json"
