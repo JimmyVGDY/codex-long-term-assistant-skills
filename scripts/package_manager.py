@@ -62,9 +62,11 @@ TARGET_CODEX_VERSION = str(COMPATIBILITY_REGISTRY["window_policy"]["anchor"])
 SUPPORTED_CODEX_VERSIONS = tuple(item["version"] for item in COMPATIBILITY_REGISTRY["versions"])
 REPAIRABLE_MARKETPLACE_STATE_VERSIONS = frozenset({
     "6.1.0", "6.2.0", "6.3.0", "7.2.0", "7.3.0", "7.4.0",
-    "7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1",
+    "7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1", "7.8.0",
 })
-AUTO_MIGRATION_SOURCES = frozenset({"7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1"})
+AUTO_MIGRATION_SOURCES = frozenset({
+    "7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1", "7.8.0",
+})
 SKILL_DIR_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
 END = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:END -->"
@@ -534,6 +536,25 @@ def managed_global_text(existing: str) -> str:
         return pattern.sub(managed, existing).rstrip() + "\n"
     prefix = existing.rstrip()
     return ((prefix + "\n\n") if prefix else "") + managed + "\n"
+
+
+def managed_global_sha256(path: Path) -> str:
+    """中文：只哈希本包拥有的 AGENTS 标记区块，忽略区块外自有内容。
+
+    English: Hash only this package's marked AGENTS block and ignore user-owned surrounding text.
+    """
+    io_path = _io_path(path)
+    if not io_path.is_file():
+        return "missing"
+    text = io_path.read_text(encoding="utf-8-sig")
+    pattern = re.compile(
+        re.escape(BEGIN) + r"\r?\n(.*?)\r?\n" + re.escape(END), re.S,
+    )
+    matches = pattern.findall(text)
+    if len(matches) != 1:
+        return "invalid-managed-block"
+    block = matches[0].strip().replace("\r\n", "\n").replace("\r", "\n") + "\n"
+    return hashlib.sha256(block.encode("utf-8")).hexdigest()
 
 
 def _native_async_user_prompt_submit_supported(profile: Optional[Mapping[str, Any]]) -> bool:
@@ -1619,7 +1640,10 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         else:
             cache_report = None
         managed = {str(path): tree_sha256(path) for _label, path in targets if _io_path(path).exists() and _label not in {"global", "hooks-json", "install-state"}}
-        managed[str(gp)] = hashlib.sha256((ROOT / "global" / "AGENTS.md").read_bytes()).hexdigest()
+        global_hash = managed_global_sha256(gp)
+        if not re.fullmatch(r"[0-9a-f]{64}", global_hash):
+            raise InstallError("全局 AGENTS 受管区块无法唯一核验，拒绝提交安装状态")
+        managed[str(gp)] = global_hash
         state = dict(migrated_old_state)
         state.update({"schema_version":3,"package":PACKAGE,"version":VERSION,"scope":"user","mode":mode,
                       "installed_at":time.time(),"backup":str(backup),"managed_hashes":managed,
@@ -2166,7 +2190,12 @@ def inventory(scope: str, mode: str, repo_path: Optional[str]) -> Dict[str, Any]
                              "actual_sha256":None})
                 continue
             exists = _io_path(path).exists()
-            actual = tree_sha256(path) if exists else "missing"
+            is_global_agents = (
+                scope == "user"
+                and _containment_path(path) == _containment_path(codex_home() / "AGENTS.md")
+            )
+            actual = (managed_global_sha256(path) if is_global_agents else tree_sha256(path)) \
+                if exists else "missing"
             status_name = "MISSING" if not exists else ("MANAGED" if str(expected) == actual else "DRIFT")
             rows.append({"path":str(path), "status":status_name, "expected_sha256":str(expected),
                          "actual_sha256":actual})

@@ -60,9 +60,9 @@ V7.4.2 及更早版本的 Event V2 与 Budget V1 链保持原始字节级验签�
 
 ## 5. Codex 0.154.0 边界
 
-V7.8.0 的 Plugin 窗口是 Codex CLI 0.154.0 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.154.0 修复 Astra 在内置模型选择器中的可见性，在未显式配置模型时将其设为内置默认，并把异步提问说明约束为仅在相关工具可用时适用；这些变化不修改本包已冻结的 Plugin/Hook 合同，也不改变自动子 Agent 仅使用 Luna/Terra 档位的策略。
+V7.8.1 的 Plugin 窗口是 Codex CLI 0.154.0 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.154.0 修复 Astra 在内置模型选择器中的可见性，在未显式配置模型时将其设为内置默认，并把异步提问说明约束为仅在相关工具可用时适用；这些变化不修改本包已冻结的 Plugin/Hook 合同，也不改变自动子 Agent 仅使用 Luna/Terra 档位的策略。
 
-安装完成必须读回 `installed=true`、`enabled=true`、`version=7.8.0`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`。磁盘已有文件不等于 Plugin 已注册或已启用。
+安装完成必须读回 `installed=true`、`enabled=true`、`version=7.8.1`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`。磁盘已有文件不等于 Plugin 已注册或已启用。
 
 ## 任务反馈与优化收益
 
@@ -70,4 +70,4 @@ V7.8.0 的 Plugin 窗口是 Codex CLI 0.154.0 与此前十个稳定发行版，�
 
 ## 能力复用与可选门禁
 
-通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭；V7.8.0 只在显式启用策略下把规范 `apply_patch` 接入 Operation v2：A 创建起点并拒绝，准备后由不同 B 领取许可，匹配的 PostToolUse 回执后才能完成核验。旧 GateTask 永不转换为新许可。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.8.0/VALIDATION_REPORT.md)。
+通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭；V7.8.1 只在显式启用策略下把规范 `apply_patch` 接入 Operation v2：A 创建起点并拒绝，准备后由不同 B 领取许可，匹配的 PostToolUse 回执后才能完成核验。旧 GateTask 永不转换为新许可。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.8.1/VALIDATION_REPORT.md)。

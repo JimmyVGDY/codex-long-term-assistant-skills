@@ -2,6 +2,12 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.8.1 - 2026-09-10
+
+- 修复账户级 `inventory` 将 `AGENTS.md` 整文件哈希与状态中的受管区块哈希比较、从而在正常安装后误报 `DRIFT` 的问题。
+- 新增受管区块提取与唯一性校验：标记外自有内容不影响归属；受管内容变化、重复/缺失标记、越界路径和重解析点仍失败关闭。
+- V7.8.0 的 AUTO、首次引导、范围复审、安装自救与 Codex 0.154.0 兼容能力保持不变；V7.8.0 标签和 Release 保留为不可变历史。
+
 ## 7.8.0 - 2026-09-10
 
 - 新增 C01-C25 `capability-registry/1`、AUTO/BASIC/ASSISTED/FULL 功能级选择和仓库外显式偏好；档位、风险与外部权限保持独立。
