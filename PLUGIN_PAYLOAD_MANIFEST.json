@@ -8,8 +8,8 @@
     "hooks",
     "runtime"
   ],
-  "file_count": 224,
-  "payload_digest": "77f400d4a427b2597d0f30e4d76908f3f375bd48819ce1407ec0c8717506ad18",
+  "file_count": 227,
+  "payload_digest": "7d95163532a524151d351e5e302b106bcbcecb162e3f350c31980ffca4305b18",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -852,14 +852,24 @@
       "size": 17408
     },
     {
+      "path": "runtime/cp_runtime/capability_registry.py",
+      "sha256": "f43d76bc07ad1090c24ac114110c8959e424e45f6727ec4b7b9b9b63a0dc75c9",
+      "size": 10127
+    },
+    {
+      "path": "runtime/cp_runtime/capability_registry_cli.py",
+      "sha256": "cc93f53a3a81384f8a45bf866f6f0e304eb9c1dc1d53b52f5bb283ca3a745ad2",
+      "size": 3986
+    },
+    {
       "path": "runtime/cp_runtime/capability_store.py",
       "sha256": "f2a77649861ecc0a1975819fdf7f2eeaafb2e57b3dfd95fe91101551cb016eb7",
       "size": 20944
     },
     {
       "path": "runtime/cp_runtime/cli.py",
-      "sha256": "0163d1ef8da6731519d7dce91e5a3e1ebc0cb41f62196d35d4c70a2b5f2d226f",
-      "size": 12531
+      "sha256": "f7200fde96f273a912e122d6d016656ae9f39838d6a0c5405613c9688fe365f0",
+      "size": 12641
     },
     {
       "path": "runtime/cp_runtime/common.py",
@@ -1115,6 +1125,11 @@
       "path": "runtime/tests/test_capability_operation_workflow.py",
       "sha256": "04971119875732d61c7d52ffd47609804a8e46286d41c22b5f24b93b19148b65",
       "size": 9159
+    },
+    {
+      "path": "runtime/tests/test_capability_registry.py",
+      "sha256": "8c03ea29bf76250847f8f00459b14a3a235d692632baa860a0930a47a5b9cf9c",
+      "size": 7980
     },
     {
       "path": "runtime/tests/test_capability_store.py",

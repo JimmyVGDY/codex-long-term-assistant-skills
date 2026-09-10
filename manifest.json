@@ -481,6 +481,7 @@
   },
   "authority_registry": {
     "package_registry": "manifest.json",
+    "capability_registry": "config/capability-registry-v1.json",
     "project_identity": "project-profile.json",
     "project_runtime_state": "project-state.json",
     "task_execution_state": "execution-state.json via execution_guard.py",
