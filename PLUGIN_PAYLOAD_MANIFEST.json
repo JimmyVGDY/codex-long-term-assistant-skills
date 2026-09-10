@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 224,
-  "payload_digest": "0155103e1a766be1fce71f9d6351e9e6c42a699cb23a2b8d99f5e894a29809c0",
+  "payload_digest": "77f400d4a427b2597d0f30e4d76908f3f375bd48819ce1407ec0c8717506ad18",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -1033,8 +1033,8 @@
     },
     {
       "path": "runtime/cp_runtime/patch_intent.py",
-      "sha256": "75906404900f52a6ed286cf83f17b6ff00d8e0edb2806bf33064c44816378d6c",
-      "size": 15955
+      "sha256": "5fae9e256781e0dbfc972c74556c70a62e42ada7b5525221918b27d324bc7fef",
+      "size": 16123
     },
     {
       "path": "runtime/cp_runtime/project.py",
@@ -1128,8 +1128,8 @@
     },
     {
       "path": "runtime/tests/test_patch_intent.py",
-      "sha256": "eca7128915a5d08821bdfa101c56438d12a9d39f330ca20bfd5ab7270afd87e6",
-      "size": 7225
+      "sha256": "cd922398fe9e77d9a74890e54e1ee12940347d3ae60aef81f7b511b5f5d4b42e",
+      "size": 7923
     }
   ]
 }

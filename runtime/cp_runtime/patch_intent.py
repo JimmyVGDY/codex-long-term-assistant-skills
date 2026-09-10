@@ -140,6 +140,8 @@ def _validate_path(value: Any, root: Path) -> tuple[str, Path]:
     try:
         safe = safe_path(candidate)
         common = os.path.commonpath((os.path.normcase(str(root)), os.path.normcase(str(safe))))
+    except CapabilityError as exc:
+        _fail(exc.args[0] if exc.args and exc.args[0] in {"SENSITIVE_PATH", "LINK_REJECTED", "PATH_UNREADABLE"} else "INVALID_PATH")
     except ValueError:
         _fail("PATH_ESCAPE")
     if common != os.path.normcase(str(root)):

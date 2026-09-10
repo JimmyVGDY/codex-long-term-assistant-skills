@@ -4,9 +4,12 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from cp_runtime.capability_store import CapabilityError
+from cp_runtime import patch_intent as patch_intent_module
 from cp_runtime.patch_intent import PatchIntentError, parse_apply_patch, revalidate_intent
 
 
@@ -139,6 +142,19 @@ class PatchIntentTests(unittest.TestCase):
             self.skipTest("symlink unavailable")
         with self.assertRaises(PatchIntentError) as caught:
             self.parse("*** Add File: link/file.txt\n+1")
+        self.assertEqual("LINK_REJECTED", caught.exception.code)
+
+    def test_normalizes_safe_path_link_rejection(self):
+        original = patch_intent_module.safe_path
+
+        def reject_target(path):
+            if Path(path) == self.root:
+                return original(path)
+            raise CapabilityError("LINK_REJECTED")
+
+        with patch.object(patch_intent_module, "safe_path", side_effect=reject_target):
+            with self.assertRaises(PatchIntentError) as caught:
+                self.parse("*** Add File: nested/file.txt\n+1")
         self.assertEqual("LINK_REJECTED", caught.exception.code)
 
 
