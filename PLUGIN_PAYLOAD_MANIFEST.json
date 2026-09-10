@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 231,
-  "payload_digest": "3a2133869ff118ab4c4d954b32aa1f58b73e70d0473875fb8076a80eb09fac34",
+  "payload_digest": "87ad269d7a2c4db88e83e29ff9a06c94b82c24e5b98051b7e95ca43d0d8a3ada",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -858,13 +858,13 @@
     },
     {
       "path": "runtime/cp_runtime/capability_registry.py",
-      "sha256": "f43d76bc07ad1090c24ac114110c8959e424e45f6727ec4b7b9b9b63a0dc75c9",
-      "size": 10127
+      "sha256": "7c9fd5f7530c6e219675b78bd3b31d8d53b36718a50bb060c7a77ffa762e45cb",
+      "size": 11542
     },
     {
       "path": "runtime/cp_runtime/capability_registry_cli.py",
-      "sha256": "cc93f53a3a81384f8a45bf866f6f0e304eb9c1dc1d53b52f5bb283ca3a745ad2",
-      "size": 3986
+      "sha256": "a6e4fd12c8f8506517e2452925670628171da14d46e31e72a896b4009a671b84",
+      "size": 4348
     },
     {
       "path": "runtime/cp_runtime/capability_store.py",
@@ -1143,8 +1143,8 @@
     },
     {
       "path": "runtime/tests/test_capability_registry.py",
-      "sha256": "8c03ea29bf76250847f8f00459b14a3a235d692632baa860a0930a47a5b9cf9c",
-      "size": 7980
+      "sha256": "d3ddbdb26ed7158aae5eb33711e9074f2f0cbb5dba9a0e0a057f696303755498",
+      "size": 9561
     },
     {
       "path": "runtime/tests/test_capability_store.py",

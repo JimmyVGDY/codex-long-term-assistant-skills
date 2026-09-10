@@ -123,6 +123,28 @@ def migrate_legacy_classification(classification: str) -> dict[str, Any]:
             "authorization": False, "scan_consent": False}
 
 
+def read_install_migration(path: Path) -> dict[str, Any]:
+    """读取安装器保存的惰性迁移计划；只接受无授权、无扫描同意的精确映射。"""
+    try:
+        value = json.loads(bounded_read(path, 256 * 1024), object_pairs_hook=unique_json_object)
+        record = value["preference_migration"]
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError, RecursionError):
+        raise CapabilityError("MIGRATION_RECORD_INVALID") from None
+    required = {"schema_version", "classification", "evidence", "configured_mode", "max_level",
+                "authorization", "scan_consent", "gate_policy_excluded", "gate_task_excluded",
+                "operation_v2_excluded", "application"}
+    fields(record, required)
+    expected = migrate_legacy_classification(record["classification"])
+    require(record["schema_version"] == "capability-preference-migration/1"
+            and record["configured_mode"] == expected["configured_mode"]
+            and record["max_level"] == expected["max_level"]
+            and record["authorization"] is False and record["scan_consent"] is False
+            and record["gate_policy_excluded"] is True and record["gate_task_excluded"] is True
+            and record["operation_v2_excluded"] is True
+            and record["application"] == "PROJECT_LAZY_CAS_AFTER_IDENTITY_BINDING", "MIGRATION_RECORD_INVALID")
+    return copy.deepcopy(record)
+
+
 class PreferenceStore:
     """身份绑定、原子 CAS 的独立偏好文件；缺文件就是 AUTO 且不落盘。"""
 

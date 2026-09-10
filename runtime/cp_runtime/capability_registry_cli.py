@@ -4,7 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .capability_registry import PreferenceStore, load_registry, migrate_legacy_classification, select_capability
+from .capability_registry import (PreferenceStore, load_registry, migrate_legacy_classification,
+                                  read_install_migration, select_capability)
 from .capability_store import require
 
 DEFAULT_REGISTRY = Path(__file__).resolve().parents[2] / "config" / "capability-registry-v1.json"
@@ -38,9 +39,11 @@ def run(args):
         return store.set_preference(args.capability_id, args.configured_mode, args.max_level,
                                     args.expected_revision, "USER")
     if args.registry_action == "preference-migrate":
-        migrated = migrate_legacy_classification(args.classification)
+        source_record = read_install_migration(Path(args.install_state)) if args.install_state else None
+        classification = source_record["classification"] if source_record else args.classification
+        migrated = migrate_legacy_classification(classification)
         return store.set_preference(args.capability_id, migrated["configured_mode"], migrated["max_level"],
-                                    args.expected_revision, args.classification)
+                                    args.expected_revision, classification)
     registry = _registry(args)
     return select_capability(registry, args.capability_id, _prerequisites(args.prerequisite),
                              store.preference(args.capability_id), args.risk)
@@ -77,5 +80,7 @@ def add_commands(subparsers):
             parser.add_argument("--max-level", choices=("BASIC", "ASSISTED", "FULL"))
             parser.add_argument("--expected-revision", type=int)
         elif action == "preference-migrate":
-            parser.add_argument("--classification", choices=("DEFAULT_OFF", "USER_OFF", "UNKNOWN_OFF", "LEGACY_ON"), required=True)
+            source = parser.add_mutually_exclusive_group(required=True)
+            source.add_argument("--classification", choices=("DEFAULT_OFF", "USER_OFF", "UNKNOWN_OFF", "LEGACY_ON"))
+            source.add_argument("--install-state")
             parser.add_argument("--expected-revision", type=int)

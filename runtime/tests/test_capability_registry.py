@@ -9,7 +9,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import test_capability_store as fixtures
-from cp_runtime.capability_registry import PreferenceStore, load_registry, migrate_legacy_classification, select_capability
+from cp_runtime.capability_registry import (PreferenceStore, load_registry, migrate_legacy_classification,
+                                            read_install_migration, select_capability)
 from cp_runtime.capability_store import CapabilityError
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -133,6 +134,26 @@ class CapabilityRegistryTests(unittest.TestCase):
                        "--capability-id", "C01")
         self.assertTrue(shown["persisted"])
         self.assertEqual("OFF", shown["preference"]["configured_mode"])
+
+    def test_install_state_lazy_migration_is_exact_cas_and_rejects_tampering(self):
+        migration = {"schema_version":"capability-preference-migration/1", "classification":"DEFAULT_OFF",
+                     "evidence":"known-version-installer-default", "configured_mode":"AUTO", "max_level":"BASIC",
+                     "authorization":False, "scan_consent":False, "gate_policy_excluded":True,
+                     "gate_task_excluded":True, "operation_v2_excluded":True,
+                     "application":"PROJECT_LAZY_CAS_AFTER_IDENTITY_BINDING"}
+        state = self.base / "install-state.json"
+        state.write_text(json.dumps({"preference_migration": migration}), encoding="utf-8")
+        self.assertEqual("DEFAULT_OFF", read_install_migration(state)["classification"])
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "cp-runtime.py"), "capability-preference-migrate",
+             "--profile", str(self.profile), "--repo-path", str(self.repo), "--capability-id", "C01",
+             "--install-state", str(state)], cwd=ROOT, check=True, capture_output=True, text=True, encoding="utf-8",
+        )
+        self.assertEqual("AUTO", json.loads(result.stdout)["preferences"]["C01"]["configured_mode"])
+        migration["authorization"] = True
+        state.write_text(json.dumps({"preference_migration": migration}), encoding="utf-8")
+        with self.assertRaisesRegex(CapabilityError, "MIGRATION_RECORD_INVALID"):
+            read_install_migration(state)
 
 
 if __name__ == "__main__":
