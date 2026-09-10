@@ -1,2 +1,3 @@
 $ErrorActionPreference = "Stop"
-python "$PSScriptRoot/package_manager.py" doctor @args
+. "$PSScriptRoot/python-launcher.ps1"
+Invoke-ValidatedPython -Script "$PSScriptRoot/package_manager.py" -Arguments (@("doctor") + @($args))

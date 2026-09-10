@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 231,
-  "payload_digest": "ad9a0e01db022883c5df43afd7f39d69a17b5872d36847e197d0b05a1dd99c6f",
+  "payload_digest": "3a2133869ff118ab4c4d954b32aa1f58b73e70d0473875fb8076a80eb09fac34",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -768,8 +768,8 @@
     },
     {
       "path": "hooks/cp_gate.cmd",
-      "sha256": "75229f8e0fa89087954309974897151619f8ede05dcd676edd59740ef6026971",
-      "size": 1334
+      "sha256": "bc9653fe4f63efd716c3fb1009f85552110db9dfa8d75244543d253d8839bfb5",
+      "size": 1829
     },
     {
       "path": "hooks/cp_gate.py",
@@ -778,8 +778,8 @@
     },
     {
       "path": "hooks/cp_hook.cmd",
-      "sha256": "db370fdf2b0309e06ca9cf66517d7d40f672a7c52d67a9ee0e4379c880c2c16d",
-      "size": 1398
+      "sha256": "5d24cb6903c8d50cb73232bcd5cf1c0743a387d275e7c89770981f6dc8210d9b",
+      "size": 1893
     },
     {
       "path": "hooks/cp_hook.py",

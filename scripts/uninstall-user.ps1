@@ -1,3 +1,4 @@
 $ErrorActionPreference = "Stop"
 $mode = if ($env:CP_INSTALL_MODE) { $env:CP_INSTALL_MODE } else { "plugin" }
-python "$PSScriptRoot/package_manager.py" uninstall --scope user --mode $mode @args
+. "$PSScriptRoot/python-launcher.ps1"
+Invoke-ValidatedPython -Script "$PSScriptRoot/package_manager.py" -Arguments (@("uninstall", "--scope", "user", "--mode", $mode) + @($args))
