@@ -1,14 +1,8 @@
 [CmdletBinding()]
 param([string]$Backup,[switch]$DryRun)
 $ErrorActionPreference="Stop"
-function Invoke-PackagePython {
-    param([string[]]$ManagerArgs)
-    $Script = Join-Path $PSScriptRoot "package_manager.py"
-    if (Get-Command python -ErrorAction SilentlyContinue) { & python $Script @ManagerArgs }
-    elseif (Get-Command py -ErrorAction SilentlyContinue) { & py -3 $Script @ManagerArgs }
-    elseif (Get-Command python3 -ErrorAction SilentlyContinue) { & python3 $Script @ManagerArgs }
-    else { throw "未找到 Python 3；请安装 Python 或使用 WSL/Linux 安装脚本。" }
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+. "$PSScriptRoot/python-launcher.ps1"
+if ($Backup -or $DryRun) {
+    throw "此兼容入口现在统一转到 recover；recover 只恢复当前持久事务，不接受手选备份或 dry-run。"
 }
-$ManagerArgs=@("restore");if($Backup){$ManagerArgs+=@("--backup",$Backup)};if($DryRun){$ManagerArgs+="--dry-run"}
-Invoke-PackagePython $ManagerArgs
+Invoke-ValidatedPython -Script "$PSScriptRoot/package_manager.py" -Arguments @("recover", "--scope", "user")

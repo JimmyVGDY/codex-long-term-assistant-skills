@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.7.1",
+  "version": "7.8.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 224,
-  "payload_digest": "e4aaccf5ba16283535b61cecbd370b65641b49efd955144de25ef603282bb60f",
+  "file_count": 231,
+  "payload_digest": "04b328cdbbd00b11589af9d334bade096493f67c81b85647003c11bf12f0c2ce",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "8f3b5b05640a73cf3845a9383b8c875b0bd0d6c6fb5a605b4671bb549a14c31b",
-      "size": 247
+      "sha256": "6529294a053225847c70dc36eb523d0dd24ee945d54a1fdff55b1f38af720a82",
+      "size": 280
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
-      "sha256": "e8029cb2764f22dbbefa9e37725968ed5893e9a393281d787d6b652485b10d3b",
+      "sha256": "5769ea1500679559d032a09d52131e4e8e84eff7ad5fed3523da3f259c35003a",
       "size": 8322
     },
     {
@@ -268,8 +268,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/quality-review-completion.md",
-      "sha256": "b37640ecefbea8f66c005297d8ed13519b6d6c062a273439d60bc6f0696f8a5f",
-      "size": 5113
+      "sha256": "68bd5dc4b4b6892506303e011509b13919f0abd3de3e5c687b6ae3060dc579d3",
+      "size": 5201
     },
     {
       "path": "skills/engineering-quality-delivery/references/quality-task-planning.md",
@@ -563,8 +563,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/SKILL.md",
-      "sha256": "613e8b4a5f4a0c48f0f5c9bf2d0beccac08992d93f5dd188a6091b7ea9c0f4a8",
-      "size": 2978
+      "sha256": "00570b19cafab6070b8a91d6c30827ec01453aa912ff65a81b662828e48ac3d1",
+      "size": 3254
     },
     {
       "path": "skills/multi-agent-independent-review/agents/openai.yaml",
@@ -655,6 +655,11 @@
       "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
       "sha256": "72320c6e15460500038a6e69dc994070b847722d99012781909a8936010d987e",
       "size": 29580
+    },
+    {
+      "path": "skills/multi-agent-independent-review/scripts/scoped_review.py",
+      "sha256": "67d6896d2e0e1c4d0bae2575f41f2017a81e246c130723983a213b439eb41029",
+      "size": 10720
     },
     {
       "path": "skills/multi-agent-independent-review/tests/test_review_tools.py",
@@ -763,8 +768,8 @@
     },
     {
       "path": "hooks/cp_gate.cmd",
-      "sha256": "75229f8e0fa89087954309974897151619f8ede05dcd676edd59740ef6026971",
-      "size": 1334
+      "sha256": "bc9653fe4f63efd716c3fb1009f85552110db9dfa8d75244543d253d8839bfb5",
+      "size": 1829
     },
     {
       "path": "hooks/cp_gate.py",
@@ -773,8 +778,8 @@
     },
     {
       "path": "hooks/cp_hook.cmd",
-      "sha256": "db370fdf2b0309e06ca9cf66517d7d40f672a7c52d67a9ee0e4379c880c2c16d",
-      "size": 1398
+      "sha256": "5d24cb6903c8d50cb73232bcd5cf1c0743a387d275e7c89770981f6dc8210d9b",
+      "size": 1893
     },
     {
       "path": "hooks/cp_hook.py",
@@ -852,14 +857,24 @@
       "size": 17408
     },
     {
+      "path": "runtime/cp_runtime/capability_registry.py",
+      "sha256": "452e27c11d4580ed0c484634ad21e74c6948b31a5a9805bf918094db75719924",
+      "size": 17963
+    },
+    {
+      "path": "runtime/cp_runtime/capability_registry_cli.py",
+      "sha256": "a6e4fd12c8f8506517e2452925670628171da14d46e31e72a896b4009a671b84",
+      "size": 4348
+    },
+    {
       "path": "runtime/cp_runtime/capability_store.py",
       "sha256": "f2a77649861ecc0a1975819fdf7f2eeaafb2e57b3dfd95fe91101551cb016eb7",
       "size": 20944
     },
     {
       "path": "runtime/cp_runtime/cli.py",
-      "sha256": "0163d1ef8da6731519d7dce91e5a3e1ebc0cb41f62196d35d4c70a2b5f2d226f",
-      "size": 12531
+      "sha256": "a95b026e35aba59f17782df34cfb82cce45180f35d487e8199e6f833e07bd7ce",
+      "size": 12746
     },
     {
       "path": "runtime/cp_runtime/common.py",
@@ -888,8 +903,8 @@
     },
     {
       "path": "runtime/cp_runtime/event_v2.py",
-      "sha256": "d478cfd7ae694a7c428e5f56cb479904ba90b1d9994fcb39757f78115a2ce8d1",
-      "size": 34418
+      "sha256": "a3793247a246e0469b2a6803341313e0da5f076b9f0790a2a748d514f009613f",
+      "size": 34990
     },
     {
       "path": "runtime/cp_runtime/event_v3.py",
@@ -1032,6 +1047,16 @@
       "size": 8102
     },
     {
+      "path": "runtime/cp_runtime/onboarding.py",
+      "sha256": "9ddfa556fa861c8c7c4a4b1070085e3cbaa0b32f3b9af82099217742341a6505",
+      "size": 20700
+    },
+    {
+      "path": "runtime/cp_runtime/onboarding_cli.py",
+      "sha256": "1d81f1551c1ca3814aac9b8788a50defde5393d5948448052483cf1ecb9f74b1",
+      "size": 5709
+    },
+    {
       "path": "runtime/cp_runtime/patch_intent.py",
       "sha256": "5fae9e256781e0dbfc972c74556c70a62e42ada7b5525221918b27d324bc7fef",
       "size": 16123
@@ -1117,6 +1142,11 @@
       "size": 9159
     },
     {
+      "path": "runtime/tests/test_capability_registry.py",
+      "sha256": "d22c74a525876697afe3d6e2ce19a27391e507dcf95f9e244394b20a368659b6",
+      "size": 10363
+    },
+    {
       "path": "runtime/tests/test_capability_store.py",
       "sha256": "56479d47260a295f81e3fe1f07c0d7474f319f9e47360c9ca4f8a35c3a95ba14",
       "size": 20152
@@ -1125,6 +1155,11 @@
       "path": "runtime/tests/test_cp_runtime.py",
       "sha256": "88919ff8411864dae890528008520a8a7b3e58200143c5cdb935309efb86afac",
       "size": 8326
+    },
+    {
+      "path": "runtime/tests/test_onboarding.py",
+      "sha256": "07654efaf718fb905a8c0905a6f5e6303ea8dbc7a1cb2bdb438a1e6a89bfeb32",
+      "size": 13298
     },
     {
       "path": "runtime/tests/test_patch_intent.py",

@@ -37,7 +37,8 @@ Requirements:
 - the coordinator deduplicates, clusters root causes, adjudicates conflicts, and assigns severity;
 - form the minimum complete repair set before centralized repair;
 - rereview only affected scope after repair, expanding when a public boundary changed;
-- respect the active reviewer's conservative defaults and hard ceilings; do not use maxima as routine budgets;
+- use `$multi-agent-independent-review` as the sole defaults authority: parallel 3, total 6, two postimplementation rounds, two centralized repair rounds, and one Terra High reviewer;
+- keep compatibility hard ceilings separate and never treat them as routine defaults;
 - after reaching a limit, stop automatic looping and retain blockers and unverified items rather than claiming a pass.
 
 The `$multi-agent-independent-review` skill defines detailed roles, packets, output, and stopping. With `$long-running-task-memory`, checkpoint the review plan, dispatch, collection, consolidation, repair, revalidation, and final rereview at recoverable nodes. Only the coordinator updates shared memory.

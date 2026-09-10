@@ -5,17 +5,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Entry = Join-Path $ScriptDir "evolution.py"
-
-$Python = Get-Command python -ErrorAction SilentlyContinue
-if (-not $Python) {
-    $Python = Get-Command py -ErrorAction SilentlyContinue
-    if (-not $Python) {
-        throw "未找到 Python。请安装 Python 3.11+ 并加入 PATH。"
-    }
-    & $Python.Source -3 -B $Entry @EvolutionArgs
-} else {
-    & $Python.Source -B $Entry @EvolutionArgs
-}
-exit $LASTEXITCODE
+# 中文：共享启动器在导入本地模块前验证 Python 3.11+。
+# English: The shared launcher validates Python 3.11+ before importing local modules.
+. "$PSScriptRoot/python-launcher.ps1"
+Invoke-ValidatedPython -Script "$PSScriptRoot/evolution.py" -Arguments $EvolutionArgs

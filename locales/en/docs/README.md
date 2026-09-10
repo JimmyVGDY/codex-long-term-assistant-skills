@@ -4,7 +4,7 @@ Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-ass
 
 This page organizes current package documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
 
-> Version scope: V<!-- cp-fact:package-version -->7.7.1<!-- /cp-fact --> is the current package version. TaskOutcomeEvent V3, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
+> Version scope: V<!-- cp-fact:package-version -->7.8.0<!-- /cp-fact --> is the current package version. TaskOutcomeEvent V3, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
 
 ## Getting started
 

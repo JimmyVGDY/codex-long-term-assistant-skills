@@ -167,6 +167,10 @@ def main() -> None:
     add_commands(sub)
     from .capability_gate_cli import add_commands as add_gate_commands
     add_gate_commands(sub)
+    from .capability_registry_cli import add_commands as add_registry_commands
+    add_registry_commands(sub)
+    from .onboarding_cli import add_commands as add_onboarding_commands
+    add_onboarding_commands(sub)
 
     item = sub.add_parser("project-onboard")
     item.add_argument("--repo-path", required=True)

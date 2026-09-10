@@ -75,10 +75,10 @@ class DocumentationSourceTests(unittest.TestCase):
         self.catalog["fact_files"]["README.md"] = ["package-version", "validation-report"]
         self.write("config/documentation.json", self.catalog)
         self.assertTrue(audit(self.root, write=True)["ok"])
-        self.write("manifest.json", {"version": "7.7.1"})
+        self.write("manifest.json", {"version": "7.8.0"})
         self.assertIn("FACT_DRIFT", self.codes())
         self.assertTrue(audit(self.root, write=True)["ok"])
-        self.assertIn("releases/v7.7.1/VALIDATION_REPORT.md", (self.root / "README.md").read_text())
+        self.assertIn("releases/v7.8.0/VALIDATION_REPORT.md", (self.root / "README.md").read_text())
 
     def test_release_status_must_follow_package_version(self):
         for version, status in [("7.6.0", "active"), ("7.6.1", "reference")]:

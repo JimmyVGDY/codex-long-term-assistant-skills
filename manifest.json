@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.7.1",
-  "release_name": "Codex CLI 0.154.0 稳定版适配",
-  "generated_for": "Codex Plugin-first engineering assistance with bounded external capability indexing, Operation v2 write preparation and PostTool reconciliation, and the frozen eleven-release host compatibility window",
+  "version": "7.8.0",
+  "release_name": "AUTO 能力注册、首次引导与开源自救体验",
+  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with C01-C25 AUTO capability selection, consent-bound onboarding scans, scoped review freshness, and feature-level installation recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -481,6 +481,7 @@
   },
   "authority_registry": {
     "package_registry": "manifest.json",
+    "capability_registry": "config/capability-registry-v1.json",
     "project_identity": "project-profile.json",
     "project_runtime_state": "project-state.json",
     "task_execution_state": "execution-state.json via execution_guard.py",
@@ -535,6 +536,8 @@
     ]
   },
   "upgrade_from": [
+    "7.7.1",
+    "7.7.0",
     "7.6.2",
     "7.6.1",
     "7.4.5",
@@ -563,8 +566,7 @@
     "7.4.6",
     "7.5.0",
     "7.5.1",
-      "7.6.0",
-      "7.7.0"
+    "7.6.0"
   ],
   "release_validation": {
     "python_syntax": true,

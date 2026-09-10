@@ -21,6 +21,12 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
+MINIMUM_PYTHON = (3, 11)
+if sys.version_info < MINIMUM_PYTHON:
+    print("[ERROR] Python 3.11+ required; actual=%s executable=%s" %
+          (".".join(str(part) for part in sys.version_info[:3]), sys.executable), file=sys.stderr)
+    raise SystemExit(2)
+
 from codex_compatibility import (CompatibilityError, canonical_digest,
                                  load_registry, normalize_plugin_list,
                                  parse_codex_version_output, profile_for_version)
@@ -33,7 +39,20 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
-VERSION = "7.7.1"
+
+
+def release_version() -> str:
+    try:
+        value = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        version = str(value["version"])
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError):
+        raise RuntimeError("manifest.json version unavailable") from None
+    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        raise RuntimeError("manifest.json version invalid")
+    return version
+
+
+VERSION = release_version()
 MARKETPLACE = "cp-assistant-local"
 COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, VERSION)
@@ -43,7 +62,9 @@ TARGET_CODEX_VERSION = str(COMPATIBILITY_REGISTRY["window_policy"]["anchor"])
 SUPPORTED_CODEX_VERSIONS = tuple(item["version"] for item in COMPATIBILITY_REGISTRY["versions"])
 REPAIRABLE_MARKETPLACE_STATE_VERSIONS = frozenset({
     "6.1.0", "6.2.0", "6.3.0", "7.2.0", "7.3.0", "7.4.0",
+    "7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1",
 })
+AUTO_MIGRATION_SOURCES = frozenset({"7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1"})
 SKILL_DIR_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
 END = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:END -->"
@@ -392,13 +413,41 @@ def reject_tree_links(path: Path) -> None:
                 raise InstallError("受管树内部不允许符号链接/Junction/Reparse Point: %s" % candidate)
 
 
+def _containment_path(path: Path) -> Path:
+    """中文：规范化 Windows 设备前缀、短路径和大小写后再做词法包含判断。
+
+    English: Normalize Windows device prefixes, short paths, and case before lexical containment checks.
+    """
+    value = str(path.absolute())
+    if os.name == "nt":
+        if value.startswith("\\\\?\\UNC\\"):
+            value = "\\\\" + value[8:]
+        elif value.startswith("\\\\?\\"):
+            value = value[4:]
+        value = os.path.realpath(value)
+        if value.startswith("\\\\?\\UNC\\"):
+            value = "\\\\" + value[8:]
+        elif value.startswith("\\\\?\\"):
+            value = value[4:]
+        value = os.path.normcase(os.path.normpath(value))
+    return Path(value)
+
+
 def ensure_inside(path: Path, root: Path) -> None:
-    p = path.absolute()
-    r = root.absolute()
+    p = _containment_path(path)
+    r = _containment_path(root)
     try:
         p.relative_to(r)
     except ValueError as exc:
         raise InstallError("目标路径越过受管根目录: %s" % path) from exc
+
+
+def path_inside(path: Path, root: Path) -> bool:
+    try:
+        _containment_path(path).relative_to(_containment_path(root))
+        return True
+    except ValueError:
+        return False
 
 
 def git_root(repo: Path) -> Path:
@@ -814,6 +863,37 @@ def migrate_state_to_v3(value: Mapping[str, Any], scope: str, mode: str) -> Dict
     migrated["scope"] = scope
     migrated["mode"] = old_mode
     return migrated
+
+
+def capability_preference_migration(value: Mapping[str, Any]) -> Dict[str, Any]:
+    """中文：只按明确旧来源生成偏好迁移计划，门禁和操作证据永不参与。
+
+    English: Build a preference migration plan only from explicit legacy sources; gate and operation evidence never participate.
+    """
+    preference = value.get("capability_preference")
+    classification = "UNKNOWN_OFF"
+    evidence = "missing-or-unowned"
+    if isinstance(preference, dict):
+        source = str(preference.get("source") or "")
+        mode = str(preference.get("mode") or "").upper()
+        if source == "USER" and mode == "OFF":
+            classification, evidence = "USER_OFF", "owned-explicit-user-preference"
+        elif source in {"USER", "INSTALLER", "MANAGED"} and mode == "ON":
+            classification, evidence = "LEGACY_ON", "owned-explicit-legacy-on"
+    elif str(value.get("package") or PACKAGE) == PACKAGE \
+            and str(value.get("version") or "") in AUTO_MIGRATION_SOURCES \
+            and value.get("schema_version") in {1, 2, 3}:
+        classification, evidence = "DEFAULT_OFF", "known-version-installer-default"
+    mapping = {
+        "DEFAULT_OFF": ("AUTO", "BASIC"), "USER_OFF": ("OFF", None),
+        "UNKNOWN_OFF": ("OFF", None), "LEGACY_ON": ("AUTO", "BASIC"),
+    }
+    configured_mode, max_level = mapping[classification]
+    return {"schema_version":"capability-preference-migration/1", "classification":classification,
+            "evidence":evidence, "configured_mode":configured_mode, "max_level":max_level,
+            "authorization":False, "scan_consent":False, "gate_policy_excluded":True,
+            "gate_task_excluded":True, "operation_v2_excluded":True,
+            "application":"PROJECT_LAZY_CAS_AFTER_IDENTITY_BINDING"}
 
 
 def _merged_marketplace_manifest(existing: Any, marketplace_profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
@@ -1383,11 +1463,13 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         reject_link_ancestors(target.parent)
     old_state = load_json(state_path("user"), {}) or {}
     migrated_old_state = migrate_state_to_v3(old_state, "user", mode)
+    preference_migration = capability_preference_migration(old_state)
     if dry_run:
         print(json.dumps({"scope":"user","mode":mode,"from_version":old_state.get("version"),
                           "to_version":VERSION,"state_schema":old_state.get("schema_version"),
                           "state_migration":"legacy-to-v3" if old_state.get("schema_version") in {1, 2} else "none",
                           "backup_required":True,"targets":[str(x[1]) for x in targets],
+                          "preference_migration":preference_migration,
                           "unknown_marketplace_entries_preserved":mode == "plugin"}, ensure_ascii=False, indent=2)); return
     _require_no_live_transaction("user")
     if old_state and str(old_state.get("mode") or mode) != mode and not force:
@@ -1542,7 +1624,8 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         state.update({"schema_version":3,"package":PACKAGE,"version":VERSION,"scope":"user","mode":mode,
                       "installed_at":time.time(),"backup":str(backup),"managed_hashes":managed,
                       "previous_backup":old_state.get("backup"),
-                      "capability_profile":_host_binding(capability_profile) if mode == "plugin" else {}})
+                      "capability_profile":_host_binding(capability_profile) if mode == "plugin" else {},
+                      "preference_migration":preference_migration})
         if mode == "plugin":
             source_report = payload_report(ROOT)
             marketplace_report = payload_report(plugin_marketplace_payload())
@@ -1638,9 +1721,11 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         ensure_inside(target, repo); reject_link_ancestors(target.parent, repo)
     old_state = load_json(state_path("repo", repo), {}) or {}
     migrated_old_state = migrate_state_to_v3(old_state, "repo", "standalone")
+    preference_migration = capability_preference_migration(old_state)
     if dry_run:
         print(json.dumps({"scope":"repo","repo":str(repo),"from_version":old_state.get("version"),
                           "to_version":VERSION,"state_migration":"legacy-to-v3" if old_state.get("schema_version") in {1, 2} else "none",
+                          "preference_migration":preference_migration,
                           "targets":[str(t) for _,t in targets]}, ensure_ascii=False, indent=2)); return
     _require_no_live_transaction("repo", repo)
     journal = _new_journal("repo", "standalone", repo, targets)
@@ -1668,6 +1753,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
         state.update({"schema_version":3,"package":PACKAGE,"version":VERSION,"scope":"repo","mode":"standalone",
                       "repo":str(repo),"backup":str(backup),"previous_backup":old_state.get("backup"),
                       "managed_hashes":managed,"compatibility_status":"STANDALONE_NOT_APPLICABLE"})
+        state["preference_migration"] = preference_migration
         state.pop("compatibility_snapshot", None)
         write_json_atomic(state_path("repo", repo), state)
         _record_applied(journal, "install-state", state_path("repo", repo))
@@ -1804,6 +1890,12 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
     sp = state_path(scope, repo)
     state = load_json(sp, {}) or {}
     if not state:
+        if dry_run:
+            preview = inventory(scope, mode, repo_path)
+            preview.update({"operation":"uninstall-preview", "will_delete":[],
+                            "real_uninstall":"REFUSED_WITHOUT_STATE", "delete_authorized":False})
+            print(json.dumps(preview, ensure_ascii=False, indent=2))
+            return
         raise InstallError("未找到 V6 安装状态文件；为避免误删未知资产，拒绝无状态卸载")
     installed_mode = str(state.get("mode") or mode)
     hashes = state.get("managed_hashes") or {}
@@ -2024,10 +2116,79 @@ def status(scope: str, mode: str, repo_path: Optional[str]) -> None:
     print(json.dumps(data, ensure_ascii=False, indent=2))
 
 
-def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] = None) -> None:
+def _inventory_candidates(scope: str, mode: str, repo: Optional[Path]) -> List[Path]:
+    if scope == "repo":
+        assert repo is not None
+        return [repo / ".agents" / "skills" / name for name in skill_names() + deprecated_skill_names()]
+    ch = codex_home()
+    paths = [ch / "AGENTS.md", ch / "tools" / "cp-runtime.py", ch / "tools" / "evolution.py"]
+    paths.extend(ch / "agents" / item.name for item in agent_files())
+    if mode == "plugin":
+        paths.extend([plugin_marketplace_payload(), plugin_marketplace_manifest(), plugin_cache_root()])
+    else:
+        paths.extend(user_skills_home() / name for name in skill_names() + deprecated_skill_names())
+        paths.extend([ch / "runtime" / "cp_runtime", ch / "cp-assistant-hooks" / "cp_hook.py",
+                      ch / "cp-assistant-hooks" / "cp_gate.py", ch / "hooks.json"])
+    return paths
+
+
+def inventory(scope: str, mode: str, repo_path: Optional[str]) -> Dict[str, Any]:
+    """中文：只读列出已知受管目标、漂移和未知候选。 English: Read-only managed, drifted, and unknown candidate inventory."""
+    repo: Optional[Path] = None
+    base_path = Path(repo_path or ".").expanduser().absolute() if scope == "repo" else None
+    if scope == "repo":
+        try:
+            repo = git_root(base_path)
+        except InstallError:
+            return {"package":PACKAGE, "version":VERSION, "scope":scope, "mode":mode,
+                    "overall":"BASIC_ONLY", "git_repository":False, "base_path":str(base_path),
+                    "state_present":False, "items":[], "unknown_assets_preserved":True,
+                    "delete_authorized":False,
+                    "remediation":["基础文件与说明能力可用；仓库身份、安装和 Git 证据不适用。"]}
+    sp = state_path(scope, repo)
+    state = load_json(sp, {}) or {}
+    hashes = state.get("managed_hashes") if isinstance(state.get("managed_hashes"), dict) else {}
+    rows = []
+    if state:
+        for raw, expected in sorted(hashes.items()):
+            path = Path(raw)
+            try:
+                if scope == "repo":
+                    ensure_inside(path, repo)
+                    reject_link_ancestors(path, repo)
+                else:
+                    allowed_roots = (codex_home(), user_skills_home(), plugin_marketplace_root())
+                    if not any(path_inside(path, root) for root in allowed_roots):
+                        raise InstallError("target outside managed roots")
+                    reject_link_ancestors(path)
+            except InstallError:
+                rows.append({"path":str(path), "status":"UNSAFE_PATH", "expected_sha256":str(expected),
+                             "actual_sha256":None})
+                continue
+            exists = _io_path(path).exists()
+            actual = tree_sha256(path) if exists else "missing"
+            status_name = "MISSING" if not exists else ("MANAGED" if str(expected) == actual else "DRIFT")
+            rows.append({"path":str(path), "status":status_name, "expected_sha256":str(expected),
+                         "actual_sha256":actual})
+    else:
+        for path in _inventory_candidates(scope, mode, repo):
+            if _io_path(path).exists():
+                rows.append({"path":str(path), "status":"UNKNOWN_OWNER", "actual_sha256":tree_sha256(path)})
+    overall = ("ERROR" if any(row["status"] == "UNSAFE_PATH" for row in rows) else
+               ("PASS" if state and all(row["status"] == "MANAGED" for row in rows) else
+                ("DEGRADED" if state else "UNKNOWN")))
+    return {"package":PACKAGE, "version":VERSION, "scope":scope, "mode":mode, "overall":overall,
+            "git_repository":True if scope == "repo" else None, "base_path":str(base_path) if base_path else None,
+            "state_present":bool(state), "state_path":str(sp), "items":rows,
+            "unknown_assets_preserved":True, "delete_authorized":False,
+            "remediation":(["先恢复或重新安装受管 state；未知资产不会自动删除。"] if not state else
+                           (["先处理缺失或漂移目标，再执行变更操作。"] if overall == "DEGRADED" else []))}
+
+
+def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] = None) -> bool:
     if recover:
         recover_transaction(scope, repo_path)
-        return
+        return True
     codex_exe = _codex_executable() if _codex_available() else None
     codex_version = None
     if codex_exe:
@@ -2041,26 +2202,80 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
             capability = _probe_plugin_host()
         except Exception as exc:
             capability = {"ok": False, "error": str(exc)}
-    state = load_json(state_path(scope, git_root(Path(repo_path or ".")) if scope == "repo" else None), {}) or {}
+    repo = None
+    non_git = False
+    if scope == "repo":
+        try:
+            repo = git_root(Path(repo_path or "."))
+        except InstallError:
+            non_git = True
+    state = (load_json(state_path(scope, repo), {}) or {}) if not non_git else {}
     host_compatibility = (
         _host_compatibility_status(state)
         if scope == "user" and state.get("mode") == "plugin"
         else None
     )
-    print(json.dumps({
+    checks: List[Dict[str, Any]] = []
+    remediation: List[str] = []
+    def check(check_id: str, status_name: str, detail: str, fix: str = "") -> None:
+        checks.append({"id":check_id, "status":status_name, "detail":detail,
+                       "remediation":fix or None})
+        if fix and status_name in {"WARN", "ERROR"} and fix not in remediation:
+            remediation.append(fix)
+    check("python", "PASS" if sys.version_info >= MINIMUM_PYTHON else "ERROR",
+          "%s (%s)" % (".".join(str(part) for part in sys.version_info[:3]), sys.executable),
+          "安装 Python 3.11+ 并用该解释器重新运行。")
+    check("git", "NOT_APPLICABLE" if non_git else ("PASS" if shutil.which("git") else "WARN"),
+          "non-Git base path" if non_git else str(shutil.which("git") or "not found"),
+          "需要仓库功能时安装 Git；基础能力仍可使用。")
+    try:
+        payload = payload_report(ROOT)
+        check("payload", "PASS", "files=%s digest=%s" % (payload.get("file_count"), payload.get("payload_digest")))
+    except Exception as exc:
+        check("payload", "ERROR", str(exc), "重新下载并校验当前发行包。")
+    live = None if non_git else _load_live_journal(scope, repo)
+    check("transaction", "ERROR" if live else "PASS", "active" if live else "none",
+          "运行 recover 或 doctor --recover，完成后再重试。")
+    check("state", "NOT_APPLICABLE" if non_git else ("PASS" if state else "WARN"),
+          "base-only" if non_git else ("present" if state else "missing"),
+          "可先运行 inventory；无 state 的真实卸载仍会拒绝。")
+    check("base-skills", "PASS" if len(skill_names()) == 10 else "ERROR", "count=%d" % len(skill_names()))
+    check("plugin", "NOT_APPLICABLE" if scope == "repo" or state.get("mode") != "plugin" else
+          ("PASS" if host_compatibility and host_compatibility.get("compatible") else "WARN"),
+          str(host_compatibility or "not active"), "运行 verify 并读回 Plugin installed/enabled/version。")
+    try:
+        hook_count = len(json.loads((ROOT / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"])
+        check("hooks", "PASS" if hook_count == 8 else "ERROR", "registered=%d" % hook_count,
+              "恢复当前发行包的受管 Hook 注册。")
+    except Exception as exc:
+        check("hooks", "ERROR", str(exc), "恢复当前发行包的受管 Hook 注册。")
+    check("child-agent-policy", "PASS" if len(agent_files()) == 7 else "WARN",
+          "reviewers=%d; optional for ordinary serial work" % len(agent_files()),
+          "需要独立复审时修复 Reviewer；普通工作可由主 Agent 串行继续。")
+    check("controlled-write", "PASS", "optional policy defaults disabled; protected actions remain separate")
+    check("observation", "PASS", "optional observation failure does not block ordinary work")
+    overall = "ERROR" if any(item["status"] == "ERROR" for item in checks) else (
+        "DEGRADED" if any(item["status"] == "WARN" for item in checks) else "PASS")
+    data = {
         "package":PACKAGE,"version":VERSION,"target_codex":TARGET_CODEX_VERSION,
         "supported_codex_versions":list(SUPPORTED_CODEX_VERSIONS),"python":sys.executable,
+        "python_version":".".join(str(part) for part in sys.version_info[:3]),
         "home":str(Path.home()),"codex_home":str(codex_home()),
         "user_skills_home":str(user_skills_home()),
         "plugin_marketplace_root":str(plugin_marketplace_root()),
         "skill_count":len(skill_names()),"reviewer_count":len(agent_files()),
         "plugin_manifest":str(ROOT/".codex-plugin"/"plugin.json"),
-        "hooks_manifest":str(ROOT/"hooks"/"hooks.json"), "transaction": str(transaction_path("user")),
+        "hooks_manifest":str(ROOT/"hooks"/"hooks.json"),
+        "transaction": None if non_git else str(transaction_path(scope, repo)),
         "payload_manifest":str(ROOT/PAYLOAD_MANIFEST_NAME),
         "plugin_cache_root":str(plugin_cache_root()),
         "git":shutil.which("git"),"codex":codex_exe,"codex_version":codex_version,
-        "capability_profile":capability,"host_compatibility":host_compatibility
-    },ensure_ascii=False,indent=2))
+        "capability_profile":capability,"host_compatibility":host_compatibility,
+        "overall":overall,"checks":checks,"remediation":remediation,
+        "base_capabilities_available":overall != "ERROR",
+    }
+    print(json.dumps(data,ensure_ascii=False,indent=2))
+    return overall == "PASS"
 
 
 def main() -> None:
@@ -2077,6 +2292,7 @@ def main() -> None:
     doctor_parser.add_argument("--recover", action="store_true")
     doctor_parser.add_argument("--scope", choices=["user", "repo"], default="user")
     doctor_parser.add_argument("--repo-path")
+    doctor_parser.add_argument("--strict", action="store_true")
     status_parser=sub.add_parser("status")
     status_parser.add_argument("--scope",choices=["user","repo"],default="user")
     status_parser.add_argument("--mode",choices=["plugin","standalone"],default="plugin")
@@ -2085,12 +2301,23 @@ def main() -> None:
     recover_parser=sub.add_parser("recover")
     recover_parser.add_argument("--scope",choices=["user","repo"],default="user")
     recover_parser.add_argument("--repo-path")
+    inventory_parser=sub.add_parser("inventory")
+    inventory_parser.add_argument("--scope",choices=["user","repo"],default="user")
+    inventory_parser.add_argument("--mode",choices=["plugin","standalone"],default="plugin")
+    inventory_parser.add_argument("--repo-path")
+    inventory_parser.add_argument("--json",action="store_true")
     args=p.parse_args()
     if args.command=="doctor":
-        repo = git_root(Path(args.repo_path or ".")) if args.scope == "repo" else None
-        with scope_lock(args.scope, repo): doctor(args.recover, args.scope, str(repo) if repo else None)
+        if args.recover:
+            repo = git_root(Path(args.repo_path or ".")) if args.scope == "repo" else None
+            with scope_lock(args.scope, repo): doctor(True, args.scope, str(repo) if repo else None)
+            return
+        ok = doctor(False, args.scope, args.repo_path)
+        if args.strict and not ok: raise SystemExit(2)
         return
     if args.command=="status": status(args.scope,args.mode,args.repo_path); return
+    if args.command=="inventory":
+        print(json.dumps(inventory(args.scope,args.mode,args.repo_path),ensure_ascii=False,indent=2)); return
     if args.command=="recover":
         repo = git_root(Path(args.repo_path or ".")) if args.scope == "repo" else None
         with scope_lock(args.scope, repo): recover_transaction(args.scope, str(repo) if repo else None)

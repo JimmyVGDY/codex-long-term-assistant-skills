@@ -4,17 +4,21 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.8.0 - 2026-09-10
+
+- Add the exact C01-C25 `capability-registry/1`, per-feature AUTO/BASIC/ASSISTED/FULL selection, and external explicit preferences while keeping levels, risk, and external authority independent.
+- Add `onboarding/1` and recoverable scan jobs with one offer, nonce/revision CAS, renewal, cancel epochs, lease fencing, cursor, and partial-coverage readback.
+- Add scoped-review dependency fingerprints. Unknown dynamic dependencies are `INCOMPLETE`, related changes are `STALE`, and release-wide audit remains separate.
+- Add actual Python 3.11+ preflight, per-feature doctor, read-only inventory, zero-delete state-less preview, non-Git BASIC guidance, and lazy preference migration.
+- Fix Windows device-prefix, short-path, and case aliases incorrectly classifying managed files as `UNSAFE_PATH`; containment now normalizes aliases while out-of-root paths and reparse points still fail closed.
+- Add exact contracts and discoverable tests for U02-U13, UX01-UX40, M01-M12, and T25-T28 while retaining V7.6.2 message-boundary and V7.7.0 Operation v2 regression coverage.
+
 ## 7.7.1 - 2026-09-10
 
-- Advance the closed compatibility registry to OpenAI Codex CLI 0.154.0 and freeze `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`, removing 0.149.1 from the active window.
-- Pin the official 0.154.0 Git tag/commit, Hook discovery, PreToolUse/PostToolUse schema, successful `apply_patch` result sources, npm SRI, and SHA-256. Add `result-v154`, referenced only by 0.154.0.
-- Synchronize the installer, compatibility matrix, release verifiers, Plugin/package versions, bilingual documentation, and site indexes. The removed upstream `codex mcp-server` entry point is not used by this repository; Operation v2, the default-disabled gate, and the Luna/Terra automatic-dispatch ceiling remain unchanged.
-- Update the effective Windows CLI through the existing global npm channel from 0.153.4 to 0.154.0. Fresh-process version, help, login, and Plugin-list readback pass, as do 19 focused tests, 11/11 official-source verification, and the isolated 0.154.0 compatibility cell.
-- Fix a configured-but-disabled capability gate incorrectly blocking PostToolUse when no operation is in flight; an already-dispatched B still converges after the policy is disabled. Release verification now binds the compatibility registry canonical digest and rejects a tampered registry.
-- The repaired full wrapper passes 329 package and 180 runtime tests on Python 3.13.15. An earlier transient Windows keyring permission failure and two legacy attestation-fixture failures are preserved with focused and full rerun evidence.
-- Two logically read-only preimplementation Reviewers reconciled and closed version fanout, paired rollback, matrix-boundary, and evidence-closure gaps. Rollback restores CLI 0.153.4 before Plugin V7.7.0.
-- After centralized repair of three postimplementation Reviewer findings, the targeted round-two re-review reported no blocking or nonblocking issues.
-- Account-level transactional installation, enabled Plugin 7.7.1 readback, `HOST_COMPATIBLE`, the three-way 224-file payload digest, and fresh-task `V771_FRESH_HOST_PASS` all pass.
+- Advance the closed compatibility registry to OpenAI Codex CLI 0.154.0, freezing `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`, and removing 0.149.1 from the active window.
+- Pin the official 0.154.0 Git tag/commit, Hook discovery, PreToolUse/PostToolUse schema, successful `apply_patch` sources, npm SRI, and SHA-256, with a 0.154.0-only `result-v154` profile.
+- Fix a configured-but-disabled capability gate incorrectly blocking PostToolUse when no operation is in flight; an already-dispatched B still converges after disablement.
+- Windows CLI, account Plugin 7.7.1, three-way payload digest, and a real fresh task were read back successfully; full evidence remains in the V7.7.1 release record.
 
 ## 7.7.0 - 2026-09-10
 

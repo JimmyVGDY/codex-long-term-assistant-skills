@@ -12,8 +12,9 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.8.0 | [Notes](v7.8.0/RELEASE_NOTES.md) | [Audit](v7.8.0/AUDIT_REPORT.md) | [Validation](v7.8.0/VALIDATION_REPORT.md) | 合入 Codex 0.154.0 兼容修复并修正 Windows 路径别名后，422 package + 205 runtime 本地候选通过；公开发布、匿名下载和账户生效分列读回 | [JSON](v7.8.0/BUILD_INFO.json) | [JSON](v7.8.0/PACKAGE_VALIDATION.json) |
 | 7.7.1 | [Notes](v7.7.1/RELEASE_NOTES.md) | [Audit](v7.7.1/AUDIT_REPORT.md) | [Validation](v7.7.1/VALIDATION_REPORT.md) | 329 package + 180 runtime 与第 2 轮复核通过；发布和安装后读回分列 | [JSON](v7.7.1/BUILD_INFO.json) | [JSON](v7.7.1/PACKAGE_VALIDATION.json) |
-| 7.7.0 | [Notes](v7.7.0/RELEASE_NOTES.md) | [Audit](v7.7.0/AUDIT_REPORT.md) | [Validation](v7.7.0/VALIDATION_REPORT.md) | Operation v2、327 package + 179 runtime 与第二轮复审通过；发布和安装后读回分列 | [JSON](v7.7.0/BUILD_INFO.json) | [JSON](v7.7.0/PACKAGE_VALIDATION.json) |
+| 7.7.0 | [Notes](v7.7.0/RELEASE_NOTES.md) | [Audit](v7.7.0/AUDIT_REPORT.md) | [Validation](v7.7.0/VALIDATION_REPORT.md) | 327 package + 179 runtime 与第二轮复审通过；发布和安装后读回分列 | [JSON](v7.7.0/BUILD_INFO.json) | [JSON](v7.7.0/PACKAGE_VALIDATION.json) |
 | 7.6.2 | [Notes](v7.6.2/RELEASE_NOTES.md) | [Audit](v7.6.2/AUDIT_REPORT.md) | [Validation](v7.6.2/VALIDATION_REPORT.md) | 当前仅记录实现与定向测试；完整验证与发布后读回待执行 | [JSON](v7.6.2/BUILD_INFO.json) | [JSON](v7.6.2/PACKAGE_VALIDATION.json) |
 | 7.6.1 | [Notes](v7.6.1/RELEASE_NOTES.md) | [Audit](v7.6.1/AUDIT_REPORT.md) | [Validation](v7.6.1/VALIDATION_REPORT.md) | 构建时验证与发布后读回分列 | [JSON](v7.6.1/BUILD_INFO.json) | [JSON](v7.6.1/PACKAGE_VALIDATION.json) |
 | 7.6.0 | [Notes](v7.6.0/RELEASE_NOTES.md) | [Audit](v7.6.0/AUDIT_REPORT.md) | [Validation](v7.6.0/VALIDATION_REPORT.md) | 限定候选验收已完成；正式版本发布单独核验 | [JSON](v7.6.0/BUILD_INFO.json) | [JSON](v7.6.0/PACKAGE_VALIDATION.json) |

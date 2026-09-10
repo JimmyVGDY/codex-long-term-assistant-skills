@@ -1,0 +1,44 @@
+{
+  "ok": true,
+  "status": "FULL_LOCAL_CANDIDATE_PASS",
+  "version": "7.8.0",
+  "evidence_scope": "local-candidate",
+  "checked_on": "2026-09-10",
+  "codex_anchor": "0.154.0",
+  "compatibility_registry_digest": "ce80bc04992bbd6d84b189966323fe00b7bb2abdf481d7366ba10114fd92f91a",
+  "focused_results": {
+    "capability_registry": {"tests": 10, "result": "PASS"},
+    "onboarding": {"tests": 15, "result": "PASS"},
+    "scoped_review": {"tests": 4, "result": "PASS"},
+    "installer_ux": {"tests": 13, "result": "PASS"},
+    "installer_security": {"tests": 40, "result": "PASS"},
+    "r3_traceability": {"tests": 76, "result": "PASS"},
+    "windows_lock_stress": {"iterations": 30, "result": "PASS"}
+  },
+  "pre_merge_full_local_wrapper": {
+    "result": "PASS",
+    "package_tests": 419,
+    "runtime_tests": 205,
+    "python": "3.13.15"
+  },
+  "full_local_wrapper_rerun": {
+    "result": "PASS",
+    "package_tests": 422,
+    "runtime_tests": 205,
+    "python": "3.13.15"
+  },
+  "disabled_hot_path_performance": {
+    "samples": 50,
+    "p50_ms": 82.22,
+    "p95_ms": 87.35,
+    "p99_ms": 88.46,
+    "budget_p95_ms": 300,
+    "budget_p99_ms": 1000,
+    "result": "PASS"
+  },
+  "independent_post_review": "R3_PRE_MERGE_LOGICAL_READONLY_PASS; V7.7.1_INDEPENDENT_REVIEW_PASS; MERGED_INTEGRATION_FULL_LOCAL_VALIDATION_PASS",
+  "review_packet_sha256": "f22009b924e310de1b40d11b8728b842dbe03bc17f6532234040f07f88a01402",
+  "publication": "NOT_EVALUATED",
+  "account_installation": "NOT_EVALUATED",
+  "fresh_task": "NOT_EVALUATED"
+}

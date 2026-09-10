@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：失败关闭的 V7.7.1 端到端发行验证器。
+"""中文：失败关闭的 V7.8.0 端到端发行验证器。
 
-English: Fail-closed V7.7.1 end-to-end release verifier.
+English: Fail-closed V7.8.0 end-to-end release verifier.
 """
 from __future__ import annotations
 
@@ -18,9 +18,9 @@ from typing import Any, Dict, Mapping
 from codex_compatibility import canonical_digest, load_registry
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
 
-VERSION = "7.7.1"
+VERSION = "7.8.0"
 TARGET_CODEX_VERSION = "0.154.0"
-COMPATIBILITY_REGISTRY_DIGEST = "718e7b287a62a11e68dd364fafc413ed5840dd112da5491c2c9493aa7a75289d"
+COMPATIBILITY_REGISTRY_DIGEST = "ce80bc04992bbd6d84b189966323fe00b7bb2abdf481d7366ba10114fd92f91a"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
@@ -217,7 +217,7 @@ def verify_release(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.7.1 端到端发行验证")
+    parser = argparse.ArgumentParser(description="V7.8.0 端到端发行验证")
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--package-validation", required=True)
     parser.add_argument("--build-witness", required=True)

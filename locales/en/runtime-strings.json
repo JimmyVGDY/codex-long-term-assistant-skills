@@ -715,7 +715,13 @@
         "缺少 %s -> V7.6.1 升级声明": "Missing %s -> V7.6.1 upgrade path",
         "[OK] V7.7.1 语义校验通过：Operation v2、PostToolUse、11 个稳定版注册表、隔离 Plugin 预演和受控演进边界一致": "[OK] V7.7.1 semantic validation passed: Operation v2, PostToolUse, the eleven-release registry, isolated Plugin preflight, and controlled-evolution boundaries agree",
         "manifest 版本不是 7.7.1": "manifest version must be 7.7.1",
-        "缺少 %s -> V7.7.1 升级声明": "Missing %s -> V7.7.1 upgrade path"
+        "缺少 %s -> V7.7.1 升级声明": "Missing %s -> V7.7.1 upgrade path",
+        "[OK] V7.8.0 语义校验通过：Codex 0.154.0、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致": "[OK] V7.8.0 semantic validation passed: Codex 0.154.0, AUTO registry, onboarding/1, Operation v2, eleven-release compatibility, and per-feature recovery boundaries agree",
+        "manifest 版本不是 7.8.0": "manifest version must be 7.8.0",
+        "缺少 %s -> V7.8.0 升级声明": "Missing %s -> V7.8.0 upgrade path",
+        "AUTO 能力注册表不是 C01-C25 完整映射": "The AUTO capability registry is not the complete C01-C25 mapping",
+        "Manifest 缺少 capability-registry/1 权威指针": "Manifest is missing the capability-registry/1 authority pointer",
+        "R3 U/UX/M/T 验收映射不完整": "The R3 U/UX/M/T acceptance mapping is incomplete"
       },
       "preserve": [
         "用户",
@@ -748,6 +754,7 @@
         "生命周期模型身份隐私声明无效": "Invalid lifecycle model-identity privacy result",
         "V7.6.1 端到端发行验证": "V7.6.1 end-to-end release validation",
         "V7.7.1 端到端发行验证": "V7.7.1 end-to-end release validation",
+        "V7.8.0 端到端发行验证": "V7.8.0 end-to-end release validation",
         "派发策略门禁存在失败用例": "Dispatch-policy gate contains a failed case",
         "派发策略门禁用例无效或冲突": "Dispatch-policy gate contains an invalid case conflict",
         "派发策略证据包含宿主模型身份字段": "Dispatch-policy evidence contains prohibited model-identity fields"
@@ -1000,6 +1007,17 @@
         "Plugin 恢复: %s": "Plugin recovery: %s",
         "事务恢复未完成: %s": "Transaction recovery is incomplete: %s",
         "[OK] 事务恢复完成": "[OK] Transaction recovery completed",
+        "基础文件与说明能力可用；仓库身份、安装和 Git 证据不适用。": "Basic file and documentation capabilities are available; repository identity, installation, and Git evidence are not applicable.",
+        "先恢复或重新安装受管 state；未知资产不会自动删除。": "Restore or reinstall the managed state first; unknown assets will not be deleted automatically.",
+        "先处理缺失或漂移目标，再执行变更操作。": "Resolve missing or drifted targets before a mutating operation.",
+        "安装 Python 3.11+ 并用该解释器重新运行。": "Install Python 3.11+ and rerun with that interpreter.",
+        "需要仓库功能时安装 Git；基础能力仍可使用。": "Install Git when repository features are needed; basic capabilities remain available.",
+        "重新下载并校验当前发行包。": "Download and validate the current distribution again.",
+        "运行 recover 或 doctor --recover，完成后再重试。": "Run recover or doctor --recover, then retry after it completes.",
+        "可先运行 inventory；无 state 的真实卸载仍会拒绝。": "Run inventory first; real uninstall without state still refuses.",
+        "运行 verify 并读回 Plugin installed/enabled/version。": "Run verify and read back Plugin installed/enabled/version.",
+        "恢复当前发行包的受管 Hook 注册。": "Restore the managed Hook registration from the current distribution.",
+        "需要独立复审时修复 Reviewer；普通工作可由主 Agent 串行继续。": "Repair Reviewers when independent review is required; ordinary work can continue serially in the main agent.",
         "Codex 跨项目长期技术助手 V%s 安装器": "Codex Cross-Project Long-Term Engineering Assistant V%s installer"
       }
     },

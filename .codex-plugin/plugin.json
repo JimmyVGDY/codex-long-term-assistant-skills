@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.7.1",
-  "description": "跨项目长期技术助手 V7.7.1：Codex CLI 0.154.0 与此前十个稳定版兼容。",
+  "version": "7.8.0",
+  "description": "跨项目长期技术助手 V7.8.0：Codex 0.154.0、AUTO 能力注册、首次引导、范围复审与分功能自救。",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }

@@ -2,17 +2,21 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.8.0 - 2026-09-10
+
+- 新增 C01-C25 `capability-registry/1`、AUTO/BASIC/ASSISTED/FULL 功能级选择和仓库外显式偏好；档位、风险与外部权限保持独立。
+- 新增 `onboarding/1` 与可恢复扫描任务：一次询问、nonce/revision CAS、续期、取消 epoch、租约 fencing、游标与部分覆盖读回。
+- 新增范围复审依赖指纹；未知动态依赖为 `INCOMPLETE`，相关变化为 `STALE`，全仓发行审计保持独立。
+- 安装器增加 Python 3.11+ 真实预检、分功能 doctor、只读 inventory、无 state 零删除预览、非 Git BASIC 指南及惰性偏好迁移。
+- 修复 Windows 设备前缀、短路径和大小写别名导致受管文件被误判为 `UNSAFE_PATH`；规范化后再判断归属，越界路径和重解析点仍失败关闭。
+- U02-U13、UX01-UX40、M01-M12 与 T25-T28 建立逐项合同和可发现测试；V7.6.2 消息边界与 V7.7.0 Operation v2 保持回归覆盖。
+
 ## 7.7.1 - 2026-09-10
 
 - 将闭合兼容注册表推进到 OpenAI Codex CLI 0.154.0，活动窗口固定为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`，并将 0.149.1 移出活动窗口。
 - 固定 0.154.0 的官方 Git tag/commit、Hook discovery、PreToolUse/PostToolUse schema、成功 `apply_patch` 结果源码、npm SRI 与 SHA-256；新增只绑定 0.154.0 的 `result-v154` profile。
-- 同步更新安装器、兼容矩阵、发行验证器、Plugin/包版本、双语文档和站点索引。上游移除的 `codex mcp-server` 不在本仓库调用链中；Operation v2、默认关闭门禁和 Luna/Terra 自动派发上限保持不变。
-- Windows 实际 CLI 通过原 npm 全局渠道从 0.153.4 更新到 0.154.0；新进程版本、帮助、登录与 Plugin 列表读回通过，19 项定向单测、11/11 官方源码复核和 0.154.0 隔离兼容单元通过。
-- 修复已配置但停用的能力门禁在不存在在途 Operation 时错误阻断 PostToolUse；停用后的既有在途 B 仍按原合同收敛。发行验证同时绑定兼容注册表 canonical digest，并新增篡改注册表必须失败的回归。
-- 修复后的完整包装器在 Python 3.13.15 上通过 329 项 package 与 180 项 runtime 测试；较早的 Windows 临时 keyring 权限波动和两处旧 attestation 夹具失败均已通过定向与完整复跑闭环记录。
-- 实施前两位逻辑只读 Reviewer 归并并关闭版本同步、回滚配对、矩阵边界和证据闭环问题；若需回滚，必须先恢复 CLI 0.153.4，再恢复 Plugin V7.7.0。
-- 实施后三位逻辑只读 Reviewer 的问题集中修复后，第 2 轮定向复核无阻塞或非阻塞项。
-- 账户级事务安装、Plugin 7.7.1 启用读回、`HOST_COMPATIBLE`、224 文件三方 payload 摘要和真实新任务 `V771_FRESH_HOST_PASS` 均通过。
+- 修复已配置但停用的能力门禁在不存在在途 Operation 时错误阻断 PostToolUse；停用后的既有在途 B 仍按原合同收敛。
+- Windows CLI、账户 Plugin 7.7.1、三方 payload 摘要与真实新任务均已读回通过；完整证据保留在 V7.7.1 发行记录。
 
 ## 7.7.0 - 2026-09-10
 
