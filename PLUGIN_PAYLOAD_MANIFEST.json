@@ -8,8 +8,8 @@
     "hooks",
     "runtime"
   ],
-  "file_count": 227,
-  "payload_digest": "7d95163532a524151d351e5e302b106bcbcecb162e3f350c31980ffca4305b18",
+  "file_count": 230,
+  "payload_digest": "37f8ffccfa64d6d7a360982a7c7df643ae3d4a05b5f7b8aa962178bc782191e3",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -868,8 +868,8 @@
     },
     {
       "path": "runtime/cp_runtime/cli.py",
-      "sha256": "f7200fde96f273a912e122d6d016656ae9f39838d6a0c5405613c9688fe365f0",
-      "size": 12641
+      "sha256": "a95b026e35aba59f17782df34cfb82cce45180f35d487e8199e6f833e07bd7ce",
+      "size": 12746
     },
     {
       "path": "runtime/cp_runtime/common.py",
@@ -1042,6 +1042,16 @@
       "size": 8102
     },
     {
+      "path": "runtime/cp_runtime/onboarding.py",
+      "sha256": "764d809317966df232fc05a2716d355f7f2d425c36a330125dbabe654ca68db4",
+      "size": 19133
+    },
+    {
+      "path": "runtime/cp_runtime/onboarding_cli.py",
+      "sha256": "1d81f1551c1ca3814aac9b8788a50defde5393d5948448052483cf1ecb9f74b1",
+      "size": 5709
+    },
+    {
       "path": "runtime/cp_runtime/patch_intent.py",
       "sha256": "5fae9e256781e0dbfc972c74556c70a62e42ada7b5525221918b27d324bc7fef",
       "size": 16123
@@ -1140,6 +1150,11 @@
       "path": "runtime/tests/test_cp_runtime.py",
       "sha256": "88919ff8411864dae890528008520a8a7b3e58200143c5cdb935309efb86afac",
       "size": 8326
+    },
+    {
+      "path": "runtime/tests/test_onboarding.py",
+      "sha256": "8b5f08dbc962697b5fa8d24e7d708f08ea1c1bfff5691f44103dc0d85367c258",
+      "size": 10341
     },
     {
       "path": "runtime/tests/test_patch_intent.py",
