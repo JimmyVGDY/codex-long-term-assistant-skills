@@ -48,7 +48,7 @@ class PackageManagerUxTests(unittest.TestCase):
         text = MANAGER.read_text(encoding="utf-8")
         self.assertLess(text.index("MINIMUM_PYTHON = (3, 11)"), text.index("from codex_compatibility import"))
         self.assertIn("VERSION = release_version()", text)
-        self.assertNotIn('VERSION = "7.8.0"', text)
+        self.assertNotIn('VERSION = "7.8.1"', text)
         self.assertEqual(json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"],
                          package_manager.VERSION)
 
@@ -133,6 +133,36 @@ class PackageManagerUxTests(unittest.TestCase):
         with mock.patch.object(package_manager, "tree_sha256", side_effect=guarded):
             result = package_manager.inventory("repo", "standalone", str(repo))
         self.assertEqual(("ERROR", "UNSAFE_PATH"), (result["overall"], result["items"][0]["status"]))
+
+    def test_user_inventory_hashes_only_the_managed_global_block(self):
+        fake_codex = self.base / "codex"
+        fake_skills = self.base / "skills"
+        fake_market = self.base / "marketplace"
+        agents = fake_codex / "AGENTS.md"
+        agents.parent.mkdir(parents=True)
+        agents.write_text(package_manager.managed_global_text("user-owned prefix"), encoding="utf-8")
+        expected = package_manager.tree_sha256(ROOT / "global" / "AGENTS.md")
+        state = fake_codex / "cp-assistant-v6-state.json"
+        state.write_text(json.dumps({"managed_hashes": {str(agents): expected}}), encoding="utf-8")
+
+        with mock.patch.object(package_manager, "codex_home", return_value=fake_codex), \
+                mock.patch.object(package_manager, "user_skills_home", return_value=fake_skills), \
+                mock.patch.object(package_manager, "plugin_marketplace_root", return_value=fake_market):
+            initial = package_manager.inventory("user", "plugin", None)
+            agents.write_text(
+                package_manager.managed_global_text("changed user-owned prefix"), encoding="utf-8"
+            )
+            user_edit = package_manager.inventory("user", "plugin", None)
+            agents.write_text(
+                agents.read_text(encoding="utf-8").replace("## 9. 交付表达", "## 9. 漂移"),
+                encoding="utf-8",
+            )
+            managed_edit = package_manager.inventory("user", "plugin", None)
+
+        self.assertEqual(("PASS", "MANAGED"), (initial["overall"], initial["items"][0]["status"]))
+        self.assertEqual(("PASS", "MANAGED"), (user_edit["overall"], user_edit["items"][0]["status"]))
+        self.assertEqual(("DEGRADED", "DRIFT"),
+                         (managed_edit["overall"], managed_edit["items"][0]["status"]))
 
     def test_legacy_preference_classification_is_explicit_and_never_authorizes(self):
         cases = [

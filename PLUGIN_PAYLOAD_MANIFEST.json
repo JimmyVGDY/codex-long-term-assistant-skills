@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.8.0",
+  "version": "7.8.1",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,12 +9,12 @@
     "runtime"
   ],
   "file_count": 231,
-  "payload_digest": "04b328cdbbd00b11589af9d334bade096493f67c81b85647003c11bf12f0c2ce",
+  "payload_digest": "d6583a7fa92a04e59ed7bb14549fc4193512c1759f2c2a99ddb30dcc3417200a",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "6529294a053225847c70dc36eb523d0dd24ee945d54a1fdff55b1f38af720a82",
-      "size": 280
+      "sha256": "ddf533561062ad5452010b54decf3fd729709c50053338d53ad847c18c293656",
+      "size": 308
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
-      "sha256": "5769ea1500679559d032a09d52131e4e8e84eff7ad5fed3523da3f259c35003a",
+      "sha256": "95c41cadcab1de312883d8a4a09d5df491554ec0d835973f054d881a82876f75",
       "size": 8322
     },
     {

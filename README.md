@@ -2,7 +2,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-V7.8.0 新增 C01-C25 AUTO 能力注册、一次性首次引导、可取消恢复的全扫状态、范围复审指纹，以及分功能 `doctor` / 只读 `inventory` 自救。缺少可选资料时普通任务仍走 BASIC；AUTO 和 FULL 都不授予外部动作权限。
+V7.8.1 修复账户级 `inventory` 对 `AGENTS.md` 受管区块的哈希核对，避免正常安装后误报 `DRIFT`；V7.8.0 的 C01-C25 AUTO、首次引导、可恢复扫描、范围复审与分功能自救能力保持不变。
 
 # Codex 跨项目长期技术助手
 
@@ -23,7 +23,7 @@ V7.8.0 新增 C01-C25 AUTO 能力注册、一次性首次引导、可取消恢�
   <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
-V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0，并修复停用门禁的 PostTool 对账。V7.8.0 在其上增加 AUTO/BASIC 分档、首次扫描同意和开源安装自救；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
+V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0，并修复停用门禁的 PostTool 对账。V7.8.1 在其上增加 AUTO/BASIC 分档、首次扫描同意和开源安装自救；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#五分钟升级) · [文档](#文档与协作)
 
@@ -33,8 +33,8 @@ V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7
 
 | 发行包 | 适用界面 | 下载 |
 | --- | --- | --- |
-| `Codex-Skills-V7.8.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.8.0/Codex-Skills-V7.8.0-zh-CN.zip) |
-| `Codex-Skills-V7.8.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.8.0/Codex-Skills-V7.8.0-en.zip) |
+| `Codex-Skills-V7.8.1-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.8.1/Codex-Skills-V7.8.1-zh-CN.zip) |
+| `Codex-Skills-V7.8.1-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.8.1/Codex-Skills-V7.8.1-en.zip) |
 
 [查看最新 Release、校验和与构建见证](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -93,15 +93,15 @@ flowchart LR
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Windows 原生 Codex CLI 0.154.0 + Plugin | 当前实机锚点 | V7.8.0 源码候选覆盖 AUTO、onboarding、迁移、诊断与 Operation v2 回归 | 账户安装、重启和新任务实际加载需在发布后单独读回 |
-| Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 async、Pre/Post schema 与成功结果响应源码证据沿用并需发布读回 | V7.8.0 跨版本真实宿主矩阵仍需在 CI 后读回 |
-| Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | V7.8.0 的 CI 结果需在推送和标签后读回 |
-| standalone 模式 | 显式兼容模式 | 本地安装结构、inventory、非 Git BASIC 和回归测试覆盖 | V7.8.0 账户安装尚未执行，不宣称 Plugin 宿主兼容 |
+| Windows 原生 Codex CLI 0.154.0 + Plugin | 当前实机锚点 | V7.8.1 源码候选覆盖 AUTO、onboarding、迁移、诊断与 Operation v2 回归 | 账户安装、重启和新任务实际加载需在发布后单独读回 |
+| Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 async、Pre/Post schema 与成功结果响应源码证据沿用并需发布读回 | V7.8.1 跨版本真实宿主矩阵仍需在 CI 后读回 |
+| Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | V7.8.1 的 CI 结果需在推送和标签后读回 |
+| standalone 模式 | 显式兼容模式 | 本地安装结构、inventory、非 Git BASIC 和回归测试覆盖 | V7.8.1 账户安装尚未执行，不宣称 Plugin 宿主兼容 |
 | macOS | 未验证 | 无当前 CI 或宿主验收证据 | 状态保持 `UNVERIFIED` |
 
 Python 最低版本为 3.11；公开 CI 配置为在 Windows 与 Ubuntu 上验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
 
-V7.8.0 窗口为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`。未来版、预发布版和窗口外版本不会自动接纳。
+V7.8.1 窗口为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`。未来版、预发布版和窗口外版本不会自动接纳。
 
 V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。门禁默认关闭，流程证据也不代表业务语义正确；发行工作流只创建草稿。
 
@@ -118,7 +118,7 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=7.8.0`，schema 3 宿主状态为 `HOST_COMPATIBLE`，且旧领域 Skill 不再发现时，升级状态才成立。
+3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=7.8.1`，schema 3 宿主状态为 `HOST_COMPATIBLE`，且旧领域 Skill 不再发现时，升级状态才成立。
 
 安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/operations/INSTALLATION_RECOVERY.md) 和 [V7.6 使用指南](docs/USER_GUIDE.md)。
 
@@ -138,7 +138,7 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 - [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
 - [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
 - [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · [V7.8.0 发行说明](docs/releases/v7.8.0/RELEASE_NOTES.md)
+- [版本记录](CHANGELOG.md) · [V7.8.1 发行说明](docs/releases/v7.8.1/RELEASE_NOTES.md)
 
 ## 本地验证
 
@@ -154,7 +154,7 @@ python scripts\validate-package.py
 `Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。标签流程只创建草稿，不会自动公开发布或覆盖既有 Release。
 
 ```shell
-gh attestation verify Codex-Skills-V7.8.0-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.8.1-zh-CN.zip --repo OWNER/REPOSITORY
 ```
 
 完整门禁和新版本发布步骤见 [Release 自动化与制品来源证明](docs/releases/RELEASE_AUTOMATION.md)。

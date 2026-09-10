@@ -2,6 +2,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.8.1 - 2026-09-10
+
+- Fix account `inventory` comparing the whole `AGENTS.md` file against the managed-block hash in install state, which incorrectly reported `DRIFT` after a valid installation.
+- Add unique managed-block extraction and verification. User text outside the markers remains independent, while managed-content changes, duplicate or missing markers, path escapes, and reparse points still fail closed.
+- Retain V7.8.0 AUTO, onboarding, scoped review, installation recovery, and Codex 0.154.0 compatibility unchanged. The V7.8.0 tag and Release remain immutable history.
+
 ## 7.8.0 - 2026-09-10
 
 - Add the exact C01-C25 `capability-registry/1`, per-feature AUTO/BASIC/ASSISTED/FULL selection, and external explicit preferences while keeping levels, risk, and external authority independent.
