@@ -171,7 +171,10 @@ def _trusted_repo(policy: GatePolicy, cwd: str) -> Path:
 
 
 def _disabled_post_has_inflight_operation(policy: GatePolicy, data: dict[str, Any]) -> bool:
-    """Keep disabled policies neutral unless this exact PostToolUse must settle an in-flight B."""
+    """中文：停用策略保持中性，除非该 PostToolUse 必须收敛已派发的 B。
+
+    English: Keep a disabled policy neutral unless this PostToolUse must settle a dispatched B.
+    """
     tool_use_id, session_id, turn_id, cwd = _post_recovery_binding(data)
     _trusted_repo(policy, cwd)
     scope = _digest_json([session_id, turn_id])[:16]

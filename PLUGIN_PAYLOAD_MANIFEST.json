@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 224,
-  "payload_digest": "2f862adb0ea668d7138aabad65d0a9230868b5860e31df374610cdc76ea5eb70",
+  "payload_digest": "e4aaccf5ba16283535b61cecbd370b65641b49efd955144de25ef603282bb60f",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -828,8 +828,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_gate_hook.py",
-      "sha256": "b5581c221df8c4f3b4deb4ae26bdef11e41059c1fe9050caffefefff06158a1c",
-      "size": 20074
+      "sha256": "8c0acf5b64eedb8ac886e22aa89f974c936a16be95ac27c10078c2b4f71f013f",
+      "size": 20175
     },
     {
       "path": "runtime/cp_runtime/capability_gate_workflow.py",
