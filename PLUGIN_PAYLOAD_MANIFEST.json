@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.7.0",
+  "version": "7.7.1",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,12 +9,12 @@
     "runtime"
   ],
   "file_count": 224,
-  "payload_digest": "77f400d4a427b2597d0f30e4d76908f3f375bd48819ce1407ec0c8717506ad18",
+  "payload_digest": "2f862adb0ea668d7138aabad65d0a9230868b5860e31df374610cdc76ea5eb70",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "f3d6d888a22965aadc6f9ff481ddb0eeaa0f81d03ab967ff619876d5cf0cd19c",
-      "size": 265
+      "sha256": "8f3b5b05640a73cf3845a9383b8c875b0bd0d6c6fb5a605b4671bb549a14c31b",
+      "size": 247
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
-      "sha256": "a7e6e3729b1eddbbc87fe669b2da4cdc0f3109c053a434665410f1b529fe4f47",
+      "sha256": "e8029cb2764f22dbbefa9e37725968ed5893e9a393281d787d6b652485b10d3b",
       "size": 8322
     },
     {
@@ -828,8 +828,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_gate_hook.py",
-      "sha256": "f63c695628d90218d209296707d61bdeb0fc59b5de85624a9978acda5a0dc262",
-      "size": 18917
+      "sha256": "b5581c221df8c4f3b4deb4ae26bdef11e41059c1fe9050caffefefff06158a1c",
+      "size": 20074
     },
     {
       "path": "runtime/cp_runtime/capability_gate_workflow.py",
@@ -1073,8 +1073,8 @@
     },
     {
       "path": "runtime/tests/test_capability_gate_hook.py",
-      "sha256": "b217cf5cce1203c680e50d3ec828edb9bec298ef35114e39740ebc8870617c16",
-      "size": 21889
+      "sha256": "3faae499a2e7640c0b3556137e42860a82273faa264331b93f29b89d933e54d0",
+      "size": 22120
     },
     {
       "path": "runtime/tests/test_capability_gate_local_exception.py",

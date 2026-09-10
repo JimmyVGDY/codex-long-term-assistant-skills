@@ -84,8 +84,8 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
     def test_plugin_preflight_rejects_frozen_version_with_unknown_async_capability(self) -> None:
         probe = {
             "version_ok": True,
-            "codex_version": "0.153.4",
-            "codex_version_output": "codex-cli 0.153.4",
+            "codex_version": "0.154.0",
+            "codex_version_output": "codex-cli 0.154.0",
             "version_contract_ok": True,
             "command_contract_errors": [],
             "plugin_list_json": True,
@@ -103,8 +103,8 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
     def test_plugin_preflight_rejects_unknown_apply_patch_operation_contract(self) -> None:
         probe = {
             "version_ok": True,
-            "codex_version": "0.153.4",
-            "codex_version_output": "codex-cli 0.153.4",
+            "codex_version": "0.154.0",
+            "codex_version_output": "codex-cli 0.154.0",
             "version_contract_ok": True,
             "command_contract_errors": [],
             "plugin_list_json": True,

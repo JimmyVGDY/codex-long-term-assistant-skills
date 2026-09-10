@@ -92,6 +92,10 @@ class CapabilityGateHookTests(unittest.TestCase):
         self.policy.set_enabled(True, None)
         self.policy.set_enabled(False, 0)
         self.assertIsNone(self.invoke("PreToolUse", tool_name="Write"))
+        self.assertEqual({}, self.invoke_gate(
+            "PostToolUse", tool_name="apply_patch", tool_use_id="disabled-no-operation",
+            tool_input=self.canonical_patch()["tool_input"], tool_response="Done!",
+        ))
         self.assertEqual({}, self.invoke("Stop"))
         self.assertFalse(self.policy.state_root.exists())
         self.assertFalse(self.store.current.exists())

@@ -2,6 +2,17 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.7.1 - 2026-09-10
+
+- 将闭合兼容注册表推进到 OpenAI Codex CLI 0.154.0，活动窗口固定为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`，并将 0.149.1 移出活动窗口。
+- 固定 0.154.0 的官方 Git tag/commit、Hook discovery、PreToolUse/PostToolUse schema、成功 `apply_patch` 结果源码、npm SRI 与 SHA-256；新增只绑定 0.154.0 的 `result-v154` profile。
+- 同步更新安装器、兼容矩阵、发行验证器、Plugin/包版本、双语文档和站点索引。上游移除的 `codex mcp-server` 不在本仓库调用链中；Operation v2、默认关闭门禁和 Luna/Terra 自动派发上限保持不变。
+- Windows 实际 CLI 通过原 npm 全局渠道从 0.153.4 更新到 0.154.0；新进程版本、帮助、登录与 Plugin 列表读回通过，19 项定向单测、11/11 官方源码复核和 0.154.0 隔离兼容单元通过。
+- 修复已配置但停用的能力门禁在不存在在途 Operation 时错误阻断 PostToolUse；停用后的既有在途 B 仍按原合同收敛。发行验证同时绑定兼容注册表 canonical digest，并新增篡改注册表必须失败的回归。
+- 修复后的完整包装器在 Python 3.13.15 上通过 329 项 package 与 180 项 runtime 测试；较早的 Windows 临时 keyring 权限波动和两处旧 attestation 夹具失败均已通过定向与完整复跑闭环记录。
+- 实施前两位逻辑只读 Reviewer 归并并关闭版本同步、回滚配对、矩阵边界和证据闭环问题；若需回滚，必须先恢复 CLI 0.153.4，再恢复 Plugin V7.7.0。
+- 实施后三位逻辑只读 Reviewer 的问题集中修复后，第 2 轮定向复核无阻塞或非阻塞项。
+
 ## 7.7.0 - 2026-09-10
 
 - 新增仓库外 Operation v2 写前协议：首次 `apply_patch` A 只创建起点并拒绝，准备后由不同 B 原子领取 READY，真实 PostToolUse 回执后才允许完成验证。

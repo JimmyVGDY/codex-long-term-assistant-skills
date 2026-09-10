@@ -27,13 +27,13 @@ The release workflow treats source validation, reproducible building, provenance
 After downloading a ZIP, use GitHub CLI to verify the actual file digest and provenance against this repository identity:
 
 ```shell
-gh attestation verify Codex-Skills-V7.6.0-zh-CN.zip --repo OWNER/REPOSITORY
-gh attestation verify Codex-Skills-V7.6.0-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.7.1-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.7.1-en.zip --repo OWNER/REPOSITORY
 ```
 
 Replace `OWNER/REPOSITORY` with the repository identity shown on the download page. `SHA256SUMS.txt` supports digest comparison, `witness-*.json` proves that two clean builds from the same commit were byte-identical, and the GitHub attestation binds ZIP digests to the workflow identity that produced them. These are distinct evidence layers and cannot substitute for one another.
 
-V7.6.0 English title segment: `Component reuse index and optional workflow gates`; the complete bilingual title is assembled from the two manifest values.
+V7.7.1 English title segment: `Codex CLI 0.154.0 stable compatibility`; the complete bilingual title is assembled from the two manifest values.
 
 ## Publish a new version
 
@@ -56,4 +56,4 @@ Historical Release title backfill is an independent online metadata operation an
 
 The workflow does not upload historical original ZIP files, replace existing assets automatically, or bypass maintainer publication approval.
 
-The checklist must also confirm title sources and constraints, job-output/environment-variable transport, Draft-only behavior, existing-Release no-overwrite behavior, bilingual assets and provenance, the Codex CLI 0.153.4 compatibility boundary, and independent authorization/readback for historical title backfill.
+The checklist must also confirm title sources and constraints, job-output/environment-variable transport, Draft-only behavior, existing-Release no-overwrite behavior, bilingual assets and provenance, the Codex CLI 0.154.0 compatibility boundary, and independent authorization/readback for historical title backfill.

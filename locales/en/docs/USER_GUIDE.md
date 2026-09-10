@@ -50,9 +50,9 @@ Role metrics differ. Child self-reports remain pending until the parent coordina
 
 Event V2 and Budget V1 chains from V7.4.2 and earlier remain byte-for-byte verifiable, but the new runtime opens them read-only and projects only allowed fields. Historical model-identity fields never reach V3 events, snapshots, assessments, proposals, or release reports. New records use separate V3/V2 chains and cannot be mixed with legacy chains.
 
-## 5. Codex 0.153.4 scope
+## 5. Codex 0.154.0 scope
 
-V7.6.2 supports Codex CLI 0.153.4 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.153.4 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract or the automatic subagent policy, which remains limited to Luna/Terra profiles. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
+V7.6.2 supports Codex CLI 0.154.0 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.154.0 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract or the automatic subagent policy, which remains limited to Luna/Terra profiles. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
 Installation is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.6.2`, and the schema-3 host snapshot is `HOST_COMPATIBLE`.
 
@@ -62,4 +62,4 @@ V7.6 retains the validation feedback introduced in V7.5, health gates, opt-in in
 
 ## Capability reuse and optional gates
 
-Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.7.0 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.7.0/VALIDATION_REPORT.md).
+Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.7.1 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.7.1/VALIDATION_REPORT.md).

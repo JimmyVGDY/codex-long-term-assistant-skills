@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：失败关闭的 V7.7.0 端到端发行验证器。
+"""中文：失败关闭的 V7.7.1 端到端发行验证器。
 
-English: Fail-closed V7.7.0 end-to-end release verifier.
+English: Fail-closed V7.7.1 end-to-end release verifier.
 """
 from __future__ import annotations
 
@@ -15,10 +15,12 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, Mapping
 
+from codex_compatibility import canonical_digest, load_registry
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
 
-VERSION = "7.7.0"
-TARGET_CODEX_VERSION = "0.153.4"
+VERSION = "7.7.1"
+TARGET_CODEX_VERSION = "0.154.0"
+COMPATIBILITY_REGISTRY_DIGEST = "718e7b287a62a11e68dd364fafc413ed5840dd112da5491c2c9493aa7a75289d"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
@@ -65,9 +67,16 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
         try:
             manifest = load_manifest(package_root / MANIFEST_NAME)
             report = verify_payload(package_root, manifest, package=PACKAGE, version=VERSION)
+            registry = load_registry(
+                package_root / "config" / "codex-compatibility-v1.json", VERSION,
+            )
+            registry_digest = canonical_digest(registry)
+            if registry_digest != COMPATIBILITY_REGISTRY_DIGEST:
+                raise VerificationError("artifact compatibility registry digest mismatch")
+            report["compatibility_registry_digest"] = registry_digest
             report["locale"] = package_root.name.removeprefix("Codex-Skills-V%s-" % VERSION)
             return report
-        except PayloadIntegrityError as exc:
+        except (PayloadIntegrityError, ValueError) as exc:
             raise VerificationError("artifact payload 身份失败: %s" % exc) from exc
 
 
@@ -182,6 +191,7 @@ def verify_release(
         "version": VERSION,
         "artifact_sha256": artifact_hash,
         "payload_digest": artifact_payload["payload_digest"],
+        "compatibility_registry_digest": artifact_payload["compatibility_registry_digest"],
         "project_id": project_id,
         "repo_fingerprint": repo_fingerprint,
         "status": {
@@ -207,7 +217,7 @@ def verify_release(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.7.0 端到端发行验证")
+    parser = argparse.ArgumentParser(description="V7.7.1 端到端发行验证")
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--package-validation", required=True)
     parser.add_argument("--build-witness", required=True)

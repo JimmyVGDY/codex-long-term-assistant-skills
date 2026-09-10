@@ -74,7 +74,7 @@ Python使用AST识别顶层公开定义，以及静态`__all__`声明的入口�
 
 ## 验证入口
 
-项目可使用`capability-gate-enable/status/disable`管理显式项目策略。门禁默认关闭，不改变普通对话和未启用项目。V7.7.0 的规范 `apply_patch` 路径采用仓库外 Operation v2：A 创建起点并拒绝，`capability-task-prepare --operation-ref ... --term ...`只消费该起点，新的 B 在写前原子领取 READY，实际 PostToolUse 回执后才能 `finish/check`。CLI 不创建起点或 dispatch ID；旧 GateTask、PREPARED/PASS 和旧回执永不转换为新许可。缺回执、策略变化、许可后取消或证据失效保持 `OUTCOME_UNKNOWN`。Edit/Write 只是 matcher 别名，shell/MCP 等未覆盖写入口不得冒称受保护；源码实现、包验证、安装加载和真实新任务验收须分别确认。
+项目可使用`capability-gate-enable/status/disable`管理显式项目策略。门禁默认关闭，不改变普通对话和未启用项目。V7.7.1 的规范 `apply_patch` 路径采用仓库外 Operation v2：A 创建起点并拒绝，`capability-task-prepare --operation-ref ... --term ...`只消费该起点，新的 B 在写前原子领取 READY，实际 PostToolUse 回执后才能 `finish/check`。CLI 不创建起点或 dispatch ID；旧 GateTask、PREPARED/PASS 和旧回执永不转换为新许可。缺回执、策略变化、许可后取消或证据失效保持 `OUTCOME_UNKNOWN`。Edit/Write 只是 matcher 别名，shell/MCP 等未覆盖写入口不得冒称受保护；源码实现、包验证、安装加载和真实新任务验收须分别确认。
 
 在源仓库根运行：
 
@@ -90,4 +90,4 @@ python -m unittest discover -s runtime/tests -p "test_capability*.py" -v
 
 冷索引的免初扫例外限于单个既有文件。跨文件准备或新增文件走有界初扫；扩大免初扫范围前已有准备内容必须未变。当前核验会将不合格的旧无索引PASS降为BLOCKED并记录INITIAL_SCAN_NOT_PROVEN，合规单文件回执继续有效。此条件不批准单文件的业务语义，未启用项目保持原行为。
 
-相关文档：[能力索引](CAPABILITY_INDEX.md) · [验收规程](COMPONENT_REUSE_ACCEPTANCE.md) · [V7.7.0 验证报告](releases/v7.7.0/VALIDATION_REPORT.md)。
+相关文档：[能力索引](CAPABILITY_INDEX.md) · [验收规程](COMPONENT_REUSE_ACCEPTANCE.md) · [V7.7.1 验证报告](releases/v7.7.1/VALIDATION_REPORT.md)。

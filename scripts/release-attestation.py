@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""中文：创建并验证隐私有界的 V7.7.0 发行证明。
+"""中文：创建并验证隐私有界的 V7.7.1 发行证明。
 
 English: Create and verify a privacy-bounded V7.4 release attestation.
 """
@@ -26,8 +26,9 @@ from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "7.7.0"
-TARGET_CODEX_VERSION = "0.153.4"
+VERSION = "7.7.1"
+TARGET_CODEX_VERSION = "0.154.0"
+COMPATIBILITY_REGISTRY_DIGEST = "718e7b287a62a11e68dd364fafc413ed5840dd112da5491c2c9493aa7a75289d"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 
 
@@ -143,6 +144,7 @@ def create_attestation(
         raise AttestationError("deterministic build evidence is not bound to the target artifact")
     if unified.get("ok") is not True or unified.get("version") != VERSION \
             or unified.get("artifact_sha256") != artifact_sha256 \
+            or unified.get("compatibility_registry_digest") != COMPATIBILITY_REGISTRY_DIGEST \
             or set((unified.get("status") or {}).values()) != {"PASS"}:
         raise AttestationError("unified release verification is not valid or not artifact-bound")
     if lifecycle.get("required_sequence") != [
@@ -211,6 +213,7 @@ def create_attestation(
             "dispatch_policy": "PASS",
             "unified_release_verification": "PASS",
             "payload_identity": "PASS",
+            "compatibility_registry_digest": COMPATIBILITY_REGISTRY_DIGEST,
         },
         "security": {
             "execution_authorization": "NONE",
@@ -338,7 +341,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.7.0 release attestation")
+    parser = argparse.ArgumentParser(description="V7.7.1 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)

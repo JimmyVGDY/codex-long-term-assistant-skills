@@ -4,7 +4,7 @@
 
 # V7.7 当前系统架构与安全边界
 
-> 状态：`active`。本页描述 V7.7.0 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
+> 状态：`active`。本页描述 V7.7.1 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
 
 ## 1. 分层
 
@@ -26,7 +26,7 @@ Observation / Assessment / Proposal
 Human Decision + Independent Implementation Task
 ```
 
-包版本是 V7.7.0；`TaskOutcomeEvent V3`、Operation v2、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
+包版本是 V7.7.1；`TaskOutcomeEvent V3`、Operation v2、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
 
 ## 2. Skill 路由
 
@@ -94,7 +94,7 @@ CLOSED
 
 ## 可选项目门禁与实际加载
 
-注册配置包含八个入口，项目门禁默认关闭。V7.7.0 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 由宿主控制；规范 `apply_patch` 只在显式启用策略下由 PreToolUse/PostToolUse 推进仓库外 Operation v2。A 只建立起点并拒绝，B 在 READY 中原子绑定，完成只接受 B 的回执；未配置或停用策略保持中性。
+注册配置包含八个入口，项目门禁默认关闭。V7.7.1 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 由宿主控制；规范 `apply_patch` 只在显式启用策略下由 PreToolUse/PostToolUse 推进仓库外 Operation v2。A 只建立起点并拒绝，B 在 READY 中原子绑定，完成只接受 B 的回执；未配置或停用策略保持中性。
 
 ```text
 未配置或 disabled ───────────────→ 原生写入保持宿主既有行为

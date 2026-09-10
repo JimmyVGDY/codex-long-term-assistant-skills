@@ -9,7 +9,7 @@ hide:
 <div class="landing-page">
   <section class="landing-hero" aria-labelledby="landing-title">
     <div class="landing-hero__copy">
-      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.7.0</p>
+      <p class="landing-kicker">CODEX PLUGIN <span aria-hidden="true">·</span> V7.7.1</p>
       <h1 id="landing-title">Codex Cross-Project Engineering Assistant</h1>
       <p class="landing-lead">A verifiable, recoverable engineering workflow built around language-neutral backend, frontend, AI, and data-infrastructure Skills.</p>
       <div class="landing-actions" aria-label="Language selection">
@@ -18,7 +18,7 @@ hide:
       </div>
       <ul class="landing-meta" aria-label="Project metadata">
         <li>Apache-2.0</li>
-        <li>Codex CLI 0.153.4</li>
+        <li>Codex CLI 0.154.0</li>
         <li>Windows</li>
       </ul>
     </div>

@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.7.0",
-  "release_name": "Operation v2 写前协议与结果对账",
+  "version": "7.7.1",
+  "release_name": "Codex CLI 0.154.0 稳定版适配",
   "generated_for": "Codex Plugin-first engineering assistance with bounded external capability indexing, Operation v2 write preparation and PostTool reconciliation, and the frozen eleven-release host compatibility window",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -563,7 +563,8 @@
     "7.4.6",
     "7.5.0",
     "7.5.1",
-    "7.6.0"
+      "7.6.0",
+      "7.7.0"
   ],
   "release_validation": {
     "python_syntax": true,
@@ -685,8 +686,9 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "anchor": "0.153.4",
+    "anchor": "0.154.0",
     "verified_versions": [
+      "0.154.0",
       "0.153.4",
       "0.153.3",
       "0.153.2",
@@ -696,8 +698,7 @@
       "0.152.0",
       "0.151.0",
       "0.150.1",
-      "0.150.0",
-      "0.149.1"
+      "0.150.0"
     ],
     "window_policy": "current-plus-ten-preceding-stable-releases-patch-counts",
     "registry": "config/codex-compatibility-v1.json",

@@ -4,6 +4,17 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.7.1 - 2026-09-10
+
+- Advance the closed compatibility registry to OpenAI Codex CLI 0.154.0 and freeze `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`, removing 0.149.1 from the active window.
+- Pin the official 0.154.0 Git tag/commit, Hook discovery, PreToolUse/PostToolUse schema, successful `apply_patch` result sources, npm SRI, and SHA-256. Add `result-v154`, referenced only by 0.154.0.
+- Synchronize the installer, compatibility matrix, release verifiers, Plugin/package versions, bilingual documentation, and site indexes. The removed upstream `codex mcp-server` entry point is not used by this repository; Operation v2, the default-disabled gate, and the Luna/Terra automatic-dispatch ceiling remain unchanged.
+- Update the effective Windows CLI through the existing global npm channel from 0.153.4 to 0.154.0. Fresh-process version, help, login, and Plugin-list readback pass, as do 19 focused tests, 11/11 official-source verification, and the isolated 0.154.0 compatibility cell.
+- Fix a configured-but-disabled capability gate incorrectly blocking PostToolUse when no operation is in flight; an already-dispatched B still converges after the policy is disabled. Release verification now binds the compatibility registry canonical digest and rejects a tampered registry.
+- The repaired full wrapper passes 329 package and 180 runtime tests on Python 3.13.15. An earlier transient Windows keyring permission failure and two legacy attestation-fixture failures are preserved with focused and full rerun evidence.
+- Two logically read-only preimplementation Reviewers reconciled and closed version fanout, paired rollback, matrix-boundary, and evidence-closure gaps. Rollback restores CLI 0.153.4 before Plugin V7.7.0.
+- After centralized repair of three postimplementation Reviewer findings, the targeted round-two re-review reported no blocking or nonblocking issues.
+
 ## 7.7.0 - 2026-09-10
 
 - Add repository-external Operation v2: the first `apply_patch` attempt A only creates an origin and is denied; after preparation, a different B atomically claims READY, and only its real PostToolUse receipt can proceed to completion verification.

@@ -75,7 +75,7 @@ model_reasoning_effort = "high"
 
 ## 6. Plugin 与 Hook
 
-V7.7.0 使用冻结注册表适配 Codex CLI 0.153.4 与此前十个稳定发行版的 Plugin、Marketplace 及 PreToolUse/PostToolUse 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.7.0`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
+V7.7.1 使用冻结注册表适配 Codex CLI 0.154.0 与此前十个稳定发行版的 Plugin、Marketplace 及 PreToolUse/PostToolUse 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.7.1`，且 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
 
 Plugin 通过 `hooks/hooks.json` 提供七个注册 Hook 入口。Windows 入口 `hooks\cp_hook.cmd` 会选择可用的 Python 启动器，不需要额外创建 `python3.exe` 垫片。SessionEnd 的宿主预算保持三秒：Hook 只构造有上限且不含正文的净化 Event V3，并以命令参数无等待派发 detached worker；不再扫描或写入事件链，也不再同步写管道。Worker 在 Hook 预算外完成稳定生命周期身份校验、语义去重、终态持久化、签名入队和封印。所有入口都会拒绝缺失稳定生命周期 ID 的事件，带 `seal_required` 的未封印链不得进入 Evolution。
 
@@ -104,7 +104,7 @@ gpt-5.6-terra / high
 
 ## 可选项目门禁与实际加载
 
-注册配置包含八个入口，项目门禁默认关闭。V7.7.0 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 由宿主控制；规范 `apply_patch` 仅在显式启用策略下由 PreToolUse/PostToolUse 推进 Operation v2，未配置或停用策略保持中性。
+注册配置包含八个入口，项目门禁默认关闭。V7.7.1 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 由宿主控制；规范 `apply_patch` 仅在显式启用策略下由 PreToolUse/PostToolUse 推进 Operation v2，未配置或停用策略保持中性。
 
 ```text
 未配置或 disabled ───────────────→ 原生写入保持宿主既有行为
@@ -112,6 +112,6 @@ gpt-5.6-terra / high
 UserPromptSubmit / Stop / Interrupt → 不消费旧 GateTask 控制状态
 ```
 
-配置 `enabled=true`、Plugin 已加载和业务语义适用是不同结论。V7.7.0 只接受 Hook 建立的 Operation v2 起点、不同 B 的许可领取与匹配 PostTool 回执；旧 GateTask 回执不能授权原生写入。已打开会话可能仍使用旧 Plugin 快照，升级后应在新任务中读回实际行为。shell/MCP 等入口不能保证写前拦截。
+配置 `enabled=true`、Plugin 已加载和业务语义适用是不同结论。V7.7.1 只接受 Hook 建立的 Operation v2 起点、不同 B 的许可领取与匹配 PostTool 回执；旧 GateTask 回执不能授权原生写入。已打开会话可能仍使用旧 Plugin 快照，升级后应在新任务中读回实际行为。shell/MCP 等入口不能保证写前拦截。
 
 冻结窗口内 11 个 Codex CLI 版本具有逐版本官方 UserPromptSubmit async 源码证据；真实 Desktop 与其他宿主仍需各自读回。旧门禁启用与停用入口见[能力索引与流程入口](../CAPABILITY_INDEX.md)，但本补丁不把旧任务生命周期恢复为写入授权。
