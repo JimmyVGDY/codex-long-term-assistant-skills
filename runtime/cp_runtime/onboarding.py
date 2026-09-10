@@ -1,4 +1,4 @@
-"""中文：首次项目询问和有界扫描任务的独立原子状态；不保存用户正文或外部权限。
+"""中文：首次项目询问和有界扫描任务的独立原子状态；不保存对话正文或外部权限。
 
 English: Independent atomic first-use offer and bounded scan-job state; no user text or external authority.
 """

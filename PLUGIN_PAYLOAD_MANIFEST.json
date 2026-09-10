@@ -8,8 +8,8 @@
     "hooks",
     "runtime"
   ],
-  "file_count": 230,
-  "payload_digest": "37f8ffccfa64d6d7a360982a7c7df643ae3d4a05b5f7b8aa962178bc782191e3",
+  "file_count": 231,
+  "payload_digest": "ad9a0e01db022883c5df43afd7f39d69a17b5872d36847e197d0b05a1dd99c6f",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -268,8 +268,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/quality-review-completion.md",
-      "sha256": "b37640ecefbea8f66c005297d8ed13519b6d6c062a273439d60bc6f0696f8a5f",
-      "size": 5113
+      "sha256": "68bd5dc4b4b6892506303e011509b13919f0abd3de3e5c687b6ae3060dc579d3",
+      "size": 5201
     },
     {
       "path": "skills/engineering-quality-delivery/references/quality-task-planning.md",
@@ -563,8 +563,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/SKILL.md",
-      "sha256": "613e8b4a5f4a0c48f0f5c9bf2d0beccac08992d93f5dd188a6091b7ea9c0f4a8",
-      "size": 2978
+      "sha256": "00570b19cafab6070b8a91d6c30827ec01453aa912ff65a81b662828e48ac3d1",
+      "size": 3254
     },
     {
       "path": "skills/multi-agent-independent-review/agents/openai.yaml",
@@ -655,6 +655,11 @@
       "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
       "sha256": "72320c6e15460500038a6e69dc994070b847722d99012781909a8936010d987e",
       "size": 29580
+    },
+    {
+      "path": "skills/multi-agent-independent-review/scripts/scoped_review.py",
+      "sha256": "67d6896d2e0e1c4d0bae2575f41f2017a81e246c130723983a213b439eb41029",
+      "size": 10720
     },
     {
       "path": "skills/multi-agent-independent-review/tests/test_review_tools.py",
@@ -1043,7 +1048,7 @@
     },
     {
       "path": "runtime/cp_runtime/onboarding.py",
-      "sha256": "764d809317966df232fc05a2716d355f7f2d425c36a330125dbabe654ca68db4",
+      "sha256": "42addeebeb79341ebc2388db5c50cc4f7c3281269b4f5d61151ac0422dcb3253",
       "size": 19133
     },
     {
