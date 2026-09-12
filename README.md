@@ -33,8 +33,8 @@ V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7
 
 | 发行包 | 适用界面 | 下载 |
 | --- | --- | --- |
-| `Codex-Skills-V7.8.1-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.8.1/Codex-Skills-V7.8.1-zh-CN.zip) |
-| `Codex-Skills-V7.8.1-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.8.1/Codex-Skills-V7.8.1-en.zip) |
+| `Codex-Skills-V7.9.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.9.0/Codex-Skills-V7.9.0-zh-CN.zip) |
+| `Codex-Skills-V7.9.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.9.0/Codex-Skills-V7.9.0-en.zip) |
 
 [查看最新 Release、校验和与构建见证](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -71,7 +71,7 @@ V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7
 - 首次全扫只在明确选择并成功读回后排队；拒绝、未答、取消、保存失败和 Worker 晚到都有独立状态。
 - 4 个稳定主领域：通用后端、通用前端、通用 AI、数据中间件基础设施；语言和框架作为按需 Reference。
 - 7 个逻辑只读 Reviewer，定义文件不写死模型或推理强度。
-- <!-- cp-fact:hooks.zh -->8 个注册 Hook 入口：`UserPromptSubmit`、`PreToolUse`、`PostToolUse`、`SubagentStart`、`SubagentStop`、`Stop`、`Interrupt`、`SessionEnd`。<!-- /cp-fact -->其中 UserPromptSubmit 为异步观察，Stop 返回中性响应，Interrupt 保持宿主控制；PreToolUse/PostToolUse 只在已验证的规范 `apply_patch` 契约下推进 Operation v2。
+- 增强安装登记 <!-- cp-fact:hooks.zh -->8 个注册 Hook 入口：`UserPromptSubmit`、`PreToolUse`、`PostToolUse`、`SubagentStart`、`SubagentStop`、`Stop`、`Interrupt`、`SessionEnd`。<!-- /cp-fact -->基础 Plugin 不登记 Hook；增强中的 UserPromptSubmit 为异步观察，Stop 返回中性响应，Interrupt 保持宿主控制。
 - TaskOutcomeEvent 3.0、`project_id + repo_fingerprint` 双重隔离与独立连续哈希链。
 - 可恢复检查点、延迟 SessionEnd 封印、事件归档与跨项目健康概览。
 - 包级路由回归与真实宿主路由验收分层记录；宿主证据绑定原始最终报告的 SHA-256。
@@ -119,15 +119,15 @@ flowchart LR
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Windows 原生 Codex CLI 0.154.0 + Plugin | 当前实机锚点 | V7.8.1 源码候选覆盖 AUTO、onboarding、迁移、诊断与 Operation v2 回归 | 账户安装、重启和新任务实际加载需在发布后单独读回 |
-| Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 async、Pre/Post schema 与成功结果响应源码证据沿用并需发布读回 | V7.8.1 跨版本真实宿主矩阵仍需在 CI 后读回 |
-| Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | V7.8.1 的 CI 结果需在推送和标签后读回 |
-| standalone 模式 | 显式兼容模式 | 本地安装结构、inventory、非 Git BASIC 和回归测试覆盖 | V7.8.1 账户安装尚未执行，不宣称 Plugin 宿主兼容 |
+| Windows 原生 Codex CLI 0.154.0 + Plugin | 当前实机锚点 | V7.9.0 账户安装、`verify` 与项目外新 CLI 任务读回通过 | Desktop 重启后的新会话未验证 |
+| Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 async、Pre/Post schema 与成功结果响应源码证据受注册表约束 | 跨版本真实宿主矩阵未逐台验收 |
+| Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | 本次发布的远端 CI 结果单独以 Actions 页面为准 |
+| standalone 模式 | 显式兼容模式 | 本地安装结构、inventory、非 Git BASIC 和回归测试覆盖 | 未作为本次账户 Plugin 验收替代 |
 | macOS | 未验证 | 无当前 CI 或宿主验收证据 | 状态保持 `UNVERIFIED` |
 
 Python 最低版本为 3.11；公开 CI 配置为在 Windows 与 Ubuntu 上验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
 
-V7.8.1 窗口为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`。未来版、预发布版和窗口外版本不会自动接纳。
+V7.9.0 窗口为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`。未来版、预发布版和窗口外版本不会自动接纳。
 
 V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。门禁默认关闭，流程证据也不代表业务语义正确；发行工作流只创建草稿。
 
@@ -163,7 +163,7 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 - [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
 - [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
 - [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · [V7.8.1 发行说明](docs/releases/v7.8.1/RELEASE_NOTES.md)
+- [版本记录](CHANGELOG.md) · [V7.9.0 发行说明](docs/releases/v7.9.0/RELEASE_NOTES.md)
 
 ## 本地验证
 
@@ -176,10 +176,10 @@ python scripts\validate-package.py
 
 ## 发行来源证明
 
-`Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。标签流程只创建草稿，不会自动公开发布或覆盖既有 Release。
+`Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。公开 Release 由受权操作创建并单独读回。
 
 ```shell
-gh attestation verify Codex-Skills-V7.8.1-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.9.0-zh-CN.zip --repo OWNER/REPOSITORY
 ```
 
 完整门禁和新版本发布步骤见 [Release 自动化与制品来源证明](docs/releases/RELEASE_AUTOMATION.md)。

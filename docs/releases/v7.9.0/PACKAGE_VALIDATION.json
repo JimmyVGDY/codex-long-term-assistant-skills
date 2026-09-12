@@ -2,7 +2,7 @@
   "ok": true,
   "status": "PASS",
   "version": "7.9.0",
-  "evidence_scope": "local-candidate",
+  "evidence_scope": "release-and-account-readback",
   "base_installation": "PASS: isolated Windows Codex Home",
   "base_to_enhancement": "PASS: isolated Windows Codex Home",
   "enhancement_to_base_restore": "PASS: isolated Windows Codex Home",
@@ -11,11 +11,11 @@
   "payload_manifest": "PASS",
   "privacy_boundary": "PASS",
   "dispatch_policy": "PASS",
-  "publication": "NOT_EVALUATED",
-  "account_installation": "NOT_EVALUATED",
-  "fresh_task": "NOT_EVALUATED",
+  "publication": "PASS: public GitHub Release v7.9.0 with bilingual ZIP assets and reproducibility witnesses",
+  "account_installation": "PASS: V7.9.0 installed=true enabled=true HOST_COMPATIBLE",
+  "fresh_task": "PASS: projectless read-only Codex CLI task completed without Profile, scan, or tool call",
   "cross_platform": {
-    "windows": "PARTIAL: isolated CLI path passed; Desktop loading pending",
+    "windows": "PARTIAL: isolated and current-account CLI paths passed; Desktop restart loading unverified",
     "ubuntu": "UNVERIFIED",
     "macos": "UNVERIFIED"
   }

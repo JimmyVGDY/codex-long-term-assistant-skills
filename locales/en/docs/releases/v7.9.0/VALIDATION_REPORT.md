@@ -1,5 +1,5 @@
 # V7.9.0 Validation Record
 
-An isolated Windows Codex Home verified base installation, base-to-enhancement upgrade, enhancement verification, enhancement uninstall, and base restoration. Focused tests, localization, documentation, and semantic checks are recorded separately from release evidence.
+An isolated Windows Codex Home verified base installation, base-to-enhancement upgrade, enhancement verification, enhancement uninstall, and base restoration. Full package validation passed: 433 package tests and 205 runtime tests, including release, privacy, dispatch-policy, and payload gates. Independent compatibility and security findings for base-state migration, failure recovery, Hook drift verification, and link-ancestor containment were repaired and rechecked.
 
-Commit, push, CI, tag, public assets, anonymous downloads, account upgrade, Desktop loading, and cross-platform host acceptance remain separate requirements. Missing real environments stay `UNVERIFIED`.
+Commit `bd73b30`, tag `v7.9.0`, the public Release, bilingual ZIP files, and reproducibility witnesses were read back. Current-account installation reads `installed=true`, `enabled=true`, `version=7.9.0`, and `HOST_COMPATIBLE`; a projectless fresh CLI task responded without creating a Profile, scanning a directory, or calling a tool. Real Ubuntu/macOS installation paths and restarted Desktop-session loading remain `UNVERIFIED`. Remote GitHub Actions must be read from Actions rather than inferred from local validation.
