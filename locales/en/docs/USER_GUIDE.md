@@ -1,4 +1,4 @@
-# V7.8 Operating Guide
+# V7.9 Operating Guide
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE_V7.6/)
 

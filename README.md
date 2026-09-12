@@ -2,7 +2,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-V7.8.1 修复账户级 `inventory` 对 `AGENTS.md` 受管区块的哈希核对，避免正常安装后误报 `DRIFT`；V7.8.0 的 C01-C25 AUTO、首次引导、可恢复扫描、范围复审与分功能自救能力保持不变。
+V7.9.0 提供基础安装即用和按需增强运行时：普通工程任务可直接开始，Hook、长期状态、预算和受控写入只在需要时接入。
 
 # Codex 跨项目长期技术助手
 
@@ -23,9 +23,9 @@ V7.8.1 修复账户级 `inventory` 对 `AGENTS.md` 受管区块的哈希核对�
   <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
-V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0，并修复停用门禁的 PostTool 对账。V7.8.1 在其上增加 AUTO/BASIC 分档、首次扫描同意和开源安装自救；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
+V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0。V7.9.0 保留这些安全边界，并将基础 Skill 与可选增强运行时解耦；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
 
-**快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#五分钟升级) · [文档](#文档与协作)
+**快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#首次安装与升级) · [文档](#文档与协作)
 
 安装后可直接使用，普通任务不需要先理解 Profile、索引或台账。首次全扫可以跳过；拒绝、未回答或辅助存储不可用时，助手仍按当前源码与基础能力继续。需要排障时依次使用 `doctor`、只读 `inventory` 和规范 `recover`，它们会说明受影响功能、当前还能做什么和唯一下一步。
 
@@ -37,6 +37,32 @@ V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7
 | `Codex-Skills-V7.8.1-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.8.1/Codex-Skills-V7.8.1-en.zip) |
 
 [查看最新 Release、校验和与构建见证](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
+
+## 两步开始
+
+1. 解压安装包后，运行原生基础安装入口；它不需要本包 Python runtime 或 API Key。
+
+   ```powershell
+   .\scripts\install-base.ps1
+   ```
+
+   ```sh
+   ./scripts/install-base.sh
+   ```
+
+2. 直接描述工程任务，例如：
+
+   ```text
+   修复当前仓库失败的验证，并运行最小相关测试。
+   审查我在这个分支的改动，检查兼容与安全风险。
+   继续之前的任务；先确认已改内容和仍需验证的部分。
+   ```
+
+基础 Plugin 只加载十个 Skill，不启动 Hook、Worker、Profile、索引或预算台账。这些属于按需启用的增强能力，不是普通任务前提。
+
+## 可选增强
+
+需要可恢复的长期状态、Hook、索引、独立 Reviewer、强制预算或受控写入时，再运行现有 `install-user` 入口。增强安装复用既有备份、事务、验证和恢复；已受管增强 state 不会被基础入口降级。
 
 ## 核心能力
 
@@ -105,10 +131,9 @@ V7.8.1 窗口为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.
 
 V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。门禁默认关闭，流程证据也不代表业务语义正确；发行工作流只创建草稿。
 
-## 五分钟升级
+## 首次安装与升级
 
-1. 下载对应语言的 ZIP，并解压到临时目录。
-2. 在解压后的包根目录依次执行：
+首次安装使用上方基础入口。需要启用增强能力，或升级既有 V7 受管安装时，在解压后的包根目录依次执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -118,7 +143,7 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. 仅当 Plugin 读回 `installed=true`、`enabled=true`、`version=7.8.1`，schema 3 宿主状态为 `HOST_COMPATIBLE`，且旧领域 Skill 不再发现时，升级状态才成立。
+增强安装只有在 Plugin 读回 `installed=true`、`enabled=true`、目标发行版本、兼容宿主快照且旧领域 Skill 不再发现时才成立。`doctor` 与 `status` 默认说明可继续的能力、受影响项、原因与唯一下一步；完整机器记录使用 `--json`。
 
 安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/operations/INSTALLATION_RECOVERY.md) 和 [V7.6 使用指南](docs/USER_GUIDE.md)。
 

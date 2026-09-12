@@ -716,9 +716,10 @@
         "[OK] V7.7.1 语义校验通过：Operation v2、PostToolUse、11 个稳定版注册表、隔离 Plugin 预演和受控演进边界一致": "[OK] V7.7.1 semantic validation passed: Operation v2, PostToolUse, the eleven-release registry, isolated Plugin preflight, and controlled-evolution boundaries agree",
         "manifest 版本不是 7.7.1": "manifest version must be 7.7.1",
         "缺少 %s -> V7.7.1 升级声明": "Missing %s -> V7.7.1 upgrade path",
-        "[OK] V7.8.1 语义校验通过：Codex 0.154.0、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致": "[OK] V7.8.1 semantic validation passed: Codex 0.154.0, AUTO registry, onboarding/1, Operation v2, eleven-release compatibility, and per-feature recovery boundaries agree",
-        "manifest 版本不是 7.8.1": "manifest version must be 7.8.1",
-        "缺少 %s -> V7.8.1 升级声明": "Missing %s -> V7.8.1 upgrade path",
+        "[OK] V7.9.0 语义校验通过：Codex 0.154.0、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致": "[OK] V7.9.0 semantic validation passed: Codex 0.154.0, AUTO registry, onboarding/1, Operation v2, eleven-release compatibility, and per-feature recovery boundaries agree",
+        "manifest 版本不是 7.9.0": "manifest version must be 7.9.0",
+        "缺少 %s -> V7.9.0 升级声明": "Missing %s -> V7.9.0 upgrade path",
+        "英文发行记录缺失: %s": "English release record is missing: %s",
         "AUTO 能力注册表不是 C01-C25 完整映射": "The AUTO capability registry is not the complete C01-C25 mapping",
         "Manifest 缺少 capability-registry/1 权威指针": "Manifest is missing the capability-registry/1 authority pointer",
         "R3 U/UX/M/T 验收映射不完整": "The R3 U/UX/M/T acceptance mapping is incomplete"
@@ -755,6 +756,7 @@
         "V7.6.1 端到端发行验证": "V7.6.1 end-to-end release validation",
         "V7.7.1 端到端发行验证": "V7.7.1 end-to-end release validation",
         "V7.8.1 端到端发行验证": "V7.8.1 end-to-end release validation",
+        "V7.9.0 端到端发行验证": "V7.9.0 end-to-end release validation",
         "派发策略门禁存在失败用例": "Dispatch-policy gate contains a failed case",
         "派发策略门禁用例无效或冲突": "Dispatch-policy gate contains an invalid case conflict",
         "派发策略证据包含宿主模型身份字段": "Dispatch-policy evidence contains prohibited model-identity fields"
@@ -888,6 +890,12 @@
     },
     "scripts/package_manager.py": {
       "plain": {
+        "增强 hooks.json 无法解析: %s": "Enhanced hooks.json could not be parsed: %s",
+        "增强 hooks.json 的 hooks 不是对象": "Enhanced hooks.json has a non-object hooks field",
+        "增强 Hook 缺少事件 %s": "Enhanced Hook event is missing: %s",
+        "增强 Hook 缺少或漂移: %s": "Enhanced Hook entry is missing or drifted: %s",
+        "增强 Hook 受管条目漂移: %s": "Managed enhanced Hook entry drifted: %s",
+        "基础 Plugin state 状态未知，拒绝覆盖或降级": "Base Plugin state has an unknown status; overwrite or downgrade is denied",
         "另一个安装/卸载事务正在此 scope 执行": "Another installation or uninstallation transaction is running in this scope",
         "未知事务阶段: %s": "Unknown transaction stage: %s",
         "测试故障注入: %s": "Test fault injection: %s",
@@ -1019,7 +1027,27 @@
         "运行 verify 并读回 Plugin installed/enabled/version。": "Run verify and read back Plugin installed/enabled/version.",
         "恢复当前发行包的受管 Hook 注册。": "Restore the managed Hook registration from the current distribution.",
         "需要独立复审时修复 Reviewer；普通工作可由主 Agent 串行继续。": "Repair Reviewers when independent review is required; ordinary work can continue serially in the main agent.",
-        "Codex 跨项目长期技术助手 V%s 安装器": "Codex Cross-Project Long-Term Engineering Assistant V%s installer"
+    "Codex 跨项目长期技术助手 V%s 安装器": "Codex Cross-Project Long-Term Engineering Assistant V%s installer",
+    "无法安全读取路径属性: %s": "Cannot safely read path attributes: %s",
+    "基础能力暂不可用": "Base capabilities are unavailable",
+    "修复错误项后重试 doctor": "Fix the reported errors and rerun doctor",
+    "基础能力可继续使用": "Base capabilities remain available",
+    "查看 doctor --json 获取详情": "Run doctor --json for details",
+    "基础与已安装增强能力可用": "Base and installed enhancement capabilities are available",
+    "可直接开始任务；需要详细状态时运行 doctor --json。": "Start a task directly; run doctor --json for detailed status.",
+    "基础 Plugin state 无效，拒绝覆盖或降级": "Base Plugin state is invalid; refusing overwrite or downgrade",
+    "基础 Plugin 卸载失败: %s": "Base Plugin removal failed: %s",
+    "基础 Marketplace 注销失败: %s": "Base Marketplace removal failed: %s",
+    "基础 Marketplace 源目录缺失": "Base Marketplace source directory is missing",
+    "基础 Plugin 重新激活读回失败": "Base Plugin reactivation readback failed",
+    "已恢复基础安装文件，但基础 Plugin 重新激活失败: %s": "Base installation files were restored, but base Plugin reactivation failed: %s",
+    "[WARN] --force：基础安装文件已恢复，但未能重新激活": "[WARN] --force: base installation files were restored but could not be reactivated",
+    "基础 Plugin Skill 入口无效": "Base Plugin Skill entry is invalid",
+    "基础 Plugin 不得直接注册增强 Hook": "Base Plugin must not register enhancement Hooks directly",
+    "缺少增强 Hook": "Missing enhancement Hook",
+    "缺少增强流程门禁 Worker": "Missing enhancement process-gate worker",
+    "运行 verify --json 查看组件与宿主读回。": "Run verify --json for component and host readback.",
+    "可直接开始任务；需要详细状态时运行 status --json。": "Start a task directly; run status --json for detailed status."
       }
     },
     "scripts/validate-v73.py": {

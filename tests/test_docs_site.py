@@ -230,12 +230,12 @@ class DocumentationSiteTests(unittest.TestCase):
         self.assertIn("10</strong><span>Skills", root)
         self.assertIn("3.0</strong><span>TaskOutcomeEvent", root)
         self.assertIn("social-preview.jpg", root)
-        self.assertIn("V7.8.1", root)
+        self.assertIn("V7.9.0", root)
         self.assertNotIn("V6.6.1", root)
         self.assertIn("docs/USER_GUIDE/", root)
         self.assertIn("/codex-long-term-assistant-skills/zh-CN/", root)
         self.assertIn("/codex-long-term-assistant-skills/en/", root)
-        self.assertIn("V7.8.1", english_pair)
+        self.assertIn("V7.9.0", english_pair)
         self.assertNotIn("V6.6.1", english_pair)
         self.assertIn("docs/USER_GUIDE/", english_pair)
         self.assertIsNone(re.search(r"[\u4e00-\u9fff]", english_pair))
@@ -276,7 +276,7 @@ class DocumentationSiteTests(unittest.TestCase):
             self.assertIn("docs/architecture/SYSTEM_ARCHITECTURE.md", text)
             self.assertIn("V7_DOMAIN_SKILL_ARCHITECTURE.md", text)
             self.assertIn("SYSTEM_ARCHITECTURE.md", text)
-            self.assertIn("releases/v7.8.1/RELEASE_NOTES.md", text)
+            self.assertIn("releases/v7.9.0/RELEASE_NOTES.md", text)
             self.assertNotIn("V6_ARCHITECTURE.md", text)
             self.assertIn("pymdownx.slugs.slugify", text)
 
@@ -312,7 +312,7 @@ class DocumentationSiteTests(unittest.TestCase):
             ROOT / ".github" / "SECURITY.en.md",
             ROOT / "locales" / "en" / ".github" / "SECURITY.md",
         ):
-            self.assertIn("7.8.1", path.read_text(encoding="utf-8"))
+            self.assertIn("7.9.0", path.read_text(encoding="utf-8"))
 
     def test_social_preview_is_reusable_1280_by_640_and_below_one_megabyte(self) -> None:
         image = (ROOT / "docs" / "assets" / "social-preview.jpg").read_bytes()

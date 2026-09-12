@@ -1,7 +1,11 @@
 # One canonical source path per line. Machine drafts are intentionally absent.
 # Reuse additions were compared by the implementing agent; this is not a human-review attestation.
 docs/COMPONENT_REUSE_ACCEPTANCE.md
+docs/PLUGIN_UX_BASELINE.md
 docs/PLUGIN_UX_OPTIMIZATION_PLAN.md
+docs/releases/v7.9.0/AUDIT_REPORT.md
+docs/releases/v7.9.0/RELEASE_NOTES.md
+docs/releases/v7.9.0/VALIDATION_REPORT.md
 skills/engineering-quality-delivery/references/component-module-reuse.md
 # V7.5 additions are agent-reviewed under authorized publication; this legacy filename does not attest human linguistic review.
 docs/releases/v7.5.0/RELEASE_NOTES.md

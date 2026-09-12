@@ -1,7 +1,6 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.8.1",
-  "description": "跨项目长期技术助手 V7.8.1：修复 AGENTS 受管区块 inventory 哈希，并保留 Codex 0.154.0、AUTO、首次引导与分功能自救。",
-  "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  "version": "7.9.0",
+  "description": "跨项目长期技术助手 V7.9.0：基础安装即用；Hook、长期状态、预算和受控写入按需接入。",
+  "skills": "./skills/"
 }

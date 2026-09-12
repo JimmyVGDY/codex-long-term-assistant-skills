@@ -89,7 +89,12 @@
     {
       "path": "docs/PLUGIN_UX_OPTIMIZATION_PLAN.md",
       "status": "active",
-      "english_source": "docs/PLUGIN_UX_OPTIMIZATION_PLAN.en.md"
+      "english_source": "locales/en/docs/PLUGIN_UX_OPTIMIZATION_PLAN.md"
+    },
+    {
+      "path": "docs/PLUGIN_UX_BASELINE.md",
+      "status": "active",
+      "english_source": "locales/en/docs/PLUGIN_UX_BASELINE.md"
     },
     {
       "path": "docs/PROJECT_CONTEXT_AND_ONBOARDING.md",
@@ -593,18 +598,33 @@
     },
     {
       "path": "docs/releases/v7.8.1/RELEASE_NOTES.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.8.1/RELEASE_NOTES.md"
     },
     {
       "path": "docs/releases/v7.8.1/VALIDATION_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.8.1/VALIDATION_REPORT.md"
     },
     {
       "path": "docs/releases/v7.8.1/AUDIT_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.8.1/AUDIT_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.9.0/RELEASE_NOTES.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.9.0/RELEASE_NOTES.md"
+    },
+    {
+      "path": "docs/releases/v7.9.0/VALIDATION_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.9.0/VALIDATION_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.9.0/AUDIT_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.9.0/AUDIT_REPORT.md"
     },
     {
       "path": "docs/releases/v7.8.0/RELEASE_NOTES.md",

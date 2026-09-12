@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.8.1",
-  "release_name": "安装清单受管区块哈希修复",
-  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with managed-block inventory hashing, C01-C25 AUTO capability selection, consent-bound onboarding scans, scoped review freshness, and feature-level installation recovery",
+  "version": "7.9.0",
+  "release_name": "基础安装与增强运行时解耦",
+  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with a native Python-free base installation, optional managed enhancement runtime, concise status summaries, and low-cost default execution",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -536,6 +536,7 @@
     ]
   },
   "upgrade_from": [
+    "7.8.1",
     "7.8.0",
     "7.7.1",
     "7.7.0",

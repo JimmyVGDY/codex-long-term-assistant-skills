@@ -2,6 +2,13 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.9.0 - 2026-09-12
+
+- Add a base-install entry point requiring neither this package's Python runtime nor an API key. The base Plugin loads the ten Skills only and starts no Hook, worker, Profile, index, or budget ledger.
+- Move Hooks, account runtime, global rules, Reviewers, recoverable state, budgets, and controlled writes into the optional enhancement transaction. Isolated regressions cover base-to-enhancement and enhancement-to-base restoration while unknown files remain preserved.
+- Make `doctor` and `status` report usable work, affected capability, cause, and next action by default while `--json` retains the full machine format. Host drift and a missing enhancement can appear together.
+- Keep simple local work serial in the main agent by default. Strict budgets enforce only with a verifiable real-host binding, ledger, and permit.
+
 ## 7.8.1 - 2026-09-10
 
 - Fix account `inventory` comparing the whole `AGENTS.md` file against the managed-block hash in install state, which incorrectly reported `DRIFT` after a valid installation.

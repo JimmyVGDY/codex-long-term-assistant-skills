@@ -18,6 +18,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import package_manager
 
 from cp_runtime.event_archive import archive_closed_segments, capacity_report, health_overview, verify_archive
 from cp_runtime.event_v2 import OwnerTokenLock, append_event, event_segment_paths, make_event, read_event_chain, verify_event_chain
@@ -513,14 +516,15 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         ignore_bytecode = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
         shutil.copytree(ROOT / "hooks", plugin / "hooks", ignore=ignore_bytecode)
         shutil.copytree(ROOT / "runtime", plugin / "runtime", ignore=ignore_bytecode)
-        hooks = json.loads((ROOT / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+        profile = package_manager.profile_for_version(package_manager.COMPATIBILITY_REGISTRY, "0.154.0")
+        hooks = package_manager.hook_fragment(plugin / "hooks" / "cp_hook.py", profile)
         env = dict(os.environ, PLUGIN_ROOT=str(plugin), CP_ASSISTANT_DATA=str(self.data),
                    CP_ASSISTANT_KEYRING_PATH=str(self.keyring),
                    CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS="2000")
         for hook_name, entries in hooks.items():
-            command = entries[0]["hooks"][0]["commandWindows"]
-            launcher = 'cp_gate.cmd' if hook_name == 'PostToolUse' else 'cp_hook.cmd'
-            self.assertIn(f'"%PLUGIN_ROOT%\\hooks\\{launcher}"', command)
+            command = entries[0]["hooks"][0]["command"]
+            launcher = 'cp_gate.py' if hook_name == 'PostToolUse' else 'cp_hook.py'
+            self.assertIn(launcher, command)
             payload = {"hook_event_name": hook_name, "session_id": "S-HOOK",
                        "turn_id": "T-HOOK", "cwd": str(self.root)}
             if hook_name == "PreToolUse":
@@ -531,7 +535,7 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
                                     env=env, shell=True, timeout=10)
             self.assertEqual(0, result.returncode, (hook_name, result.stderr))
         failure_env = dict(env, CP_ASSISTANT_SEAL_QUEUE_MAX_JOBS="0")
-        command = hooks["SessionEnd"][0]["hooks"][0]["commandWindows"]
+        command = hooks["SessionEnd"][0]["hooks"][0]["command"]
         payload = {"hook_event_name": "SessionEnd", "session_id": "S-FAIL",
                    "turn_id": "T-FAIL", "cwd": str(self.root)}
         started = time.perf_counter()

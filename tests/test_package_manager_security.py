@@ -48,6 +48,13 @@ home=Path(os.environ.get('CODEX_HOME') or '.')
 state=home/'fake-codex-plugin-state.json'
 market_file=home/'fake-codex-marketplace-path.txt'
 args=sys.argv[1:]
+failure=os.environ.get('FAKE_CODEX_FAIL','')
+if failure == 'marketplace-add' and args[:3] == ['plugin','marketplace','add']:
+    print('injected marketplace add failure',file=sys.stderr); raise SystemExit(9)
+if failure == 'plugin-add' and args[:2] == ['plugin','add']:
+    print('injected plugin add failure',file=sys.stderr); raise SystemExit(9)
+if failure == 'plugin-list' and args == ['plugin','list','--json']:
+    print('injected plugin list failure',file=sys.stderr); raise SystemExit(9)
 help_fixture=json.loads(Path(os.environ['FAKE_CODEX_CONTRACT_FIXTURE']).read_text(encoding='utf-8'))
 def emit_help(name):
     fixture_name=name
@@ -68,8 +75,8 @@ if args[:3] == ['plugin','marketplace','remove']:
 if args[:2] == ['plugin','add']:
     if len(args) > 2 and args[2] == '--help': emit_help('plugin_add'); raise SystemExit(0)
     home.mkdir(parents=True,exist_ok=True)
-    state.write_text(json.dumps({'installed':True}),encoding='utf-8')
-    version=os.environ.get('FAKE_PLUGIN_VERSION','7.8.1')
+    state.write_text(json.dumps({'installed':True,'selector':args[2]}),encoding='utf-8')
+    version=os.environ.get('FAKE_PLUGIN_VERSION','7.9.0')
     source=Path(market_file.read_text(encoding='utf-8'))/'plugins'/'codex-cross-project-engineering-assistant'
     cache=home/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/version
     if io_path(cache).exists(): shutil.rmtree(io_path(cache))
@@ -84,7 +91,9 @@ if args == ['plugin','list','--json']:
         print('configured marketplace manifest is invalid',file=sys.stderr); raise SystemExit(2)
     installed=[]
     if state.exists():
-        installed=[{'pluginId':'codex-cross-project-engineering-assistant@cp-assistant-local','name':'codex-cross-project-engineering-assistant','marketplaceName':'cp-assistant-local','version':os.environ.get('FAKE_PLUGIN_VERSION','7.8.1'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
+        selector=json.loads(state.read_text(encoding='utf-8')).get('selector','codex-cross-project-engineering-assistant@cp-assistant-local')
+        name,market=selector.split('@',1)
+        installed=[{'pluginId':selector,'name':name,'marketplaceName':market,'version':os.environ.get('FAKE_PLUGIN_VERSION','7.9.0'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
     print(json.dumps({'installed':installed,'available':[]})); raise SystemExit(0)
 print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemExit(2)
 """,encoding='utf-8')
@@ -191,7 +200,9 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertTrue((p/'.codex-plugin'/'plugin.json').is_file())
         self.assertTrue((p/'hooks'/'hooks.json').is_file())
         plugin_hooks=json.loads((p/'hooks'/'hooks.json').read_text(encoding='utf-8'))['hooks']
-        self.assertIs(plugin_hooks['UserPromptSubmit'][0]['hooks'][0]['async'],True)
+        self.assertEqual({},plugin_hooks)
+        account_hooks=json.loads((self.codex/'hooks.json').read_text(encoding='utf-8'))['hooks']
+        self.assertIs(account_hooks['UserPromptSubmit'][0]['hooks'][0]['async'],True)
         self.assertTrue((self.codex/'fake-codex-plugin-state.json').is_file())
         state=json.loads((self.codex/'cp-assistant-v6-state.json').read_text(encoding='utf-8'))
         self.assertEqual(3,state['schema_version'])
@@ -200,6 +211,99 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['uninstall','--scope','user','--mode','plugin'],self.env)
         self.assertFalse((self.codex/'tools'/'cp-runtime.py').exists())
         self.assertFalse((self.codex/'tools'/'evolution.py').exists())
+
+    def test_plugin_verify_rejects_missing_or_drifted_managed_gate_hook(self):
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        hooks_path=self.codex/'hooks.json'
+        hooks=json.loads(hooks_path.read_text(encoding='utf-8'))
+        hooks['hooks']['PreToolUse']=[entry for entry in hooks['hooks']['PreToolUse']
+                                      if entry.get('matcher') != 'apply_patch|Edit|Write']
+        hooks_path.write_text(json.dumps(hooks),encoding='utf-8')
+        failed=run(['verify','--scope','user','--mode','plugin'],self.env,1)
+        self.assertIn('增强 Hook 缺少或漂移: PreToolUse',failed.stdout)
+
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        hooks=json.loads(hooks_path.read_text(encoding='utf-8'))
+        for entry in hooks['hooks']['PostToolUse']:
+            if entry.get('matcher') == 'apply_patch|Edit|Write':
+                entry['hooks'][0]['command']='"wrong-python" "wrong-gate.py" PostToolUse'
+        hooks_path.write_text(json.dumps(hooks),encoding='utf-8')
+        failed=run(['verify','--scope','user','--mode','plugin'],self.env,1)
+        self.assertIn('增强 Hook 缺少或漂移: PostToolUse',failed.stdout)
+
+    @unittest.skipUnless(os.name == 'nt', 'PowerShell base-install regression')
+    def test_base_installer_uses_native_cli_without_python_runtime_install(self):
+        result=subprocess.run(
+            ['powershell.exe','-NoLogo','-NoProfile','-NonInteractive','-File',str(ROOT/'scripts'/'install-base.ps1')],
+            env=self.env,text=True,encoding='utf-8',capture_output=True,timeout=30,
+        )
+        self.assertEqual(0,result.returncode,result.stdout+result.stderr)
+        base_state=self.codex/'cp-assistant-base-state.json'
+        self.assertTrue(base_state.is_file())
+        self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
+        plugin=self.home/'.agents'/'plugins'/'cp-assistant-base-marketplace'/'plugins'/package_manager.PACKAGE
+        self.assertTrue((plugin/'skills'/'backend-engineering'/'SKILL.md').is_file())
+        self.assertEqual({},json.loads((plugin/'hooks'/'hooks.json').read_text(encoding='utf-8'))['hooks'])
+        self.assertFalse((self.codex/'cp-assistant-hooks').exists())
+        state=json.loads(base_state.read_text(encoding='utf-8'))
+        self.assertEqual('INSTALLED',state['status'])
+        self.assertEqual(str(self.home/'.agents'/'plugins'/'cp-assistant-base-marketplace'),state['market_root'])
+
+    @unittest.skipUnless(os.name == 'nt', 'PowerShell base-install recovery regression')
+    def test_base_installer_cleans_failed_native_registration_before_retry(self):
+        failed_env={**self.env,'FAKE_CODEX_FAIL':'plugin-add'}
+        failed=subprocess.run(
+            ['powershell.exe','-NoLogo','-NoProfile','-NonInteractive','-File',str(ROOT/'scripts'/'install-base.ps1')],
+            env=failed_env,text=True,encoding='utf-8',capture_output=True,timeout=30,
+        )
+        self.assertNotEqual(0,failed.returncode,(failed.stdout or '')+(failed.stderr or ''))
+        self.assertFalse((self.codex/'cp-assistant-base-state.json').exists())
+        self.assertFalse((self.home/'.agents'/'plugins'/'cp-assistant-base-marketplace').exists())
+        self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
+
+        retried=subprocess.run(
+            ['powershell.exe','-NoLogo','-NoProfile','-NonInteractive','-File',str(ROOT/'scripts'/'install-base.ps1')],
+            env=self.env,text=True,encoding='utf-8',capture_output=True,timeout=30,
+        )
+        self.assertEqual(0,retried.returncode,(retried.stdout or '')+(retried.stderr or ''))
+
+    def test_base_installers_contain_links_and_share_recoverable_state_contract(self):
+        shell=(ROOT/'scripts'/'install-base.sh').read_text(encoding='utf-8')
+        powershell=(ROOT/'scripts'/'install-base.ps1').read_text(encoding='utf-8')
+        self.assertIn('reject_link_ancestors',shell)
+        self.assertIn('Assert-NoReparseAncestor',powershell)
+        self.assertIn('market_root',shell)
+        self.assertIn("Write-BaseState -Status 'INSTALLED'",powershell)
+        self.assertIn('RECOVERY_REQUIRED',shell)
+        self.assertIn('RECOVERY_REQUIRED',powershell)
+
+    @unittest.skipUnless(os.name == 'nt', 'PowerShell base-to-enhancement regression')
+    def test_plugin_install_replaces_managed_base_state_with_enhancement(self):
+        base=subprocess.run(
+            ['powershell.exe','-NoLogo','-NoProfile','-NonInteractive','-File',str(ROOT/'scripts'/'install-base.ps1')],
+            env=self.env,text=True,encoding='utf-8',capture_output=True,timeout=30,
+        )
+        self.assertEqual(0,base.returncode,base.stdout+base.stderr)
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        self.assertFalse((self.codex/'cp-assistant-base-state.json').exists())
+        state=json.loads((self.codex/'cp-assistant-v6-state.json').read_text(encoding='utf-8'))
+        self.assertEqual('PLUGIN_MANAGED',state['components']['base']['status'])
+        self.assertEqual('MANAGED',state['components']['enhancement']['status'])
+        self.assertTrue((self.codex/'cp-assistant-hooks'/'cp_gate.py').is_file())
+
+    @unittest.skipUnless(os.name == 'nt', 'PowerShell base rollback regression')
+    def test_uninstall_enhancement_restores_managed_base_install(self):
+        base=subprocess.run(
+            ['powershell.exe','-NoLogo','-NoProfile','-NonInteractive','-File',str(ROOT/'scripts'/'install-base.ps1')],
+            env=self.env,text=True,encoding='utf-8',capture_output=True,timeout=30,
+        )
+        self.assertEqual(0,base.returncode,base.stdout+base.stderr)
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        run(['uninstall','--scope','user','--mode','plugin'],self.env)
+        self.assertTrue((self.codex/'cp-assistant-base-state.json').is_file())
+        self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
+        self.assertFalse((self.codex/'cp-assistant-hooks'/'cp_hook.py').exists())
+        self.assertFalse((self.codex/'cp-assistant-hooks'/'cp_gate.py').exists())
 
     def test_plugin_unknown_host_rejects_static_async_payload_before_account_write(self):
         unknown={**self.env,'FAKE_CODEX_VERSION':'codex-cli 0.154.1'}
@@ -260,7 +364,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['install','--scope','user','--mode','plugin'],self.env)
         state_path=self.codex/'cp-assistant-v6-state.json'
         state_bytes=state_path.read_bytes()
-        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.8.1'
+        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.9.0'
 
         def assert_tools_fail_closed():
             for name in ('cp-runtime.py','evolution.py'):
@@ -380,7 +484,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_install_rejects_wrong_registered_version(self):
         env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
         result=run(['install','--scope','user','--mode','plugin'],env,2)
-        self.assertIn('version=7.8.1',result.stderr)
+        self.assertIn('version=7.9.0',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
@@ -448,7 +552,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertEqual('{ malformed user hooks',hooks_path.read_text(encoding='utf-8'))
 
     def test_doctor_reads_codex_version(self):
-        r=run(['doctor'],self.env)
+        r=run(['doctor','--json'],self.env)
         data=json.loads(r.stdout)
         self.assertEqual(data['target_codex'],'0.154.0')
         self.assertEqual(
@@ -466,7 +570,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['doctor','--recover'],self.env)
         self.assertFalse(journal.exists())
         status=json.loads(run(['status','--json'],self.env).stdout)
-        self.assertEqual('7.8.1',status['version'])
+        self.assertEqual('7.9.0',status['version'])
         self.assertIn('live_transaction',status)
 
     def test_mode_switch_is_refused_without_force(self):

@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "status": "PASS",
+  "version": "7.9.0",
+  "evidence_scope": "local-candidate",
+  "base_installation": "PASS: isolated Windows Codex Home",
+  "base_to_enhancement": "PASS: isolated Windows Codex Home",
+  "enhancement_to_base_restore": "PASS: isolated Windows Codex Home",
+  "documentation": "PASS: documentation.py check and semantic-lint.py",
+  "package_validation": "PASS: 433 package tests + 205 runtime tests (Python 3.13.15)",
+  "payload_manifest": "PASS",
+  "privacy_boundary": "PASS",
+  "dispatch_policy": "PASS",
+  "publication": "NOT_EVALUATED",
+  "account_installation": "NOT_EVALUATED",
+  "fresh_task": "NOT_EVALUATED",
+  "cross_platform": {
+    "windows": "PARTIAL: isolated CLI path passed; Desktop loading pending",
+    "ubuntu": "UNVERIFIED",
+    "macos": "UNVERIFIED"
+  }
+}

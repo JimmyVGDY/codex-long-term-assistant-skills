@@ -29,14 +29,10 @@ Skill activation does not expand file, Git, environment, production, or data aut
 ## 4. Model and subagent ceiling
 
 - The main agent keeps the currently selected model and effort.
-- Automatic subagents use Luna or Terra profiles in this order: `luna-low -> luna-medium -> terra-medium -> terra-high`.
-- The automatic ceiling is `gpt-5.6-terra + high`. Sol, `xhigh`, `max`, and `ultra` are forbidden for automatic dispatch.
-- Reviewer, Explorer, and Worker share one root-task DelegationBudget. LIGHT/STANDARD/STRICT provide `4/16/32` weighted units, using fixed weights `1/2/4/8`.
-- For a controlled budgeted task, the primary agent must initialize the ledger and set both `CP_DELEGATION_BUDGET_PATH` and `CP_DELEGATION_BUDGET_REQUIRED=1` in the host launch environment. Without explicit activation, only the model ceiling is active and the budget gate must not be reported as passed.
-- PreToolUse atomically reserves only when the explicit dispatch permit, stable host dispatch ID, role, and profile agree. Exhaustion, unknown roles, invalid reasons, or ledger corruption fail closed.
-- Started subagents are never refunded. A reservation is released only with a host proof reference that the agent did not start. Nested agents charge the same root budget.
-- An omitted model charges the Task Envelope approved default as `policy-default`. The budget is reserved once before dispatch; no host runtime model identity is read or inferred after start and no profile top-up occurs.
-- Reviewer keeps rounds, findings, and review state but no longer owns the total budget. An unchanged packet must not trigger mechanical repeat review.
+- A simple local task stays serial in the main agent by default: no proactive subagent, repository-wide scan, or unrelated checkpoint. Escalate only when risk, scope, or independent evidence requires it.
+- Automatic dispatch uses only `luna-low -> luna-medium -> terra-medium -> terra-high`; the hard ceiling is `gpt-5.6-terra + high`. Sol, `xhigh`, `max`, and `ultra` are forbidden.
+- A budget is enforced only when a real host binding, explicit ledger, and dispatch permit are all verifiable. Exhaustion, corruption, or untrusted association stops new dispatch. Otherwise only the model ceiling applies and the result must say `policy constraint`.
+- Reviewers do not own the total budget and an unchanged review packet must not be dispatched again. Load weighting, refund, reservation, and host-environment details from the budget reference only when needed.
 
 ## 5. Change, validation, and review
 
@@ -48,10 +44,9 @@ Skill activation does not expand file, Git, environment, production, or data aut
 
 ## 6. Long-running work
 
-- Checkpoint only at recoverable nodes, before and after material risk, or before pause and context compaction.
+- Checkpoint only at recoverable nodes, before and after material risk, or before pause and context compaction. A simple one-off task creates no long-lived record.
 - The coordinating agent is the sole shared-memory writer. Subagents return structured summaries.
-- Recovery reads current task, current plan stage, recent checkpoints, and live Git or runtime state.
-- Checkpoint -> Project Memory -> Cross-project Knowledge requires review at every promotion step.
+- Checkpoint -> Project Memory -> Cross-project Knowledge requires review at every promotion step. Recovery reads only current state, the current plan, recent checkpoints, and live Git or runtime state.
 
 ## 7. Deterministic observation and controlled evolution
 

@@ -219,7 +219,7 @@ def project_english(root: Path, item: dict, catalog: dict) -> str:
 
 
 def fact_value(key: str, root: Path) -> str:
-    hooks = json.loads((root / "hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]
+    hooks = json.loads((root / "hooks/enhancement-hooks.json").read_text(encoding="utf-8"))["hooks"]
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
     if key.startswith("schema."):
         values, problems = schema_contracts(root, manifest)

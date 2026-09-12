@@ -2,6 +2,13 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.9.0 - 2026-09-12
+
+- 新增不依赖本包 Python 或 API Key 的基础安装入口：基础 Plugin 只加载 10 个 Skill，不启动 Hook、Worker、Profile、索引或预算台账。
+- 将 Hook、账户 runtime、全局规则、Reviewer、长期状态、预算和受控写入移入可选增强事务；基础升级增强、增强卸载恢复基础均由隔离回归覆盖，未知文件保持保留。
+- `doctor` 与 `status` 默认报告可继续能力、受影响项、原因和下一步，`--json` 保留完整机器格式；当前宿主漂移与缺失增强可同时显示。
+- 简单局部任务默认主 Agent 串行完成；严格预算仅在真实宿主绑定、账本和 permit 可核验时强制执行。
+
 ## 7.8.1 - 2026-09-10
 
 - 修复账户级 `inventory` 将 `AGENTS.md` 整文件哈希与状态中的受管区块哈希比较、从而在正常安装后误报 `DRIFT` 的问题。

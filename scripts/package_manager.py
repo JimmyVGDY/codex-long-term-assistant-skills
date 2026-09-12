@@ -54,6 +54,8 @@ def release_version() -> str:
 
 VERSION = release_version()
 MARKETPLACE = "cp-assistant-local"
+BASE_MARKETPLACE = "cp-assistant-base"
+BASE_STATE_FILE = "cp-assistant-base-state.json"
 COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, VERSION)
 TARGET_CODEX_VERSION = str(COMPATIBILITY_REGISTRY["window_policy"]["anchor"])
@@ -62,10 +64,10 @@ TARGET_CODEX_VERSION = str(COMPATIBILITY_REGISTRY["window_policy"]["anchor"])
 SUPPORTED_CODEX_VERSIONS = tuple(item["version"] for item in COMPATIBILITY_REGISTRY["versions"])
 REPAIRABLE_MARKETPLACE_STATE_VERSIONS = frozenset({
     "6.1.0", "6.2.0", "6.3.0", "7.2.0", "7.3.0", "7.4.0",
-    "7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1", "7.8.0",
+    "7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1", "7.8.0", "7.8.1",
 })
 AUTO_MIGRATION_SOURCES = frozenset({
-    "7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1", "7.8.0",
+    "7.6.0", "7.6.1", "7.6.2", "7.7.0", "7.7.1", "7.8.0", "7.8.1",
 })
 SKILL_DIR_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 BEGIN = "<!-- CODEX-CROSS-PROJECT-ASSISTANT:BEGIN -->"
@@ -664,6 +666,42 @@ def _is_managed_hook_entry(entry: Any) -> bool:
     return False
 
 
+def _managed_hook_errors(path: Path, script_path: Path,
+                         profile: Optional[Mapping[str, Any]] = None) -> List[str]:
+    """中文：验证账户级受管 Hook 完整性，同时保留第三方 Hook。
+
+    English: Verify account-managed Hook integrity without constraining third-party Hooks.
+    """
+    try:
+        data = load_json(path, {}) or {}
+    except (json.JSONDecodeError, UnicodeError) as exc:
+        return ["增强 hooks.json 无法解析: %s" % exc]
+    hooks = data.get("hooks") if isinstance(data, dict) else None
+    if not isinstance(hooks, dict):
+        return ["增强 hooks.json 的 hooks 不是对象"]
+    expected = hook_fragment(script_path, profile)
+    errors: List[str] = []
+    for event, entries in expected.items():
+        actual = hooks.get(event)
+        if not isinstance(actual, list):
+            errors.append("增强 Hook 缺少事件 %s" % event)
+            continue
+        actual_serialized = [json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                             for item in actual if isinstance(item, dict)]
+        expected_serialized = [json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                               for item in entries]
+        for item in expected_serialized:
+            if item not in actual_serialized:
+                errors.append("增强 Hook 缺少或漂移: %s" % event)
+                break
+        expected_set = set(expected_serialized)
+        for raw, item in zip(actual_serialized, (item for item in actual if isinstance(item, dict))):
+            if _is_managed_hook_entry(item) and raw not in expected_set:
+                errors.append("增强 Hook 受管条目漂移: %s" % event)
+                break
+    return errors
+
+
 def restore_global_agents(path: Path, previous: Optional[Path]) -> None:
     """中文：只恢复本包拥有的 AGENTS 标记区块并保留外部编辑；卸载升级版本时可恢复旧受管区块。
 
@@ -807,6 +845,30 @@ def plugin_marketplace_root() -> Path:
     return (Path.home() / ".agents" / "plugins" / "cp-assistant-marketplace").absolute()
 
 
+def base_marketplace_root() -> Path:
+    return (Path.home() / ".agents" / "plugins" / "cp-assistant-base-marketplace").absolute()
+
+
+def base_state_path() -> Path:
+    return codex_home() / BASE_STATE_FILE
+
+
+def _base_state() -> Dict[str, Any]:
+    state = load_json(base_state_path(), {}) or {}
+    if not state:
+        return {}
+    expected_root = str(base_marketplace_root())
+    if (state.get("schema_version") != 1 or state.get("package") != PACKAGE
+            or state.get("marketplace") != BASE_MARKETPLACE
+            or state.get("market_root") != expected_root):
+        raise InstallError("基础 Plugin state 无效，拒绝覆盖或降级")
+    status = str(state.get("status") or "INSTALLED")
+    if status not in {"INSTALLING", "INSTALLED", "RECOVERY_REQUIRED"}:
+        raise InstallError("基础 Plugin state 状态未知，拒绝覆盖或降级")
+    state["status"] = status
+    return state
+
+
 def plugin_marketplace_payload() -> Path:
     return plugin_marketplace_root() / "plugins" / PACKAGE
 
@@ -834,20 +896,25 @@ def payload_report(root: Path) -> Dict[str, Any]:
 
 
 def doctor_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
-    """中文：为普通用户提供可行动摘要；完整机器字段仍由 JSON 输出。
+    """中文：为常规调用者提供可行动摘要；完整机器字段仍由 JSON 输出。
 
     English: Provide an actionable ordinary-user summary while retaining JSON details.
     """
     checks = data.get("checks") if isinstance(data.get("checks"), list) else []
-    failed = [item.get("id") for item in checks if isinstance(item, dict) and item.get("status") == "ERROR"]
-    warned = [item.get("id") for item in checks if isinstance(item, dict) and item.get("status") == "WARN"]
+    failed = [item for item in checks if isinstance(item, dict) and item.get("status") == "ERROR"]
+    warned = [item for item in checks if isinstance(item, dict) and item.get("status") == "WARN"]
+    def cause(items: List[Mapping[str, Any]]) -> List[Dict[str, str]]:
+        return [{"id": str(item.get("id") or "unknown"), "detail": str(item.get("detail") or "unknown")}
+                for item in items]
     if failed:
-        return {"overall": "ERROR", "available": "基础能力暂不可用", "affected": failed,
+        return {"overall": "ERROR", "available": "基础能力暂不可用", "affected": [item.get("id") for item in failed],
+                "cause": cause(failed),
                 "next_action": (data.get("remediation") or ["修复错误项后重试 doctor"])[0]}
     if warned:
-        return {"overall": "DEGRADED", "available": "基础能力可继续使用", "affected": warned,
+        return {"overall": "DEGRADED", "available": "基础能力可继续使用", "affected": [item.get("id") for item in warned],
+                "cause": cause(warned),
                 "next_action": (data.get("remediation") or ["查看 doctor --json 获取详情"])[0]}
-    return {"overall": "PASS", "available": "基础与已安装增强能力可用", "affected": [],
+    return {"overall": "PASS", "available": "基础与已安装增强能力可用", "affected": [], "cause": [],
             "next_action": "可直接开始任务；需要详细状态时运行 doctor --json。"}
 
 
@@ -1046,6 +1113,35 @@ def _deactivate_plugin(check: bool = True) -> None:
             raise InstallError("Codex Plugin 卸载失败: %s" % detail[-2000:])
 
 
+def _deactivate_base_plugin(check: bool = True) -> None:
+    result = _run_codex(["plugin", "remove", "%s@%s" % (PACKAGE, BASE_MARKETPLACE)], check=False)
+    if check and result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip().lower()
+        if not any(token in detail for token in ("not installed", "not found", "no plugin")):
+            raise InstallError("基础 Plugin 卸载失败: %s" % detail[-2000:])
+
+
+def _remove_base_marketplace(check: bool = True) -> None:
+    result = _run_codex(["plugin", "marketplace", "remove", BASE_MARKETPLACE], check=False)
+    if check and result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip().lower()
+        if not any(token in detail for token in ("not configured", "not found", "no marketplace")):
+            raise InstallError("基础 Marketplace 注销失败: %s" % detail[-2000:])
+
+
+def _base_plugin_active() -> bool:
+    result = _run_codex(["plugin", "list", "--json"], check=False)
+    if result.returncode != 0:
+        return False
+    try:
+        payload = json.loads(result.stdout or "{}")
+        rows = list(payload.get("installed") or []) + list(payload.get("available") or [])
+    except (TypeError, ValueError):
+        return False
+    return any(isinstance(item, dict) and item.get("pluginId") == "%s@%s" % (PACKAGE, BASE_MARKETPLACE)
+               and item.get("installed") is True and item.get("enabled") is True for item in rows)
+
+
 def _remove_marketplace(check: bool = True) -> None:
     result = _run_codex(["plugin", "marketplace", "remove", MARKETPLACE], check=False)
     if check and result.returncode != 0:
@@ -1159,7 +1255,16 @@ def _probe_plugin_host() -> Dict[str, Any]:
             normalized_target = normalize_plugin_list(data, PACKAGE, MARKETPLACE, None, json_profile)
             list_ok = True
         except CompatibilityError as exc:
-            list_error = str(exc)
+            # 中文：基础入口拥有独立 marker；升级前允许它作为唯一已安装身份通过同一 schema 校验。
+            # English: The base entry has its own marker; before upgrade it may be the sole installed identity under the same schema.
+            try:
+                if _base_state():
+                    normalized_target = normalize_plugin_list(data, PACKAGE, BASE_MARKETPLACE, None, json_profile)
+                    list_ok = True
+                else:
+                    list_error = str(exc)
+            except (CompatibilityError, InstallError):
+                list_error = str(exc)
     elif result.returncode != 0:
         list_error = (result.stderr or result.stdout or "codex plugin list failed").strip()
     commands: Dict[str, Dict[str, Any]] = {}
@@ -1475,6 +1580,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     ch = codex_home(); sh = user_skills_home(); home = Path.home().absolute()
     current_skills = skill_names()
     deprecated_skills = deprecated_skill_names()
+    old_base_state = _base_state() if mode == "plugin" else {}
     reject_link_ancestors(ch); reject_link_ancestors(home / ".agents")
     targets: List[Tuple[str, Path]] = [
         ("global", ch / "AGENTS.md"),
@@ -1492,14 +1598,18 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         for _label, target in current_skill_targets:
             ensure_inside(target, sh)
         targets.extend(current_skill_targets)
-        targets.extend([("runtime", ch / "runtime" / "cp_runtime"), ("hook-script", ch / "cp-assistant-hooks" / "cp_hook.py"),
-                        ("gate-worker", ch / "cp-assistant-hooks" / "cp_gate.py"), ("hooks-json", ch / "hooks.json")])
     else:
         targets.extend([
             ("plugin-payload", plugin_marketplace_payload()),
             ("marketplace-manifest", plugin_marketplace_manifest()),
             ("plugin-cache", plugin_cache_root()),
         ])
+        if old_base_state:
+            targets.append(("base-state", base_state_path()))
+    # 中文：增强运行时始终是账户级受管组件；基础 Plugin 自身不加载它。
+    # English: Enhancement runtime is always an account-managed component; the base Plugin itself never loads it.
+    targets.extend([("runtime", ch / "runtime" / "cp_runtime"), ("hook-script", ch / "cp-assistant-hooks" / "cp_hook.py"),
+                    ("gate-worker", ch / "cp-assistant-hooks" / "cp_gate.py"), ("hooks-json", ch / "hooks.json")])
     for _label, target in targets:
         reject_link_ancestors(target.parent)
     old_state = load_json(state_path("user"), {}) or {}
@@ -1511,6 +1621,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                           "state_migration":"legacy-to-v3" if old_state.get("schema_version") in {1, 2} else "none",
                           "backup_required":True,"targets":[str(x[1]) for x in targets],
                           "preference_migration":preference_migration,
+                          "base_upgrade":bool(old_base_state),
                           "unknown_marketplace_entries_preserved":mode == "plugin"}, ensure_ascii=False, indent=2)); return
     _require_no_live_transaction("user")
     if old_state and str(old_state.get("mode") or mode) != mode and not force:
@@ -1526,6 +1637,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     records: List[Dict[str, Any]] = []
     previous_plugin_active = False
     previous_plugin_detail = ""
+    previous_base_active = _base_plugin_active() if old_base_state and _codex_available() else False
     previous_market_exists = _io_path(plugin_marketplace_root()).exists() if mode == "plugin" else False
     if mode == "plugin" and _codex_available():
         try:
@@ -1550,6 +1662,8 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             "version": previous_version,
             "cache_path": str(previous_cache) if previous_cache else "",
             "cache_tree_sha256": tree_sha256(previous_cache) if previous_cache and previous_cache.is_dir() else "",
+            "base_active": previous_base_active,
+            "base_market_root": old_base_state.get("market_root") if old_base_state else "",
         }
         _journal_write(journal, "BACKED_UP")
         _journal_write(journal, "APPLYING")
@@ -1576,6 +1690,9 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         if mode == "standalone":
             for name in current_skills:
                 dst = sh / name; copy_atomic(ROOT / "skills" / name, dst); _record_applied(journal, "skill:" + name, dst)
+        # 中文：Plugin 模式由基础 Plugin 唯一加载 Skills；安装器只接入按需增强运行时。
+        # English: In Plugin mode, only the base Plugin loads Skills; this installer adds the optional enhancement runtime.
+        if mode in {"standalone", "plugin"}:
             dst = ch / "runtime" / "cp_runtime"; copy_atomic(ROOT / "runtime" / "cp_runtime", dst); _record_applied(journal, "runtime", dst)
             dst = ch / "cp-assistant-hooks" / "cp_hook.py"; copy_atomic(ROOT / "hooks" / "cp_hook.py", dst); _record_applied(journal, "hook-script", dst)
             dst = ch / "cp-assistant-hooks" / "cp_gate.py"; copy_atomic(ROOT / "hooks" / "cp_gate.py", dst); _record_applied(journal, "gate-worker", dst)
@@ -1584,7 +1701,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                 _standalone_hook_profile(),
             )
             _record_applied(journal, "hooks-json", ch / "hooks.json")
-        else:
+        if mode == "plugin":
             market = plugin_marketplace_root()
             with tempfile.TemporaryDirectory(prefix="cp-v6-market-") as td:
                 temporary_root = Path(td)
@@ -1622,6 +1739,9 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                     raise InstallError("测试 Marketplace 替换后崩溃注入；请执行 doctor --recover")
                 _hard_crash("MARKETPLACE:AFTER_REPLACE")
         if mode == "plugin":
+            if old_base_state:
+                _deactivate_base_plugin()
+                _remove_base_marketplace()
             _journal_write(journal, "ACTIVATING")
             pre_activation_profile = _probe_plugin_host()
             same_host = (
@@ -1657,6 +1777,9 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             journal["cache_payload"] = cache_report
             _record_applied(journal, "plugin-cache", plugin_cache_root())
             _hard_crash("PLUGIN:AFTER_CACHE_VERIFY")
+            if old_base_state:
+                _io_path(base_state_path()).unlink(missing_ok=True)
+                _record_applied(journal, "base-state", base_state_path())
         else:
             cache_report = None
         managed = {str(path): tree_sha256(path) for _label, path in targets if _io_path(path).exists() and _label not in {"global", "hooks-json", "install-state"}}
@@ -1669,7 +1792,14 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                       "installed_at":time.time(),"backup":str(backup),"managed_hashes":managed,
                       "previous_backup":old_state.get("backup"),
                       "capability_profile":_host_binding(capability_profile) if mode == "plugin" else {},
-                      "preference_migration":preference_migration})
+                      "preference_migration":preference_migration,
+                      "components":{
+                          "base":{"status":"PLUGIN_MANAGED" if mode == "plugin" else "STANDALONE_SKILLS",
+                                  "skills":current_skills},
+                          "enhancement":{"status":"MANAGED",
+                                         "runtime":str(ch / "runtime" / "cp_runtime"),
+                                         "hooks":str(ch / "hooks.json")},
+                      }})
         if mode == "plugin":
             source_report = payload_report(ROOT)
             marketplace_report = payload_report(plugin_marketplace_payload())
@@ -1741,6 +1871,12 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                     _verify_restored_plugin(journal.get("previous_plugin_state") or {})
                 except Exception as rollback_exc:
                     journal["rollback_errors"].append("plugin reactivate: %s" % rollback_exc)
+            if journal.get("previous_plugin_state", {}).get("base_active") and _io_path(base_marketplace_root()).exists():
+                try:
+                    _run_codex(["plugin", "marketplace", "add", str(base_marketplace_root())])
+                    _run_codex(["plugin", "add", "%s@%s" % (PACKAGE, BASE_MARKETPLACE)])
+                except Exception as rollback_exc:
+                    journal["rollback_errors"].append("base plugin reactivate: %s" % rollback_exc)
         _journal_write(journal, "RECOVERY_REQUIRED" if journal["rollback_errors"] else "ROLLED_BACK")
         if not journal["rollback_errors"]:
             _finish_journal(journal)
@@ -1856,36 +1992,10 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                 if _io_path(plugin/"skills"/name).exists(): errors.append("Plugin 遗留旧 Skill %s" % name)
             if not _io_path(market/".agents"/"plugins"/"marketplace.json").is_file(): errors.append("缺少 Codex Marketplace manifest")
             if not _io_path(plugin/".codex-plugin"/"plugin.json").is_file(): errors.append("缺少 Plugin")
-            if not _io_path(plugin/"hooks"/"hooks.json").is_file(): errors.append("缺少 Plugin Hooks")
-            if not _io_path(plugin/"hooks"/"seal_worker.py").is_file(): errors.append("缺少延迟封印 Worker")
-            if not _io_path(plugin/"hooks"/"cp_gate.py").is_file(): errors.append("缺少流程门禁 Worker")
-            if os.name == "nt" and not _io_path(plugin/"hooks"/"cp_hook.cmd").is_file(): errors.append("缺少 Windows Hook 启动器")
-            if os.name == "nt" and not _io_path(plugin/"hooks"/"cp_gate.cmd").is_file(): errors.append("缺少 Windows 文件门禁启动器")
-            if _io_path(plugin/"hooks"/"hooks.json").is_file():
-                hook_manifest = load_json(plugin/"hooks"/"hooks.json", {}) or {}
-                hook_groups = hook_manifest.get("hooks") or {}
-                for hook_name in ("UserPromptSubmit", "PreToolUse", "PostToolUse", "SubagentStart", "SubagentStop", "Stop", "Interrupt", "SessionEnd"):
-                    entries = hook_groups.get(hook_name) or []
-                    commands = [
-                        hook.get("commandWindows", "")
-                        for entry in entries
-                        for hook in (entry.get("hooks") or [])
-                        if isinstance(hook, dict)
-                    ]
-                    launcher = "cp_gate.cmd" if hook_name == "PostToolUse" else "cp_hook.cmd"
-                    if os.name == "nt" and not any(launcher in command for command in commands):
-                        errors.append("Windows Hook 启动命令缺失 %s" % hook_name)
-                    quoted_prefix = f'cmd.exe /d /c ""%PLUGIN_ROOT%\\hooks\\{launcher}" '
-                    if os.name == "nt" and not any(command.startswith(quoted_prefix) and command.endswith('"')
-                                                     for command in commands):
-                        errors.append("Windows Hook 启动路径未完整引用 %s" % hook_name)
-                pre_commands = [
-                    hook.get("commandWindows", "")
-                    for entry in (hook_groups.get("PreToolUse") or [])
-                    for hook in (entry.get("hooks") or []) if isinstance(hook, dict)
-                ]
-                if os.name == "nt" and not any("cp_gate.cmd" in command for command in pre_commands):
-                    errors.append("Windows PreToolUse 缺少文件门禁启动命令")
+            base_manifest = load_json(plugin/".codex-plugin"/"plugin.json", {}) or {}
+            if base_manifest.get("skills") != "./skills/": errors.append("基础 Plugin Skill 入口无效")
+            base_hooks = load_json(plugin/"hooks"/"hooks.json", {}) or {}
+            if base_hooks.get("hooks") != {}: errors.append("基础 Plugin 不得直接注册增强 Hook")
             active, detail = _plugin_activation_status(VERSION)
             if not active: errors.append("Plugin 未被 Codex 实际安装并启用: %s" % detail)
             try:
@@ -1911,6 +2021,13 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                 verify_keyring()
             except Exception as exc:
                 errors.append("完整性 keyring 不可用: %s" % exc)
+            if not _io_path(ch/"cp-assistant-hooks"/"cp_hook.py").is_file(): errors.append("缺少增强 Hook")
+            if not _io_path(ch/"cp-assistant-hooks"/"cp_gate.py").is_file(): errors.append("缺少增强流程门禁 Worker")
+            else:
+                errors.extend(_managed_hook_errors(
+                    ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py",
+                    _standalone_hook_profile(),
+                ))
         for script_name in ("cp-runtime.py", "evolution.py"):
             dst = ch / "tools" / script_name
             src = ROOT / "scripts" / script_name
@@ -2050,6 +2167,19 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
             if not force:
                 raise InstallError("已恢复旧版文件，但旧 Plugin 重新激活失败: %s" % exc)
             print("[WARN] --force：旧版 Plugin 文件已恢复，但未能重新激活")
+    if installed_mode == "plugin" and _io_path(base_state_path()).is_file() and _codex_available():
+        try:
+            _base_state()
+            if not _io_path(base_marketplace_root()).is_dir():
+                raise InstallError("基础 Marketplace 源目录缺失")
+            _run_codex(["plugin", "marketplace", "add", str(base_marketplace_root())])
+            _run_codex(["plugin", "add", "%s@%s" % (PACKAGE, BASE_MARKETPLACE)])
+            if not _base_plugin_active():
+                raise InstallError("基础 Plugin 重新激活读回失败")
+        except Exception as exc:
+            if not force:
+                raise InstallError("已恢复基础安装文件，但基础 Plugin 重新激活失败: %s" % exc)
+            print("[WARN] --force：基础安装文件已恢复，但未能重新激活")
     _journal_write(journal, "COMMITTED")
     _finish_journal(journal)
     print("[OK] V%s 已卸载并恢复安装前状态；项目上下文/观测数据未删除" % VERSION)
@@ -2135,7 +2265,34 @@ def recover_transaction(scope: str, repo_path: Optional[str] = None) -> None:
     print("[OK] 事务恢复完成")
 
 
-def status(scope: str, mode: str, repo_path: Optional[str]) -> None:
+def status_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
+    """中文：将安装事实投影为可行动状态，不删改完整 JSON 契约。
+
+    English: Project installation facts into an actionable status without removing the full JSON contract.
+    """
+    activation = data.get("plugin_activation") if isinstance(data.get("plugin_activation"), Mapping) else {}
+    state = data.get("state") if isinstance(data.get("state"), Mapping) else {}
+    components = state.get("components") if isinstance(state.get("components"), Mapping) else {}
+    host = data.get("host_compatibility") if isinstance(data.get("host_compatibility"), Mapping) else {}
+    affected: List[str] = []
+    cause: List[Dict[str, str]] = []
+    if data.get("scope") == "user" and data.get("mode") == "plugin" and (
+            not activation.get("active") or host.get("compatible") is False):
+        affected.append("base-plugin")
+        cause.append({"id": "base-plugin", "detail": str(
+            activation.get("detail") or host.get("detail") or host.get("status") or "not active",
+        )})
+    if data.get("scope") == "user" and not isinstance(components.get("enhancement"), Mapping):
+        affected.append("enhancement")
+        cause.append({"id": "enhancement", "detail": "state has no managed enhancement component"})
+    if affected:
+        return {"overall": "DEGRADED", "available": "基础能力可继续使用", "affected": affected,
+                "cause": cause, "next_action": "运行 verify --json 查看组件与宿主读回。"}
+    return {"overall": "PASS", "available": "基础与已安装增强能力可用", "affected": [],
+            "cause": [], "next_action": "可直接开始任务；需要详细状态时运行 status --json。"}
+
+
+def status(scope: str, mode: str, repo_path: Optional[str], summary: bool = False) -> None:
     repo = git_root(Path(repo_path or ".")) if scope == "repo" else None
     state = load_json(state_path(scope, repo), {}) or {}
     live = _load_live_journal(scope, repo)
@@ -2151,13 +2308,13 @@ def status(scope: str, mode: str, repo_path: Optional[str]) -> None:
                        "cache": payload_report(plugin_cache_root())}
         except InstallError as exc:
             payload = {"ok": False, "error": str(exc)}
-    data = {"package": PACKAGE, "version": VERSION, "scope": scope, "state": state,
+    data = {"package": PACKAGE, "version": VERSION, "scope": scope, "mode": mode, "state": state,
             "live_transaction": live, "plugin_activation": {"active": active, "detail": detail},
             "host_compatibility": host_compatibility,
             "payload_identity": payload,
             "skills": skill_names(), "reviewers": [p.name for p in agent_files()],
             "hooks": str(ch / "hooks.json") if scope == "user" else None}
-    print(json.dumps(data, ensure_ascii=False, indent=2))
+    print(json.dumps(status_summary(data) if summary else data, ensure_ascii=False, indent=2))
 
 
 def _inventory_candidates(scope: str, mode: str, repo: Optional[Path]) -> List[Path]:
@@ -2294,7 +2451,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
           ("PASS" if host_compatibility and host_compatibility.get("compatible") else "WARN"),
           str(host_compatibility or "not active"), "运行 verify 并读回 Plugin installed/enabled/version。")
     try:
-        hook_count = len(json.loads((ROOT / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"])
+        hook_count = len(json.loads((ROOT / "hooks" / "enhancement-hooks.json").read_text(encoding="utf-8"))["hooks"])
         check("hooks", "PASS" if hook_count == 8 else "ERROR", "registered=%d" % hook_count,
               "恢复当前发行包的受管 Hook 注册。")
     except Exception as exc:
@@ -2364,10 +2521,12 @@ def main() -> None:
             repo = git_root(Path(args.repo_path or ".")) if args.scope == "repo" else None
             with scope_lock(args.scope, repo): doctor(True, args.scope, str(repo) if repo else None)
             return
-        ok = doctor(False, args.scope, args.repo_path, summary=args.summary)
+        # 中文：常规调用者默认获得可行动摘要；脚本调用方通过 --json 保留完整稳定字段。
+        # English: Ordinary users receive an actionable summary by default; --json retains stable full fields for scripts.
+        ok = doctor(False, args.scope, args.repo_path, summary=not args.json)
         if args.strict and not ok: raise SystemExit(2)
         return
-    if args.command=="status": status(args.scope,args.mode,args.repo_path); return
+    if args.command=="status": status(args.scope,args.mode,args.repo_path,summary=not args.json); return
     if args.command=="inventory":
         print(json.dumps(inventory(args.scope,args.mode,args.repo_path),ensure_ascii=False,indent=2)); return
     if args.command=="recover":

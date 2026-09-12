@@ -1,4 +1,4 @@
-# V7.8 Current System Architecture and Security Boundaries
+# V7.9 Current System Architecture and Security Boundaries
 
 > Status: `active`. This page describes the current V7.8.1 package architecture. Earlier design and release evidence is retained only for historical traceability.
 

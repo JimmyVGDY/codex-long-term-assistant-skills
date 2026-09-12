@@ -17,6 +17,7 @@ class DocumentationSourceTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.write("manifest.json", {"version": "7.6.1"})
         self.write("hooks/hooks.json", {"hooks": {"Stop": [], "Interrupt": []}})
+        self.write("hooks/enhancement-hooks.json", {"hooks": {"Stop": [], "Interrupt": []}})
         self.write("docs/GUIDE.md", "# 当前指南\n")
         self.write("locales/en/docs/GUIDE.md", "# Current guide\n\n[Other](OTHER.md)\n")
         self.write("locales/en/docs/OTHER.md", "# Other\n")
@@ -54,7 +55,7 @@ class DocumentationSourceTests(unittest.TestCase):
 
     def test_hook_registry_change_invalidates_count_until_regenerated(self):
         audit(self.root, write=True)
-        self.write("hooks/hooks.json", {"hooks": {"Stop": [], "Interrupt": [], "UserPromptSubmit": []}})
+        self.write("hooks/enhancement-hooks.json", {"hooks": {"Stop": [], "Interrupt": [], "UserPromptSubmit": []}})
         self.assertIn("FACT_DRIFT", self.codes())
         audit(self.root, write=True)
         self.assertIn("-->3<!--", (self.root / "README.md").read_text())

@@ -3,9 +3,9 @@
 ## 适用范围
 
 - 目标宿主：Windows 原生 Codex CLI 0.154.0。
-- Python：3.11 或更高版本。
+- 基础安装无需本包 Python runtime；仅增强运行时需 Python 3.11 或更高版本。
 - 推荐形态：账户级 Plugin。
-- 可升级版本：<!-- cp-fact:upgrade-sources -->7.8.0, 7.7.1, 7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->。
+- 可升级版本：<!-- cp-fact:upgrade-sources -->7.8.1, 7.8.0, 7.7.1, 7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->。
 - 受管对象：本包 Marketplace payload、manifest 条目、Plugin cache、Reviewer、全局规则和安装状态。
 
 安装器不改写 `config.toml`，不删除未知 Skill、Agent、Hook、MCP、项目上下文、Event、Snapshot、Assessment、Proposal 或历史备份。
@@ -22,6 +22,8 @@ python scripts\package_manager.py recover --scope user
 
 无 state 时，`uninstall --dry-run` 只给出零删除预览；真实卸载仍拒绝。非 Git 文件夹可使用基础说明和文件能力，不会被自动初始化为仓库。
 
+基础安装使用 `scripts\\install-base.ps1`（或 POSIX 的 `scripts/install-base.sh`）并只注册 Skill。它在任何写入前拒绝符号链接、Junction 或 Reparse Point 祖先；原生 Marketplace/Plugin 注册失败会撤销本次创建的受管路径。若宿主注册本身无法撤销，会保留 `cp-assistant-base-state.json` 的 `RECOVERY_REQUIRED` 状态，下一次同一基础安装入口会先尝试受管恢复，绝不覆盖未知 Marketplace。
+
 ## 路径规则
 
 - Skill：`$HOME/.agents/skills`
@@ -34,7 +36,7 @@ Windows 原生进程若继承 `/mnt/c/.../.codex`，必须转换为盘符路径�
 
 ## 标准升级
 
-在解压后的 V7.8.1 语言包根目录依次执行：
+在解压后的 V7.9.0 语言包根目录依次执行：
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -46,7 +48,7 @@ codex plugin list --json
 
 dry-run 应明确显示：
 
-- 当前升级应读回已安装版本与 `to_version=7.8.1`；V7.7.1、V7.7.0 及清单声明的更早升级路径必须被识别；
+- 当前升级应读回已安装版本与 `to_version=7.9.0`；V7.8.1 及清单声明的更早升级路径必须被识别；
 - schema 3 保持不变，旧 schema 1/2 迁移到 3 后重新核验宿主；
 - 新升级备份路径；
 - Marketplace payload、manifest 和 Plugin cache 分离目标；
@@ -56,9 +58,9 @@ dry-run 应明确显示：
 
 Codex 0.154.0 的本地 Marketplace manifest 必须包含顶层 `interface.displayName`。升级器会在备份后移除旧 `owner`、生成受控的 `interface.displayName`，并保留其他未知外部字段；`codex plugin list --json` 恢复正常后才继续激活。
 
-Plugin payload 中的 UserPromptSubmit 是静态 `async=true` 注册，规范 `apply_patch` 还依赖 PreToolUse/PostToolUse，因此安装器必须先把当前 Codex CLI 精确匹配到冻结兼容窗口，并核验两类能力绑定的官方仓库、tag、提交、源码路径和 SHA-256。版本未知或任一证据不完整时，Plugin 安装在任何账户文件写入前失败关闭；standalone 模式按同一能力档案动态省略可选 UserPromptSubmit，但不伪造 Operation v2 宿主支持。
+基础 Plugin payload 不注册 Hook。增强安装才在账户级 `hooks.json` 注册可选观察与受控写入 Hook；`verify` 会逐条核验本包拥有的 matcher、命令和事件参数，同时保留第三方 Hook。版本未知、门禁文件缺失或任一受管条目漂移时，受控操作验证失败关闭；基础任务仍可继续，不伪造 Operation v2 宿主支持。
 
-完成条件：Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.8.1`，schema 3 宿主状态为 `HOST_COMPATIBLE`，并且 10 个 Skill、7 个 Reviewer、8 个 Hook、延迟封印 worker、keyring 和 payload digest 全部通过。`java-backend-engineering`、`python-backend-ai-engineering`、`data-middleware-ai-infrastructure` 和此前废弃的 `vue-frontend-engineering` 不得残留；文件复制完成不构成 Plugin 成功状态。
+完成条件：基础 Plugin 精确读回 `installed=true`、`enabled=true`、`version=7.9.0`，并且 10 个 Skill 与空 Plugin Hook 清单通过；若安装增强，还必须通过 schema 3 宿主状态、账户级受管 Hook、延迟封印 worker、keyring 和 payload digest 验证。文件复制完成不构成 Plugin 成功状态。
 
 ## 事务与能力探测
 
@@ -125,8 +127,8 @@ python scripts\package_manager.py uninstall --scope user --mode plugin
 
 ```powershell
 python scripts\validate-package.py
-python scripts\build-release.py verify --archive ..\Codex-Skills-V7.8.1-zh-CN.zip --locale zh-CN
-python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.8.1.json --artifact ..\Codex-Skills-V7.8.1-zh-CN.zip
+python scripts\build-release.py verify --archive ..\Codex-Skills-V7.9.0-zh-CN.zip --locale zh-CN
+python scripts\release-attestation.py verify --attestation ..\release-attestation-v7.9.0.json --artifact ..\Codex-Skills-V7.9.0-zh-CN.zip
 ```
 
 `validate-package.py` 调用当前 `validate-v74.py`，检查执行前后的 Git index、受管与未跟踪文件内容、删除状态和链接类型；`--output` 只能写到仓库外。其 `routing_host_observation` 固定为 `NOT_EVALUATED`，不能替代真实宿主路由验收。
@@ -141,7 +143,7 @@ python scripts\release-attestation.py verify --attestation ..\release-attestatio
 
 ## 可选项目门禁与实际加载
 
-注册配置包含八个入口，项目门禁默认关闭。V7.8.1 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 完全由宿主控制；规范 `apply_patch` 仅在显式启用策略下由 PreToolUse/PostToolUse 推进 Operation v2，未配置或停用策略保持中性。
+增强注册包含八个入口，基础 Plugin 本身为空，项目门禁默认关闭。V7.9.0 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 完全由宿主控制；规范 `apply_patch` 仅在显式启用策略下由 PreToolUse/PostToolUse 推进 Operation v2，未配置或停用策略保持中性。
 
 ```text
 未配置或 disabled ───────────────→ 原生写入保持宿主既有行为
@@ -149,6 +151,6 @@ python scripts\release-attestation.py verify --attestation ..\release-attestatio
 UserPromptSubmit / Stop / Interrupt → 不消费旧 GateTask 控制状态
 ```
 
-配置 `enabled=true`、Plugin 已加载和业务语义适用是不同结论。V7.8.1 只接受 Hook 建立的 Operation v2 起点、不同 B 的许可领取与匹配 PostTool 回执；旧 GateTask 回执不能授权原生写入。已打开会话可能仍使用旧 Plugin 快照，升级后应在新任务中读回实际行为。shell/MCP 等入口不能保证写前拦截。
+配置 `enabled=true`、增强已加载和业务语义适用是不同结论。V7.9.0 只接受 Hook 建立的 Operation v2 起点、不同 B 的许可领取与匹配 PostTool 回执；旧 GateTask 回执不能授权原生写入。已打开会话可能仍使用旧 Plugin 快照，升级后应在新任务中读回实际行为。shell/MCP 等入口不能保证写前拦截。
 
 冻结窗口内 11 个 Codex CLI 版本具有逐版本官方 UserPromptSubmit async 源码证据；真实 Desktop 与其他宿主仍需各自读回。旧门禁启用与停用入口见[能力索引与流程入口](../CAPABILITY_INDEX.md)，但本补丁不把旧任务生命周期恢复为写入授权。

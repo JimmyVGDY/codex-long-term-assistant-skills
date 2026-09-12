@@ -53,7 +53,7 @@ CANONICAL_ENTRYPOINTS = {
     "C13": ["runtime/cp_runtime/capability_gate.py", "runtime/cp_runtime/capability_operation.py", "runtime/cp_runtime/patch_intent.py", "hooks/cp_gate.py"],
     "C14": ["runtime/cp_runtime/delegation_budget.py", "scripts/delegation-budget.py"],
     "C15": ["skills/long-running-task-memory/scripts/checkpoint.py", "runtime/cp_runtime/memory.py"],
-    "C16": ["hooks/hooks.json", "hooks/cp_hook.py", "hooks/cp_gate.py", "runtime/cp_runtime/seal_queue.py"],
+    "C16": ["hooks/enhancement-hooks.json", "hooks/cp_hook.py", "hooks/cp_gate.py", "runtime/cp_runtime/seal_queue.py"],
     "C17": ["runtime/cp_runtime/feedback.py", "runtime/cp_runtime/finalization.py", "scripts/cp-runtime.py:feedback/finalize"],
     "C18": ["runtime/cp_runtime/evolution", "scripts/evolution.py"],
     "C19": ["custom-agents/*.toml", "skills/multi-agent-independent-review/scripts/review_controller.py", "skills/multi-agent-independent-review/scripts/review_packet.py"],
@@ -121,7 +121,7 @@ def validate_registry_coverage(registry: Mapping[str, Any], repo_root: Path) -> 
     reviewers = manifest.get("custom_agents", [])
     require(isinstance(reviewers, list) and len(reviewers) == 7, "REGISTRY_REVIEWER_COVERAGE")
     require(all((root / item["file"]).is_file() for item in reviewers), "REGISTRY_REVIEWER_COVERAGE")
-    hooks = json.loads(bounded_read(root / "hooks" / "hooks.json", 256 * 1024), object_pairs_hook=unique_json_object)["hooks"]
+    hooks = json.loads(bounded_read(root / "hooks" / "enhancement-hooks.json", 256 * 1024), object_pairs_hook=unique_json_object)["hooks"]
     require(set(hooks) == {"UserPromptSubmit", "PreToolUse", "PostToolUse", "SubagentStart", "SubagentStop", "Stop", "Interrupt", "SessionEnd"},
             "REGISTRY_HOOK_COVERAGE")
     for capability_id, expected in CANONICAL_ENTRYPOINTS.items():

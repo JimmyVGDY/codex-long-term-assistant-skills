@@ -4,7 +4,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-V7.8.1 fixes account `inventory` hashing for the managed `AGENTS.md` block so a valid installation is not reported as `DRIFT`. V7.8.0 C01-C25 AUTO, onboarding, recoverable scans, scoped review, and per-feature recovery remain unchanged.
+V7.9.0 provides ready-to-use base installation with optional enhancement runtime. Ordinary engineering work can begin directly, while Hooks, recoverable state, budgets, and controlled writes attach only when needed.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -25,11 +25,37 @@ V7.8.1 fixes account `inventory` hashing for the managed `AGENTS.md` block so a 
   <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
-V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0 while fixing disabled-gate PostTool reconciliation. V7.8.1 adds AUTO/BASIC levels, first-scan consent, and open-source installation recovery. The gate remains off by default, and capability level is neither semantic correctness nor authority.
+V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.9.0 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
 
-**Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Usage example](#reproducible-usage-example) · [Compatibility](#compatibility-matrix) · [Installation](#five-minute-upgrade) · [Documentation](#documentation-and-collaboration)
+**Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 
 Use the assistant directly after installation; ordinary work does not require learning Profiles, indexes, or ledgers first. The first full scan is optional. Declining it, leaving it unanswered, or losing auxiliary storage keeps the current-source BASIC path available. For recovery, use `doctor`, read-only `inventory`, and canonical `recover` in that order; each reports the affected feature, what still works, and the next action.
+
+## Start in two steps
+
+1. Extract the package and install the base Plugin with its native launcher. This does not need this package's Python runtime or an API key.
+
+   ```powershell
+   .\scripts\install-base.ps1
+   ```
+
+   ```sh
+   ./scripts/install-base.sh
+   ```
+
+2. Describe the work in ordinary language. For example:
+
+   ```text
+   Fix the failing validation in this repository and run the smallest relevant test.
+   Review the changes I made in this branch for compatibility and security risks.
+   Continue the previous task; first confirm what is already changed and what still needs verification.
+   ```
+
+The base Plugin loads the ten Skills once and does not start Hooks, workers, Profile creation, indexing, or a budget ledger. Those remain optional enhancements rather than prerequisites for ordinary work.
+
+## Optional enhancements
+
+Use the existing enhanced installer only when the task needs recoverable long-running state, Hooks, indexing, an independent Reviewer, an enforced budget, or controlled writes. It performs the existing backup, transaction, verification, and recovery steps; a managed enhancement installation is never downgraded by the base launcher.
 
 ## Downloads
 
@@ -112,10 +138,9 @@ The minimum Python version is 3.11; public CI is configured to validate both 3.1
 
 The V7.8.1 window is `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
-## Five-minute upgrade
+## First install and upgrade
 
-1. Download one language archive and extract it into a temporary directory.
-2. Run the following commands from the extracted package root:
+For a new installation, use the base launcher above. To add enhancements, or to upgrade an existing managed V7 installation, run the following commands from the extracted package root:
 
 ```powershell
 python scripts\package_manager.py doctor
@@ -125,7 +150,7 @@ python scripts\package_manager.py verify --scope user --mode plugin
 codex plugin list --json
 ```
 
-3. The upgrade is established only when Plugin readback reports `installed=true`, `enabled=true`, and `version=7.8.1`, schema-3 host state is `HOST_COMPATIBLE`, and every Manifest-declared legacy Skill directory is absent.
+The enhanced installation is established only when Plugin readback reports `installed=true`, `enabled=true`, the expected release version, a compatible host snapshot, and no declared legacy Skill directory. `doctor` and `status` normally show what remains usable, what is affected, why, and the one next action; use `--json` for the full machine-readable record.
 
 The installer detects an existing version, creates a bounded backup, rejects link and reparse-point risks, preserves unknown files, and removes only Manifest-declared legacy Skill directories: the three V7 domain replacements plus the previously deprecated Vue Skill. See [Installation and recovery](docs/operations/INSTALLATION_RECOVERY.en.md) and the [User guide](docs/USER_GUIDE.en.md).
 

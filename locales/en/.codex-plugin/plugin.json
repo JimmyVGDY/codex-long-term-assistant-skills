@@ -1,7 +1,6 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.8.1",
-  "description": "Cross-project engineering assistant V7.8.1: fixes managed AGENTS block inventory hashes while retaining Codex 0.154.0, AUTO, onboarding, scoped review, and per-feature recovery.",
-  "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  "version": "7.9.0",
+  "description": "Cross-project engineering assistant V7.9.0: native base installation with optional Hooks, recoverable state, budgets, and controlled writes.",
+  "skills": "./skills/"
 }

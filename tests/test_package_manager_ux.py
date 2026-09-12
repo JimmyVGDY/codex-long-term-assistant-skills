@@ -229,13 +229,52 @@ class PackageManagerUxTests(unittest.TestCase):
             self.assertTrue(package_manager.doctor(True, "user", None))
         recover.assert_called_once_with("user", None)
 
+    def test_doctor_summary_answers_available_impact_and_next_action(self):
+        data = {
+            "checks": [{"id": "plugin", "status": "WARN"}],
+            "remediation": ["运行 verify 并读回 Plugin installed/enabled/version。"],
+        }
+        self.assertEqual({
+            "overall": "DEGRADED",
+            "available": "基础能力可继续使用",
+            "affected": ["plugin"],
+            "cause": [{"id": "plugin", "detail": "unknown"}],
+            "next_action": "运行 verify 并读回 Plugin installed/enabled/version。",
+        }, package_manager.doctor_summary(data))
+
+    def test_status_summary_keeps_base_available_when_enhancement_is_missing(self):
+        summary = package_manager.status_summary({
+            "scope": "user", "mode": "plugin", "plugin_activation": {"active": True},
+            "state": {"components": {"base": {"status": "PLUGIN_MANAGED"}}},
+        })
+        self.assertEqual("DEGRADED", summary["overall"])
+        self.assertEqual("基础能力可继续使用", summary["available"])
+        self.assertEqual(["enhancement"], summary["affected"])
+
+    def test_status_summary_marks_host_drift_and_missing_enhancement(self):
+        summary = package_manager.status_summary({
+            "scope": "user", "mode": "plugin", "plugin_activation": {"active": True},
+            "host_compatibility": {"compatible": False, "status": "HOST_DRIFT_REINSTALL_REQUIRED"},
+            "state": {},
+        })
+        self.assertEqual(["base-plugin", "enhancement"], summary["affected"])
+        self.assertEqual("HOST_DRIFT_REINSTALL_REQUIRED", summary["cause"][0]["detail"])
+
+    def test_status_json_keeps_mode_for_the_default_summary_projection(self):
+        output = io.StringIO()
+        with mock.patch.object(package_manager, "codex_home", return_value=self.base / "codex"), \
+                mock.patch.object(package_manager, "_codex_available", return_value=False), \
+                contextlib.redirect_stdout(output):
+            package_manager.status("user", "standalone", None, summary=False)
+        self.assertEqual("standalone", json.loads(output.getvalue())["mode"])
+
     @unittest.skipUnless(os.name == "nt", "PowerShell launcher regression")
     def test_windows_doctor_launcher_checks_actual_python_and_runs(self):
         directory = self.base / "plain"
         directory.mkdir()
         result = subprocess.run(
             ["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
-             "-File", str(ROOT / "scripts" / "doctor.ps1"), "--scope", "repo", "--repo-path", str(directory)],
+             "-File", str(ROOT / "scripts" / "doctor.ps1"), "--json", "--scope", "repo", "--repo-path", str(directory)],
             cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30,
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)

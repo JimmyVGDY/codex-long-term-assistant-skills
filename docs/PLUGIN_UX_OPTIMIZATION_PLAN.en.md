@@ -12,11 +12,11 @@ Base capability never weakens authorization, project validation, or an enabled s
 
 | Component | Contents | Dependencies | User outcome |
 | --- | --- | --- | --- |
-| base | Ten Skills and user-facing Plugin metadata | Codex Plugin host | Install and describe an engineering task directly |
-| enhanced | Hooks, Python runtime, account tools, Reviewers, managed global rules | Python 3.11+ and verified host contract | Long-task memory, indexes, budgets, and controlled writes |
+| base | Ten Skills and user-facing Plugin metadata | Codex Plugin host | Install through `install-base.ps1` / `install-base.sh` and describe an engineering task directly |
+| enhanced | Hooks, Python runtime, account tools, Reviewers, managed global rules | Python 3.11+ and verified host contract | `install-user` attaches long-task memory, indexes, budgets, and controlled writes to the same product |
 | strict controls | Enabled gates and Required budgets | Equivalent enhanced enforcement | Controlled operations fail closed |
 
-Base and enhanced share one source of engineering rules. The enhancement must not ship duplicate Skills that cause the host to discover the same Skill twice.
+Base and enhanced share one source of engineering rules. The enhancement must not ship duplicate Skills that cause the host to discover the same Skill twice. The base entry refuses to downgrade an existing managed enhancement state, while enhancement uninstall restores its known base installation.
 
 ## Security and migration decisions
 
@@ -35,4 +35,3 @@ Base and enhanced share one source of engineering rules. The enhancement must no
 5. Update bilingual README, installation material, CHANGELOG, and release evidence. Publish only after platform and real-host acceptance.
 
 Minimum safety acceptance: with an enabled gate and no verifiable Operation v2 origin, `apply_patch`, `Edit`, and `Write` remain denied. Base capability may continue only for ordinary work outside that control.
-

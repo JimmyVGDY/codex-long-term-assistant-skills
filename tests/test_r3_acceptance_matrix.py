@@ -82,7 +82,7 @@ class R3AcceptanceMatrixTests(unittest.TestCase):
                          (result["effective_level"], result["persistence_status"], result["authorization"]))
 
     def test_release_and_incident_status_are_separate(self):
-        report = (ROOT / "docs" / "releases" / "v7.8.1" / "VALIDATION_REPORT.md").read_text(encoding="utf-8")
+        report = (ROOT / "docs" / "releases" / "v7.9.0" / "VALIDATION_REPORT.md").read_text(encoding="utf-8")
         self.assertIn("RELEASE_COMPLETE", report)
         self.assertIn("INCIDENT_EFFECTIVE", report)
         self.assertIn("分别", report)

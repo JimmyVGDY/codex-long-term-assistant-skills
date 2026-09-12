@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.8.1",
+  "version": "7.9.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 231,
-  "payload_digest": "d6583a7fa92a04e59ed7bb14549fc4193512c1759f2c2a99ddb30dcc3417200a",
+  "file_count": 232,
+  "payload_digest": "bf3c7cc1173fca543df5be2e78c882d784545eda4690851967589869f1a665a0",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "ddf533561062ad5452010b54decf3fd729709c50053338d53ad847c18c293656",
-      "size": 308
+      "sha256": "248fe135ad52c8ff6008f4e128bcffae2fed1343402f124fdc7e428806dedb82",
+      "size": 242
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -228,7 +228,7 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
-      "sha256": "95c41cadcab1de312883d8a4a09d5df491554ec0d835973f054d881a82876f75",
+      "sha256": "64ba430bcfac4acdc41f34ce0b2ace109f114a0e69806f1de23561445c4181f5",
       "size": 8322
     },
     {
@@ -787,9 +787,14 @@
       "size": 27454
     },
     {
+      "path": "hooks/enhancement-hooks.json",
+      "sha256": "9f30ab1c236dc8d2a103fe34264236bc9004fd4286f82b5686f266459eb7bd7d",
+      "size": 201
+    },
+    {
       "path": "hooks/hooks.json",
-      "sha256": "9b68c2d6785ddd9ad55b66ebc84df0bbaba71e794b70ca0f60f3a1731a538ef7",
-      "size": 3109
+      "sha256": "78922a784ee78e9e50587e93628cd3b9d4dfbe49087adc4514e6781cea38cbb9",
+      "size": 18
     },
     {
       "path": "hooks/seal_worker.py",
@@ -858,8 +863,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_registry.py",
-      "sha256": "452e27c11d4580ed0c484634ad21e74c6948b31a5a9805bf918094db75719924",
-      "size": 17963
+      "sha256": "64716fe1047b6b52a4e85c84d57652c8a636e00c4d34a126194ddff0c6ac4e8a",
+      "size": 17987
     },
     {
       "path": "runtime/cp_runtime/capability_registry_cli.py",
