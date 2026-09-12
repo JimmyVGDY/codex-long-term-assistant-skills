@@ -373,6 +373,8 @@ def _is_reparse(path: Path) -> bool:
         st = _io_path(path).lstat()
     except FileNotFoundError:
         return False
+    except OSError as exc:
+        raise InstallError("无法安全读取路径属性: %s" % path) from exc
     if stat.S_ISLNK(st.st_mode):
         return True
     attrs = getattr(st, "st_file_attributes", 0)
@@ -827,8 +829,26 @@ def payload_manifest() -> Dict[str, Any]:
 def payload_report(root: Path) -> Dict[str, Any]:
     try:
         return verify_payload(root, payload_manifest(), package=PACKAGE, version=VERSION)
-    except PayloadIntegrityError as exc:
+    except (PayloadIntegrityError, OSError) as exc:
         raise InstallError("Plugin payload 校验失败 (%s): %s" % (root, exc)) from exc
+
+
+def doctor_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
+    """中文：为普通用户提供可行动摘要；完整机器字段仍由 JSON 输出。
+
+    English: Provide an actionable ordinary-user summary while retaining JSON details.
+    """
+    checks = data.get("checks") if isinstance(data.get("checks"), list) else []
+    failed = [item.get("id") for item in checks if isinstance(item, dict) and item.get("status") == "ERROR"]
+    warned = [item.get("id") for item in checks if isinstance(item, dict) and item.get("status") == "WARN"]
+    if failed:
+        return {"overall": "ERROR", "available": "基础能力暂不可用", "affected": failed,
+                "next_action": (data.get("remediation") or ["修复错误项后重试 doctor"])[0]}
+    if warned:
+        return {"overall": "DEGRADED", "available": "基础能力可继续使用", "affected": warned,
+                "next_action": (data.get("remediation") or ["查看 doctor --json 获取详情"])[0]}
+    return {"overall": "PASS", "available": "基础与已安装增强能力可用", "affected": [],
+            "next_action": "可直接开始任务；需要详细状态时运行 doctor --json。"}
 
 
 def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
@@ -2214,7 +2234,8 @@ def inventory(scope: str, mode: str, repo_path: Optional[str]) -> Dict[str, Any]
                            (["先处理缺失或漂移目标，再执行变更操作。"] if overall == "DEGRADED" else []))}
 
 
-def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] = None) -> bool:
+def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] = None,
+           summary: bool = False) -> bool:
     if recover:
         recover_transaction(scope, repo_path)
         return True
@@ -2303,7 +2324,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
         "overall":overall,"checks":checks,"remediation":remediation,
         "base_capabilities_available":overall != "ERROR",
     }
-    print(json.dumps(data,ensure_ascii=False,indent=2))
+    print(json.dumps(doctor_summary(data) if summary else data, ensure_ascii=False, indent=2))
     return overall == "PASS"
 
 
@@ -2322,6 +2343,8 @@ def main() -> None:
     doctor_parser.add_argument("--scope", choices=["user", "repo"], default="user")
     doctor_parser.add_argument("--repo-path")
     doctor_parser.add_argument("--strict", action="store_true")
+    doctor_parser.add_argument("--json", action="store_true")
+    doctor_parser.add_argument("--summary", action="store_true")
     status_parser=sub.add_parser("status")
     status_parser.add_argument("--scope",choices=["user","repo"],default="user")
     status_parser.add_argument("--mode",choices=["plugin","standalone"],default="plugin")
@@ -2341,7 +2364,7 @@ def main() -> None:
             repo = git_root(Path(args.repo_path or ".")) if args.scope == "repo" else None
             with scope_lock(args.scope, repo): doctor(True, args.scope, str(repo) if repo else None)
             return
-        ok = doctor(False, args.scope, args.repo_path)
+        ok = doctor(False, args.scope, args.repo_path, summary=args.summary)
         if args.strict and not ok: raise SystemExit(2)
         return
     if args.command=="status": status(args.scope,args.mode,args.repo_path); return
