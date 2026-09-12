@@ -19,4 +19,6 @@ English: [Validation record](VALIDATION_REPORT.en.md)
 
 ## 状态分离
 
-- 发布已经读回提交、推送、标签、公开资产、隔离安装与账户安装。Desktop 未重启，因此未报告 Desktop 加载完成。
+- `RELEASE_COMPLETE` 与 `INCIDENT_EFFECTIVE` 分别描述发行读回和运行时有效性，不能相互替代。
+- `RELEASE_COMPLETE`：提交、推送、标签、公开资产、隔离安装与账户安装均已读回；远端 CI 仍以 Actions 终态为准。
+- `INCIDENT_EFFECTIVE`：`NOT_EVALUATED`。Desktop 未重启，且未进行 Ubuntu/macOS 实机或现场业务验收，因此不报告运行时事故处置已生效。
