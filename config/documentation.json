@@ -87,6 +87,11 @@
       "english_source": "locales/en/docs/P0_OPTIMIZATION_DESIGN.md"
     },
     {
+      "path": "docs/PLUGIN_UX_OPTIMIZATION_PLAN.md",
+      "status": "active",
+      "english_source": "docs/PLUGIN_UX_OPTIMIZATION_PLAN.en.md"
+    },
+    {
       "path": "docs/PROJECT_CONTEXT_AND_ONBOARDING.md",
       "status": "active",
       "english_source": "locales/en/docs/PROJECT_CONTEXT_AND_ONBOARDING.md"
