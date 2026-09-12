@@ -32,7 +32,11 @@ hide:
     <div class="landing-stat-grid">
       <article class="landing-stat"><strong>10</strong><span>Skills</span></article>
       <article class="landing-stat"><strong>7</strong><span>Reviewers</span></article>
-      <article class="landing-stat"><strong><!-- cp-fact:hook-count -->8<!-- /cp-fact --></strong><span>Hooks</span></article>
+      <article class="landing-stat">
+        <strong><!-- cp-fact:hook-count -->8<!-- /cp-fact --></strong>
+        <span>Hook events</span>
+        <small>9 account registrations</small>
+      </article>
       <article class="landing-stat"><strong>3.0</strong><span>TaskOutcomeEvent</span></article>
     </div>
   </section>

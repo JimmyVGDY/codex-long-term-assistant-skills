@@ -307,7 +307,8 @@
 }
 
 .landing-stat strong,
-.landing-stat span {
+.landing-stat span,
+.landing-stat small {
   display: block;
 }
 
@@ -330,6 +331,13 @@
   color: var(--landing-muted);
   font-size: 0.76rem;
   font-weight: 700;
+}
+
+.landing-stat small {
+  margin-top: 0.2rem;
+  color: var(--landing-muted);
+  font-size: 0.66rem;
+  line-height: 1.3;
 }
 
 .landing-resource-grid {
