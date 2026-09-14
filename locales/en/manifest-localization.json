@@ -1,5 +1,5 @@
 {
-  "release_name": "Native base install and optional enhancement runtime",
+  "release_name": "Fix installed capability registry discovery",
   "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with a native Python-free base installation, optional managed enhancement runtime, concise status summaries, and low-cost default execution",
   "skills": {
     "backend-engineering": {

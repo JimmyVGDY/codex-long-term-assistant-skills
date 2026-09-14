@@ -1,19 +1,19 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.9.0",
+  "version": "7.9.1",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 232,
-  "payload_digest": "bf3c7cc1173fca543df5be2e78c882d784545eda4690851967589869f1a665a0",
+  "file_count": 233,
+  "payload_digest": "a6e9ace3e86bec1a7ac8a69cc999a611962424eaf833b545392014415db133ba",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "248fe135ad52c8ff6008f4e128bcffae2fed1343402f124fdc7e428806dedb82",
+      "sha256": "37de5f9ca0011c168ce15001dbefad5b8b3229beb0eae21d6a1ce713839b19a6",
       "size": 242
     },
     {
@@ -228,7 +228,7 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
-      "sha256": "64ba430bcfac4acdc41f34ce0b2ace109f114a0e69806f1de23561445c4181f5",
+      "sha256": "fd4afd0a64d066f21a6688297754cb4df8bdfc85f97ed2558e62b00763efd387",
       "size": 8322
     },
     {
@@ -868,8 +868,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_registry_cli.py",
-      "sha256": "a6e4fd12c8f8506517e2452925670628171da14d46e31e72a896b4009a671b84",
-      "size": 4348
+      "sha256": "17757ff5883f00b5116bfa7571e2fbc0d3ea8ad7a52e2dac6caf5086a1d050a9",
+      "size": 4838
     },
     {
       "path": "runtime/cp_runtime/capability_store.py",
@@ -890,6 +890,11 @@
       "path": "runtime/cp_runtime/contracts.py",
       "sha256": "86829fb07087b03ad3f8ceb52b43eba2ab1ff45e82660b684812a36dab3d3bc2",
       "size": 2478
+    },
+    {
+      "path": "runtime/cp_runtime/data/capability-registry-v1.json",
+      "sha256": "ab10aa901f0c3e72bbbbe033effe0ac506a7832a40256a25292fbd69934f4e24",
+      "size": 13089
     },
     {
       "path": "runtime/cp_runtime/delegation_budget.py",

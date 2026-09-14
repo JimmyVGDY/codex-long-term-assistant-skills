@@ -3,9 +3,9 @@
 docs/COMPONENT_REUSE_ACCEPTANCE.md
 docs/PLUGIN_UX_BASELINE.md
 docs/PLUGIN_UX_OPTIMIZATION_PLAN.md
-docs/releases/v7.9.0/AUDIT_REPORT.md
-docs/releases/v7.9.0/RELEASE_NOTES.md
-docs/releases/v7.9.0/VALIDATION_REPORT.md
+docs/releases/v7.9.1/AUDIT_REPORT.md
+docs/releases/v7.9.1/RELEASE_NOTES.md
+docs/releases/v7.9.1/VALIDATION_REPORT.md
 skills/engineering-quality-delivery/references/component-module-reuse.md
 # V7.5 additions are agent-reviewed under authorized publication; this legacy filename does not attest human linguistic review.
 docs/releases/v7.5.0/RELEASE_NOTES.md
@@ -358,3 +358,7 @@ docs/releases/v7.8.0/VALIDATION_REPORT.md
 docs/releases/v7.8.1/AUDIT_REPORT.md
 docs/releases/v7.8.1/RELEASE_NOTES.md
 docs/releases/v7.8.1/VALIDATION_REPORT.md
+
+docs/releases/v7.9.0/AUDIT_REPORT.md
+docs/releases/v7.9.0/RELEASE_NOTES.md
+docs/releases/v7.9.0/VALIDATION_REPORT.md

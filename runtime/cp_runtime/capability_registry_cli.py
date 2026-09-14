@@ -8,7 +8,16 @@ from .capability_registry import (PreferenceStore, load_registry, migrate_legacy
                                   read_install_migration, select_capability)
 from .capability_store import require
 
-DEFAULT_REGISTRY = Path(__file__).resolve().parents[2] / "config" / "capability-registry-v1.json"
+# 中文：源码使用权威注册表；安装包使用受 payload 完整性保护的运行时副本。
+# English: Source checkouts keep the authority registry; installed payloads ship a
+# checked copy under runtime, which is already covered by payload integrity.
+_PACKAGE_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_REGISTRY = (
+    _PACKAGE_ROOT / "config" / "capability-registry-v1.json"
+    if ((_PACKAGE_ROOT / ".git").exists()
+        or (_PACKAGE_ROOT / "SOURCE_MANIFEST.json").is_file())
+    else Path(__file__).resolve().parent / "data" / "capability-registry-v1.json"
+)
 
 
 def _registry(args):
