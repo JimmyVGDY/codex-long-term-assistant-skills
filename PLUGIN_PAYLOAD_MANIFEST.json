@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.9.2",
+  "version": "7.10.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 233,
-  "payload_digest": "c9093ce40b61109aab30d25c9d09c5bca0cfcca903d309991ca91c8cc8022289",
+  "file_count": 236,
+  "payload_digest": "8ee104982604c3e8b81d68530d5607202f255ddbb459a338e5ade36e4e695561",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "5ece1de6f47ef088685d479b256dad983db0dc20a50e156fce7de762617c4c2a",
-      "size": 242
+      "sha256": "24d7a7ad5761ec581a96b4eada904da7b6fd49739f3f1bc7bf083df775cb1cab",
+      "size": 243
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -228,8 +228,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
-      "sha256": "31e18bd3472d27f908c8b88772fbcbab75295e0b09fe57dad99b7482ff5d4832",
-      "size": 8322
+      "sha256": "af78e98486ddd9eb999ac5350a4b285cf1105ea282895ab318a343e6eddf4f4a",
+      "size": 8323
     },
     {
       "path": "skills/engineering-quality-delivery/references/component-module-reuse.md",
@@ -878,8 +878,8 @@
     },
     {
       "path": "runtime/cp_runtime/cli.py",
-      "sha256": "a95b026e35aba59f17782df34cfb82cce45180f35d487e8199e6f833e07bd7ce",
-      "size": 12746
+      "sha256": "c01ff8efdc8090693669292dd0ea590296ff11b9c658d4f3ff91c3bc3a7dcf6c",
+      "size": 13915
     },
     {
       "path": "runtime/cp_runtime/common.py",
@@ -1077,6 +1077,16 @@
       "size": 14672
     },
     {
+      "path": "runtime/cp_runtime/resume.py",
+      "sha256": "eeaac6e2da8d6b9f1632a0f812a81ce424240c4c5bf7bbb154107eeeeea7aee0",
+      "size": 14445
+    },
+    {
+      "path": "runtime/cp_runtime/resume_snapshot.py",
+      "sha256": "fc80f576f4c567dea64bb9a28cb010084b3518ef29a266a84d5ce552c8cdfb8b",
+      "size": 9616
+    },
+    {
       "path": "runtime/cp_runtime/seal_queue.py",
       "sha256": "718c003aef75db316c746c58e54a0bbd39d7e22dd167ba4bd4d39f05937042c5",
       "size": 19448
@@ -1175,6 +1185,11 @@
       "path": "runtime/tests/test_patch_intent.py",
       "sha256": "cd922398fe9e77d9a74890e54e1ee12940347d3ae60aef81f7b511b5f5d4b42e",
       "size": 7923
+    },
+    {
+      "path": "runtime/tests/test_resume.py",
+      "sha256": "aaf47e9f1a6ae650c4174f954b2db08d43b910175068339e1407e434e0d4835b",
+      "size": 7293
     }
   ]
 }

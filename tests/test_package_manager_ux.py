@@ -231,34 +231,85 @@ class PackageManagerUxTests(unittest.TestCase):
 
     def test_doctor_summary_answers_available_impact_and_next_action(self):
         data = {
+            "scope": "user", "mode": "plugin",
             "checks": [{"id": "plugin", "status": "WARN"}],
+            "plugin_activation": {"active": True, "checked": True},
+            "base_activation": {"active": True, "checked": True},
+            "state": {"components": {"base": {"status": "PLUGIN_MANAGED"}}},
             "remediation": ["运行 verify 并读回 Plugin installed/enabled/version。"],
         }
-        self.assertEqual({
-            "overall": "DEGRADED",
-            "available": "基础能力可继续使用",
-            "affected": ["plugin"],
-            "cause": [{"id": "plugin", "detail": "unknown"}],
-            "next_action": "运行 verify 并读回 Plugin installed/enabled/version。",
-        }, package_manager.doctor_summary(data))
+        summary = package_manager.doctor_summary(data)
+        self.assertEqual(("DEGRADED", "基础能力可继续使用", ["plugin"]),
+                         (summary["overall"], summary["available"], summary["affected"]))
+        self.assertEqual("运行 verify 并读回 Plugin installed/enabled/version。", summary["next_action"])
+        self.assertEqual("ux-summary/1", summary["ux"]["schema"])
+        self.assertEqual("VERIFY_INSTALLATION", summary["ux"]["next_action_detail"]["code"])
+        self.assertNotIn("--json", summary["ux"]["next_action_detail"]["argv"])
 
     def test_status_summary_keeps_base_available_when_enhancement_is_missing(self):
         summary = package_manager.status_summary({
             "scope": "user", "mode": "plugin", "plugin_activation": {"active": True},
+            "base_activation": {"active": True, "checked": True},
             "state": {"components": {"base": {"status": "PLUGIN_MANAGED"}}},
         })
-        self.assertEqual("DEGRADED", summary["overall"])
-        self.assertEqual("基础能力可继续使用", summary["available"])
-        self.assertEqual(["enhancement"], summary["affected"])
+        self.assertEqual("PASS", summary["overall"])
+        self.assertEqual("基础模式正常；已安装增强能力按实际状态显示", summary["available"])
+        self.assertEqual([], summary["affected"])
+        self.assertEqual("NOT_ENABLED", next(item for item in summary["ux"]["capabilities"]
+                                               if item["id"] == "enhancement")["availability"])
 
     def test_status_summary_marks_host_drift_and_missing_enhancement(self):
         summary = package_manager.status_summary({
             "scope": "user", "mode": "plugin", "plugin_activation": {"active": True},
+            "base_activation": {"active": True, "checked": True},
             "host_compatibility": {"compatible": False, "status": "HOST_DRIFT_REINSTALL_REQUIRED"},
             "state": {},
         })
-        self.assertEqual(["base-plugin", "enhancement"], summary["affected"])
+        self.assertEqual(["base-plugin"], summary["affected"])
         self.assertEqual("HOST_DRIFT_REINSTALL_REQUIRED", summary["cause"][0]["detail"])
+
+    def test_status_summary_marks_uninstalled_base_as_unavailable(self):
+        summary = package_manager.status_summary({
+            "scope": "user", "mode": "plugin",
+            "plugin_activation": {"active": False, "checked": True, "detail": "not installed"},
+            "base_activation": {"active": False, "checked": True, "detail": "not installed"},
+            "state": {},
+        })
+        self.assertEqual("ERROR", summary["overall"])
+        self.assertEqual("UNAVAILABLE", next(item for item in summary["ux"]["capabilities"]
+                                               if item["id"] == "base-plugin")["availability"])
+
+    def test_status_summary_action_is_structured_and_scoped(self):
+        summary = package_manager.status_summary({
+            "scope": "user", "mode": "plugin", "plugin_activation": {"active": False, "checked": True},
+            "base_activation": {"active": False, "checked": True}, "state": {},
+        })
+        action = summary["ux"]["next_action_detail"]
+        self.assertEqual(("CHECK_PLUGIN_REGISTRATION", "READ_ONLY", "user"),
+                         (action["code"], action["action_kind"], action["scope"]))
+        self.assertEqual(["codex", "plugin", "list", "--json"], action["argv"])
+
+    def test_enhancement_activation_does_not_prove_base_activation(self):
+        summary = package_manager.status_summary({
+            "scope": "user", "mode": "plugin",
+            "plugin_activation": {"active": True, "checked": True},
+            "base_activation": {"active": False, "checked": True},
+            "state": {},
+        })
+        self.assertEqual("UNAVAILABLE", next(item for item in summary["ux"]["capabilities"]
+                                               if item["id"] == "base-plugin")["availability"])
+
+    def test_doctor_summary_never_masks_error_check(self):
+        summary = package_manager.doctor_summary({
+            "scope": "user", "mode": "plugin",
+            "checks": [{"id": "payload", "status": "ERROR", "detail": "broken"}],
+            "remediation": ["重新下载并校验当前发行包。"],
+            "plugin_activation": {"active": True, "checked": True},
+            "base_activation": {"active": True, "checked": True},
+            "state": {"components": {"base": {"status": "PLUGIN_MANAGED"}}},
+        })
+        self.assertEqual("ERROR", summary["overall"])
+        self.assertEqual(["payload"], summary["affected"])
 
     def test_status_json_keeps_mode_for_the_default_summary_projection(self):
         output = io.StringIO()

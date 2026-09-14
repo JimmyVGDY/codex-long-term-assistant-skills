@@ -895,11 +895,156 @@ def payload_report(root: Path) -> Dict[str, Any]:
         raise InstallError("Plugin payload 校验失败 (%s): %s" % (root, exc)) from exc
 
 
+def _safe_base_state() -> Tuple[Dict[str, Any], Optional[str]]:
+    """中文：读取独立基础安装 state，不把可选缺失转换为错误。
+
+    English: Read the independent base-install state without turning an optional absence into an error.
+    """
+    try:
+        return _base_state(), None
+    except InstallError as exc:
+        return {}, str(exc)
+
+
+def _action_detail(code: str, action_kind: str, argv: List[str], reason: str,
+                   expected_result: str, scope: str = "user") -> Dict[str, Any]:
+    """中文：构建 status/doctor 投影使用的机器动作合同。
+
+    English: Build the machine action contract used by status and doctor projections.
+    """
+    display = " ".join(
+        ('"%s"' % item.replace('"', '\\"')) if any(ch.isspace() for ch in item) else item
+        for item in argv
+    )
+    return {
+        "schema": "ux-action/1",
+        "code": code,
+        "action_kind": action_kind,
+        "argv": list(argv),
+        "working_directory": str(ROOT),
+        "display_command": display,
+        "reason": reason,
+        "expected_result": expected_result,
+        "scope": scope,
+    }
+
+
+def _verify_action(scope: str = "user", mode: str = "plugin") -> Dict[str, Any]:
+    return _action_detail(
+        "VERIFY_INSTALLATION", "READ_ONLY",
+        [sys.executable, "scripts/package_manager.py", "verify", "--scope", scope, "--mode", mode],
+        "重新读取安装文件、注册和兼容性证据。",
+        "输出安装验证通过，且不会执行安装、恢复或修复。",
+        scope,
+    )
+
+
+def _ux_capability(capability_id: str, availability: str, reason_codes: List[str],
+                   evidence_level: str) -> Dict[str, Any]:
+    return {"id": capability_id, "availability": availability,
+            "reason_codes": sorted(set(reason_codes)), "evidence_level": evidence_level}
+
+
+def _ux_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
+    """中文：在不修改状态、不授予权限的前提下分类基础与可选能力。
+
+    English: Classify base and optional capabilities without mutating or authorizing anything.
+    """
+    scope = str(data.get("scope") or "user")
+    mode = str(data.get("mode") or "plugin")
+    activation = data.get("plugin_activation") if isinstance(data.get("plugin_activation"), Mapping) else {}
+    base_activation = data.get("base_activation") if isinstance(data.get("base_activation"), Mapping) else {}
+    state = data.get("state") if isinstance(data.get("state"), Mapping) else {}
+    components = state.get("components") if isinstance(state.get("components"), Mapping) else {}
+    base_state = data.get("base_state") if isinstance(data.get("base_state"), Mapping) else {}
+    host = data.get("host_compatibility") if isinstance(data.get("host_compatibility"), Mapping) else {}
+    transaction = data.get("live_transaction")
+    capabilities: List[Dict[str, Any]] = []
+    causes: List[Dict[str, str]] = []
+    affected: List[str] = []
+    action = _verify_action(scope, mode)
+
+    if scope != "user":
+        capabilities.append(_ux_capability("base-plugin", "NOT_APPLICABLE", ["REPO_SCOPE"], "NOT_CHECKED"))
+        capabilities.append(_ux_capability("repository-skills", "AVAILABLE", ["REPO_SCOPE"], "INSTALLATION"))
+        overall = "PASS"
+        available = "仓库范围能力可用"
+    else:
+        base_is_active = bool(base_activation.get("active"))
+        base_installed = bool(base_state)
+        base_checked = bool(base_activation.get("checked", True))
+        activation_active = bool(activation.get("active"))
+        if not base_checked and not base_is_active:
+            capabilities.append(_ux_capability("base-plugin", "UNKNOWN", ["HOST_SAMPLE_UNAVAILABLE"], "NOT_CHECKED"))
+            affected.append("base-plugin")
+            causes.append({"id": "base-plugin", "detail": str(base_activation.get("detail") or "无法读取宿主注册状态")})
+            overall = "DEGRADED"
+            available = "当前无法确认本插件基础能力"
+        elif not base_is_active:
+            detail = str(activation.get("detail") or base_activation.get("detail") or "本插件基础 Plugin 未安装或未启用")
+            capabilities.append(_ux_capability("base-plugin", "UNAVAILABLE", ["BASE_NOT_ACTIVE"], "HOST_CHECK"))
+            affected.append("base-plugin")
+            causes.append({"id": "base-plugin", "detail": detail})
+            overall = "ERROR"
+            available = "本插件基础能力尚不可用"
+            action = _action_detail(
+                "CHECK_PLUGIN_REGISTRATION", "READ_ONLY", ["codex", "plugin", "list", "--json"],
+                "基础 Plugin 尚未通过宿主注册读回。", "确认 installed/enabled/version 后再进行下一步。", "user",
+            )
+        elif mode == "plugin" and host.get("compatible") is False:
+            capabilities.append(_ux_capability("base-plugin", "BLOCKED", ["HOST_INCOMPATIBLE"], "HOST_CHECK"))
+            affected.append("base-plugin")
+            causes.append({"id": "base-plugin", "detail": str(host.get("status") or "宿主兼容证据不匹配")})
+            overall = "DEGRADED"
+            available = "基础能力被当前宿主兼容性阻断"
+            action = _verify_action(scope, mode)
+        else:
+            base_level = "REGISTRATION" if activation_active or base_activation.get("active") else (
+                "INSTALLATION" if base_installed else "HOST_CHECK")
+            capabilities.append(_ux_capability("base-plugin", "AVAILABLE", ["BASE_VERIFIED"], base_level))
+            enhancement = components.get("enhancement")
+            if isinstance(enhancement, Mapping):
+                enhancement_status = str(enhancement.get("status") or "")
+                if enhancement_status in {"MANAGED", "INSTALLED", "PLUGIN_MANAGED"}:
+                    capabilities.append(_ux_capability("enhancement", "AVAILABLE", ["ENHANCEMENT_MANAGED"], "INSTALLATION"))
+                else:
+                    capabilities.append(_ux_capability("enhancement", "UNKNOWN", ["ENHANCEMENT_STATE_UNKNOWN"], "NOT_CHECKED"))
+                    affected.append("enhancement")
+                    causes.append({"id": "enhancement", "detail": "增强 state 状态未知"})
+            else:
+                capabilities.append(_ux_capability("enhancement", "NOT_ENABLED", ["OPTIONAL_NOT_ENABLED"], "NOT_CHECKED"))
+            if transaction:
+                capabilities.append(_ux_capability("installation-transaction", "BLOCKED", ["TRANSACTION_INCOMPLETE"], "INSTALLATION"))
+                affected.append("installation-transaction")
+                causes.append({"id": "installation-transaction", "detail": "存在未收敛安装事务"})
+                overall = "DEGRADED"
+                available = "基础能力可用，但安装状态尚未稳定"
+                action = _action_detail(
+                    "RECOVER_INSTALLATION_TRANSACTION", "WRITE",
+                    [sys.executable, "scripts/package_manager.py", "recover", "--scope", scope],
+                    "完成既有安装事务恢复后重新诊断。", "事务归档或返回明确恢复失败，不自动执行其他修复。", scope,
+                )
+            else:
+                overall = "PASS"
+                available = "基础模式正常；已安装增强能力按实际状态显示"
+
+    return {
+        "schema": "ux-summary/1",
+        "overall": overall,
+        "available": available,
+        "affected": affected,
+        "cause": causes,
+        "capabilities": sorted(capabilities, key=lambda item: item["id"]),
+        "next_action_detail": action,
+    }
+
+
 def doctor_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
     """中文：为常规调用者提供可行动摘要；完整机器字段仍由 JSON 输出。
 
     English: Provide an actionable ordinary-user summary while retaining JSON details.
     """
+    ux = data.get("ux") if isinstance(data.get("ux"), Mapping) else _ux_summary(data)
     checks = data.get("checks") if isinstance(data.get("checks"), list) else []
     failed = [item for item in checks if isinstance(item, dict) and item.get("status") == "ERROR"]
     warned = [item for item in checks if isinstance(item, dict) and item.get("status") == "WARN"]
@@ -909,13 +1054,13 @@ def doctor_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
     if failed:
         return {"overall": "ERROR", "available": "基础能力暂不可用", "affected": [item.get("id") for item in failed],
                 "cause": cause(failed),
-                "next_action": (data.get("remediation") or ["修复错误项后重试 doctor"])[0]}
+                "next_action": (data.get("remediation") or ["修复错误项后重试 doctor"])[0], "ux": ux}
     if warned:
         return {"overall": "DEGRADED", "available": "基础能力可继续使用", "affected": [item.get("id") for item in warned],
                 "cause": cause(warned),
-                "next_action": (data.get("remediation") or ["查看 doctor --json 获取详情"])[0]}
+                "next_action": (data.get("remediation") or ["查看 doctor --json 获取详情"])[0], "ux": ux}
     return {"overall": "PASS", "available": "基础与已安装增强能力可用", "affected": [], "cause": [],
-            "next_action": "可直接开始任务；需要详细状态时运行 doctor --json。"}
+            "next_action": "可直接开始任务；需要详细状态时运行 doctor --json。", "ux": ux}
 
 
 def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
@@ -2270,33 +2415,25 @@ def status_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
 
     English: Project installation facts into an actionable status without removing the full JSON contract.
     """
-    activation = data.get("plugin_activation") if isinstance(data.get("plugin_activation"), Mapping) else {}
-    state = data.get("state") if isinstance(data.get("state"), Mapping) else {}
-    components = state.get("components") if isinstance(state.get("components"), Mapping) else {}
-    host = data.get("host_compatibility") if isinstance(data.get("host_compatibility"), Mapping) else {}
-    affected: List[str] = []
-    cause: List[Dict[str, str]] = []
-    if data.get("scope") == "user" and data.get("mode") == "plugin" and (
-            not activation.get("active") or host.get("compatible") is False):
-        affected.append("base-plugin")
-        cause.append({"id": "base-plugin", "detail": str(
-            activation.get("detail") or host.get("detail") or host.get("status") or "not active",
-        )})
-    if data.get("scope") == "user" and not isinstance(components.get("enhancement"), Mapping):
-        affected.append("enhancement")
-        cause.append({"id": "enhancement", "detail": "state has no managed enhancement component"})
-    if affected:
-        return {"overall": "DEGRADED", "available": "基础能力可继续使用", "affected": affected,
-                "cause": cause, "next_action": "运行 verify --json 查看组件与宿主读回。"}
-    return {"overall": "PASS", "available": "基础与已安装增强能力可用", "affected": [],
-            "cause": [], "next_action": "可直接开始任务；需要详细状态时运行 status --json。"}
+    ux = _ux_summary(data)
+    return {
+        "overall": ux["overall"],
+        "available": ux["available"],
+        "affected": ux["affected"],
+        "cause": ux["cause"],
+        "next_action": ux["next_action_detail"]["display_command"],
+        "ux": ux,
+    }
 
 
 def status(scope: str, mode: str, repo_path: Optional[str], summary: bool = False) -> None:
     repo = git_root(Path(repo_path or ".")) if scope == "repo" else None
     state = load_json(state_path(scope, repo), {}) or {}
     live = _load_live_journal(scope, repo)
-    active, detail = _plugin_activation_status() if scope == "user" and _codex_available() else (False, "not checked")
+    codex_checked = scope == "user" and _codex_available()
+    active, detail = _plugin_activation_status() if codex_checked else (False, "not checked")
+    base_value, base_error = _safe_base_state() if scope == "user" else ({}, None)
+    base_active = _base_plugin_active() if codex_checked and base_value else False
     host_compatibility = None
     if scope == "user" and mode == "plugin":
         host_compatibility = _host_compatibility_status(state)
@@ -2309,11 +2446,17 @@ def status(scope: str, mode: str, repo_path: Optional[str], summary: bool = Fals
         except InstallError as exc:
             payload = {"ok": False, "error": str(exc)}
     data = {"package": PACKAGE, "version": VERSION, "scope": scope, "mode": mode, "state": state,
-            "live_transaction": live, "plugin_activation": {"active": active, "detail": detail},
+            "base_state": base_value, "base_state_error": base_error,
+            "live_transaction": live,
+            "plugin_activation": {"active": active, "detail": detail, "checked": codex_checked},
+            "base_activation": {"active": base_active, "detail": "base Plugin active" if base_active else "base Plugin not active",
+                                 "checked": codex_checked},
             "host_compatibility": host_compatibility,
             "payload_identity": payload,
             "skills": skill_names(), "reviewers": [p.name for p in agent_files()],
             "hooks": str(ch / "hooks.json") if scope == "user" else None}
+    if not summary:
+        data["ux"] = _ux_summary(data)
     print(json.dumps(status_summary(data) if summary else data, ensure_ascii=False, indent=2))
 
 
@@ -2417,6 +2560,8 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
         except InstallError:
             non_git = True
     state = (load_json(state_path(scope, repo), {}) or {}) if not non_git else {}
+    base_state, base_state_error = _safe_base_state() if scope == "user" else ({}, None)
+    base_active = bool(codex_exe and base_state and _base_plugin_active())
     host_compatibility = (
         _host_compatibility_status(state)
         if scope == "user" and state.get("mode") == "plugin"
@@ -2443,13 +2588,20 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
     live = None if non_git else _load_live_journal(scope, repo)
     check("transaction", "ERROR" if live else "PASS", "active" if live else "none",
           "运行 recover 或 doctor --recover，完成后再重试。")
-    check("state", "NOT_APPLICABLE" if non_git else ("PASS" if state else "WARN"),
-          "base-only" if non_git else ("present" if state else "missing"),
+    state_available = bool(state or base_state)
+    check("state", "NOT_APPLICABLE" if non_git else ("PASS" if state_available else "WARN"),
+          "base-only" if non_git else ("present" if state else ("base-only" if base_state else "missing")),
           "可先运行 inventory；无 state 的真实卸载仍会拒绝。")
     check("base-skills", "PASS" if len(skill_names()) == 10 else "ERROR", "count=%d" % len(skill_names()))
-    check("plugin", "NOT_APPLICABLE" if scope == "repo" or state.get("mode") != "plugin" else
-          ("PASS" if host_compatibility and host_compatibility.get("compatible") else "WARN"),
-          str(host_compatibility or "not active"), "运行 verify 并读回 Plugin installed/enabled/version。")
+    if scope == "repo" or (not state and not base_state):
+        plugin_status, plugin_detail = "NOT_APPLICABLE", ("base-only" if non_git else "not installed")
+    elif base_state and not state:
+        plugin_status = "PASS" if base_active else "WARN"
+        plugin_detail = "base Plugin active" if base_active else (base_state_error or "base Plugin registration not verified")
+    else:
+        plugin_status = "PASS" if host_compatibility and host_compatibility.get("compatible") else "WARN"
+        plugin_detail = str(host_compatibility or "not active")
+    check("plugin", plugin_status, plugin_detail, "运行 verify 并读回 Plugin installed/enabled/version。")
     try:
         hook_count = len(json.loads((ROOT / "hooks" / "enhancement-hooks.json").read_text(encoding="utf-8"))["hooks"])
         check("hooks", "PASS" if hook_count == 8 else "ERROR", "registered=%d" % hook_count,
@@ -2478,9 +2630,17 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
         "plugin_cache_root":str(plugin_cache_root()),
         "git":shutil.which("git"),"codex":codex_exe,"codex_version":codex_version,
         "capability_profile":capability,"host_compatibility":host_compatibility,
+        "base_state":base_state,"base_state_error":base_state_error,
+        "base_activation":{"active":base_active,"checked":bool(codex_exe),
+                            "detail":"base Plugin active" if base_active else "base Plugin registration not verified"},
+        "plugin_activation":{"active":bool(capability and capability.get("normalized_target")),
+                             "checked":bool(codex_exe),
+                             "detail":(capability or {}).get("plugin_list_error", "not checked")
+                             if isinstance(capability, Mapping) else "not checked"},
         "overall":overall,"checks":checks,"remediation":remediation,
         "base_capabilities_available":overall != "ERROR",
     }
+    data["ux"] = _ux_summary(data)
     print(json.dumps(doctor_summary(data) if summary else data, ensure_ascii=False, indent=2))
     return overall == "PASS"
 

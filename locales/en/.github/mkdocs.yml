@@ -80,7 +80,7 @@ nav:
           - Codex configuration: zh-CN/docs/operations/CODEX_CONFIG_GUIDE.md
           - Project context and onboarding: zh-CN/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
       - Architecture and governance:
-          - V7.9 current system architecture: zh-CN/docs/architecture/SYSTEM_ARCHITECTURE.md
+          - V7.10 current system architecture: zh-CN/docs/architecture/SYSTEM_ARCHITECTURE.md
           - Domain Skill architecture: zh-CN/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
           - Model routing and cost: zh-CN/docs/MODEL_ROUTING_AND_COST_POLICY.md
           - Reviewer isolation: zh-CN/docs/REVIEWER_RUNTIME_ISOLATION.md
@@ -90,9 +90,9 @@ nav:
           - Capability index and optional gates: en/docs/CAPABILITY_INDEX.md
           - Component reuse acceptance: en/docs/COMPONENT_REUSE_ACCEPTANCE.md
       - Release and history:
-          - V7.9.2 release notes: zh-CN/docs/releases/v7.9.2/RELEASE_NOTES.md
-          - V7.9.2 validation report: zh-CN/docs/releases/v7.9.2/VALIDATION_REPORT.md
-          - V7.9.2 audit report: zh-CN/docs/releases/v7.9.2/AUDIT_REPORT.md
+          - V7.10.0 release notes: zh-CN/docs/releases/v7.10.0/RELEASE_NOTES.md
+          - V7.10.0 validation report: zh-CN/docs/releases/v7.10.0/VALIDATION_REPORT.md
+          - V7.10.0 audit report: zh-CN/docs/releases/v7.10.0/AUDIT_REPORT.md
           - V7.8.1 release notes: zh-CN/docs/releases/v7.8.1/RELEASE_NOTES.md
           - V7.8.1 validation report: zh-CN/docs/releases/v7.8.1/VALIDATION_REPORT.md
           - V7.8.1 audit report: zh-CN/docs/releases/v7.8.1/AUDIT_REPORT.md
@@ -126,7 +126,7 @@ nav:
           - Codex configuration: en/docs/operations/CODEX_CONFIG_GUIDE.md
           - Project context and onboarding: en/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
       - Architecture and governance:
-          - V7.9 current system architecture: en/docs/architecture/SYSTEM_ARCHITECTURE.md
+          - V7.10 current system architecture: en/docs/architecture/SYSTEM_ARCHITECTURE.md
           - Domain Skill architecture: en/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
           - Model routing and cost: en/docs/MODEL_ROUTING_AND_COST_POLICY.md
           - Reviewer isolation: en/docs/REVIEWER_RUNTIME_ISOLATION.md
@@ -136,9 +136,9 @@ nav:
           - Capability index and optional gates: en/docs/CAPABILITY_INDEX.md
           - Component reuse acceptance: en/docs/COMPONENT_REUSE_ACCEPTANCE.md
       - Release and history:
-          - V7.9.2 release notes: en/docs/releases/v7.9.2/RELEASE_NOTES.md
-          - V7.9.2 validation report: en/docs/releases/v7.9.2/VALIDATION_REPORT.md
-          - V7.9.2 audit report: en/docs/releases/v7.9.2/AUDIT_REPORT.md
+          - V7.10.0 release notes: en/docs/releases/v7.10.0/RELEASE_NOTES.md
+          - V7.10.0 validation report: en/docs/releases/v7.10.0/VALIDATION_REPORT.md
+          - V7.10.0 audit report: en/docs/releases/v7.10.0/AUDIT_REPORT.md
           - V7.8.1 release notes: en/docs/releases/v7.8.1/RELEASE_NOTES.md
           - V7.8.1 validation report: en/docs/releases/v7.8.1/VALIDATION_REPORT.md
           - V7.8.1 audit report: en/docs/releases/v7.8.1/AUDIT_REPORT.md

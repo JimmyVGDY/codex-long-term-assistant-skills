@@ -4,15 +4,46 @@
 
 [Current location](USER_GUIDE.en.md)
 
-# V7.9 Operating Guide
+# V7.10 Operating Guide
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE/)
 
 ## Quick start
 
-From the extracted V7.9.2 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
+From the extracted V7.10.0 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
 
 Simple local tasks run with the main Agent by default. A Profile, index, full scan, and budget ledger are not prerequisites. Add the optional enhancement through `install-user` only when needed; see [installation and recovery](operations/INSTALLATION_RECOVERY.en.md). The index, Hook, and budget procedures below apply to that enhancement. Strict budgeting requires a verifiable host binding, ledger, and dispatch permit; otherwise the model ceiling remains a policy constraint.
+
+## Four daily paths and the unified entry
+
+New users can start from four paths: fix a bug, build a feature, review, or continue a task. The extracted package provides `scripts/cp-assistant.ps1`, `scripts/cp-assistant.sh`, and `scripts/cp-assistant.py`. They use a whitelist to forward to the existing installer and runtime; the legacy `package_manager.py`, `cp-runtime.py`, and base launchers remain available.
+
+| Path | Example request | Boundary |
+| --- | --- | --- |
+| Fix a bug | “Fix the failing validation and run the smallest relevant test.” | Let the Agent read the current code and focused tests; no enhancement is required first. |
+| Build a feature | “Implement this feature and validate it according to risk.” | Add enhancements only when long-running state, Hooks, Reviewers, budgets, or controlled writes are needed. |
+| Review | “Review this branch for compatibility, security, and rollback risks.” | A Reviewer is risk- and evidence-driven; the entry does not force one. |
+| Continue a task | “Continue the previous task and tell me where it stopped and what is next.” | Use read-only `resume` for the stage, checkpoint, repository changes, and evidence needing revalidation. |
+
+Unified-entry examples:
+
+```powershell
+.\scripts\cp-assistant.ps1 help
+.\scripts\cp-assistant.ps1 install-base
+.\scripts\cp-assistant.ps1 status
+.\scripts\cp-assistant.ps1 doctor
+.\scripts\cp-assistant.ps1 inventory --scope user --mode plugin --json
+.\scripts\cp-assistant.ps1 resume --repo-path E:\\work\\repo --profile C:\\safe-state\\project-profile.json --checkpoint-dir C:\\safe-state\\task
+.\scripts\cp-assistant.ps1 recover --scope user
+```
+
+`status`, `doctor`, `inventory`, `verify`, and `resume` are query or verification actions. `install-base`, `install-enhancement`, and `recover` change managed state. Queries do not install, initialize a Profile, refresh an index, repair a ledger, or invoke installation recovery. `resume` supports a bound `--profile` (optionally with `--state` and repeated `--evidence`) or an explicitly supplied `--checkpoint-dir` for legacy Markdown checkpoints. Missing input, stale evidence, budget exhaustion, and repository changes remain `UNKNOWN/PARTIAL/STALE`; the command never fabricates a current pass.
+
+The unified entry only promises parameters that exist. `verify` does not accept the nonexistent `--json`; use `status --json`, `doctor --json`, `inventory --json`, or `resume --json` for machine JSON. Without Python, `help` and `install-base` still work. Other management commands return an explicit dependency-missing structure and point to `codex plugin list --json` for native readback.
+
+## Experience benchmark
+
+`scripts/ux-benchmark.py` runs deterministic command samples only when explicitly invoked. It does not start a model, upload data, or save prompts or complete outputs. The `collect`, `import-observations`, and `compare` protocol and privacy fields are documented in `tests/fixtures/ux-benchmark/protocol.json`. Wrapper-layer duration or tool-count changes describe the measured samples only; they do not by themselves prove a real Agent-task speedup.
 
 ## Component reuse workflow
 
@@ -64,9 +95,9 @@ Event V2 and Budget V1 chains from V7.4.2 and earlier remain byte-for-byte verif
 
 ## 5. Codex 0.154.0 scope
 
-V7.9.2 supports Codex CLI 0.154.0 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.154.0 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract or the automatic subagent policy, which remains limited to Luna/Terra profiles. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
+V7.10.0 supports Codex CLI 0.154.0 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.154.0 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract or the automatic subagent policy, which remains limited to Luna/Terra profiles. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
-Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.9.2`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
+Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.10.0`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
 
 ## Feedback and measured benefits
 
@@ -74,4 +105,4 @@ V7.9 retains the validation feedback introduced in V7.5, health gates, opt-in in
 
 ## Capability reuse and optional gates
 
-Use the [capability index](CAPABILITY_INDEX.en.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.9.2 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.en.md) and [release validation](releases/v7.9.2/VALIDATION_REPORT.en.md).
+Use the [capability index](CAPABILITY_INDEX.en.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.10.0 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.en.md) and [release validation](releases/v7.10.0/VALIDATION_REPORT.en.md).

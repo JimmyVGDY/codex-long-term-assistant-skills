@@ -4,6 +4,11 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 ## Unreleased
 
+## 7.10.0 - 2026-09-14
+
+- Complete the P1-P2 experience improvements: separate base and optional-enhancement availability, capability-level status and structured next actions, four daily paths, a unified source/archive entry, a read-only `resume` view, and explicit UX benchmark collection/import/comparison.
+- Preserve the legacy installer, runtime, and recovery contracts; queries do not repair state or grant write authority. Add the boundary cases, bilingual documentation, isolated fixtures, and regression tests to the release gates.
+
 ## 7.9.2 - 2026-09-14
 
 - Complete release build metadata and synchronize the compatibility registry digest; fix the English release-notes heading. V7.9.1 remains an unpublished failed candidate; V7.9.2 delivers the registry fix.

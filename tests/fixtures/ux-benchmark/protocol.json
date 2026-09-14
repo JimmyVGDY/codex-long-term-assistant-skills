@@ -1,0 +1,15 @@
+{
+  "schema": "ux-benchmark-fixture/1",
+  "scenarios": [
+    "simple-local-fix",
+    "ordinary-feature-change",
+    "cross-task-resume"
+  ],
+  "privacy": [
+    "no_prompt_text",
+    "no_answer_text",
+    "no_credentials",
+    "no_raw_event_log"
+  ],
+  "comparison": "same fixture digest and same target objective before and after"
+}

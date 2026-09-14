@@ -1,6 +1,6 @@
 {
   "schema_version": "r3-acceptance/1",
-  "release": "7.9.2",
+  "release": "7.10.0",
   "groups": {
     "U": [
       {"id":"U02","positive":"one reviewer defaults authority","negative":"hard ceilings are not defaults","fallback":"optional review absence stays visible","implementation":["skills/multi-agent-independent-review/SKILL.md","skills/engineering-quality-delivery/references/quality-review-completion.md"],"evidence_tests":["test_reviewer_defaults_single_authority"]},
@@ -52,7 +52,7 @@
       {"id":"UX33","positive":"one CAS winner for opposite choices","negative":"duplicate choice does not rescan","fallback":"conflict readback","implementation":["runtime/cp_runtime/onboarding.py"],"evidence_tests":["test_opposite_concurrent_choices_have_one_cas_winner"]},
       {"id":"UX34","positive":"temporary identity can show offer","negative":"failed response persistence cannot enqueue","fallback":"OFFERED remains","implementation":["runtime/cp_runtime/onboarding.py"],"evidence_tests":["test_response_persistence_failure_never_queues_full_scan"]},
       {"id":"UX35","positive":"accepted scan can be cancelled","negative":"late checkpoint cannot complete","fallback":"CANCELLED terminal","implementation":["runtime/cp_runtime/onboarding.py"],"evidence_tests":["test_only_persisted_acceptance_queues_and_decline_cancels_running_scan"]},
-      {"id":"UX36","positive":"release completion is independently reportable","negative":"no account-effectiveness claim without readback","fallback":"incident status separate","implementation":["docs/releases/v7.9.2/VALIDATION_REPORT.md"],"evidence_tests":["test_release_and_incident_status_are_separate"]},
+      {"id":"UX36","positive":"release completion is independently reportable","negative":"no account-effectiveness claim without readback","fallback":"incident status separate","implementation":["docs/releases/v7.10.0/VALIDATION_REPORT.md"],"evidence_tests":["test_release_and_incident_status_are_separate"]},
       {"id":"UX37","positive":"R1 and R2 remain independently valid","negative":"R3 absence never invalidates earlier release evidence","fallback":"roadmap remains explicit","implementation":["CHANGELOG.md"],"evidence_tests":["test_release_and_incident_status_are_separate"]},
       {"id":"UX38","positive":"live managed state determines active version","negative":"cache presence is not loading proof","fallback":"doctor readback","implementation":["scripts/package_manager.py"],"evidence_tests":["test_plugin_tools_prefer_versioned_cache_over_stale_standalone_runtime"]},
       {"id":"UX39","positive":"all manifest Hook CLI modules are classified","negative":"coverage gap blocks all-covered claim only","fallback":"chat remains usable","implementation":["config/capability-registry-v1.json"],"evidence_tests":["test_registry_has_exact_c01_c25_mapping_and_digest"]},

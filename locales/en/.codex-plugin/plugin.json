@@ -1,6 +1,6 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.9.2",
-  "description": "Cross-project engineering assistant V7.9.2: native base installation with optional Hooks, recoverable state, budgets, and controlled writes.",
+  "version": "7.10.0",
+  "description": "Cross-project engineering assistant V7.10.0: native base installation with actionable diagnostics, a unified entry, and bounded read-only recovery.",
   "skills": "./skills/"
 }

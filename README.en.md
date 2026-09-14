@@ -4,7 +4,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-V7.9.2 provides ready-to-use base installation with optional enhancement runtime. Ordinary engineering work can begin directly, while Hooks, recoverable state, budgets, and controlled writes attach only when needed.
+V7.10.0 provides ready-to-use base installation with optional enhancement runtime. Ordinary engineering work can begin directly, while Hooks, recoverable state, budgets, and controlled writes attach only when needed.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -25,11 +25,36 @@ V7.9.2 provides ready-to-use base installation with optional enhancement runtime
   <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
-V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.9.2 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
+V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.10.0 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
 
-**Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
+**Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Four daily paths](#four-daily-paths-and-the-unified-entry) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 
 Use the assistant directly after installation; ordinary work does not require learning Profiles, indexes, or ledgers first. The first full scan is optional. Declining it, leaving it unanswered, or losing auxiliary storage keeps the current-source BASIC path available. For recovery, use `doctor`, read-only `inventory`, and canonical `recover` in that order; each reports the affected feature, what still works, and the next action.
+
+## Four daily paths and the unified entry
+
+The extracted source tree and release ZIPs provide the same `cp-assistant` entry. Use `scripts\\cp-assistant.ps1` on Windows and `scripts/cp-assistant.sh` on POSIX. `help` and `install-base` do not require this package's Python runtime. Other management commands report the Python 3.11+ requirement instead of fabricating Plugin state.
+
+| Daily path | Example request | Entry behavior |
+| --- | --- | --- |
+| Fix a bug | “Fix the failing validation and run the smallest relevant test.” | Describe the problem; use `status` / `doctor` when state is relevant. |
+| Build a feature | “Implement this feature and validate it according to risk.” | Describe the objective; add enhancements only when needed. |
+| Review | “Review this branch for compatibility and security risks.” | Describe the review scope; independent review is risk-driven. |
+| Continue a task | “Continue the previous task and tell me where it stopped and what is next.” | Run read-only `resume`; it does not recover an install transaction. |
+
+```powershell
+.\scripts\cp-assistant.ps1 help
+.\scripts\cp-assistant.ps1 install-base
+.\scripts\cp-assistant.ps1 status
+.\scripts\cp-assistant.ps1 doctor
+.\scripts\cp-assistant.ps1 inventory --scope user --mode plugin --json
+.\scripts\cp-assistant.ps1 resume --repo-path E:\\work\\repo --profile C:\\safe-state\\project-profile.json --checkpoint-dir C:\\safe-state\\task
+.\scripts\cp-assistant.ps1 recover --scope user
+```
+
+`status`, `doctor`, `inventory`, and `resume` are read-only. `install-base`, `install-enhancement`, and `recover` are write operations. `resume` accepts a bound Profile/State/Evidence set or an explicitly supplied legacy Markdown checkpoint directory. It reports the stage, checkpoint, repository changes, evidence needing revalidation, and one next action; it does not create a Profile, repair checkpoints, or continue a task. Add `--json` for the machine-readable view.
+
+On POSIX, replace the path with `./scripts/cp-assistant.sh`. See the [user guide](docs/USER_GUIDE.en.md) for the four paths.
 
 ## Start in two steps
 
@@ -61,8 +86,8 @@ Use the existing enhanced installer only when the task needs recoverable long-ru
 
 | Distribution | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V7.9.2-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.9.2/Codex-Skills-V7.9.2-zh-CN.zip) |
-| `Codex-Skills-V7.9.2-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.9.2/Codex-Skills-V7.9.2-en.zip) |
+| `Codex-Skills-V7.10.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.10.0/Codex-Skills-V7.10.0-zh-CN.zip) |
+| `Codex-Skills-V7.10.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.10.0/Codex-Skills-V7.10.0-en.zip) |
 
 [Open the latest Release, checksums, and build witnesses](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -128,7 +153,7 @@ Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not 
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Native Windows Codex CLI 0.154.0 + Plugin | Current real-host anchor | V7.9.2 account installation, `verify`, and a projectless fresh CLI task passed | A restarted Desktop session remains unverified |
+| Native Windows Codex CLI 0.154.0 + Plugin | Current real-host anchor | Target-version account installation, `verify`, and a projectless fresh CLI task will be read back independently in S8/S9 | A restarted Desktop session remains unverified |
 | Windows + eleven pinned stable Codex releases | Frozen compatibility window | The registry binds 11/11 official async, Pre/Post schema, and result-response source evidence | The cross-version real-host matrix has not been run on every host |
 | Windows / Ubuntu GitHub matrix | Release gate | The workflow is configured for Python 3.11/3.13 and eleven-version replay on both systems | Refer to GitHub Actions for this release's remote CI state |
 | standalone mode | Explicit fallback | Local installation structure, inventory, non-Git BASIC, and regression coverage | It is not a substitute for this account Plugin acceptance |
@@ -136,7 +161,7 @@ Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not 
 
 The base installation does not require the package Python runtime; the enhancement runtime requires Python 3.11 or later; public CI is configured to validate both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
 
-The V7.9.2 window is `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
+The V7.10.0 window is `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
 ## First install and upgrade
 
@@ -175,7 +200,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V7.9.2 release notes](docs/releases/v7.9.2/RELEASE_NOTES.en.md)
+- [Changelog](CHANGELOG.en.md) · [V7.10.0 release notes](docs/releases/v7.10.0/RELEASE_NOTES.en.md)
 
 ## Local validation
 
@@ -191,7 +216,7 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. An authorized public Release is created and read back separately.
 
 ```shell
-gh attestation verify Codex-Skills-V7.9.2-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.10.0-en.zip --repo OWNER/REPOSITORY
 ```
 
 See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.en.md) for the complete gates and new-version procedure.
