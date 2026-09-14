@@ -7,6 +7,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 ## 7.10.0 - 2026-09-14
 
 - 完成 P1-P2 使用体验改进：基础安装与可选增强状态分离，状态/诊断提供能力级结果和结构化下一步；新增四条日常路径、源码树与发行包统一入口、只读 `resume` 恢复摘要，以及显式 UX 基准采集/导入/比较。
+- 修复 Windows PowerShell 5.1 基础安装复制隐藏目录时的目录/文件混淆；改用受控递归复制后，基础 Marketplace 与十个 Skill 的原生注册读回可用。
 - 保留旧安装器、runtime 和恢复合同；查询不自动修复或授权写入。新增边界、双语文档、隔离 fixture 和回归测试进入本版本交付门禁。
 
 ## 7.9.2 - 2026-09-14

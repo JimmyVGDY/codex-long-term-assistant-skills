@@ -963,6 +963,19 @@ def _ux_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
     causes: List[Dict[str, str]] = []
     affected: List[str] = []
     action = _verify_action(scope, mode)
+    mode_error = str(data.get("mode_error") or "")
+    if scope == "user" and mode_error:
+        return {
+            "schema": "ux-summary/1",
+            "overall": "ERROR",
+            "available": "当前无法确认本插件基础能力",
+            "affected": ["installation-state"],
+            "cause": [{"id": "installation-state", "detail": mode_error}],
+            "capabilities": [_ux_capability(
+                "installation-state", "UNKNOWN", [mode_error], "INSTALLATION",
+            )],
+            "next_action_detail": action,
+        }
 
     if scope != "user":
         capabilities.append(_ux_capability("base-plugin", "NOT_APPLICABLE", ["REPO_SCOPE"], "NOT_CHECKED"))
@@ -1039,13 +1052,42 @@ def _ux_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _merge_doctor_checks_into_ux(ux: Mapping[str, Any], checks: List[Mapping[str, Any]]) -> Dict[str, Any]:
+    """中文：让 doctor 的检查级错误与能力级投影保持同一终态。
+
+    English: Keep doctor check failures aligned with the capability-level projection.
+    """
+    merged = dict(ux)
+    affected = list(ux.get("affected") or [])
+    causes = list(ux.get("cause") or [])
+    errors = [item for item in checks if item.get("status") == "ERROR"]
+    warnings = [item for item in checks if item.get("status") == "WARN"]
+    for item in errors + warnings:
+        check_id = str(item.get("id") or "unknown")
+        if check_id not in affected:
+            affected.append(check_id)
+        if not any(isinstance(cause, Mapping) and cause.get("id") == check_id for cause in causes):
+            causes.append({"id": check_id, "detail": str(item.get("detail") or "doctor check requires attention")})
+    current = str(ux.get("overall") or "UNKNOWN")
+    if errors:
+        merged["overall"] = "ERROR"
+        merged["available"] = "存在错误项，基础能力状态需以 doctor 检查为准"
+    elif warnings and current == "PASS":
+        merged["overall"] = "DEGRADED"
+        merged["available"] = "基础能力可继续使用，但存在需核对的 doctor 检查项"
+    merged["affected"] = affected
+    merged["cause"] = causes
+    return merged
+
+
 def doctor_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
     """中文：为常规调用者提供可行动摘要；完整机器字段仍由 JSON 输出。
 
     English: Provide an actionable ordinary-user summary while retaining JSON details.
     """
-    ux = data.get("ux") if isinstance(data.get("ux"), Mapping) else _ux_summary(data)
     checks = data.get("checks") if isinstance(data.get("checks"), list) else []
+    raw_ux = data.get("ux") if isinstance(data.get("ux"), Mapping) else _ux_summary(data)
+    ux = _merge_doctor_checks_into_ux(raw_ux, [item for item in checks if isinstance(item, Mapping)])
     failed = [item for item in checks if isinstance(item, dict) and item.get("status") == "ERROR"]
     warned = [item for item in checks if isinstance(item, dict) and item.get("status") == "WARN"]
     def cause(items: List[Mapping[str, Any]]) -> List[Dict[str, str]]:
@@ -1285,6 +1327,41 @@ def _base_plugin_active() -> bool:
         return False
     return any(isinstance(item, dict) and item.get("pluginId") == "%s@%s" % (PACKAGE, BASE_MARKETPLACE)
                and item.get("installed") is True and item.get("enabled") is True for item in rows)
+
+
+def _normalized_mode(value: Any) -> str:
+    mode = str(value or "")
+    return mode if mode in {"plugin", "standalone"} else "plugin"
+
+
+def _mode_error(value: Any) -> Optional[str]:
+    if value in (None, "", "plugin", "standalone"):
+        return None
+    return "INVALID_PERSISTED_MODE"
+
+
+def _base_activation_detail(mode: str, active: bool) -> str:
+    if mode == "standalone":
+        return "独立模式基础 Skill 可用" if active else "独立模式基础 Skill 未核验"
+    return "base Plugin active" if active else "base Plugin not active"
+
+
+def _base_capability_active(codex_checked: bool, mode: str, base_state: Mapping[str, Any],
+                            state: Mapping[str, Any], plugin_active: bool,
+                            base_plugin_active: bool) -> bool:
+    """中文：组合独立基础注册或明确迁移后的基础归属与宿主读回。
+
+    English: Combine independent base registration or explicit migrated ownership with host readback.
+    """
+    components = state.get("components") if isinstance(state.get("components"), Mapping) else {}
+    base_component = components.get("base") if isinstance(components.get("base"), Mapping) else {}
+    if mode == "standalone" and base_component.get("status") == "STANDALONE_SKILLS":
+        return True
+    if not codex_checked:
+        return False
+    if base_state and base_plugin_active:
+        return True
+    return mode == "plugin" and plugin_active and base_component.get("status") == "PLUGIN_MANAGED"
 
 
 def _remove_marketplace(check: bool = True) -> None:
@@ -2426,14 +2503,20 @@ def status_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
     }
 
 
-def status(scope: str, mode: str, repo_path: Optional[str], summary: bool = False) -> None:
+def status(scope: str, mode: Optional[str], repo_path: Optional[str], summary: bool = False) -> None:
     repo = git_root(Path(repo_path or ".")) if scope == "repo" else None
     state = load_json(state_path(scope, repo), {}) or {}
+    mode_error = _mode_error(state.get("mode"))
+    if mode not in {"plugin", "standalone"}:
+        mode = _normalized_mode(state.get("mode"))
     live = _load_live_journal(scope, repo)
     codex_checked = scope == "user" and _codex_available()
     active, detail = _plugin_activation_status() if codex_checked else (False, "not checked")
     base_value, base_error = _safe_base_state() if scope == "user" else ({}, None)
-    base_active = _base_plugin_active() if codex_checked and base_value else False
+    base_native_active = _base_plugin_active() if codex_checked and base_value else False
+    base_active = _base_capability_active(
+        codex_checked, mode, base_value, state, active, base_native_active,
+    )
     host_compatibility = None
     if scope == "user" and mode == "plugin":
         host_compatibility = _host_compatibility_status(state)
@@ -2445,11 +2528,11 @@ def status(scope: str, mode: str, repo_path: Optional[str], summary: bool = Fals
                        "cache": payload_report(plugin_cache_root())}
         except InstallError as exc:
             payload = {"ok": False, "error": str(exc)}
-    data = {"package": PACKAGE, "version": VERSION, "scope": scope, "mode": mode, "state": state,
+    data = {"package": PACKAGE, "version": VERSION, "scope": scope, "mode": mode, "mode_error": mode_error, "state": state,
             "base_state": base_value, "base_state_error": base_error,
             "live_transaction": live,
             "plugin_activation": {"active": active, "detail": detail, "checked": codex_checked},
-            "base_activation": {"active": base_active, "detail": "base Plugin active" if base_active else "base Plugin not active",
+            "base_activation": {"active": base_active, "detail": _base_activation_detail(mode, base_active),
                                  "checked": codex_checked},
             "host_compatibility": host_compatibility,
             "payload_identity": payload,
@@ -2560,11 +2643,17 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
         except InstallError:
             non_git = True
     state = (load_json(state_path(scope, repo), {}) or {}) if not non_git else {}
+    mode = _normalized_mode(state.get("mode"))
+    mode_error = _mode_error(state.get("mode"))
     base_state, base_state_error = _safe_base_state() if scope == "user" else ({}, None)
-    base_active = bool(codex_exe and base_state and _base_plugin_active())
+    base_native_active = bool(codex_exe and base_state and _base_plugin_active())
+    plugin_active = bool(capability and capability.get("normalized_target"))
+    base_active = _base_capability_active(
+        bool(codex_exe), mode, base_state, state, plugin_active, base_native_active,
+    )
     host_compatibility = (
         _host_compatibility_status(state)
-        if scope == "user" and state.get("mode") == "plugin"
+        if scope == "user" and mode == "plugin"
         else None
     )
     checks: List[Dict[str, Any]] = []
@@ -2589,15 +2678,27 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
     check("transaction", "ERROR" if live else "PASS", "active" if live else "none",
           "运行 recover 或 doctor --recover，完成后再重试。")
     state_available = bool(state or base_state)
-    check("state", "NOT_APPLICABLE" if non_git else ("PASS" if state_available else "WARN"),
-          "base-only" if non_git else ("present" if state else ("base-only" if base_state else "missing")),
-          "可先运行 inventory；无 state 的真实卸载仍会拒绝。")
+    if mode_error:
+        check("state", "ERROR", mode_error, "运行 verify 并重新确认安装状态。")
+    else:
+        check("state", "NOT_APPLICABLE" if non_git else ("PASS" if state_available else "WARN"),
+              "base-only" if non_git else ("present" if state else ("base-only" if base_state else "missing")),
+              "可先运行 inventory；无 state 的真实卸载仍会拒绝。")
     check("base-skills", "PASS" if len(skill_names()) == 10 else "ERROR", "count=%d" % len(skill_names()))
-    if scope == "repo" or (not state and not base_state):
-        plugin_status, plugin_detail = "NOT_APPLICABLE", ("base-only" if non_git else "not installed")
+    if scope == "repo":
+        plugin_status, plugin_detail = "NOT_APPLICABLE", "base-only"
+    elif not state and not base_state:
+        plugin_status = "WARN" if not codex_exe else "ERROR"
+        plugin_detail = "base Plugin registration not verified"
     elif base_state and not state:
-        plugin_status = "PASS" if base_active else "WARN"
+        plugin_status = "PASS" if base_active else ("WARN" if not codex_exe else "ERROR")
         plugin_detail = "base Plugin active" if base_active else (base_state_error or "base Plugin registration not verified")
+    elif mode == "standalone":
+        plugin_status = "PASS" if base_active else "ERROR"
+        plugin_detail = _base_activation_detail(mode, base_active)
+    elif not base_active:
+        plugin_status = "WARN" if not codex_exe else "ERROR"
+        plugin_detail = "base Plugin registration not verified"
     else:
         plugin_status = "PASS" if host_compatibility and host_compatibility.get("compatible") else "WARN"
         plugin_detail = str(host_compatibility or "not active")
@@ -2616,7 +2717,7 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
     overall = "ERROR" if any(item["status"] == "ERROR" for item in checks) else (
         "DEGRADED" if any(item["status"] == "WARN" for item in checks) else "PASS")
     data = {
-        "package":PACKAGE,"version":VERSION,"target_codex":TARGET_CODEX_VERSION,
+        "package":PACKAGE,"version":VERSION,"scope":scope,"mode":mode,"mode_error":mode_error,"target_codex":TARGET_CODEX_VERSION,
         "supported_codex_versions":list(SUPPORTED_CODEX_VERSIONS),"python":sys.executable,
         "python_version":".".join(str(part) for part in sys.version_info[:3]),
         "home":str(Path.home()),"codex_home":str(codex_home()),
@@ -2632,15 +2733,15 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
         "capability_profile":capability,"host_compatibility":host_compatibility,
         "base_state":base_state,"base_state_error":base_state_error,
         "base_activation":{"active":base_active,"checked":bool(codex_exe),
-                            "detail":"base Plugin active" if base_active else "base Plugin registration not verified"},
-        "plugin_activation":{"active":bool(capability and capability.get("normalized_target")),
+                            "detail":_base_activation_detail(mode, base_active)},
+        "plugin_activation":{"active":plugin_active,
                              "checked":bool(codex_exe),
                              "detail":(capability or {}).get("plugin_list_error", "not checked")
                              if isinstance(capability, Mapping) else "not checked"},
         "overall":overall,"checks":checks,"remediation":remediation,
         "base_capabilities_available":overall != "ERROR",
     }
-    data["ux"] = _ux_summary(data)
+    data["ux"] = _merge_doctor_checks_into_ux(_ux_summary(data), checks)
     print(json.dumps(doctor_summary(data) if summary else data, ensure_ascii=False, indent=2))
     return overall == "PASS"
 
@@ -2664,7 +2765,7 @@ def main() -> None:
     doctor_parser.add_argument("--summary", action="store_true")
     status_parser=sub.add_parser("status")
     status_parser.add_argument("--scope",choices=["user","repo"],default="user")
-    status_parser.add_argument("--mode",choices=["plugin","standalone"],default="plugin")
+    status_parser.add_argument("--mode",choices=["plugin","standalone"],default=None)
     status_parser.add_argument("--repo-path")
     status_parser.add_argument("--json",action="store_true")
     recover_parser=sub.add_parser("recover")

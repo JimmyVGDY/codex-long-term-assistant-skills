@@ -49,11 +49,16 @@ state=home/'fake-codex-plugin-state.json'
 market_file=home/'fake-codex-marketplace-path.txt'
 args=sys.argv[1:]
 failure=os.environ.get('FAKE_CODEX_FAIL','')
-if failure == 'marketplace-add' and args[:3] == ['plugin','marketplace','add']:
+failures=set(item.strip() for item in failure.split(',') if item.strip())
+if 'marketplace-add' in failures and args[:3] == ['plugin','marketplace','add']:
     print('injected marketplace add failure',file=sys.stderr); raise SystemExit(9)
-if failure == 'plugin-add' and args[:2] == ['plugin','add']:
+if 'plugin-add' in failures and args[:2] == ['plugin','add']:
     print('injected plugin add failure',file=sys.stderr); raise SystemExit(9)
-if failure == 'plugin-list' and args == ['plugin','list','--json']:
+if 'plugin-remove' in failures and args[:2] == ['plugin','remove']:
+    print('injected plugin remove failure',file=sys.stderr); raise SystemExit(9)
+if 'marketplace-remove' in failures and args[:3] == ['plugin','marketplace','remove']:
+    print('injected marketplace remove failure',file=sys.stderr); raise SystemExit(9)
+if 'plugin-list' in failures and args == ['plugin','list','--json']:
     print('injected plugin list failure',file=sys.stderr); raise SystemExit(9)
 help_fixture=json.loads(Path(os.environ['FAKE_CODEX_CONTRACT_FIXTURE']).read_text(encoding='utf-8'))
 def emit_help(name):
@@ -251,14 +256,19 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
 
     @unittest.skipUnless(os.name == 'nt', 'PowerShell base-install recovery regression')
     def test_base_installer_cleans_failed_native_registration_before_retry(self):
-        failed_env={**self.env,'FAKE_CODEX_FAIL':'plugin-add'}
+        failed_env={**self.env,'FAKE_CODEX_FAIL':'plugin-add,plugin-remove'}
         failed=subprocess.run(
             ['powershell.exe','-NoLogo','-NoProfile','-NonInteractive','-File',str(ROOT/'scripts'/'install-base.ps1')],
             env=failed_env,text=True,encoding='utf-8',capture_output=True,timeout=30,
         )
         self.assertNotEqual(0,failed.returncode,(failed.stdout or '')+(failed.stderr or ''))
-        self.assertFalse((self.codex/'cp-assistant-base-state.json').exists())
-        self.assertFalse((self.home/'.agents'/'plugins'/'cp-assistant-base-marketplace').exists())
+        base_state=self.codex/'cp-assistant-base-state.json'
+        self.assertTrue(base_state.is_file())
+        self.assertEqual('RECOVERY_REQUIRED',json.loads(base_state.read_text(encoding='utf-8'))['status'])
+        market=self.home/'.agents'/'plugins'/'cp-assistant-base-marketplace'
+        self.assertTrue(market.is_dir())
+        unknown=market/'user-owned-asset.txt'
+        unknown.write_text('keep',encoding='utf-8')
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
 
         retried=subprocess.run(
@@ -266,6 +276,8 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
             env=self.env,text=True,encoding='utf-8',capture_output=True,timeout=30,
         )
         self.assertEqual(0,retried.returncode,(retried.stdout or '')+(retried.stderr or ''))
+        self.assertEqual('keep',unknown.read_text(encoding='utf-8'))
+        self.assertTrue((market/'plugins'/'codex-cross-project-engineering-assistant'/'skills'/'backend-engineering'/'SKILL.md').is_file())
 
     def test_base_installers_contain_links_and_share_recoverable_state_contract(self):
         shell=(ROOT/'scripts'/'install-base.sh').read_text(encoding='utf-8')
@@ -273,9 +285,42 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertIn('reject_link_ancestors',shell)
         self.assertIn('Assert-NoReparseAncestor',powershell)
         self.assertIn('market_root',shell)
+        self.assertIn('reject_payload_tree',shell)
+        self.assertIn('remove_managed_tree',shell)
         self.assertIn("Write-BaseState -Status 'INSTALLED'",powershell)
         self.assertIn('RECOVERY_REQUIRED',shell)
         self.assertIn('RECOVERY_REQUIRED',powershell)
+
+    @unittest.skipUnless(os.name == 'nt', 'PowerShell dangling reparse regression')
+    def test_base_installer_rejects_dangling_marketplace_reparse_target(self):
+        market=self.home/'.agents'/'plugins'/'cp-assistant-base-marketplace'
+        market.parent.mkdir(parents=True,exist_ok=True)
+        target=self.home/'outside-marketplace'
+        try:
+            market.symlink_to(target,target_is_directory=True)
+        except OSError as exc:
+            target.mkdir(parents=True,exist_ok=True)
+            made=subprocess.run(
+                ['cmd.exe','/d','/c','mklink','/J',str(market),str(target)],
+                text=True,capture_output=True,
+            )
+            if made.returncode != 0:
+                shutil.rmtree(target,ignore_errors=True)
+                self.skipTest('reparse target unavailable: '+str(exc)+' / '+made.stderr)
+            shutil.rmtree(target)
+        try:
+            result=subprocess.run(
+                ['powershell.exe','-NoLogo','-NoProfile','-NonInteractive','-File',str(ROOT/'scripts'/'install-base.ps1')],
+                env=self.env,text=True,encoding='utf-8',capture_output=True,timeout=30,
+            )
+            self.assertNotEqual(0,result.returncode,result.stdout+result.stderr)
+            self.assertTrue('符号链接' in result.stderr or 'reparse' in result.stderr.lower() or 'Reparse' in result.stderr)
+            self.assertFalse(target.exists())
+        finally:
+            if market.is_symlink():
+                market.unlink()
+            elif market.exists():
+                subprocess.run(['cmd.exe','/d','/c','rmdir',str(market)],capture_output=True)
 
     @unittest.skipUnless(os.name == 'nt', 'PowerShell base-to-enhancement regression')
     def test_plugin_install_replaces_managed_base_state_with_enhancement(self):

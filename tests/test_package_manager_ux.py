@@ -268,6 +268,166 @@ class PackageManagerUxTests(unittest.TestCase):
         self.assertEqual(["base-plugin"], summary["affected"])
         self.assertEqual("HOST_DRIFT_REINSTALL_REQUIRED", summary["cause"][0]["detail"])
 
+    def test_status_marks_migrated_base_active_for_managed_enhancement(self):
+        output = io.StringIO()
+        with mock.patch.object(package_manager, "codex_home", return_value=self.base / "codex"), \
+                mock.patch.object(package_manager, "load_json", return_value={
+                    "components": {"base": {"status": "PLUGIN_MANAGED"}},
+                }), \
+                mock.patch.object(package_manager, "_load_live_journal", return_value=None), \
+                mock.patch.object(package_manager, "_codex_available", return_value=True), \
+                mock.patch.object(package_manager, "_plugin_activation_status", return_value=(True, "active")), \
+                mock.patch.object(package_manager, "_base_plugin_active", return_value=False), \
+                mock.patch.object(package_manager, "_safe_base_state", return_value=({}, None)), \
+                mock.patch.object(package_manager, "_host_compatibility_status", return_value={"compatible": True}), \
+                contextlib.redirect_stdout(output):
+            package_manager.status("user", "plugin", None, summary=False)
+        value = json.loads(output.getvalue())
+        self.assertTrue(value["base_activation"]["active"])
+        self.assertEqual("PASS", value["ux"]["overall"])
+
+    def test_base_activation_requires_explicit_managed_ownership(self):
+        self.assertFalse(package_manager._base_capability_active(
+            True, "plugin", {}, {}, True, False,
+        ))
+        self.assertTrue(package_manager._base_capability_active(
+            True, "plugin", {}, {"components": {"base": {"status": "PLUGIN_MANAGED"}}}, True, False,
+        ))
+        self.assertTrue(package_manager._base_capability_active(
+            True, "standalone", {}, {"components": {"base": {"status": "STANDALONE_SKILLS"}}}, False, False,
+        ))
+        self.assertTrue(package_manager._base_capability_active(
+            False, "standalone", {}, {"components": {"base": {"status": "STANDALONE_SKILLS"}}}, False, False,
+        ))
+
+    def test_status_uses_persisted_mode_when_mode_is_not_supplied(self):
+        output = io.StringIO()
+        with mock.patch.object(package_manager, "codex_home", return_value=self.base / "codex"), \
+                mock.patch.object(package_manager, "load_json", return_value={
+                    "mode": "standalone", "components": {"base": {"status": "STANDALONE_SKILLS"}},
+                }), \
+                mock.patch.object(package_manager, "_codex_available", return_value=False), \
+                contextlib.redirect_stdout(output):
+            package_manager.status("user", None, None, summary=False)
+        value = json.loads(output.getvalue())
+        self.assertEqual("standalone", value["mode"])
+        self.assertEqual("PASS", value["ux"]["overall"])
+
+    def test_invalid_persisted_mode_fails_closed_in_status_and_doctor(self):
+        status_output = io.StringIO()
+        state = {"mode": "legacy", "components": {"base": {"status": "PLUGIN_MANAGED"}}}
+        with mock.patch.object(package_manager, "codex_home", return_value=self.base / "codex"), \
+                mock.patch.object(package_manager, "load_json", return_value=state), \
+                mock.patch.object(package_manager, "_codex_available", return_value=False), \
+                contextlib.redirect_stdout(status_output):
+            package_manager.status("user", None, None, summary=False)
+        status_value = json.loads(status_output.getvalue())
+        self.assertEqual("plugin", status_value["mode"])
+        self.assertEqual("INVALID_PERSISTED_MODE", status_value["mode_error"])
+        self.assertEqual("ERROR", status_value["ux"]["overall"])
+
+        doctor_output = io.StringIO()
+        patches = [
+            mock.patch.object(package_manager, "codex_home", return_value=self.base / "codex"),
+            mock.patch.object(package_manager, "_codex_available", return_value=False),
+            mock.patch.object(package_manager, "load_json", return_value=state),
+            mock.patch.object(package_manager, "_safe_base_state", return_value=({}, None)),
+            mock.patch.object(package_manager, "_load_live_journal", return_value=None),
+            mock.patch.object(package_manager, "payload_report", return_value={"file_count": 236, "payload_digest": "a" * 64}),
+            mock.patch.object(package_manager, "skill_names", return_value=["skill-%d" % index for index in range(10)]),
+        ]
+        with contextlib.ExitStack() as stack:
+            for patcher in patches:
+                stack.enter_context(patcher)
+            with contextlib.redirect_stdout(doctor_output):
+                package_manager.doctor(False, "user", None, summary=False)
+        doctor_value = json.loads(doctor_output.getvalue())
+        self.assertEqual("plugin", doctor_value["mode"])
+        self.assertEqual("INVALID_PERSISTED_MODE", doctor_value["mode_error"])
+        self.assertEqual("ERROR", doctor_value["overall"])
+        self.assertEqual("ERROR", doctor_value["ux"]["overall"])
+
+    def test_doctor_matches_status_for_migrated_base(self):
+        output = io.StringIO()
+        patches = [
+            mock.patch.object(package_manager, "codex_home", return_value=self.base / "codex"),
+            mock.patch.object(package_manager, "_codex_available", return_value=True),
+            mock.patch.object(package_manager, "_codex_executable", return_value="codex"),
+            mock.patch.object(package_manager, "_codex_version_text", return_value="codex-cli 0.154.0"),
+            mock.patch.object(package_manager, "_probe_plugin_host", return_value={"normalized_target": {"version": "7.10.0"}}),
+            mock.patch.object(package_manager, "load_json", return_value={
+                "mode": "plugin", "components": {"base": {"status": "PLUGIN_MANAGED"}},
+            }),
+            mock.patch.object(package_manager, "_safe_base_state", return_value=({}, None)),
+            mock.patch.object(package_manager, "_base_plugin_active", return_value=False),
+            mock.patch.object(package_manager, "_host_compatibility_status", return_value={"compatible": True}),
+            mock.patch.object(package_manager, "_load_live_journal", return_value=None),
+            mock.patch.object(package_manager, "payload_report", return_value={"file_count": 236, "payload_digest": "a" * 64}),
+            mock.patch.object(package_manager, "skill_names", return_value=["skill-%d" % index for index in range(10)]),
+        ]
+        with contextlib.ExitStack() as stack:
+            for patcher in patches:
+                stack.enter_context(patcher)
+            with contextlib.redirect_stdout(output):
+                package_manager.doctor(False, "user", None, summary=False)
+        value = json.loads(output.getvalue())
+        self.assertTrue(value["base_activation"]["active"])
+        self.assertEqual("PASS", value["ux"]["overall"])
+        self.assertEqual("PASS", value["overall"], value)
+
+    def test_doctor_rejects_enhancement_without_managed_base(self):
+        output = io.StringIO()
+        patches = [
+            mock.patch.object(package_manager, "codex_home", return_value=self.base / "codex"),
+            mock.patch.object(package_manager, "_codex_available", return_value=True),
+            mock.patch.object(package_manager, "_codex_executable", return_value="codex"),
+            mock.patch.object(package_manager, "_codex_version_text", return_value="codex-cli 0.154.0"),
+            mock.patch.object(package_manager, "_probe_plugin_host", return_value={"normalized_target": {"version": "7.10.0"}}),
+            mock.patch.object(package_manager, "load_json", return_value={
+                "mode": "plugin", "components": {"enhancement": {"status": "MANAGED"}},
+            }),
+            mock.patch.object(package_manager, "_safe_base_state", return_value=({}, None)),
+            mock.patch.object(package_manager, "_base_plugin_active", return_value=False),
+            mock.patch.object(package_manager, "_host_compatibility_status", return_value={"compatible": True}),
+            mock.patch.object(package_manager, "_load_live_journal", return_value=None),
+            mock.patch.object(package_manager, "payload_report", return_value={"file_count": 236, "payload_digest": "a" * 64}),
+            mock.patch.object(package_manager, "skill_names", return_value=["skill-%d" % index for index in range(10)]),
+        ]
+        with contextlib.ExitStack() as stack:
+            for patcher in patches:
+                stack.enter_context(patcher)
+            with contextlib.redirect_stdout(output):
+                package_manager.doctor(False, "user", None, summary=False)
+        value = json.loads(output.getvalue())
+        self.assertFalse(value["base_activation"]["active"])
+        self.assertEqual("ERROR", next(item for item in value["checks"] if item["id"] == "plugin")["status"])
+        self.assertEqual("ERROR", value["overall"])
+        self.assertEqual("ERROR", value["ux"]["overall"])
+
+    def test_doctor_accepts_standalone_base_without_codex_host(self):
+        output = io.StringIO()
+        patches = [
+            mock.patch.object(package_manager, "codex_home", return_value=self.base / "codex"),
+            mock.patch.object(package_manager, "_codex_available", return_value=False),
+            mock.patch.object(package_manager, "load_json", return_value={
+                "mode": "standalone", "components": {"base": {"status": "STANDALONE_SKILLS"}},
+            }),
+            mock.patch.object(package_manager, "_safe_base_state", return_value=({}, None)),
+            mock.patch.object(package_manager, "_load_live_journal", return_value=None),
+            mock.patch.object(package_manager, "payload_report", return_value={"file_count": 236, "payload_digest": "a" * 64}),
+            mock.patch.object(package_manager, "skill_names", return_value=["skill-%d" % index for index in range(10)]),
+        ]
+        with contextlib.ExitStack() as stack:
+            for patcher in patches:
+                stack.enter_context(patcher)
+            with contextlib.redirect_stdout(output):
+                package_manager.doctor(False, "user", None, summary=False)
+        value = json.loads(output.getvalue())
+        self.assertEqual("standalone", value["mode"])
+        self.assertTrue(value["base_activation"]["active"])
+        self.assertEqual("PASS", value["overall"])
+        self.assertEqual("PASS", value["ux"]["overall"])
+
     def test_status_summary_marks_uninstalled_base_as_unavailable(self):
         summary = package_manager.status_summary({
             "scope": "user", "mode": "plugin",
@@ -310,6 +470,7 @@ class PackageManagerUxTests(unittest.TestCase):
         })
         self.assertEqual("ERROR", summary["overall"])
         self.assertEqual(["payload"], summary["affected"])
+        self.assertEqual("ERROR", summary["ux"]["overall"])
 
     def test_status_json_keeps_mode_for_the_default_summary_projection(self):
         output = io.StringIO()

@@ -3,7 +3,7 @@
   "status": "PASS",
   "version": "7.10.0",
   "evidence_scope": "package-only",
-  "focused_tests": "450 package tests and 212 runtime tests passed (1 runtime test skipped)",
+  "focused_tests": "458 package tests and 212 runtime tests passed (1 runtime test skipped)",
   "full_validation": "Not asserted by this file; use the complete CI runs for the release commit",
   "publication": "Use the GitHub Release state",
   "account_installation": "Requires separate account readback"
