@@ -1,6 +1,6 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.9.1",
-  "description": "跨项目长期技术助手 V7.9.1：基础安装即用；Hook、长期状态、预算和受控写入按需接入。",
+  "version": "7.9.2",
+  "description": "跨项目长期技术助手 V7.9.2：基础安装即用；Hook、长期状态、预算和受控写入按需接入。",
   "skills": "./skills/"
 }

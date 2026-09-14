@@ -4,6 +4,10 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 ## Unreleased
 
+## 7.9.2 - 2026-09-14
+
+- Complete release build metadata and synchronize the compatibility registry digest; fix the English release-notes heading. V7.9.1 remains an unpublished failed candidate; V7.9.2 delivers the registry fix.
+
 ## 7.9.1 - 2026-09-14
 
 - Fix UNREADABLE from the default capability registry command after Plugin installation: ship an authority-matched registry in the managed runtime and resolve source and installed layouts separately. Add isolated payload, explicit missing-path, and corrupt-file regression coverage.

@@ -2,7 +2,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-V7.9.1 provides ready-to-use base installation with optional enhancement runtime. Ordinary engineering work can begin directly, while Hooks, recoverable state, budgets, and controlled writes attach only when needed.
+V7.9.2 provides ready-to-use base installation with optional enhancement runtime. Ordinary engineering work can begin directly, while Hooks, recoverable state, budgets, and controlled writes attach only when needed.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -23,7 +23,7 @@ V7.9.1 provides ready-to-use base installation with optional enhancement runtime
   <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
-V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.9.1 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
+V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.9.2 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -59,8 +59,8 @@ Use the existing enhanced installer only when the task needs recoverable long-ru
 
 | Distribution | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V7.9.1-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.9.1/Codex-Skills-V7.9.1-zh-CN.zip) |
-| `Codex-Skills-V7.9.1-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.9.1/Codex-Skills-V7.9.1-en.zip) |
+| `Codex-Skills-V7.9.2-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.9.2/Codex-Skills-V7.9.2-zh-CN.zip) |
+| `Codex-Skills-V7.9.2-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.9.2/Codex-Skills-V7.9.2-en.zip) |
 
 [Open the latest Release, checksums, and build witnesses](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -126,7 +126,7 @@ Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not 
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Native Windows Codex CLI 0.154.0 + Plugin | Current real-host anchor | V7.9.1 account installation, `verify`, and a projectless fresh CLI task passed | A restarted Desktop session remains unverified |
+| Native Windows Codex CLI 0.154.0 + Plugin | Current real-host anchor | V7.9.2 account installation, `verify`, and a projectless fresh CLI task passed | A restarted Desktop session remains unverified |
 | Windows + eleven pinned stable Codex releases | Frozen compatibility window | The registry binds 11/11 official async, Pre/Post schema, and result-response source evidence | The cross-version real-host matrix has not been run on every host |
 | Windows / Ubuntu GitHub matrix | Release gate | The workflow is configured for Python 3.11/3.13 and eleven-version replay on both systems | Refer to GitHub Actions for this release's remote CI state |
 | standalone mode | Explicit fallback | Local installation structure, inventory, non-Git BASIC, and regression coverage | It is not a substitute for this account Plugin acceptance |
@@ -134,7 +134,7 @@ Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not 
 
 The base installation does not require the package Python runtime; the enhancement runtime requires Python 3.11 or later; public CI is configured to validate both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
 
-The V7.9.1 window is `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
+The V7.9.2 window is `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
 ## First install and upgrade
 
@@ -173,7 +173,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](.github/CONTRIBUTING.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.md) · [V7.9.1 release notes](docs/releases/v7.9.1/RELEASE_NOTES.md)
+- [Changelog](CHANGELOG.md) · [V7.9.2 release notes](docs/releases/v7.9.2/RELEASE_NOTES.md)
 
 ## Local validation
 
@@ -189,7 +189,7 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. An authorized public Release is created and read back separately.
 
 ```shell
-gh attestation verify Codex-Skills-V7.9.1-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.9.2-en.zip --repo OWNER/REPOSITORY
 ```
 
 See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.md) for the complete gates and new-version procedure.

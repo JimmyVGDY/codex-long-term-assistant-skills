@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "status": "PASS",
+  "version": "7.9.2",
+  "evidence_scope": "focused-local-validation",
+  "focused_tests": "14 targeted registry, archive verifier, release metadata and bilingual build tests passed",
+  "full_validation": "Not asserted by this file; use the complete CI runs for the release commit",
+  "publication": "Use the GitHub Release state",
+  "account_installation": "Requires separate account readback"
+}

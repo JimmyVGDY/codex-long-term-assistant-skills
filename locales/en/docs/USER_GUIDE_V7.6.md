@@ -8,7 +8,7 @@ Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-ass
 
 ## Quick start
 
-From the extracted V7.9.1 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
+From the extracted V7.9.2 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
 
 Simple local tasks run with the main Agent by default. A Profile, index, full scan, and budget ledger are not prerequisites. Add the optional enhancement through `install-user` only when needed; see [installation and recovery](operations/INSTALLATION_RECOVERY.md). The index, Hook, and budget procedures below apply to that enhancement. Strict budgeting requires a verifiable host binding, ledger, and dispatch permit; otherwise the model ceiling remains a policy constraint.
 
@@ -62,9 +62,9 @@ Event V2 and Budget V1 chains from V7.4.2 and earlier remain byte-for-byte verif
 
 ## 5. Codex 0.154.0 scope
 
-V7.9.1 supports Codex CLI 0.154.0 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.154.0 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract or the automatic subagent policy, which remains limited to Luna/Terra profiles. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
+V7.9.2 supports Codex CLI 0.154.0 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.154.0 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract or the automatic subagent policy, which remains limited to Luna/Terra profiles. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
-Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.9.1`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
+Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.9.2`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
 
 ## Feedback and measured benefits
 
@@ -72,4 +72,4 @@ V7.9 retains the validation feedback introduced in V7.5, health gates, opt-in in
 
 ## Capability reuse and optional gates
 
-Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.9.1 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.9.1/VALIDATION_REPORT.md).
+Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.9.2 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.9.2/VALIDATION_REPORT.md).
