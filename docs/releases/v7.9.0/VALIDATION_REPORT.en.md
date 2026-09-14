@@ -1,19 +1,9 @@
+<!-- Generated from locales/en/docs/releases/v7.9.0/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.9.0 Validation Record
 
-Chinese version: [VALIDATION_REPORT.md](VALIDATION_REPORT.md)
+An isolated Windows Codex Home verified base installation, base-to-enhancement upgrade, enhancement verification, enhancement uninstall, and base restoration. Full package validation passed: 433 package tests and 205 runtime tests, including release, privacy, dispatch-policy, and payload gates. Independent compatibility and security findings for base-state migration, failure recovery, Hook drift verification, and link-ancestor containment were repaired and rechecked.
 
-## Verified candidate evidence
+Commit `bd73b30`, tag `v7.9.0`, the public Release, bilingual ZIP files, and reproducibility witnesses were read back. Current-account installation reads `installed=true`, `enabled=true`, `version=7.9.0`, and `HOST_COMPATIBLE`; a projectless fresh CLI task responded without creating a Profile, scanning a directory, or calling a tool. Real Ubuntu/macOS installation paths and restarted Desktop-session loading remain `UNVERIFIED`. Remote GitHub Actions must be read from Actions rather than inferred from local validation.
 
-- An isolated Windows Codex Home completed base installation, base-to-enhancement upgrade, enhancement verification, enhancement uninstall, and base recovery. Base installation wrote no enhancement runtime or Hook.
-- Focused installer/status tests, localization audit, documentation consistency, semantic checks, and whitespace checks passed on their respective candidate baseline.
-- Current-account status distinguishes base Plugin host drift from a missing enhancement. Disk state does not substitute for effective host loading.
-
-## Release evidence still required
-
-- Full-package validation, independent review, Windows/Ubuntu CI, macOS path, public assets, anonymous download, account upgrade, Desktop restart, and fresh-task loading.
-- Any combination without a real environment remains `UNVERIFIED`; no support claim is inferred.
-
-## Separate outcomes
-
-- `RELEASE_COMPLETE` requires commit, push, CI, tag, candidate/public assets, anonymous downloads, and isolated-install readback.
-- `INCIDENT_EFFECTIVE` also requires account installation, any required restart, current-task loading, and field acceptance.
+`RELEASE_COMPLETE` and `INCIDENT_EFFECTIVE` separately describe release readback and runtime effectiveness; neither substitutes for the other. `RELEASE_COMPLETE` has commit, push, tag, public-asset, isolated-install, and account-install readback; remote CI remains governed by its Actions terminal state. `INCIDENT_EFFECTIVE` is `NOT_EVALUATED`: Desktop was not restarted and no real Ubuntu/macOS or field business acceptance was run.

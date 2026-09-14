@@ -11,7 +11,7 @@
 | 中文说明 | 根目录、docs、skills 下的中文源文件 | 中文站点与中文发行包 |
 | 英文说明 | locales/en 下对应来源 | 同级 *.en.md、英文站点与英文发行包 |
 | 当前包版本 | manifest.json；插件清单须匹配 | 带 cp-fact 标记的版本呈现 |
-| Hook 注册 | hooks/hooks.json | 标记的入口名称和数量；具体用途仍需人工对照实现 |
+| Hook 注册 | hooks/enhancement-hooks.json | 标记的入口名称和数量；具体用途仍需人工对照实现 |
 | 格式版本 | 模板、运行时常量、结果 Schema | manifest 声明和标记的文档表格 |
 | 状态归属 | manifest.json 的 authority_registry | 标记的权威来源引用 |
 

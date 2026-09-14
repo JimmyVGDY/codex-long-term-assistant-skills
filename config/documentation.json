@@ -93,7 +93,7 @@
     },
     {
       "path": "docs/PLUGIN_UX_BASELINE.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/PLUGIN_UX_BASELINE.md"
     },
     {
@@ -1158,6 +1158,18 @@
     {
       "source": "locales/en/docs/releases/v7.6.1/AUDIT_REPORT.md",
       "target": "docs/releases/v7.6.1/AUDIT_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.9.0/RELEASE_NOTES.md",
+      "target": "docs/releases/v7.9.0/RELEASE_NOTES.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.9.0/VALIDATION_REPORT.md",
+      "target": "docs/releases/v7.9.0/VALIDATION_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.9.0/AUDIT_REPORT.md",
+      "target": "docs/releases/v7.9.0/AUDIT_REPORT.en.md"
     }
   ],
   "fact_files": {

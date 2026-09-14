@@ -4,6 +4,8 @@ English: [Implementation plan](PLUGIN_UX_OPTIMIZATION_PLAN.en.md)
 
 ## 当前状态
 
+V7.9.0 已公开发布；本页保留实施计划及其验收目标，不是未完成任务清单。最终实现为一个基础 Plugin 加账户受管增强运行时。发布、账户安装与项目外新 CLI 任务的结果见[发行记录](releases/v7.9.0/RELEASE_NOTES.md)；Desktop 重启加载和跨平台实机路径仍须单独验收。
+
 本计划从 V7.8.1 开始实施。基础 Plugin 的目标是无需 Plugin 专属 Python、Profile、索引、台账或 Hook 即可安装并开始普通工程任务；增强能力在需要长期任务、索引、受控写入或硬预算时单独接入。
 
 基础能力不等于放宽授权、降低项目测试门槛，或绕过已启用的安全控制。安装、注册、当前任务加载和业务验收分别记录。

@@ -83,8 +83,8 @@ Use the existing enhanced installer only when the task needs recoverable long-ru
 flowchart LR
     A[Task input] --> B[Minimal Skill routing]
     B --> C[Main Agent execution]
-    C --> D[Independent Reviewers]
-    C --> E[Lifecycle Hooks]
+    C -. Optional enhancement .-> D[Independent Reviewers]
+    C -. Optional enhancement .-> E[Lifecycle Hooks]
     D --> E
     E --> F[TaskOutcomeEvent 3.0]
     F --> G[Project isolation and hash chain]
@@ -115,14 +115,14 @@ Task input
   -> report evidence, risks, and unverified boundaries
 ```
 
-The lifecycle can produce `TURN_OPENED -> SUBAGENT_STARTED -> SUBAGENT_STOPPED -> TASK_COMPLETED`; `SessionEnd` then enters the delayed sealing path. Model evidence stays separated into three fields:
+The lifecycle can produce `TURN_OPENED -> SUBAGENT_STARTED -> SUBAGENT_STOPPED -> TASK_COMPLETED`; `SessionEnd` then enters the delayed sealing path. Model evidence stays separated into two fields:
 
 ```ini
 dispatch_policy_status = PASS
 host_model_identity = NOT_COLLECTED
 ```
 
-Here, `requested_model_policy=PASS` only proves that automatic dispatch did not request a configuration above Terra High. It does not attest to the model that actually ran.
+Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not request a configuration above Terra High. It does not attest to the model that actually ran.
 
 ## Compatibility matrix
 
@@ -134,7 +134,7 @@ Here, `requested_model_policy=PASS` only proves that automatic dispatch did not 
 | standalone mode | Explicit fallback | Local installation structure, inventory, non-Git BASIC, and regression coverage | It is not a substitute for this account Plugin acceptance |
 | macOS | Unverified | No current CI or host-acceptance evidence | Status remains `UNVERIFIED` |
 
-The minimum Python version is 3.11; public CI is configured to validate both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
+The base installation does not require the package Python runtime; the enhancement runtime requires Python 3.11 or later; public CI is configured to validate both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
 
 The V7.9.0 window is `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
@@ -175,7 +175,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V7.9.0 release notes](locales/en/docs/releases/v7.9.0/RELEASE_NOTES.md)
+- [Changelog](CHANGELOG.en.md) · [V7.9.0 release notes](docs/releases/v7.9.0/RELEASE_NOTES.en.md)
 
 ## Local validation
 

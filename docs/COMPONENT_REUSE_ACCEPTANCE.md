@@ -1,6 +1,6 @@
 # 组件与模块复用验收
 
-本规程验证 [公共复用规则](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/v7.6.0/skills/engineering-quality-delivery/references/component-module-reuse.md)。适用于本包维护者；不由普通业务任务自动执行。
+本规程验证 [公共复用规则](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/skills/engineering-quality-delivery/references/component-module-reuse.md)。适用于本包维护者；不由普通业务任务自动执行。
 
 ## 准备与执行
 
@@ -33,4 +33,4 @@
 
 包校验、链接、本地化和样例测试分别报告；独立复审使用现有 packet/controller，不引入新运行时合同。获授权安装后核对实际安装内容与候选哈希，并在新的宿主任务中从安装入口加载实测；副本回放不能代替安装验收。没有实际安装或新宿主证据时，保持未完成。有限样本通过不代表普遍稳定，优化前已通过的样例不能据此宣称复用率提升。
 
-相关文档：[能力索引](CAPABILITY_INDEX.md) · [验收规程](COMPONENT_REUSE_ACCEPTANCE.md) · [V7.6.0 验证报告](releases/v7.6.0/VALIDATION_REPORT.md)。
+相关文档：[能力索引](CAPABILITY_INDEX.md) · [验收规程](COMPONENT_REUSE_ACCEPTANCE.md) · [V7.9.0 验证报告](releases/v7.9.0/VALIDATION_REPORT.md)。

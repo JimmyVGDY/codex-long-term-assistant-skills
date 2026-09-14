@@ -7,7 +7,7 @@ English: [SECURITY.en.md](https://github.com/JimmyVGDY/codex-long-term-assistant
 | 版本 | 状态 |
 | --- | --- |
 | <!-- cp-fact:package-version -->7.9.0<!-- /cp-fact --> | 当前维护 |
-| 7.6.0 | 当前维护 |
+| 7.6.0 | 旧维护线，建议升级当前版本 |
 | 7.4.4 | 仅安全修复 |
 | 7.4.3 | 仅安全修复 |
 | 7.4.2 | 仅安全修复 |

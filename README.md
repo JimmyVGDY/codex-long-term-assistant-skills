@@ -19,7 +19,7 @@ V7.9.0 提供基础安装即用和按需增强运行时：普通工程任务可�
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/"><img alt="双语文档站" src="https://img.shields.io/badge/docs-%E4%B8%AD%E6%96%87%20%7C%20English-00b8a9"></a>
   <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/github/license/JimmyVGDY/codex-long-term-assistant-skills"></a>
-  <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
+  <img alt="增强运行时 Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
   <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
@@ -82,8 +82,8 @@ V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7
 flowchart LR
     A[任务输入] --> B[Skill 最小路由]
     B --> C[主 Agent 执行]
-    C --> D[独立 Reviewer]
-    C --> E[生命周期 Hooks]
+    C -. 按需增强 .-> D[独立 Reviewer]
+    C -. 按需增强 .-> E[生命周期 Hooks]
     D --> E
     E --> F[TaskOutcomeEvent 3.0]
     F --> G[项目隔离与哈希链]
@@ -125,7 +125,7 @@ flowchart LR
 | standalone 模式 | 显式兼容模式 | 本地安装结构、inventory、非 Git BASIC 和回归测试覆盖 | 未作为本次账户 Plugin 验收替代 |
 | macOS | 未验证 | 无当前 CI 或宿主验收证据 | 状态保持 `UNVERIFIED` |
 
-Python 最低版本为 3.11；公开 CI 配置为在 Windows 与 Ubuntu 上验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
+基础安装无需本包 Python runtime；增强运行时的 Python 最低版本为 3.11；公开 CI 配置为在 Windows 与 Ubuntu 上验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
 
 V7.9.0 窗口为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`。未来版、预发布版和窗口外版本不会自动接纳。
 
@@ -145,7 +145,7 @@ codex plugin list --json
 
 增强安装只有在 Plugin 读回 `installed=true`、`enabled=true`、目标发行版本、兼容宿主快照且旧领域 Skill 不再发现时才成立。`doctor` 与 `status` 默认说明可继续的能力、受影响项、原因与唯一下一步；完整机器记录使用 `--json`。
 
-安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/operations/INSTALLATION_RECOVERY.md) 和 [V7.6 使用指南](docs/USER_GUIDE.md)。
+安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/operations/INSTALLATION_RECOVERY.md) 和 [V7.9 使用指南](docs/USER_GUIDE.md)。
 
 ## 派发策略与模型身份隐私边界
 

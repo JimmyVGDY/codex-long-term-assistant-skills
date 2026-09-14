@@ -2,6 +2,10 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 未发布
+
+- 同步 V7.9.0 当前展示文档：修复导航、安装版本读回、基础与增强边界、Hook 事件与注册数量及当前验证链接；保留历史发行证据并同步英文与兼容副本。
+
 ## 7.9.0 - 2026-09-12
 
 - 新增不依赖本包 Python 或 API Key 的基础安装入口：基础 Plugin 只加载 10 个 Skill，不启动 Hook、Worker、Profile、索引或预算台账。

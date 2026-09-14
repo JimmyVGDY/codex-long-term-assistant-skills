@@ -2,6 +2,8 @@
 
 English: [S0 baseline and layering decision](PLUGIN_UX_BASELINE.en.md)
 
+> 历史 S0 设计快照：下文保留实施前的候选分支、测量和伴随 Plugin 方案。V7.9.0 最终采用一个基础 Plugin 加账户受管增强运行时，没有另行注册 enhanced Plugin。当前事实以[系统架构](architecture/SYSTEM_ARCHITECTURE.md)、[安装指南](operations/INSTALLATION_RECOVERY.md)和[V7.9.0 发行记录](releases/v7.9.0/RELEASE_NOTES.md)为准。
+
 ## 结论
 
 本次优化的候选目标版本确定为 **V7.9.0**。采用一个 Marketplace、一个面向安装者的基础 Plugin 和一个仅在需要时启用的增强伴随 Plugin：基础 Plugin 保持既有 `codex-cross-project-engineering-assistant` 名称，增强伴随 Plugin 暂定为 `codex-cross-project-engineering-assistant-enhanced`。两个 Plugin 不重复分发 Skill。

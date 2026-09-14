@@ -22,7 +22,7 @@ python scripts\package_manager.py recover --scope user
 
 无 state 时，`uninstall --dry-run` 只给出零删除预览；真实卸载仍拒绝。非 Git 文件夹可使用基础说明和文件能力，不会被自动初始化为仓库。
 
-基础安装使用 `scripts\\install-base.ps1`（或 POSIX 的 `scripts/install-base.sh`）并只注册 Skill。它在任何写入前拒绝符号链接、Junction 或 Reparse Point 祖先；原生 Marketplace/Plugin 注册失败会撤销本次创建的受管路径。若宿主注册本身无法撤销，会保留 `cp-assistant-base-state.json` 的 `RECOVERY_REQUIRED` 状态，下一次同一基础安装入口会先尝试受管恢复，绝不覆盖未知 Marketplace。
+基础安装使用 `scripts\install-base.ps1`（或 POSIX 的 `scripts/install-base.sh`）并只注册 Skill。它在任何写入前拒绝符号链接、Junction 或 Reparse Point 祖先；原生 Marketplace/Plugin 注册失败会撤销本次创建的受管路径。若宿主注册本身无法撤销，会保留 `cp-assistant-base-state.json` 的 `RECOVERY_REQUIRED` 状态，下一次同一基础安装入口会先尝试受管恢复，绝不覆盖未知 Marketplace。
 
 ## 路径规则
 
@@ -137,7 +137,7 @@ python scripts\release-attestation.py verify --attestation ..\release-attestatio
 
 ## Windows Hook
 
-七个注册 Hook 入口通过 `cp_hook.cmd` 启动，优先使用可用的账户 CPython，再回退 `python.exe` 或 `py.exe -3`。无需额外创建 `python3.exe`。SessionEnd timeout 为 3 秒；Hook 只构造有上限且不含正文的净化事件，并以命令参数无等待派发 detached worker，不扫描或写入事件链，也不做同步管道写入。Worker 在 Hook 预算外完成稳定身份校验、语义去重、持久化、DPAPI 解密、v2 签名入列和封印；未封印的 `seal_required` 链不会被 Evolution 消费。
+可选增强在已核验宿主 profile 下登记八类 Hook 事件、九条账户注册项，由安装器绑定当前 Python 解释器；包内 `cp_hook.cmd` 是兼容启动入口。无需额外创建 `python3.exe`。SessionEnd timeout 为 3 秒；Hook 只构造有上限且不含正文的净化事件，并以命令参数无等待派发 detached worker，不扫描或写入事件链，也不做同步管道写入。Worker 在 Hook 预算外完成稳定身份校验、语义去重、持久化、DPAPI 解密、v2 签名入列和封印；未封印的 `seal_required` 链不会被 Evolution 消费。
 
 升级前已打开的任务可能继续使用旧 Plugin 快照；升级后新建任务完成最终发现验证。不自动重启 Codex。
 

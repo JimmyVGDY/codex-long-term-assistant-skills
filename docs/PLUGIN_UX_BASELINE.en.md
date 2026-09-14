@@ -1,5 +1,7 @@
 # Plugin UX and cost optimization: S0 baseline and layering decision
 
+> Historical S0 context: the initial companion-Plugin design was superseded. V7.9.0 ships one base Plugin plus an account-managed enhancement runtime, not a separately registered enhanced Plugin. See the [current architecture](architecture/SYSTEM_ARCHITECTURE.md), [installation guide](operations/INSTALLATION_RECOVERY.md), and [V7.9.0 release record](releases/v7.9.0/RELEASE_NOTES.md). The notes below preserve candidate-stage evidence.
+
 Chinese: [S0 baseline and layering decision](PLUGIN_UX_BASELINE.md)
 
 ## Decision

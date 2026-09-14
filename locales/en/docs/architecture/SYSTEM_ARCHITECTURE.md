@@ -1,28 +1,23 @@
 # V7.9 Current System Architecture and Security Boundaries
 
-> Status: `active`. This page describes the current V7.8.1 package architecture. Earlier design and release evidence is retained only for historical traceability.
+> Status: `active`. This page describes the current V7.9.0 package architecture. Earlier design and release evidence is retained only for historical traceability.
 
 ## 1. Layers
 
 ```text
-Global AGENTS (minimal cross-project rules)
-        ↓
-10 Skills (4 primary domains + 6 supporting capabilities, loaded on demand)
-        ↓
-Main Agent / 7 Reviewers
-        ↓
-Observation / governance: 6 existing Hook events
-        ↓
-TaskOutcomeEvent V3
-        ↓
-Project Context Runtime
-        ↓
-Observation / Assessment / Proposal
-        ↓
-Human Decision + Independent Implementation Task
+Base Plugin: 10 Skills -> Main Agent -> Engineering task
+
+Optional managed enhancement
+  + Global AGENTS / 7 Reviewers
+  + Account Hooks: 8 event types / 9 registrations
+  + Project Context Runtime / index / budget
+  + TaskOutcomeEvent V3 -> Assessment / Proposal
+  + Human Decision -> Independent Implementation Task
 ```
 
-The package version is V7.8.1. Names such as `TaskOutcomeEvent V3`, Operation v2, and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
+The package version is V7.9.0. Names such as `TaskOutcomeEvent V3`, Operation v2, and Evolution Policy identify component contracts or data formats; they do not mean an older package is installed.
+
+The base Plugin has no Hooks and does not start runtime state. The following lifecycle, isolation, budget, and governance sections apply only after installing the optional enhancement. Its verified host profile registers eight event types and nine account entries because PreToolUse has separate dispatch and write matchers.
 
 ## 2. Skill routing
 
@@ -33,7 +28,7 @@ Choose one primary domain Skill per phase:
 - `ai-engineering`: model calls, RAG, agents, evaluation, inference, and multimodal generation;
 - `data-middleware-infrastructure`: databases, caches, messaging, search, storage, GPU resources, containers, and networks.
 
-Logging, quality delivery, independent review, technical documentation, long-running memory, and controlled evolution are supporting capabilities loaded by phase. See the [V7.6 domain Skill architecture](../V7_DOMAIN_SKILL_ARCHITECTURE.md) and [V7.6 Skill trigger matrix](../SKILL_TRIGGER_MATRIX.md) for detailed boundaries.
+Logging, quality delivery, independent review, technical documentation, long-running memory, and controlled evolution are supporting capabilities loaded by phase. See the [V7.9 domain Skill architecture](../V7_DOMAIN_SKILL_ARCHITECTURE.md) and [V7.9 Skill trigger matrix](../SKILL_TRIGGER_MATRIX.md) for detailed boundaries.
 
 ## 3. Project and data isolation
 
@@ -50,7 +45,7 @@ Observation first verifies the hash chain or HMAC, checks `project_id + repo_fin
 
 `PreToolUse` checks the automatic sub-agent model ceiling before dispatch. `SubagentStart` and `SubagentStop` record minimal runtime facts, while the other observation Hooks form lifecycle events; `Interrupt` remains host-controlled and does not write legacy gate-cancellation state. The Hook guard is a workflow protection, not an unbypassable platform security boundary.
 
-Model evidence keeps three meanings separate:
+Model evidence keeps two meanings separate:
 
 ```ini
 dispatch_policy_status = whether the pre-dispatch request obeyed the approved ceiling
@@ -90,14 +85,14 @@ A proposal superseded by newer evidence may become `SUPERSEDED`. No state change
 
 ## 8. Current and historical documentation
 
-- Enter current guidance through the [documentation hub](../README.md), where it is marked V7.6.
+- Enter current guidance through the [documentation hub](../README.md), where it is marked V7.9.
 - Upgrade-source versions, migration mappings, and component-contract versions may appear in current guidance only when their purpose is explicit.
 - Earlier release notes, validation reports, and design documents remain available for traceability but do not establish current installation, runtime, or acceptance state.
 - Historical detail pages are excluded from default site search so outdated commands cannot be confused with current operating instructions.
 
 ## Optional project gate and effective loading
 
-The registration contains eight entry points, while project gates default to disabled. In V7.8.1, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances repository-external Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy. A creates an origin and is denied, B atomically binds READY, and completion accepts only B's receipt. Unconfigured or disabled policies remain neutral.
+The registration contains eight entry points, while project gates default to disabled. In V7.9.0, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances repository-external Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy. A creates an origin and is denied, B atomically binds READY, and completion accepts only B's receipt. Unconfigured or disabled policies remain neutral.
 
 ```text
 Unconfigured or disabled ───────────────→ native writes preserve host behavior

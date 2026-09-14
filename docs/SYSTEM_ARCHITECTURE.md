@@ -4,29 +4,24 @@
 
 # V7.9 当前系统架构与安全边界
 
-> 状态：`active`。本页描述 V7.8.1 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
+> 状态：`active`。本页描述 V7.9.0 当前包的整体架构；旧版本设计与发行证据只用于历史追溯。
 
 ## 1. 分层
 
 ```text
-Global AGENTS（最小跨项目规则）
-        ↓
-10 Skills（4 个主领域 + 6 个支撑能力，按需加载）
-        ↓
-Main Agent / 7 Reviewers
-        ↓
-Observation / governance: 6 existing Hook events
-        ↓
-TaskOutcomeEvent V3
-        ↓
-Project Context Runtime
-        ↓
-Observation / Assessment / Proposal
-        ↓
-Human Decision + Independent Implementation Task
+Base Plugin: 10 Skills -> Main Agent -> Engineering task
+
+Optional managed enhancement
+  + Global AGENTS / 7 Reviewers
+  + Account Hooks: 8 event types / 9 registrations
+  + Project Context Runtime / index / budget
+  + TaskOutcomeEvent V3 -> Assessment / Proposal
+  + Human Decision -> Independent Implementation Task
 ```
 
-包版本是 V7.8.1；`TaskOutcomeEvent V3`、Operation v2、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
+包版本是 V7.9.0；`TaskOutcomeEvent V3`、Operation v2、Evolution Policy 等名称是组件合同或数据格式标识，不代表安装了旧版软件。
+
+基础 Plugin 没有 Hook，也不启动运行时状态。以下生命周期、隔离、预算与治理章节适用于已安装的可选增强；在已核验宿主 profile 下，增强登记八类事件、九条账户注册项，其中 PreToolUse 分为派发与写入两个 matcher。
 
 ## 2. Skill 路由
 
@@ -37,7 +32,7 @@ Human Decision + Independent Implementation Task
 - `ai-engineering`：模型调用、RAG、Agent、评测、推理与多模态生成；
 - `data-middleware-infrastructure`：数据库、缓存、MQ、搜索、存储、GPU、容器与网络。
 
-日志、质量交付、独立复审、技术文档、长期记忆和受控演进作为支撑能力按阶段加载。详细边界见 [V7.6 领域 Skill 架构](V7_DOMAIN_SKILL_ARCHITECTURE.md) 和 [V7.6 Skill 触发矩阵](SKILL_TRIGGER_MATRIX.md)。
+日志、质量交付、独立复审、技术文档、长期记忆和受控演进作为支撑能力按阶段加载。详细边界见 [V7.9 领域 Skill 架构](V7_DOMAIN_SKILL_ARCHITECTURE.md) 和 [V7.9 Skill 触发矩阵](SKILL_TRIGGER_MATRIX.md)。
 
 ## 3. 项目与数据隔离
 
@@ -87,14 +82,14 @@ CLOSED
 
 ## 8. 当前与历史文档边界
 
-- 当前规范从[文档中心](README.md)进入，并明确标记 V7.6；
+- 当前规范从[文档中心](README.md)进入，并明确标记 V7.9；
 - 升级来源版本、迁移映射和组件合同版本可以在当前文档中出现，但必须说明其用途；
 - 历版发行说明、验证报告和设计文档保留用于追溯，不作为当前安装、运行或验收结论；
 - 历史详情页不进入默认站内搜索，避免旧命令与当前操作说明混淆。
 
 ## 可选项目门禁与实际加载
 
-注册配置包含八个入口，项目门禁默认关闭。V7.8.1 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 由宿主控制；规范 `apply_patch` 只在显式启用策略下由 PreToolUse/PostToolUse 推进仓库外 Operation v2。A 只建立起点并拒绝，B 在 READY 中原子绑定，完成只接受 B 的回执；未配置或停用策略保持中性。
+注册配置包含八个入口，项目门禁默认关闭。V7.9.0 中 `UserPromptSubmit` 是异步观察，`Stop` 是中性观察，`Interrupt` 由宿主控制；规范 `apply_patch` 只在显式启用策略下由 PreToolUse/PostToolUse 推进仓库外 Operation v2。A 只建立起点并拒绝，B 在 READY 中原子绑定，完成只接受 B 的回执；未配置或停用策略保持中性。
 
 ```text
 未配置或 disabled ───────────────→ 原生写入保持宿主既有行为

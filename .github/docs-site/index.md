@@ -70,8 +70,8 @@ hide:
       <article class="landing-stat"><strong>7</strong><span>Reviewers</span></article>
       <article class="landing-stat">
         <strong><!-- cp-fact:hook-count -->8<!-- /cp-fact --></strong>
-        <span><span lang="zh-CN">Hook 事件</span> <span aria-hidden="true">/</span> <span lang="en">Hook events</span></span>
-        <small><span lang="zh-CN">9 条账户注册规则</span> <span aria-hidden="true">/</span> <span lang="en">9 account registrations</span></small>
+        <span><span lang="zh-CN">增强 Hook 事件</span> <span aria-hidden="true">/</span> <span lang="en">Enhancement Hook events</span></span>
+        <small><span lang="zh-CN">9 条账户注册规则；基础版无 Hook</span> <span aria-hidden="true">/</span> <span lang="en">9 account registrations; none in the base Plugin</span></small>
       </article>
       <article class="landing-stat"><strong>3.0</strong><span>TaskOutcomeEvent</span></article>
     </div>

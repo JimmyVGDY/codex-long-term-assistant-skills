@@ -2,6 +2,10 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## Unreleased
+
+- Synchronize current documentation with V7.9.0: navigation, installation readback, base/enhancement boundaries, Hook event and registration counts, and current validation links. Preserve historical release evidence and regenerate English and compatibility copies.
+
 ## 7.9.0 - 2026-09-12
 
 - Add a base-install entry point requiring neither this package's Python runtime nor an API key. The base Plugin loads the ten Skills only and starts no Hook, worker, Profile, index, or budget ledger.

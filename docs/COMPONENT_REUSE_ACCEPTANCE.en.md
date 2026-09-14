@@ -2,7 +2,7 @@
 
 # Component and Module Reuse Acceptance
 
-This procedure evaluates the [shared reuse rules](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/v7.6.0/locales/en/skills/engineering-quality-delivery/references/component-module-reuse.md). It is for package maintainers, not an automatic step in ordinary application tasks.
+This procedure evaluates the [shared reuse rules](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/locales/en/skills/engineering-quality-delivery/references/component-module-reuse.md). It is for package maintainers, not an automatic step in ordinary application tasks.
 
 ## Prepare and Execute
 
@@ -35,4 +35,4 @@ All candidate cases must satisfy predefined behavioral and semantic expectations
 
 Report package, link, localization, and fixture checks separately. Use existing packet/controller tooling for review without new runtime contracts. After authorized installation, compare actual installed content with candidate hashes and exercise the installed entrypoint in a new host task. Copy-based replay is not installation acceptance; absent installation or new-host evidence remains incomplete. Finite samples do not establish universal reliability, and cases already passing before optimization cannot support a claim of improved reuse rates.
 
-Related: [Capability index](CAPABILITY_INDEX.en.md) · [Acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.en.md) · [V7.6.0 validation](releases/v7.6.0/VALIDATION_REPORT.en.md).
+Related: [Capability index](CAPABILITY_INDEX.en.md) · [Acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.en.md) · [V7.9.0 validation](releases/v7.9.0/VALIDATION_REPORT.en.md).

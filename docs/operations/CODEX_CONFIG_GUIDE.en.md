@@ -77,9 +77,9 @@ A hard-coded model overrides bounded scheduling and `[agents]` defaults, breakin
 
 ## 6. Plugin and Hooks
 
-V7.8.1 uses a frozen registry for the Plugin, Marketplace, and PreToolUse/PostToolUse interfaces in Codex CLI 0.154.0 and the ten preceding stable releases. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.8.1`, and the schema-3 host snapshot is `HOST_COMPATIBLE`. Files present on disk do not establish installation or enablement.
+V7.9.0 uses a frozen registry for the Plugin, Marketplace, and PreToolUse/PostToolUse interfaces in Codex CLI 0.154.0 and the ten preceding stable releases. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.9.0`, and, for enhancement installation, the schema-3 host snapshot is `HOST_COMPATIBLE`. Files present on disk do not establish installation or enablement.
 
-The Plugin supplies seven registered Hook entry points through `hooks/hooks.json`. On Windows, `hooks\cp_hook.cmd` selects an available Python launcher without an extra `python3.exe` shim. SessionEnd keeps a three-second host budget: the Hook only constructs a capped, body-free sanitized Event V3 and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe. It neither scans nor writes the event chain. Outside the Hook budget, the worker validates stable lifecycle identity, semantically deduplicates, persists the terminal event, creates the signed job, and seals the chain. Every queue entry point rejects missing stable lifecycle IDs, and an unsealed `seal_required` chain cannot enter Evolution.
+The base Plugin registers no Hooks. The optional enhancement registers eight event types and nine account entries in account-level `hooks.json`; PreToolUse has separate dispatch and write matchers. On Windows, `hooks\cp_hook.cmd` selects an available Python launcher without an extra `python3.exe` shim. SessionEnd keeps a three-second host budget: the Hook only constructs a capped, body-free sanitized Event V3 and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe. It neither scans nor writes the event chain. Outside the Hook budget, the worker validates stable lifecycle identity, semantically deduplicates, persists the terminal event, creates the signed job, and seals the chain. Every queue entry point rejects missing stable lifecycle IDs, and an unsealed `seal_required` chain cannot enter Evolution.
 
 ## 7. Automatic model ceiling
 
@@ -98,7 +98,7 @@ After changing the configuration or Reviewer files, fully close and reopen the C
 
 1. `/model` still shows the user's selected main model.
 2. `codex plugin list --json` reads back the target Plugin's installation, enabled state, and version.
-3. A new task can discover ten current Skills and seven Reviewers.
+3. A new task can discover ten current Skills; the seven managed Reviewers are available only with the enhancement installed.
 4. A small read-only review does not start many Reviewers without justification.
 5. Review results contain only the approved dispatch profile, permit reference, reserved units, outcome metrics, and isolation level.
 
@@ -106,7 +106,7 @@ See [installation and recovery](INSTALLATION_RECOVERY.en.md) for the complete `d
 
 ## Optional project gate and effective loading
 
-The registration contains eight entry points, while project gates default to disabled. In V7.8.1, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy; unconfigured or disabled policies remain neutral.
+The optional enhancement covers eight event types and nine account registrations, while project gates default to disabled. In V7.9.0, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy; unconfigured or disabled policies remain neutral.
 
 ```text
 Unconfigured or disabled ───────────────→ native writes preserve host behavior
@@ -114,6 +114,6 @@ Legacy enabled + native write tool ────→ deny LEGACY_WRITE_ORIGIN_UNAV
 UserPromptSubmit / Stop / Interrupt ───→ do not consume legacy GateTask control state
 ```
 
-Configured `enabled=true`, a loaded Plugin, and semantic suitability are separate conclusions. V7.8.1 accepts only a Hook-created Operation v2 origin, permission claimed by a different B, and B's matching PostTool receipt; legacy GateTask receipts cannot authorize native writes. An open session can retain an older Plugin snapshot, so verify a fresh task after upgrade. Shell, MCP, and other entry points do not have guaranteed pre-write interception.
+Configured `enabled=true`, a loaded Plugin, and semantic suitability are separate conclusions. V7.9.0 accepts only a Hook-created Operation v2 origin, permission claimed by a different B, and B's matching PostTool receipt; legacy GateTask receipts cannot authorize native writes. An open session can retain an older Plugin snapshot, so verify a fresh task after upgrade. Shell, MCP, and other entry points do not have guaranteed pre-write interception.
 
 All 11 Codex CLI versions in the frozen window have per-version official source evidence for UserPromptSubmit async behavior; Desktop and other real hosts still require separate readback. See the [capability index and workflow entry](../CAPABILITY_INDEX.en.md) for legacy gate enable/disable entry points, but this patch does not restore the legacy task lifecycle as write authorization.

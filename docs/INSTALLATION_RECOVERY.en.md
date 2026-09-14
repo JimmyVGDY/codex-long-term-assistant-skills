@@ -29,9 +29,11 @@ python scripts\package_manager.py recover --scope user
 
 Without state, `uninstall --dry-run` is a zero-delete preview and real uninstall still refuses. A non-Git directory retains basic documentation and file capabilities and is never initialized as a repository automatically.
 
-Use `scripts\\install-base.ps1` for the base installation (or `scripts/install-base.sh` on POSIX). It registers Skills only and rejects symbolic-link, Junction, and reparse-point ancestors before writing. A failed native Marketplace or Plugin registration rolls back the paths created by that attempt. If native registration cannot be removed, `cp-assistant-base-state.json` remains as `RECOVERY_REQUIRED`; the same base entry attempts managed recovery on the next run and never overwrites an unknown Marketplace.
+Use `scripts\install-base.ps1` for the base installation (or `scripts/install-base.sh` on POSIX). It registers Skills only and rejects symbolic-link, Junction, and reparse-point ancestors before writing. A failed native Marketplace or Plugin registration rolls back the paths created by that attempt. If native registration cannot be removed, `cp-assistant-base-state.json` remains as `RECOVERY_REQUIRED`; the same base entry attempts managed recovery on the next run and never overwrites an unknown Marketplace.
 
 ## Upgrade sequence
+
+The following Python commands add enhancements or upgrade an existing managed enhancement. Base-only users use the native base launcher above.
 
 ```powershell
 codex --version

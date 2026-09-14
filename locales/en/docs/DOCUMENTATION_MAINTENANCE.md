@@ -11,7 +11,7 @@ Run the maintenance commands below from the root of a complete source checkout. 
 | Chinese guidance | Chinese sources in the root, docs and skills | Chinese site and release package |
 | English guidance | Matching source under locales/en | Sibling *.en.md files, English site and package |
 | Current package version | manifest.json; the plugin manifest must agree | Marked version projections |
-| Hook registration | hooks/hooks.json | Marked names and counts; purpose still requires implementation review |
+| Hook registration | hooks/enhancement-hooks.json | Marked names and counts; purpose still requires implementation review |
 | Format versions | Templates, runtime constants and result schema | Manifest declarations and marked document tables |
 | State ownership | authority_registry in manifest.json | Marked authority references |
 

@@ -32,8 +32,8 @@ hide:
       <article class="landing-stat"><strong>7</strong><span>Reviewers</span></article>
       <article class="landing-stat">
         <strong><!-- cp-fact:hook-count -->8<!-- /cp-fact --></strong>
-        <span>Hook events</span>
-        <small>9 account registrations</small>
+        <span>Enhancement Hook events</span>
+        <small>9 account registrations; none in the base Plugin</small>
       </article>
       <article class="landing-stat"><strong>3.0</strong><span>TaskOutcomeEvent</span></article>
     </div>

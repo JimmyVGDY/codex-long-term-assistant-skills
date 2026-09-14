@@ -1,6 +1,6 @@
 {
-  "release_name": "Managed-block inventory hash repair",
-  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with managed-block inventory hashing, C01-C25 AUTO capability selection, consent-bound onboarding scans, scoped review freshness, and feature-level installation recovery",
+  "release_name": "Native base install and optional enhancement runtime",
+  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with a native Python-free base installation, optional managed enhancement runtime, concise status summaries, and low-cost default execution",
   "skills": {
     "backend-engineering": {
       "display_name": "General Backend Engineering",

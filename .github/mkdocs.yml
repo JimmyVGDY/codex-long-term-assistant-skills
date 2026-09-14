@@ -75,7 +75,7 @@ nav:
       - 项目概览: zh-CN/index.md
       - 文档中心: zh-CN/docs/README.md
       - 开始使用:
-          - V7.8 使用指南: zh-CN/docs/USER_GUIDE.md
+          - V7.9 使用指南: zh-CN/docs/USER_GUIDE.md
           - 安装、升级与恢复: zh-CN/docs/operations/INSTALLATION_RECOVERY.md
           - Codex 配置: zh-CN/docs/operations/CODEX_CONFIG_GUIDE.md
           - 项目上下文与接入: zh-CN/docs/PROJECT_CONTEXT_AND_ONBOARDING.md

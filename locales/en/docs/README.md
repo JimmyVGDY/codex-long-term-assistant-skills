@@ -8,7 +8,7 @@ This page organizes current package documentation by adoption stage. Historical 
 
 ## Getting started
 
-- [V7.6 user guide](USER_GUIDE.md)
+- [V7.9 user guide](USER_GUIDE.md)
 - [Installation, upgrade, rollback, and recovery](operations/INSTALLATION_RECOVERY.md)
 - [Codex configuration guide](operations/CODEX_CONFIG_GUIDE.md)
 - [Project context and onboarding](PROJECT_CONTEXT_AND_ONBOARDING.md)
@@ -16,8 +16,8 @@ This page organizes current package documentation by adoption stage. Historical 
 
 ## Architecture and policy
 
-- [V7.6 current system architecture](architecture/SYSTEM_ARCHITECTURE.md)
-- [V7.6 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md)
+- [V7.9 current system architecture](architecture/SYSTEM_ARCHITECTURE.md)
+- [V7.9 domain Skill architecture](V7_DOMAIN_SKILL_ARCHITECTURE.md)
 - [Model routing and cost policy](MODEL_ROUTING_AND_COST_POLICY.md)
 - [Reviewer runtime isolation](REVIEWER_RUNTIME_ISOLATION.md)
 - [Independent sub-agent context](SUBAGENT_INDEPENDENT_CONTEXT.md)
@@ -31,15 +31,15 @@ This page organizes current package documentation by adoption stage. Historical 
 - [Controlled-evolution operations](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](VALIDATION_REPORT.md)
-- [V7.6.0 package validation report](releases/v7.6.0/VALIDATION_REPORT.md)
-- [V7.6.0 audit report](releases/v7.6.0/AUDIT_REPORT.md)
+- [V7.9.0 package validation report](releases/v7.9.0/VALIDATION_REPORT.md)
+- [V7.9.0 audit report](releases/v7.9.0/AUDIT_REPORT.md)
 - [Component reuse acceptance](COMPONENT_REUSE_ACCEPTANCE.md)
 - [Documentation maintenance and fact checks](DOCUMENTATION_MAINTENANCE.md)
 
 ## Release and history
 
 - [Release evidence index](releases/README.md)
-- [V7.6.0 release notes](releases/v7.6.0/RELEASE_NOTES.md)
+- [V7.9.0 release notes](releases/v7.9.0/RELEASE_NOTES.md)
 - [Changelog](../CHANGELOG.md)
 - [Public reconstruction index](history/README.md)
 - [Public reconstruction release index](history/RELEASE_ARCHIVES.md)

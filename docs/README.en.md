@@ -10,7 +10,7 @@ This page organizes current package documentation by adoption stage. Historical 
 
 ## Getting started
 
-- [V7.6 user guide](USER_GUIDE.en.md)
+- [V7.9 user guide](USER_GUIDE.en.md)
 - [Installation, upgrade, rollback, and recovery](operations/INSTALLATION_RECOVERY.en.md)
 - [Codex configuration guide](operations/CODEX_CONFIG_GUIDE.en.md)
 - [Project context and onboarding](../locales/en/docs/PROJECT_CONTEXT_AND_ONBOARDING.md)
@@ -18,8 +18,8 @@ This page organizes current package documentation by adoption stage. Historical 
 
 ## Architecture and policy
 
-- [V7.6 current system architecture](architecture/SYSTEM_ARCHITECTURE.en.md)
-- [V7.6 domain Skill architecture](../locales/en/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md)
+- [V7.9 current system architecture](architecture/SYSTEM_ARCHITECTURE.en.md)
+- [V7.9 domain Skill architecture](../locales/en/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md)
 - [Model routing and cost policy](../locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md)
 - [Reviewer runtime isolation](../locales/en/docs/REVIEWER_RUNTIME_ISOLATION.md)
 - [Independent sub-agent context](../locales/en/docs/SUBAGENT_INDEPENDENT_CONTEXT.md)
@@ -33,15 +33,15 @@ This page organizes current package documentation by adoption stage. Historical 
 - [Controlled-evolution operations](../locales/en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](../locales/en/docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](../locales/en/docs/VALIDATION_REPORT.md)
-- [V7.6.0 package validation report](releases/v7.6.0/VALIDATION_REPORT.en.md)
-- [V7.6.0 audit report](releases/v7.6.0/AUDIT_REPORT.en.md)
+- [V7.9.0 package validation report](releases/v7.9.0/VALIDATION_REPORT.en.md)
+- [V7.9.0 audit report](releases/v7.9.0/AUDIT_REPORT.en.md)
 - [Component reuse acceptance](COMPONENT_REUSE_ACCEPTANCE.en.md)
 - [Documentation maintenance and fact checks](DOCUMENTATION_MAINTENANCE.en.md)
 
 ## Release and history
 
 - [Release evidence index](releases/README.en.md)
-- [V7.6.0 release notes](releases/v7.6.0/RELEASE_NOTES.en.md)
+- [V7.9.0 release notes](releases/v7.9.0/RELEASE_NOTES.en.md)
 - [Changelog](../CHANGELOG.en.md)
 - [Public reconstruction index](history/README.en.md)
 - [Public reconstruction release index](history/RELEASE_ARCHIVES.en.md)

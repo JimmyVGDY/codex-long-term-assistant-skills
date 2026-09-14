@@ -1,8 +1,7 @@
+<!-- Generated from locales/en/docs/releases/v7.9.0/AUDIT_REPORT.md; edit that source and run scripts/documentation.py sync. -->
+
 # V7.9.0 Audit Record
 
-Chinese version: [AUDIT_REPORT.md](AUDIT_REPORT.md)
+The base Plugin loads Skills only. The account-managed enhancement runtime owns Hooks and avoids duplicate Skill discovery. Base state is migrated only when verifiable and restored on enhancement uninstall; unknown files remain preserved.
 
-- The base Plugin loads Skills only. Enhancement runtime attaches through account-managed Hooks, preventing duplicate same-named Skill discovery.
-- Native base installation creates the base state. The enhancement transaction migrates only verifiable base state and restores it on uninstall; unknown files remain preserved.
-- An enabled controlled-write policy, Operation v2, or Required budget cannot be bypassed by a base downgrade. A runtime failure must fail controlled operations closed.
-- This record is not an independent Reviewer conclusion. Independent review follows stable candidate validation.
+An enabled controlled-write policy, Operation v2, or Required budget cannot be bypassed by base downgrade. Independent compatibility and security reviews completed; their base-state, failure-recovery, account-Hook verification, and path-containment findings were repaired, and the focused recheck found no remaining blocking issue.
