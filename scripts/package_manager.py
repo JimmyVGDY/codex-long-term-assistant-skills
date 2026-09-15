@@ -912,10 +912,13 @@ def _action_detail(code: str, action_kind: str, argv: List[str], reason: str,
 
     English: Build the machine action contract used by status and doctor projections.
     """
-    display = " ".join(
-        ('"%s"' % item.replace('"', '\\"')) if any(ch.isspace() for ch in item) else item
-        for item in argv
-    )
+    if not argv:
+        display = ""
+    elif os.name == "nt":
+        display = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in argv)
+    else:
+        import shlex
+        display = shlex.join(argv)
     return {
         "schema": "ux-action/1",
         "code": code,
@@ -925,14 +928,17 @@ def _action_detail(code: str, action_kind: str, argv: List[str], reason: str,
         "display_command": display,
         "reason": reason,
         "expected_result": expected_result,
-        "scope": scope,
+        "scope": scope.upper(),
     }
 
 
-def _verify_action(scope: str = "user", mode: str = "plugin") -> Dict[str, Any]:
+def _verify_action(scope: str = "user", mode: str = "plugin", repo_path: Optional[str] = None) -> Dict[str, Any]:
+    arguments = [sys.executable, str(ROOT / "scripts" / "package_manager.py"), "verify", "--scope", scope, "--mode", mode]
+    if scope == "repo" and repo_path:
+        arguments.extend(["--repo-path", str(repo_path)])
     return _action_detail(
         "VERIFY_INSTALLATION", "READ_ONLY",
-        [sys.executable, "scripts/package_manager.py", "verify", "--scope", scope, "--mode", mode],
+        arguments,
         "重新读取安装文件、注册和兼容性证据。",
         "输出安装验证通过，且不会执行安装、恢复或修复。",
         scope,
@@ -946,110 +952,132 @@ def _ux_capability(capability_id: str, availability: str, reason_codes: List[str
 
 
 def _ux_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
-    """中文：在不修改状态、不授予权限的前提下分类基础与可选能力。
+    """中文：只投影已观察的组件事实；配置不作为运行时执行证明。
 
-    English: Classify base and optional capabilities without mutating or authorizing anything.
+    English: Project observed component facts; configuration is not runtime enforcement proof.
     """
-    scope = str(data.get("scope") or "user")
-    mode = str(data.get("mode") or "plugin")
-    activation = data.get("plugin_activation") if isinstance(data.get("plugin_activation"), Mapping) else {}
-    base_activation = data.get("base_activation") if isinstance(data.get("base_activation"), Mapping) else {}
+    scope, mode = str(data.get("scope") or "user"), str(data.get("mode") or "plugin")
     state = data.get("state") if isinstance(data.get("state"), Mapping) else {}
     components = state.get("components") if isinstance(state.get("components"), Mapping) else {}
-    base_state = data.get("base_state") if isinstance(data.get("base_state"), Mapping) else {}
+    activation = data.get("base_activation") if isinstance(data.get("base_activation"), Mapping) else {}
     host = data.get("host_compatibility") if isinstance(data.get("host_compatibility"), Mapping) else {}
-    transaction = data.get("live_transaction")
+    issues = data.get("component_errors") if isinstance(data.get("component_errors"), Mapping) else {}
     capabilities: List[Dict[str, Any]] = []
     causes: List[Dict[str, str]] = []
     affected: List[str] = []
-    action = _verify_action(scope, mode)
-    mode_error = str(data.get("mode_error") or "")
-    if scope == "user" and mode_error:
-        return {
-            "schema": "ux-summary/1",
-            "overall": "ERROR",
-            "available": "当前无法确认本插件基础能力",
-            "affected": ["installation-state"],
-            "cause": [{"id": "installation-state", "detail": mode_error}],
-            "capabilities": [_ux_capability(
-                "installation-state", "UNKNOWN", [mode_error], "INSTALLATION",
-            )],
-            "next_action_detail": action,
-        }
+    overall = "PASS"
+    action: Optional[Dict[str, Any]] = None
 
-    if scope != "user":
-        capabilities.append(_ux_capability("base-plugin", "NOT_APPLICABLE", ["REPO_SCOPE"], "NOT_CHECKED"))
-        capabilities.append(_ux_capability("repository-skills", "AVAILABLE", ["REPO_SCOPE"], "INSTALLATION"))
-        overall = "PASS"
-        available = "仓库范围能力可用"
-    else:
-        base_is_active = bool(base_activation.get("active"))
-        base_installed = bool(base_state)
-        base_checked = bool(base_activation.get("checked", True))
-        activation_active = bool(activation.get("active"))
-        if not base_checked and not base_is_active:
-            capabilities.append(_ux_capability("base-plugin", "UNKNOWN", ["HOST_SAMPLE_UNAVAILABLE"], "NOT_CHECKED"))
-            affected.append("base-plugin")
-            causes.append({"id": "base-plugin", "detail": str(base_activation.get("detail") or "无法读取宿主注册状态")})
-            overall = "DEGRADED"
-            available = "当前无法确认本插件基础能力"
-        elif not base_is_active:
-            detail = str(activation.get("detail") or base_activation.get("detail") or "本插件基础 Plugin 未安装或未启用")
-            capabilities.append(_ux_capability("base-plugin", "UNAVAILABLE", ["BASE_NOT_ACTIVE"], "HOST_CHECK"))
-            affected.append("base-plugin")
-            causes.append({"id": "base-plugin", "detail": detail})
-            overall = "ERROR"
-            available = "本插件基础能力尚不可用"
-            action = _action_detail(
-                "CHECK_PLUGIN_REGISTRATION", "READ_ONLY", ["codex", "plugin", "list", "--json"],
-                "基础 Plugin 尚未通过宿主注册读回。", "确认 installed/enabled/version 后再进行下一步。", "user",
-            )
-        elif mode == "plugin" and host.get("compatible") is False:
-            capabilities.append(_ux_capability("base-plugin", "BLOCKED", ["HOST_INCOMPATIBLE"], "HOST_CHECK"))
-            affected.append("base-plugin")
-            causes.append({"id": "base-plugin", "detail": str(host.get("status") or "宿主兼容证据不匹配")})
-            overall = "DEGRADED"
-            available = "基础能力被当前宿主兼容性阻断"
-            action = _verify_action(scope, mode)
+    def add(name: str, availability: str, reasons: List[str], level: str,
+            severity: Optional[str] = None) -> None:
+        nonlocal overall
+        capabilities.append(_ux_capability(name, availability, reasons, level))
+        if severity:
+            affected.append(name)
+            causes.append({"id": name, "detail": "; ".join(reasons)})
+            if severity == "ERROR" or overall == "PASS":
+                overall = severity
+
+    base_active = bool(activation.get("active"))
+    checked = bool(activation.get("checked", False))
+    base_errors = list(issues.get("base") or [])
+    if scope == "repo":
+        add("base-plugin", "NOT_APPLICABLE", ["ACCOUNT_REGISTRATION_OUTSIDE_SCOPE"], "NOT_CHECKED")
+        if data.get("git_repository") is False:
+            add("repository-skills", "NOT_APPLICABLE", ["NON_GIT_DIRECTORY"], "NOT_CHECKED")
+        elif not state:
+            add("repository-skills", "NOT_ENABLED", ["OPTIONAL_REPO_INSTALLATION_ABSENT"], "NOT_CHECKED")
+        elif base_errors:
+            add("repository-skills", "UNAVAILABLE", base_errors, "INSTALLATION", "ERROR")
         else:
-            base_level = "REGISTRATION" if activation_active or base_activation.get("active") else (
-                "INSTALLATION" if base_installed else "HOST_CHECK")
-            capabilities.append(_ux_capability("base-plugin", "AVAILABLE", ["BASE_VERIFIED"], base_level))
-            enhancement = components.get("enhancement")
-            if isinstance(enhancement, Mapping):
-                enhancement_status = str(enhancement.get("status") or "")
-                if enhancement_status in {"MANAGED", "INSTALLED", "PLUGIN_MANAGED"}:
-                    capabilities.append(_ux_capability("enhancement", "AVAILABLE", ["ENHANCEMENT_MANAGED"], "INSTALLATION"))
-                else:
-                    capabilities.append(_ux_capability("enhancement", "UNKNOWN", ["ENHANCEMENT_STATE_UNKNOWN"], "NOT_CHECKED"))
-                    affected.append("enhancement")
-                    causes.append({"id": "enhancement", "detail": "增强 state 状态未知"})
-            else:
-                capabilities.append(_ux_capability("enhancement", "NOT_ENABLED", ["OPTIONAL_NOT_ENABLED"], "NOT_CHECKED"))
-            if transaction:
-                capabilities.append(_ux_capability("installation-transaction", "BLOCKED", ["TRANSACTION_INCOMPLETE"], "INSTALLATION"))
-                affected.append("installation-transaction")
-                causes.append({"id": "installation-transaction", "detail": "存在未收敛安装事务"})
-                overall = "DEGRADED"
-                available = "基础能力可用，但安装状态尚未稳定"
-                action = _action_detail(
-                    "RECOVER_INSTALLATION_TRANSACTION", "WRITE",
-                    [sys.executable, "scripts/package_manager.py", "recover", "--scope", scope],
-                    "完成既有安装事务恢复后重新诊断。", "事务归档或返回明确恢复失败，不自动执行其他修复。", scope,
-                )
-            else:
-                overall = "PASS"
-                available = "基础模式正常；已安装增强能力按实际状态显示"
-
-    return {
-        "schema": "ux-summary/1",
-        "overall": overall,
-        "available": available,
-        "affected": affected,
-        "cause": causes,
-        "capabilities": sorted(capabilities, key=lambda item: item["id"]),
-        "next_action_detail": action,
-    }
+            add("repository-skills", "AVAILABLE", ["REPO_INSTALLATION_FILES_PRESENT"], "INSTALLATION")
+        available = "基础文件与说明任务可继续；仓库级安装按本次检查结果显示"
+    else:
+        if not checked and not base_active:
+            add("base-plugin", "UNKNOWN", [str(activation.get("detail") or "HOST_SAMPLE_UNAVAILABLE")],
+                "NOT_CHECKED", "DEGRADED")
+        elif not base_active:
+            add("base-plugin", "UNAVAILABLE", ["BASE_NOT_ACTIVE"], "REGISTRATION", "ERROR")
+        elif base_errors:
+            add("base-plugin", "UNAVAILABLE", base_errors, "INSTALLATION", "ERROR")
+        else:
+            add("base-plugin", "AVAILABLE", ["BASE_VERIFIED"],
+                "INSTALLATION" if mode == "standalone" else "REGISTRATION")
+        available = ("基础模式正常；已安装增强能力按实际状态显示" if base_active and not base_errors
+                     else "当前无法确认本插件基础能力" if not checked else "本插件基础能力尚不可用")
+    enhancement = components.get("enhancement")
+    selected = bool(data.get("enhancement_selected", isinstance(enhancement, Mapping)))
+    if scope != "user":
+        add("enhancement", "NOT_APPLICABLE", ["ACCOUNT_ENHANCEMENT_OUTSIDE_SCOPE"], "NOT_CHECKED")
+    elif not selected:
+        add("enhancement", "NOT_ENABLED", ["OPTIONAL_NOT_ENABLED"], "NOT_CHECKED")
+    else:
+        errors = list(issues.get("enhancement") or [])
+        if errors:
+            add("enhancement", "UNAVAILABLE", errors, "INSTALLATION", "DEGRADED")
+        elif host.get("compatible") is False:
+            add("enhancement", "BLOCKED", [str(host.get("status") or "HOST_INCOMPATIBLE")],
+                "HOST_CHECK", "DEGRADED")
+        elif not isinstance(enhancement, Mapping) or enhancement.get("status") not in {"MANAGED", "INSTALLED", "PLUGIN_MANAGED"}:
+            add("enhancement", "UNKNOWN", ["ENHANCEMENT_STATE_UNKNOWN"], "NOT_CHECKED", "DEGRADED")
+        else:
+            add("enhancement", "AVAILABLE", ["ENHANCEMENT_CHECKED"], "INSTALLATION")
+    for key in ("mode_error", "state_error", "base_state_error", "transaction_error", "sample_error"):
+        if data.get(key):
+            add(key, "UNKNOWN" if key == "sample_error" else "BLOCKED", [str(data[key])],
+                "INSTALLATION", "DEGRADED" if key == "sample_error" else "ERROR")
+    if data.get("duplicate_registration"):
+        add("plugin-registration", "BLOCKED", ["DUPLICATE_BASE_AND_ENHANCEMENT_REGISTRATION"],
+            "REGISTRATION", "ERROR")
+    transaction = data.get("live_transaction")
+    if transaction:
+        add("installation-transaction", "BLOCKED", ["TRANSACTION_INCOMPLETE"], "INSTALLATION", "ERROR")
+        args = [sys.executable, str(ROOT / "scripts" / "package_manager.py"), "recover", "--scope", scope]
+        if scope == "repo" and data.get("repo_path"):
+            args.extend(["--repo-path", str(data["repo_path"])])
+        action = _action_detail("RECOVER_INSTALLATION_TRANSACTION", "WRITE", args,
+                                "存在未收敛安装事务。", "显式恢复既有事务后重新诊断。", scope)
+    elif data.get("mode_error") == "REQUESTED_MODE_MISMATCH":
+        args = [sys.executable, str(ROOT / "scripts" / "package_manager.py"), "status", "--scope", scope]
+        if scope == "repo" and data.get("repo_path"):
+            args.extend(["--repo-path", str(data["repo_path"])])
+        action = _action_detail("READ_INSTALLED_MODE", "READ_ONLY", args,
+                                "Requested mode differs from managed state.", "Read the actual installed mode.", scope)
+    elif any(data.get(key) for key in ("state_error", "base_state_error", "transaction_error", "mode_error")):
+        action = _action_detail("INSPECT_MANAGED_STATE", "MANUAL", [],
+                                "受管状态无法可靠读取。", "核对受管状态与已知备份，保留未知文件。", scope)
+    elif affected:
+        action = _verify_action(scope, mode, data.get("repo_path"))
+        if scope == "user" and (not checked or not base_active):
+            action = _action_detail("CHECK_PLUGIN_REGISTRATION", "READ_ONLY", ["codex", "plugin", "list", "--json"],
+                                    "基础 Plugin 尚未通过宿主注册读回。", "确认 installed/enabled/version 后再进行下一步。")
+            records = data.get("registrations") or {}
+            if checked and records:
+                record = records.get("base") or records.get("enhancement")
+                if record and record.get("installed") and not record.get("enabled"):
+                    action = _action_detail("ENABLE_INSTALLED_PLUGIN", "WRITE",
+                                            ["codex", "plugin", "add", str(record["plugin_id"])],
+                                            "The installed Plugin is disabled.", "Verify the enabled registration.")
+                elif not record and not state and not data.get("base_state"):
+                    args = (["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-File",
+                             str(ROOT / "scripts" / "install-base.ps1")] if os.name == "nt" else
+                            ["sh", str(ROOT / "scripts" / "install-base.sh")])
+                    action = _action_detail("INSTALL_BASE_PLUGIN", "WRITE", args,
+                                            "The base Plugin is not installed.", "Verify the base Plugin registration.")
+    control_checks = data.get("control_checks") or {}
+    for name, default in (("controlled-write", "OPERATION_AUTHORIZATION_NOT_EVALUATED"),
+                          ("delegation-budget", "TASK_BUDGET_NOT_EVALUATED")):
+        control = control_checks.get(name) or {"availability": "NOT_APPLICABLE", "reason": default}
+        availability = control["availability"]
+        add(name, availability, [control["reason"]], "NOT_CHECKED",
+            "ERROR" if availability == "BLOCKED" else "DEGRADED" if availability == "UNKNOWN" else None)
+        if availability == "BLOCKED" and action is None:
+            action = _action_detail("RESTORE_CONTROL_PREREQUISITES", "MANUAL", [],
+                                    control["reason"], "Restore the required runtime or task binding; keep the control enabled.", scope)
+    return {"schema": "ux-summary/1", "overall": overall, "available": available,
+            "affected": list(dict.fromkeys(affected)), "cause": causes,
+            "capabilities": sorted(capabilities, key=lambda item: item["id"]),
+            "next_action_detail": action}
 
 
 def _merge_doctor_checks_into_ux(ux: Mapping[str, Any], checks: List[Mapping[str, Any]]) -> Dict[str, Any]:
@@ -1071,12 +1099,13 @@ def _merge_doctor_checks_into_ux(ux: Mapping[str, Any], checks: List[Mapping[str
     current = str(ux.get("overall") or "UNKNOWN")
     if errors:
         merged["overall"] = "ERROR"
-        merged["available"] = "存在错误项，基础能力状态需以 doctor 检查为准"
     elif warnings and current == "PASS":
         merged["overall"] = "DEGRADED"
         merged["available"] = "基础能力可继续使用，但存在需核对的 doctor 检查项"
     merged["affected"] = affected
     merged["cause"] = causes
+    if (errors or warnings) and not merged.get("next_action_detail"):
+        merged["next_action_detail"] = _verify_action()
     return merged
 
 
@@ -1088,21 +1117,11 @@ def doctor_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
     checks = data.get("checks") if isinstance(data.get("checks"), list) else []
     raw_ux = data.get("ux") if isinstance(data.get("ux"), Mapping) else _ux_summary(data)
     ux = _merge_doctor_checks_into_ux(raw_ux, [item for item in checks if isinstance(item, Mapping)])
-    failed = [item for item in checks if isinstance(item, dict) and item.get("status") == "ERROR"]
-    warned = [item for item in checks if isinstance(item, dict) and item.get("status") == "WARN"]
-    def cause(items: List[Mapping[str, Any]]) -> List[Dict[str, str]]:
-        return [{"id": str(item.get("id") or "unknown"), "detail": str(item.get("detail") or "unknown")}
-                for item in items]
-    if failed:
-        return {"overall": "ERROR", "available": "基础能力暂不可用", "affected": [item.get("id") for item in failed],
-                "cause": cause(failed),
-                "next_action": (data.get("remediation") or ["修复错误项后重试 doctor"])[0], "ux": ux}
-    if warned:
-        return {"overall": "DEGRADED", "available": "基础能力可继续使用", "affected": [item.get("id") for item in warned],
-                "cause": cause(warned),
-                "next_action": (data.get("remediation") or ["查看 doctor --json 获取详情"])[0], "ux": ux}
-    return {"overall": "PASS", "available": "基础与已安装增强能力可用", "affected": [], "cause": [],
-            "next_action": "可直接开始任务；需要详细状态时运行 doctor --json。", "ux": ux}
+    action = ux.get("next_action_detail") or {}
+    return {"overall": ux["overall"], "available": ux["available"],
+            "affected": ux["affected"], "cause": ux["cause"],
+            "next_action": action.get("display_command") or action.get("expected_result") or "可直接开始任务；需要详细状态时运行 doctor --json。",
+            "ux": ux}
 
 
 def migrate_state_v1_to_v2(value: Mapping[str, Any], scope: str, mode: str) -> Dict[str, Any]:
@@ -1440,13 +1459,18 @@ def _verify_restored_plugin(previous: Mapping[str, Any]) -> None:
             raise InstallError("旧 Plugin cache 恢复后 digest 不匹配: %s" % cache)
 
 
-def _probe_plugin_host() -> Dict[str, Any]:
+def _probe_plugin_host(timeout: Optional[int] = None) -> Dict[str, Any]:
     """中文：读取已验证 Codex CLI 版本的 Plugin 宿主能力，不修改状态。
 
     English: Read the Plugin host capability profile for verified Codex CLI versions without
     changing state.
     """
-    version_text = _codex_version_text()
+    run_options = {"timeout": timeout} if timeout is not None else {}
+    if timeout is None:
+        version_text = _codex_version_text()
+    else:
+        version_result = _run_codex(["--version"], check=False, **run_options)
+        version_text = (version_result.stdout or version_result.stderr or "").rstrip("\r\n")
     try:
         version = parse_codex_version_output(version_text)
         version_profile = profile_for_version(COMPATIBILITY_REGISTRY, version)
@@ -1463,12 +1487,28 @@ def _probe_plugin_host() -> Dict[str, Any]:
         version_profile
         and version_output_digest == expected_evidence.get("version_output_sha256")
     )
-    result = _run_codex(["plugin", "list", "--json"], check=False)
+    result = _run_codex(["plugin", "list", "--json"], check=False, **run_options)
     try:
         data = json.loads(result.stdout or "")
     except json.JSONDecodeError:
         data = None
     normalized_target = None
+    registrations: Dict[str, Any] = {"checked": False, "base": None, "enhancement": None}
+    if result.returncode == 0 and version_profile is not None:
+        try:
+            diagnostic_profile = COMPATIBILITY_REGISTRY["profiles"]["plugin_json"][version_profile["plugin_json_profile"]]
+            registrations["base"] = normalize_plugin_list(
+                data, PACKAGE, BASE_MARKETPLACE, None, diagnostic_profile,
+                require_active=False, other_marketplaces=(MARKETPLACE,),
+            )
+            registrations["enhancement"] = normalize_plugin_list(
+                data, PACKAGE, MARKETPLACE, None, diagnostic_profile,
+                require_active=False, other_marketplaces=(BASE_MARKETPLACE,),
+            )
+            registrations["checked"] = True
+        except CompatibilityError:
+            registrations = {"checked": False, "base": None, "enhancement": None,
+                             "detail": "PLUGIN_SCHEMA_UNVERIFIED"}
     list_error = ""
     list_ok = False
     if result.returncode == 0 and version_profile is not None:
@@ -1497,7 +1537,7 @@ def _probe_plugin_host() -> Dict[str, Any]:
         "plugin_add": ["plugin", "add", "--help"],
         "plugin_remove": ["plugin", "remove", "--help"],
     }.items():
-        probe = _run_codex(args, check=False)
+        probe = _run_codex(args, check=False, **run_options)
         output = (probe.stdout or probe.stderr or "").rstrip("\r\n")
         output_digest = hashlib.sha256(output.encode("utf-8")).hexdigest()
         expected_digest = expected_evidence.get(f"{name}_help_sha256")
@@ -1532,6 +1572,7 @@ def _probe_plugin_host() -> Dict[str, Any]:
         "plugin_list_error": list_error[-2000:],
         "command_contract_errors": command_contract_errors,
         "normalized_target": normalized_target,
+        "registrations": registrations,
         "ok": version_ok and version_contract_ok and list_ok
               and all(item["ok"] for item in commands.values())
               and not command_contract_errors,
@@ -1650,7 +1691,7 @@ def _compatibility_snapshot(profile: Mapping[str, Any], payload_digest: str,
     }
 
 
-def _host_compatibility_status(state: Mapping[str, Any]) -> Dict[str, Any]:
+def _host_compatibility_status(state: Mapping[str, Any], observed: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     if state.get("schema_version") != 3:
         return {"status": "LEGACY_HOST_PROFILE_UNKNOWN", "compatible": False}
     snapshot = state.get("compatibility_snapshot")
@@ -1673,7 +1714,7 @@ def _host_compatibility_status(state: Mapping[str, Any]) -> Dict[str, Any]:
             or snapshot.get("payload_digest") != payload_identity.get("manifest_digest")):
         return {"status": "COMPATIBILITY_SNAPSHOT_INVALID", "compatible": False}
     try:
-        current = _probe_plugin_host()
+        current = observed if observed is not None else _probe_plugin_host()
     except Exception as exc:
         return {"status": "HOST_PROBE_FAILED", "compatible": False, "detail": str(exc)}
     if not current.get("ok"):
@@ -2498,48 +2539,281 @@ def status_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
         "available": ux["available"],
         "affected": ux["affected"],
         "cause": ux["cause"],
-        "next_action": ux["next_action_detail"]["display_command"],
+        "next_action": (ux.get("next_action_detail") or {}).get("display_command") or
+                       (ux.get("next_action_detail") or {}).get("expected_result") or "可直接开始任务",
         "ux": ux,
     }
 
 
-def status(scope: str, mode: Optional[str], repo_path: Optional[str], summary: bool = False) -> None:
-    repo = git_root(Path(repo_path or ".")) if scope == "repo" else None
-    state = load_json(state_path(scope, repo), {}) or {}
-    mode_error = _mode_error(state.get("mode"))
-    if mode not in {"plugin", "standalone"}:
-        mode = _normalized_mode(state.get("mode"))
-    live = _load_live_journal(scope, repo)
-    codex_checked = scope == "user" and _codex_available()
-    active, detail = _plugin_activation_status() if codex_checked else (False, "not checked")
-    base_value, base_error = _safe_base_state() if scope == "user" else ({}, None)
-    base_native_active = _base_plugin_active() if codex_checked and base_value else False
-    base_active = _base_capability_active(
-        codex_checked, mode, base_value, state, active, base_native_active,
-    )
-    host_compatibility = None
-    if scope == "user" and mode == "plugin":
-        host_compatibility = _host_compatibility_status(state)
-    ch = codex_home()
-    payload = None
-    if scope == "user" and mode == "plugin" and plugin_cache_root().is_dir():
+def _diagnostic_object(path: Path) -> Tuple[Dict[str, Any], Optional[str]]:
+    """中文：诊断读取拒绝链接、超大文件与重复字段，不修复文件。
+
+    English: Diagnostic reads reject links, oversized files, and duplicate keys without repair.
+    """
+    from cp_runtime.capability_store import bounded_read, safe_path, unique_json_object, CapabilityError
+    try:
+        checked = safe_path(path)
         try:
-            payload = {"source": payload_report(ROOT), "marketplace": payload_report(plugin_marketplace_payload()),
-                       "cache": payload_report(plugin_cache_root())}
-        except InstallError as exc:
-            payload = {"ok": False, "error": str(exc)}
-    data = {"package": PACKAGE, "version": VERSION, "scope": scope, "mode": mode, "mode_error": mode_error, "state": state,
-            "base_state": base_value, "base_state_error": base_error,
-            "live_transaction": live,
-            "plugin_activation": {"active": active, "detail": detail, "checked": codex_checked},
-            "base_activation": {"active": base_active, "detail": _base_activation_detail(mode, base_active),
-                                 "checked": codex_checked},
-            "host_compatibility": host_compatibility,
-            "payload_identity": payload,
-            "skills": skill_names(), "reviewers": [p.name for p in agent_files()],
-            "hooks": str(ch / "hooks.json") if scope == "user" else None}
-    if not summary:
-        data["ux"] = _ux_summary(data)
+            checked.stat()
+        except FileNotFoundError:
+            return {}, None
+        value = json.loads(bounded_read(path, 8 * 1024 * 1024).decode("utf-8-sig"),
+                           object_pairs_hook=unique_json_object)
+        if not isinstance(value, dict):
+            return {}, "STATE_OBJECT_REQUIRED"
+        return value, None
+    except (OSError, ValueError, UnicodeError, CapabilityError):
+        return {}, "STATE_UNREADABLE_OR_INVALID"
+
+
+def _diagnostic_journal(scope: str, repo: Optional[Path]) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """中文：诊断有界读取 journal，保留恢复器的格式合同且不执行恢复。
+
+    English: Read journals within diagnostic bounds, retaining the recovery format without recovery writes.
+    """
+    value, error = _diagnostic_object(transaction_path(scope, repo))
+    if error:
+        return None, "TRANSACTION_UNREADABLE"
+    if not value:
+        try:
+            return (None, "TRANSACTION_UNREADABLE") if _io_path(transaction_path(scope, repo)).exists() else (None, None)
+        except (OSError, InstallError):
+            return None, "TRANSACTION_UNREADABLE"
+    if value.get("schema_version") != JOURNAL_SCHEMA or value.get("scope") != scope or value.get("stage") not in JOURNAL_STAGES:
+        return None, "TRANSACTION_UNREADABLE"
+    return value, None
+
+
+def _diagnostic_base_files(skills_root: Path) -> List[str]:
+    problems = []
+    for name in skill_names():
+        path = skills_root / name / "SKILL.md"
+        try:
+            reject_link_ancestors(path)
+            if not _io_path(path).is_file():
+                problems.append("BASE_SKILL_MISSING")
+        except (OSError, InstallError):
+            problems.append("BASE_SKILL_UNREADABLE_OR_UNSAFE")
+    return sorted(set(problems))
+
+
+def _diagnostic_facts_once(scope: str, mode: Optional[str], repo_path: Optional[str]) -> Dict[str, Any]:
+    repo = None
+    non_git = False
+    if scope == "repo":
+        try:
+            repo = git_root(Path(repo_path or "."))
+        except InstallError:
+            non_git = True
+    source_state_path = state_path(scope, repo) if not non_git else None
+    state, state_error = _diagnostic_object(source_state_path) if source_state_path else ({}, None)
+    state_read_error = state_error
+    if state and (type(state.get("schema_version")) is not int or
+                  state.get("schema_version") not in {1, 2, 3} or state.get("package") != PACKAGE):
+        state_error = "INSTALLATION_STATE_IDENTITY_INVALID"
+    for key in ("components", "managed_hashes", "payload_identity"):
+        if key in state and not isinstance(state[key], dict):
+            state_error = "INSTALLATION_STATE_FIELDS_INVALID"
+    mode_error = _mode_error(state.get("mode"))
+    selected_mode = mode if mode in {"plugin", "standalone"} else _normalized_mode(state.get("mode"))
+    if state.get("mode") in {"plugin", "standalone"} and mode and mode != state["mode"]:
+        mode_error = "REQUESTED_MODE_MISMATCH"
+    base_state, base_error = _diagnostic_object(base_state_path()) if scope == "user" else ({}, None)
+    base_read_error = base_error
+    if base_state and (
+            base_state.get("schema_version") != 1 or base_state.get("package") != PACKAGE
+            or base_state.get("marketplace") != BASE_MARKETPLACE
+            or Path(str(base_state.get("market_root", ""))) != base_marketplace_root()
+            or base_state.get("status", "INSTALLED") not in {"INSTALLING", "INSTALLED", "RECOVERY_REQUIRED"}):
+        base_error = "BASE_STATE_IDENTITY_INVALID"
+    live = None
+    transaction_error = None
+    if not non_git:
+        live, transaction_error = _diagnostic_journal(scope, repo)
+    capability = None
+    registrations: Dict[str, Any] = {"checked": False, "base": None, "enhancement": None}
+    if scope == "user" and selected_mode == "plugin" and _codex_available():
+        try:
+            capability = _probe_plugin_host(timeout=5)
+            registrations = capability.get("registrations") or registrations
+        except (OSError, ValueError, InstallError, CompatibilityError, subprocess.TimeoutExpired):
+            registrations["detail"] = "HOST_PROBE_UNAVAILABLE"
+    base_record = registrations.get("base") or {}
+    enhanced_record = registrations.get("enhancement") or {}
+    base_registered = bool(base_record.get("installed") and base_record.get("enabled"))
+    enhanced_registered = bool(enhanced_record.get("installed") and enhanced_record.get("enabled"))
+    base_active = _base_capability_active(
+        bool(registrations.get("checked")), selected_mode,
+        base_state if not base_error else {}, state, enhanced_registered, base_registered,
+    )
+    component_errors: Dict[str, List[str]] = {"base": [], "enhancement": []}
+    payload_reports = None
+    installed_version = state.get("version") or base_record.get("version") or enhanced_record.get("version")
+    if scope == "repo" and repo is not None and state:
+        component_errors["base"] = _diagnostic_base_files(repo / ".agents" / "skills")
+        base_active = not component_errors["base"]
+    elif scope == "user" and selected_mode == "standalone":
+        component_errors["base"] = _diagnostic_base_files(user_skills_home())
+        base_active = bool(state) and not component_errors["base"]
+    elif base_active:
+        record = enhanced_record if enhanced_registered else base_record
+        market = MARKETPLACE if enhanced_registered else BASE_MARKETPLACE
+        version = str(record.get("version") or "")
+        if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+            component_errors["base"] = ["BASE_VERSION_UNVERIFIED"]
+        else:
+            cache = codex_home() / "plugins" / "cache" / market / PACKAGE / version
+            component_errors["base"] = _diagnostic_base_files(cache / "skills")
+    components = state.get("components") if isinstance(state.get("components"), dict) else {}
+    enhancement_selected = scope == "user" and bool(state)
+    managed_hashes = state.get("managed_hashes") if isinstance(state.get("managed_hashes"), dict) else {}
+    payload_identity = state.get("payload_identity") if isinstance(state.get("payload_identity"), dict) else {}
+    if enhancement_selected:
+        if enhanced_registered and state.get("version") != enhanced_record.get("version"):
+            state_error = "INSTALLATION_VERSION_CONFLICT"
+        for path in [
+            codex_home() / "tools" / "cp-runtime.py", codex_home() / "tools" / "evolution.py",
+            codex_home() / "cp-assistant-hooks" / "cp_hook.py",
+            codex_home() / "cp-assistant-hooks" / "cp_gate.py",
+            *[codex_home() / "agents" / item.name for item in agent_files()],
+        ]:
+            try:
+                reject_link_ancestors(path)
+                if not _io_path(path).is_file():
+                    component_errors["enhancement"].append("ENHANCEMENT_FILE_MISSING")
+            except (OSError, InstallError):
+                component_errors["enhancement"].append("ENHANCEMENT_PATH_UNREADABLE_OR_UNSAFE")
+        if selected_mode == "plugin" and isinstance(installed_version, str) and re.fullmatch(r"\d+\.\d+\.\d+", installed_version):
+            cache = plugin_cache_root(installed_version)
+            try:
+                own_manifest = load_payload_manifest(cache / PAYLOAD_MANIFEST_NAME)
+                payload = verify_payload(cache, own_manifest, package=PACKAGE, version=installed_version)
+                payload_reports = {"source": None, "marketplace": None, "cache": payload}
+                try:
+                    payload_reports["source"] = payload_report(ROOT)
+                except (OSError, ValueError, InstallError):
+                    payload_reports["source"] = {"ok": False, "error": "SOURCE_PAYLOAD_UNVERIFIED"}
+                marketplace = plugin_marketplace_payload()
+                try:
+                    market_manifest = load_payload_manifest(marketplace / PAYLOAD_MANIFEST_NAME)
+                    payload_reports["marketplace"] = verify_payload(
+                        marketplace, market_manifest, package=PACKAGE, version=installed_version)
+                    if payload_identity.get("marketplace_digest") != payload_reports["marketplace"].get("payload_digest"):
+                        component_errors["enhancement"].append("MARKETPLACE_PAYLOAD_IDENTITY_MISMATCH")
+                except (OSError, ValueError, PayloadIntegrityError, InstallError):
+                    payload_reports["marketplace"] = {"ok": False, "error": "MARKETPLACE_PAYLOAD_UNVERIFIED"}
+                    component_errors["enhancement"].append("MARKETPLACE_PAYLOAD_UNVERIFIED")
+                expected = payload_identity.get("cache_digest")
+                if expected != payload.get("payload_digest"):
+                    component_errors["enhancement"].append("INSTALLED_PAYLOAD_IDENTITY_MISMATCH")
+            except (OSError, ValueError, PayloadIntegrityError, InstallError):
+                component_errors["enhancement"].append("INSTALLED_PAYLOAD_UNVERIFIED")
+        else:
+            try:
+                runtime = codex_home() / "runtime" / "cp_runtime"
+                expected = managed_hashes.get(str(runtime))
+                if not expected or tree_sha256(runtime) != expected:
+                    component_errors["enhancement"].append("INSTALLED_RUNTIME_UNVERIFIED")
+            except (OSError, InstallError):
+                component_errors["enhancement"].append("INSTALLED_RUNTIME_UNVERIFIED")
+    host = None
+    if scope == "user" and selected_mode == "plugin" and enhancement_selected:
+        if capability is not None:
+            host = _host_compatibility_status(state, observed=capability)
+        else:
+            host = {"compatible": False, "status": "HOST_PROBE_UNAVAILABLE"}
+    return {
+        "package": PACKAGE, "version": VERSION, "scope": scope, "mode": selected_mode,
+        "repo_path": str(repo) if repo else str(Path(repo_path or ".").absolute()) if scope == "repo" else None,
+        "git_repository": not non_git if scope == "repo" else None,
+        "state": state, "mode_error": mode_error, "state_error": state_error,
+        "base_state": base_state, "base_state_error": base_error,
+        "_read_errors": {"state": state_read_error, "base_state": base_read_error},
+        "live_transaction": live, "transaction_error": transaction_error,
+        "plugin_activation": {"active": enhanced_registered, "checked": registrations.get("checked", False)},
+        "registrations": registrations,
+        "base_activation": {"active": base_active,
+                            "checked": registrations.get("checked", False) if selected_mode == "plugin" else True,
+                            "detail": registrations.get("detail", "")},
+        "duplicate_registration": base_registered and enhanced_registered,
+        "host_compatibility": host, "capability_profile": capability,
+        "installed_version": installed_version, "enhancement_selected": enhancement_selected,
+        "component_errors": {key: sorted(set(value)) for key, value in component_errors.items()},
+        "payload_identity": payload_reports, "skills": skill_names(), "reviewers": [item.name for item in agent_files()],
+        "hooks": str(codex_home() / "hooks.json") if scope == "user" else None,
+    }
+
+
+def _diagnostic_facts(scope: str, mode: Optional[str], repo_path: Optional[str],
+                      profile_path: Optional[str] = None) -> Dict[str, Any]:
+    """中文：稳定采样后按显式项目/当前任务环境评估控制准备条件。
+
+    English: Check sample stability and control prerequisites for an explicit project or current task environment.
+    """
+    for attempt in range(2):
+        data = _diagnostic_facts_once(scope, mode, repo_path)
+        stable = True
+        paths = []
+        if data.get("git_repository") is not False:
+            paths.append((state_path(scope, Path(data["repo_path"]) if scope == "repo" else None),
+                          data["state"], data["_read_errors"]["state"]))
+        if scope == "user":
+            paths.append((base_state_path(), data["base_state"], data["_read_errors"]["base_state"]))
+        for path, captured, error in paths:
+            value, current_error = _diagnostic_object(path)
+            if value != captured or current_error != error:
+                stable = False
+        if data.get("git_repository") is not False:
+            live, journal_error = _diagnostic_journal(scope, Path(data["repo_path"]) if scope == "repo" else None)
+            if live != data["live_transaction"] or journal_error != data["transaction_error"]:
+                stable = False
+        if stable:
+            break
+    data.pop("_read_errors", None)
+    if not stable:
+        data["sample_error"] = "INSTALLATION_CHANGED_DURING_READ"
+        data["base_activation"] = {"active": False, "checked": False, "detail": data["sample_error"]}
+    controls: Dict[str, Any] = {}
+    if profile_path:
+        from cp_runtime.capability_store import CapabilityStore, CapabilityError
+        from cp_runtime.capability_gate import GatePolicy
+        from cp_runtime.common import RuntimeContractError
+        try:
+            profile_value, profile_error = _diagnostic_object(Path(profile_path))
+            if profile_error or not profile_value:
+                raise InstallError("PROJECT_PROFILE_UNREADABLE")
+            store = CapabilityStore(Path(profile_path), Path(repo_path or "."))
+            policy = GatePolicy(store).read()
+            ready = bool(data.get("enhancement_selected")) and not data["component_errors"]["enhancement"]
+            ready = ready and (data.get("mode") != "plugin" or (data.get("host_compatibility") or {}).get("compatible") is True)
+            controls["controlled-write"] = {
+                "availability": "NOT_ENABLED" if not policy or not policy["enabled"] else "UNKNOWN" if ready else "BLOCKED",
+                "reason": "CONTROL_NOT_ENABLED" if not policy or not policy["enabled"] else
+                          "OPERATION_AUTHORIZATION_NOT_EVALUATED" if ready else "CONTROL_RUNTIME_UNAVAILABLE",
+            }
+        except (OSError, ValueError, InstallError, RuntimeContractError):
+            controls["controlled-write"] = {"availability": "BLOCKED", "reason": "CONTROL_PROFILE_UNVERIFIED"}
+    if os.environ.get("CP_DELEGATION_BUDGET_REQUIRED", "").lower() in {"1", "true"}:
+        from cp_runtime.delegation_budget import read_budget
+        try:
+            ledger = os.environ.get("CP_DELEGATION_BUDGET_PATH")
+            if not ledger:
+                raise ValueError("missing ledger")
+            from cp_runtime.capability_store import safe_path
+            budget = read_budget(safe_path(Path(ledger)))
+            if profile_path and budget["identity"].get("project_id") != profile_value.get("project_id"):
+                raise ValueError("project mismatch")
+            controls["delegation-budget"] = {"availability": "UNKNOWN", "reason": "HOST_DISPATCH_PERMIT_NOT_EVALUATED"}
+        except Exception:
+            controls["delegation-budget"] = {"availability": "BLOCKED", "reason": "REQUIRED_BUDGET_UNAVAILABLE"}
+    data["control_checks"] = controls
+    return data
+
+
+def status(scope: str, mode: Optional[str], repo_path: Optional[str], summary: bool = False,
+           profile_path: Optional[str] = None) -> None:
+    data = _diagnostic_facts(scope, mode, repo_path, profile_path)
+    data["ux"] = _ux_summary(data)
     print(json.dumps(status_summary(data) if summary else data, ensure_ascii=False, indent=2))
 
 
@@ -2559,6 +2833,47 @@ def _inventory_candidates(scope: str, mode: str, repo: Optional[Path]) -> List[P
     return paths
 
 
+def _inventory_digest(path: Path, managed_global: bool = False) -> str:
+    """中文：有界检查已知受管目标，沿用既有目录摘要算法。
+
+    English: Bound managed-target reads while preserving the existing tree digest algorithm.
+    """
+    from cp_runtime.capability_store import bounded_read, safe_path
+    target = safe_path(path)
+    maximum = 64 * 1024 * 1024
+    if target.is_file():
+        raw = bounded_read(target, maximum)
+        return managed_global_sha256(target) if managed_global else hashlib.sha256(raw).hexdigest()
+    pending, files = [target], []
+    visited = 0
+    while pending:
+        visited += 1
+        if visited > 2000:
+            raise InstallError("INVENTORY_DIRECTORY_LIMIT")
+        with os.scandir(pending.pop()) as entries:
+            for entry in entries:
+                item = safe_path(Path(entry.path))
+                if entry.is_dir(follow_symlinks=False):
+                    pending.append(item)
+                    if len(pending) + visited > 2000:
+                        raise InstallError("INVENTORY_DIRECTORY_LIMIT")
+                elif entry.is_file(follow_symlinks=False):
+                    files.append(item)
+                    if len(files) > 2000:
+                        raise InstallError("INVENTORY_FILE_LIMIT")
+                else:
+                    raise InstallError("INVENTORY_NON_REGULAR_ENTRY")
+    digest = hashlib.sha256()
+    for item in sorted(files, key=lambda item: item.as_posix()):
+        raw = bounded_read(item, maximum)
+        maximum -= len(raw)
+        digest.update(item.relative_to(target).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(hashlib.sha256(raw).hexdigest().encode("ascii"))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
 def inventory(scope: str, mode: str, repo_path: Optional[str]) -> Dict[str, Any]:
     """中文：只读列出已知受管目标、漂移和未知候选。 English: Read-only managed, drifted, and unknown candidate inventory."""
     repo: Optional[Path] = None
@@ -2573,7 +2888,13 @@ def inventory(scope: str, mode: str, repo_path: Optional[str]) -> Dict[str, Any]
                     "delete_authorized":False,
                     "remediation":["基础文件与说明能力可用；仓库身份、安装和 Git 证据不适用。"]}
     sp = state_path(scope, repo)
-    state = load_json(sp, {}) or {}
+    state, state_error = _diagnostic_object(sp)
+    if state_error or ("managed_hashes" in state and not isinstance(state["managed_hashes"], dict)):
+        return {"package": PACKAGE, "version": VERSION, "scope": scope, "mode": mode,
+                "overall": "ERROR", "state_present": bool(state), "state_path": str(sp),
+                "items": [], "unknown_assets_preserved": True, "delete_authorized": False,
+                "reason": state_error or "STATE_HASHES_INVALID",
+                "remediation": ["Inspect the managed state and known backups; no assets were changed."]}
     hashes = state.get("managed_hashes") if isinstance(state.get("managed_hashes"), dict) else {}
     rows = []
     if state:
@@ -2592,20 +2913,32 @@ def inventory(scope: str, mode: str, repo_path: Optional[str]) -> Dict[str, Any]
                 rows.append({"path":str(path), "status":"UNSAFE_PATH", "expected_sha256":str(expected),
                              "actual_sha256":None})
                 continue
-            exists = _io_path(path).exists()
             is_global_agents = (
                 scope == "user"
                 and _containment_path(path) == _containment_path(codex_home() / "AGENTS.md")
             )
-            actual = (managed_global_sha256(path) if is_global_agents else tree_sha256(path)) \
-                if exists else "missing"
-            status_name = "MISSING" if not exists else ("MANAGED" if str(expected) == actual else "DRIFT")
+            try:
+                _io_path(path).stat()
+                actual = _inventory_digest(path, is_global_agents)
+                status_name = "MANAGED" if str(expected) == actual else "DRIFT"
+            except FileNotFoundError:
+                actual, status_name = "missing", "MISSING"
+            except Exception:
+                actual, status_name = None, "UNREADABLE"
             rows.append({"path":str(path), "status":status_name, "expected_sha256":str(expected),
                          "actual_sha256":actual})
     else:
         for path in _inventory_candidates(scope, mode, repo):
-            if _io_path(path).exists():
-                rows.append({"path":str(path), "status":"UNKNOWN_OWNER", "actual_sha256":tree_sha256(path)})
+            try:
+                _io_path(path).lstat()
+                reject_link_ancestors(path)
+                rows.append({"path":str(path), "status":"UNKNOWN_OWNER", "actual_sha256":_inventory_digest(path)})
+            except FileNotFoundError:
+                continue
+            except InstallError:
+                rows.append({"path":str(path), "status":"UNSAFE_PATH", "actual_sha256":None})
+            except Exception:
+                rows.append({"path":str(path), "status":"UNREADABLE", "actual_sha256":None})
     overall = ("ERROR" if any(row["status"] == "UNSAFE_PATH" for row in rows) else
                ("PASS" if state and all(row["status"] == "MANAGED" for row in rows) else
                 ("DEGRADED" if state else "UNKNOWN")))
@@ -2618,132 +2951,82 @@ def inventory(scope: str, mode: str, repo_path: Optional[str]) -> Dict[str, Any]
 
 
 def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] = None,
-           summary: bool = False) -> bool:
+           summary: bool = False, profile_path: Optional[str] = None) -> bool:
     if recover:
         recover_transaction(scope, repo_path)
         return True
-    codex_exe = _codex_executable() if _codex_available() else None
-    codex_version = None
-    if codex_exe:
-        try:
-            codex_version = _codex_version_text()
-        except Exception:
-            codex_version = None
-    capability = None
-    if codex_exe:
-        try:
-            capability = _probe_plugin_host()
-        except Exception as exc:
-            capability = {"ok": False, "error": str(exc)}
-    repo = None
-    non_git = False
-    if scope == "repo":
-        try:
-            repo = git_root(Path(repo_path or "."))
-        except InstallError:
-            non_git = True
-    state = (load_json(state_path(scope, repo), {}) or {}) if not non_git else {}
-    mode = _normalized_mode(state.get("mode"))
-    mode_error = _mode_error(state.get("mode"))
-    base_state, base_state_error = _safe_base_state() if scope == "user" else ({}, None)
-    base_native_active = bool(codex_exe and base_state and _base_plugin_active())
-    plugin_active = bool(capability and capability.get("normalized_target"))
-    base_active = _base_capability_active(
-        bool(codex_exe), mode, base_state, state, plugin_active, base_native_active,
-    )
-    host_compatibility = (
-        _host_compatibility_status(state)
-        if scope == "user" and mode == "plugin"
-        else None
-    )
+    data = _diagnostic_facts(scope, None, repo_path, profile_path)
     checks: List[Dict[str, Any]] = []
     remediation: List[str] = []
-    def check(check_id: str, status_name: str, detail: str, fix: str = "") -> None:
-        checks.append({"id":check_id, "status":status_name, "detail":detail,
-                       "remediation":fix or None})
-        if fix and status_name in {"WARN", "ERROR"} and fix not in remediation:
+
+    def check(identifier: str, result: str, detail: str, fix: str = "") -> None:
+        checks.append({"id": identifier, "status": result, "detail": detail, "remediation": fix or None})
+        if result in {"WARN", "ERROR"} and fix:
             remediation.append(fix)
-    check("python", "PASS" if sys.version_info >= MINIMUM_PYTHON else "ERROR",
-          "%s (%s)" % (".".join(str(part) for part in sys.version_info[:3]), sys.executable),
-          "安装 Python 3.11+ 并用该解释器重新运行。")
-    check("git", "NOT_APPLICABLE" if non_git else ("PASS" if shutil.which("git") else "WARN"),
-          "non-Git base path" if non_git else str(shutil.which("git") or "not found"),
-          "需要仓库功能时安装 Git；基础能力仍可使用。")
+
+    check("python", "PASS", ".".join(map(str, sys.version_info[:3])))
+    check("git", "NOT_APPLICABLE" if data.get("git_repository") is False else
+          ("PASS" if shutil.which("git") else "WARN"),
+          str(shutil.which("git") or "not found"))
     try:
-        payload = payload_report(ROOT)
-        check("payload", "PASS", "files=%s digest=%s" % (payload.get("file_count"), payload.get("payload_digest")))
-    except Exception as exc:
-        check("payload", "ERROR", str(exc), "重新下载并校验当前发行包。")
-    live = None if non_git else _load_live_journal(scope, repo)
-    check("transaction", "ERROR" if live else "PASS", "active" if live else "none",
-          "运行 recover 或 doctor --recover，完成后再重试。")
-    state_available = bool(state or base_state)
-    if mode_error:
-        check("state", "ERROR", mode_error, "运行 verify 并重新确认安装状态。")
-    else:
-        check("state", "NOT_APPLICABLE" if non_git else ("PASS" if state_available else "WARN"),
-              "base-only" if non_git else ("present" if state else ("base-only" if base_state else "missing")),
-              "可先运行 inventory；无 state 的真实卸载仍会拒绝。")
-    check("base-skills", "PASS" if len(skill_names()) == 10 else "ERROR", "count=%d" % len(skill_names()))
-    if scope == "repo":
-        plugin_status, plugin_detail = "NOT_APPLICABLE", "base-only"
-    elif not state and not base_state:
-        plugin_status = "WARN" if not codex_exe else "ERROR"
-        plugin_detail = "base Plugin registration not verified"
-    elif base_state and not state:
-        plugin_status = "PASS" if base_active else ("WARN" if not codex_exe else "ERROR")
-        plugin_detail = "base Plugin active" if base_active else (base_state_error or "base Plugin registration not verified")
-    elif mode == "standalone":
-        plugin_status = "PASS" if base_active else "ERROR"
-        plugin_detail = _base_activation_detail(mode, base_active)
-    elif not base_active:
-        plugin_status = "WARN" if not codex_exe else "ERROR"
-        plugin_detail = "base Plugin registration not verified"
-    else:
-        plugin_status = "PASS" if host_compatibility and host_compatibility.get("compatible") else "WARN"
-        plugin_detail = str(host_compatibility or "not active")
-    check("plugin", plugin_status, plugin_detail, "运行 verify 并读回 Plugin installed/enabled/version。")
+        report = payload_report(ROOT)
+        check("payload", "PASS", "source payload files=%s" % report.get("file_count"))
+    except (OSError, ValueError, InstallError) as exc:
+        check("payload", "ERROR", "SOURCE_PAYLOAD_UNVERIFIED:" + type(exc).__name__,
+              "重新下载并校验当前发行包。")
+    check("state", "ERROR" if data.get("state_error") or data.get("base_state_error") or data.get("mode_error")
+          else "NOT_APPLICABLE" if data.get("git_repository") is False
+          else "PASS" if data.get("state") or data.get("base_state") else "WARN",
+          str(data.get("state_error") or data.get("base_state_error") or data.get("mode_error") or
+              ("present" if data.get("state") or data.get("base_state") else "missing")))
+    check("transaction", "ERROR" if data.get("live_transaction") or data.get("transaction_error") else "PASS",
+          str(data.get("transaction_error") or ("active" if data.get("live_transaction") else "none")))
+    check("base-skills", "PASS" if len(skill_names()) == 10 else "ERROR", "source count=%d" % len(skill_names()))
     try:
         hook_count = len(json.loads((ROOT / "hooks" / "enhancement-hooks.json").read_text(encoding="utf-8"))["hooks"])
-        check("hooks", "PASS" if hook_count == 8 else "ERROR", "registered=%d" % hook_count,
-              "恢复当前发行包的受管 Hook 注册。")
-    except Exception as exc:
-        check("hooks", "ERROR", str(exc), "恢复当前发行包的受管 Hook 注册。")
+        check("hooks", "PASS" if hook_count == 8 else "ERROR", "source hook types=%d" % hook_count)
+    except (OSError, ValueError, KeyError, TypeError):
+        check("hooks", "ERROR", "SOURCE_HOOKS_UNVERIFIED")
     check("child-agent-policy", "PASS" if len(agent_files()) == 7 else "WARN",
-          "reviewers=%d; optional for ordinary serial work" % len(agent_files()),
-          "需要独立复审时修复 Reviewer；普通工作可由主 Agent 串行继续。")
-    check("controlled-write", "PASS", "optional policy defaults disabled; protected actions remain separate")
-    check("observation", "PASS", "optional observation failure does not block ordinary work")
-    overall = "ERROR" if any(item["status"] == "ERROR" for item in checks) else (
-        "DEGRADED" if any(item["status"] == "WARN" for item in checks) else "PASS")
-    data = {
-        "package":PACKAGE,"version":VERSION,"scope":scope,"mode":mode,"mode_error":mode_error,"target_codex":TARGET_CODEX_VERSION,
-        "supported_codex_versions":list(SUPPORTED_CODEX_VERSIONS),"python":sys.executable,
-        "python_version":".".join(str(part) for part in sys.version_info[:3]),
-        "home":str(Path.home()),"codex_home":str(codex_home()),
-        "user_skills_home":str(user_skills_home()),
-        "plugin_marketplace_root":str(plugin_marketplace_root()),
-        "skill_count":len(skill_names()),"reviewer_count":len(agent_files()),
-        "plugin_manifest":str(ROOT/".codex-plugin"/"plugin.json"),
-        "hooks_manifest":str(ROOT/"hooks"/"hooks.json"),
-        "transaction": None if non_git else str(transaction_path(scope, repo)),
-        "payload_manifest":str(ROOT/PAYLOAD_MANIFEST_NAME),
-        "plugin_cache_root":str(plugin_cache_root()),
-        "git":shutil.which("git"),"codex":codex_exe,"codex_version":codex_version,
-        "capability_profile":capability,"host_compatibility":host_compatibility,
-        "base_state":base_state,"base_state_error":base_state_error,
-        "base_activation":{"active":base_active,"checked":bool(codex_exe),
-                            "detail":_base_activation_detail(mode, base_active)},
-        "plugin_activation":{"active":plugin_active,
-                             "checked":bool(codex_exe),
-                             "detail":(capability or {}).get("plugin_list_error", "not checked")
-                             if isinstance(capability, Mapping) else "not checked"},
-        "overall":overall,"checks":checks,"remediation":remediation,
-        "base_capabilities_available":overall != "ERROR",
-    }
-    data["ux"] = _merge_doctor_checks_into_ux(_ux_summary(data), checks)
+          "source reviewers=%d; optional for serial work" % len(agent_files()))
+    check("controlled-write", "NOT_APPLICABLE", "OPERATION_AUTHORIZATION_NOT_EVALUATED")
+    check("observation", "NOT_APPLICABLE", "RUNTIME_OBSERVATION_NOT_EVALUATED")
+    projected = _ux_summary(data)
+    base_result = next((item for item in projected["capabilities"] if item["id"] == "base-plugin"), {})
+    plugin_status = "NOT_APPLICABLE" if scope == "repo" else (
+        "ERROR" if data.get("mode_error") or data.get("state_error") or
+        base_result.get("availability") == "UNAVAILABLE" else
+        "WARN" if base_result.get("availability") == "UNKNOWN" else "PASS"
+    )
+    check("plugin", plugin_status, "; ".join(base_result.get("reason_codes") or ["OUTSIDE_SCOPE"]))
+    ux = _merge_doctor_checks_into_ux(projected, checks)
+    source_failure = next((item for item in checks if item["status"] == "ERROR"
+                           and item["id"] in {"payload", "hooks", "base-skills"}), None)
+    if source_failure:
+        ux["next_action_detail"] = _action_detail(
+            "VERIFY_SOURCE_PACKAGE", "MANUAL", [], "当前诊断源包校验失败。", "重新下载并校验当前发行包。", scope,
+        )
+    elif ux.get("next_action_detail") and ux["next_action_detail"].get("code") == "VERIFY_INSTALLATION":
+        ux["next_action_detail"] = _verify_action(scope, data["mode"], data.get("repo_path"))
+    capability = data.get("capability_profile") or {}
+    base = next((item for item in ux["capabilities"] if item["id"] == "base-plugin"), {})
+    data.update({
+        "target_codex": TARGET_CODEX_VERSION, "supported_codex_versions": list(SUPPORTED_CODEX_VERSIONS),
+        "python": sys.executable, "python_version": ".".join(map(str, sys.version_info[:3])),
+        "home": str(Path.home()), "codex_home": str(codex_home()), "user_skills_home": str(user_skills_home()),
+        "plugin_marketplace_root": str(plugin_marketplace_root()), "skill_count": len(skill_names()),
+        "reviewer_count": len(agent_files()), "plugin_manifest": str(ROOT / ".codex-plugin" / "plugin.json"),
+        "hooks_manifest": str(ROOT / "hooks" / "hooks.json"), "payload_manifest": str(ROOT / PAYLOAD_MANIFEST_NAME),
+        "plugin_cache_root": str(plugin_cache_root()), "git": shutil.which("git"),
+        "codex": _codex_executable() if _codex_available() else None,
+        "codex_version": capability.get("codex_version_output"),
+        "transaction": None if data.get("git_repository") is False else
+                       str(transaction_path(scope, Path(data["repo_path"]) if scope == "repo" else None)),
+        "overall": ux["overall"], "checks": checks, "remediation": remediation, "ux": ux,
+        "base_capabilities_available": base.get("availability") == "AVAILABLE" or scope == "repo",
+    })
     print(json.dumps(doctor_summary(data) if summary else data, ensure_ascii=False, indent=2))
-    return overall == "PASS"
+    return ux["overall"] == "PASS"
 
 
 def main() -> None:
@@ -2760,6 +3043,7 @@ def main() -> None:
     doctor_parser.add_argument("--recover", action="store_true")
     doctor_parser.add_argument("--scope", choices=["user", "repo"], default="user")
     doctor_parser.add_argument("--repo-path")
+    doctor_parser.add_argument("--profile", help="Explicit project profile for control-prerequisite diagnostics; never changes policy")
     doctor_parser.add_argument("--strict", action="store_true")
     doctor_parser.add_argument("--json", action="store_true")
     doctor_parser.add_argument("--summary", action="store_true")
@@ -2767,6 +3051,7 @@ def main() -> None:
     status_parser.add_argument("--scope",choices=["user","repo"],default="user")
     status_parser.add_argument("--mode",choices=["plugin","standalone"],default=None)
     status_parser.add_argument("--repo-path")
+    status_parser.add_argument("--profile", help="Explicit project profile for control-prerequisite diagnostics; never changes policy")
     status_parser.add_argument("--json",action="store_true")
     recover_parser=sub.add_parser("recover")
     recover_parser.add_argument("--scope",choices=["user","repo"],default="user")
@@ -2784,10 +3069,10 @@ def main() -> None:
             return
         # 中文：常规调用者默认获得可行动摘要；脚本调用方通过 --json 保留完整稳定字段。
         # English: Ordinary users receive an actionable summary by default; --json retains stable full fields for scripts.
-        ok = doctor(False, args.scope, args.repo_path, summary=not args.json)
+        ok = doctor(False, args.scope, args.repo_path, summary=not args.json, profile_path=args.profile)
         if args.strict and not ok: raise SystemExit(2)
         return
-    if args.command=="status": status(args.scope,args.mode,args.repo_path,summary=not args.json); return
+    if args.command=="status": status(args.scope,args.mode,args.repo_path,summary=not args.json,profile_path=args.profile); return
     if args.command=="inventory":
         print(json.dumps(inventory(args.scope,args.mode,args.repo_path),ensure_ascii=False,indent=2)); return
     if args.command=="recover":

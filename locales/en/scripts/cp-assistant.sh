@@ -7,10 +7,10 @@ if [ "$#" -gt 0 ]; then shift; fi
 
 case "$command" in
   help|--help|-h)
-    printf '%s\n' 'Codex 跨项目助手日常入口' \
+    printf '%s\n' 'Codex Cross Project Assistant daily entry' \
       'Usage: cp-assistant.sh <command> [options]' \
       'Commands: help, install-base, status, doctor, verify, inventory, install-enhancement, recover, resume' \
-      'help 与 install-base 无需 Python；管理命令需要 Python 3.11+。'
+      'help and install-base do not require Python. Management commands require Python 3.11+.'
     exit 0
     ;;
   install-base)

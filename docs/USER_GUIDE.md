@@ -25,7 +25,7 @@
 .\scripts\cp-assistant.ps1 status
 .\scripts\cp-assistant.ps1 doctor
 .\scripts\cp-assistant.ps1 inventory --scope user --mode plugin --json
-.\scripts\cp-assistant.ps1 resume --repo-path E:\\work\\repo --profile C:\\safe-state\\project-profile.json --checkpoint-dir C:\\safe-state\\task
+.\scripts\cp-assistant.ps1 resume --repo-path E:\work\repo --profile C:\safe-state\project-profile.json --checkpoint-dir C:\safe-state\task
 .\scripts\cp-assistant.ps1 recover --scope user
 ```
 
@@ -36,6 +36,10 @@
 ## 体验基准
 
 `scripts/ux-benchmark.py` 只在显式调用时执行确定性命令采样，不启动模型、不上传数据、不保存 Prompt 或完整输出。`collect`、`import-observations` 和 `compare` 的输入、输出和隐私字段见 `tests/fixtures/ux-benchmark/protocol.json`。包装层耗时或工具数变化只能说明测量样本的变化，不能单独证明真实 Agent 任务提速。
+
+`status` 与 `doctor` 可通过 `--profile <项目Profile> --repo-path <仓库>` 读取显式项目的控制准备条件。已启用门禁但运行时不可用会阻断对应能力；没有实际操作许可时不宣称受控写入可执行。`inventory` 在文件不可读或状态损坏时返回明确结果，不修复或删除资产。
+
+基准命令可使用 `--command-file <JSON参数数组文件>` 避免 Shell 引号问题。输出必须是包根目录外的新文件；比较时重新计算统计，核对完整来源 SHA、fixture、场景及环境。少于 20 个有效耗时样本不输出 p95。
 
 ## 组件复用的使用顺序
 

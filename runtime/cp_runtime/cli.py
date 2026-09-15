@@ -18,7 +18,7 @@ from .feedback import record_feedback
 from .finalization import build_finalization_report
 from .memory import create_knowledge_candidate, create_projection_candidate, promote_projection
 from .project import load_profile, load_state, onboard_project, refresh_project, validate_binding
-from .resume import build_resume_view, render_resume_text
+from .resume import build_resume_view, error_resume_view, render_resume_text
 
 
 def emit(value: Any) -> None:
@@ -72,7 +72,10 @@ def cmd_project_resume(args: argparse.Namespace) -> None:
             [Path(item) for item in args.evidence],
         )
     except RuntimeContractError as exc:
-        print("[FAIL] " + str(exc), file=sys.stderr)
+        if args.json:
+            emit(error_resume_view(str(exc)))
+        else:
+            print("[FAIL] " + str(exc), file=sys.stderr)
         raise SystemExit(2)
     if args.json:
         emit(view)

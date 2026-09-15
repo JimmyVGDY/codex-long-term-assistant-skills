@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
     [Parameter(Position = 0)][string]$Command = "help",
     [Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments = @()
@@ -11,11 +11,11 @@ $env:PYTHONIOENCODING = 'utf-8'
 $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
 
 function Write-CpAssistantHelp {
-    Write-Output "Codex 跨项目助手日常入口"
+    Write-Output "Codex Cross Project Assistant daily entry"
     Write-Output "Usage: cp-assistant.ps1 <command> [options]"
     Write-Output "Commands: help, install-base, status, doctor, verify, inventory,"
     Write-Output "          install-enhancement, recover, resume"
-    Write-Output "help 与 install-base 无需 Python；管理命令需要 Python 3.11+。"
+    Write-Output "help and install-base do not require Python. Management commands require Python 3.11+."
 }
 
 if ($Command -in @("help", "--help", "-h")) {

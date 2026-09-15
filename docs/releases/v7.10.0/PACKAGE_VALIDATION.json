@@ -1,10 +1,10 @@
 {
-  "ok": true,
-  "status": "PASS",
+  "ok": false,
+  "status": "FINAL_FULL_VALIDATION_PENDING",
   "version": "7.10.0",
   "evidence_scope": "package-only",
-  "focused_tests": "458 package tests and 212 runtime tests passed (1 runtime test skipped)",
-  "full_validation": "Not asserted by this file; use the complete CI runs for the release commit",
+  "focused_tests": "41 diagnostic, 8 benchmark and 25 recovery/resource tests passed (2 Windows link-privilege skips)",
+  "full_validation": "Required again after the diagnosed recovery fix; replace this record with the actual final full report before publication",
   "publication": "Use the GitHub Release state",
   "account_installation": "Requires separate account readback"
 }

@@ -6,6 +6,8 @@
 
 按顺序执行：
 
+已有增强 runtime 且请求方提供了明确的 Profile、检查点与 Evidence 路径时，先调用一次已安装 `cp-runtime.py project-resume --repo-path <仓库> --profile <Profile> --checkpoint-dir <检查点目录> --evidence <Evidence> --json`，复用其中的身份、基线与过期证据结果，避免逐文件重复查询。多个 Evidence 重复传参。没有增强 runtime 时沿用下方手动流程或 Skill 自带的 `checkpoint.py recover`；不为恢复查询自动安装、初始化或修复状态。摘要不是授权，PARTIAL/UNKNOWN/STALE 必须保持原意，再阅读下一步涉及的源码。
+
 1. 读取当前请求和当前授权；
 2. 读取平台、全局和项目级 `AGENTS.md`；
 3. 读取 `PROJECT_CONTEXT.md`；

@@ -8,8 +8,8 @@
     "hooks",
     "runtime"
   ],
-  "file_count": 236,
-  "payload_digest": "8ee104982604c3e8b81d68530d5607202f255ddbb459a338e5ade36e4e695561",
+  "file_count": 237,
+  "payload_digest": "c6ee952015eb88da0b2fc725b081db9295e1df4d71ddf5ef3020e6f24ab9dc2c",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -543,8 +543,8 @@
     },
     {
       "path": "skills/long-running-task-memory/references/memory-recovery-conflicts.md",
-      "sha256": "f2a64c44bb281cc489c33916e807825b48a83cb01f67d076a6cc9a75f961bdca",
-      "size": 1737
+      "sha256": "6189ee18cc5303eedd75e078988a2951df411c76cb95bcc798b25dcb7b8fdf08",
+      "size": 2367
     },
     {
       "path": "skills/long-running-task-memory/references/memory-security-lifecycle.md",
@@ -878,8 +878,8 @@
     },
     {
       "path": "runtime/cp_runtime/cli.py",
-      "sha256": "c01ff8efdc8090693669292dd0ea590296ff11b9c658d4f3ff91c3bc3a7dcf6c",
-      "size": 13915
+      "sha256": "5059f631909a2f73bde86da34c24909abe4dd8e10023d64a349e6ab75fbf234d",
+      "size": 14020
     },
     {
       "path": "runtime/cp_runtime/common.py",
@@ -1078,13 +1078,13 @@
     },
     {
       "path": "runtime/cp_runtime/resume.py",
-      "sha256": "eeaac6e2da8d6b9f1632a0f812a81ce424240c4c5bf7bbb154107eeeeea7aee0",
-      "size": 14445
+      "sha256": "75285984d4916a45ed5203031499d04399ef809deb9196c9f23a54cb01e10188",
+      "size": 20455
     },
     {
       "path": "runtime/cp_runtime/resume_snapshot.py",
-      "sha256": "fc80f576f4c567dea64bb9a28cb010084b3518ef29a266a84d5ce552c8cdfb8b",
-      "size": 9616
+      "sha256": "247cc9aba5a338854ad0330d23c0c23db67c31db0fb90972e1d98397f0bedeac",
+      "size": 15595
     },
     {
       "path": "runtime/cp_runtime/seal_queue.py",
@@ -1188,8 +1188,13 @@
     },
     {
       "path": "runtime/tests/test_resume.py",
-      "sha256": "aaf47e9f1a6ae650c4174f954b2db08d43b910175068339e1407e434e0d4835b",
-      "size": 7293
+      "sha256": "159006880d7111ef0f7cb9ba86b7102f8e590c4a2c3ab00bc0b33e282b870633",
+      "size": 12774
+    },
+    {
+      "path": "runtime/tests/test_resume_resources.py",
+      "sha256": "91c0acee39abec543bc561c358ba2d126aef60c97f810c6926ed61c780dd2b78",
+      "size": 2331
     }
   ]
 }

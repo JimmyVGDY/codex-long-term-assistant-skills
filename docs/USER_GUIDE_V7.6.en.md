@@ -33,7 +33,7 @@ Unified-entry examples:
 .\scripts\cp-assistant.ps1 status
 .\scripts\cp-assistant.ps1 doctor
 .\scripts\cp-assistant.ps1 inventory --scope user --mode plugin --json
-.\scripts\cp-assistant.ps1 resume --repo-path E:\\work\\repo --profile C:\\safe-state\\project-profile.json --checkpoint-dir C:\\safe-state\\task
+.\scripts\cp-assistant.ps1 resume --repo-path E:\work\repo --profile C:\safe-state\project-profile.json --checkpoint-dir C:\safe-state\task
 .\scripts\cp-assistant.ps1 recover --scope user
 ```
 
@@ -44,6 +44,10 @@ The unified entry only promises parameters that exist. `verify` does not accept 
 ## Experience benchmark
 
 `scripts/ux-benchmark.py` runs deterministic command samples only when explicitly invoked. It does not start a model, upload data, or save prompts or complete outputs. The `collect`, `import-observations`, and `compare` protocol and privacy fields are documented in `tests/fixtures/ux-benchmark/protocol.json`. Wrapper-layer duration or tool-count changes describe the measured samples only; they do not by themselves prove a real Agent-task speedup.
+
+`status` and `doctor` accept `--profile <project-Profile> --repo-path <repository>` to inspect explicit project control prerequisites. Enabled controls with an unavailable runtime block the affected capability; without an actual operation permit, diagnostics do not assert that a controlled write can execute. `inventory` reports unreadable files or corrupt state without repairing or deleting assets.
+
+Benchmark collection accepts `--command-file <JSON-argument-array-file>` to avoid shell quoting issues. Outputs must be new files outside the package root. Comparisons recompute statistics and require a full source SHA plus matching fixture, scenario, and environment. Fewer than 20 valid timings produce no p95.
 
 ## Component reuse workflow
 

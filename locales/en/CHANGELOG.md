@@ -4,7 +4,12 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 ## Unreleased
 
-## 7.10.0 - 2026-09-14
+## 7.10.0 - 2026-09-15
+
+- Correct diagnostic aggregation, installed-version and payload readback, sample stability, and explicit project control prerequisites. Unreadable or corrupt state returns structured results and scoped recovery guidance.
+- Recovery validates actual checkpoint references and identity with bounded reads, process output, deadlines, and descendant cleanup. Legacy Markdown fingerprints or sampled contents never prove current validation.
+- The unified entry preserves the caller directory and avoids redundant Python startup. Native help remains available without Python. Benchmarks recompute statistics and reject mixed identity, invalid timings, and overwriting prior results.
+- Incomplete-transaction recovery takes priority over control-prerequisite guidance. Diagnostics resample changing read errors and journals and reject oversized or corrupt journals. Unrelated Git text converters no longer make recovery evidence unknown; missing fixture directories stop benchmark collection before commands run.
 
 - Complete the P1-P2 experience improvements: separate base and optional-enhancement availability, capability-level status and structured next actions, four daily paths, a unified source/archive entry, a read-only `resume` view, and explicit UX benchmark collection/import/comparison.
 - Fix Windows PowerShell 5.1 base installation confusing hidden directories with files during payload copying; use controlled recursive copying so native base Marketplace and ten-Skill registration can be read back.

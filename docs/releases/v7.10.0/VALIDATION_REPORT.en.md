@@ -2,20 +2,16 @@
 
 # V7.10.0 Validation Report
 
-This report is bound to target version `7.10.0`. Package-only focused and full local validation, target-ZIP isolated installation, and Windows native base/enhancement registration readback are complete; the isolated account has no authentication, so the real Codex task, remote CI, candidate provenance, and public Release readback remain S8/S9 work.
+This report records local evidence for the 7.10.0 repair candidate on 2026-09-15. Completion requires CI for the target commit, the public Release, download verification, and the external delivery record. This file alone proves neither publication nor effectiveness in the current account.
 
-Required boundaries:
+Focused checks passed: 41 status/diagnostic tests, 8 benchmark-tool tests, and 25 recovery/process-resource tests (2 skipped because Windows link privileges were unavailable). Recovery coverage includes complete snapshots matching the legacy algorithm, STALE after source changes, unused text converters, refusing applicable converters without executing them, aggregate read budgets, identity conflicts, and file-byte invariance. Diagnostic coverage includes healthy base-only installation, disabled/unknown/duplicate registration, required-control failures, transaction priority, changing samples, and bounded journal reads.
 
-- P1-01/P1-02 capability classification, availability, structured actions, and legacy field/exit-code compatibility;
-- P1-03 four scenario paths, help, bilingual copy, and unified-entry arguments;
-- P2-01 source tree, zh-CN ZIP, English ZIP, no-Python base entry, and legacy-entry compatibility;
-- P2-02 Profile/State, legacy Markdown, explicit Evidence, repository changes, budgets, conflicts, and read-only invariance;
-- P2-03 deterministic wrapper benchmarks, failure samples, fixture binding, and privacy whitelist.
+The preceding full run reached 228 runtime tests and found 2 recovery failures: a configured converter unrelated to the changed files incorrectly made the snapshot incomplete. The issue is fixed and the focused regressions above pass; full package validation must run again. Pre-repair package, archive, and validation digests must not stand in for this candidate.
 
-Confirmed locally: 458 package tests and 212 runtime tests (1 skipped); a 236-file payload with digest `8ee104982604c3e8b81d68530d5607202f255ddbb459a338e5ade36e4e695561`; both target ZIPs have 572 entries, are byte-identical across repeated builds, and passed archive verification. Final ZIP SHA256/size values are kept in the external delivery record to avoid a self-referential release report. The target ZIP completed base installation, enhancement installation, status/verify, and matching `CURRENT` results from installed `cp-runtime.py` and the extracted-package unified entry in a short-path temporary isolation environment; isolated `codex login status` was `NOT_AUTHENTICATED`, so the authenticated real-model task was not run.
+Bilingual source/projection checks, strict localization audit, and 1,123 repository-internal link checks passed. Navigation now consistently names V7.10. Final site construction and remote Pages still require binding to the final commit.
 
-The benchmark records 20 paired wrapper-only samples for `simple-local-fix` and `cross-task-resume`. All current samples completed, but the resume wrapper median increased; these measurements cannot claim lower real Agent cost. Real Agent samples, business acceptance, and dynamic host registration remain unverified.
+Independent review was logically read-only. The three findings concerning transaction-action priority, changing read errors, and nonexistent benchmark input were repaired together and covered by focused counterexamples. Final-diff binding, repair records, and review closeout are maintained outside the repository and must complete before publication.
 
-Independent review: two rounds with 3+2 Reviewers; final packet is `60ec3a5a8aa31a7a1cfb6dcdbefc5f5c88c7439d862b312c32bc071be8c46c45`. The conclusion is logical-readonly with nonblocking unverified items; first-round blocking findings were repaired and covered by focused regressions. This repair commit must be rebound to the subsequent delivery evidence.
+Isolated native Codex 0.154.0 passed authentication, ten-Skill discovery, and real model/terminal-tool preflight. The private harness uses in-memory token authentication through the native app-server without copying or persisting credentials; this is not a new product interface promised across hosts. Three samples per version for each real-task scenario, twenty paired wrapper measurements, the final ZIP installation matrix, and pre-publication native acceptance have separate records. Failed, timed-out, and unknown observations remain visible. Process exit is not an external oracle, and small samples do not prove general speed improvements.
 
-Verify `RELEASE_COMPLETE` and `INCIDENT_EFFECTIVE` separately. Without a fresh Desktop session or business-project evidence, do not report current loading or business effectiveness. This report is not public-release completion evidence.
+Upgrading the actual account and restarting Desktop are outside this execution scope. Installed files, Plugin registration, fresh CLI loading, task behavior, the current Desktop session, and business-project effectiveness require separate evidence.
