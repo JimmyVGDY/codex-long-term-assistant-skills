@@ -18,6 +18,7 @@ from .feedback import record_feedback
 from .finalization import build_finalization_report
 from .memory import create_knowledge_candidate, create_projection_candidate, promote_projection
 from .project import load_profile, load_state, onboard_project, refresh_project, validate_binding
+from .resume import build_resume_view, error_resume_view, render_resume_text
 
 
 def emit(value: Any) -> None:
@@ -58,6 +59,30 @@ def cmd_project_validate(args: argparse.Namespace) -> None:
         Path(args.state) if args.state else None,
     )
     emit(binding.__dict__)
+
+
+def cmd_project_resume(args: argparse.Namespace) -> None:
+    try:
+        view = build_resume_view(
+            Path(args.repo_path),
+            Path(args.profile) if args.profile else None,
+            Path(args.state) if args.state else None,
+            args.task_id,
+            Path(args.checkpoint_dir) if args.checkpoint_dir else None,
+            [Path(item) for item in args.evidence],
+        )
+    except RuntimeContractError as exc:
+        if args.json:
+            emit(error_resume_view(str(exc)))
+        else:
+            print("[FAIL] " + str(exc), file=sys.stderr)
+        raise SystemExit(2)
+    if args.json:
+        emit(view)
+    else:
+        print(render_resume_text(view))
+    if view["overall"] in {"PARTIAL", "UNKNOWN"}:
+        raise SystemExit(1)
 
 
 def cmd_approval_issue(args: argparse.Namespace) -> None:
@@ -197,6 +222,16 @@ def main() -> None:
     item.add_argument("--project-id")
     item.add_argument("--repo-path", required=True)
     item.set_defaults(func=cmd_project_validate)
+
+    item = sub.add_parser("project-resume")
+    item.add_argument("--repo-path", required=True)
+    item.add_argument("--profile")
+    item.add_argument("--state")
+    item.add_argument("--task-id")
+    item.add_argument("--checkpoint-dir")
+    item.add_argument("--evidence", action="append", default=[])
+    item.add_argument("--json", action="store_true")
+    item.set_defaults(func=cmd_project_resume)
 
     item = sub.add_parser("approval-issue")
     item.add_argument("--output", required=True)

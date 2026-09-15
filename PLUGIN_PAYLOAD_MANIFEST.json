@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.9.2",
+  "version": "7.10.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 233,
-  "payload_digest": "c9093ce40b61109aab30d25c9d09c5bca0cfcca903d309991ca91c8cc8022289",
+  "file_count": 237,
+  "payload_digest": "527e56800f542131e632f301010d1241304aff1a37f64f04b4a02184a8256b1f",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "5ece1de6f47ef088685d479b256dad983db0dc20a50e156fce7de762617c4c2a",
-      "size": 242
+      "sha256": "24d7a7ad5761ec581a96b4eada904da7b6fd49739f3f1bc7bf083df775cb1cab",
+      "size": 243
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -228,8 +228,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
-      "sha256": "31e18bd3472d27f908c8b88772fbcbab75295e0b09fe57dad99b7482ff5d4832",
-      "size": 8322
+      "sha256": "af78e98486ddd9eb999ac5350a4b285cf1105ea282895ab318a343e6eddf4f4a",
+      "size": 8323
     },
     {
       "path": "skills/engineering-quality-delivery/references/component-module-reuse.md",
@@ -543,8 +543,8 @@
     },
     {
       "path": "skills/long-running-task-memory/references/memory-recovery-conflicts.md",
-      "sha256": "f2a64c44bb281cc489c33916e807825b48a83cb01f67d076a6cc9a75f961bdca",
-      "size": 1737
+      "sha256": "6189ee18cc5303eedd75e078988a2951df411c76cb95bcc798b25dcb7b8fdf08",
+      "size": 2367
     },
     {
       "path": "skills/long-running-task-memory/references/memory-security-lifecycle.md",
@@ -878,8 +878,8 @@
     },
     {
       "path": "runtime/cp_runtime/cli.py",
-      "sha256": "a95b026e35aba59f17782df34cfb82cce45180f35d487e8199e6f833e07bd7ce",
-      "size": 12746
+      "sha256": "a8ff77f80fc3f15569bea1c682a60a4d4490c93bf70982b9ba2d71d1b6a52162",
+      "size": 14011
     },
     {
       "path": "runtime/cp_runtime/common.py",
@@ -1077,6 +1077,16 @@
       "size": 14672
     },
     {
+      "path": "runtime/cp_runtime/resume.py",
+      "sha256": "75285984d4916a45ed5203031499d04399ef809deb9196c9f23a54cb01e10188",
+      "size": 20455
+    },
+    {
+      "path": "runtime/cp_runtime/resume_snapshot.py",
+      "sha256": "247cc9aba5a338854ad0330d23c0c23db67c31db0fb90972e1d98397f0bedeac",
+      "size": 15595
+    },
+    {
       "path": "runtime/cp_runtime/seal_queue.py",
       "sha256": "718c003aef75db316c746c58e54a0bbd39d7e22dd167ba4bd4d39f05937042c5",
       "size": 19448
@@ -1175,6 +1185,16 @@
       "path": "runtime/tests/test_patch_intent.py",
       "sha256": "cd922398fe9e77d9a74890e54e1ee12940347d3ae60aef81f7b511b5f5d4b42e",
       "size": 7923
+    },
+    {
+      "path": "runtime/tests/test_resume.py",
+      "sha256": "eebde5fb86e3668a64d78b816c9942ac1fb497970bc3a333f4df5169640a786d",
+      "size": 13868
+    },
+    {
+      "path": "runtime/tests/test_resume_resources.py",
+      "sha256": "91c0acee39abec543bc561c358ba2d126aef60c97f810c6926ed61c780dd2b78",
+      "size": 2331
     }
   ]
 }

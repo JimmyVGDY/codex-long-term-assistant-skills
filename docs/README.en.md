@@ -6,7 +6,7 @@ Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-ass
 
 This page organizes current package documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
 
-> Version scope: V<!-- cp-fact:package-version -->7.9.2<!-- /cp-fact --> is the current package version. TaskOutcomeEvent V3, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
+> Version scope: V<!-- cp-fact:package-version -->7.10.0<!-- /cp-fact --> is the current package version. TaskOutcomeEvent V3, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
 
 ## Getting started
 
@@ -33,15 +33,15 @@ This page organizes current package documentation by adoption stage. Historical 
 - [Controlled-evolution operations](../locales/en/docs/evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](../locales/en/docs/evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](../locales/en/docs/VALIDATION_REPORT.md)
-- [V7.9.2 package validation report](releases/v7.9.2/VALIDATION_REPORT.en.md)
-- [V7.9.2 audit report](releases/v7.9.2/AUDIT_REPORT.en.md)
+- [V7.10.0 package validation report](releases/v7.10.0/VALIDATION_REPORT.en.md)
+- [V7.10.0 audit report](releases/v7.10.0/AUDIT_REPORT.en.md)
 - [Component reuse acceptance](COMPONENT_REUSE_ACCEPTANCE.en.md)
 - [Documentation maintenance and fact checks](DOCUMENTATION_MAINTENANCE.en.md)
 
 ## Release and history
 
 - [Release evidence index](releases/README.en.md)
-- [V7.9.2 release notes](releases/v7.9.2/RELEASE_NOTES.en.md)
+- [V7.10.0 release notes](releases/v7.10.0/RELEASE_NOTES.en.md)
 - [Changelog](../CHANGELOG.en.md)
 - [Public reconstruction index](history/README.en.md)
 - [Public reconstruction release index](history/RELEASE_ARCHIVES.en.md)

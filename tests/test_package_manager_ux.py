@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -32,6 +33,58 @@ class PackageManagerUxTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
+
+
+    @contextlib.contextmanager
+    def installed_fixture(self, mode="plugin", include_base=True):
+        from payload_integrity import write_manifest
+        home, skills = self.base / "codex", self.base / "user-skills"
+        cache = home / "plugins" / "cache" / package_manager.MARKETPLACE / package_manager.PACKAGE / package_manager.VERSION
+        for name in (".codex-plugin", "skills", "hooks", "runtime"):
+            (cache / name).mkdir(parents=True)
+        for name in package_manager.skill_names():
+            directory = cache / "skills" / name if mode == "plugin" else skills / name
+            directory.mkdir(parents=True, exist_ok=True)
+            (directory / "SKILL.md").write_text("fixture", encoding="utf-8")
+        for relative in ("tools/cp-runtime.py", "tools/evolution.py",
+                         "cp-assistant-hooks/cp_hook.py", "cp-assistant-hooks/cp_gate.py"):
+            target = home / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("fixture", encoding="utf-8")
+        for agent in package_manager.agent_files():
+            target = home / "agents" / agent.name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("fixture", encoding="utf-8")
+        runtime = home / "runtime" / "cp_runtime"
+        runtime.mkdir(parents=True)
+        (runtime / "cli.py").write_text("fixture", encoding="utf-8")
+        payload = write_manifest(cache, package_manager.PACKAGE, package_manager.VERSION)
+        state = {"schema_version": 3, "package": package_manager.PACKAGE,
+                 "version": package_manager.VERSION, "mode": mode,
+                 "components": {"enhancement": {"status": "MANAGED"}},
+                 "payload_identity": {"cache_digest": payload["payload_digest"],
+                                      "marketplace_digest": payload["payload_digest"]},
+                 "managed_hashes": {str(runtime): package_manager.tree_sha256(runtime)}}
+        if include_base:
+            state["components"]["base"] = {"status": "PLUGIN_MANAGED" if mode == "plugin" else "STANDALONE_SKILLS"}
+        state_file = home / "cp-assistant-v6-state.json"
+        state_file.write_text(json.dumps(state), encoding="utf-8")
+        native = {"checked": True, "base": None, "enhancement": {
+            "installed": True, "enabled": True, "version": package_manager.VERSION,
+        }}
+        with contextlib.ExitStack() as stack:
+            for patcher in (
+                mock.patch.object(package_manager, "codex_home", return_value=home),
+                mock.patch.object(package_manager, "user_skills_home", return_value=skills),
+                mock.patch.object(package_manager, "plugin_marketplace_payload", return_value=cache),
+                mock.patch.object(package_manager, "_codex_available", return_value=mode == "plugin"),
+                mock.patch.object(package_manager, "_codex_executable", return_value="codex"),
+                mock.patch.object(package_manager, "_probe_plugin_host", return_value={"registrations": native}),
+                mock.patch.object(package_manager, "_host_compatibility_status", return_value={"compatible": True}),
+                mock.patch.object(package_manager, "payload_report", return_value={"file_count": 236}),
+            ):
+                stack.enter_context(patcher)
+            yield state_file
 
     def repo(self):
         path = self.base / "repo"
@@ -231,34 +284,315 @@ class PackageManagerUxTests(unittest.TestCase):
 
     def test_doctor_summary_answers_available_impact_and_next_action(self):
         data = {
+            "scope": "user", "mode": "plugin",
             "checks": [{"id": "plugin", "status": "WARN"}],
+            "plugin_activation": {"active": True, "checked": True},
+            "base_activation": {"active": True, "checked": True},
+            "state": {"components": {"base": {"status": "PLUGIN_MANAGED"}}},
             "remediation": ["运行 verify 并读回 Plugin installed/enabled/version。"],
         }
-        self.assertEqual({
-            "overall": "DEGRADED",
-            "available": "基础能力可继续使用",
-            "affected": ["plugin"],
-            "cause": [{"id": "plugin", "detail": "unknown"}],
-            "next_action": "运行 verify 并读回 Plugin installed/enabled/version。",
-        }, package_manager.doctor_summary(data))
+        summary = package_manager.doctor_summary(data)
+        self.assertEqual(("DEGRADED", ["plugin"]), (summary["overall"], summary["affected"]))
+        self.assertEqual(summary["ux"]["available"], summary["available"])
+        self.assertEqual(summary["ux"]["next_action_detail"]["display_command"], summary["next_action"])
+        self.assertEqual("ux-summary/1", summary["ux"]["schema"])
+        self.assertEqual("VERIFY_INSTALLATION", summary["ux"]["next_action_detail"]["code"])
+        self.assertNotIn("--json", summary["ux"]["next_action_detail"]["argv"])
 
     def test_status_summary_keeps_base_available_when_enhancement_is_missing(self):
         summary = package_manager.status_summary({
             "scope": "user", "mode": "plugin", "plugin_activation": {"active": True},
+            "base_activation": {"active": True, "checked": True},
             "state": {"components": {"base": {"status": "PLUGIN_MANAGED"}}},
         })
-        self.assertEqual("DEGRADED", summary["overall"])
-        self.assertEqual("基础能力可继续使用", summary["available"])
-        self.assertEqual(["enhancement"], summary["affected"])
+        self.assertEqual("PASS", summary["overall"])
+        self.assertEqual("基础模式正常；已安装增强能力按实际状态显示", summary["available"])
+        self.assertEqual([], summary["affected"])
+        self.assertEqual("NOT_ENABLED", next(item for item in summary["ux"]["capabilities"]
+                                               if item["id"] == "enhancement")["availability"])
 
     def test_status_summary_marks_host_drift_and_missing_enhancement(self):
         summary = package_manager.status_summary({
             "scope": "user", "mode": "plugin", "plugin_activation": {"active": True},
+            "base_activation": {"active": True, "checked": True},
             "host_compatibility": {"compatible": False, "status": "HOST_DRIFT_REINSTALL_REQUIRED"},
+            "state": {"components": {"enhancement": {"status": "MANAGED"}}},
+        })
+        self.assertEqual(["enhancement"], summary["affected"])
+        self.assertEqual("HOST_DRIFT_REINSTALL_REQUIRED", summary["cause"][0]["detail"])
+
+    def test_status_marks_migrated_base_active_for_managed_enhancement(self):
+        output = io.StringIO()
+        with self.installed_fixture(), contextlib.redirect_stdout(output):
+            package_manager.status("user", "plugin", None, summary=False)
+        value = json.loads(output.getvalue())
+        self.assertTrue(value["base_activation"]["active"])
+        self.assertEqual("PASS", value["ux"]["overall"])
+
+    def test_base_only_native_facts_pass_doctor_and_distinguish_disabled_unknown_and_duplicate(self):
+        with self.installed_fixture() as path:
+            path.unlink()
+            cache = package_manager.codex_home() / "plugins" / "cache" / package_manager.BASE_MARKETPLACE / package_manager.PACKAGE / package_manager.VERSION
+            shutil.copytree(package_manager.plugin_cache_root() / "skills", cache / "skills")
+            package_manager.base_state_path().write_text(json.dumps({
+                "schema_version": 1, "package": package_manager.PACKAGE,
+                "marketplace": package_manager.BASE_MARKETPLACE,
+                "market_root": str(package_manager.base_marketplace_root()), "status": "INSTALLED",
+            }), encoding="utf-8")
+            base = {"installed": True, "enabled": True, "version": package_manager.VERSION,
+                    "plugin_id": package_manager.PACKAGE + "@" + package_manager.BASE_MARKETPLACE}
+            registered = {"checked": True, "base": base, "enhancement": None}
+            before = {str(p): p.read_bytes() for p in self.base.rglob("*") if p.is_file()}
+            with mock.patch.object(package_manager, "_probe_plugin_host", return_value={"registrations": registered}):
+                value = package_manager._ux_summary(package_manager._diagnostic_facts("user", None, None))
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    self.assertTrue(package_manager.doctor(False, "user", None))
+                self.assertEqual("PASS", json.loads(output.getvalue())["overall"])
+            self.assertEqual("PASS", value["overall"])
+            self.assertEqual("NOT_ENABLED", next(row for row in value["capabilities"] if row["id"] == "enhancement")["availability"])
+            for record, expected in (
+                ({"checked": True, "base": {**base, "enabled": False}, "enhancement": None}, "UNAVAILABLE"),
+                ({"checked": False, "base": None, "enhancement": None}, "UNKNOWN"),
+            ):
+                with mock.patch.object(package_manager, "_probe_plugin_host", return_value={"registrations": record}):
+                    value = package_manager._ux_summary(package_manager._diagnostic_facts("user", None, None))
+                self.assertEqual(expected, next(row for row in value["capabilities"] if row["id"] == "base-plugin")["availability"])
+            with mock.patch.object(package_manager, "_probe_plugin_host", return_value={"registrations": {**registered, "enhancement": base}}):
+                value = package_manager._ux_summary(package_manager._diagnostic_facts("user", None, None))
+            self.assertEqual("ERROR", value["overall"])
+            self.assertIn("plugin-registration", value["affected"])
+            self.assertEqual(before, {str(p): p.read_bytes() for p in self.base.rglob("*") if p.is_file()})
+
+    def test_base_activation_requires_explicit_managed_ownership(self):
+        self.assertFalse(package_manager._base_capability_active(
+            True, "plugin", {}, {}, True, False,
+        ))
+        self.assertTrue(package_manager._base_capability_active(
+            True, "plugin", {}, {"components": {"base": {"status": "PLUGIN_MANAGED"}}}, True, False,
+        ))
+        self.assertTrue(package_manager._base_capability_active(
+            True, "standalone", {}, {"components": {"base": {"status": "STANDALONE_SKILLS"}}}, False, False,
+        ))
+        self.assertTrue(package_manager._base_capability_active(
+            False, "standalone", {}, {"components": {"base": {"status": "STANDALONE_SKILLS"}}}, False, False,
+        ))
+
+    def test_required_budget_missing_keeps_base_available_but_blocks_delegation(self):
+        with self.installed_fixture(), mock.patch.dict(os.environ, {"CP_DELEGATION_BUDGET_REQUIRED": "1", "CP_DELEGATION_BUDGET_PATH": ""}):
+            view = package_manager._ux_summary(package_manager._diagnostic_facts("user", None, None))
+        self.assertEqual("ERROR", view["overall"])
+        capabilities = {row["id"]: row for row in view["capabilities"]}
+        self.assertEqual("AVAILABLE", capabilities["base-plugin"]["availability"])
+        self.assertEqual("BLOCKED", capabilities["delegation-budget"]["availability"])
+        self.assertEqual("RESTORE_CONTROL_PREREQUISITES", view["next_action_detail"]["code"])
+
+    def test_live_transaction_precedes_blocked_control_without_recovery_write(self):
+        with self.installed_fixture(), mock.patch.dict(os.environ, {"CP_DELEGATION_BUDGET_REQUIRED": "1", "CP_DELEGATION_BUDGET_PATH": ""}):
+            journal = package_manager.transaction_path("user")
+            journal.write_text(json.dumps({"schema_version": 1, "scope": "user", "stage": "PREPARED"}), encoding="utf-8")
+            before = journal.read_bytes()
+            view = package_manager._ux_summary(package_manager._diagnostic_facts("user", None, None))
+            self.assertEqual(before, journal.read_bytes())
+        self.assertEqual("ERROR", view["overall"])
+        self.assertEqual("RECOVER_INSTALLATION_TRANSACTION", view["next_action_detail"]["code"])
+        self.assertEqual("WRITE", view["next_action_detail"]["action_kind"])
+        self.assertIn("recover", view["next_action_detail"]["argv"])
+        self.assertEqual("BLOCKED", next(row for row in view["capabilities"] if row["id"] == "delegation-budget")["availability"])
+
+    def test_changed_read_error_is_retried_and_repeated_change_is_unstable(self):
+        with self.installed_fixture() as state_path:
+            original = package_manager._diagnostic_object
+            count = 0
+            def read(path):
+                nonlocal count
+                if path == state_path:
+                    count += 1
+                    return ({}, "STATE_UNREADABLE_OR_INVALID") if count % 2 else ({}, None)
+                return original(path)
+            with mock.patch.object(package_manager, "_diagnostic_object", side_effect=read):
+                data = package_manager._diagnostic_facts("user", None, None)
+        self.assertEqual(4, count)
+        self.assertEqual("INSTALLATION_CHANGED_DURING_READ", data["sample_error"])
+        self.assertFalse(data["base_activation"]["checked"])
+
+    def test_stable_semantic_state_error_does_not_become_read_instability(self):
+        with self.installed_fixture() as path:
+            state = json.loads(path.read_bytes())
+            state["schema_version"] = 999
+            path.write_text(json.dumps(state), encoding="utf-8")
+            data = package_manager._diagnostic_facts("user", None, None)
+        self.assertEqual("INSTALLATION_STATE_IDENTITY_INVALID", data["state_error"])
+        self.assertNotIn("sample_error", data)
+
+    def test_transaction_changes_are_rechecked_before_projecting_availability(self):
+        with self.installed_fixture(), mock.patch.object(package_manager, "_diagnostic_journal", side_effect=[
+            (None, None), ({"stage": "PREPARED"}, None),
+            (None, None), ({"stage": "APPLYING"}, None),
+        ]):
+            data = package_manager._diagnostic_facts("user", None, None)
+        self.assertEqual("INSTALLATION_CHANGED_DURING_READ", data["sample_error"])
+        self.assertEqual("DEGRADED", package_manager._ux_summary(data)["overall"])
+
+    def test_oversized_transaction_is_bounded_and_never_recovered_by_diagnostics(self):
+        with self.installed_fixture():
+            journal = package_manager.transaction_path("user")
+            journal.write_bytes(b" " * (8 * 1024 * 1024 + 1))
+            with mock.patch.object(package_manager, "_load_live_journal", side_effect=AssertionError("unbounded reader")):
+                data = package_manager._diagnostic_facts("user", None, None)
+            self.assertEqual(8 * 1024 * 1024 + 1, journal.stat().st_size)
+        self.assertEqual("TRANSACTION_UNREADABLE", data["transaction_error"])
+
+    def test_empty_journal_object_remains_invalid(self):
+        with self.installed_fixture():
+            package_manager.transaction_path("user").write_text("{}", encoding="utf-8")
+            data = package_manager._diagnostic_facts("user", None, None)
+        self.assertEqual("TRANSACTION_UNREADABLE", data["transaction_error"])
+
+    def test_explicit_gate_without_enhancement_is_fail_closed_without_state_writes(self):
+        from cp_runtime.project import onboard_project
+        from cp_runtime.capability_store import CapabilityStore
+        from cp_runtime.capability_gate import GatePolicy
+        repo = self.repo()
+        profile = onboard_project(repo, "UX-CONTROL", "Fixture", self.base / "context")
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(self.base / "empty-home")}), \
+                mock.patch.object(package_manager, "codex_home", return_value=self.base / "empty-home"), \
+                mock.patch.object(package_manager, "_codex_available", return_value=False):
+            policy = GatePolicy(CapabilityStore(profile.profile_path, repo))
+            policy.set_enabled(True, None)
+            before = {str(path): path.read_bytes() for path in self.base.rglob("*") if path.is_file()}
+            value = package_manager._ux_summary(package_manager._diagnostic_facts("user", None, str(repo), str(profile.profile_path)))
+            after = {str(path): path.read_bytes() for path in self.base.rglob("*") if path.is_file()}
+        self.assertEqual("BLOCKED", next(row for row in value["capabilities"] if row["id"] == "controlled-write")["availability"])
+        self.assertEqual(before, after)
+
+    def test_inventory_corrupt_state_returns_structured_error_without_repair(self):
+        repo = self.repo()
+        path = package_manager.state_path("repo", repo)
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"not-json")
+        value = package_manager.inventory("repo", "standalone", str(repo))
+        self.assertEqual("ERROR", value["overall"])
+        self.assertFalse(value["delete_authorized"])
+        self.assertEqual(b"not-json", path.read_bytes())
+
+    def test_native_and_state_version_conflict_cannot_pass(self):
+        with self.installed_fixture() as path:
+            value = json.loads(path.read_text(encoding="utf-8"))
+            value["version"] = "7.9.2"
+            path.write_text(json.dumps(value), encoding="utf-8")
+            view = package_manager._ux_summary(package_manager._diagnostic_facts("user", None, None))
+        self.assertEqual("ERROR", view["overall"])
+        self.assertTrue(any("INSTALLATION_VERSION_CONFLICT" in item["detail"] for item in view["cause"]))
+
+    def test_payload_detail_remains_available_in_detailed_status(self):
+        with self.installed_fixture():
+            view = package_manager._diagnostic_facts("user", None, None)
+        self.assertEqual({"source", "marketplace", "cache"}, set(view["payload_identity"]))
+        self.assertEqual(view["state"]["payload_identity"]["cache_digest"], view["payload_identity"]["cache"]["payload_digest"])
+
+    def test_status_uses_persisted_mode_when_mode_is_not_supplied(self):
+        output = io.StringIO()
+        with self.installed_fixture("standalone"), contextlib.redirect_stdout(output):
+            package_manager.status("user", None, None, summary=False)
+        value = json.loads(output.getvalue())
+        self.assertEqual("standalone", value["mode"])
+        self.assertEqual("PASS", value["ux"]["overall"])
+
+    def test_invalid_persisted_mode_fails_closed_in_status_and_doctor(self):
+        with self.installed_fixture() as path:
+            state = json.loads(path.read_text(encoding="utf-8"))
+            state["mode"] = "legacy"
+            path.write_text(json.dumps(state), encoding="utf-8")
+            for call in (
+                lambda: package_manager.status("user", None, None, summary=False),
+                lambda: package_manager.doctor(False, "user", None, summary=False),
+            ):
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    call()
+                value = json.loads(output.getvalue())
+                self.assertEqual("INVALID_PERSISTED_MODE", value["mode_error"])
+                self.assertEqual("ERROR", value["ux"]["overall"])
+
+    def test_doctor_matches_status_for_migrated_base(self):
+        outputs = []
+        with self.installed_fixture():
+            for call in (
+                lambda: package_manager.status("user", None, None, summary=False),
+                lambda: package_manager.doctor(False, "user", None, summary=False),
+            ):
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    call()
+                outputs.append(json.loads(output.getvalue()))
+        self.assertTrue(outputs[1]["base_activation"]["active"])
+        self.assertEqual("PASS", outputs[0]["ux"]["overall"])
+        self.assertEqual(outputs[0]["ux"]["overall"], outputs[1]["overall"])
+
+    def test_doctor_rejects_enhancement_without_managed_base(self):
+        output = io.StringIO()
+        with self.installed_fixture(include_base=False), contextlib.redirect_stdout(output):
+            package_manager.doctor(False, "user", None, summary=False)
+        value = json.loads(output.getvalue())
+        self.assertFalse(value["base_activation"]["active"])
+        self.assertEqual("ERROR", next(item for item in value["checks"] if item["id"] == "plugin")["status"])
+        self.assertEqual("ERROR", value["overall"])
+        self.assertEqual(value["overall"], value["ux"]["overall"])
+
+    def test_doctor_accepts_standalone_base_without_codex_host(self):
+        output = io.StringIO()
+        with self.installed_fixture("standalone"), contextlib.redirect_stdout(output):
+            package_manager.doctor(False, "user", None, summary=False)
+        value = json.loads(output.getvalue())
+        self.assertEqual("standalone", value["mode"])
+        self.assertTrue(value["base_activation"]["active"])
+        self.assertEqual("PASS", value["overall"])
+        self.assertEqual(value["overall"], value["ux"]["overall"])
+
+    def test_status_summary_marks_uninstalled_base_as_unavailable(self):
+        summary = package_manager.status_summary({
+            "scope": "user", "mode": "plugin",
+            "plugin_activation": {"active": False, "checked": True, "detail": "not installed"},
+            "base_activation": {"active": False, "checked": True, "detail": "not installed"},
             "state": {},
         })
-        self.assertEqual(["base-plugin", "enhancement"], summary["affected"])
-        self.assertEqual("HOST_DRIFT_REINSTALL_REQUIRED", summary["cause"][0]["detail"])
+        self.assertEqual("ERROR", summary["overall"])
+        self.assertEqual("UNAVAILABLE", next(item for item in summary["ux"]["capabilities"]
+                                               if item["id"] == "base-plugin")["availability"])
+
+    def test_status_summary_action_is_structured_and_scoped(self):
+        summary = package_manager.status_summary({
+            "scope": "user", "mode": "plugin", "plugin_activation": {"active": False, "checked": True},
+            "base_activation": {"active": False, "checked": True}, "state": {},
+        })
+        action = summary["ux"]["next_action_detail"]
+        self.assertEqual(("CHECK_PLUGIN_REGISTRATION", "READ_ONLY", "USER"),
+                         (action["code"], action["action_kind"], action["scope"]))
+        self.assertEqual(["codex", "plugin", "list", "--json"], action["argv"])
+
+    def test_enhancement_activation_does_not_prove_base_activation(self):
+        summary = package_manager.status_summary({
+            "scope": "user", "mode": "plugin",
+            "plugin_activation": {"active": True, "checked": True},
+            "base_activation": {"active": False, "checked": True},
+            "state": {},
+        })
+        self.assertEqual("UNAVAILABLE", next(item for item in summary["ux"]["capabilities"]
+                                               if item["id"] == "base-plugin")["availability"])
+
+    def test_doctor_summary_never_masks_error_check(self):
+        summary = package_manager.doctor_summary({
+            "scope": "user", "mode": "plugin",
+            "checks": [{"id": "payload", "status": "ERROR", "detail": "broken"}],
+            "remediation": ["重新下载并校验当前发行包。"],
+            "plugin_activation": {"active": True, "checked": True},
+            "base_activation": {"active": True, "checked": True},
+            "state": {"components": {"base": {"status": "PLUGIN_MANAGED"}}},
+        })
+        self.assertEqual("ERROR", summary["overall"])
+        self.assertEqual(["payload"], summary["affected"])
+        self.assertEqual("ERROR", summary["ux"]["overall"])
 
     def test_status_json_keeps_mode_for_the_default_summary_projection(self):
         output = io.StringIO()

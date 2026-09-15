@@ -6,6 +6,8 @@ After context compaction, session recovery, a model change, a coordinating-agent
 
 Follow this order:
 
+When the enhancement runtime is already available and the requester supplies explicit Profile, checkpoint, and Evidence paths, first call the installed `cp-runtime.py project-resume --repo-path <repository> --profile <Profile> --checkpoint-dir <checkpoint-directory> --evidence <Evidence> --json` once. Reuse its identity, baseline, and stale-evidence results instead of querying every file again. Repeat the Evidence argument for multiple records. Without the enhancement runtime, use the manual steps below or the Skill's `checkpoint.py recover`; do not install, initialize, or repair state automatically. A summary grants no authority. Preserve PARTIAL/UNKNOWN/STALE and then read the source involved in the next action.
+
 1. Read the current request and authorization.
 2. Read platform, global, and project-level `AGENTS.md` files.
 3. Read `PROJECT_CONTEXT.md`.

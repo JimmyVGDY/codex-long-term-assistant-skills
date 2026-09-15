@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.9.2",
-  "release_name": "修复安装后能力注册表读取",
-  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with a native Python-free base installation, optional managed enhancement runtime, concise status summaries, and low-cost default execution",
+  "version": "7.10.0",
+  "release_name": "P1-P2 使用体验与恢复入口",
+  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with a native Python-free base installation, actionable capability diagnostics, a unified daily entry, bounded read-only task recovery, and explicit UX benchmarks",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -536,6 +536,7 @@
     ]
   },
   "upgrade_from": [
+    "7.9.2",
     "7.9.1",
     "7.9.0",
     "7.8.1",

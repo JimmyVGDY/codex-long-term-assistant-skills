@@ -464,6 +464,9 @@ def normalize_plugin_list(
     marketplace: str,
     expected_version: Optional[str],
     profile: Mapping[str, Any],
+    *,
+    require_active: bool = True,
+    other_marketplaces: tuple[str, ...] = (),
 ) -> Optional[Dict[str, Any]]:
     """中文：规范化唯一目标条目；不存在时返回 ``None``。
 
@@ -486,6 +489,8 @@ def normalize_plugin_list(
             plugin_id = item.get("pluginId")
             name = item.get("name")
             market = item.get("marketplaceName")
+            if name == package and market in other_marketplaces and plugin_id == f"{package}@{market}":
+                continue
             by_id = plugin_id == expected_id
             by_pair = name == package and market == marketplace
             partial_identity = name == package or market == marketplace
@@ -518,7 +523,9 @@ def normalize_plugin_list(
         raise CompatibilityError("目标 Plugin 版本不是稳定三段版本")
     if expected_version is not None and item["version"] != expected_version:
         raise CompatibilityError("目标 Plugin 版本不匹配或不是稳定三段版本")
-    if item["installed"] is not True or item["enabled"] is not True:
+    if type(item["installed"]) is not bool or type(item["enabled"]) is not bool:
+        raise CompatibilityError("Plugin installed/enabled must be booleans")
+    if require_active and (item["installed"] is not True or item["enabled"] is not True):
         raise CompatibilityError("目标 Plugin 必须 installed=true 且 enabled=true")
     if item["installPolicy"] not in profile["install_policies"]:
         raise CompatibilityError("目标 Plugin installPolicy 未登记")
@@ -532,8 +539,8 @@ def normalize_plugin_list(
         "name": item["name"],
         "marketplace_name": item["marketplaceName"],
         "version": item["version"],
-        "installed": True,
-        "enabled": True,
+        "installed": item["installed"],
+        "enabled": item["enabled"],
         "install_policy": item["installPolicy"],
         "auth_policy": item["authPolicy"],
     }
