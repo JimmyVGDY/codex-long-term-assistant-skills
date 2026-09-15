@@ -29,10 +29,18 @@ case "$command" in
 esac
 
 python_bin=${CP_ASSISTANT_PYTHON:-}
-if [ -z "$python_bin" ] || ! "$python_bin" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 2)' >/dev/null 2>&1; then
-  if command -v python3 >/dev/null 2>&1; then python_bin=$(command -v python3)
-  elif command -v python >/dev/null 2>&1; then python_bin=$(command -v python)
-  fi
+supports_python() {
+  "$1" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 2)' >/dev/null 2>&1
+}
+if [ -n "$python_bin" ]; then
+  if ! supports_python "$python_bin"; then python_bin=; fi
+else
+  for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1 && supports_python "$candidate"; then
+      python_bin=$(command -v "$candidate")
+      break
+    fi
+  done
 fi
 if [ -z "$python_bin" ]; then
   case " $* " in *' --json '*) printf '%s\n' '{"schema":"cp-assistant/1","overall":"UNKNOWN","reason":"PYTHON_REQUIRED","available":"Base Skill availability was not checked by this entry","next_action":"codex plugin list --json"}' ;; *) printf '%s\n' 'Python 3.11+ is required for this diagnostic command; run codex plugin list --json for native readback.' >&2 ;; esac

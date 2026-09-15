@@ -103,6 +103,22 @@ class ResumeViewTests(unittest.TestCase):
         self.assertEqual("STALE", stale["overall"])
         self.assertEqual("STALE", stale["evidence"][0]["freshness"])
 
+    def test_complete_stale_queries_exit_zero_through_both_entries(self):
+        evidence = self.evidence()
+        (self.repo / "app.py").write_text("print('changed')\n", encoding="utf-8")
+        before = self.fingerprints()
+        common = ["--repo-path", str(self.repo), "--profile", str(self.binding.profile_path),
+                  "--checkpoint-dir", str(self.context), "--evidence", str(evidence), "--json"]
+        for script, subcommand in (("cp-runtime.py", "project-resume"), ("cp-assistant.py", "resume")):
+            result = subprocess.run([sys.executable, "-X", "utf8", "-B", str(ROOT / "scripts" / script),
+                                     subcommand, *common], capture_output=True)
+            self.assertEqual(0, result.returncode, result.stderr.decode("utf-8", "replace"))
+            view = json.loads(result.stdout)
+            self.assertEqual("STALE", view["overall"])
+            self.assertEqual("STALE", view["evidence"][0]["freshness"])
+            self.assertTrue(view["coverage"]["snapshot_complete"])
+        self.assertEqual(before, self.fingerprints())
+
     def test_dirty_content_change_is_detected_with_identical_git_status(self):
         (self.repo / "app.py").write_text("print('v2')\n", encoding="utf-8")
         evidence = self.evidence()

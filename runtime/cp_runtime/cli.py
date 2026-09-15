@@ -81,7 +81,7 @@ def cmd_project_resume(args: argparse.Namespace) -> None:
         emit(view)
     else:
         print(render_resume_text(view))
-    if view["overall"] in {"PARTIAL", "STALE", "UNKNOWN"}:
+    if view["overall"] in {"PARTIAL", "UNKNOWN"}:
         raise SystemExit(1)
 
 

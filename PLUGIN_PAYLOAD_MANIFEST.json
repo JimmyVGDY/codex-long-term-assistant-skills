@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 237,
-  "payload_digest": "c6ee952015eb88da0b2fc725b081db9295e1df4d71ddf5ef3020e6f24ab9dc2c",
+  "payload_digest": "527e56800f542131e632f301010d1241304aff1a37f64f04b4a02184a8256b1f",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -878,8 +878,8 @@
     },
     {
       "path": "runtime/cp_runtime/cli.py",
-      "sha256": "5059f631909a2f73bde86da34c24909abe4dd8e10023d64a349e6ab75fbf234d",
-      "size": 14020
+      "sha256": "a8ff77f80fc3f15569bea1c682a60a4d4490c93bf70982b9ba2d71d1b6a52162",
+      "size": 14011
     },
     {
       "path": "runtime/cp_runtime/common.py",
@@ -1188,8 +1188,8 @@
     },
     {
       "path": "runtime/tests/test_resume.py",
-      "sha256": "159006880d7111ef0f7cb9ba86b7102f8e590c4a2c3ab00bc0b33e282b870633",
-      "size": 12774
+      "sha256": "eebde5fb86e3668a64d78b816c9942ac1fb497970bc3a333f4df5169640a786d",
+      "size": 13868
     },
     {
       "path": "runtime/tests/test_resume_resources.py",

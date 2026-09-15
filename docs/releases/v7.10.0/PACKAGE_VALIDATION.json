@@ -3,7 +3,7 @@
   "status": "FINAL_FULL_VALIDATION_PENDING",
   "version": "7.10.0",
   "evidence_scope": "package-only",
-  "focused_tests": "41 diagnostic, 8 benchmark and 25 recovery/resource tests passed (2 Windows link-privilege skips)",
+  "focused_tests": "41 diagnostic, 8 benchmark and 26 recovery/resource tests passed (2 Windows link-privilege skips)",
   "full_validation": "Required again after the diagnosed recovery fix; replace this record with the actual final full report before publication",
   "publication": "Use the GitHub Release state",
   "account_installation": "Requires separate account readback"
