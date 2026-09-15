@@ -10,8 +10,9 @@ both package versions. A separate oracle checks the final code and allowed chang
   both catalog operations must use the same helper and duplicate normalized keys must still raise `ValueError`.
   Only `labels.py` and `catalog.py` may change.
 - `cross-task-resume`: the harness records a valid checkpoint and evidence, then removes the negative-count
-  guard. The subject must identify stale validation, restore the guard, and rerun the existing test.
-  Only `app.py` may change. Context and evidence live outside the fixture repository.
+  guard. The subject only identifies stale validation and provides the next action; it must not repair code
+  or update state during the query. The existing negative-count test remains failing by design.
+  Context and evidence live outside the fixture repository, and their bytes must remain unchanged.
 
 Model responses and business prompts are not fixture data. Observations contain only approved aggregate
 fields; an agent saying PASS is not an oracle result. Small samples do not establish general speed gains.

@@ -38,9 +38,26 @@ jobs:
       - name: 验证完整包 / Validate complete package
         run: python scripts/validate-package.py
 
+  required-validation:
+    name: 验证 / Validate (${{ matrix.os }})
+    needs: validate
+    if: always()
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - name: 汇总全部 Python 验证 / Aggregate every Python validation
+        run: |
+          echo "Validation matrix result: ${{ needs.validate.result }}"
+      - name: 拒绝未通过的矩阵 / Reject an unsuccessful matrix
+        if: needs.validate.result != 'success'
+        run: exit 1
+
   build:
     name: 构建双语发行包 / Build bilingual distributions
-    needs: validate
+    needs: [validate, required-validation]
     runs-on: windows-latest
     steps:
       - name: 检出源码 / Check out source
