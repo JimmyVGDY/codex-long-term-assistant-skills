@@ -4,7 +4,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-V7.10.0 provides ready-to-use base installation with optional enhancement runtime. Ordinary engineering work can begin directly, while Hooks, recoverable state, budgets, and controlled writes attach only when needed.
+The V7.11.0 local candidate adds ten independent Reviewer combinations. Each review starts from Luna Low, scores verified evidence and its budget mode, and dispatches once. Base installation and optional enhancement remain separate; no public release has been performed in this work.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -25,7 +25,7 @@ V7.10.0 provides ready-to-use base installation with optional enhancement runtim
   <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
-V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.10.0 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
+V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.11.0 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Four daily paths](#four-daily-paths-and-the-unified-entry) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -83,6 +83,8 @@ The base Plugin loads the ten Skills once and does not start Hooks, workers, Pro
 Use the existing enhanced installer only when the task needs recoverable long-running state, Hooks, indexing, an independent Reviewer, an enforced budget, or controlled writes. It performs the existing backup, transaction, verification, and recovery steps; a managed enhancement installation is never downgraded by the base launcher.
 
 ## Downloads
+
+The links below retain the 7.10.0 artifacts; the 7.11.0 local candidate has not been publicly released by this work.
 
 | Distribution | Interface | Download |
 | --- | --- | --- |
@@ -161,7 +163,7 @@ Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not 
 
 The base installation does not require the package Python runtime; the enhancement runtime requires Python 3.11 or later; public CI is configured to validate both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
 
-The V7.10.0 window is `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
+The V7.11.0 window is `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, `0.151.0`, `0.150.1`, and `0.150.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
 ## First install and upgrade
 
@@ -200,7 +202,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V7.10.0 release notes](docs/releases/v7.10.0/RELEASE_NOTES.en.md)
+- [Changelog](CHANGELOG.en.md) · [V7.11.0 release notes](docs/releases/v7.11.0/RELEASE_NOTES.en.md)
 
 ## Local validation
 
@@ -216,7 +218,7 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. An authorized public Release is created and read back separately.
 
 ```shell
-gh attestation verify Codex-Skills-V7.10.0-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.11.0-en.zip --repo OWNER/REPOSITORY
 ```
 
 See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.en.md) for the complete gates and new-version procedure.

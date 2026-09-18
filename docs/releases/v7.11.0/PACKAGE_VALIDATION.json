@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "version": "7.11.0",
+  "ok": false,
+  "evidence_scope": "local version-correction evidence only",
+  "targeted_validation": {
+    "ok": true,
+    "test_count": 224,
+    "passed": 224,
+    "skipped": 0,
+    "modules": 11,
+    "source_snapshot_digest": "f1033eb50b8409ae6ec4875473766207d8480eca4bda45a90639adac9f059a9b"
+  },
+  "full_current_package_suite": "NOT_REPEATED",
+  "release_gate": "NOT_EVALUATED",
+  "public_release_created": false,
+  "historical_behavior_cases": 773,
+  "historical_platform_skips": 5
+}

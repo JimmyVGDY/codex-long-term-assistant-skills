@@ -13,14 +13,14 @@
 - 基线 / 差异范围：
 - 审查文件：
 - 阅读的上游、下游和共享逻辑：
-- 请求模型档位：luna-low / luna-medium / terra-medium / terra-high
-- 最低可接受模型档位：luna-low / luna-medium / terra-medium / terra-high
+- 请求模型档位：generated approved_profile / acceptable_profiles
+- 明确可接受组合集合：generated approved_profile / acceptable_profiles
 - 派发 permit 引用：未激活根预算时为空
-- 策略状态：approved / legacy-unbound
+- 策略状态：V5 为 approved / policy-only；旧 V4 可为 legacy-unbound
 - 成本依据：批准派发档位；不采集宿主实际模型身份
 - 任务难度：LOW / MEDIUM / HIGH / CRITICAL / UNKNOWN
 - 耗时（毫秒）：
-- 估算成本 / 公式版本：profile-weight-v1
+- 估算成本 / 公式版本：review-weight-v2
 - 校准归因是否最终完成：固定为否；由主协调 Agent 在修复验证后通过控制器另行最终化
 - Reviewer 配置声明：
 - 父会话实际沙箱：
@@ -61,3 +61,5 @@
 - 建议维度：
 
 > Reviewer 按行为规则只报告、不修改、不提交、不继续派生；同一根因合并，默认最多 8 组。只有 isolation=system-readonly 时，才能声明系统级写入隔离。
+
+V5 JSON 必须由 `result-template --review-dir` 生成，固定策略摘要、评分卡、attempt/permit 绑定及可接受集合。V7 旧状态继续使用归档 V4 契约。

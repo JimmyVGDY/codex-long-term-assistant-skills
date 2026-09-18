@@ -35,9 +35,9 @@ MAX_TERRA_HIGH_REVIEWERS = 1
 
 ## 三、模型预算
 
-自动 Reviewer 只允许 `luna-low / luna-medium / terra-medium / terra-high`。模型路由、升级条件与运行时核验见 `reviewer-model-routing.md`。
+登记 Reviewer 支持十组合：Luna Low/Medium、Terra Medium/High、Sol Low/Medium/High、Astra Low/Medium/High。每次从 Luna Low 的 1 分开始，按复审预算模式与有效证据加分，计算完成后一次派发。Worker/Explorer 保持原四组合。评分、可接受集合与切换条件见 `reviewer-model-routing.md`。
 
-模型、人数、上下文、轮次必须同时控制。即使模型不超过 Terra High，多个并行 Reviewer 仍会放大总体消耗。
+模型、人数、上下文、轮次必须同时控制。根任务 Sol/Astra 合计最多 2 次、同时最多 1 个、Astra High 最多 1 次；重试也计次数。STANDARD/STRICT 可显式启用 72 个代理单位的复审扩展，不能扩大全部角色额度。预算不足或证据不满足质量约束时停止派发，不静默降档。
 
 ## 四、运行时隔离
 

@@ -2,7 +2,14 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
-## Unreleased
+## 7.11.0 - 2026-09-17
+
+Local candidate; no public release has been performed in this work.
+
+- Bind native tool calls, agent creation receipts, and lifecycle callbacks. Calls without task names carry a random single-use dispatch reference; only its hash is retained. Implicit matching, incorrect references, and repeated consumption reject. Missing agent_id is not proof of root-caller identity. Direct start/complete cannot stand in for V3 native completion; unknown no-start causes do not trigger refunds.
+
+- Add Sol/Astra Low, Medium, and High for ten registered Reviewer combinations. Start from Luna Low, score valid evidence and review budget, and dispatch once within explicit quality constraints.
+- Add frozen policies, V3 root accounting, V8/V5 review contracts, and version-isolated calibration while retaining V2/V7/V4 compatibility and preventing permit reuse, root mismatches, cost mixing, and silent downgrades.
 
 ## 7.10.0 - 2026-09-15
 

@@ -1,12 +1,12 @@
 <!-- Generated from locales/en/docs/USER_GUIDE.md; edit that source and run scripts/documentation.py sync. -->
 
-# V7.10 Operating Guide
+# V7.11 Operating Guide
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE/)
 
 ## Quick start
 
-From the extracted V7.10.0 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
+From the extracted V7.11.0 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
 
 Simple local tasks run with the main Agent by default. A Profile, index, full scan, and budget ledger are not prerequisites. Add the optional enhancement through `install-user` only when needed; see [installation and recovery](operations/INSTALLATION_RECOVERY.en.md). The index, Hook, and budget procedures below apply to that enhancement. Strict budgeting requires a verifiable host binding, ledger, and dispatch permit; otherwise the model ceiling remains a policy constraint.
 
@@ -58,46 +58,36 @@ The [capability index](CAPABILITY_INDEX.en.md) links the complete commands. The 
 
 ## 1. Dispatch budget and privacy
 
-The enhancement preserves one root-task weighted budget for Reviewer, Explorer, and Worker while tightening model-identity privacy to the pre-dispatch boundary. The Task Envelope declares the class, `delegation-budget.py` owns the repository-external append-only Budget V2 ledger, the PreToolUse Hook reserves the approved profile atomically before dispatch, and the Reviewer controller keeps rounds and findings without charging twice or receiving host runtime model identity.
+Reviewer, Explorer, and Worker share one root budget; the review controller never charges twice. New tasks use Budget V3, Reviewer state V8, and result V5; old tasks pin their original policy. The main agent retains its current selection. Workers/Explorers keep the original four combinations. Registered Reviewers start at Luna Low with one point, add review-budget and valid-evidence points, then select one of ten combinations for one dispatch, capped at Astra High.
 
-Weights are fixed at `luna-low=1`, `luna-medium=2`, `terra-medium=4`, and `terra-high=8`.
-
-| Class | Units | Dispatches | Parallel | Depth | Terra High |
-|---|---:|---:|---:|---:|---:|
-| LIGHT | 4 | 2 | 1 | 1 | 0 |
-| STANDARD | 16 | 6 | 3 | 2 | 1 |
-| STRICT | 32 | 10 | 3 | 2 | 1 |
+Proxy units are neither actual prices nor a capability ranking. See [model selection and budget](../locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md) for combinations, evidence deduplication, quality constraints, extensions, and family limits. Stop when no acceptable combination is affordable.
 
 ## 2. Workflow
 
-1. Initialize the Task Envelope and choose a budget class.
-2. Initialize DelegationBudget V2 outside the repository.
-3. Record an `INLINE` or `DELEGATE` decision before every dispatch. A delegated call needs a controlled reason and an opaque unique dispatch key; exact model requests may exist only transiently during host-adapter validation.
-4. In the Codex host launch environment, point `CP_DELEGATION_BUDGET_PATH` at the ledger and also set `CP_DELEGATION_BUDGET_REQUIRED=1`. PreToolUse permits the call only when the stable host dispatch ID, role, approved profile, and permit agree; required mode fails closed when the ledger path is missing.
-5. Start/Stop reconciliation occurs only when the host propagates `reservation_id`. Codex 0.153.2 omits it in the observed path, so the reservation remains `RESERVED`; time-order guessing is forbidden.
-6. Only host proof that an agent did not start can release a reservation. A started agent is never refunded.
+1. Bind an external Project Profile, initialize a Task Envelope with the new scoring policy, and choose LIGHT, STANDARD, or STRICT.
+2. Initialize the external V3 ledger with `--root-envelope` and the genuine host session binding. Old tasks explicitly select `--policy-id four-tier-v1`; an old envelope cannot silently become a new-policy task.
+3. Decide INLINE or DELEGATE first. Reviewer `decide` takes `--selection-input`, `--review-assignment`, and the root envelope. Supply evidence references and paths, never submitted totals. The program scores from Luna and freezes the final combination and permit.
+4. Bind that permit, packet hash, and unique review slot in the V8 controller. Dispatch once using either its named parameters or `native_request_parameters` for the host interface. Native calls without task names must prepend the returned `native_message_prefix` verbatim to `message`. Missing, incorrect, or consumed references reject; roles never select permits implicitly. Reviewer combinations must be explicit.
+5. Launch the host with `CP_DELEGATION_BUDGET_PATH`, `CP_DELEGATION_ENVELOPE_PATH`, and `CP_DELEGATION_BUDGET_REQUIRED=1`. PreToolUse verifies the genuine root identity, current baseline, role, and permit before atomic reservation.
+6. Join the exact PostToolUse tool-call/agent-ID receipt to SubagentStart/Stop, including out-of-order callbacks. V3 start/complete CLI calls cannot replace native receipts. Missing association, timeout, or unknown responses remain incomplete and cannot imply PASS or refunds.
 
-The enhancement does not create a root-task ledger automatically. The unified budget is activated explicitly per task. Without both environment variables, the Hook still enforces the automatic dispatch-profile ceiling, but that task must not be reported as having passed the unified budget gate.
+The enhancement does not automatically create task ledgers. Unactivated tasks are policy-only; missing or corrupt required budget configuration denies dispatch. Automatic no-start refunds remain unavailable until a native no-create response contract is verified. Started, failed, or cancelled work is not refunded.
 
-## 3. Routing contract
+## 3. Retries and transitions
 
-Allowed reasons are `INDEPENDENT_EVIDENCE_GAIN`, `SEMANTIC_COMPLEXITY`, `EVIDENCE_CONFLICT`, `SECURITY_OR_CONCURRENCY_RISK`, `LOWER_TIER_INCONCLUSIVE`, `MISSING_EVIDENCE`, and `INLINE_SUFFICIENT`.
+Missing evidence is not an upgrade reason. Same-family effort increases and cross-family switches have separate records. Re-review binds the prior terminal attempt, result references, and new evidence; renaming cannot reuse permits or reset counts. Retries require an explicit new round or slot within the same root budget.
 
-Missing evidence cannot justify an upgrade. Inconclusive lower-tier work must reference the preceding tier and may advance only one step. Terra High requires a security/concurrency risk or a referenced stepwise escalation. Unknown roles and invalid inputs fail closed.
+## 4. Cost and calibration
 
-## 4. Approved profile, cost, and calibration
+Store only approved combinations, scoring, and cost proxies; never read, infer, or store underlying host model identity. Samples pin project, repository, policy digest, formula, and declared comparison pair. Old units never mix with a new formula. Parent finalization with result and validation references precedes replay; insufficient samples retain NO_CHANGE. Proposals permanently retain `execution_authorization=NONE`.
 
-An omitted model charges the Task Envelope default approved profile as `policy-default`. Each dispatch reserves fixed units once before startup. After startup the system never reads, infers, or stores host runtime model identity or reasoning effort, and those facts cannot trigger a top-up, refund, or reinterpretation of the outcome.
-
-Role metrics differ. Child self-reports remain pending until the parent coordinator finalizes them with SHA-256 evidence references. Offline calibration compares outcome value per reserved unit between approved profiles and cannot recommend a route change without sufficient adjacent-profile samples. Every proposal retains `execution_authorization=NONE`.
-
-Event V2 and Budget V1 chains from V7.4.2 and earlier remain byte-for-byte verifiable, but the new runtime opens them read-only and projects only allowed fields. Historical model-identity fields never reach V3 events, snapshots, assessments, proposals, or release reports. New records use separate V3/V2 chains and cannot be mixed with legacy chains.
+Budget V1 is read-only; V2 preserves original byte-level replay and continuation. V7/V4 reviews keep their old semantics. New tasks use separate V3 ledgers; unknown versions fail closed. Installation, registration, Hook behavior, native dispatch, and underlying identity are distinct evidence layers. Synthetic tests never replace host acceptance.
 
 ## 5. Codex 0.154.0 scope
 
-V7.10.0 supports Codex CLI 0.154.0 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.154.0 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract or the automatic subagent policy, which remains limited to Luna/Terra profiles. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
+V7.11.0 supports Codex CLI 0.154.0 and the ten preceding stable releases exactly as frozen in `config/codex-compatibility-v1.json`. Upstream 0.154.0 fixes Astra visibility in the bundled model picker, makes Astra the bundled default when no model is explicitly configured, and limits async-question guidance to sessions where the tool is available. These changes do not alter the frozen Plugin/Hook contract. Workers and Explorers retain the original four Luna/Terra combinations; registered Reviewers start from Luna, score evidence and budget, and are capped at Astra High. The local Marketplace manifest requires `interface.displayName`; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
-Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.10.0`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
+Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.11.0`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
 
 ## Feedback and measured benefits
 
@@ -105,4 +95,4 @@ V7.9 retains the validation feedback introduced in V7.5, health gates, opt-in in
 
 ## Capability reuse and optional gates
 
-Use the [capability index](CAPABILITY_INDEX.en.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.10.0 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.en.md) and [release validation](releases/v7.10.0/VALIDATION_REPORT.en.md).
+Use the [capability index](CAPABILITY_INDEX.en.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.11.0 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.en.md) and [release validation](releases/v7.11.0/VALIDATION_REPORT.en.md).

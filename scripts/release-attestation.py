@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：创建并验证隐私有界的 V7.10.0 发行证明。
+"""中文：创建并验证隐私有界的 V7.11.0 发行证明。
 
-English: Create and verify a privacy-bounded V7.10.0 release attestation.
+English: Create and verify a privacy-bounded V7.11.0 release attestation.
 """
 from __future__ import annotations
 
@@ -26,9 +26,9 @@ from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "7.10.0"
+VERSION = "7.11.0"
 TARGET_CODEX_VERSION = "0.154.0"
-COMPATIBILITY_REGISTRY_DIGEST = "9d274e3709d728b986ce5e179b769f0e3e82b4c685e35e5da56a0804ddc1b6a5"
+COMPATIBILITY_REGISTRY_DIGEST = "60e81297cab3020709cad3311522e130bf9f3ce0b8e6f2d298b7de9642f858f0"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 
 
@@ -341,7 +341,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.10.0 release attestation")
+    parser = argparse.ArgumentParser(description="V7.11.0 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)

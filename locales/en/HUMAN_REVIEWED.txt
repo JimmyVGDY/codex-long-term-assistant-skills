@@ -369,3 +369,6 @@ docs/releases/v7.9.2/VALIDATION_REPORT.md
 docs/releases/v7.10.0/AUDIT_REPORT.md
 docs/releases/v7.10.0/RELEASE_NOTES.md
 docs/releases/v7.10.0/VALIDATION_REPORT.md
+docs/releases/v7.11.0/RELEASE_NOTES.md
+docs/releases/v7.11.0/VALIDATION_REPORT.md
+docs/releases/v7.11.0/AUDIT_REPORT.md

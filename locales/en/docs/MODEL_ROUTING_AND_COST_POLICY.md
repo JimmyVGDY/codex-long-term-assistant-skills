@@ -1,119 +1,74 @@
-# Subagent Model Tiers and Cost Policy
+# Independent Review Model Selection and Budget
 
-## 1. Goal
+## Scope
 
-Preserve independent contexts, specialist review, and critical-risk judgment while reducing unnecessary subagents, duplicated context, repeated scans, and high reasoning effort.
+The seven registered cp_review roles may use ten combinations. Workers and explorers retain the original four; the main agent uses the user's selected model. High remains the reasoning ceiling. The authority is runtime/cp_runtime/data/dispatch-policy-v2.json; the manifest and documentation are projections.
 
-This policy governs only subagents launched automatically by this package. The main agent keeps its selected model. Agents launched manually outside this workflow are not blocked by `review_controller.py`.
+| Combination | Scheduling proxy units |
+|---|---:|
+| Luna Low / Medium | 1 / 2 |
+| Terra Medium / High | 4 / 8 |
+| Sol Low / Medium / High | 10 / 14 / 18 |
+| Astra Low / Medium / High | 24 / 32 / 40 |
 
-## 2. Three Non-Equivalent Dimensions
+Units are versioned scheduling weights, not actual prices or a universal quality ranking.
 
-| Dimension | Values | Controls |
-|---|---|---|
-| Execution workflow | `LIGHT / STANDARD / STRICT` | Authorization, validation, rollback, and delivery gates |
-| Reviewer cost | `economy / balanced / deep` | Reviewer count, scope, context, and rounds |
-| Model tier | `luna-low / luna-medium / terra-medium / terra-high` | Model and reasoning effort |
+## Start from Luna
 
-`STRICT` does not imply `terra-high`, and `deep` does not mean every Reviewer uses High.
+Every new assignment starts at the Luna Low baseline of one point. Score once, then dispatch once; do not make preliminary model calls merely to climb a ladder.
 
-## 3. Four Model Tiers
+Review budget modes add economy 0, balanced 1, or deep 3 points. STRICT execution, the parent's model, file counts, long logs, and elapsed time alone add nothing.
 
-| Tier | Model | Reasoning Effort | Typical Work |
-|---|---|---|---|
-| `luna-low` | `gpt-5.6-luna` | `low` | File/symbol location, extraction, classification, formatting, and mechanical state/test checks |
-| `luna-medium` | `gpt-5.6-luna` | `medium` | Bounded log classification, ordinary compatibility scans, test-evidence review, and scoped read-only analysis |
-| `terra-medium` | `gpt-5.6-terra` | `medium` | Business semantics, multi-file call chains, ordinary implementation, specialist review, and synthesis |
-| `terra-high` | `gpt-5.6-terra` | `high` | Complex transactions, races, privilege escalation, irreversible migration, core state machines, and conflict adjudication |
+| Supported evidence | Points |
+|---|---:|
+| Bounded / cross-module / multi-domain semantics | 2 / 4 / 8 |
+| Multi-step / concurrent state | 4 / 8 |
+| High-impact / critical irreversible boundary | 4 / 14 |
+| Confirmed evidence conflict | 6 |
+| Prior inconclusive review with matching result and attempt references | 6 |
 
-Fixed automatic escalation:
+Take at most one award per dimension. Exclude missing, stale, or context-mismatched evidence first. The same evidence or root cause forms a transitive exclusivity group that earns one award. Frozen tie rules make input order irrelevant. The total is capped at 40.
 
-```text
-luna-low -> luna-medium -> terra-medium -> terra-high
-```
+Choose an affordable combination within the role candidates and explicit quality requirements. Cost order does not establish capability dominance; Astra Low does not automatically satisfy a Sol High requirement. Stop when no permitted combination meets the requirement.
 
-Automatic flows prohibit `gpt-5.6-sol`, `xhigh`, `max`, and `ultra`. The automatic ceiling is `terra-high`.
+The coordinator assesses the semantic facts against source evidence. Code verifies provenance, freshness, binding, and arithmetic; a model's own risk assertion is not verified evidence.
 
-## 4. Escalation and Deescalation
+## Score once and dispatch once
 
-### 4.1 Escalation Is Allowed When
+New tasks use execution-state 5, review-state 8, Reviewer Result 5, DelegationBudget 3, and calibration sample 3. The Task Envelope template has its separate schema 4; Review Packet remains schema 3.
 
-- Luna cannot reach an evidence-backed conclusion.
-- Business definitions or a multi-file call chain must be understood.
-- Valid evidence or Reviewer conclusions conflict.
-- Transactions, locks, concurrency, idempotency, authorization, migration, or irreversible operations are involved.
-- Failure cost clearly exceeds escalation cost.
+1. Bind the project and task envelope to reviewer-matrix-v2 and its digest.
+2. Create the shared packet and record INLINE or DELEGATE. INLINE neither dispatches nor charges a model.
+3. The root budget command resolves sealed Evidence files and recomputes the score. Submitted totals or provenance assertions are not accepted.
+4. Bind the permit to one review state, reviewer, boundary, phase, round, and packet. Preparation does not charge twice.
+5. Dispatch an independent context with the explicit model, reasoning_effort, agent_type, and task_name emitted by the controller.
+6. The Hook checks the role, genuine root identity, envelope, current source baseline, and permit, then reserves atomically. Another host call cannot reuse that permit.
+7. Collect V5 results, merge findings, and repair together. Do not repeat an already clean packet; reassessment after an inconclusive result requires new evidence.
 
-### 4.2 These Alone Do Not Justify Escalation
+Prefer review_controller.py result-template for new results. V5 packet templates and validation require --review-dir. Unbound V4 templates serve only the legacy protocol.
 
-- Many files or long logs.
-- Many Skills.
-- Long task duration.
-- `STRICT` workflow.
-- A second or third round.
-- A parent agent using Terra High.
+## Limits and recovery
 
-### 4.3 Prefer Deescalation
+Ordinary LIGHT / STANDARD / STRICT allowances remain 4 / 16 / 32. An explicit review-extension adds 72 units to STANDARD / STRICT, producing root totals of 88 / 104. Ordinary role and nonpremium aggregate limits do not grow. LIGHT cannot enable the extension.
 
-- Use Luna for evidence extraction, test-output summaries, and state checks.
-- When a postrepair rereview is narrower than round one, keep or lower the tier.
-- Select the approved profile for a narrower post-repair review from its current risk; do not reuse host runtime information from the previous round.
-- When result quality is insufficient, redispatch through a controlled reason code rather than explaining the result from host runtime model identity.
+Sol/Astra share a maximum of two attempts, one concurrent attempt, and one Astra High attempt. Overall review counts and rounds still apply. A no-start refund does not reset V3 attempt counters. Timeouts, missing associations, and lost replies do not prove that an agent never started or completed.
 
-## 5. Default Reviewer Routing
+The root ledger alone owns cost accounting. V8 reconcile restores state from authoritative claims and reservations without inventing review output or refunds. V1 remains read-only; V2 retains its frozen writer rules. V7/V4 reviews retain their four-profile semantics. New tasks use the new policy; old tasks do not silently migrate.
 
-| Reviewer | Default | Escalation Condition |
-|---|---|---|
-| Test and delivery | `luna-low` | `luna-medium` for complex regression scope |
-| Regression and compatibility | `luna-medium` | `terra-medium` for public APIs, historical data, and coexistence |
-| Performance and resources | `luna-medium` | `terra-medium` or `terra-high` for complex SQL, locks, thread pools, or capacity |
-| Function and business | `terra-medium` | `terra-high` for core state, money, or complex business definitions |
-| Authorization and security | `terra-medium` | `terra-high` for authentication, privilege escalation, tenant isolation, or high-impact vulnerabilities |
-| Data and contracts | `terra-medium` | `terra-high` for migrations, transactions, message success boundaries, or irreversible change |
-| State and concurrency | `terra-medium` | `terra-high` for races, lock ordering, idempotency, compensation, or recovery |
+## Capability and evidence levels
 
-Use at most one `terra-high` Reviewer per boundary by default; the hard ceiling is two after explicit relaxation.
+The base Plugin remains Python-free. Without enhancement, report policy constraints only. An ordinary worker cannot impersonate an unavailable registered premium Reviewer. Broken or missing required budget binding must deny dispatch instead of falling back to basic mode.
 
-## 6. Cost-Tier Mapping
+Validate requested tuples, installation/registration, Hook behavior, and real host dispatch separately. A read-only TOML declaration does not prove system isolation. Missing host associations remain unverified. Do not collect or request self-reported host model identity.
 
-| Reviewer Tier | Default Model | Reviewers | Notes |
-|---|---|---:|---|
-| `economy` | `luna-low` | 0–1 | Prefer no subagent for a small task |
-| `balanced` | `luna-medium` | 1–2 | One may use `terra-medium` when business judgment is needed |
-| `deep` | `terra-medium` | 2–3 | Use `terra-high` only for a critical dimension |
+## Calibration and changes
 
-This is a default mapping, not a requirement that every Reviewer in one round use the same tier. Select independently by unique responsibility.
+Compare independent tasks only within the same project, repository, policy digest, cost formula, and declared pair. Never mix old and new cost cohorts. Insufficient data produces NO_CHANGE. Consider adopted/repaired findings, false positives and misses, regression prevention, duration, and cost; finding count alone is not a benefit measure.
 
-## 7. Configuration and Priority
+Only the coordinator finalizes attribution with result and validation references. Proposals keep execution_authorization=NONE and never change policy or installation automatically. Changes to weights, scoring algorithms, or candidate relationships require new policy/formula versions while preserving old evaluators.
 
-Recommended low-cost fallback in existing `config.toml`:
+Native lifecycle association uses the exact PreToolUse tool-use claim, PostToolUse agent-ID receipt, and SubagentStart/Stop callbacks within the verified root session. Callbacks may arrive out of order. Unknown response shapes remain unassociated; generic status, timeout, or missing callbacks never prove no-start. V3 refunds require a matching trusted no-start receipt. No native no-create response adapter is enabled until its contract is verified. A local protocol test does not prove host registration or real dispatch.
 
-```toml
-[agents]
-enabled = true
-max_concurrent_threads_per_session = 3
-default_subagent_model = "gpt-5.6-luna"
-default_subagent_reasoning_effort = "medium"
-```
+Use `task_name` to bind a permit when supported. For a native interface without that field, prepend the controller's `native_message_prefix` verbatim to `message`, then append the review task. Use `native_request_parameters`, including `fork_context=false`. The fixed ASCII first line is `CP_REVIEW_DISPATCH/1 <nonce>`, followed by a blank line. The controller generates a random 256-bit nonce; the ledger retains only its SHA-256 reference. The Hook parses this fixed-length header without scanning or retaining the body. Adjacent duplicate headers and missing, unknown, or conflicting references reject. The reference binds the root session, registered role, explicit profile, current baseline, depth, and claimed review slot. Validation and reservation share one lock; no candidate-count matching remains. The same call can replay idempotently before its creation receipt; a different call cannot reuse the permit. PostToolUse joins by the unique tool-call ID.
 
-Keep the Codex default `agents.interrupt_message = true`. Disabling it saves little interrupt context but may reduce semantic completeness during recovery.
-
-Specialist Reviewer TOML deliberately omits `model` and `model_reasoning_effort` so the coordinator can choose dynamically. A fixed model in Agent TOML overrides spawn settings and `[agents]` defaults and prevents deescalation.
-
-## 8. Auditability
-
-`review_controller.py dispatch` records:
-
-- abstract approved profile, permit reference, and reserved units;
-- reason for `terra-high` escalation;
-- reason for redispatch against the same packet;
-- current isolation level and packet hash.
-
-Reviewer V4 results reject host model identity and reasoning-effort fields. They record only:
-
-- `dispatch_assignment`: approved profile, permit reference, reserved units, and approval basis;
-- outcome, findings, repair rounds, and isolation level;
-- SHA-256 evidence references finalized by the primary coordinator.
-
-A new V7 ledger must record `INLINE` or `DELEGATE` first. `route --decision INLINE` is the formal no-delegation gate: it creates no round and consumes no Reviewer budget. A redecision must append `DELEGATE` before the first round and cite the prior decision, new evidence, and a change reason. Reviewer V4 rejects fields outside its schema and uses `profile-weight-v1` (1/2/4/8) to project the approved profile and reserved cost into calibration. A Reviewer cannot finalize attribution; after repair validation, the primary coordinator must provide evidence through `finalize-calibration`. Missing cost is never treated as zero, and unfinalized attribution cannot drive low-yield classification.
-
-The controller governs registered automatic dispatches only. It does not read host model information outside the workflow or include that information in final reports.
+Return the reference only to the coordinator's current dispatch call, never to plans, review results, or ordinary logs. A lost preparation response cannot reconstruct or guess the reference: retain the unconsumed state and use an explicit named path or a separately defined recovery workflow. A child receives its own reference only after consumption. The native protocol does not positively authenticate the root caller: this is an explicit single-use permit, not system-level caller isolation. Disclosure before consumption remains within the existing logical trust boundary.

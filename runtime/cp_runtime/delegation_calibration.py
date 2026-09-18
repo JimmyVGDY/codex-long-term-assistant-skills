@@ -22,9 +22,11 @@ from .delegation_budget import (
     ROLES, DelegationBudgetError, canonical_json, read_budget, sha256_ref,
 )
 from .event_v2 import OwnerTokenLock
+from .dispatch_policy import LEGACY_POLICY_ID, DispatchPolicyError, policy, policy_digest, profile_weights
 
-SAMPLE_SCHEMA = "2.0"
-REPLAY_SCHEMA = "2.0"
+SAMPLE_SCHEMA = "3.0"
+LEGACY_SAMPLE_SCHEMA = "2.0"
+REPLAY_SCHEMA = "3.0"
 IDENTITY_KEYS = ("budget_id", "task_id", "project_id", "repo_fingerprint")
 ROLE_METRICS = {
     "reviewer": {"accepted_findings", "repaired_findings", "duplicate_findings", "missed_findings", "regressions_prevented"},
@@ -96,8 +98,9 @@ def build_pending_sample(ledger_path: Path, reservation_id: str,
     if not decision:
         raise DelegationBudgetError("校准样本缺少路由决策")
     identity = budget["identity"]
-    return {
-        "schema_version": SAMPLE_SCHEMA,
+    matrix = budget["schema_version"] == "3.0"
+    result = {
+        "schema_version": SAMPLE_SCHEMA if matrix else LEGACY_SAMPLE_SCHEMA,
         "record_id": _sample_id(identity, reservation_id),
         **identity,
         "reservation_id": reservation_id,
@@ -118,6 +121,13 @@ def build_pending_sample(ledger_path: Path, reservation_id: str,
         "finalized_by": "",
         "evidence_refs": [],
     }
+    if matrix:
+        contract = policy(budget["policy_id"], budget["policy_digest"])
+        result.update(policy_id=budget["policy_id"], policy_digest=budget["policy_digest"],
+                      cost_formula_version=budget["cost_formula_version"],
+                      comparison_pairs=[pair for pair in contract["comparison_pairs"]
+                                        if reservation["approved_profile"] in pair["profiles"]])
+    return result
 
 
 def finalize_sample(sample: Mapping[str, Any], *, finalized_by: str,
@@ -128,7 +138,7 @@ def finalize_sample(sample: Mapping[str, Any], *, finalized_by: str,
     English: Parent-finalize a sample. A child report cannot finalize itself.
     """
     value = dict(sample)
-    if value.get("schema_version") != SAMPLE_SCHEMA or value.get("calibration_finalized") is not False:
+    if value.get("schema_version") not in {SAMPLE_SCHEMA, LEGACY_SAMPLE_SCHEMA} or value.get("calibration_finalized") is not False:
         raise DelegationBudgetError("只能 finalise 合法的 pending 校准样本")
     if not FINALIZER.fullmatch(str(finalized_by)):
         raise DelegationBudgetError("校准只能由主协调 Agent 最终化")
@@ -155,7 +165,10 @@ def _validate_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
         "context_size", "duration_ms", "retry_count", "metrics", "value_score", "source",
         "calibration_finalized", "finalized_by", "evidence_refs",
     }
-    if set(sample) != expected_keys or sample.get("schema_version") != SAMPLE_SCHEMA:
+    matrix = sample.get("schema_version") == SAMPLE_SCHEMA
+    if matrix:
+        expected_keys |= {"policy_id", "policy_digest", "cost_formula_version", "comparison_pairs"}
+    if set(sample) != expected_keys or sample.get("schema_version") not in {SAMPLE_SCHEMA, LEGACY_SAMPLE_SCHEMA}:
         raise DelegationBudgetError("校准样本 schema 非法")
     role = str(sample.get("role") or "")
     if role not in ROLES or sample.get("difficulty") not in DIFFICULTIES:
@@ -172,10 +185,21 @@ def _validate_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
     if not SHA_REF.fullmatch(str(sample.get("reservation_completion_ref") or "")):
         raise DelegationBudgetError("校准 reservation 完成引用非法")
     approved = str(sample.get("approved_profile") or "")
-    if approved not in PROFILE_WEIGHTS:
+    policy_id = sample["policy_id"] if matrix else LEGACY_POLICY_ID
+    try:
+        contract = policy(policy_id, sample["policy_digest"] if matrix else "")
+    except DispatchPolicyError as exc:
+        raise DelegationBudgetError(str(exc)) from exc
+    weights = {name: item["units"] for name, item in contract["profiles"].items()}
+    if approved not in contract["role_profiles"][role]:
         raise DelegationBudgetError("校准批准档位非法")
-    if _nonnegative(sample.get("cost_basis_units"), "cost_basis_units") != PROFILE_WEIGHTS[approved]:
+    if _nonnegative(sample.get("cost_basis_units"), "cost_basis_units") != weights[approved]:
         raise DelegationBudgetError("校准成本依据与批准档位不一致")
+    if matrix:
+        pairs = [pair for pair in contract["comparison_pairs"] if approved in pair["profiles"]]
+        if "scoring" not in contract or sample["cost_formula_version"] != contract["cost_formula_version"] \
+                or sample["comparison_pairs"] != pairs or not pairs or type(sample["cost_basis_units"]) is not int:
+            raise DelegationBudgetError("校准策略、公式或声明比较对不一致")
     metrics = sample.get("metrics")
     if not isinstance(metrics, Mapping) or set(metrics) != ROLE_METRICS[role]:
         raise DelegationBudgetError("角色校准指标字段不完整或包含未知字段")
@@ -213,6 +237,12 @@ def _validate_against_budget_state(sample: Mapping[str, Any], budget: Mapping[st
         raise DelegationBudgetError("DelegationBudget V1 只读投影不能参与新校准")
     if any(value[key] != budget["identity"][key] for key in IDENTITY_KEYS):
         raise DelegationBudgetError("校准样本与预算账本身份不一致")
+    expected_schema = SAMPLE_SCHEMA if budget["schema_version"] == "3.0" else LEGACY_SAMPLE_SCHEMA
+    if value["schema_version"] != expected_schema:
+        raise DelegationBudgetError("校准样本与预算格式版本不一致")
+    if expected_schema == SAMPLE_SCHEMA and any(value[key] != budget[key] for key in
+                                               ("policy_id", "policy_digest", "cost_formula_version")):
+        raise DelegationBudgetError("校准样本与冻结预算策略不一致")
     reservation = budget["reservations"].get(value["reservation_id"])
     if not reservation or reservation.get("state") != "COMPLETED":
         raise DelegationBudgetError("校准样本未绑定已完成 reservation")
@@ -287,8 +317,13 @@ def compare_scenarios(samples: Iterable[Mapping[str, Any]], *, minimum_samples_p
         raise DelegationBudgetError("minimum_samples_per_profile 至少为 1")
     scenario_groups: Dict[tuple[str, ...], Dict[str, List[Dict[str, Any]]]] = {}
     seen: Dict[str, str] = {}
+    project_identity: tuple[str, str] | None = None
     for raw in samples:
         item = _validate_sample(raw)
+        identity = (item["project_id"], item["repo_fingerprint"])
+        if project_identity is not None and project_identity != identity:
+            raise DelegationBudgetError("CALIBRATION_PROJECT_REPO_MISMATCH")
+        project_identity = identity
         if not item["calibration_finalized"]:
             continue
         encoded = canonical_json(item)
@@ -298,13 +333,12 @@ def compare_scenarios(samples: Iterable[Mapping[str, Any]], *, minimum_samples_p
             continue
         seen[item["record_id"]] = encoded
         profile = str(item.get("approved_profile") or "")
-        if profile not in PROFILE_WEIGHTS:
-            continue
+        cohort_context = sample_policy_context(item)
+        cohort = tuple(cohort_context[key] for key in ("policy_id", "policy_digest", "cost_formula_version"))
         scenario = tuple(str(item.get(key) or "UNKNOWN") for key in
                          ("role", "responsibility", "difficulty", "risk_domain", "context_size"))
-        scenario_groups.setdefault(scenario, {}).setdefault(profile, []).append(item)
+        scenario_groups.setdefault(cohort + scenario, {}).setdefault(profile, []).append(item)
     comparisons: List[Dict[str, Any]] = []
-    ordered = sorted(PROFILE_ORDER, key=PROFILE_ORDER.get)
 
     def aggregate(items: List[Dict[str, Any]]) -> Dict[str, Any]:
         tasks: Dict[str, List[Dict[str, Any]]] = {}
@@ -321,8 +355,12 @@ def compare_scenarios(samples: Iterable[Mapping[str, Any]], *, minimum_samples_p
         return {"samples": len(items), "tasks": len(tasks), "yield": average, "interval": interval,
                 "harm_rate": harmed / len(tasks) if tasks else None}
 
-    for scenario, profiles in sorted(scenario_groups.items()):
-        for lower, higher in zip(ordered, ordered[1:]):
+    for cohort_scenario, profiles in sorted(scenario_groups.items()):
+        policy_id, digest_ref, formula = cohort_scenario[:3]
+        scenario = cohort_scenario[3:]
+        contract = policy(policy_id, digest_ref)
+        for pair in contract["comparison_pairs"]:
+            lower, higher = pair["profiles"]
             low = profiles.get(lower, []); high = profiles.get(higher, [])
             low_stats, high_stats = aggregate(low), aggregate(high)
             enough = (len(low) >= minimum and len(high) >= minimum and low_stats["tasks"] >= task_minimum
@@ -338,6 +376,8 @@ def compare_scenarios(samples: Iterable[Mapping[str, Any]], *, minimum_samples_p
                     elif higher_ci[0] > lower_ci[1] and high_stats["harm_rate"] <= low_stats["harm_rate"]:
                         recommendation = higher
             comparisons.append({
+                "policy_id": policy_id, "policy_digest": digest_ref, "cost_formula_version": formula,
+                "comparison_pair_id": pair["id"], "comparison_basis": "declared-policy-pair",
                 "scenario": dict(zip(("role", "responsibility", "difficulty", "risk_domain", "context_size"), scenario)),
                 "lower_profile": lower, "higher_profile": higher,
                 "lower_samples": len(low), "higher_samples": len(high),
@@ -350,6 +390,12 @@ def compare_scenarios(samples: Iterable[Mapping[str, Any]], *, minimum_samples_p
                 "regression_rate": max(0.0, 1.0 - high_yield / low_yield) if enough and low_yield else 0.0,
             })
     return comparisons
+
+
+def sample_policy_context(sample: Mapping[str, Any]) -> Dict[str, str]:
+    return {"policy_id": sample.get("policy_id", LEGACY_POLICY_ID),
+            "policy_digest": sample.get("policy_digest", policy_digest(LEGACY_POLICY_ID)),
+            "cost_formula_version": sample.get("cost_formula_version", "profile-weight-v1")}
 
 
 def offline_replay_many(samples: Iterable[Mapping[str, Any]], *, ledger_paths: Mapping[str, Path],

@@ -11,6 +11,7 @@ Task Envelope 是非简单任务的最小确定性控制对象，用于在主会
 - 修改、提交、推送、部署、重启、数据写入和功能生效的独立授权；
 - 必须门禁、停止条件、回滚条件和验收标准；
 - Git 基线、当前差异指纹、Evidence、Review Packet hash、动作读回和 Finalization 状态。
+- `reviewer_policy` 固定策略 ID 和摘要；新任务从 Luna 起算，预算模式与有效证据决定最终组合。execution-state schema 5 以前的状态固定旧四档策略，不能静默转成 V3 预算。
 
 ## 使用规则
 
@@ -25,9 +26,9 @@ Task Envelope 是非简单任务的最小确定性控制对象，用于在主会
 
 | 对象 | 当前格式 | 事实来源 |
 |---|---|---|
-| Task Envelope 模板 | schema <!-- cp-fact:schema.envelope -->3<!-- /cp-fact --> | `../assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml` 与包 manifest |
-| execution-state | schema <!-- cp-fact:schema.execution-state -->4<!-- /cp-fact --> | `../scripts/execution_guard.py` 的 SCHEMA |
+| Task Envelope 模板 | schema <!-- cp-fact:schema.envelope -->4<!-- /cp-fact --> | `../assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml` 与包 manifest |
+| execution-state | schema <!-- cp-fact:schema.execution-state -->5<!-- /cp-fact --> | `../scripts/execution_guard.py` 的 SCHEMA |
 | 嵌入式 delegation_budget 绑定 | schema 1 | execution_guard 的 routing 声明 |
-| 外部 DelegationBudget 账本 | <!-- cp-fact:schema.budget -->2.0<!-- /cp-fact --> | 根任务预算运行时 |
+| 外部 DelegationBudget 账本 | <!-- cp-fact:schema.budget -->3.0<!-- /cp-fact --> | 根任务预算运行时 |
 
 这些是不同对象的格式版本，不随包版本一起替换。Reviewer 状态管理复审，不拥有根任务总预算。

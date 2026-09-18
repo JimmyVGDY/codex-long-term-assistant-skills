@@ -1,0 +1,105 @@
+{
+  "identity": {
+    "budget_id": "FIXTURE-active",
+    "task_id": "FIXTURE-TASK",
+    "project_id": "fixture-project",
+    "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "budget_class": "STRICT",
+  "schema_version": "2.0",
+  "read_only": false,
+  "default_dispatch_profile": "luna-medium",
+  "limits": {
+    "max_units": 32,
+    "max_dispatches": 10,
+    "max_parallel": 3,
+    "max_depth": 2,
+    "max_terra_high": 1
+  },
+  "role_limits": {
+    "explorer": {
+      "max_units": 32,
+      "max_dispatches": 10
+    },
+    "reviewer": {
+      "max_units": 32,
+      "max_dispatches": 10
+    },
+    "worker": {
+      "max_units": 32,
+      "max_dispatches": 10
+    }
+  },
+  "decisions": {
+    "sha256:05598889f5317368417e6e63c28681e46fc59bcd10b6a83e8b9f4a6ddb1c3171": {
+      "approved_profile": "terra-medium",
+      "context_size": "UNKNOWN",
+      "decision": "DELEGATE",
+      "decision_kind": "dispatch",
+      "depth": 1,
+      "difficulty": "UNKNOWN",
+      "dispatch_ref": "sha256:05598889f5317368417e6e63c28681e46fc59bcd10b6a83e8b9f4a6ddb1c3171",
+      "parent_reservation_id": "",
+      "prior_profile": "",
+      "prior_result_ref": "",
+      "reason_code": "SEMANTIC_COMPLEXITY",
+      "responsibility": "general",
+      "risk_domain": "UNKNOWN",
+      "role": "reviewer"
+    }
+  },
+  "reservations": {
+    "DBR_ff466ae3d2a4c8c66159b019465a9c40": {
+      "approval_basis": "explicit-request",
+      "approved_profile": "terra-medium",
+      "association": "pretool-verified",
+      "depth": 1,
+      "dispatch_ref": "sha256:05598889f5317368417e6e63c28681e46fc59bcd10b6a83e8b9f4a6ddb1c3171",
+      "host_dispatch_ref": "sha256:36a2d6020710eb14e76f8845083f79f9d1e545237f89242354a8cabfc31835a1",
+      "parent_reservation_id": "",
+      "reservation_id": "DBR_ff466ae3d2a4c8c66159b019465a9c40",
+      "role": "reviewer",
+      "units": 4,
+      "charged_units": 4,
+      "state": "RESERVED",
+      "agent_ref": "",
+      "completion_ref": ""
+    }
+  },
+  "violations": [],
+  "usage": {
+    "units": 4,
+    "dispatches": 1,
+    "active": 1,
+    "terra_high": 0,
+    "by_role": {
+      "explorer": {
+        "units": 0,
+        "dispatches": 0,
+        "active": 0
+      },
+      "reviewer": {
+        "units": 4,
+        "dispatches": 1,
+        "active": 1
+      },
+      "worker": {
+        "units": 0,
+        "dispatches": 0,
+        "active": 0
+      }
+    },
+    "by_approved_profile": {
+      "luna-low": 0,
+      "luna-medium": 0,
+      "terra-medium": 1,
+      "terra-high": 0
+    }
+  },
+  "remaining_units": 28,
+  "violated": false,
+  "closed": false,
+  "association_complete": false,
+  "head_hash": "20d67bcbeef457519d2152b9352a1d0495adcae959864f18b5ec28e1a7b28e3a",
+  "event_count": 3
+}

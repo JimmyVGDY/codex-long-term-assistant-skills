@@ -13,14 +13,14 @@
 - Baseline / diff scope:
 - Reviewed files:
 - Upstream, downstream, and shared logic read:
-- Requested model tier: luna-low / luna-medium / terra-medium / terra-high
-- Minimum acceptable model tier: luna-low / luna-medium / terra-medium / terra-high
+- Requested model tier: generated approved_profile / acceptable_profiles
+- Minimum acceptable model tier: generated approved_profile / acceptable_profiles
 - Dispatch permit reference: empty when the root budget is inactive
-- Policy status: approved / legacy-unbound
+- Policy status: V5 uses approved / policy-only; legacy V4 may use legacy-unbound
 - Cost basis: approved dispatch profile; do not collect runtime model identity
 - Task difficulty: LOW / MEDIUM / HIGH / CRITICAL / UNKNOWN
 - Duration (milliseconds):
-- Estimated cost / formula version: profile-weight-v1
+- Estimated cost / formula version: review-weight-v2
 - Calibration attribution finalized: Always No; the coordinating agent finalizes it separately through the controller after repair validation
 - Reviewer configuration declaration:
 - Actual parent-session sandbox:
@@ -61,3 +61,5 @@
 - Suggested dimension:
 
 > A Reviewer reports only: it does not modify, commit, or dispatch further Agents. Merge findings with the same root cause; the default maximum is eight groups. System-level write isolation may be claimed only when `isolation=system-readonly`.
+
+V5 JSON must be generated with `result-template --review-dir` and keeps the policy digest, scorecard, attempt/permit binding, and acceptable set fixed. V7 states keep the archived V4 contract.

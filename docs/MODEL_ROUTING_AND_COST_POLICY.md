@@ -1,119 +1,74 @@
-# 子 Agent 模型分级与成本策略
+# 独立复审的模型选择与预算
 
-## 一、目标
+## 适用范围
 
-在保留独立上下文、专业复审和关键风险判断的前提下，降低不必要的子 Agent 数量、重复上下文、重复扫描和高强度推理。
+登记的七个 cp_review 角色使用十种组合。Worker、Explorer 保持原四种组合；主 Agent 使用当前选择的模型。最高推理强度为 High。策略事实源是 runtime/cp_runtime/data/dispatch-policy-v2.json；manifest 和文档是投影。
 
-本策略只约束本安装包自动发起的子 Agent 工作流。主 Agent 继续采用当前选择的模型；外部在本工作流之外手工启动的 Agent 不受 `review_controller.py` 强制拦截。
+| 组合 | 调度代理单位 |
+|---|---:|
+| Luna Low / Medium | 1 / 2 |
+| Terra Medium / High | 4 / 8 |
+| Sol Low / Medium / High | 10 / 14 / 18 |
+| Astra Low / Medium / High | 24 / 32 / 40 |
 
-## 二、三个互不等价的维度
+单位是版本化调度权重，不是实际费用，也不是跨模型质量排名。
 
-| 维度 | 可选值 | 控制内容 |
-|---|---|---|
-| 执行流程 | `LIGHT / STANDARD / STRICT` | 授权、验证、回滚和交付门禁 |
-| Reviewer 成本 | `economy / balanced / deep` | Reviewer 数量、范围、上下文和轮次 |
-| 模型档位 | `luna-low / luna-medium / terra-medium / terra-high` | 模型和推理强度 |
+## 从 Luna 起算
 
-`STRICT` 不等于 `terra-high`，`deep` 也不代表所有 Reviewer 都使用 High。
+每次新复审先以 Luna Low 的 1 分为起点，评分完成后只派发一次。无需为了升级先调用低档模型。
 
-## 三、四级模型档位
+复审预算模式加分：economy 0，balanced 1，deep 3。执行流程 STRICT、父模型、文件数量、日志长度、耗时本身不加分。
 
-| 档位 | 模型 | 推理强度 | 典型任务 |
-|---|---|---|---|
-| `luna-low` | `gpt-5.6-luna` | `low` | 文件/符号定位、提取、分类、格式化、状态与测试结果机械核对 |
-| `luna-medium` | `gpt-5.6-luna` | `medium` | 有界日志归类、普通兼容扫描、测试证据审查、明确范围的只读分析 |
-| `terra-medium` | `gpt-5.6-terra` | `medium` | 业务语义、多文件调用链、常规实现、专业审查和综合判断 |
-| `terra-high` | `gpt-5.6-terra` | `high` | 复杂事务、并发竞态、鉴权越权、不可逆迁移、核心状态机和冲突裁决 |
+| 已有有效证据 | 分值 |
+|---|---:|
+| 业务语义有界 / 跨模块 / 多领域 | 2 / 4 / 8 |
+| 多步状态 / 并发状态 | 4 / 8 |
+| 高影响 / 关键不可逆边界 | 4 / 14 |
+| 已确认的证据冲突 | 6 |
+| 前次复审无结论且结果、尝试引用匹配 | 6 |
 
-自动升级链固定为：
+同一维度最多取一项。先排除缺失、失效和项目、任务、审查包不匹配的证据；同证据或同根因形成传递互斥组，每组只取一次。并列按冻结规则裁决，调整输入顺序不能改变结果。总分最高 40。
 
-```text
-luna-low → luna-medium → terra-medium → terra-high
-```
+最终选择是角色候选集合、明确质量约束和评分预算的交集内可负担的组合。成本排序不代表能力排序；Astra Low 不自动满足 Sol High 的约束。没有满足质量约束的组合时停止，不静默降级。
 
-自动流程禁止使用 `gpt-5.6-sol`、`xhigh`、`max` 和 `ultra`。自动上限是 `terra-high`。
+事实分类由主协调者结合源码和证据审阅；程序验证来源、时效、绑定及算术，不把模型自己的风险描述当作已验证事实。
 
-## 四、升级与降级条件
+## 一次评分、一次派发
 
-### 4.1 允许升级
+新任务使用 execution-state 5、review-state 8、Reviewer Result 5、DelegationBudget 3 和校准样本 3。Task Envelope 模板为独立的 schema 4；Review Packet 仍为 schema 3。
 
-- Luna 无法给出有证据支撑的结论；
-- 需要理解业务口径或多文件调用链；
-- 出现多个相互冲突的证据或 Reviewer 结论；
-- 涉及事务、锁、并发、幂等、权限、数据迁移或不可逆操作；
-- 当前任务的失败成本明显高于升级成本。
+1. 建立项目和任务信封，固定 reviewer-matrix-v2 策略及摘要。
+2. 创建统一审查包；先记录 INLINE 或 DELEGATE。INLINE 不派发、不计模型预算。
+3. 根预算命令读取评分输入及已封装的 Evidence 文件，重算得分；不接受调用者直接提交的总分或来源自述。
+4. 控制器把 permit 绑定到唯一复审状态、Reviewer、边界、阶段、轮次和 packet；准备阶段不重复扣费。
+5. 按控制器输出的显式 model、reasoning_effort、agent_type、task_name 发起独立上下文复审。
+6. Hook 校验角色、根会话绑定、任务信封、当前代码基线及 permit，首次调用原子预占。同一许可不同宿主调用不得复用。
+7. 返回 V5 结构化结果，统一归并后集中修复。相同 packet 已通过时不重复审查；无结论后的重算必须有新增证据。
 
-### 4.2 不允许仅因以下原因升级
+新结果模板优先使用 review_controller.py result-template；review_packet.py 的 V5 模板和验证需要 --review-dir。未绑定状态的 V4 模板仅服务旧协议。
 
-- 文件数量多、日志很长；
-- Skill 数量多；
-- 任务持续时间长；
-- 处于 `STRICT` 流程；
-- 已进入第二轮或第三轮；
-- 父 Agent 使用 Terra High。
+## 额度与失败恢复
 
-### 4.3 降级优先
+原 LIGHT / STANDARD / STRICT 普通额度为 4 / 16 / 32。显式 review-extension 为 STANDARD / STRICT 增加 72 单位，总额为 88 / 104；普通角色和非 Sol/Astra 聚合仍受原额度约束。LIGHT 不接受扩展。
 
-- 证据提取、测试输出归纳和状态核对优先 Luna；
-- 修复后定向复核范围比第一轮更窄时，应保持或降低档位；
-- 修复后定向复核应根据当前风险重新选择批准档位，不沿用上一轮的宿主运行信息；
-- 结果质量不足时按受控原因码重新派发，不能从宿主实际模型身份解释成败。
+Sol/Astra 合计最多两次、同时最多一个，Astra High 最多一次；并受整体人数和轮次限制。未启动退款不重置 V3 尝试计数。超时、失联或缺少真实关联不能当作未启动或完成。
 
-## 五、各类 Reviewer 默认路由
+根预算是唯一成本 Owner。V8 reconcile 从权威 claim/预占恢复状态，不猜造 Reviewer 结果，不自行退款。旧 V1 只读，V2 按冻结原规则继续写入；V7/V4 复审仍按原四档解释。新任务默认新策略，旧任务不自动升级。
 
-| Reviewer | 默认 | 升级条件 |
-|---|---|---|
-| 测试与交付 | `luna-low` | 回归范围复杂时 `luna-medium` |
-| 回归与兼容 | `luna-medium` | 公共接口、历史数据、新旧版本共存时 `terra-medium` |
-| 性能与资源 | `luna-medium` | SQL/锁/线程池/容量模型复杂时 `terra-medium` 或 `terra-high` |
-| 功能与业务 | `terra-medium` | 核心状态机、资金或复杂业务口径时 `terra-high` |
-| 权限与安全 | `terra-medium` | 认证、越权、租户隔离和高影响漏洞时 `terra-high` |
-| 数据与契约 | `terra-medium` | 迁移、事务、MQ 成功边界和不可逆变更时 `terra-high` |
-| 状态与并发 | `terra-medium` | 竞态、锁顺序、幂等、补偿和恢复时 `terra-high` |
+## 能力与证据层级
 
-同一边界默认最多 1 个 `terra-high` Reviewer；显式放宽后硬上限为 2。
+基础 Plugin 不因此增加 Python 依赖。未启用增强时只能说明策略约束；没有已注册 Reviewer 角色时，不能用普通 Worker 伪装高档复审。已启用严格预算但绑定损坏或缺失时必须拒绝，不能退回基础模式放行。
 
-## 六、成本档位映射
+请求组合、安装注册、Hook 行为和宿主真实派发分别验证。TOML 的 read-only 声明不等于系统隔离。缺少真实宿主关联时保留未验证；不读取或请求 Reviewer 自报实际运行型号。
 
-| Reviewer 档位 | 默认模型 | Reviewer 数量 | 说明 |
-|---|---|---:|---|
-| `economy` | `luna-low` | 0～1 | 小任务优先不启动子 Agent |
-| `balanced` | `luna-medium` | 1～2 | 有业务判断时其中 1 个可用 `terra-medium` |
-| `deep` | `terra-medium` | 2～3 | 仅关键维度使用 `terra-high` |
+## 校准与变更
 
-映射是默认值，不是强制让同轮所有 Reviewer 使用同一档位。每个 Reviewer 按唯一职责独立选择。
+只比较同项目、仓库、策略摘要、成本公式和声明比较对的独立任务样本。旧样本不与新公式混算；数据不足保持 NO_CHANGE。采纳、修复、误报/遗漏、回归预防、耗时和成本共同提供依据，发现数量不能单独证明收益。
 
-## 七、配置与优先级
+校准由主协调者携带结果与验证引用最终化。提案永久 execution_authorization=NONE，不自动修改权重、策略或安装配置。修改权重、评分算法或候选关系必须增加对应策略/公式版本，并保留旧解释器。
 
-推荐在现有 `config.toml` 中设置低成本兜底：
+原生生命周期通过同一已核验根会话内的 PreToolUse 工具调用预占、PostToolUse Agent ID 回执与 SubagentStart/Stop 关联，允许回调乱序。未知响应格式保留未关联；通用 status、超时、缺回调都不是未启动证明。V3 退款必须匹配可信未启动回执；在核验宿主明确未创建响应契约前，不启用自动未启动适配。本地协议测试不等于宿主注册或真实派发验收。
 
-```toml
-[agents]
-enabled = true
-max_concurrent_threads_per_session = 3
-default_subagent_model = "gpt-5.6-luna"
-default_subagent_reasoning_effort = "medium"
-```
+宿主支持 `task_name` 时按该字段绑定许可。原生接口缺少该字段时，将控制器仅在本次派发响应返回的 `native_message_prefix` 原样放在 `message` 开头，再追加审查任务；参数使用 `native_request_parameters`，其中 `fork_context=false`。首行为固定 ASCII 的 `CP_REVIEW_DISPATCH/1 <nonce>`，后接空行；nonce 由控制器生成 256 位随机值，仅 SHA-256 引用进入账本。Hook 只解析该固定长度头部，正文不扫描、不保存；重复的相邻头部、缺失、未知或冲突引用均拒绝。引用绑定同一根会话、角色、明确档位、当前基线、深度和已认领复审槽位，校验与预占同锁完成；不再按候选数猜配许可。收到创建回执前同一调用可幂等重放，不同调用不得复用；PostToolUse 按唯一工具调用 ID 对账。
 
-保留 `agents.interrupt_message` 的 Codex 默认值 `true`。关闭它只能节省极少量中断提示上下文，却可能降低中断恢复时的语义完整性。
-
-现有专业 Reviewer TOML **故意不写死** `model` 和 `model_reasoning_effort`，以便主协调 Agent 在派发时动态指定。若 Agent TOML 写死模型，文件配置会覆盖 spawn 和 `[agents]` 默认值，动态降级将失效。
-
-## 八、可审计性
-
-`review_controller.py dispatch` 记录：
-
-- 抽象批准档位、permit 引用与预留单位；
-- `terra-high` 升级理由；
-- 相同 packet 重复派发理由；
-- 当前隔离等级和 packet hash。
-
-Reviewer V4 结果不接受宿主模型身份或推理强度字段，只记录：
-
-- `dispatch_assignment`：批准档位、permit 引用、预留单位与批准依据；
-- `outcome`、Finding、修复轮次与隔离等级；
-- 由主协调 Agent 最终化的 SHA-256 Evidence 引用。
-
-新建 V7 台账必须先记录 `INLINE` 或 `DELEGATE`。`route --decision INLINE` 是正式不派生门：不创建轮次、不占 Reviewer 预算；改判必须在首轮前追加 `DELEGATE`，并引用前一决策、记录新证据和改判原因。Reviewer V4 结果拒绝 schema 外字段，按 `profile-weight-v1`（1/2/4/8）将批准档位和预留成本投影到校准台账。Reviewer 不能自行最终化归因，主协调 Agent 必须在修复验证后通过 `finalize-calibration` 携带证据完成。缺失成本不按 0 处理，未最终化的数据不参与低收益判断。
-
-控制器只约束通过它登记的自动派发；它不读取工作流外的宿主模型信息，也不把该信息作为最终报告内容。
+派发引用只交给主协调者的当前调用，不写入计划、审查结果或普通日志。若准备响应丢失，不恢复或猜造原引用；保留未消费状态，并通过显式命名路径或后续明确恢复流程处理。子任务收到自身引用时许可已被消费。原生协议没有提供根调用者正向身份证明：这里强制的是显式单次许可，而非系统级调用者隔离；引用在消费前泄露仍属于既有逻辑信任边界。

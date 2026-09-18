@@ -1,89 +1,74 @@
-# Reviewer 模型路由与升级策略
+# 独立复审的模型选择与预算
 
-## 一、四级批准档位
+## 适用范围
 
-自动 Reviewer 只允许以下档位：
+登记的七个 cp_review 角色使用十种组合。Worker、Explorer 保持原四种组合；主 Agent 使用当前选择的模型。最高推理强度为 High。策略事实源是 runtime/cp_runtime/data/dispatch-policy-v2.json；manifest 和文档是投影。
 
-| 档位 | 模型 | 推理强度 | 典型工作 |
-|---|---|---|---|
-| `luna-low` | `gpt-5.6-luna` | `low` | 搜索、提取、分类、清单核对和机械证据检查 |
-| `luna-medium` | `gpt-5.6-luna` | `medium` | 范围明确的只读分析、兼容扫描、测试证据复核 |
-| `terra-medium` | `gpt-5.6-terra` | `medium` | 业务语义、多文件逻辑、专业工程判断和普通复杂审查 |
-| `terra-high` | `gpt-5.6-terra` | `high` | 事务、并发、安全、不可逆迁移、核心状态机和阻塞冲突裁决 |
+| 组合 | 调度代理单位 |
+|---|---:|
+| Luna Low / Medium | 1 / 2 |
+| Terra Medium / High | 4 / 8 |
+| Sol Low / Medium / High | 10 / 14 / 18 |
+| Astra Low / Medium / High | 24 / 32 / 40 |
 
-升级链固定为：
+单位是版本化调度权重，不是实际费用，也不是跨模型质量排名。
 
-```text
-luna-low -> luna-medium -> terra-medium -> terra-high
-```
+## 从 Luna 起算
 
-自动流程禁止使用 Sol、`xhigh`、`max` 和 `ultra`。`terra-high` 是自动 Reviewer 的硬性策略上限，不是默认值。
+每次新复审先以 Luna Low 的 1 分为起点，评分完成后只派发一次。无需为了升级先调用低档模型。
 
-## 二、三类档位互相独立
+复审预算模式加分：economy 0，balanced 1，deep 3。执行流程 STRICT、父模型、文件数量、日志长度、耗时本身不加分。
 
-| 维度 | 取值 | 控制内容 |
-|---|---|---|
-| 执行流程 | `LIGHT / STANDARD / STRICT` | 授权、验证、回滚和交付门禁 |
-| Reviewer 成本 | `economy / balanced / deep` | Reviewer 数量、范围和上下文预算 |
-| 模型档位 | 四级批准档位 | 单个 Reviewer 的模型与推理强度 |
+| 已有有效证据 | 分值 |
+|---|---:|
+| 业务语义有界 / 跨模块 / 多领域 | 2 / 4 / 8 |
+| 多步状态 / 并发状态 | 4 / 8 |
+| 高影响 / 关键不可逆边界 | 4 / 14 |
+| 已确认的证据冲突 | 6 |
+| 前次复审无结论且结果、尝试引用匹配 | 6 |
 
-流程严格不等于推理强度高；`deep` 也不等于全部 Reviewer 使用 `terra-high`。
+同一维度最多取一项。先排除缺失、失效和项目、任务、审查包不匹配的证据；同证据或同根因形成传递互斥组，每组只取一次。并列按冻结规则裁决，调整输入顺序不能改变结果。总分最高 40。
 
-## 三、默认映射
+最终选择是角色候选集合、明确质量约束和评分预算的交集内可负担的组合。成本排序不代表能力排序；Astra Low 不自动满足 Sol High 的约束。没有满足质量约束的组合时停止，不静默降级。
 
-| 成本档位 | 默认模型档位 | 默认 Reviewer 数量 |
-|---|---|---:|
-| `economy` | `luna-low` | 0～1 |
-| `balanced` | `luna-medium` | 1～2 |
-| `deep` | `terra-medium` | 2～3 |
+事实分类由主协调者结合源码和证据审阅；程序验证来源、时效、绑定及算术，不把模型自己的风险描述当作已验证事实。
 
-主协调 Agent 可按职责覆盖默认值，但必须记录原因。高风险边界默认最多 1 个 `terra-high` Reviewer；只有明确授权或项目规则显式放宽且不超过控制器硬上限时才允许 2 个。
+## 一次评分、一次派发
 
-## 四、按 Reviewer 职责选择
+新任务使用 execution-state 5、review-state 8、Reviewer Result 5、DelegationBudget 3 和校准样本 3。Task Envelope 模板为独立的 schema 4；Review Packet 仍为 schema 3。
 
-| Reviewer | 常态档位 | 升级条件 |
-|---|---|---|
-| 测试与交付 | `luna-low` | 回归范围复杂时 `luna-medium`；通常不使用 Terra High |
-| 回归与兼容 | `luna-medium` | 公共接口、历史数据、新旧版本共存时 `terra-medium` |
-| 性能与资源 | `luna-medium` | SQL、锁、线程池、容量或高频路径判断时 `terra-medium`；复杂并发资源争用可 `terra-high` |
-| 功能与业务 | `terra-medium` | 核心业务状态机、资金、库存或口径冲突时 `terra-high` |
-| 权限与安全 | `terra-medium` | 认证、越权、租户隔离或高权限入口时 `terra-high` |
-| 数据与契约 | `terra-medium` | 事务、迁移、MQ 成功边界或不可逆数据变化时 `terra-high` |
-| 状态与并发 | `terra-medium` | 竞态、锁顺序、幂等、补偿或复杂时序时 `terra-high` |
+1. 建立项目和任务信封，固定 reviewer-matrix-v2 策略及摘要。
+2. 创建统一审查包；先记录 INLINE 或 DELEGATE。INLINE 不派发、不计模型预算。
+3. 根预算命令读取评分输入及已封装的 Evidence 文件，重算得分；不接受调用者直接提交的总分或来源自述。
+4. 控制器把 permit 绑定到唯一复审状态、Reviewer、边界、阶段、轮次和 packet；准备阶段不重复扣费。
+5. 按控制器输出的显式 model、reasoning_effort、agent_type、task_name 发起独立上下文复审。
+6. Hook 校验角色、根会话绑定、任务信封、当前代码基线及 permit，首次调用原子预占。同一许可不同宿主调用不得复用。
+7. 返回 V5 结构化结果，统一归并后集中修复。相同 packet 已通过时不重复审查；无结论后的重算必须有新增证据。
 
-## 五、升级与降级
+新结果模板优先使用 review_controller.py result-template；review_packet.py 的 V5 模板和验证需要 --review-dir。未绑定状态的 V4 模板仅服务旧协议。
 
-允许升级的证据：
+## 额度与失败恢复
 
-- 当前档位无法形成有证据的结论；
-- 需要解释业务语义或复杂跨模块调用链；
-- 存在相互冲突的有效证据；
-- 命中事务、并发、安全、不可逆迁移或核心状态机风险。
+原 LIGHT / STANDARD / STRICT 普通额度为 4 / 16 / 32。显式 review-extension 为 STANDARD / STRICT 增加 72 单位，总额为 88 / 104；普通角色和非 Sol/Astra 聚合仍受原额度约束。LIGHT 不接受扩展。
 
-以下不能单独作为升级理由：文件多、日志长、Skill 多、任务持续时间长、流程为 `STRICT`、已进入第二轮。
+Sol/Astra 合计最多两次、同时最多一个，Astra High 最多一次；并受整体人数和轮次限制。未启动退款不重置 V3 尝试计数。超时、失联或缺少真实关联不能当作未启动或完成。
 
-优先降级或停止：
+根预算是唯一成本 Owner。V8 reconcile 从权威 claim/预占恢复状态，不猜造 Reviewer 结果，不自行退款。旧 V1 只读，V2 按冻结原规则继续写入；V7/V4 复审仍按原四档解释。新任务默认新策略，旧任务不自动升级。
 
-- 子任务只是搜索、清单核对、格式化或证据提取；
-- 已有证据足以裁决；
-- 相同 Reviewer 已审过相同 packet；
-- 上一轮已对相同 packet 无问题通过；
-- 继续扩大范围不会改变门禁结论。
+## 能力与证据层级
 
-## 六、派发约束
+基础 Plugin 不因此增加 Python 依赖。未启用增强时只能说明策略约束；没有已注册 Reviewer 角色时，不能用普通 Worker 伪装高档复审。已启用严格预算但绑定损坏或缺失时必须拒绝，不能退回基础模式放行。
 
-- Reviewer TOML 保持模型和强度未固定；协调者按控制器记录的批准档位派发。
-- 派发前记录批准档位、最低可接受档位和 permit 引用；最低档位不能高于批准档位。
-- 结果必须匹配任务、边界、轮次、packet 和派发约束。请求档位是策略约束，不证明实际运行模型。
-- 不读取、推断、保存或导出宿主模型身份，不请求 Reviewer 自报模型。
-- 根任务 DelegationBudget 管理预占与成本；未激活账本时只有模型上限生效，不宣称预算门禁通过。
+请求组合、安装注册、Hook 行为和宿主真实派发分别验证。TOML 的 read-only 声明不等于系统隔离。缺少真实宿主关联时保留未验证；不读取或请求 Reviewer 自报实际运行型号。
 
-## 七、INLINE 决策与校准
+## 校准与变更
 
-- 无需子 Agent 时，先用 `route --decision INLINE` 追加阶段决策。它不创建轮次、不增加 Reviewer 计数，也不消耗模型预算。
-- 新建台账在 `plan` 前必须先记录 `INLINE` 或 `DELEGATE`；迁移自 v4 及更早版本的台账保留无决策兼容路径。
-- 最新决策为 `INLINE` 时，`plan` 与 `dispatch` 都会失败。只有首轮计划前，提供前一 decision id、改判原因和新证据，才能追加 `DELEGATE` 改判；历史决策不可覆盖。
-- Reviewer v4 结果包含任务难度、耗时、待定归因和版本化估算成本，并拒绝 schema 外字段；Reviewer 文件中的 `calibration_finalized` 必须为 `false`。主协调 Agent 在修复和验证后，使用 `finalize-calibration` 携带证据单独最终化归因。
-- 控制器以 `task_id + reviewer + result_id` 投影到 `review-results.jsonl`；估算成本由批准派发档位确定，投影不包含宿主实际模型身份。
-- `validate` 会核对投影台账与 `review-state`；若进程中断造成不一致，使用 `sync-calibration` 从权威状态确定性重建。
-- `profile-weight-v1` 权重为 1/2/4/8。缺失或非法成本保持 unknown；只有控制器最终化后的记录才参与低收益判断。
+只比较同项目、仓库、策略摘要、成本公式和声明比较对的独立任务样本。旧样本不与新公式混算；数据不足保持 NO_CHANGE。采纳、修复、误报/遗漏、回归预防、耗时和成本共同提供依据，发现数量不能单独证明收益。
+
+校准由主协调者携带结果与验证引用最终化。提案永久 execution_authorization=NONE，不自动修改权重、策略或安装配置。修改权重、评分算法或候选关系必须增加对应策略/公式版本，并保留旧解释器。
+
+原生生命周期通过同一已核验根会话内的 PreToolUse 工具调用预占、PostToolUse Agent ID 回执与 SubagentStart/Stop 关联，允许回调乱序。未知响应格式保留未关联；通用 status、超时、缺回调都不是未启动证明。V3 退款必须匹配可信未启动回执；在核验宿主明确未创建响应契约前，不启用自动未启动适配。本地协议测试不等于宿主注册或真实派发验收。
+
+宿主支持 `task_name` 时按该字段绑定许可。原生接口缺少该字段时，将控制器仅在本次派发响应返回的 `native_message_prefix` 原样放在 `message` 开头，再追加审查任务；参数使用 `native_request_parameters`，其中 `fork_context=false`。首行为固定 ASCII 的 `CP_REVIEW_DISPATCH/1 <nonce>`，后接空行；nonce 由控制器生成 256 位随机值，仅 SHA-256 引用进入账本。Hook 只解析该固定长度头部，正文不扫描、不保存；重复的相邻头部、缺失、未知或冲突引用均拒绝。引用绑定同一根会话、角色、明确档位、当前基线、深度和已认领复审槽位，校验与预占同锁完成；不再按候选数猜配许可。收到创建回执前同一调用可幂等重放，不同调用不得复用；PostToolUse 按唯一工具调用 ID 对账。
+
+派发引用只交给主协调者的当前调用，不写入计划、审查结果或普通日志。若准备响应丢失，不恢复或猜造原引用；保留未消费状态，并通过显式命名路径或后续明确恢复流程处理。子任务收到自身引用时许可已被消费。原生协议没有提供根调用者正向身份证明：这里强制的是显式单次许可，而非系统级调用者隔离；引用在消费前泄露仍属于既有逻辑信任边界。

@@ -1,6 +1,6 @@
 # 有意不固定 model / model_reasoning_effort：由主协调 Agent 按
-# luna-low -> luna-medium -> terra-medium -> terra-high 动态路由。
-# 自动上限由复审控制器约束为 Terra High。
+# 从 Luna Low 起算，按预算和有效证据评分后选择十种批准组合。
+# 登记 Reviewer 自动上限为 Astra High；本文件不固定模型或推理强度。
 name = "cp_review_functional_business"
 description = "逻辑只读功能正确性与业务口径 Reviewer，检查目标问题、业务规则、状态流转、异常和补偿路径。"
 sandbox_mode = "read-only"
@@ -19,5 +19,5 @@ Reviewer 运行在独立上下文中，只做逻辑只读专项复审，不修�
 
 涉及复用决策时，通过当前启用的 engineering-quality-delivery Skill 定位 references/component-module-reuse.md（相对于该 Skill 目录）并检查已有能力是否遗漏、抽取后的共同业务语义是否成立，以及独立新建理由。重复实现 Finding 必须定位适用的已有实现和具体维护/业务风险；不得仅因代码相似或抽象偏好阻塞。
 
-只报告可行动、可定位、可复核的问题；同一根因合并为一组，纯风格问题不报告。除全部为阻塞问题外，默认最多返回 8 个根因组。没有发现时列出已检查范围和未验证项。按 REVIEW_RESULT Schema 返回结构化结果，并回传实际模型、推理强度、审查包哈希和隔离等级；不要回传原始长日志、完整 diff 或内部推理过程。需要第二意见时只提出建议，由主协调 Agent 决定。
+只报告可行动、可定位、可复核的问题；同一根因合并为一组，纯风格问题不报告。除全部为阻塞问题外，默认最多返回 8 个根因组。没有发现时列出已检查范围和未验证项。按 REVIEW_RESULT Schema 返回结构化结果，并回传批准组合、评分与派发引用、审查包哈希和隔离等级；禁止自报实际运行型号；不要回传原始长日志、完整 diff 或内部推理过程。需要第二意见时只提出建议，由主协调 Agent 决定。
 """

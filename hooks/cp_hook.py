@@ -30,15 +30,18 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v3 import append_event, project_id_for, stable_repo_fingerprint  # noqa: E402
 from cp_runtime.delegation_budget import (  # noqa: E402
     DelegationBudgetError, mark_completed, mark_started, profile_for, read_budget,
-    reserve_budget,
+    reserve_budget, sha256_ref,
+    record_host_dispatch_receipt, record_host_agent_observation,
+    reserve_native_review, native_review_nonce, NATIVE_DISPATCH_PREFIX,
 )
+from cp_runtime.dispatch_policy import DispatchPolicyError, policy, resolve_request  # noqa: E402
+from cp_runtime.dispatch_context import verify_root_binding  # noqa: E402
+from cp_runtime.common import RuntimeContractError, repo_snapshot  # noqa: E402
 from cp_runtime.seal_queue import launch_worker  # noqa: E402
 from cp_runtime.evolution.task_feedback import consume_for_hook  # noqa: E402
 from cp_runtime.capability_gate_hook import INPUT_LIMIT, supervise  # noqa: E402
 
-ALLOWED_REASONING = {"", "none", "minimal", "low", "medium", "high"}
-ALLOWED_AUTOMATIC_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra"}
-DENY_MARKERS = ("sol", "gpt-5.6-sol", "xhigh", "extra-high", "extra_high", "ultra", "max")
+_VERIFIED_ROOT = object()
 HOOK_ALIASES = {
     "hook_event_name": ("hook_event_name", "hookEventName", "event_name", "event"),
     "tool_name": ("tool_name", "toolName", "tool"),
@@ -58,9 +61,9 @@ HOOK_ALIASES = {
 }
 POLICY_MESSAGES = {
     "zh-CN": {
-        "model_ceiling": "自动子 Agent 模型不得超过 Terra High；显式 Sol 或更高模型被策略拒绝。",
+        "model_ceiling": "请求不在角色允许组合内：普通子 Agent 最高 Terra High，登记 Reviewer 最高 Astra High。",
         "effort_ceiling": "自动子 Agent reasoning_effort 最高为 high。",
-        "unknown_model": "显式模型无法证明不超过 Terra High，按 fail-closed 策略拒绝；可使用 gpt-5.6-luna、gpt-5.6-terra 或省略显式模型。",
+        "unknown_model": "模型、强度或角色未知；普通角色限 Luna/Terra，登记 Reviewer 必须显式指定批准组合。",
         "invalid_input": "PreToolUse 输入无法解析，按 fail-closed 策略拒绝自动子 Agent。",
         "hook_failure": "PreToolUse Hook 异常，按 fail-closed 策略拒绝自动子 Agent。",
         "budget_denied": "统一委派预算拒绝此次子 Agent 派发；请先创建匹配的显式 dispatch permit，并检查余额、角色、并行数和深度。",
@@ -68,9 +71,9 @@ POLICY_MESSAGES = {
         "budget_unconfigured": "任务已启用统一委派预算，但未配置 CP_DELEGATION_BUDGET_PATH，按 fail-closed 策略拒绝。",
     },
     "en": {
-        "model_ceiling": "Automatic subagent models cannot exceed Terra High; explicit Sol or stronger models are denied.",
+        "model_ceiling": "The request is outside its role policy: ordinary agents are capped at Terra High; registered Reviewers at Astra High.",
         "effort_ceiling": "Automatic subagent reasoning_effort cannot exceed high.",
-        "unknown_model": "The explicit model cannot be proven within the Terra High ceiling and is denied fail-closed; use gpt-5.6-luna, gpt-5.6-terra, or omit the explicit model.",
+        "unknown_model": "Unknown model, effort, or role; ordinary agents stay within Terra High and registered Reviewers must request an explicit approved tuple.",
         "invalid_input": "PreToolUse input could not be parsed; automatic subagent dispatch is denied fail-closed.",
         "hook_failure": "PreToolUse Hook failed; automatic subagent dispatch is denied fail-closed.",
         "budget_denied": "The unified delegation budget denied this subagent dispatch. Create a matching explicit dispatch permit and check remaining units, role, parallelism, and depth.",
@@ -152,23 +155,39 @@ def _lookup_strict(data: Mapping[str, Any], *names: str) -> Any:
 
 def _tool_input(data: Mapping[str, Any]) -> Mapping[str, Any]:
     candidate = _lookup_strict(data, *HOOK_ALIASES["tool_input"])
-    return candidate if isinstance(candidate, Mapping) else {}
+    if candidate is not None and not isinstance(candidate, Mapping):
+        raise AliasConflictError("invalid tool input object")
+    return candidate or {}
+
+
+def _verify_budget_root(state: Mapping[str, Any], data: Mapping[str, Any]) -> None:
+    envelope = os.environ.get("CP_DELEGATION_ENVELOPE_PATH", "").strip()
+    root_session = _lookup_strict(data, "root_session_id", "rootSessionId")
+    session = root_session or _lookup_strict(data, *HOOK_ALIASES["session_id"])
+    cwd = str(_lookup_strict(data, *HOOK_ALIASES["cwd"]) or "")
+    if not envelope or not session or not cwd:
+        raise DelegationBudgetError("V3 宿主根身份或任务信封缺失")
+    verify_root_binding(state["root_binding"], state["identity"], envelope_path=Path(envelope),
+                        cwd=cwd, host_session_id=str(session))
 
 
 def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
+    if str(_lookup_strict(data, *HOOK_ALIASES["hook_event_name"]) or "") != "PreToolUse":
+        return None
     tool = str(_lookup_strict(data, *HOOK_ALIASES["tool_name"]) or "").lower()
     if tool not in {"agent", "spawn_agent"}:
         return None
     args = _tool_input(data)
     model = str(_lookup_strict(args, *HOOK_ALIASES["model"]) or "").strip().lower()
     effort = str(_lookup_strict(args, *HOOK_ALIASES["reasoning_effort"]) or "").strip().lower()
+    role = str(_lookup_strict(args, *HOOK_ALIASES["agent_type"]) or "").strip().lower()
     reason = ""
-    if any(marker in model for marker in DENY_MARKERS):
-        reason = _policy_message("model_ceiling")
-    elif effort not in ALLOWED_REASONING:
-        reason = _policy_message("effort_ceiling")
-    elif model and model not in ALLOWED_AUTOMATIC_MODELS:
-        reason = _policy_message("unknown_model")
+    try:
+        if role in policy()["reviewer_roles"] and (not model or not effort):
+            raise DispatchPolicyError("EXPLICIT_REVIEW_TUPLE_REQUIRED")
+        resolve_request(model, effort, "luna-low", role)
+    except DispatchPolicyError:
+        reason = _policy_message("effort_ceiling" if effort in {"xhigh", "max", "ultra"} else "model_ceiling")
     if not reason:
         ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
         if not ledger_text:
@@ -179,45 +198,124 @@ def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
         if not reason:
             dispatch_key = str(_lookup_strict(args, *HOOK_ALIASES["task_name"]) or "").strip()
             host_dispatch_id = str(_lookup_strict(data, *HOOK_ALIASES["tool_use_id"]) or "").strip()
-            role = str(_lookup_strict(args, *HOOK_ALIASES["agent_type"]) or "").strip()
-            if not dispatch_key or not host_dispatch_id or not role:
+            if not host_dispatch_id or not role:
                 reason = _policy_message("budget_input")
             else:
                 try:
                     state = read_budget(Path(ledger_text).expanduser().resolve())
-                    profile, basis = profile_for(model, effort, state["default_dispatch_profile"])
-                    reservation = reserve_budget(
-                        Path(ledger_text).expanduser().resolve(), dispatch_key=dispatch_key,
-                        host_dispatch_id=host_dispatch_id, approved_profile=profile,
-                        approval_basis=basis, role=role,
-                    )
+                    if state["schema_version"] == "3.0":
+                        _verify_budget_root(state, data)
+                        profile, basis = resolve_request(model, effort, state["default_dispatch_profile"], role, state["policy_id"])
+                        if dispatch_key:
+                            if isinstance(args.get("message"), str) and args["message"].startswith(NATIVE_DISPATCH_PREFIX):
+                                raise DelegationBudgetError("NATIVE_REVIEW_KEY_CONFLICT")
+                            permit = state["decisions"].get(sha256_ref(dispatch_key))
+                            if not permit:
+                                raise DelegationBudgetError("派发 permit 缺失")
+                            if permit["role"] == "reviewer":
+                                if permit["review_assignment"]["agent_type"] != role:
+                                    raise DelegationBudgetError("Reviewer 角色与 permit 绑定不一致")
+                                expected = permit["selection_scorecard"]["context"]["baseline_sha256"]
+                                if repo_snapshot(Path(state["root_binding"]["repo_path"]))["sha256"] != expected:
+                                    raise DelegationBudgetError("评分证据或审查基线已变化")
+                        elif role not in policy(state["policy_id"])["reviewer_roles"]:
+                            raise DelegationBudgetError("NATIVE_REVIEW_REQUIRES_REGISTERED_ROLE")
+                        elif _lookup_strict(data, *HOOK_ALIASES["agent_id"]):
+                            raise DelegationBudgetError("NATIVE_REVIEW_NESTED_CALLER_DENIED")
+                    else:
+                        if not dispatch_key:
+                            raise DelegationBudgetError("LEGACY_DISPATCH_KEY_REQUIRED")
+                        profile, basis = profile_for(model, effort, state["default_dispatch_profile"])
+                    if not dispatch_key:
+                        reservation = reserve_native_review(
+                            Path(ledger_text).expanduser().resolve(), host_dispatch_id=host_dispatch_id,
+                            approved_profile=profile, agent_type=role,
+                            baseline_sha256=repo_snapshot(Path(state["root_binding"]["repo_path"]))["sha256"],
+                            native_dispatch_nonce=native_review_nonce(args.get("message")),
+                        )
+                    else:
+                        reservation = reserve_budget(
+                            Path(ledger_text).expanduser().resolve(), dispatch_key=dispatch_key,
+                            host_dispatch_id=host_dispatch_id, approved_profile=profile,
+                            approval_basis=basis, role=role,
+                        )
+                    if state["schema_version"] == "3.0" and reservation.get("state") != "RESERVED":
+                        raise DelegationBudgetError("派发尝试已经启动或结束，不得再次执行")
                     # 中文：仅把受控 reservation 标识留在本次内存 payload，绝不写回原始任务正文。
                     # English: Keep only the controlled reservation identifier in this in-memory payload.
                     if isinstance(data, dict):
                         data["_cp_reservation_id"] = reservation["reservation_id"]
+                        if state["schema_version"] == "3.0":
+                            data["_cp_root_verified"] = _VERIFIED_ROOT
                     return None
-                except (DelegationBudgetError, OSError, TimeoutError):
+                except (DelegationBudgetError, DispatchPolicyError, RuntimeContractError, OSError, TimeoutError, ValueError):
                     reason = _policy_message("budget_denied")
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason}}
 
 
 def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
-    """中文：只在宿主显式传播 reservation_id 时对账；当前宿主缺失时保留 RESERVED。
+    """中文：通过精确工具回执关联 Agent；缺失回执保持未关联，绝不推测退款。
 
-    English: Reconcile only when the host explicitly propagates reservation_id; keep RESERVED when the current host omits it.
+    English: Join exact native tool receipts to lifecycle IDs; missing receipts never imply a refund.
     """
     ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
-    if not ledger_text or hook_name not in {"SubagentStart", "SubagentStop"}:
-        return
-    reservation_id = str(_lookup(data, *HOOK_ALIASES["reservation_id"]) or "").strip()
-    agent_id = str(_lookup(data, *HOOK_ALIASES["agent_id"]) or "").strip()
-    if not reservation_id or not agent_id:
+    if not ledger_text or hook_name not in {"PostToolUse", "SubagentStart", "SubagentStop"}:
         return
     ledger = Path(ledger_text).expanduser().resolve()
+    state = read_budget(ledger)
+    if hook_name == "PostToolUse":
+        tool = str(_lookup_strict(data, *HOOK_ALIASES["tool_name"]) or "").lower()
+        if state["schema_version"] != "3.0" or tool not in {"agent", "spawn_agent"}:
+            return
+        _verify_budget_root(state, data)
+        response = data.get("tool_response")
+        if isinstance(response, str):
+            try:
+                response = json.loads(response)
+            except ValueError:
+                return
+        # 中文：只接受明确的 agent_id 对象；不扫描正文、transcript 或通用 status。
+        # English: Accept only an explicit agent_id object; never scrape prose, transcripts, or generic status.
+        if not isinstance(response, Mapping):
+            return
+        agent_id = _lookup_strict(response, *HOOK_ALIASES["agent_id"])
+        if not isinstance(agent_id, str) or not agent_id.strip():
+            return
+        receipt = record_host_dispatch_receipt(
+            ledger, host_dispatch_id=str(_lookup_strict(data, *HOOK_ALIASES["tool_use_id"]) or ""),
+            dispatch_key=str(_lookup_strict(_tool_input(data), *HOOK_ALIASES["task_name"]) or ""),
+            agent_id=agent_id,
+        )
+        if isinstance(data, dict):
+            data["_cp_reservation_id"] = receipt["reservation_id"]
+            data["_cp_root_verified"] = _VERIFIED_ROOT
+        return
+    reservation_id = str(_lookup_strict(data, *HOOK_ALIASES["reservation_id"]) or "").strip()
+    agent_id = str(_lookup_strict(data, *HOOK_ALIASES["agent_id"]) or "").strip()
+    if not agent_id:
+        return
+    outcome = str(_lookup_strict(data, *HOOK_ALIASES["terminal_outcome"]) or "UNKNOWN").upper()
+    if state["schema_version"] == "3.0":
+        _verify_budget_root(state, data)
+        record_host_agent_observation(ledger, agent_id=agent_id,
+                                      phase="start" if hook_name == "SubagentStart" else "stop",
+                                      outcome="UNKNOWN" if hook_name == "SubagentStart" else outcome)
+        state = read_budget(ledger)
+        matches = [rid for rid, receipt in state["host_receipts"].items()
+                   if receipt["agent_ref"] == sha256_ref(agent_id)]
+        if matches and isinstance(data, dict):
+            # 中文：不信任传入的 reservation_id；观察投影只使用回执解析的归属。
+            # English: Ignore supplied reservation_id; project only receipt-resolved ownership.
+            for alias in HOOK_ALIASES["reservation_id"]:
+                data.pop(alias, None)
+            data["_cp_reservation_id"] = matches[0]
+            data["_cp_root_verified"] = _VERIFIED_ROOT
+        return
+    if not reservation_id:
+        return
     if hook_name == "SubagentStart":
         mark_started(ledger, reservation_id=reservation_id, agent_id=agent_id)
     else:
-        outcome = str(_lookup(data, *HOOK_ALIASES["terminal_outcome"]) or "UNKNOWN").upper()
         mark_completed(ledger, reservation_id=reservation_id, outcome=outcome)
 
 
@@ -257,15 +355,23 @@ def _event(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[str,
     approved_profile = ""
     permit_ref = ""
     reserved_units = 0
+    observed_project_id = project_id_for(fingerprint, cwd)
     reservation_id = str(_lookup(data, *HOOK_ALIASES["reservation_id"]) or data.get("_cp_reservation_id") or "").strip()
     ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
     if reservation_id and ledger_text:
         try:
             budget = read_budget(Path(ledger_text).expanduser().resolve())
             reservation = budget.get("reservations", {}).get(reservation_id) or {}
+            if budget["schema_version"] == "3.0":
+                if data.get("_cp_root_verified") is not _VERIFIED_ROOT or not reservation:
+                    raise DelegationBudgetError("未核验的 V3 关联不能进入根任务观察")
+                observed_project_id = budget["identity"]["project_id"]
+                task_id = budget["identity"]["task_id"]
+                fingerprint = budget["identity"]["repo_fingerprint"]
             approved_profile = str(reservation.get("approved_profile") or reservation.get("requested_profile") or "")
-            reserved_units = int(reservation.get("charged_units") or reservation.get("units") or 0)
-            permit_ref = "sha256:" + hashlib.sha256(reservation_id.encode("utf-8")).hexdigest()
+            reserved_units = int(reservation.get("charged_units", reservation.get("units", 0)))
+            permit_ref = (reservation["dispatch_ref"] if budget["schema_version"] == "3.0" else
+                          "sha256:" + hashlib.sha256(reservation_id.encode("utf-8")).hexdigest())
         except (DelegationBudgetError, OSError, TimeoutError, TypeError, ValueError):
             approved_profile = ""
             permit_ref = ""
@@ -275,7 +381,7 @@ def _event(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[str,
         "session_id": session_id,
         "turn_id": turn_id,
         "task_id": task_id,
-        "project_id": project_id_for(fingerprint, cwd),
+        "project_id": observed_project_id,
         "repo_fingerprint": fingerprint,
         "terminal_outcome": terminal,
         "terminal_outcome_source": "hook-payload" if terminal_value is not None and terminal != "UNKNOWN" else "unavailable",
@@ -463,7 +569,7 @@ def main() -> int:
         return 0
     try:
         _budget_lifecycle(data, hook_name)
-    except (DelegationBudgetError, OSError, TimeoutError) as exc:
+    except (DelegationBudgetError, DispatchPolicyError, RuntimeContractError, OSError, TimeoutError, ValueError) as exc:
         diagnostic = {"schema_version": "1.0", "component": "delegation-budget",
                       "status": "RECONCILIATION_FAILED", "hook": hook_name,
                       "error_ref": "sha256:" + hashlib.sha256(str(exc).encode("utf-8")).hexdigest()}

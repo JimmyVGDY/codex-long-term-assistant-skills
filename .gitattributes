@@ -1,2 +1,4 @@
 * -text
 *.cmd text eol=crlf
+# Frozen ledger bytes retain CRLF; do not normalize them. / 冻结账本保留原字节。
+tests/fixtures/delegation-budget-v2/*.jsonl -text whitespace=cr-at-eol

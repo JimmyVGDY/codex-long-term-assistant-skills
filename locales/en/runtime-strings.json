@@ -16,7 +16,16 @@
     },
     "scripts/delegation-budget.py": {
       "plain": {
-        "维护 DelegationBudget V2 根任务预算账本": "Maintain the DelegationBudget V2 root-task budget ledger"
+        "维护 DelegationBudget V2 根任务预算账本": "Maintain the DelegationBudget V2 root-task budget ledger",
+        "维护 DelegationBudget V3 根任务预算账本；旧 V2 需显式选择": "Maintain a DelegationBudget V3 root ledger; explicitly select legacy V2",
+        "V3 写入必须绑定根任务信封": "V3 writes must bind the root task envelope",
+        "V3 初始化必须指定 --root-envelope": "V3 initialization requires --root-envelope",
+        "初始化身份与任务信封不一致": "Initialization identity differs from the task envelope",
+        "普通角色或旧策略必须提供 approved-profile": "Ordinary roles and legacy policies require approved-profile",
+        "V3 决策必须绑定根任务信封": "V3 decisions must bind the root task envelope",
+        "V3 复审必须提供评分输入、派发绑定和根任务信封": "V3 reviews require scoring input, dispatch binding, and a root task envelope",
+        "显式档位与 Luna 起算的评分结果不一致": "The explicit profile differs from the Luna-first score selection",
+        "当前角色或旧策略不接受 V3 复审参数": "This role or legacy policy does not accept V3 review parameters"
       }
     },
     "hooks/cp_hook.py": {
@@ -28,7 +37,16 @@
         "PreToolUse Hook 异常，按 fail-closed 策略拒绝自动子 Agent。": "PreToolUse Hook failed; automatic subagent dispatch is denied fail-closed.",
         "统一委派预算拒绝此次子 Agent 派发；请先创建匹配的显式 dispatch permit，并检查余额、角色、并行数和深度。": "The unified delegation budget denied this subagent dispatch. Create a matching explicit dispatch permit and check the remaining units, role, concurrency, and depth.",
         "任务已启用统一委派预算，但未配置 CP_DELEGATION_BUDGET_PATH，按 fail-closed 策略拒绝。": "The task has enabled the unified delegation budget, but CP_DELEGATION_BUDGET_PATH is not configured; the request is denied fail-closed.",
-        "受控任务缺少稳定的派发关联字段或角色，按 fail-closed 策略拒绝。": "The controlled task lacks a stable dispatch association field or role and is denied fail-closed."
+        "受控任务缺少稳定的派发关联字段或角色，按 fail-closed 策略拒绝。": "The controlled task lacks a stable dispatch association field or role and is denied fail-closed.",
+        "请求不在角色允许组合内：普通子 Agent 最高 Terra High，登记 Reviewer 最高 Astra High。": "The tuple is outside the role policy: ordinary agents are capped at Terra High; registered Reviewers at Astra High.",
+        "模型、强度或角色未知；普通角色限 Luna/Terra，登记 Reviewer 必须显式指定批准组合。": "Unknown model, effort, or role; ordinary roles use Luna/Terra and registered Reviewers must specify their approved tuple.",
+        "V3 宿主根身份或任务信封缺失": "V3 host root identity or task envelope is missing",
+        "生命周期缺少匹配预占或 Agent": "The lifecycle has no matching reservation or agent",
+        "未核验的 V3 关联不能进入根任务观察": "Unverified V3 associations cannot enter root-task observations",
+        "派发尝试已经启动或结束，不得再次执行": "The dispatch attempt has started or ended and cannot execute again",
+        "派发 permit 缺失": "The dispatch permit is missing",
+        "Reviewer 角色与 permit 绑定不一致": "Reviewer role and permit binding differ",
+        "评分证据或审查基线已变化": "Scoring evidence or the review baseline has changed"
       }
     },
     "runtime/cp_runtime/delegation_budget.py": {
@@ -142,7 +160,65 @@
         "旧预算违规事件非法": "The legacy budget violation event is invalid",
         "旧预算已经关闭": "The legacy budget is already closed",
         "旧预算关闭事件非法": "The legacy budget close event is invalid",
-        "旧预算关闭快照与账本状态不一致": "The legacy budget close snapshot does not match ledger state"
+        "旧预算关闭快照与账本状态不一致": "The legacy budget close snapshot does not match ledger state",
+        "预算类别或扩展标记非法": "Invalid budget class or extension flag",
+        "LIGHT 不允许复审预算扩展": "LIGHT does not allow review budget extensions",
+        "V3 缺少完整根任务绑定": "V3 lacks a complete root task binding",
+        "旧任务信封保持旧策略；V3 需要新评分策略任务": "Old envelopes retain the legacy policy; V3 requires a new scoring-policy task",
+        "根任务项目路径缺失": "The root task project path is missing",
+        "V3 Reviewer 派发绑定字段非法": "Invalid V3 Reviewer dispatch binding fields",
+        "Reviewer 阶段轮次非法": "Invalid Reviewer phase or round",
+        "Reviewer 可接受组合集合非法": "Invalid Reviewer acceptable profile set",
+        "评分与派发或根任务身份不一致": "Score, dispatch, or root task identities differ",
+        "V3 Reviewer 不接受旧线性升级字段": "V3 Reviewers do not accept legacy linear escalation fields",
+        "根任务预算、原始额度或模型家族上限不足": "Root budget, base allowance, or model-family limit is insufficient",
+        "V3 策略身份缺失": "V3 policy identity is missing",
+        "V2 不接受新策略扩展或根绑定字段": "V2 does not accept new-policy extensions or root bindings",
+        "INLINE 不创建评分派发或复审尝试": "INLINE creates no scored dispatch or review attempt",
+        "普通角色不得扩展复审模型或伪装复审绑定": "Ordinary roles cannot use review-only models or forge review bindings",
+        "Reviewer 必须使用登记角色": "Reviewers must use registered roles",
+        "Reviewer 切换字段非法": "Invalid Reviewer transition fields",
+        "Reviewer 切换类型或原因非法": "Invalid Reviewer transition type or reason",
+        "Reviewer 切换缺少终态前次尝试": "The Reviewer transition lacks a terminal prior attempt",
+        "Reviewer 切换缺少匹配结果来源": "The Reviewer transition lacks matching result provenance",
+        "跨模型切换需要不同模型系列": "Cross-model transitions require different model families",
+        "回退组合未在前次批准集合内": "The fallback combination was not previously approved",
+        "角色累计预算不足": "The cumulative role budget is insufficient",
+        "已退款尝试出现宿主创建回执": "A refunded attempt received a host creation receipt",
+        "宿主回执与已绑定 Agent 不一致": "The host receipt conflicts with the bound agent",
+        "预算策略与任务信封固定策略不一致": "Budget and task-envelope pinned policies differ",
+        "批准档位不属于账本固定策略": "The approved profile is outside the ledger's pinned policy",
+        "V2 不接受 V3 评分或派发字段": "V2 does not accept V3 scoring or dispatch fields",
+        "当前预算不可绑定新复审尝试": "This budget cannot bind a new review attempt",
+        "复审状态与 permit 指定任务不一致": "Review state and permit identify different tasks",
+        "Reviewer permit 尚未绑定复审状态": "The Reviewer permit is not bound to review state",
+        "新增模型组合必须显式请求": "New model combinations must be explicitly requested",
+        "单次派发许可已绑定另一宿主调用": "The one-use permit is bound to another host call",
+        "宿主回执需要未关闭的 V3 账本": "Host receipts require an open V3 ledger",
+        "宿主回执没有唯一匹配的预占": "The host receipt has no unique matching reservation",
+        "生命周期回执需要未关闭的 V3 账本": "Lifecycle receipts require an open V3 ledger",
+        "未完成或未关联的尝试不能关闭为 PASS": "Incomplete or unassociated attempts cannot close as PASS",
+        "同模型推理强度升级非法": "Invalid same-family effort escalation",
+        "未启动回执与生命周期冲突": "The no-start receipt conflicts with the lifecycle",
+        "宿主终态与已记录结果冲突": "The host terminal outcome conflicts with the recorded result",
+        "复审扩展不得扩大普通角色额度": "Review extensions cannot expand ordinary-role limits",
+        "该许可已归属其他复审状态": "The permit belongs to another review state",
+        "同一复审槽位已有派发尝试；重试须新轮次或明确的新任务槽位": "The review slot already has an attempt; retries require a new round or explicit task slot",
+        "已释放尝试不可重新派发": "A released attempt cannot be dispatched again",
+        "宿主派发回执重放冲突": "Host dispatch receipt replay conflicts",
+        "宿主生命周期重放冲突": "Host lifecycle replay conflicts",
+        "V3 退款缺少匹配的宿主未启动回执": "V3 refunds require a matching host no-start receipt",
+        "同一预算账本禁止混用格式版本": "A budget ledger cannot mix schema versions",
+        "Reviewer 尝试绑定非法或重复": "Invalid or duplicate Reviewer attempt binding",
+        "同一复审槽位存在重复许可": "Duplicate permits exist for one review slot",
+        "单次派发许可已被消费": "The one-use dispatch permit has been consumed",
+        "宿主派发回执字段或关联非法": "Invalid host dispatch receipt fields or association",
+        "宿主回执摘要不匹配": "The host receipt digest does not match",
+        "已启动尝试不能登记未启动回执": "A started attempt cannot register a no-start receipt",
+        "同一宿主 Agent 不能归属两个派发": "One host agent cannot belong to two dispatches",
+        "宿主 Agent 生命周期回执非法": "Invalid host agent lifecycle receipt",
+        "未关联生命周期回执达到有界上限": "Unassociated lifecycle receipts reached the bounded limit",
+        "宿主生命周期事件重复": "Duplicate host lifecycle event"
       }
     },
     "runtime/cp_runtime/delegation_calibration.py": {
@@ -182,7 +258,10 @@
         "DelegationBudget V1 只读投影不能生成新校准样本": "DelegationBudget V1 is a read-only projection and cannot produce new calibration samples",
         "校准批准档位非法": "Invalid approved profile for calibration",
         "校准成本依据与批准档位不一致": "Calibration cost does not match the approved profile",
-        "DelegationBudget V1 只读投影不能参与新校准": "DelegationBudget V1 is a read-only projection and cannot enter calibration"
+        "DelegationBudget V1 只读投影不能参与新校准": "DelegationBudget V1 is a read-only projection and cannot enter calibration",
+        "校准样本与预算格式版本不一致": "Calibration sample and budget schema versions differ",
+        "校准样本与冻结预算策略不一致": "The calibration sample differs from the frozen budget policy",
+        "校准策略、公式或声明比较对不一致": "Calibration policy, formula, or declared pair differs"
       }
     },
     "runtime/cp_runtime/approval.py": {
@@ -683,9 +762,9 @@
     },
     "scripts/semantic-lint.py": {
       "preserve": [
-        "[OK] V7.10.0 语义校验通过：Codex 0.154.0、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致",
-        "manifest 版本不是 7.10.0",
-        "缺少 %s -> V7.10.0 升级声明",
+        "[OK] V7.11.0 语义校验通过：Codex 0.154.0、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致",
+        "manifest 版本不是 7.11.0",
+        "缺少 %s -> V7.11.0 升级声明",
         "%s 证据必须为 JSON 对象",
         "%s 证据无法读取: %s",
         "AUTO 能力注册表不是 C01-C25 完整映射",
@@ -745,7 +824,7 @@
     },
     "scripts/verify-release.py": {
       "preserve": [
-        "V7.10.0 端到端发行验证",
+        "V7.11.0 端到端发行验证",
         "%s 证据必须为 JSON 对象",
         "%s 证据无法读取: %s",
         "AUTO 能力注册表不是 C01-C25 完整映射",
@@ -1513,7 +1592,11 @@
         "{} / {} default_dispatch_profile 非法": "{} / {} has an invalid default_dispatch_profile",
         "Reviewer approved_profile 与派发记录不一致": "Reviewer approved_profile does not match the dispatch record",
         "Reviewer dispatch_permit_ref 与派发记录不一致": "Reviewer dispatch_permit_ref does not match the dispatch record",
-        "Reviewer cost_basis_units 与批准档位不一致": "Reviewer cost_basis_units does not match the approved profile"
+        "Reviewer cost_basis_units 与批准档位不一致": "Reviewer cost_basis_units does not match the approved profile",
+        "未知旧版 Reviewer 档位，拒绝隐式降级": "Unknown legacy Reviewer profile; refusing an implicit downgrade",
+        "旧状态请使用 review_packet.py result-template": "Use review_packet.py result-template for legacy states",
+        "旧复审状态不支持 V8 reconciliation": "Legacy review states do not support V8 reconciliation",
+        "未知复审状态格式，拒绝写入": "Unknown review state schema; refusing to write"
       }
     },
     "skills/multi-agent-independent-review/scripts/review_packet.py": {
@@ -1590,7 +1673,17 @@
         "dispatch_assignment.policy_status 非法": "Invalid dispatch_assignment.policy_status",
         "dispatch_assignment 包含 schema 未允许字段: ": "dispatch_assignment contains unknown schema fields: ",
         "Reviewer v4 结果缺少校准字段: ": "Reviewer v4 result is missing calibration fields: ",
-        "成本依据必须由 approved_profile 按 {} 计算": "Cost evidence must equal {} units for approved_profile"
+        "成本依据必须由 approved_profile 按 {} 计算": "Cost evidence must equal {} units for approved_profile",
+        "[OK] V5 Reviewer 结果模板已绑定评分和派发状态": "[OK] V5 Reviewer template is bound to scoring and dispatch state",
+        "评分策略审查包必须使用 --review-dir 绑定 V8 派发结果模板": "Scored packets require --review-dir to bind the V8 dispatch result template",
+        "[OK] V5 Reviewer 结构化结果及派发绑定有效": "[OK] V5 Reviewer result and dispatch binding are valid",
+        "评分策略审查包不接受旧 V4 结果": "Scored packets do not accept legacy V4 results",
+        "--review-dir 绑定模板只接受 V8；旧模板继续使用原四档参数": "--review-dir templates require V8; legacy templates retain the original four-profile parameters",
+        "V8 复审状态与 packet 不匹配": "V8 review state and packet do not match",
+        "V8 task_id 不匹配": "V8 task_id does not match",
+        "V5 验证必须提供 --review-dir 绑定真实派发约束": "V5 validation requires --review-dir to bind actual dispatch constraints",
+        "V5 结果只能绑定 V8 状态": "V5 results can only bind V8 state",
+        "V5 结果与审查包、Reviewer 或轮次不一致": "The V5 result differs from its packet, Reviewer, or round"
       }
     },
     "skills/frontend-engineering/scripts/detect_frontend_stack.py": {
@@ -1693,6 +1786,13 @@
         "原因： ": "Cause: ",
         "下一步： ": "Next action: ",
         "受管条目： ": "Managed entries: "
+      }
+    },
+    "runtime/cp_runtime/review_matrix.py": {
+      "plain": {
+        "通过": "Passed",
+        "无阻塞": "No blockers",
+        "系统隔离复审": "System-isolated review"
       }
     }
   }

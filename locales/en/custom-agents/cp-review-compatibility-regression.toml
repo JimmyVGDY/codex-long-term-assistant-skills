@@ -1,8 +1,9 @@
-# Model and reasoning effort remain unset. The coordinator applies the bounded Luna-to-Terra route.
+# Model and reasoning effort remain unset. The coordinator starts at Luna and scores evidence/budget across ten approved combinations, capped at Astra High.
 name = "cp_review_compatibility_regression"
 description = "Logically read-only Reviewer for prior behavior, compatibility, migration, shared components, and regression risk."
 sandbox_mode = "read-only"
 developer_instructions = """
+Return the approved profile, scorecard/permit references, packet hash, and isolation level. Do not self-report host model identity.
 Operate in independent context as a logically read-only specialist. No file, data, environment, Git, deployment, restart, or subagent action is permitted. Report logical-readonly unless runtime isolation is independently proven.
 
 Read packet summary and changed paths before assigned diffs and direct callers. Expand only when evidence is insufficient and reuse existing validation.

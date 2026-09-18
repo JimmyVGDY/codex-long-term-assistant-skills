@@ -27,6 +27,11 @@ class ModelRoutingCalibrationGateTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def run_tool(self, script: Path, *args: str, ok: bool = True) -> subprocess.CompletedProcess[str]:
+        # 中文：这些断言固定验证 V7/V4 兼容路径；English: pin the historical contract.
+        if script == CONTROLLER and args and args[0] == "init":
+            args = (*args, "--policy-id", "four-tier-v1")
+        if script == PACKET and args and args[0] == "create":
+            args = (*args, "--policy-id", "four-tier-v1")
         result = subprocess.run(
             [sys.executable, str(script), *args], cwd=ROOT, text=True,
             encoding="utf-8", errors="replace", capture_output=True,

@@ -600,7 +600,10 @@ def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None
             {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": command, "timeout": 5}]},
             {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_command + " PreToolUse", "timeout": 5}]},
         ],
-        "PostToolUse": [{"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_command + " PostToolUse", "timeout": 5}]}],
+        "PostToolUse": [
+            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_command + " PostToolUse", "timeout": 5}]},
+            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": command + " PostToolUse", "timeout": 5}]},
+        ],
         "SubagentStart": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "Stop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],

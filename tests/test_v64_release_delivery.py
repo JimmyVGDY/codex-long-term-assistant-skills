@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "scripts" / "build-release.py"
 ATTEST = ROOT / "scripts" / "release-attestation.py"
 LIFECYCLE = ROOT / "scripts" / "lifecycle-acceptance.py"
-VERSION = "7.10.0"
+VERSION = "7.11.0"
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v3 import append_event, make_event, project_id_for, stable_repo_fingerprint
 
@@ -156,7 +156,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             "witness.json": {"ok": True, "reproducible": True, "artifact_sha256": digest},
             "unified.json": {
                 "ok": True, "version": VERSION, "artifact_sha256": digest,
-                "compatibility_registry_digest": "9d274e3709d728b986ce5e179b769f0e3e82b4c685e35e5da56a0804ddc1b6a5",
+                "compatibility_registry_digest": "60e81297cab3020709cad3311522e130bf9f3ce0b8e6f2d298b7de9642f858f0",
                 "status": {key: "PASS" for key in (
                     "package", "artifact", "host", "plugin", "lifecycle", "dispatch_policy", "payload"
                 )},

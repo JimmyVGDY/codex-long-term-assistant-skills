@@ -30,7 +30,7 @@ Skill activation does not expand file, Git, environment, production, or data aut
 
 - The main agent keeps the currently selected model and effort.
 - A simple local task stays serial in the main agent by default: no proactive subagent, repository-wide scan, or unrelated checkpoint. Escalate only when risk, scope, or independent evidence requires it.
-- Automatic dispatch uses only `luna-low -> luna-medium -> terra-medium -> terra-high`; the hard ceiling is `gpt-5.6-terra + high`. Sol, `xhigh`, `max`, and `ultra` are forbidden.
+- Independent Reviewers start at Luna Low, score the review budget and valid evidence, then select one combination. Registered roles may use Luna Low/Medium, Terra Medium/High, and Sol/Astra Low/Medium/High. Workers and explorers retain the original four profiles, capped at gpt-5.6-terra + high; registered Reviewers are capped at gpt-6-astra + high. Automatic xhigh, max, and ultra remain forbidden.
 - A budget is enforced only when a real host binding, explicit ledger, and dispatch permit are all verifiable. Exhaustion, corruption, or untrusted association stops new dispatch. Otherwise only the model ceiling applies and the result must say `policy constraint`.
 - Reviewers do not own the total budget and an unchanged review packet must not be dispatched again. Load weighting, refund, reservation, and host-environment details from the budget reference only when needed.
 

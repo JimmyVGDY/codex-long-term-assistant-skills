@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.10.0",
-  "release_name": "P1-P2 使用体验与恢复入口",
-  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with a native Python-free base installation, actionable capability diagnostics, a unified daily entry, bounded read-only task recovery, and explicit UX benchmarks",
+  "version": "7.11.0",
+  "release_name": "独立复审十档模型与证据预算",
+  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with ten registered Reviewer combinations, Luna-based evidence scoring, versioned budgets, and explicit native dispatch references",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -58,7 +58,7 @@
     {
       "name": "multi-agent-independent-review",
       "display_name": "多 Agent 独立复审",
-      "description": "高风险实施前设计审查或行为改动后的独立复审时使用。统一审查包、渐进读取、Luna/Terra 四级模型路由、集中归因和定向复核；简单低风险任务不机械多开。",
+      "description": "高风险设计与行为变更的独立复审；从 Luna 起算，以有效证据和复审预算评分选择十种模型组合，统一预算、精确可接受集合和定向复核。",
       "source_mapping": "new/multi-agent-independent-review"
     },
     {
@@ -178,14 +178,20 @@
       "luna-low",
       "luna-medium",
       "terra-medium",
-      "terra-high"
+      "terra-high",
+      "sol-low",
+      "sol-medium",
+      "sol-high",
+      "astra-low",
+      "astra-medium",
+      "astra-high"
     ],
-    "automatic_reviewer_model_ceiling": "gpt-5.6-terra",
+    "automatic_reviewer_model_ceiling": "gpt-6-astra",
     "automatic_reviewer_reasoning_ceiling": "high",
     "review_packet_schema_version": 3,
-    "review_result_schema_version": 4,
-    "review_state_schema_version": 7,
-    "minimum_acceptable_reviewer_profile_required": true,
+    "review_result_schema_version": 5,
+    "review_state_schema_version": 8,
+    "minimum_acceptable_reviewer_profile_required": false,
     "inline_delegation_decision_gate": true,
     "duplicate_review_dispatch_protection": true,
     "checkpoint_content_deduplication": true,
@@ -215,10 +221,15 @@
     "checkpoint_to_project_memory_requires_promotion": true,
     "project_memory_to_knowledge_requires_candidate_review": true,
     "finalization_readback_required_for_external_action_claims": true,
-    "task_execution_envelope_schema_version": 3,
-    "execution_state_schema_version": 4,
-    "delegation_budget_schema_version": "2.0",
-    "delegation_calibration_schema_version": "1.0"
+    "task_execution_envelope_schema_version": 4,
+    "execution_state_schema_version": 5,
+    "delegation_budget_schema_version": "3.0",
+    "delegation_calibration_schema_version": "3.0",
+    "explicit_acceptable_reviewer_profiles_required": true,
+    "max_premium_reviewers": 2,
+    "max_premium_parallel": 1,
+    "max_astra_high_reviewers": 1,
+    "luna_first_evidence_scoring": true
   },
   "log_analysis_modes": [
     "static-file-analysis",
@@ -374,48 +385,41 @@
         "reasoning_effort": "high"
       }
     },
-    "upgrade_chain": [
-      "luna-low",
-      "luna-medium",
-      "terra-medium",
-      "terra-high"
-    ],
     "forbidden_automatic": [
-      "gpt-5.6-sol",
       "xhigh",
       "max",
       "ultra"
     ],
     "recommended_default_subagent_model": "gpt-5.6-luna",
-    "recommended_default_subagent_reasoning_effort": "medium",
+    "recommended_default_subagent_reasoning_effort": "low",
     "recommended_max_concurrent_threads_per_session": 3,
-    "minimum_acceptable_profile_default": "requested-profile",
-    "model_assignment_statuses": [
-      "declared_match",
-      "fallback_acceptable",
-      "underpowered",
-      "unverified",
-      "mismatch"
-    ],
     "reviewer_declaration_is_trusted_runtime_proof": false,
     "reviewer_result_can_self_finalize_calibration": false,
     "calibration_finalization_authority": "review-controller-finalize-calibration",
     "calibration_profile_dimensions": [
-      "requested-profile",
-      "declared-runtime-profile",
-      "cost-basis-profile"
+      "approved-profile",
+      "cost-basis-profile",
+      "policy-digest",
+      "cost-formula",
+      "declared-comparison-pair"
     ],
     "delegation_decisions": [
       "INLINE",
       "DELEGATE"
     ],
     "calibration_cost_formula": {
-      "version": "profile-weight-v1",
+      "version": "review-weight-v2",
       "weights": {
+        "astra-high": 40,
+        "astra-low": 24,
+        "astra-medium": 32,
         "luna-low": 1,
         "luna-medium": 2,
-        "terra-medium": 4,
-        "terra-high": 8
+        "sol-high": 18,
+        "sol-low": 10,
+        "sol-medium": 14,
+        "terra-high": 8,
+        "terra-medium": 4
       }
     },
     "delegation_budget": {
@@ -433,7 +437,7 @@
         "MISSING_EVIDENCE",
         "INLINE_SUFFICIENT"
       ],
-      "accounting_owner": "delegation-budget-v2",
+      "accounting_owner": "delegation-budget-v3",
       "association_mode": "explicit-dispatch-permit",
       "activation_mode": "task-scoped-explicit-ledger",
       "required_mode_environment": "CP_DELEGATION_BUDGET_REQUIRED=1",
@@ -463,10 +467,138 @@
           "max_terra_high": 1
         }
       },
-      "proposal_execution_authorization": "NONE"
+      "proposal_execution_authorization": "NONE",
+      "root_envelope_environment": "CP_DELEGATION_ENVELOPE_PATH",
+      "root_identity_binding_required": true,
+      "one_use_review_attempt_claim": true,
+      "review_extension_units": 72,
+      "premium_limits": {
+        "max_astra_high": 1,
+        "max_dispatches": 2,
+        "max_parallel": 1
+      },
+      "no_start_refund_policy": "verified-not-started-only; attempts-remain-counted",
+      "legacy_v2_policy": "frozen-reader-and-writer"
     },
     "config_example": "config/agents.example.toml",
-    "policy_scope": "skill-and-controller-workflow; not a platform-level allowlist"
+    "policy_scope": "skill-and-controller-workflow; not a platform-level allowlist",
+    "policy_source": "runtime/cp_runtime/data/dispatch-policy-v2.json",
+    "policy_id": "reviewer-matrix-v2",
+    "policy_digest": "sha256:bbb7c1fc54f38bd02b07ff9bb00ce73437f180f36a7464b8f9a9dc8f4dbeca62",
+    "automatic_reviewer_profiles": {
+      "astra-high": {
+        "model": "gpt-6-astra",
+        "reasoning_effort": "high"
+      },
+      "astra-low": {
+        "model": "gpt-6-astra",
+        "reasoning_effort": "low"
+      },
+      "astra-medium": {
+        "model": "gpt-6-astra",
+        "reasoning_effort": "medium"
+      },
+      "luna-low": {
+        "model": "gpt-5.6-luna",
+        "reasoning_effort": "low"
+      },
+      "luna-medium": {
+        "model": "gpt-5.6-luna",
+        "reasoning_effort": "medium"
+      },
+      "sol-high": {
+        "model": "gpt-5.6-sol",
+        "reasoning_effort": "high"
+      },
+      "sol-low": {
+        "model": "gpt-5.6-sol",
+        "reasoning_effort": "low"
+      },
+      "sol-medium": {
+        "model": "gpt-5.6-sol",
+        "reasoning_effort": "medium"
+      },
+      "terra-high": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "high"
+      },
+      "terra-medium": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "medium"
+      }
+    },
+    "role_profiles": {
+      "explorer": [
+        "luna-low",
+        "luna-medium",
+        "terra-medium",
+        "terra-high"
+      ],
+      "reviewer": [
+        "luna-low",
+        "luna-medium",
+        "terra-medium",
+        "terra-high",
+        "sol-low",
+        "sol-medium",
+        "sol-high",
+        "astra-low",
+        "astra-medium",
+        "astra-high"
+      ],
+      "worker": [
+        "luna-low",
+        "luna-medium",
+        "terra-medium",
+        "terra-high"
+      ]
+    },
+    "legacy_upgrade_chain": [
+      "luna-low",
+      "luna-medium",
+      "terra-medium",
+      "terra-high"
+    ],
+    "acceptable_profiles_default": "exact-approved-profile",
+    "selection_scoring": {
+      "base_units": 1,
+      "dimension_priority": [
+        "impact",
+        "conflict",
+        "prior_inconclusive",
+        "state",
+        "semantic"
+      ],
+      "dimensions": {
+        "conflict": {
+          "confirmed": 6
+        },
+        "impact": {
+          "critical_irreversible": 14,
+          "high": 4
+        },
+        "prior_inconclusive": {
+          "confirmed": 6
+        },
+        "semantic": {
+          "bounded": 2,
+          "cross_module": 4,
+          "multi_domain": 8
+        },
+        "state": {
+          "concurrent": 8,
+          "multi_step": 4
+        }
+      },
+      "formula_version": "luna-evidence-v1",
+      "max_evidence_items": 24,
+      "max_units": 40,
+      "mode_points": {
+        "balanced": 1,
+        "deep": 3,
+        "economy": 0
+      }
+    }
   },
   "project_governance": {
     "runtime": "runtime/cp_runtime",
@@ -486,7 +618,7 @@
     "project_runtime_state": "project-state.json",
     "task_execution_state": "execution-state.json via execution_guard.py",
     "review_dispatch_state": "review-state.json via review_controller.py",
-    "delegation_budget": "repository-external DelegationBudget V2 JSONL via delegation-budget.py",
+    "delegation_budget": "repository-external DelegationBudget V3 JSONL via delegation-budget.py; frozen V2 continuation",
     "delegation_calibration": "parent-finalized samples and offline proposals via delegation-calibration.py",
     "review_input_baseline": "review packet manifest via review_packet.py",
     "task_recovery_state": "CURRENT_TASK.md + PROGRESS.md via checkpoint.py",
@@ -502,7 +634,8 @@
     "capability_index": "capability-index/<worktree_id> via CapabilityStore",
     "capability_gate_policy": "capability-gates/<worktree_id>.json via GatePolicy",
     "capability_gate_task": "capability-gate/<worktree_id> via GateTask and Workflow",
-    "task_feedback": "task-bound feedback via runtime/cp_runtime/evolution"
+    "task_feedback": "task-bound feedback via runtime/cp_runtime/evolution",
+    "dispatch_policy": "runtime/cp_runtime/data/dispatch-policy-v2.json via dispatch_policy.py; manifest is a verified projection"
   },
   "approval_evidence_finalization": {
     "approval_schema_version": 1,
@@ -536,6 +669,7 @@
     ]
   },
   "upgrade_from": [
+    "7.10.0",
     "7.9.2",
     "7.9.1",
     "7.9.0",

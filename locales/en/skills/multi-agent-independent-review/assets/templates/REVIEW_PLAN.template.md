@@ -40,7 +40,7 @@
 
 | Reviewer | Responsibility | Scope | Non-Responsibilities | Model Tier | Status |
 |---|---|---|---|---|---|
-|  |  |  |  | luna-low / luna-medium / terra-medium / terra-high | Pending |
+|  |  |  |  | computed approved_profile (ten registered combinations) | Pending |
 
 ## Waiting and Consolidation Rules
 
@@ -53,3 +53,11 @@
 ## Stop Conditions
 
 -
+
+## Selection evidence
+
+- Policy ID/digest and scoring formula: reviewer-matrix-v2 / luna-evidence-v1
+- Luna base 1 + review budget mode points + valid evidence awards:
+- Excluded evidence and reasons; exact acceptable_profiles:
+- Final profile; root permit and remaining budget:
+- Sol/Astra <=2 attempts, <=1 concurrent; Astra High <=1; retries count.

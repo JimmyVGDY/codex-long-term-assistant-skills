@@ -42,7 +42,7 @@ Skill 激活不扩大文件、Git、环境、生产或数据权限，也不自�
 
 - 主 Agent 采用当前选择的模型和强度，本包不强制覆盖。
 - 简单局部任务默认由主 Agent 串行完成：不主动派发子 Agent、不全仓扫描、不建立无关检查点；风险、范围或独立证据需要时再升级。
-- 自动派发只使用 `luna-low -> luna-medium -> terra-medium -> terra-high`，硬上限为 `gpt-5.6-terra + high`；禁止自动 Sol、`xhigh`、`max`、`ultra`。
+- 独立 Reviewer 每次从 Luna Low 起算，按复审预算与有效证据计分后一次选择组合；登记角色可用 Luna Low/Medium、Terra Medium/High、Sol 和 Astra Low/Medium/High。Worker、Explorer 保持原四档，硬上限 gpt-5.6-terra + high；登记 Reviewer 上限 gpt-6-astra + high。所有自动派发禁止 xhigh、max、ultra。
 - 预算只有在真实宿主绑定、显式账本与 dispatch permit 均可核验时才是强制门禁；余额耗尽、账本损坏或关联不可信时停止新增派发。否则仅模型上限生效，必须标明“策略约束”。
 - Reviewer 不拥有总预算；相同审查包没有新信息时不得重复派发。权重、退款、预占和宿主环境细则按需读取预算 Reference。
 

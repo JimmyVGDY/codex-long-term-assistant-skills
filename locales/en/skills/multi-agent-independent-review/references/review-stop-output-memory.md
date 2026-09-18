@@ -4,7 +4,7 @@
 
 Normal stop: blocking issues are resolved; high-severity issues are resolved or explicitly accepted; minimum targeted validation remains valid; affected contracts were rereviewed; the diff is stable; and unverified items are recorded.
 
-Constrained stop that cannot be called a pass: a depth, round, repair, reviewer-count, Terra High, or platform-concurrency limit is reached; environment or permissions are missing; conflict cannot be adjudicated; further work would expand scope; or the requester must decide a business definition or risk acceptance.
+Constrained stop that cannot be called a pass: a depth, round, repair, reviewer-count, model-family or platform-concurrency limit is reached; environment or permissions are missing; conflict cannot be adjudicated; further work would expand scope; or the requester must decide a business definition or risk acceptance.
 
 Stop adding reviewers when:
 
@@ -20,7 +20,7 @@ Postimplementation review has at most two rounds by default. A third round is on
 Reviewers use `review-result.schema.json`, containing at least:
 
 - reviewer, round, functional boundary, and packet hash;
-- approved profile, minimum acceptable profile, dispatch permit reference, and policy status; do not read or report host runtime model identity;
+- approved profile, explicit acceptable profiles and scorecard reference, dispatch permit reference, and policy status; do not read or report host runtime model identity;
 - isolation level;
 - checked scope and unverified items;
 - conclusion;
