@@ -78,6 +78,26 @@ class DocumentationSiteTests(unittest.TestCase):
                 "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/",
                 english_home,
             )
+            for language in ("zh-CN", "en"):
+                audit = output / language / "docs/releases/v7.11.0/AUDIT_REPORT.md"
+                rendered = audit.read_text(encoding="utf-8")
+                for source in ("runtime/cp_runtime/dispatch_policy.py",
+                               "runtime/cp_runtime/data/dispatch-policy-v2.json",
+                               "tests/test_dispatch_policy.py"):
+                    self.assertIn(self.builder.REPOSITORY_BLOB + source, rendered)
+
+    def test_source_links_preserve_fragments_and_site_boundaries(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="cp-docs-source-links-") as temporary:
+            output = Path(temporary)
+            for language in ("zh-CN", "en"):
+                page = output / language / "docs/releases/v7.11.0/AUDIT_REPORT.md"
+                self.assertEqual(
+                    self.builder.REPOSITORY_BLOB + "tests/test_dispatch_policy.py#L10",
+                    self.builder.rewrite_target(
+                        page, output, "../../../tests/test_dispatch_policy.py#L10"))
+                for target in ("../../USER_GUIDE.md", "../../../tests/missing.py",
+                               "../../../../tests/test_dispatch_policy.py"):
+                    self.assertEqual(target, self.builder.rewrite_target(page, output, target))
 
     def test_historical_pages_are_marked_and_excluded_from_default_search(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cp-docs-history-") as temporary:
