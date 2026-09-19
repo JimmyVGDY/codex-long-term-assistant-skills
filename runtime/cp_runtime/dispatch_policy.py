@@ -13,10 +13,12 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 LEGACY_POLICY_ID = "four-tier-v1"
-CURRENT_POLICY_ID = "reviewer-matrix-v2"
+PREVIOUS_POLICY_ID = "reviewer-matrix-v2"
+CURRENT_POLICY_ID = "reviewer-matrix-v3"
 POLICY_FILES = {
     LEGACY_POLICY_ID: "dispatch-policy-v1.json",
-    CURRENT_POLICY_ID: "dispatch-policy-v2.json",
+    PREVIOUS_POLICY_ID: "dispatch-policy-v2.json",
+    CURRENT_POLICY_ID: "dispatch-policy-v3.json",
 }
 CONTEXT_FIELDS = {"project_id", "task_id", "repo_fingerprint", "packet_sha256", "baseline_sha256"}
 ATOM_FIELDS = {"evidence_ref", "correlation_ref", "dimension", "level"}
@@ -47,7 +49,7 @@ def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=3)
 def _policy_bytes(policy_id: str) -> bytes:
     filename = POLICY_FILES.get(policy_id)
     if filename is None:
@@ -189,7 +191,7 @@ def validate_context(context: Mapping[str, Any]) -> dict[str, str]:
     return result
 
 
-def _score_review_v1(*, agent_type: str, context: Mapping[str, Any], reviewer_budget: str = "economy",
+def _score_review(*, select_awards: Any, agent_type: str, context: Mapping[str, Any], reviewer_budget: str = "economy",
                  evidence_items: Iterable[Mapping[str, str]] = (), proofs: Mapping[str, Any] | None = None,
                  requirements: Iterable[str] | None = None, policy_id: str = CURRENT_POLICY_ID) -> dict[str, Any]:
     """中文：从已核验来源快照重算，不接收提交的总分。
@@ -279,19 +281,8 @@ def _score_review_v1(*, agent_type: str, context: Mapping[str, Any], reviewer_bu
             exclusions.append({**atom, "reason": reason, "points": 0})
         else:
             groups.setdefault(find(index), []).append(atom)
-    surviving: list[dict[str, str]] = []
-    for group in groups.values():
-        ranked = sorted(group, key=award_key)
-        surviving.append(ranked[0])
-        exclusions.extend({**atom, "reason": "CORRELATED_EVIDENCE", "points": 0} for atom in ranked[1:])
-    awards: list[dict[str, Any]] = []
-    dimensions: set[str] = set()
-    for atom in sorted(surviving, key=award_key):
-        if atom["dimension"] in dimensions:
-            exclusions.append({**atom, "reason": "DIMENSION_CAP", "points": 0})
-        else:
-            dimensions.add(atom["dimension"])
-            awards.append({**atom, "points": config["dimensions"][atom["dimension"]][atom["level"]]})
+    awards, selection_exclusions = select_awards(groups, config, award_key)
+    exclusions.extend(selection_exclusions)
     earned = min(config["max_units"], config["base_units"] + config["mode_points"][reviewer_budget]
                  + sum(item["points"] for item in awards))
     affordable = [name for name in candidates if contract["profiles"][name]["units"] <= earned]
@@ -311,6 +302,74 @@ def _score_review_v1(*, agent_type: str, context: Mapping[str, Any], reviewer_bu
     }
 
 
+def _select_awards_v1(groups: Mapping[int, list[dict[str, str]]], config: Mapping[str, Any],
+                      award_key: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """中文：保留旧贪心选择以重放 luna-evidence-v1。
+
+    English: Frozen greedy selection for luna-evidence-v1 replay."""
+    exclusions: list[dict[str, Any]] = []
+    surviving: list[dict[str, str]] = []
+    for group in groups.values():
+        ranked = sorted(group, key=award_key)
+        surviving.append(ranked[0])
+        exclusions.extend({**atom, "reason": "CORRELATED_EVIDENCE", "points": 0} for atom in ranked[1:])
+    awards: list[dict[str, Any]] = []
+    dimensions: set[str] = set()
+    for atom in sorted(surviving, key=award_key):
+        if atom["dimension"] in dimensions:
+            exclusions.append({**atom, "reason": "DIMENSION_CAP", "points": 0})
+        else:
+            dimensions.add(atom["dimension"])
+            awards.append({**atom, "points": config["dimensions"][atom["dimension"]][atom["level"]]})
+    return awards, exclusions
+
+
+def _select_awards_v2(groups: Mapping[int, list[dict[str, str]]], config: Mapping[str, Any],
+                      award_key: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """中文：联合求最优解，每个关联组和维度至多取一项，最多 32 个掩码。
+
+    English: Joint optimum: one atom per connected group and per dimension, at most 32 masks."""
+    bits = {name: 1 << index for index, name in enumerate(config["dimension_priority"])}
+
+    def solution_key(solution: tuple[int, tuple[dict[str, str], ...]]) -> tuple[Any, ...]:
+        # 中文：比较完整规范解，避免局部选择依赖输入顺序。
+        # English: Compare the whole canonical solution, never an input-order-dependent local winner.
+        return (-solution[0], tuple(award_key(atom) for atom in solution[1]))
+
+    states: dict[int, tuple[int, tuple[dict[str, str], ...]]] = {0: (0, ())}
+    for group in groups.values():
+        next_states = dict(states)  # 中文：跳过此组始终可行。 English: Skipping this group is always feasible.
+        for mask, (total, selected) in states.items():
+            for atom in group:
+                bit = bits[atom["dimension"]]
+                if mask & bit:
+                    continue
+                candidate = (total + config["dimensions"][atom["dimension"]][atom["level"]],
+                             tuple(sorted((*selected, atom), key=award_key)))
+                target = mask | bit
+                if target not in next_states or solution_key(candidate) < solution_key(next_states[target]):
+                    next_states[target] = candidate
+        states = next_states
+    _total, selected = min(states.values(), key=solution_key)
+    selected_keys = {canonical_json(atom) for atom in selected}
+    awards = [{**atom, "points": config["dimensions"][atom["dimension"]][atom["level"]]} for atom in selected]
+    exclusions = []
+    for group in groups.values():
+        occupied = any(canonical_json(atom) in selected_keys for atom in group)
+        for atom in group:
+            if canonical_json(atom) not in selected_keys:
+                exclusions.append({**atom, "reason": "CORRELATED_EVIDENCE" if occupied else "DIMENSION_CAP", "points": 0})
+    return awards, exclusions
+
+
+def _score_review_v1(**kwargs: Any) -> dict[str, Any]:
+    return _score_review(select_awards=_select_awards_v1, **kwargs)
+
+
+def _score_review_v2(**kwargs: Any) -> dict[str, Any]:
+    return _score_review(select_awards=_select_awards_v2, **kwargs)
+
+
 def score_review(*, agent_type: str, context: Mapping[str, Any], reviewer_budget: str = "economy",
                  evidence_items: Iterable[Mapping[str, str]] = (), proofs: Mapping[str, Any] | None = None,
                  requirements: Iterable[str] | None = None, policy_id: str = CURRENT_POLICY_ID) -> dict[str, Any]:
@@ -319,10 +378,11 @@ def score_review(*, agent_type: str, context: Mapping[str, Any], reviewer_budget
     English: Dispatch frozen evaluators by version instead of reinterpreting old scorecards.
     """
     formula = policy(policy_id).get("scoring", {}).get("formula_version")
-    if formula != "luna-evidence-v1":
+    evaluator = {"luna-evidence-v1": _score_review_v1, "luna-evidence-v2": _score_review_v2}.get(formula)
+    if evaluator is None:
         raise DispatchPolicyError("SCORE_FORMULA_UNSUPPORTED")
-    return _score_review_v1(agent_type=agent_type, context=context, reviewer_budget=reviewer_budget,
-                            evidence_items=evidence_items, proofs=proofs, requirements=requirements, policy_id=policy_id)
+    return evaluator(agent_type=agent_type, context=context, reviewer_budget=reviewer_budget,
+                     evidence_items=evidence_items, proofs=proofs, requirements=requirements, policy_id=policy_id)
 
 
 def validate_scorecard(value: Mapping[str, Any]) -> dict[str, Any]:

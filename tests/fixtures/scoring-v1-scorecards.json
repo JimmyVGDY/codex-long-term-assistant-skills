@@ -1,0 +1,726 @@
+[
+  {
+    "name": "before-conflicting-local-tie",
+    "scorecard": {
+      "schema_version": "selection-scorecard/1",
+      "policy_id": "reviewer-matrix-v2",
+      "policy_digest": "sha256:bbb7c1fc54f38bd02b07ff9bb00ce73437f180f36a7464b8f9a9dc8f4dbeca62",
+      "formula_version": "luna-evidence-v1",
+      "agent_type": "cp_review_data_contract",
+      "context": {
+        "project_id": "synthetic-project",
+        "task_id": "synthetic-task",
+        "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "reviewer_budget": "economy",
+      "requirement_profiles": [
+        "astra-high",
+        "astra-low",
+        "astra-medium",
+        "luna-low",
+        "luna-medium",
+        "sol-high",
+        "sol-low",
+        "sol-medium",
+        "terra-high",
+        "terra-medium"
+      ],
+      "evidence_items": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "multi_domain"
+        },
+        {
+          "correlation_ref": "sha256:4488baa84ad729976db42aae7439ca95f91c72ad11b36db9eabedeb85601da54",
+          "dimension": "state",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "concurrent"
+        }
+      ],
+      "proofs": {
+        "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd": {
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79": {
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        }
+      },
+      "awards": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "multi_domain",
+          "points": 8
+        },
+        {
+          "correlation_ref": "sha256:4488baa84ad729976db42aae7439ca95f91c72ad11b36db9eabedeb85601da54",
+          "dimension": "state",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "concurrent",
+          "points": 8
+        }
+      ],
+      "exclusions": [],
+      "base_units": 1,
+      "mode_points": 0,
+      "earned_budget": 17,
+      "approved_profile": "sol-medium",
+      "cost_basis_units": 14
+    }
+  },
+  {
+    "name": "after-conflicting-local-tie",
+    "scorecard": {
+      "schema_version": "selection-scorecard/1",
+      "policy_id": "reviewer-matrix-v2",
+      "policy_digest": "sha256:bbb7c1fc54f38bd02b07ff9bb00ce73437f180f36a7464b8f9a9dc8f4dbeca62",
+      "formula_version": "luna-evidence-v1",
+      "agent_type": "cp_review_data_contract",
+      "context": {
+        "project_id": "synthetic-project",
+        "task_id": "synthetic-task",
+        "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "reviewer_budget": "economy",
+      "requirement_profiles": [
+        "astra-high",
+        "astra-low",
+        "astra-medium",
+        "luna-low",
+        "luna-medium",
+        "sol-high",
+        "sol-low",
+        "sol-medium",
+        "terra-high",
+        "terra-medium"
+      ],
+      "evidence_items": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "multi_domain"
+        },
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "state",
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "level": "concurrent"
+        },
+        {
+          "correlation_ref": "sha256:4488baa84ad729976db42aae7439ca95f91c72ad11b36db9eabedeb85601da54",
+          "dimension": "state",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "concurrent"
+        }
+      ],
+      "proofs": {
+        "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd": {
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79": {
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a": {
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        }
+      },
+      "awards": [
+        {
+          "correlation_ref": "sha256:4488baa84ad729976db42aae7439ca95f91c72ad11b36db9eabedeb85601da54",
+          "dimension": "state",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "concurrent",
+          "points": 8
+        }
+      ],
+      "exclusions": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "multi_domain",
+          "reason": "CORRELATED_EVIDENCE",
+          "points": 0
+        },
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "state",
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "level": "concurrent",
+          "reason": "DIMENSION_CAP",
+          "points": 0
+        }
+      ],
+      "base_units": 1,
+      "mode_points": 0,
+      "earned_budget": 9,
+      "approved_profile": "terra-high",
+      "cost_basis_units": 8
+    }
+  },
+  {
+    "name": "lower-local-choice",
+    "scorecard": {
+      "schema_version": "selection-scorecard/1",
+      "policy_id": "reviewer-matrix-v2",
+      "policy_digest": "sha256:bbb7c1fc54f38bd02b07ff9bb00ce73437f180f36a7464b8f9a9dc8f4dbeca62",
+      "formula_version": "luna-evidence-v1",
+      "agent_type": "cp_review_data_contract",
+      "context": {
+        "project_id": "synthetic-project",
+        "task_id": "synthetic-task",
+        "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "reviewer_budget": "economy",
+      "requirement_profiles": [
+        "astra-high",
+        "astra-low",
+        "astra-medium",
+        "luna-low",
+        "luna-medium",
+        "sol-high",
+        "sol-low",
+        "sol-medium",
+        "terra-high",
+        "terra-medium"
+      ],
+      "evidence_items": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "impact",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "high"
+        },
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "multi_domain"
+        },
+        {
+          "correlation_ref": "sha256:0ae5fbba825eecf6fba7247d9dc8534e97b51ba2181171f3045e9444a26f3e33",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "level": "multi_domain"
+        }
+      ],
+      "proofs": {
+        "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd": {
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79": {
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a": {
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        }
+      },
+      "awards": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "multi_domain",
+          "points": 8
+        }
+      ],
+      "exclusions": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "impact",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "high",
+          "reason": "CORRELATED_EVIDENCE",
+          "points": 0
+        },
+        {
+          "correlation_ref": "sha256:0ae5fbba825eecf6fba7247d9dc8534e97b51ba2181171f3045e9444a26f3e33",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "level": "multi_domain",
+          "reason": "DIMENSION_CAP",
+          "points": 0
+        }
+      ],
+      "base_units": 1,
+      "mode_points": 0,
+      "earned_budget": 9,
+      "approved_profile": "terra-high",
+      "cost_basis_units": 8
+    }
+  },
+  {
+    "name": "cap-and-quality",
+    "scorecard": {
+      "schema_version": "selection-scorecard/1",
+      "policy_id": "reviewer-matrix-v2",
+      "policy_digest": "sha256:bbb7c1fc54f38bd02b07ff9bb00ce73437f180f36a7464b8f9a9dc8f4dbeca62",
+      "formula_version": "luna-evidence-v1",
+      "agent_type": "cp_review_data_contract",
+      "context": {
+        "project_id": "synthetic-project",
+        "task_id": "synthetic-task",
+        "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "reviewer_budget": "deep",
+      "requirement_profiles": [
+        "sol-high",
+        "sol-medium"
+      ],
+      "evidence_items": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "impact",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "critical_irreversible"
+        },
+        {
+          "correlation_ref": "sha256:0ae5fbba825eecf6fba7247d9dc8534e97b51ba2181171f3045e9444a26f3e33",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "level": "multi_domain"
+        },
+        {
+          "correlation_ref": "sha256:1ecfb289e1f86c3335aa04705d310fb0f1401b9e910bf84a947478843a28325f",
+          "dimension": "prior_inconclusive",
+          "evidence_ref": "sha256:0ead304da5ab3f53ecbc2400e838b01fa42081ec08566a7a4ef670f6896e3d8e",
+          "level": "confirmed"
+        },
+        {
+          "correlation_ref": "sha256:4488baa84ad729976db42aae7439ca95f91c72ad11b36db9eabedeb85601da54",
+          "dimension": "state",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "concurrent"
+        },
+        {
+          "correlation_ref": "sha256:b8de2fec427c1f8de3a548448720ae965c45ca98b4a76be455c6659bcf5867c1",
+          "dimension": "conflict",
+          "evidence_ref": "sha256:bbcdc8b99f6547667bccd05db008f82e59ac9002084757f84e5944b99b1c8287",
+          "level": "confirmed"
+        }
+      ],
+      "proofs": {
+        "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd": {
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79": {
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a": {
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:bbcdc8b99f6547667bccd05db008f82e59ac9002084757f84e5944b99b1c8287": {
+          "evidence_ref": "sha256:bbcdc8b99f6547667bccd05db008f82e59ac9002084757f84e5944b99b1c8287",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:0ead304da5ab3f53ecbc2400e838b01fa42081ec08566a7a4ef670f6896e3d8e": {
+          "evidence_ref": "sha256:0ead304da5ab3f53ecbc2400e838b01fa42081ec08566a7a4ef670f6896e3d8e",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "sha256:1d7c038164c66d9ba77a83725b42e14f5c2b79e7eddf1179574076c95c0345d7",
+          "prior_attempt_ref": "sha256:bd1b82237d4ee3a1865c2b5b7cc95c0842546d2f68241103f8b04ede78f35671"
+        }
+      },
+      "awards": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "impact",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "critical_irreversible",
+          "points": 14
+        },
+        {
+          "correlation_ref": "sha256:0ae5fbba825eecf6fba7247d9dc8534e97b51ba2181171f3045e9444a26f3e33",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "level": "multi_domain",
+          "points": 8
+        },
+        {
+          "correlation_ref": "sha256:1ecfb289e1f86c3335aa04705d310fb0f1401b9e910bf84a947478843a28325f",
+          "dimension": "prior_inconclusive",
+          "evidence_ref": "sha256:0ead304da5ab3f53ecbc2400e838b01fa42081ec08566a7a4ef670f6896e3d8e",
+          "level": "confirmed",
+          "points": 6
+        },
+        {
+          "correlation_ref": "sha256:4488baa84ad729976db42aae7439ca95f91c72ad11b36db9eabedeb85601da54",
+          "dimension": "state",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "concurrent",
+          "points": 8
+        },
+        {
+          "correlation_ref": "sha256:b8de2fec427c1f8de3a548448720ae965c45ca98b4a76be455c6659bcf5867c1",
+          "dimension": "conflict",
+          "evidence_ref": "sha256:bbcdc8b99f6547667bccd05db008f82e59ac9002084757f84e5944b99b1c8287",
+          "level": "confirmed",
+          "points": 6
+        }
+      ],
+      "exclusions": [],
+      "base_units": 1,
+      "mode_points": 3,
+      "earned_budget": 40,
+      "approved_profile": "sol-high",
+      "cost_basis_units": 18
+    }
+  },
+  {
+    "name": "invalid-proof-reasons",
+    "scorecard": {
+      "schema_version": "selection-scorecard/1",
+      "policy_id": "reviewer-matrix-v2",
+      "policy_digest": "sha256:bbb7c1fc54f38bd02b07ff9bb00ce73437f180f36a7464b8f9a9dc8f4dbeca62",
+      "formula_version": "luna-evidence-v1",
+      "agent_type": "cp_review_data_contract",
+      "context": {
+        "project_id": "synthetic-project",
+        "task_id": "synthetic-task",
+        "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "reviewer_budget": "economy",
+      "requirement_profiles": [
+        "astra-high",
+        "astra-low",
+        "astra-medium",
+        "luna-low",
+        "luna-medium",
+        "sol-high",
+        "sol-low",
+        "sol-medium",
+        "terra-high",
+        "terra-medium"
+      ],
+      "evidence_items": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "impact",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "critical_irreversible"
+        },
+        {
+          "correlation_ref": "sha256:0ae5fbba825eecf6fba7247d9dc8534e97b51ba2181171f3045e9444a26f3e33",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "level": "multi_domain"
+        },
+        {
+          "correlation_ref": "sha256:1ecfb289e1f86c3335aa04705d310fb0f1401b9e910bf84a947478843a28325f",
+          "dimension": "prior_inconclusive",
+          "evidence_ref": "sha256:0ead304da5ab3f53ecbc2400e838b01fa42081ec08566a7a4ef670f6896e3d8e",
+          "level": "confirmed"
+        },
+        {
+          "correlation_ref": "sha256:4488baa84ad729976db42aae7439ca95f91c72ad11b36db9eabedeb85601da54",
+          "dimension": "state",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "concurrent"
+        },
+        {
+          "correlation_ref": "sha256:b8de2fec427c1f8de3a548448720ae965c45ca98b4a76be455c6659bcf5867c1",
+          "dimension": "conflict",
+          "evidence_ref": "sha256:bbcdc8b99f6547667bccd05db008f82e59ac9002084757f84e5944b99b1c8287",
+          "level": "confirmed"
+        }
+      ],
+      "proofs": {
+        "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd": {
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79": {
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "stale",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a": {
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "another-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "",
+          "prior_attempt_ref": ""
+        },
+        "sha256:0ead304da5ab3f53ecbc2400e838b01fa42081ec08566a7a4ef670f6896e3d8e": {
+          "evidence_ref": "sha256:0ead304da5ab3f53ecbc2400e838b01fa42081ec08566a7a4ef670f6896e3d8e",
+          "context": {
+            "project_id": "synthetic-project",
+            "task_id": "synthetic-task",
+            "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "status": "valid",
+          "source": "verified-evidence-record",
+          "prior_result_ref": "sha256:1d7c038164c66d9ba77a83725b42e14f5c2b79e7eddf1179574076c95c0345d7",
+          "prior_attempt_ref": ""
+        }
+      },
+      "awards": [
+        {
+          "correlation_ref": "sha256:0246600bdffc9ebe2bcf5586932e4ddea9520fd834eceadd25b9c5625737d571",
+          "dimension": "impact",
+          "evidence_ref": "sha256:5a260bdfad618385f1a779b8cac8cf13b0f46eb66b0733c8fa88e180a5ef79cd",
+          "level": "critical_irreversible",
+          "points": 14
+        }
+      ],
+      "exclusions": [
+        {
+          "correlation_ref": "sha256:0ae5fbba825eecf6fba7247d9dc8534e97b51ba2181171f3045e9444a26f3e33",
+          "dimension": "semantic",
+          "evidence_ref": "sha256:9af31bcb109451912fc898c24e0704b90bfa20917bdc26dd23e06eabf6c6642a",
+          "level": "multi_domain",
+          "reason": "EVIDENCE_CONTEXT_MISMATCH",
+          "points": 0
+        },
+        {
+          "correlation_ref": "sha256:1ecfb289e1f86c3335aa04705d310fb0f1401b9e910bf84a947478843a28325f",
+          "dimension": "prior_inconclusive",
+          "evidence_ref": "sha256:0ead304da5ab3f53ecbc2400e838b01fa42081ec08566a7a4ef670f6896e3d8e",
+          "level": "confirmed",
+          "reason": "PRIOR_RESULT_BINDING_MISSING",
+          "points": 0
+        },
+        {
+          "correlation_ref": "sha256:4488baa84ad729976db42aae7439ca95f91c72ad11b36db9eabedeb85601da54",
+          "dimension": "state",
+          "evidence_ref": "sha256:550c3d05acc5783da01a4303dfa5371cfd8ee3ad66601c81f0281339436a5f79",
+          "level": "concurrent",
+          "reason": "EVIDENCE_NOT_CURRENT_VALID",
+          "points": 0
+        },
+        {
+          "correlation_ref": "sha256:b8de2fec427c1f8de3a548448720ae965c45ca98b4a76be455c6659bcf5867c1",
+          "dimension": "conflict",
+          "evidence_ref": "sha256:bbcdc8b99f6547667bccd05db008f82e59ac9002084757f84e5944b99b1c8287",
+          "level": "confirmed",
+          "reason": "EVIDENCE_MISSING",
+          "points": 0
+        }
+      ],
+      "base_units": 1,
+      "mode_points": 0,
+      "earned_budget": 15,
+      "approved_profile": "sol-medium",
+      "cost_basis_units": 14
+    }
+  },
+  {
+    "name": "luna-base",
+    "scorecard": {
+      "schema_version": "selection-scorecard/1",
+      "policy_id": "reviewer-matrix-v2",
+      "policy_digest": "sha256:bbb7c1fc54f38bd02b07ff9bb00ce73437f180f36a7464b8f9a9dc8f4dbeca62",
+      "formula_version": "luna-evidence-v1",
+      "agent_type": "cp_review_data_contract",
+      "context": {
+        "project_id": "synthetic-project",
+        "task_id": "synthetic-task",
+        "repo_fingerprint": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "packet_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "baseline_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "reviewer_budget": "economy",
+      "requirement_profiles": [
+        "astra-high",
+        "astra-low",
+        "astra-medium",
+        "luna-low",
+        "luna-medium",
+        "sol-high",
+        "sol-low",
+        "sol-medium",
+        "terra-high",
+        "terra-medium"
+      ],
+      "evidence_items": [],
+      "proofs": {},
+      "awards": [],
+      "exclusions": [],
+      "base_units": 1,
+      "mode_points": 0,
+      "earned_budget": 1,
+      "approved_profile": "luna-low",
+      "cost_basis_units": 1
+    }
+  }
+]

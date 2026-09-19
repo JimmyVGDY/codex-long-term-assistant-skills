@@ -21,7 +21,7 @@ _RUNTIME_ROOT = Path(__file__).resolve().parents[3] / "runtime"
 if str(_RUNTIME_ROOT) not in sys.path:
     sys.path.insert(0, str(_RUNTIME_ROOT))
 from cp_runtime.delegation_budget import read_budget, sha256_ref  # noqa: E402
-from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, DispatchPolicyError, profile_weights  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, DispatchPolicyError, profile_weights  # noqa: E402
 from cp_runtime.common import RuntimeContractError  # noqa: E402
 from cp_runtime.review_matrix import run as run_matrix_review  # noqa: E402
 from cp_runtime.review_contract import derive_isolation as derive_review_isolation  # noqa: E402
@@ -1438,7 +1438,7 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--review-dir", required=True)
     init.add_argument("--boundary-id", required=True)
     init.add_argument("--task-id", default="")
-    init.add_argument("--policy-id", choices=[LEGACY_POLICY_ID, CURRENT_POLICY_ID], default=CURRENT_POLICY_ID)
+    init.add_argument("--policy-id", choices=list(POLICY_FILES), default=CURRENT_POLICY_ID)
     init.add_argument("--repo-path", default="")
     init.add_argument("--project-profile", default="")
     init.add_argument("--project-id", default="")
@@ -1600,7 +1600,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = build_parser().parse_args()
     try:
-        matrix = args.command == "init" and args.policy_id == CURRENT_POLICY_ID
+        matrix = args.command == "init" and args.policy_id != LEGACY_POLICY_ID
         if args.command != "init":
             path = Path(args.review_dir).expanduser().resolve() / STATE_FILE
             if path.is_file():

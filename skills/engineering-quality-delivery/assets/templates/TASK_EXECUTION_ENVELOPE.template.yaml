@@ -15,7 +15,7 @@ routing:
   execution_profile: STANDARD  # LIGHT | STANDARD | STRICT
   reviewer_budget: balanced  # economy | balanced | deep
   reviewer_policy:
-    policy_id: reviewer-matrix-v2
+    policy_id: reviewer-matrix-v3
     policy_digest: sha256:bbb7c1fc54f38bd02b07ff9bb00ce73437f180f36a7464b8f9a9dc8f4dbeca62
     selection_mode: luna-first-evidence-score
   model_profile: luna-low  # luna-low | luna-medium | terra-medium | terra-high

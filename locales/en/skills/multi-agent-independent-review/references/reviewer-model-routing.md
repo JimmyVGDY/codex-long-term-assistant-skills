@@ -2,7 +2,7 @@
 
 ## Scope
 
-The seven registered cp_review roles may use ten combinations. Workers and explorers retain the original four; the main agent uses the user's selected model. High remains the reasoning ceiling. The authority is runtime/cp_runtime/data/dispatch-policy-v2.json; the manifest and documentation are projections.
+The seven registered cp_review roles may use ten combinations. Workers and explorers retain the original four; the main agent uses the user's selected model. High remains the reasoning ceiling. The authority is runtime/cp_runtime/data/dispatch-policy-v3.json; the manifest and documentation are projections.
 
 | Combination | Scheduling proxy units |
 |---|---:|
@@ -27,9 +27,11 @@ Review budget modes add economy 0, balanced 1, or deep 3 points. STRICT executio
 | Confirmed evidence conflict | 6 |
 | Prior inconclusive review with matching result and attempt references | 6 |
 
-Take at most one award per dimension. Exclude missing, stale, or context-mismatched evidence first. The same evidence or root cause forms a transitive exclusivity group that earns one award. Frozen tie rules make input order irrelevant. The total is capped at 40.
+Take at most one award per dimension. Exclude missing, stale, or context-mismatched evidence first. The same evidence or root cause forms a transitive exclusivity group that earns one award. luna-evidence-v2 jointly enforces group and dimension limits and maximizes total evidence points. Frozen whole-solution tie rules make input order irrelevant. Maximize raw evidence points first, then add the baseline and mode points and cap the result at 40.
 
-Choose an affordable combination within the role candidates and explicit quality requirements. Cost order does not establish capability dominance; Astra Low does not automatically satisfy a Sol High requirement. Stop when no permitted combination meets the requirement.
+Adding evidence cannot lower the budget when existing evidence remains valid, no existing groups merge, and configuration stays fixed. Corrected correlations or invalidated evidence may legitimately lower it. Frozen reviewer-matrix-v2 / luna-evidence-v1 retains the original greedy evaluator; existing ledgers, states, and samples do not migrate automatically.
+
+Choose the highest-proxy-unit affordable combination within the role candidates and explicit quality requirements. Cost order does not establish capability dominance; Astra Low does not automatically satisfy a Sol High requirement. Stop when no permitted combination meets the requirement.
 
 The coordinator assesses the semantic facts against source evidence. Code verifies provenance, freshness, binding, and arithmetic; a model's own risk assertion is not verified evidence.
 
@@ -37,7 +39,7 @@ The coordinator assesses the semantic facts against source evidence. Code verifi
 
 New tasks use execution-state 5, review-state 8, Reviewer Result 5, DelegationBudget 3, and calibration sample 3. The Task Envelope template has its separate schema 4; Review Packet remains schema 3.
 
-1. Bind the project and task envelope to reviewer-matrix-v2 and its digest.
+1. Bind the project and task envelope to reviewer-matrix-v3 and its digest.
 2. Create the shared packet and record INLINE or DELEGATE. INLINE neither dispatches nor charges a model.
 3. The root budget command resolves sealed Evidence files and recomputes the score. Submitted totals or provenance assertions are not accepted.
 4. Bind the permit to one review state, reviewer, boundary, phase, round, and packet. Preparation does not charge twice.

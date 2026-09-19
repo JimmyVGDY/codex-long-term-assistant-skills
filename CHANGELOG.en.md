@@ -4,6 +4,13 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.11.1 - 2026-09-18
+
+- Fix the 17-to-9 score regression after adding valid evidence. reviewer-matrix-v3 / luna-evidence-v2 jointly optimizes root-group and dimension constraints with deterministic whole-solution ties.
+- Preserve old policy resources, evaluators, ledger and state replay. Initialization accepts both policies and verifies root bindings. Model tuples, weights, limits, and highest-affordable selection remain unchanged. The local account upgrade and native read-only loading passed; this candidate is not publicly released.
+
+- Adapt to official stable Codex CLI 0.155.0 while retaining the current-plus-ten stable window. Verify CLI, Plugin, Hook and apply_patch contracts separately; prereleases still fail closed.
+
 ## 7.11.0 - 2026-09-17
 
 Local candidate; no public release has been performed in this work.

@@ -22,7 +22,7 @@ if str(_RUNTIME_ROOT) not in sys.path:
     sys.path.insert(0, str(_RUNTIME_ROOT))
 from cp_runtime.common import RuntimeContractError, verify_record  # noqa: E402
 from cp_runtime.dispatch_context import read_request_json  # noqa: E402
-from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, DispatchPolicyError, policy_digest  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, DispatchPolicyError, policy_digest  # noqa: E402
 from cp_runtime.review_contract import result_template as matrix_result_template, validate_result as validate_matrix_result  # noqa: E402
 
 MAX_SNAPSHOT_BYTES = 1024 * 1024
@@ -324,7 +324,7 @@ def command_create(args: argparse.Namespace) -> None:
         "phase": args.phase,
         "profile": args.profile,
         "effort_tier": args.effort_tier,
-        "default_model_profile": "luna-low" if args.policy_id == CURRENT_POLICY_ID else DEFAULT_PROFILE_BY_TIER[args.effort_tier],
+        "default_model_profile": "luna-low" if args.policy_id != LEGACY_POLICY_ID else DEFAULT_PROFILE_BY_TIER[args.effort_tier],
         "policy_id": args.policy_id,
         "policy_digest": policy_digest(args.policy_id),
         "base_ref": base,
@@ -703,7 +703,7 @@ def main() -> None:
     create.add_argument("--phase", choices=["pre", "post"], default="post")
     create.add_argument("--profile", choices=["LIGHT", "STANDARD", "STRICT"], default="STANDARD")
     create.add_argument("--effort-tier", choices=["economy", "balanced", "deep"], default="balanced")
-    create.add_argument("--policy-id", choices=[LEGACY_POLICY_ID, CURRENT_POLICY_ID], default=CURRENT_POLICY_ID)
+    create.add_argument("--policy-id", choices=list(POLICY_FILES), default=CURRENT_POLICY_ID)
     create.add_argument("--related-files", default="")
     create.add_argument("--constraints-file")
     create.add_argument("--validations-file")

@@ -9,7 +9,7 @@
 | 事实 | 唯一 Owner | 允许的投影 |
 |---|---|---|
 | 包版本、Skill、Reviewer 目录 | `manifest.json` | README、Skill Matrix、校验报告 |
-| 模型组合、代理单位、评分与根预算上限 | `runtime/cp_runtime/data/dispatch-policy-v2.json`；旧任务固定 v1 | manifest、模型策略文档与校验报告 |
+| 模型组合、代理单位、评分与根预算上限 | `runtime/cp_runtime/data/dispatch-policy-v3.json`；旧任务保留各自固定的 v1/v2 策略 | manifest、模型策略文档与校验报告 |
 | 项目身份和稳定边界 | `project-profile.json` | Onboarding 报告、任务信封引用 |
 | 项目当前阶段和基线 | `project-state.json` | 状态摘要 |
 | 任务阶段、门禁、Evidence、动作 | `execution-state.json` | Finalization Report、Handoff |

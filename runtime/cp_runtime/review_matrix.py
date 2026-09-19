@@ -174,13 +174,16 @@ def initialize(args: Any) -> dict[str, Any]:
     for key in limits:
         if getattr(args, key, None) is not None:
             limits[key] = getattr(args, key)
+    policy_id = getattr(args, "policy_id", CURRENT_POLICY_ID)
+    if "scoring" not in policy(policy_id):
+        _fail("REVIEW_MATRIX_POLICY_REQUIRED")
     state_id = "RVS_" + secrets.token_hex(16)
     state = {
         "schema_version": REVIEW_STATE_SCHEMA_VERSION, "review_state_id": state_id, "review_state_ref": sha256_ref(state_id),
         "boundary_id": args.boundary_id, "task_id": task_id, "project_id": project_id, "repo_path": str(repo),
         "repo_fingerprint": fingerprint, "title": args.title, "risk_level": args.risk_level,
-        "strict_readonly_required": bool(args.strict_readonly_required), "policy_id": CURRENT_POLICY_ID,
-        "policy_digest": policy_digest(), "status": "open", "created_at": utc_now(), "updated_at": utc_now(),
+        "strict_readonly_required": bool(args.strict_readonly_required), "policy_id": policy_id,
+        "policy_digest": policy_digest(policy_id), "status": "open", "created_at": utc_now(), "updated_at": utc_now(),
         "limits": limits, "counters": {"total_reviewers": 0, "repair_rounds": 0},
         "routing_decisions": {"pre": [], "post": []}, "isolation": default_isolation(),
         "phases": {name: {"current_round": 0, "rounds": {}} for name in ("pre", "post")},

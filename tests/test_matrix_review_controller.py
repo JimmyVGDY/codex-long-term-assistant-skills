@@ -20,20 +20,24 @@ from cp_runtime.delegation_budget import (bind_review_attempt, read_budget, reco
                                          record_host_dispatch_receipt, record_host_agent_observation,
                                          native_review_nonce, sha256_ref)  # noqa: E402
 from cp_runtime.review_contract import validate_result  # noqa: E402
-from cp_runtime.dispatch_policy import DispatchPolicyError  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, PREVIOUS_POLICY_ID, DispatchPolicyError, policy_digest  # noqa: E402
 from cp_runtime.common import atomic_write_json  # noqa: E402
 
 
 class MatrixReviewControllerTests(unittest.TestCase):
+    policy_id = CURRENT_POLICY_ID
+
     def setUp(self):
         self.fixture = fixtures.DispatchContextTests(methodName="runTest")
+        self.fixture.policy_id = self.policy_id
         self.fixture.setUp()
         self.fixture.init()
         self.review = self.fixture.root / "review"
         self.env = {**os.environ, "PYTHONUTF8": "1", "CODEX_THREAD_ID": "synthetic-session",
                     "CP_DELEGATION_ENVELOPE_PATH": str(self.fixture.envelope)}
         self.tool("init", "--boundary-id", "boundary-one", "--task-id", "synthetic-task",
-                  "--repo-path", str(self.fixture.repo), "--delegation-ledger", str(self.fixture.ledger))
+                  "--repo-path", str(self.fixture.repo), "--delegation-ledger", str(self.fixture.ledger),
+                  "--policy-id", self.policy_id)
         self.tool("isolation", "--review-mode", "independent-agent", "--parent-sandbox", "workspace-write")
 
     def tearDown(self):
@@ -92,6 +96,8 @@ class MatrixReviewControllerTests(unittest.TestCase):
         self.assertEqual(sha256_ref(nonce), claim["native_dispatch_ref"])
         state = self.state()
         self.assertEqual(8, state["schema_version"])
+        self.assertEqual(self.policy_id, state["policy_id"])
+        self.assertEqual(policy_digest(self.policy_id), state["policy_digest"])
         self.assertEqual(0, read_budget(self.fixture.ledger)["usage"]["units"])
         reservation = self.start()
         path, result = self.result_file()
@@ -165,7 +171,11 @@ class MatrixReviewControllerTests(unittest.TestCase):
             return result
 
         packet_tool("create", "--repo-path", str(self.fixture.repo), "--output-dir", str(packet),
-                    "--boundary-id", "boundary-one", "--phase", "post")
+                    "--boundary-id", "boundary-one", "--phase", "post", "--policy-id", self.policy_id,
+                    "--effort-tier", "deep")
+        packet_manifest = json.loads((packet / "manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual("luna-low", packet_manifest["default_model_profile"])
+        self.assertEqual(self.policy_id, packet_manifest["policy_id"])
         packet_hash = (packet / "PACKET_SHA256").read_text().strip()
         self.fixture.assignment["packet_sha256"] = packet_hash
         self.tool("route", "--phase", "post", "--decision", "DELEGATE", "--reason-code", "INDEPENDENT_EVIDENCE_GAIN", "--reason", "Synthetic fixture")
@@ -190,6 +200,21 @@ class MatrixReviewControllerTests(unittest.TestCase):
         packet_tool("freshness", "--packet-dir", str(packet), "--repo-path", str(self.fixture.repo))
         (self.fixture.repo / "README.md").write_text("Changed after packet", encoding="utf-8")
         packet_tool("freshness", "--packet-dir", str(packet), "--repo-path", str(self.fixture.repo), ok=False)
+
+    def test_controller_policy_must_match_bound_ledger_before_creating_state(self):
+        other = PREVIOUS_POLICY_ID if self.policy_id == CURRENT_POLICY_ID else CURRENT_POLICY_ID
+        directory = self.fixture.root / "mismatched-review"
+        self.tool("init", "--boundary-id", "boundary-one", "--task-id", "synthetic-task",
+                  "--repo-path", str(self.fixture.repo), "--delegation-ledger", str(self.fixture.ledger),
+                  "--policy-id", other, review=directory, ok=False)
+        self.assertFalse((directory / "review-state.json").exists())
+
+
+class PreviousMatrixReviewControllerTests(MatrixReviewControllerTests):
+    """中文：使用冻结旧策略运行完整 V8/V5/V3 生命周期，不执行迁移。
+
+    English: Run the entire V8/V5/V3 lifecycle with the frozen old policy, without migration."""
+    policy_id = PREVIOUS_POLICY_ID
 
 
 if __name__ == "__main__":

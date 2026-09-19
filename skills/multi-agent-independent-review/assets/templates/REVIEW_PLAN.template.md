@@ -56,7 +56,7 @@
 
 ## 模型选择证据
 
-- 策略 ID/摘要与评分公式：reviewer-matrix-v2 / luna-evidence-v1
+- 策略 ID/摘要与评分公式：reviewer-matrix-v3 / luna-evidence-v2
 - Luna 基础 1 分 + 复审预算模式加分 + 有效证据加分：
 - 排除证据及原因；精确 acceptable_profiles：
 - 最终档位；根任务 permit 与剩余预算：

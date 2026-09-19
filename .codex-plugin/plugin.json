@@ -1,6 +1,6 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.11.0",
-  "description": "跨项目长期技术助手 V7.11.0：独立复审从 Luna 起算，按证据与预算选择十档模型组合。",
+  "version": "7.11.1",
+  "description": "跨项目长期技术助手 V7.11.1：独立复审从 Luna 起算，按证据与预算选择十档模型组合。",
   "skills": "./skills/"
 }

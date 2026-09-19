@@ -9,7 +9,7 @@ Each fact has one authoritative owner. Other files may reference or project it b
 | Fact | Sole Owner | Allowed Projections |
 |---|---|---|
 | Package version and Skill/Reviewer catalog | `manifest.json` | README, Skill Matrix, validation report |
-| Model combinations, proxy units, scoring, and root limits | `runtime/cp_runtime/data/dispatch-policy-v2.json`; old tasks pin v1 | Manifest, model policy, validation reports |
+| Model combinations, proxy units, scoring, and root limits | `runtime/cp_runtime/data/dispatch-policy-v3.json`; old tasks retain their pinned v1/v2 policy | Manifest, model policy, validation reports |
 | Project identity and stable boundaries | `project-profile.json` | Onboarding report, envelope references |
 | Current project phase and baseline | `project-state.json` | State summary |
 | Task phase, gates, evidence, and actions | `execution-state.json` | Finalization report, handoff |

@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime import delegation_budget as budget  # noqa: E402
 from cp_runtime.delegation_calibration import (build_pending_sample, compare_scenarios, finalize_sample,
                                               offline_replay_many)  # noqa: E402
-from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, policy_digest, score_review  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, PREVIOUS_POLICY_ID, LEGACY_POLICY_ID, policy_digest, score_review  # noqa: E402
 from test_dispatch_policy import CONTEXT, ROLE, evidence, sha  # noqa: E402
 
 
@@ -29,7 +29,7 @@ class MatrixCalibrationTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def sample(self, profile, *, matrix=True, finalized=True, shared_task=None):
+    def sample(self, profile, *, matrix=True, finalized=True, shared_task=None, policy_id=CURRENT_POLICY_ID):
         self.count += 1
         name = "sample-" + str(self.count)
         task = shared_task or "task-" + str(self.count)
@@ -38,10 +38,10 @@ class MatrixCalibrationTests(unittest.TestCase):
         binding = {"schema_version": "dispatch-root/1", "repo_path": str(self.root),
                    "profile_path": str(self.root / "synthetic-profile.json"), "profile_binding_sha256": "d" * 64,
                    "envelope_identity_ref": sha("synthetic-envelope-" + task), "host_session_ref": sha("synthetic-session-" + task),
-                   "reviewer_policy_id": CURRENT_POLICY_ID, "reviewer_policy_digest": policy_digest()}
+                   "reviewer_policy_id": policy_id, "reviewer_policy_digest": policy_digest(policy_id)}
         budget.initialize_budget(ledger, budget_id=name, task_id=task, project_id=CONTEXT["project_id"],
                                  repo_fingerprint=CONTEXT["repo_fingerprint"], budget_class="STRICT", default_dispatch_profile="luna-low",
-                                 policy_id=CURRENT_POLICY_ID if matrix else LEGACY_POLICY_ID,
+                                 policy_id=policy_id if matrix else LEGACY_POLICY_ID,
                                  review_extension=matrix, root_binding=binding if matrix else None)
         extra = {}
         if matrix:
@@ -50,7 +50,7 @@ class MatrixCalibrationTests(unittest.TestCase):
             for value in proofs.values():
                 value["context"] = dict(context)
             selection = score_review(agent_type=ROLE, context=context, reviewer_budget="deep", evidence_items=atoms,
-                                     proofs=proofs, requirements=[profile])
+                                     proofs=proofs, requirements=[profile], policy_id=policy_id)
             assignment = {"reviewer": "data", "agent_type": ROLE, "boundary_id": "boundary", "phase": "post",
                           "round": 1, "packet_sha256": context["packet_sha256"], "acceptable_profiles": [profile]}
             extra = {"selection_scorecard": selection, "review_assignment": assignment}
@@ -116,6 +116,16 @@ class MatrixCalibrationTests(unittest.TestCase):
             changed = {**sample, key: value}
             with self.assertRaises(budget.DelegationBudgetError):
                 compare_scenarios([changed])
+
+    def test_scoring_versions_remain_separate_even_with_identical_cost_formula(self):
+        samples = [self.sample("sol-low", policy_id=PREVIOUS_POLICY_ID), self.sample("sol-medium")]
+        report = offline_replay_many(samples, ledger_paths=self.ledgers,
+                                     minimum_samples_per_profile=1, minimum_tasks_per_profile=1)
+        pairs = [row for row in report["comparisons"] if row["comparison_pair_id"] == "sol-low--sol-medium"]
+        self.assertEqual(2, len(pairs))
+        self.assertEqual({PREVIOUS_POLICY_ID, CURRENT_POLICY_ID}, {row["policy_id"] for row in pairs})
+        self.assertTrue(all(not row["eligible"] for row in pairs))
+        self.assertTrue(all(row["lower_samples"] + row["higher_samples"] == 1 for row in pairs))
 
     def test_pending_and_repeated_same_task_do_not_create_independent_evidence(self):
         pending = self.sample("sol-high", finalized=False)

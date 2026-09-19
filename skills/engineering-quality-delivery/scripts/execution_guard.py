@@ -26,7 +26,7 @@ from cp_runtime.common import (  # noqa: E402
 )
 from cp_runtime.finalization import build_finalization_report  # noqa: E402
 from cp_runtime.project import validate_binding  # noqa: E402
-from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, policy, policy_digest  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, policy, policy_digest  # noqa: E402
 
 STATE = "execution-state.json"
 SCHEMA = 5
@@ -242,7 +242,7 @@ def command_init(args: argparse.Namespace) -> None:
             "execution_profile": args.profile,
             "reviewer_budget": args.reviewer_budget,
             "reviewer_policy": {"policy_id": args.reviewer_policy, "policy_digest": policy_digest(args.reviewer_policy),
-                                "selection_mode": "luna-first-evidence-score" if args.reviewer_policy == CURRENT_POLICY_ID else "legacy-four-tier"},
+                                "selection_mode": "luna-first-evidence-score" if args.reviewer_policy != LEGACY_POLICY_ID else "legacy-four-tier"},
             "model_profile": args.model_profile,
             "host_surface": args.host_surface,
             "legacy_reviewer_budget": args.reviewer_budget,
@@ -520,7 +520,7 @@ def main() -> None:
     init.add_argument("--project-stage", choices=sorted(PROJECT_STAGES), default="UNPROFILED")
     init.add_argument("--reviewer-budget", choices=sorted(REVIEWER_BUDGETS), default="balanced")
     init.add_argument("--model-profile", choices=sorted(MODEL_PROFILES), default="luna-low")
-    init.add_argument("--reviewer-policy", choices=[LEGACY_POLICY_ID, CURRENT_POLICY_ID], default=CURRENT_POLICY_ID)
+    init.add_argument("--reviewer-policy", choices=list(POLICY_FILES), default=CURRENT_POLICY_ID)
     init.add_argument("--delegation-budget", choices=sorted(DELEGATION_BUDGET_CLASSES), default="STANDARD")
     init.add_argument("--default-model-profile", choices=sorted(MODEL_PROFILES), default="luna-low")
     init.add_argument("--delegation-ledger", default="")

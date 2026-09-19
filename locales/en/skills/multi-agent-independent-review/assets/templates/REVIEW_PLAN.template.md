@@ -56,7 +56,7 @@
 
 ## Selection evidence
 
-- Policy ID/digest and scoring formula: reviewer-matrix-v2 / luna-evidence-v1
+- Policy ID/digest and scoring formula: reviewer-matrix-v3 / luna-evidence-v2
 - Luna base 1 + review budget mode points + valid evidence awards:
 - Excluded evidence and reasons; exact acceptable_profiles:
 - Final profile; root permit and remaining budget:

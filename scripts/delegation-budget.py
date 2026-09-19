@@ -19,7 +19,7 @@ from cp_runtime.delegation_budget import (  # noqa: E402
     mark_completed, mark_started, read_budget, record_decision, release_not_started,
     reserve_budget,
 )
-from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, DispatchPolicyError, profile_weights  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, DispatchPolicyError, profile_weights  # noqa: E402
 from cp_runtime.dispatch_context import build_root_binding, prepare_review_selection, read_request_json, verify_root_binding  # noqa: E402
 from cp_runtime.common import RuntimeContractError  # noqa: E402
 
@@ -41,7 +41,7 @@ def main() -> int:
     init.add_argument("--repo-fingerprint", required=True)
     init.add_argument("--budget-class", choices=sorted(BUDGET_CLASSES), required=True)
     init.add_argument("--default-dispatch-profile", choices=list(PROFILE_WEIGHTS), default="luna-low")
-    init.add_argument("--policy-id", choices=[LEGACY_POLICY_ID, CURRENT_POLICY_ID], default=CURRENT_POLICY_ID)
+    init.add_argument("--policy-id", choices=list(POLICY_FILES), default=CURRENT_POLICY_ID)
     init.add_argument("--review-extension", action="store_true")
     init.add_argument("--root-envelope", default=os.environ.get("CP_DELEGATION_ENVELOPE_PATH", ""))
     init.add_argument("--host-session-id", default=os.environ.get("CODEX_THREAD_ID", ""))
@@ -96,7 +96,7 @@ def main() -> int:
                                     cwd=os.getcwd(), host_session_id=args.host_session_id)
         if args.command == "init":
             binding = None
-            if args.policy_id == CURRENT_POLICY_ID:
+            if args.policy_id != LEGACY_POLICY_ID:
                 if not args.root_envelope:
                     raise DelegationBudgetError("V3 初始化必须指定 --root-envelope")
                 identity, binding = build_root_binding(Path(args.root_envelope), args.host_session_id)

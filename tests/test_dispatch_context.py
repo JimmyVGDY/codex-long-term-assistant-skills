@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.dispatch_context import build_root_binding, prepare_review_selection, verify_root_binding  # noqa: E402
-from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, DispatchPolicyError, policy_digest  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, PREVIOUS_POLICY_ID, DispatchPolicyError, policy_digest  # noqa: E402
 from cp_runtime.delegation_budget import initialize_budget, read_budget  # noqa: E402
 from cp_runtime.evidence import record_evidence  # noqa: E402
 from cp_runtime.project import onboard_project  # noqa: E402
@@ -24,6 +24,7 @@ from cp_runtime.project import onboard_project  # noqa: E402
 
 class DispatchContextTests(unittest.TestCase):
     def setUp(self):
+        self.policy_id = getattr(self, "policy_id", CURRENT_POLICY_ID)
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         self.repo = self.root / "repo"
@@ -37,7 +38,7 @@ class DispatchContextTests(unittest.TestCase):
         self.envelope = self.root / "execution-state.json"
         self.envelope.write_text(json.dumps({
             "schema_version": 5, "task_id": "synthetic-task", "repo_path": str(self.repo),
-            "routing": {"reviewer_policy": {"policy_id": CURRENT_POLICY_ID, "policy_digest": policy_digest()}},
+            "routing": {"reviewer_policy": {"policy_id": self.policy_id, "policy_digest": policy_digest(self.policy_id)}},
             "project": {"binding_status": "BOUND", "project_id": self.project.project_id,
                         "profile_path": str(self.project.profile_path), "profile_sha256": self.project.profile_sha256,
                         "state_path": str(self.project.state_path)},
@@ -54,7 +55,7 @@ class DispatchContextTests(unittest.TestCase):
     def init(self):
         return initialize_budget(self.ledger, budget_id="budget-one", **self.identity,
                                  budget_class="STRICT", default_dispatch_profile="luna-low",
-                                 policy_id=CURRENT_POLICY_ID, root_binding=self.binding, review_extension=True)
+                                 policy_id=self.policy_id, root_binding=self.binding, review_extension=True)
 
     def evidence_request(self):
         path = self.root / "evidence.json"
@@ -137,6 +138,45 @@ class DispatchContextTests(unittest.TestCase):
         result = json.loads(self.cli(*args).stdout)
         self.assertEqual("sol-low", result["approved_profile"])
         self.assertEqual(10, result["selection_scorecard"]["earned_budget"])
+
+    def test_explicit_previous_matrix_init_verifies_root_and_preserves_policy(self):
+        document = json.loads(self.envelope.read_text(encoding="utf-8"))
+        document["routing"]["reviewer_policy"] = {
+            "policy_id": PREVIOUS_POLICY_ID, "policy_digest": policy_digest(PREVIOUS_POLICY_ID)}
+        self.envelope.write_text(json.dumps(document), encoding="utf-8")
+        args = ("init", "--ledger", str(self.ledger), "--budget-id", "previous-matrix",
+                "--task-id", self.identity["task_id"], "--project-id", self.identity["project_id"],
+                "--repo-fingerprint", self.identity["repo_fingerprint"], "--budget-class", "STRICT")
+        self.cli(*args, "--policy-id", PREVIOUS_POLICY_ID, ok=False)  # 中文：无任务信封。 English: No envelope.
+        self.cli(*args, "--policy-id", PREVIOUS_POLICY_ID, "--root-envelope", str(self.envelope),
+                 "--host-session-id", "", ok=False)
+        self.cli(*args, "--root-envelope", str(self.envelope), "--host-session-id", "synthetic-session", ok=False)
+        self.assertFalse(self.ledger.exists())  # 中文：默认 v3 不能绑定 v2 信封。 English: Default v3 cannot bind a v2 envelope.
+        self.cli(*args, "--policy-id", PREVIOUS_POLICY_ID, "--root-envelope", str(self.envelope),
+                 "--host-session-id", "synthetic-session")
+        state = read_budget(self.ledger)
+        self.assertEqual("3.0", state["schema_version"])
+        self.assertEqual(PREVIOUS_POLICY_ID, state["policy_id"])
+        self.assertEqual(policy_digest(PREVIOUS_POLICY_ID), state["policy_digest"])
+        selection, _assignment = self.issue(self.evidence_request())
+        self.assertEqual("luna-evidence-v1", selection["formula_version"])
+
+    def test_execution_envelope_pins_default_and_explicit_scored_policies(self):
+        for selected in (CURRENT_POLICY_ID, PREVIOUS_POLICY_ID):
+            directory = self.root / ("execution-" + selected)
+            command = [sys.executable, "-B", str(ROOT / "skills/engineering-quality-delivery/scripts/execution_guard.py"),
+                       "init", "--state-dir", str(directory), "--task-id", "synthetic-task",
+                       "--repo-path", str(self.repo), "--project-profile", str(self.project.profile_path),
+                       "--project-id", self.project.project_id]
+            if selected == PREVIOUS_POLICY_ID:
+                command += ["--reviewer-policy", selected]
+            completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8",
+                                       env={**os.environ, "PYTHONUTF8": "1"}, timeout=20)
+            self.assertEqual(0, completed.returncode, completed.stdout + completed.stderr)
+            document = json.loads((directory / "execution-state.json").read_text(encoding="utf-8"))
+            self.assertEqual(selected, document["routing"]["reviewer_policy"]["policy_id"])
+            self.assertEqual(policy_digest(selected), document["routing"]["reviewer_policy"]["policy_digest"])
+            self.assertEqual("luna-first-evidence-score", document["routing"]["reviewer_policy"]["selection_mode"])
 
 
 if __name__ == "__main__":

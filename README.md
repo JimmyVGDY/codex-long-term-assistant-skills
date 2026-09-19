@@ -2,7 +2,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-V7.11.0 本地候选新增十档独立复审组合：从 Luna Low 起算，按有效证据和预算模式计分后一次派发。基础安装与可选增强保持分离；本次尚未公开发布。
+V7.11.1 本地候选新增十档独立复审组合：从 Luna Low 起算，按有效证据和预算模式计分后一次派发。基础安装与可选增强保持分离；本次尚未公开发布。
 
 # Codex 跨项目长期技术助手
 
@@ -23,7 +23,7 @@ V7.11.0 本地候选新增十档独立复审组合：从 Luna Low 起算，按�
   <img alt="Codex CLI 0.154.0" src="https://img.shields.io/badge/Codex%20CLI-0.154.0-111827">
 </p>
 
-V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0。V7.11.0 保留这些安全边界，并将基础 Skill 与可选增强运行时解耦；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
+V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0。V7.11.1 保留这些安全边界，并将基础 Skill 与可选增强运行时解耦；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [四条日常路径](#四条日常路径与统一入口) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#首次安装与升级) · [文档](#文档与协作)
 
@@ -56,7 +56,7 @@ POSIX 将上述路径替换为 `./scripts/cp-assistant.sh`。四条路径的完�
 
 ## 下载
 
-以下保留 7.10.0 制品链接；7.11.0 本地候选尚未从本次工作公开发布。
+以下保留 7.10.0 制品链接；7.11.1 本地候选尚未从本次工作公开发布。
 
 | 发行包 | 适用界面 | 下载 |
 | --- | --- | --- |
@@ -154,7 +154,7 @@ flowchart LR
 
 基础安装无需本包 Python runtime；增强运行时的 Python 最低版本为 3.11；公开 CI 配置为在 Windows 与 Ubuntu 上验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
 
-V7.11.0 窗口继续为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`。未来版、预发布版和窗口外版本不会自动接纳。
+V7.11.1 窗口继续为 `0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`、`0.150.1`、`0.150.0`。未来版、预发布版和窗口外版本不会自动接纳。
 
 V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。门禁默认关闭，流程证据也不代表业务语义正确；公开 Release 仍须以受权操作与读回为准。
 
@@ -190,7 +190,7 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 - [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
 - [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
 - [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · [V7.11.0 发行说明](docs/releases/v7.11.0/RELEASE_NOTES.md)
+- [版本记录](CHANGELOG.md) · [V7.11.1 发行说明](docs/releases/v7.11.1/RELEASE_NOTES.md)
 
 ## 本地验证
 
@@ -206,7 +206,7 @@ python scripts\validate-package.py
 `Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。公开 Release 由受权操作创建并单独读回。
 
 ```shell
-gh attestation verify Codex-Skills-V7.11.0-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.11.1-zh-CN.zip --repo OWNER/REPOSITORY
 ```
 
 完整门禁和新版本发布步骤见 [Release 自动化与制品来源证明](docs/releases/RELEASE_AUTOMATION.md)。

@@ -1,5 +1,5 @@
 {
-  "release_name": "Reviewer routing and evidence budgets",
+  "release_name": "Review scoring fix and Codex stable compatibility",
   "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with ten registered Reviewer combinations, Luna-based evidence scoring, versioned budgets, and explicit native dispatch references",
   "skills": {
     "backend-engineering": {
