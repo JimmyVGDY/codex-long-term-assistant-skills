@@ -194,6 +194,17 @@ def rewrite_target(path: Path, output: Path, target: str) -> str:
         return REPOSITORY_BLOB + repository_path + (marker + fragment if marker else "")
     relative = path.relative_to(output)
     language = relative.parts[0] if relative.parts else ""
+    if language in {"zh-CN", "en"}:
+        try:
+            repository_path = (path.parent / path_part).resolve().relative_to(
+                (output / language).resolve())
+        except ValueError:
+            repository_path = Path()
+        # 中文：仅将站点未复制的实际源码文件转为仓库链接。
+        # English: Link actual source files omitted from the site to the repository.
+        if (repository_path.parts and repository_path.parts[0] in {"runtime", "tests"}
+                and (ROOT / repository_path).is_file()):
+            return REPOSITORY_BLOB + repository_path.as_posix() + (marker + fragment if marker else "")
     destination: Path | None = None
     if language == "zh-CN" and path_part.endswith(".en.md"):
         requested = (path.parent / path_part).resolve()
