@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "reviewer_roles": [
+    "cp_review_functional_business",
+    "cp_review_compatibility_regression",
+    "cp_review_security_access",
+    "cp_review_performance_resources",
+    "cp_review_data_contract",
+    "cp_review_state_concurrency",
+    "cp_review_test_delivery"
+  ],
+  "budget_classes": {
+    "LIGHT": {
+      "max_units": 4,
+      "max_dispatches": 2,
+      "max_parallel": 1,
+      "max_depth": 1,
+      "max_terra_high": 0
+    },
+    "STANDARD": {
+      "max_units": 16,
+      "max_dispatches": 6,
+      "max_parallel": 3,
+      "max_depth": 2,
+      "max_terra_high": 1
+    },
+    "STRICT": {
+      "max_units": 32,
+      "max_dispatches": 10,
+      "max_parallel": 3,
+      "max_depth": 2,
+      "max_terra_high": 1
+    }
+  },
+  "policy_id": "reviewer-matrix-v3",
+  "cost_formula_version": "review-weight-v2",
+  "profiles": {
+    "luna-low": {
+      "family": "luna",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "units": 1
+    },
+    "luna-medium": {
+      "family": "luna",
+      "model": "gpt-5.6-luna",
+      "effort": "medium",
+      "units": 2
+    },
+    "terra-medium": {
+      "family": "terra",
+      "model": "gpt-5.6-terra",
+      "effort": "medium",
+      "units": 4
+    },
+    "terra-high": {
+      "family": "terra",
+      "model": "gpt-5.6-terra",
+      "effort": "high",
+      "units": 8
+    },
+    "sol-low": {
+      "family": "sol",
+      "model": "gpt-5.6-sol",
+      "effort": "low",
+      "units": 10
+    },
+    "sol-medium": {
+      "family": "sol",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "units": 14
+    },
+    "sol-high": {
+      "family": "sol",
+      "model": "gpt-5.6-sol",
+      "effort": "high",
+      "units": 18
+    },
+    "astra-low": {
+      "family": "astra",
+      "model": "gpt-6-astra",
+      "effort": "low",
+      "units": 24
+    },
+    "astra-medium": {
+      "family": "astra",
+      "model": "gpt-6-astra",
+      "effort": "medium",
+      "units": 32
+    },
+    "astra-high": {
+      "family": "astra",
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "units": 40
+    }
+  },
+  "role_profiles": {
+    "reviewer": [
+      "luna-low",
+      "luna-medium",
+      "terra-medium",
+      "terra-high",
+      "sol-low",
+      "sol-medium",
+      "sol-high",
+      "astra-low",
+      "astra-medium",
+      "astra-high"
+    ],
+    "worker": [
+      "luna-low",
+      "luna-medium",
+      "terra-medium",
+      "terra-high"
+    ],
+    "explorer": [
+      "luna-low",
+      "luna-medium",
+      "terra-medium",
+      "terra-high"
+    ]
+  },
+  "review_extension_units": 72,
+  "premium_limits": {
+    "max_dispatches": 2,
+    "max_parallel": 1,
+    "max_astra_high": 1
+  },
+  "scoring": {
+    "formula_version": "luna-evidence-v2",
+    "base_units": 1,
+    "max_units": 40,
+    "max_evidence_items": 24,
+    "mode_points": {
+      "economy": 0,
+      "balanced": 1,
+      "deep": 3
+    },
+    "dimension_priority": [
+      "impact",
+      "conflict",
+      "prior_inconclusive",
+      "state",
+      "semantic"
+    ],
+    "dimensions": {
+      "semantic": {
+        "bounded": 2,
+        "cross_module": 4,
+        "multi_domain": 8
+      },
+      "state": {
+        "multi_step": 4,
+        "concurrent": 8
+      },
+      "impact": {
+        "high": 4,
+        "critical_irreversible": 14
+      },
+      "conflict": {
+        "confirmed": 6
+      },
+      "prior_inconclusive": {
+        "confirmed": 6
+      }
+    }
+  },
+  "comparison_pairs": [
+    {
+      "id": "luna-low--luna-medium",
+      "profiles": [
+        "luna-low",
+        "luna-medium"
+      ]
+    },
+    {
+      "id": "luna-medium--terra-medium",
+      "profiles": [
+        "luna-medium",
+        "terra-medium"
+      ]
+    },
+    {
+      "id": "terra-medium--terra-high",
+      "profiles": [
+        "terra-medium",
+        "terra-high"
+      ]
+    },
+    {
+      "id": "terra-high--sol-medium",
+      "profiles": [
+        "terra-high",
+        "sol-medium"
+      ]
+    },
+    {
+      "id": "sol-high--astra-medium",
+      "profiles": [
+        "sol-high",
+        "astra-medium"
+      ]
+    },
+    {
+      "id": "astra-medium--astra-high",
+      "profiles": [
+        "astra-medium",
+        "astra-high"
+      ]
+    },
+    {
+      "id": "sol-low--sol-medium",
+      "profiles": [
+        "sol-low",
+        "sol-medium"
+      ]
+    },
+    {
+      "id": "sol-medium--sol-high",
+      "profiles": [
+        "sol-medium",
+        "sol-high"
+      ]
+    },
+    {
+      "id": "astra-low--astra-medium",
+      "profiles": [
+        "astra-low",
+        "astra-medium"
+      ]
+    }
+  ]
+}

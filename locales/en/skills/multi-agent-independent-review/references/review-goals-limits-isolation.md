@@ -35,9 +35,9 @@ Use a lower platform, task, or project limit whenever it exists. Do not evade bu
 
 ## 3. Model Budget
 
-Automatic reviewers may use only `luna-low`, `luna-medium`, `terra-medium`, or `terra-high`. See `reviewer-model-routing.md` for routing, escalation, and runtime evidence.
+Registered Reviewers support ten combinations: Luna Low/Medium, Terra Medium/High, and Sol/Astra Low/Medium/High. Each selection starts at Luna Low with one point, adds budget-mode and valid-evidence points, and dispatches once after calculation. Workers/Explorers retain the original four combinations. See `reviewer-model-routing.md` for scoring, acceptable sets, and transitions.
 
-Control model, reviewer count, context, and rounds together. Multiple reviewers can amplify total cost even when none exceeds Terra High.
+Control model, reviewer count, context, and rounds together. A root task allows at most two Sol/Astra attempts, one concurrently, and one Astra High attempt; retries also count. STANDARD/STRICT may explicitly enable 72 review extension proxy units without expanding ordinary-role limits. Insufficient budget or unmet quality requirements stops dispatch without silent downgrades.
 
 ## 4. Runtime Isolation
 

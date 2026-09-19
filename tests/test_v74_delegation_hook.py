@@ -42,6 +42,8 @@ class DelegationHookTests(unittest.TestCase):
 
     def controller(self, *args: str, ok: bool = True) -> subprocess.CompletedProcess[str]:
         script = ROOT / "skills" / "multi-agent-independent-review" / "scripts" / "review_controller.py"
+        if args and args[0] == "init":
+            args = (*args, "--policy-id", "four-tier-v1")
         result = subprocess.run([sys.executable, str(script), *args], text=True, encoding="utf-8",
                                 errors="replace", capture_output=True, timeout=10)
         if ok and result.returncode:

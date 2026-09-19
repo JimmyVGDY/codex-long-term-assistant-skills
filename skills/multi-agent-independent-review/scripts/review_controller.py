@@ -21,11 +21,16 @@ _RUNTIME_ROOT = Path(__file__).resolve().parents[3] / "runtime"
 if str(_RUNTIME_ROOT) not in sys.path:
     sys.path.insert(0, str(_RUNTIME_ROOT))
 from cp_runtime.delegation_budget import read_budget, sha256_ref  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, DispatchPolicyError, profile_weights  # noqa: E402
+from cp_runtime.common import RuntimeContractError  # noqa: E402
+from cp_runtime.review_matrix import run as run_matrix_review  # noqa: E402
+from cp_runtime.review_contract import derive_isolation as derive_review_isolation  # noqa: E402
 
 STATE_FILE = "review-state.json"
 CALIBRATION_LEDGER_FILE = "review-results.jsonl"
 LOCK_FILE = ".review-controller.lock"
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
+LEGACY_SCHEMA_VERSION = 7
 
 # 中文：默认值以成本为先；可显式提高，但绝不能超过 HARD_LIMITS。
 # English: Defaults are cost-conscious; they may be raised explicitly but never beyond HARD_LIMITS.
@@ -311,30 +316,14 @@ def default_dispatch_policy() -> Dict[str, Any]:
 
 
 def derive_isolation_level(data: Dict[str, Any]) -> Tuple[str, bool]:
-    review_mode = str(data.get("review_mode", "unknown"))
-    parent_sandbox = str(data.get("parent_sandbox", "unknown"))
-    probe_result = str(data.get("probe_result", "not-run"))
-
-    if review_mode == "self-review":
-        return "self-review", False
-    if probe_result == "write-succeeded":
-        return "logical-readonly", False
-    if probe_result == "sandbox-denied":
-        confirmed = bool(data.get("runtime_agent_confirmed"))
-        return ("system-readonly", True) if confirmed else ("unknown", False)
-    if parent_sandbox in {"workspace-write", "danger-full-access"}:
-        return "logical-readonly", False
-    if parent_sandbox == "read-only":
-        confirmed = bool(data.get("runtime_agent_confirmed")) and bool(data.get("agent_config_confirmed"))
-        return ("system-readonly", True) if confirmed else ("unknown", False)
-    return "unknown", False
+    return derive_review_isolation(data)
 
 
 def normalize_dispatch_record(record: Dict[str, Any], effort_tier: str) -> Dict[str, Any]:
     legacy_profile = record.pop("model_profile", "")
     profile = str(record.get("approved_profile") or legacy_profile or DEFAULT_PROFILE_BY_TIER.get(effort_tier, "luna-medium"))
     if profile not in MODEL_PROFILES:
-        profile = "luna-medium"
+        die("未知旧版 Reviewer 档位，拒绝隐式降级")
     record["approved_profile"] = profile
     record.pop("requested_model", None)
     record.pop("requested_reasoning_effort", None)
@@ -348,7 +337,7 @@ def normalize_dispatch_record(record: Dict[str, Any], effort_tier: str) -> Dict[
 
 def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
     version = state.get("schema_version")
-    if version not in {1, 2, 3, 4, 5, 6, SCHEMA_VERSION}:
+    if version not in {1, 2, 3, 4, 5, 6, LEGACY_SCHEMA_VERSION}:
         return state
 
     if version in {1, 2}:
@@ -384,8 +373,8 @@ def normalize_state_data(state: Dict[str, Any]) -> Dict[str, Any]:
             "升级到 schema v7：删除运行模型自报和实际模型判断，仅保留批准派发档位与结果归因。"
         )
 
-    migrating = version != SCHEMA_VERSION
-    state["schema_version"] = SCHEMA_VERSION
+    migrating = version != LEGACY_SCHEMA_VERSION
+    state["schema_version"] = LEGACY_SCHEMA_VERSION
     state.setdefault("risk_level", "unknown")
     state.setdefault("strict_readonly_required", False)
     state.setdefault("isolation", default_isolation())
@@ -473,7 +462,7 @@ def ensure_state_mutable(state: Dict[str, Any]) -> None:
 
 
 def save_state(review_dir: Path, state: Dict[str, Any]) -> None:
-    state["schema_version"] = SCHEMA_VERSION
+    state["schema_version"] = LEGACY_SCHEMA_VERSION
     state["updated_at"] = now_iso()
     atomic_write(state_path(review_dir), state)
 
@@ -548,7 +537,7 @@ def validate_dispatch_profile(record: Dict[str, Any]) -> None:
 
 
 def validate_state_data(state: Dict[str, Any]) -> None:
-    if state.get("schema_version") != SCHEMA_VERSION:
+    if state.get("schema_version") != LEGACY_SCHEMA_VERSION:
         die("不支持的 review-state schema_version")
     delegation = state.get("delegation_budget")
     if not isinstance(delegation, dict) or set(delegation) != {"ledger_path", "budget_id", "accounting_owner"}:
@@ -678,7 +667,7 @@ def command_init(args: argparse.Namespace) -> None:
                 die("{} 必须在 1 到硬上限 {} 之间".format(key, ceiling))
             limits[key] = value
     state = {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": LEGACY_SCHEMA_VERSION,
         "boundary_id": args.boundary_id,
         "task_id": args.task_id or args.boundary_id,
         "title": args.title,
@@ -1449,6 +1438,12 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--review-dir", required=True)
     init.add_argument("--boundary-id", required=True)
     init.add_argument("--task-id", default="")
+    init.add_argument("--policy-id", choices=list(POLICY_FILES), default=CURRENT_POLICY_ID)
+    init.add_argument("--repo-path", default="")
+    init.add_argument("--project-profile", default="")
+    init.add_argument("--project-id", default="")
+    init.add_argument("--root-envelope", default=os.environ.get("CP_DELEGATION_ENVELOPE_PATH", ""))
+    init.add_argument("--host-session-id", default=os.environ.get("CODEX_THREAD_ID", ""))
     init.add_argument("--title", default="")
     init.add_argument("--risk-level", choices=["low", "medium", "high", "critical", "unknown"], default="unknown")
     init.add_argument("--strict-readonly-required", action="store_true")
@@ -1506,7 +1501,11 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.add_argument("--reviewer", required=True)
     dispatch.add_argument("--scope", required=True)
     dispatch.add_argument("--approved-profile", "--model-profile", dest="model_profile",
-                          choices=list(MODEL_PROFILES), default="")
+                          choices=list(profile_weights()), default="")
+    dispatch.add_argument("--agent-type", default="")
+    dispatch.add_argument("--selection-input", default="")
+    dispatch.add_argument("--root-envelope", default=os.environ.get("CP_DELEGATION_ENVELOPE_PATH", ""))
+    dispatch.add_argument("--host-session-id", default=os.environ.get("CODEX_THREAD_ID", ""))
     dispatch.add_argument("--minimum-acceptable-profile", choices=list(MODEL_PROFILES), default="")
     dispatch.add_argument("--escalation-reason", default="")
     dispatch.add_argument("--allow-repeat", action="store_true")
@@ -1525,6 +1524,8 @@ def build_parser() -> argparse.ArgumentParser:
     result.add_argument("--summary", required=True)
     result.add_argument("--result-file", default="")
     result.add_argument("--delegation-reservation-id", default="")
+    result.add_argument("--root-envelope", default=os.environ.get("CP_DELEGATION_ENVELOPE_PATH", ""))
+    result.add_argument("--host-session-id", default=os.environ.get("CODEX_THREAD_ID", ""))
     result.set_defaults(func=command_result)
 
     merge = sub.add_parser("merge")
@@ -1579,12 +1580,41 @@ def build_parser() -> argparse.ArgumentParser:
     close.add_argument("--note", default="")
     close.add_argument("--ack-model-policy-violation", action="store_true")
     close.set_defaults(func=command_close)
+
+    template = sub.add_parser("result-template")
+    add_common(template)
+    template.add_argument("--phase", choices=sorted(VALID_PHASES), required=True)
+    template.add_argument("--round", type=int, required=True)
+    template.add_argument("--reviewer", required=True)
+    template.add_argument("--output", required=True)
+    template.add_argument("--task-difficulty", choices=["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"], default="UNKNOWN")
+    template.set_defaults(func=lambda _args: die("旧状态请使用 review_packet.py result-template"))
+    reconcile = sub.add_parser("reconcile")
+    add_common(reconcile)
+    reconcile.add_argument("--root-envelope", default=os.environ.get("CP_DELEGATION_ENVELOPE_PATH", ""))
+    reconcile.add_argument("--host-session-id", default=os.environ.get("CODEX_THREAD_ID", ""))
+    reconcile.set_defaults(func=lambda _args: die("旧复审状态不支持 V8 reconciliation"))
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
-    args.func(args)
+    try:
+        matrix = args.command == "init" and args.policy_id != LEGACY_POLICY_ID
+        if args.command != "init":
+            path = Path(args.review_dir).expanduser().resolve() / STATE_FILE
+            if path.is_file():
+                with path.open("r", encoding="utf-8-sig") as handle:
+                    version = json.load(handle).get("schema_version")
+                if type(version) is not int or version > SCHEMA_VERSION:
+                    die("未知复审状态格式，拒绝写入")
+                matrix = version == SCHEMA_VERSION
+        if matrix:
+            run_matrix_review(args)
+        else:
+            args.func(args)
+    except (DispatchPolicyError, RuntimeContractError, OSError, TimeoutError, ValueError) as exc:
+        die(str(exc))
 
 
 if __name__ == "__main__":

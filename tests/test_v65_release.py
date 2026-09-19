@@ -28,7 +28,7 @@ class V64ReleaseTests(unittest.TestCase):
         cls.root = Path(cls.temporary.name)
         cls.builder = load_script("build_release_v65", "build-release.py")
         cls.verifier = load_script("verify_release_v65", "verify-release.py")
-        cls.artifact = cls.root / "Codex-Skills-V7.10.0-zh-CN.zip"
+        cls.artifact = cls.root / "Codex-Skills-V7.11.1-zh-CN.zip"
         cls.build = cls.builder.build_release(cls.artifact, "zh-CN")
 
     @classmethod
@@ -37,12 +37,12 @@ class V64ReleaseTests(unittest.TestCase):
 
     def evidence(self):
         digest = json.loads((ROOT / "PLUGIN_PAYLOAD_MANIFEST.json").read_text(encoding="utf-8"))["payload_digest"]
-        package = {"ok": True, "version": "7.10.0"}
-        witness = {"ok": True, "reproducible": True, "version": "7.10.0",
+        package = {"ok": True, "version": "7.11.1"}
+        witness = {"ok": True, "reproducible": True, "version": "7.11.1",
                    "artifact_sha256": hashlib.sha256(self.artifact.read_bytes()).hexdigest()}
         plugin = {"installed": [{"pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
                                   "name": "codex-cross-project-engineering-assistant",
-                                  "marketplaceName": "cp-assistant-local", "version": "7.10.0",
+                                  "marketplaceName": "cp-assistant-local", "version": "7.11.1",
                                   "installed": True, "enabled": True}]}
         lifecycle = {"ok": True, "schema_version": "2.0", "project_id": "project-v65",
                      "repo_fingerprint": "sha256:" + "b" * 64,
@@ -57,7 +57,7 @@ class V64ReleaseTests(unittest.TestCase):
                      "exit_code": 0, "pass": True}],
                 "privacy": {"host_model_information_collected": False,
                             "host_model_information_exported": False}}
-        host = {"codex_version": "codex-cli 0.154.0", "capability_profile": {"ok": True}}
+        host = {"codex_version": "codex-cli 0.155.0", "capability_profile": {"ok": True}}
         report = {key: {"ok": True, "payload_digest": digest} for key in ("source", "marketplace", "cache")}
         return package, witness, plugin, lifecycle, gate, host, report
 
@@ -104,13 +104,24 @@ class V64ReleaseTests(unittest.TestCase):
             (ROOT / "docs" / "releases" / "v7.10.0" / "BUILD_INFO.json").read_text(encoding="utf-8")
         )
         governance = manifest["quality_limits"]
-        expected = {
+        historical_expected = {
             "review_result_schema_version": 4,
             "review_state_schema_version": 7,
             "delegation_budget_schema_version": "2.0",
         }
-        for key, value in expected.items():
+        sys.path.insert(0, str(ROOT / "runtime"))
+        from cp_runtime.review_contract import RESULT_SCHEMA_VERSION, REVIEW_STATE_SCHEMA_VERSION
+        from cp_runtime.delegation_budget import SCHEMA_VERSION as BUDGET_SCHEMA_VERSION
+        current_expected = {
+            "review_result_schema_version": RESULT_SCHEMA_VERSION,
+            "review_state_schema_version": REVIEW_STATE_SCHEMA_VERSION,
+            "delegation_budget_schema_version": BUDGET_SCHEMA_VERSION,
+        }
+        for key, value in current_expected.items():
             self.assertEqual(value, governance[key], key)
+        # 中文：已发布的 7.10.0 元数据保持冻结，不能用未发布契约覆盖历史。
+        # English: Published 7.10.0 metadata stays frozen; unreleased contracts cannot rewrite history.
+        for key, value in historical_expected.items():
             self.assertEqual(value, build_info[key], key)
 
 

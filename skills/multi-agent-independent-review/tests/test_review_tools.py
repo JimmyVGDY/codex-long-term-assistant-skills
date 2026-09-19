@@ -17,6 +17,10 @@ CONTROLLER = ROOT / "scripts" / "review_controller.py"
 
 
 def run(script: Path, *args: str, cwd: Path | None = None, expected: int = 0) -> subprocess.CompletedProcess[str]:
+    if script == CONTROLLER and args and args[0] == "init":
+        args = (*args, "--policy-id", "four-tier-v1")
+    if script == PACKET and args and args[0] == "create":
+        args = (*args, "--policy-id", "four-tier-v1")
     result = subprocess.run(
         [sys.executable, str(script), *args],
         cwd=str(cwd) if cwd else None,

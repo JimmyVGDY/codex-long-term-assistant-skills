@@ -2,11 +2,11 @@
 
 [当前入口](USER_GUIDE.md)
 
-# Codex 跨项目长期技术助手 V7.10 使用说明
+# Codex 跨项目长期技术助手 V7.11 使用说明
 
 ## 快速开始
 
-在解压后的 V7.10.0 包中，Windows 运行 `./scripts/install-base.ps1`，POSIX 运行 `./scripts/install-base.sh`，随后直接描述工程任务。基础 Plugin 加载十个 Skill，无需本包 Python runtime 或 API Key，不安装账户 Hook、Reviewer、全局规则或长期运行时状态。
+在解压后的 V7.11.1 包中，Windows 运行 `./scripts/install-base.ps1`，POSIX 运行 `./scripts/install-base.sh`，随后直接描述工程任务。基础 Plugin 加载十个 Skill，无需本包 Python runtime 或 API Key，不安装账户 Hook、Reviewer、全局规则或长期运行时状态。
 
 简单局部任务默认由主 Agent 完成；Profile、索引、全扫和预算台账不是开始任务的前提。需要时再通过 `install-user` 接入增强，详见[安装与恢复](operations/INSTALLATION_RECOVERY.md)。下方索引、Hook 与预算步骤适用于增强能力；严格预算仅在真实宿主绑定、账本和 dispatch permit 均可核验时强制执行，否则模型上限仅为策略约束。
 
@@ -58,56 +58,36 @@
 
 ## 1. 委派预算与隐私边界
 
-增强运行时保留 Reviewer、Explorer、Worker 的同一个根任务加权预算，并把模型身份隐私边界收紧到派发之前。Task Envelope 声明预算档位，`delegation-budget.py` 维护仓库外追加式 Budget V2 账本，PreToolUse Hook 在派发前按批准档位原子预占，Reviewer 控制器只维护复审轮次与 Finding，不再重复计费，也不接收宿主运行时模型身份。
+Reviewer、Explorer、Worker 共用根任务预算，控制器不重复扣费。新任务采用 DelegationBudget V3、Reviewer 状态 V8、结果 V5；旧任务固定原策略。主 Agent 保持当前选择。Worker/Explorer 仍使用原四组合；登记 Reviewer 从 Luna Low 的基础 1 分开始，按复审预算模式和有效证据加分，算完后一次选择十组合之一，最高 Astra High。
 
-模型权重固定为：`luna-low=1`、`luna-medium=2`、`terra-medium=4`、`terra-high=8`。初始预算为：
-
-| 档位 | 单位 | 派发 | 并行 | 深度 | Terra High |
-|---|---:|---:|---:|---:|---:|
-| LIGHT | 4 | 2 | 1 | 1 | 0 |
-| STANDARD | 16 | 6 | 3 | 2 | 1 |
-| STRICT | 32 | 10 | 3 | 2 | 1 |
+代理单位不是实际价格或模型能力排名。完整组合、证据去重、质量约束、扩展额度和家族次数限制见[模型选择与预算](MODEL_ROUTING_AND_COST_POLICY.md)。没有满足质量约束且可负担的组合时停止派发。
 
 ## 2. 使用顺序
 
-1. 在仓库外初始化 Task Envelope，并选择 `LIGHT`、`STANDARD` 或 `STRICT`。
-2. 在仓库外初始化 DelegationBudget V2 账本。
-3. 每次派发前先记录 `INLINE` 或 `DELEGATE` 决策。DELEGATE 必须使用受控原因码，并以不含任务正文的唯一 dispatch key 作为 permit；精确模型请求只允许在宿主适配器校验期间短暂存在。
-4. 在 Codex 宿主启动环境中设置 `CP_DELEGATION_BUDGET_PATH` 指向账本，并同时设置 `CP_DELEGATION_BUDGET_REQUIRED=1`。PreToolUse 只有在稳定宿主派发 ID、角色、批准档位与 permit 全部匹配时才允许并原子预占；Required 模式缺少账本路径时会失败关闭。
-5. 宿主能够传播 `reservation_id` 时，由 SubagentStart/Stop 自动对账；Codex 0.153.2 未传播时保持 `RESERVED`，不得靠时间顺序猜测。
-6. 只有宿主明确证明 Agent 未启动时才能释放预占。Agent 一旦启动，完成、失败或取消都不退款。
+1. 绑定仓库外 Project Profile，建立采用新评分策略的 Task Envelope，选择 LIGHT、STANDARD 或 STRICT。
+2. 在仓库外初始化 V3 账本，使用 `--root-envelope` 和真实宿主 session 绑定。旧任务显式选择 `--policy-id four-tier-v1`；不能把旧信封静默解释成新策略。
+3. 每次先决定 INLINE 或 DELEGATE。Reviewer 的 `decide` 输入为 `--selection-input`、`--review-assignment` 与根信封；提交证据引用及路径，不提交计算结果。程序从 Luna 起算并固定最终组合与 permit。
+4. V8 控制器关联同一 permit、packet hash 和唯一复审槽位后，按宿主接口使用带 `task_name` 的参数或 `native_request_parameters` 一次派发。原生无任务名接口须将本次返回的 `native_message_prefix` 原样前置于 `message`；缺失、错误或重复消费的引用均拒绝，不按角色猜配许可。Reviewer 组合必须明确指定，不能隐式继承。
+5. 启动宿主时设置 `CP_DELEGATION_BUDGET_PATH`、`CP_DELEGATION_ENVELOPE_PATH`、`CP_DELEGATION_BUDGET_REQUIRED=1`。PreToolUse 验证真实根身份、当前基线、角色和 permit 后原子预占。
+6. PostToolUse 的工具调用 ID 和 Agent ID 回执与 SubagentStart/Stop 精确关联，允许乱序。V3 的 start/complete CLI 不可替代原生回执。无关联、超时或未知响应保持未完成，不能猜成 PASS 或退款。
 
-示例：
+增强不会自动为任务建账本。未激活时仅为策略约束；严格预算配置缺失或损坏时拒绝派发。原生未创建响应尚无已核验适配时，不开放自动未启动退款；已启动、失败或取消不退费。
 
-```powershell
-python scripts\delegation-budget.py init --ledger C:\safe-state\budget.jsonl --budget-id BUDGET-1 --task-id TASK-1 --project-id PROJECT-1 --repo-fingerprint sha256:<64-hex> --budget-class STANDARD --default-model-profile luna-medium
-python scripts\delegation-budget.py decide --ledger C:\safe-state\budget.jsonl --dispatch-key review-data-1 --decision DELEGATE --role reviewer --requested-profile luna-medium --reason-code INDEPENDENT_EVIDENCE_GAIN
-```
+## 3. 重试与切换
 
-增强运行时不会自动为每个根任务创建账本。统一预算采用任务级显式激活；未设置上述两个环境变量时，Hook 仍执行自动派发档位上限，但不得把该任务记录为“统一预算门禁已通过”。
+缺失证据不构成升级理由。同家族增加强度与跨家族切换分别记录；再次复审绑定前次终态、结果引用与新证据，不能通过改名重新使用许可或重置次数。重试需要明确的新轮次或槽位，并继续受同一个根预算约束。
 
-## 3. 路由原因
+## 4. 成本与校准
 
-允许：`INDEPENDENT_EVIDENCE_GAIN`、`SEMANTIC_COMPLEXITY`、`EVIDENCE_CONFLICT`、`SECURITY_OR_CONCURRENCY_RISK`、`LOWER_TIER_INCONCLUSIVE`、`MISSING_EVIDENCE`、`INLINE_SUFFICIENT`。
+只保存批准组合、评分和成本代理，不读取、推断或保存宿主实际型号。比较样本固定项目、仓库、策略摘要、公式与声明比较对；旧单位不和新公式混算。主协调者带结果与验证引用最终化后才进入回放，样本不足保持 NO_CHANGE。Proposal 永久 `execution_authorization=NONE`。
 
-- `MISSING_EVIDENCE` 不能用于模型升级。
-- `LOWER_TIER_INCONCLUSIVE` 必须引用上一档结果，并且只允许逐级升级。
-- Terra High 只允许高风险安全/并发直达，或有上一档结果的逐级升级。
-- 未知角色、非法模型组合、非法原因码或损坏账本失败关闭。
-
-## 4. 批准档位、成本与校准
-
-未显式指定模型时按 Task Envelope 默认批准档位计费，依据写为 `policy-default`。每次派发在启动前一次性预占固定单位；启动后不读取、不推断、不保存宿主实际模型身份或推理强度，也不允许据此补扣、退款或改变结果解释。
-
-Reviewer、Explorer、Worker 使用不同收益指标。子 Agent 自报只能形成 pending 样本；主协调 Agent 带 SHA-256 Evidence 引用最终化后，样本才可进入离线回放。离线校准只比较批准档位的结果价值与单位成本；相邻档位样本不足时结果必须为“不调整”。Proposal 永久保持 `execution_authorization=NONE`。
-
-V7.4.2 及更早版本的 Event V2 与 Budget V1 链保持原始字节级验签能力，但新运行时只读打开并投影允许字段，不会把历史模型身份字段带入 V3 事件、Snapshot、Assessment、Proposal 或发布报告；新记录必须写入独立的 V3/V2 链，禁止与旧链混写。
+V1 预算只读；V2 按原字节规则读取和续写；V7/V4 复审保持原语义。新任务使用独立 V3 账本，未知版本失败关闭。安装、注册、Hook 行为、真实派发与实际型号分别是不同证据层，不以模拟测试代替宿主验收。
 
 ## 5. Codex 0.154.0 边界
 
-V7.10.0 的 Plugin 窗口是 Codex CLI 0.154.0 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.154.0 修复 Astra 在内置模型选择器中的可见性，在未显式配置模型时将其设为内置默认，并把异步提问说明约束为仅在相关工具可用时适用；这些变化不修改本包已冻结的 Plugin/Hook 合同，也不改变自动子 Agent 仅使用 Luna/Terra 档位的策略。
+V7.11.1 的 Plugin 窗口是 Codex CLI 0.154.0 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.154.0 修复 Astra 在内置模型选择器中的可见性，在未显式配置模型时将其设为内置默认，并把异步提问说明约束为仅在相关工具可用时适用；这些变化不修改本包已冻结的 Plugin/Hook 合同。Worker/Explorer 仍限原 Luna/Terra 四档；登记 Reviewer 按证据预算从 Luna 起算，最高 Astra High。
 
-基础安装必须读回 `installed=true`、`enabled=true`、`version=7.10.0`、十个 Skill 与空 Plugin Hook 清单；增强安装还须核验 `HOST_COMPATIBLE` schema 3 快照、账户 Hook 和受管运行时资产。磁盘已有文件不等于 Plugin 已注册或已启用。
+基础安装必须读回 `installed=true`、`enabled=true`、`version=7.11.1`、十个 Skill 与空 Plugin Hook 清单；增强安装还须核验 `HOST_COMPATIBLE` schema 3 快照、账户 Hook 和受管运行时资产。磁盘已有文件不等于 Plugin 已注册或已启用。
 
 ## 任务反馈与优化收益
 
@@ -115,4 +95,4 @@ V7.10.0 的 Plugin 窗口是 Codex CLI 0.154.0 与此前十个稳定发行版，
 
 ## 能力复用与可选门禁
 
-通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭；V7.10.0 只在显式启用策略下把规范 `apply_patch` 接入 Operation v2：A 创建起点并拒绝，准备后由不同 B 领取许可，匹配的 PostToolUse 回执后才能完成核验。旧 GateTask 永不转换为新许可。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.10.0/VALIDATION_REPORT.md)。
+通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭；V7.11.1 只在显式启用策略下把规范 `apply_patch` 接入 Operation v2：A 创建起点并拒绝，准备后由不同 B 领取许可，匹配的 PostToolUse 回执后才能完成核验。旧 GateTask 永不转换为新许可。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.11.1/VALIDATION_REPORT.md)。

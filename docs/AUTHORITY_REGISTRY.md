@@ -8,13 +8,14 @@
 
 | 事实 | 唯一 Owner | 允许的投影 |
 |---|---|---|
-| 包版本、Skill、Reviewer、上限 | `manifest.json` | README、Skill Matrix、校验报告 |
+| 包版本、Skill、Reviewer 目录 | `manifest.json` | README、Skill Matrix、校验报告 |
+| 模型组合、代理单位、评分与根预算上限 | `runtime/cp_runtime/data/dispatch-policy-v3.json`；旧任务保留各自固定的 v1/v2 策略 | manifest、模型策略文档与校验报告 |
 | 项目身份和稳定边界 | `project-profile.json` | Onboarding 报告、任务信封引用 |
 | 项目当前阶段和基线 | `project-state.json` | 状态摘要 |
 | 任务阶段、门禁、Evidence、动作 | `execution-state.json` | Finalization Report、Handoff |
 | Reviewer 轮次、Finding 与复审状态 | `review-state.json` | Review Ledger |
-| 根任务统一预算、permit 与预占 | 仓库外 DelegationBudget V2 账本；`scripts/delegation-budget.py` 管理 | 任务信封引用、成本摘要 |
-| Hook 注册入口 | `hooks/hooks.json` | 配置指南、架构说明 |
+| 根任务统一预算、permit 与预占 | 仓库外 DelegationBudget V3 账本；V2 保留冻结续写；`scripts/delegation-budget.py` 管理 | 任务信封引用、成本摘要 |
+| Hook 注册入口 | 基础 `hooks/hooks.json`；增强 `scripts/package_manager.py::hook_fragment` | 配置指南、架构说明 |
 | 工作区能力定位与覆盖 | Profile 同级 `capability-index/<worktree_id>`；CapabilityStore 管理 | query 结果、任务决策引用 |
 | 项目门禁启用与绑定 | 账户外部 `capability-gates/<worktree_id>.json`；GatePolicy 管理 | status 读回 |
 | 旧门禁任务与当前回执 | Profile 同级 `capability-gate/<worktree_id>`；GateTask/Workflow 管理 | prepare/finish/check 结果；仅为 schema 1 旧状态事实，不授予 Operation v2 写入权限 |
@@ -45,5 +46,5 @@
 
 ## 机器事实来源引用
 
-- <!-- cp-fact:owner.budget -->repository-external DelegationBudget V2 JSONL via delegation-budget.py<!-- /cp-fact -->
+- <!-- cp-fact:owner.budget -->repository-external DelegationBudget V3 JSONL via delegation-budget.py; frozen V2 continuation<!-- /cp-fact -->
 - <!-- cp-fact:owner.review -->review-state.json via review_controller.py<!-- /cp-fact -->

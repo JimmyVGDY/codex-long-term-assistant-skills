@@ -14,7 +14,7 @@ description: >-
 4. 观察必须按 `project_id + repo_fingerprint` 双重隔离；任一不一致立即拒绝聚合。
 5. 原始事件先按 `event_id` 去重，再按 `task_id` 聚合；同一 Task 不得因生命周期事件数量更多而被重复加权。
 6. 终态结果只使用 `PASS/BLOCKED/FAILED/CANCELLED/PARTIAL/UNKNOWN`；禁止从通用 `status` 猜测任务成败。
-7. 自动 Reviewer、Explorer、Worker 共用根任务预算且最高 Terra High；显式 Sol 或 `xhigh/max/ultra` 由 Hook 前置拒绝。宿主实际模型身份不读取、不推断，也不参与治理。
+7. Reviewer、Explorer、Worker 共用根任务预算。登记 Reviewer 从 Luna 起算并按证据评分，可选择最高 Astra High；其他角色仍限原四档。xhigh/max/ultra 由 Hook 拒绝。宿主实际模型身份不读取、不推断，也不参与治理。
 8. Hook 只采集最小结构化元数据，禁止保存原始 Prompt、完整回答、代码正文、Patch、Token、Cookie、API Key 或其他凭据。
 9. `health` 门禁通过后才运行分析；增量自动化必须按项目显式启用。保持 `NO_CHANGE/WAITING_FOR_TASKS/COOLDOWN` 安静，仅报告有意义的变化、新候选或需要处理的异常。
 10. 新提案固定可检验假设；实施验证与收益证明分开，收益报告读回时重验引用、窗口、独立样本和质量底线。已确认根因只生成待审回归候选，不自动实施或跨项目晋升。

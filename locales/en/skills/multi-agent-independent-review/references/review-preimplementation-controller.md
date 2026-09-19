@@ -16,9 +16,7 @@ Do not ask reviewers to discuss an entire system without design boundaries.
 
 Use one or two complementary reviewers by default. Critical work may need three, but the default controller budget remains two until explicitly relaxed.
 
-- Functional/business and data/contract review normally use `terra-medium`.
-- Compatibility and initial performance review may use `luna-medium`.
-- One reviewer may use `terra-high` only when security, concurrency, irreversible migration, or core-state risk is explicitly present.
+- All roles start from Luna Low. Compute budget and evidence points using reviewer-model-routing.md; do not hard-code a model by role. Existing task policies remain pinned.
 
 Before implementation, review the design, contracts, call chains, and known facts only. Do not present hypothetical defects in code that does not yet exist as confirmed findings.
 

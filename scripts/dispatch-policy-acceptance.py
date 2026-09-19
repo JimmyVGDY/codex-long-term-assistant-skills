@@ -15,22 +15,28 @@ from pathlib import Path
 from typing import Dict
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "runtime"))
+from cp_runtime.dispatch_policy import policy  # noqa: E402
 
 # 中文：这些精确标识仅作为适配器瞬时输入，绝不复制到证据。
 # English: These exact identifiers are transient adapter inputs. They are never copied to evidence.
-_CASES = (
-    ("allow-luna-low", "gpt-5.6-luna", "low", "allow"),
-    ("allow-luna-medium", "gpt-5.6-luna", "medium", "allow"),
-    ("allow-terra-medium", "gpt-5.6-terra", "medium", "allow"),
-    ("allow-terra-high", "gpt-5.6-terra", "high", "allow"),
-    ("deny-terra-xhigh", "gpt-5.6-terra", "xhigh", "deny"),
-    ("deny-sol-high", "gpt-5.6-sol", "high", "deny"),
-    ("deny-terra-max", "gpt-5.6-terra", "max", "deny"),
-    ("deny-terra-ultra", "gpt-5.6-terra", "ultra", "deny"),
-)
+_POLICY = policy()
+_CASES = [
+    ("reviewer-" + name, spec["model"], spec["effort"], "cp_review_data_contract", "allow")
+    for name, spec in _POLICY["profiles"].items()
+] + [
+    (role + "-" + name, spec["model"], spec["effort"], role,
+     "allow" if name in _POLICY["role_profiles"][role] else "deny")
+    for role in ("worker", "explorer") for name, spec in _POLICY["profiles"].items()
+] + [("deny-" + effort, "gpt-6-astra", effort, "cp_review_data_contract", "deny")
+     for effort in ("xhigh", "max", "ultra")] + [
+    ("deny-unknown-role", "gpt-5.6-sol", "low", "cp_review_spoof", "deny"),
+    ("deny-implicit-review", "", "", "cp_review_data_contract", "deny"),
+    ("deny-unknown-model", "unknown", "low", "cp_review_data_contract", "deny"),
+]
 
 
-def _case(case_id: str, model: str, effort: str, expected: str) -> Dict[str, object]:
+def _case(case_id: str, model: str, effort: str, role: str, expected: str) -> Dict[str, object]:
     payload = {
         "hook_event_name": "PreToolUse",
         "tool_name": "spawn_agent",
@@ -38,10 +44,11 @@ def _case(case_id: str, model: str, effort: str, expected: str) -> Dict[str, obj
         "turn_id": "dispatch-policy",
         "task_id": "dispatch-policy",
         "cwd": str(ROOT),
-        "tool_input": {"model": model, "reasoning_effort": effort},
+        "tool_input": {"model": model, "reasoning_effort": effort, "agent_type": role},
     }
     with tempfile.TemporaryDirectory(prefix="cp-v743-dispatch-policy-") as data:
-        environment = dict(os.environ, CP_ASSISTANT_DATA=data)
+        environment = dict(os.environ, CP_ASSISTANT_DATA=data, CP_DELEGATION_BUDGET_PATH="",
+                           CP_DELEGATION_BUDGET_REQUIRED="0", PYTHONDONTWRITEBYTECODE="1")
         result = subprocess.run(
             [sys.executable, str(ROOT / "hooks" / "cp_hook.py"), "PreToolUse"],
             input=json.dumps(payload),
@@ -78,9 +85,12 @@ def evaluate() -> Dict[str, object]:
     passed = all(row["pass"] is True for row in rows)
     return {
         "ok": passed,
-        "schema_version": "2.0",
+        "schema_version": "3.0",
+        "evidence_scope": "synthetic-policy-only",
         "dispatch_policy_status": "PASS" if passed else "FAIL",
         "automatic_ceiling_profile": "terra-high",
+        "registered_reviewer_ceiling_profile": "astra-high",
+        "selection_scoring": "tested separately; this report exercises role/tuple admission only",
         "case_count": len(rows),
         "cases": rows,
         "privacy": {
@@ -91,7 +101,7 @@ def evaluate() -> Dict[str, object]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.10.0 dispatch-policy acceptance")
+    parser = argparse.ArgumentParser(description="V7.11.1 dispatch-policy acceptance")
     parser.add_argument("--output")
     args = parser.parse_args()
     report = evaluate()

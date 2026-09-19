@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "reviewer_roles": [
+    "cp_review_functional_business",
+    "cp_review_compatibility_regression",
+    "cp_review_security_access",
+    "cp_review_performance_resources",
+    "cp_review_data_contract",
+    "cp_review_state_concurrency",
+    "cp_review_test_delivery"
+  ],
+  "budget_classes": {
+    "LIGHT": {
+      "max_units": 4,
+      "max_dispatches": 2,
+      "max_parallel": 1,
+      "max_depth": 1,
+      "max_terra_high": 0
+    },
+    "STANDARD": {
+      "max_units": 16,
+      "max_dispatches": 6,
+      "max_parallel": 3,
+      "max_depth": 2,
+      "max_terra_high": 1
+    },
+    "STRICT": {
+      "max_units": 32,
+      "max_dispatches": 10,
+      "max_parallel": 3,
+      "max_depth": 2,
+      "max_terra_high": 1
+    }
+  },
+  "policy_id": "four-tier-v1",
+  "cost_formula_version": "profile-weight-v1",
+  "profiles": {
+    "luna-low": {
+      "family": "luna",
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "units": 1
+    },
+    "luna-medium": {
+      "family": "luna",
+      "model": "gpt-5.6-luna",
+      "effort": "medium",
+      "units": 2
+    },
+    "terra-medium": {
+      "family": "terra",
+      "model": "gpt-5.6-terra",
+      "effort": "medium",
+      "units": 4
+    },
+    "terra-high": {
+      "family": "terra",
+      "model": "gpt-5.6-terra",
+      "effort": "high",
+      "units": 8
+    }
+  },
+  "role_profiles": {
+    "reviewer": [
+      "luna-low",
+      "luna-medium",
+      "terra-medium",
+      "terra-high"
+    ],
+    "worker": [
+      "luna-low",
+      "luna-medium",
+      "terra-medium",
+      "terra-high"
+    ],
+    "explorer": [
+      "luna-low",
+      "luna-medium",
+      "terra-medium",
+      "terra-high"
+    ]
+  },
+  "legacy_order": [
+    "luna-low",
+    "luna-medium",
+    "terra-medium",
+    "terra-high"
+  ],
+  "comparison_pairs": [
+    {
+      "id": "luna-low--luna-medium",
+      "profiles": [
+        "luna-low",
+        "luna-medium"
+      ]
+    },
+    {
+      "id": "luna-medium--terra-medium",
+      "profiles": [
+        "luna-medium",
+        "terra-medium"
+      ]
+    },
+    {
+      "id": "terra-medium--terra-high",
+      "profiles": [
+        "terra-medium",
+        "terra-high"
+      ]
+    }
+  ]
+}

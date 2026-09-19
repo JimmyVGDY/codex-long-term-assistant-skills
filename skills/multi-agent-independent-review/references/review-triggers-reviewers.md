@@ -31,15 +31,15 @@
 
 | Reviewer | 核心职责 | 常态模型档位 |
 |---|---|---|
-| `cp_review_functional_business` | 目标问题、业务口径、状态流转、异常和补偿 | `terra-medium` |
-| `cp_review_compatibility_regression` | 原有路径、旧接口、旧数据、共享组件和新旧版本共存 | `luna-medium` |
-| `cp_review_security_access` | 认证、鉴权、越权、租户、注入、文件和敏感信息 | `terra-medium` |
-| `cp_review_performance_resources` | SQL、I/O、连接、线程、队列、内存、Token/GPU 和扩展性 | `luna-medium` |
-| `cp_review_data_contract` | 数据库、API、Redis、MQ、序列化和成功边界 | `terra-medium` |
-| `cp_review_state_concurrency` | 竞态、幂等、超时、重试、取消、恢复和交互状态 | `terra-medium` |
-| `cp_review_test_delivery` | 最低验证、测试缺口、失败项、文档、提交和授权 | `luna-low` |
+| `cp_review_functional_business` | 目标问题、业务口径、状态流转、异常和补偿 | Luna 起算，按评分选择 |
+| `cp_review_compatibility_regression` | 原有路径、旧接口、旧数据、共享组件和新旧版本共存 | Luna 起算，按评分选择 |
+| `cp_review_security_access` | 认证、鉴权、越权、租户、注入、文件和敏感信息 | Luna 起算，按评分选择 |
+| `cp_review_performance_resources` | SQL、I/O、连接、线程、队列、内存、Token/GPU 和扩展性 | Luna 起算，按评分选择 |
+| `cp_review_data_contract` | 数据库、API、Redis、MQ、序列化和成功边界 | Luna 起算，按评分选择 |
+| `cp_review_state_concurrency` | 竞态、幂等、超时、重试、取消、恢复和交互状态 | Luna 起算，按评分选择 |
+| `cp_review_test_delivery` | 最低验证、测试缺口、失败项、文档、提交和授权 | Luna 起算，按评分选择 |
 
-按 `reviewer-model-routing.md` 的证据条件逐级升级，任何自动 Reviewer 不得超过 `terra-high`。
+按 `reviewer-model-routing.md` 的证据条件逐级升级，登记 Reviewer 最高 Astra High；其他角色保留原四档上限。
 
 ## 四、职责去重
 

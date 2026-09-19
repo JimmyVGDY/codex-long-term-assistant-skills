@@ -17,6 +17,14 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+_RUNTIME_ROOT = Path(__file__).resolve().parents[3] / "runtime"
+if str(_RUNTIME_ROOT) not in sys.path:
+    sys.path.insert(0, str(_RUNTIME_ROOT))
+from cp_runtime.common import RuntimeContractError, verify_record  # noqa: E402
+from cp_runtime.dispatch_context import read_request_json  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, DispatchPolicyError, policy_digest  # noqa: E402
+from cp_runtime.review_contract import result_template as matrix_result_template, validate_result as validate_matrix_result  # noqa: E402
+
 MAX_SNAPSHOT_BYTES = 1024 * 1024
 FULL_HASH_LIMIT = 4 * 1024 * 1024
 SAMPLE_BYTES = 1024 * 1024
@@ -316,7 +324,9 @@ def command_create(args: argparse.Namespace) -> None:
         "phase": args.phase,
         "profile": args.profile,
         "effort_tier": args.effort_tier,
-        "default_model_profile": DEFAULT_PROFILE_BY_TIER[args.effort_tier],
+        "default_model_profile": "luna-low" if args.policy_id != LEGACY_POLICY_ID else DEFAULT_PROFILE_BY_TIER[args.effort_tier],
+        "policy_id": args.policy_id,
+        "policy_digest": policy_digest(args.policy_id),
         "base_ref": base,
         "head_commit": head,
         "diff_sha256": sha256_bytes(inputs["diff"]),
@@ -458,6 +468,28 @@ def command_freshness(args: argparse.Namespace) -> None:
 
 
 def command_result_template(args: argparse.Namespace) -> None:
+    if args.review_dir:
+        manifest = load_manifest(Path(args.packet_dir).resolve())
+        state = read_request_json(Path(args.review_dir) / "review-state.json")
+        if state.get("schema_version") != 8:
+            die("--review-dir 绑定模板只接受 V8；旧模板继续使用原四档参数")
+        verify_record(state, "Reviewer V8")
+        phase = args.review_phase or manifest.get("phase", "post")
+        row = state["phases"][phase]["rounds"][str(args.review_round)]
+        if manifest["boundary_id"] != state["boundary_id"] or manifest["packet_sha256"] != row["packet_sha256"]:
+            die("V8 复审状态与 packet 不匹配")
+        if args.task_id and args.task_id != state["task_id"]:
+            die("V8 task_id 不匹配")
+        assignment = row["dispatch"][args.reviewer]["dispatch_assignment"]
+        value = matrix_result_template(boundary_id=state["boundary_id"], task_id=state["task_id"],
+                                       phase=phase, round_number=args.review_round, reviewer=args.reviewer,
+                                       packet_sha256=manifest["packet_sha256"], assignment=assignment,
+                                       difficulty=args.task_difficulty)
+        Path(args.output).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print("[OK] V5 Reviewer 结果模板已绑定评分和派发状态", args.output)
+        return
+    if load_manifest(Path(args.packet_dir).resolve()).get("policy_id", LEGACY_POLICY_ID) != LEGACY_POLICY_ID:
+        die("评分策略审查包必须使用 --review-dir 绑定 V8 派发结果模板")
     packet_dir = Path(args.packet_dir).resolve()
     manifest = load_manifest(packet_dir)
     profile = args.model_profile or manifest.get("default_model_profile") or DEFAULT_PROFILE_BY_TIER.get(
@@ -522,6 +554,26 @@ def command_validate_result(args: argparse.Namespace) -> None:
     packet_dir = Path(args.packet_dir).resolve()
     manifest = load_manifest(packet_dir)
     result = json.loads(Path(args.result_file).read_text(encoding="utf-8-sig"))
+    if result.get("schema_version") == 5:
+        if not args.review_dir:
+            die("V5 验证必须提供 --review-dir 绑定真实派发约束")
+        state = read_request_json(Path(args.review_dir) / "review-state.json")
+        verify_record(state, "Reviewer V8")
+        if state.get("schema_version") != 8:
+            die("V5 结果只能绑定 V8 状态")
+        row = state["phases"][result["review_phase"]]["rounds"][str(result["review_round"])]
+        assignment = row["dispatch"][result["reviewer"]]["dispatch_assignment"]
+        validate_matrix_result(result, expected_assignment=assignment, expected_identity={
+            "task_id": state["task_id"], "boundary_id": manifest["boundary_id"],
+            "packet_sha256": manifest["packet_sha256"],
+        })
+        if state["boundary_id"] != manifest["boundary_id"] or row["packet_sha256"] != manifest["packet_sha256"] \
+                or (args.reviewer and args.reviewer != result["reviewer"]):
+            die("V5 结果与审查包、Reviewer 或轮次不一致")
+        print("[OK] V5 Reviewer 结构化结果及派发绑定有效", args.result_file)
+        return
+    if manifest.get("policy_id", LEGACY_POLICY_ID) != LEGACY_POLICY_ID:
+        die("评分策略审查包不接受旧 V4 结果")
     required = {
         "schema_version",
         "result_id",
@@ -651,6 +703,7 @@ def main() -> None:
     create.add_argument("--phase", choices=["pre", "post"], default="post")
     create.add_argument("--profile", choices=["LIGHT", "STANDARD", "STRICT"], default="STANDARD")
     create.add_argument("--effort-tier", choices=["economy", "balanced", "deep"], default="balanced")
+    create.add_argument("--policy-id", choices=list(POLICY_FILES), default=CURRENT_POLICY_ID)
     create.add_argument("--related-files", default="")
     create.add_argument("--constraints-file")
     create.add_argument("--validations-file")
@@ -669,6 +722,7 @@ def main() -> None:
 
     template = sub.add_parser("result-template")
     template.add_argument("--packet-dir", required=True)
+    template.add_argument("--review-dir", default="")
     template.add_argument("--reviewer", required=True)
     template.add_argument("--task-id", default="")
     template.add_argument("--review-phase", choices=["pre", "post"], default="")
@@ -682,12 +736,16 @@ def main() -> None:
 
     result = sub.add_parser("validate-result")
     result.add_argument("--packet-dir", required=True)
+    result.add_argument("--review-dir", default="")
     result.add_argument("--result-file", required=True)
     result.add_argument("--reviewer")
     result.set_defaults(func=command_validate_result)
 
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except (DispatchPolicyError, RuntimeContractError, OSError, ValueError, KeyError, TypeError) as exc:
+        die(str(exc))
 
 
 if __name__ == "__main__":

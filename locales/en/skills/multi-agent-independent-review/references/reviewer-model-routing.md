@@ -1,89 +1,76 @@
-# Reviewer Model Routing and Escalation
+# Independent Review Model Selection and Budget
 
-## 1. Four Approved Tiers
+## Scope
 
-Automatic reviewers may use only:
+The seven registered cp_review roles may use ten combinations. Workers and explorers retain the original four; the main agent uses the user's selected model. High remains the reasoning ceiling. The authority is runtime/cp_runtime/data/dispatch-policy-v3.json; the manifest and documentation are projections.
 
-| Tier | Model | Reasoning Effort | Typical Work |
-|---|---|---|---|
-| `luna-low` | `gpt-5.6-luna` | `low` | Search, extraction, classification, checklist verification, and mechanical evidence checks |
-| `luna-medium` | `gpt-5.6-luna` | `medium` | Bounded read-only analysis, compatibility scans, and test-evidence review |
-| `terra-medium` | `gpt-5.6-terra` | `medium` | Business semantics, multi-file logic, specialist engineering judgment, and ordinary complex review |
-| `terra-high` | `gpt-5.6-terra` | `high` | Transactions, concurrency, security, irreversible migrations, core state machines, and blocking adjudication |
+| Combination | Scheduling proxy units |
+|---|---:|
+| Luna Low / Medium | 1 / 2 |
+| Terra Medium / High | 4 / 8 |
+| Sol Low / Medium / High | 10 / 14 / 18 |
+| Astra Low / Medium / High | 24 / 32 / 40 |
 
-Fixed escalation chain:
+Units are versioned scheduling weights, not actual prices or a universal quality ranking.
 
-```text
-luna-low -> luna-medium -> terra-medium -> terra-high
-```
+## Start from Luna
 
-Automatic flows prohibit Sol, `xhigh`, `max`, and `ultra`. `terra-high` is a hard automatic ceiling, not a default.
+Every new assignment starts at the Luna Low baseline of one point. Score once, then dispatch once; do not make preliminary model calls merely to climb a ladder.
 
-## 2. Three Independent Tier Systems
+Review budget modes add economy 0, balanced 1, or deep 3 points. STRICT execution, the parent's model, file counts, long logs, and elapsed time alone add nothing.
 
-| Dimension | Values | Controls |
-|---|---|---|
-| Execution workflow | `LIGHT / STANDARD / STRICT` | Authorization, validation, rollback, and delivery gates |
-| Reviewer cost | `economy / balanced / deep` | Reviewer count, scope, and context budget |
-| Model tier | Four approved tiers | Model and reasoning effort for one reviewer |
+| Supported evidence | Points |
+|---|---:|
+| Bounded / cross-module / multi-domain semantics | 2 / 4 / 8 |
+| Multi-step / concurrent state | 4 / 8 |
+| High-impact / critical irreversible boundary | 4 / 14 |
+| Confirmed evidence conflict | 6 |
+| Prior inconclusive review with matching result and attempt references | 6 |
 
-A strict workflow does not imply high reasoning effort, and `deep` does not mean every reviewer uses `terra-high`.
+Take at most one award per dimension. Exclude missing, stale, or context-mismatched evidence first. The same evidence or root cause forms a transitive exclusivity group that earns one award. luna-evidence-v2 jointly enforces group and dimension limits and maximizes total evidence points. Frozen whole-solution tie rules make input order irrelevant. Maximize raw evidence points first, then add the baseline and mode points and cap the result at 40.
 
-## 3. Default Mapping
+Adding evidence cannot lower the budget when existing evidence remains valid, no existing groups merge, and configuration stays fixed. Corrected correlations or invalidated evidence may legitimately lower it. Frozen reviewer-matrix-v2 / luna-evidence-v1 retains the original greedy evaluator; existing ledgers, states, and samples do not migrate automatically.
 
-| Cost Tier | Default Model Tier | Default Reviewers |
-|---|---|---:|
-| `economy` | `luna-low` | 0–1 |
-| `balanced` | `luna-medium` | 1–2 |
-| `deep` | `terra-medium` | 2–3 |
+Choose the highest-proxy-unit affordable combination within the role candidates and explicit quality requirements. Cost order does not establish capability dominance; Astra Low does not automatically satisfy a Sol High requirement. Stop when no permitted combination meets the requirement.
 
-The coordinator may override a default by role but must record the reason. A high-risk boundary uses at most one `terra-high` reviewer by default; two require explicit authorization or a project rule and must remain within the controller hard limit.
+The coordinator assesses the semantic facts against source evidence. Code verifies provenance, freshness, binding, and arithmetic; a model's own risk assertion is not verified evidence.
 
-## 4. Selection by Reviewer Role
+## Score once and dispatch once
 
-| Reviewer | Normal Tier | Escalation Condition |
-|---|---|---|
-| Test and delivery | `luna-low` | `luna-medium` for complex regression scope; normally no Terra High |
-| Compatibility and regression | `luna-medium` | `terra-medium` for public APIs, historical data, or coexistence of versions |
-| Performance and resources | `luna-medium` | `terra-medium` for SQL, locks, thread pools, capacity, or hot paths; `terra-high` for complex concurrent resource contention |
-| Function and business | `terra-medium` | `terra-high` for core state machines, money, inventory, or business-definition conflict |
-| Authorization and security | `terra-medium` | `terra-high` for authentication, privilege escalation, tenant isolation, or privileged entry points |
-| Data and contracts | `terra-medium` | `terra-high` for transactions, migrations, message success boundaries, or irreversible data changes |
-| State and concurrency | `terra-medium` | `terra-high` for races, lock ordering, idempotency, compensation, or complex timing |
+New tasks use execution-state 5, review-state 8, Reviewer Result 5, DelegationBudget 3, and calibration sample 3. The Task Envelope template has its separate schema 4; Review Packet remains schema 3.
 
-## 5. Escalation and Deescalation
+1. Bind the project and task envelope to reviewer-matrix-v3 and its digest.
+2. Create the shared packet and record INLINE or DELEGATE. INLINE neither dispatches nor charges a model.
+3. The root budget command resolves sealed Evidence files and recomputes the score. Submitted totals or provenance assertions are not accepted.
+4. Bind the permit to one review state, reviewer, boundary, phase, round, and packet. Preparation does not charge twice.
+5. Dispatch an independent context with the explicit model, reasoning_effort, agent_type, and task_name emitted by the controller.
+6. The Hook checks the role, genuine root identity, envelope, current source baseline, and permit, then reserves atomically. Another host call cannot reuse that permit.
+7. Collect V5 results, merge findings, and repair together. Do not repeat an already clean packet; reassessment after an inconclusive result requires new evidence.
 
-Valid escalation evidence:
+Prefer review_controller.py result-template for new results. V5 packet templates and validation require --review-dir. Unbound V4 templates serve only the legacy protocol.
 
-- the current tier cannot reach an evidence-backed conclusion;
-- business semantics or a complex cross-module call chain must be understood;
-- valid evidence conflicts;
-- transaction, concurrency, security, irreversible migration, or core-state risk is present.
+## Limits and recovery
 
-The following alone do not justify escalation: many files, long logs, many skills, long task duration, `STRICT` workflow, or entering round two.
+Ordinary LIGHT / STANDARD / STRICT allowances remain 4 / 16 / 32. An explicit review-extension adds 72 units to STANDARD / STRICT, producing root totals of 88 / 104. Ordinary role and nonpremium aggregate limits do not grow. LIGHT cannot enable the extension.
 
-Prefer deescalation or stopping when:
+Sol/Astra share a maximum of two attempts, one concurrent attempt, and one Astra High attempt. Overall review counts and rounds still apply. A no-start refund does not reset V3 attempt counters. Timeouts, missing associations, and lost replies do not prove that an agent never started or completed.
 
-- the subtask is only search, checklist verification, formatting, or evidence extraction;
-- existing evidence is enough to decide;
-- the same reviewer already reviewed the same packet;
-- the previous round passed the same packet without findings;
-- broader scope cannot change the gate conclusion.
+The root ledger alone owns cost accounting. V8 reconcile restores state from authoritative claims and reservations without inventing review output or refunds. V1 remains read-only; V2 retains its frozen writer rules. V7/V4 reviews retain their four-profile semantics. New tasks use the new policy; old tasks do not silently migrate.
 
-## 6. Dispatch constraints
+## Capability and evidence levels
 
-- Reviewer TOML leaves model and reasoning settings unset. The coordinator dispatches at the approved profile recorded in the controller.
-- Before dispatch, record the approved profile, minimum acceptable profile and dispatch permit reference. The minimum cannot exceed the approved profile.
-- The result must match its task, boundary, round, packet and dispatch assignment. A requested profile is a policy constraint, not proof of the runtime model.
-- Do not read, infer, store or export host runtime model identity. Do not request a model declaration from the Reviewer.
-- Root DelegationBudget owns reservations and cost. Without an activated ledger, only the model ceiling applies; do not claim budget enforcement.
+The base Plugin remains Python-free. Without enhancement, report policy constraints only. An ordinary worker cannot impersonate an unavailable registered premium Reviewer. Broken or missing required budget binding must deny dispatch instead of falling back to basic mode.
 
-## 7. INLINE Decision and Calibration
+Validate requested tuples, installation/registration, Hook behavior, and real host dispatch separately. A read-only TOML declaration does not prove system isolation. Missing host associations remain unverified. Do not collect or request self-reported host model identity.
 
-- When no subagent is needed, append a phase decision with `route --decision INLINE`. It creates no round, increments no Reviewer counter, and consumes no model budget.
-- A newly initialized ledger must record `INLINE` or `DELEGATE` before `plan`; ledgers migrated from v4 or earlier retain the decision-free compatibility path.
-- While the latest decision is `INLINE`, both `plan` and `dispatch` fail. Before the first round only, a `DELEGATE` redecision may be appended with the previous decision id, a change reason, and new evidence; history is never overwritten.
-- Reviewer v4 results contain task difficulty, duration, pending attribution, and versioned estimated cost, and reject fields outside the schema. `calibration_finalized` must be `false` in a Reviewer file. After repair and validation, the primary coordinator finalizes attribution separately with evidence through `finalize-calibration`.
-- The controller projects results to `review-results.jsonl` under `task_id + reviewer + result_id`; the approved dispatch profile determines estimated cost. Runtime model identity is absent from this projection.
-- `validate` checks the projection ledger against `review-state`; after an interrupted write, use `sync-calibration` to rebuild it deterministically from authoritative state.
-- `profile-weight-v1` uses weights 1/2/4/8. Missing or invalid cost remains unknown; only controller-finalized records participate in low-yield classification.
+## Calibration and changes
+
+Compare independent tasks only within the same project, repository, policy digest, cost formula, and declared pair. Never mix old and new cost cohorts. Insufficient data produces NO_CHANGE. Consider adopted/repaired findings, false positives and misses, regression prevention, duration, and cost; finding count alone is not a benefit measure.
+
+Only the coordinator finalizes attribution with result and validation references. Proposals keep execution_authorization=NONE and never change policy or installation automatically. Changes to weights, scoring algorithms, or candidate relationships require new policy/formula versions while preserving old evaluators.
+
+Native lifecycle association uses the exact PreToolUse tool-use claim, PostToolUse agent-ID receipt, and SubagentStart/Stop callbacks within the verified root session. Callbacks may arrive out of order. Unknown response shapes remain unassociated; generic status, timeout, or missing callbacks never prove no-start. V3 refunds require a matching trusted no-start receipt. No native no-create response adapter is enabled until its contract is verified. A local protocol test does not prove host registration or real dispatch.
+
+Use `task_name` to bind a permit when supported. For a native interface without that field, prepend the controller's `native_message_prefix` verbatim to `message`, then append the review task. Use `native_request_parameters`, including `fork_context=false`. The fixed ASCII first line is `CP_REVIEW_DISPATCH/1 <nonce>`, followed by a blank line. The controller generates a random 256-bit nonce; the ledger retains only its SHA-256 reference. The Hook parses this fixed-length header without scanning or retaining the body. Adjacent duplicate headers and missing, unknown, or conflicting references reject. The reference binds the root session, registered role, explicit profile, current baseline, depth, and claimed review slot. Validation and reservation share one lock; no candidate-count matching remains. The same call can replay idempotently before its creation receipt; a different call cannot reuse the permit. PostToolUse joins by the unique tool-call ID.
+
+Return the reference only to the coordinator's current dispatch call, never to plans, review results, or ordinary logs. A lost preparation response cannot reconstruct or guess the reference: retain the unconsumed state and use an explicit named path or a separately defined recovery workflow. A child receives its own reference only after consumption. The native protocol does not positively authenticate the root caller: this is an explicit single-use permit, not system-level caller isolation. Disclosure before consumption remains within the existing logical trust boundary.

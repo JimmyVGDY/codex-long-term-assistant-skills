@@ -37,9 +37,10 @@ def validate_package():
                 tomllib.loads(path.read_text(encoding='utf-8-sig'))
         run([sys.executable,'-m','compileall','-q',str(ROOT/'runtime'),str(ROOT/'scripts'),str(ROOT/'hooks')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'payload-integrity.py'),'verify','--root',str(ROOT),
-             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.10.0'],validation_env)
+             '--manifest',str(ROOT/'PLUGIN_PAYLOAD_MANIFEST.json'),'--package','codex-cross-project-engineering-assistant','--version','7.11.1'],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'semantic-lint.py')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'privacy-boundary-lint.py')],validation_env)
+        run([sys.executable,str(ROOT/'scripts'/'check-dispatch-policy.py')],validation_env)
         run([sys.executable,str(ROOT/'scripts'/'routing-eval.py'),'validate'],validation_env)
         dispatch_policy=run([sys.executable,str(ROOT/'scripts'/'dispatch-policy-acceptance.py')],validation_env)
         tests=run([sys.executable,'-m','unittest','discover','-s','tests','-p','test_*.py'],validation_env)
@@ -55,7 +56,7 @@ def test_count(output):
 
 package_test_count=test_count(tests); runtime_test_count=test_count(runtime_tests)
 result={
- 'ok':True,'evidence_scope':'package-only','version':'7.10.0','skill_count':10,'reviewer_count':7,
+ 'ok':True,'evidence_scope':'package-only','version':'7.11.1','skill_count':10,'reviewer_count':7,
  'hooks':list(json.loads((ROOT/'hooks'/'hooks.json').read_text(encoding='utf-8'))['hooks']),
  'optional_capability_gate_host_acceptance':'NOT_EVALUATED (separate real-host and fresh-task acceptance)',
  'task_outcome_event':'3.0','execution_authorization':'NONE','automatic_self_modification':False,
@@ -72,6 +73,12 @@ result={
  'minimum_profile_and_inline_delegate_gates':'PASS (tests/test_model_routing_calibration_gates.py)',
  'state_bound_plugin_runtime':'PASS (tests/test_package_manager_security.py)',
  'delegation_budget_v2':'PASS (tests/test_v74_delegation_budget.py)',
+ 'reviewer_policy_v2':'PASS (tests/test_dispatch_policy.py; deterministic Luna-first scoring)',
+ 'delegation_budget_v3':'PASS (tests/test_matrix_delegation_budget.py)',
+ 'reviewer_state_v8_result_v5':'PASS (tests/test_matrix_review_controller.py)',
+ 'matrix_hook_protocol':'PASS (synthetic; tests/test_matrix_delegation_hook.py)',
+ 'calibration_sample_v3':'PASS (tests/test_matrix_delegation_calibration.py)',
+ 'native_reviewer_matrix_acceptance':'NOT_EVALUATED (separate real-host acceptance)',
  'delegation_hook_gate':'PASS (tests/test_v74_delegation_hook.py)',
  'delegation_calibration_replay':'PASS (tests/test_v74_delegation_calibration.py)',
  'event_archive_capacity_health':'PASS (tests/test_v66_runtime_deepening.py)',

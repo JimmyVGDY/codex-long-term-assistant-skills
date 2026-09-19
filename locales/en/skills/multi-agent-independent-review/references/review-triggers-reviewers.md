@@ -31,15 +31,15 @@ Defaults are cost budgets, not minimum quality levels. Choose reviewers for genu
 
 | Reviewer | Primary Responsibility | Normal Model Tier |
 |---|---|---|
-| `cp_review_functional_business` | Target problem, business definitions, state transitions, exceptions, and compensation | `terra-medium` |
-| `cp_review_compatibility_regression` | Existing paths, legacy APIs and data, shared components, and version coexistence | `luna-medium` |
-| `cp_review_security_access` | Authentication, authorization, privilege escalation, tenants, injection, files, and sensitive information | `terra-medium` |
-| `cp_review_performance_resources` | SQL, I/O, connections, threads, queues, memory, token/GPU cost, and scalability | `luna-medium` |
-| `cp_review_data_contract` | Databases, APIs, Redis, message queues, serialization, and success boundaries | `terra-medium` |
-| `cp_review_state_concurrency` | Races, idempotency, timeouts, retries, cancellation, recovery, and interaction state | `terra-medium` |
-| `cp_review_test_delivery` | Minimum validation, test gaps, failures, documentation, commits, and authorization | `luna-low` |
+| `cp_review_functional_business` | Target problem, business definitions, state transitions, exceptions, and compensation | Luna baseline; scored |
+| `cp_review_compatibility_regression` | Existing paths, legacy APIs and data, shared components, and version coexistence | Luna baseline; scored |
+| `cp_review_security_access` | Authentication, authorization, privilege escalation, tenants, injection, files, and sensitive information | Luna baseline; scored |
+| `cp_review_performance_resources` | SQL, I/O, connections, threads, queues, memory, token/GPU cost, and scalability | Luna baseline; scored |
+| `cp_review_data_contract` | Databases, APIs, Redis, message queues, serialization, and success boundaries | Luna baseline; scored |
+| `cp_review_state_concurrency` | Races, idempotency, timeouts, retries, cancellation, recovery, and interaction state | Luna baseline; scored |
+| `cp_review_test_delivery` | Minimum validation, test gaps, failures, documentation, commits, and authorization | Luna baseline; scored |
 
-Escalate only under the evidence conditions in `reviewer-model-routing.md`. No automatic reviewer may exceed `terra-high`.
+Escalate only under the evidence conditions in `reviewer-model-routing.md`. The registered Reviewer ceiling is Astra High; other roles retain the four-profile ceiling.
 
 ## 4. Responsibility Deduplication
 

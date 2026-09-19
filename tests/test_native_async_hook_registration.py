@@ -58,6 +58,8 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
         for event in ("PreToolUse", "PostToolUse", "SubagentStart", "SubagentStop", "Stop", "Interrupt", "SessionEnd"):
             self.assertNotIn("async", fragment[event][0]["hooks"][0])
         self.assertEqual("apply_patch|Edit|Write", fragment["PostToolUse"][0]["matcher"])
+        self.assertEqual("Agent|spawn_agent", fragment["PostToolUse"][1]["matcher"])
+        self.assertIn("cp_hook.py", fragment["PostToolUse"][1]["hooks"][0]["command"])
         self.assertEqual(["Agent|spawn_agent", "apply_patch|Edit|Write"],
                          [entry["matcher"] for entry in fragment["PreToolUse"]])
         self.assertIn("cp_gate.py", fragment["PreToolUse"][1]["hooks"][0]["command"])

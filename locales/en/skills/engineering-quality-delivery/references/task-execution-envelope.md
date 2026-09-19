@@ -25,9 +25,11 @@ The Task Envelope is the minimum deterministic control object for a nontrivial t
 
 | Object | Current format | Source |
 |---|---|---|
-| Task Envelope template | schema <!-- cp-fact:schema.envelope -->3<!-- /cp-fact --> | `../assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml` and package manifest |
-| execution-state | schema <!-- cp-fact:schema.execution-state -->4<!-- /cp-fact --> | SCHEMA in `../scripts/execution_guard.py` |
+| Task Envelope template | schema <!-- cp-fact:schema.envelope -->4<!-- /cp-fact --> | `../assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml` and package manifest |
+| execution-state | schema <!-- cp-fact:schema.execution-state -->5<!-- /cp-fact --> | SCHEMA in `../scripts/execution_guard.py` |
 | Embedded delegation_budget binding | schema 1 | execution_guard routing declaration |
-| External DelegationBudget ledger | <!-- cp-fact:schema.budget -->2.0<!-- /cp-fact --> | Root-task budget runtime |
+| External DelegationBudget ledger | <!-- cp-fact:schema.budget -->3.0<!-- /cp-fact --> | Root-task budget runtime |
 
 These objects have distinct format versions, independent of the package version. Reviewer state owns reviews, not the root-task budget.
+
+`reviewer_policy` pins the policy ID and digest. New tasks start from Luna and select after budget-mode and valid-evidence scoring. Execution states older than schema 5 pin the legacy policy and cannot silently initialize V3 budgets.

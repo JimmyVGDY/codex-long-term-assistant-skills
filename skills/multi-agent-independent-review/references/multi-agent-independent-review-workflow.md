@@ -7,7 +7,7 @@
 | Reference | 内容 | 何时读取 |
 |---|---|---|
 | `review-goals-limits-isolation.md` | 目标、默认预算、硬上限和运行时隔离 | 启动复审或确定安全边界 |
-| `reviewer-model-routing.md` | Luna/Terra 四级模型路由和升级条件 | 计划或派发 Reviewer |
+| `reviewer-model-routing.md` | Luna 起算、十组合评分和切换条件 | 计划或派发 Reviewer |
 | `reviewer-effort-tiers.md` | `economy/balanced/deep` 数量与上下文预算 | 选择复审规模 |
 | `review-triggers-reviewers.md` | 触发条件、风险级别和 Reviewer 职责 | 决定是否复审和选择角色 |
 | `review-preimplementation-controller.md` | 实施前门禁与状态控制器 | 高风险编码前 |

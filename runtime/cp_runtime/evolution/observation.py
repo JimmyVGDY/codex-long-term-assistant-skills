@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from statistics import mean
 from typing import Any, DefaultDict, Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence, Set, Tuple
+from ..dispatch_policy import LEGACY_POLICY_ID, DispatchPolicyError, policy as dispatch_policy, policy_digest as dispatch_policy_digest, profile_weights
+from ..delegation_calibration import sample_policy_context
 
 from .contracts import (
     ConfidenceLevel,
@@ -37,7 +39,7 @@ _ALLOWED_SOURCE_WORDS = (
 _EXCLUDED_SOURCE_WORDS = (
     "proposal", "decision", "snapshot", "assessment", "knowledge-candidate"
 )
-_DISPATCH_PROFILES = ("luna-low", "luna-medium", "terra-medium", "terra-high")
+_DISPATCH_PROFILES = tuple(profile_weights())
 _SUCCESS_OUTCOMES = {"accepted", "success", "succeeded", "pass", "passed", "ok", "completed", "complete"}
 _UNKNOWN_OUTCOMES = {"", "unknown", "none", "n/a", "na"}
 _TIME_FIELDS = (
@@ -687,7 +689,7 @@ def observe_project(
                 "duration_ms": 0, "cost_units": 0.0,
                 "known_cost_invocation_count": 0, "unknown_cost_invocation_count": 0,
                 "finalized_known_cost_invocation_count": 0, "finalized_cost_units": 0.0,
-                "cost_formula_versions": Counter(), "approved_dispatch_profiles": Counter(),
+                "cost_formula_versions": Counter(), "cost_cohorts": {}, "approved_dispatch_profiles": Counter(),
                 "cost_basis_profiles": Counter(),
                 "profile_difficulty": Counter(), "unfinalized_invocation_count": 0,
                 "attribution_count": 0,
@@ -739,6 +741,20 @@ def observe_project(
             stats["duration_ms"] += max(0, _to_int(result.get("duration_ms"), 0))
             cost_source = "estimated_cost_units" if "estimated_cost_units" in result else "cost_units"
             cost_value = _optional_positive_float(result.get(cost_source)) if cost_source in result else None
+            formula = str(result.get("cost_formula_version") or (
+                "legacy-cost-units" if cost_source == "cost_units" else "UNKNOWN"))
+            dispatch_policy_id = str(result.get("policy_id") or LEGACY_POLICY_ID)
+            dispatch_digest = str(result.get("policy_digest") or dispatch_policy_digest(LEGACY_POLICY_ID))
+            if result.get("policy_id"):
+                try:
+                    frozen = dispatch_policy(dispatch_policy_id, dispatch_digest)
+                    if formula != frozen["cost_formula_version"] or approved_profile not in frozen["profiles"] \
+                            or cost_value != frozen["profiles"][approved_profile]["units"]:
+                        cost_value = None
+                except DispatchPolicyError:
+                    cost_value = None
+            elif approved_profile.startswith(("sol-", "astra-")):
+                cost_value = None
             if cost_value is None:
                 stats["unknown_cost_invocation_count"] += 1
             else:
@@ -747,10 +763,15 @@ def observe_project(
                 if finalized:
                     stats["finalized_known_cost_invocation_count"] += 1
                     stats["finalized_cost_units"] += cost_value
-                formula = str(result.get("cost_formula_version") or (
-                    "legacy-cost-units" if cost_source == "cost_units" else "UNKNOWN"
-                ))
                 stats["cost_formula_versions"][formula] += 1
+                cohort_key = sha256_hex([dispatch_policy_id, dispatch_digest, formula])
+                cohort = stats["cost_cohorts"].setdefault(cohort_key, {
+                    "policy_id": dispatch_policy_id, "policy_digest": dispatch_digest,
+                    "cost_formula_version": formula, "cost_units": 0.0, "finalized_cost_units": 0.0, "invocations": 0})
+                cohort["cost_units"] += cost_value
+                cohort["invocations"] += 1
+                if finalized:
+                    cohort["finalized_cost_units"] += cost_value
             if finalized and any(name in result for name in ("accepted", "rejected", "duplicate", "repaired", "regressions_prevented")):
                 stats["attribution_count"] += 1
                 stats["labeled_finding_count"] += sum(max(0, _to_int(result.get(name), 0))
@@ -829,6 +850,7 @@ def observe_project(
 
     normalized_reviewer_metrics: Dict[str, Any] = {}
     for reviewer, stats in sorted(reviewer_stats.items()):
+        comparable_costs = len(stats["cost_cohorts"]) <= 1
         total_findings = stats["blocking_findings"] + stats["nonblocking_findings"]
         invocations = stats["invocations"]
         task_count = len(stats["tasks"])
@@ -844,7 +866,7 @@ def observe_project(
         benefit_proxy = (
             float(stats["repaired"] + stats["regressions_prevented"]) / stats["finalized_cost_units"]
             if stats["finalized_known_cost_invocation_count"] and stats["finalized_cost_units"] > 0
-            and stats["attribution_count"] else None
+            and stats["attribution_count"] and comparable_costs else None
         )
         sample_sufficient = (invocations >= policy.reviewer_min_invocations
                              and task_count >= policy.reviewer_min_independent_tasks
@@ -853,6 +875,8 @@ def observe_project(
                              and stats["labeled_finding_count"] >= policy.reviewer_min_labeled_findings)
         if stats["conflicting_result_count"]:
             calibration_status = "CONFLICT"
+        elif not comparable_costs:
+            calibration_status = "MIXED_POLICY_COHORTS"
         elif not sample_sufficient:
             calibration_status = "INSUFFICIENT_DATA"
         elif effective_duplicate_rate >= policy.reviewer_high_duplicate_rate:
@@ -888,9 +912,11 @@ def observe_project(
             "duplicate_cluster_finding_count": duplicate_cluster_findings,
             "clustered_duplicate_rate": round(clustered_duplicate_rate, 6) if clustered_duplicate_rate is not None else None,
             "adoption_reasons": dict(sorted(stats["adoption_reasons"].items())),
-            "duration_ms": stats["duration_ms"], "estimated_cost_units": round(stats["cost_units"], 6),
-            "cost_units": round(stats["cost_units"], 6),
-            "finalized_estimated_cost_units": round(stats["finalized_cost_units"], 6),
+            "duration_ms": stats["duration_ms"],
+            "estimated_cost_units": round(stats["cost_units"], 6) if comparable_costs else None,
+            "cost_units": round(stats["cost_units"], 6) if comparable_costs else None,
+            "finalized_estimated_cost_units": round(stats["finalized_cost_units"], 6) if comparable_costs else None,
+            "cost_cohorts": dict(sorted(stats["cost_cohorts"].items())), "cost_basis_comparable": comparable_costs,
             "known_cost_invocation_count": stats["known_cost_invocation_count"],
             "unknown_cost_invocation_count": stats["unknown_cost_invocation_count"],
             "finalized_known_cost_invocation_count": stats["finalized_known_cost_invocation_count"],
@@ -903,8 +929,8 @@ def observe_project(
             "repair_conversion_rate": round(float(stats["repaired"]) / stats["accepted"], 6) if stats["accepted"] else None,
             "duplicate_rate": round(duplicate_rate, 6) if total_findings else None,
             "duration_per_invocation_ms": round(float(stats["duration_ms"]) / invocations, 6) if invocations else None,
-            "cost_per_accepted": round(float(stats["finalized_cost_units"]) / stats["accepted"], 6) if stats["accepted"] else None,
-            "cost_per_repaired": round(float(stats["finalized_cost_units"]) / stats["repaired"], 6) if stats["repaired"] else None,
+            "cost_per_accepted": round(float(stats["finalized_cost_units"]) / stats["accepted"], 6) if stats["accepted"] and comparable_costs else None,
+            "cost_per_repaired": round(float(stats["finalized_cost_units"]) / stats["repaired"], 6) if stats["repaired"] and comparable_costs else None,
             "benefit_proxy": round(benefit_proxy, 6) if benefit_proxy is not None else None,
             "labeled_finding_count": stats["labeled_finding_count"],
             "sample_sufficient": sample_sufficient,
@@ -932,7 +958,8 @@ def observe_project(
     profile_value_comparisons = calibration_replay["comparisons"]
     profile_value_regressions: List[Dict[str, Any]] = []
     for comparison in profile_value_comparisons:
-        comparison["scenario_key"] = sha256_hex(comparison["scenario"])
+        comparison["scenario_key"] = sha256_hex({key: comparison[key] for key in
+                                                ("scenario", "policy_id", "policy_digest", "cost_formula_version", "comparison_pair_id")})
         if (comparison["eligible"] and comparison["regression_rate"] >= policy.dispatch_profile_value_regression_rate
                 and comparison["recommendation"] == comparison["lower_profile"]):
             profile_value_regressions.append(comparison)
@@ -1084,6 +1111,8 @@ def observe_project(
         higher = comparison["higher_profile"]
         matched_rows = [row for row in calibration_rows if row["sample"]["calibration_finalized"]
                         and row["sample"]["approved_profile"] in {lower, higher}
+                        and all(sample_policy_context(row["sample"])[key] == comparison[key]
+                                for key in ("policy_id", "policy_digest", "cost_formula_version"))
                         and all(row["sample"][key] == value for key, value in comparison["scenario"].items())]
         profile_evidence = [EvidenceReference(source_kind="delegation-calibration", source_path=row["path"],
                                              line_number=row["line_number"], record_id=row["sample"]["record_id"],

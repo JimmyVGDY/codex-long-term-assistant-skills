@@ -40,7 +40,7 @@
 
 | Reviewer | 职责 | 范围 | 不负责 | 模型档位 | 状态 |
 |---|---|---|---|---|---|
-|  |  |  |  | luna-low / luna-medium / terra-medium / terra-high | 待启动 |
+|  |  |  |  | 评分计算出的 approved_profile（登记十组合） | 待启动 |
 
 ## 等待与归并规则
 
@@ -53,3 +53,11 @@
 ## 停止条件
 
 -
+
+## 模型选择证据
+
+- 策略 ID/摘要与评分公式：reviewer-matrix-v3 / luna-evidence-v2
+- Luna 基础 1 分 + 复审预算模式加分 + 有效证据加分：
+- 排除证据及原因；精确 acceptable_profiles：
+- 最终档位；根任务 permit 与剩余预算：
+- Sol/Astra 最多 2 次、同时 1 个；Astra High 最多 1 次；重试计次数。

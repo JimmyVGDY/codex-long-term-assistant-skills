@@ -26,9 +26,10 @@ from cp_runtime.common import (  # noqa: E402
 )
 from cp_runtime.finalization import build_finalization_report  # noqa: E402
 from cp_runtime.project import validate_binding  # noqa: E402
+from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, policy, policy_digest  # noqa: E402
 
 STATE = "execution-state.json"
-SCHEMA = 4
+SCHEMA = 5
 PROFILES = {"LIGHT", "STANDARD", "STRICT"}
 COMPLEXITIES = {"L0", "L1", "L2", "L3", "L4"}
 PROJECT_STAGES = {"UNPROFILED", "ONBOARDING", "ACTIVE", "PAUSED", "ARCHIVED"}
@@ -147,6 +148,15 @@ def migrate_state(state: Dict[str, Any]) -> Dict[str, Any]:
         state.setdefault("history", []).append({
             "at": utc_now(), "event": "migrate", "from": version, "to": SCHEMA,
         })
+    if version < 5:
+        state.setdefault("routing", {}).setdefault("reviewer_policy", {
+            "policy_id": LEGACY_POLICY_ID, "policy_digest": policy_digest(LEGACY_POLICY_ID),
+            "selection_mode": "legacy-four-tier",
+        })
+        state["schema_version"] = 5
+        state.setdefault("history", []).append({
+            "at": utc_now(), "event": "pin-legacy-review-policy", "from": version, "to": 5,
+        })
     state["repo_fingerprint"] = state.get("current_fingerprint") or state.get("repo_fingerprint") or {}
     return state
 
@@ -231,6 +241,8 @@ def command_init(args: argparse.Namespace) -> None:
             "project_stage": project_stage,
             "execution_profile": args.profile,
             "reviewer_budget": args.reviewer_budget,
+            "reviewer_policy": {"policy_id": args.reviewer_policy, "policy_digest": policy_digest(args.reviewer_policy),
+                                "selection_mode": "luna-first-evidence-score" if args.reviewer_policy != LEGACY_POLICY_ID else "legacy-four-tier"},
             "model_profile": args.model_profile,
             "host_surface": args.host_surface,
             "legacy_reviewer_budget": args.reviewer_budget,
@@ -507,9 +519,10 @@ def main() -> None:
     init.add_argument("--complexity", choices=sorted(COMPLEXITIES), default="L1")
     init.add_argument("--project-stage", choices=sorted(PROJECT_STAGES), default="UNPROFILED")
     init.add_argument("--reviewer-budget", choices=sorted(REVIEWER_BUDGETS), default="balanced")
-    init.add_argument("--model-profile", choices=sorted(MODEL_PROFILES), default="terra-medium")
+    init.add_argument("--model-profile", choices=sorted(MODEL_PROFILES), default="luna-low")
+    init.add_argument("--reviewer-policy", choices=list(POLICY_FILES), default=CURRENT_POLICY_ID)
     init.add_argument("--delegation-budget", choices=sorted(DELEGATION_BUDGET_CLASSES), default="STANDARD")
-    init.add_argument("--default-model-profile", choices=sorted(MODEL_PROFILES), default="terra-medium")
+    init.add_argument("--default-model-profile", choices=sorted(MODEL_PROFILES), default="luna-low")
     init.add_argument("--delegation-ledger", default="")
     init.add_argument("--host-surface", choices=sorted(HOST_SURFACES), default="direct-workspace")
     init.add_argument("--environment", choices=sorted(ENVIRONMENTS), default="local")

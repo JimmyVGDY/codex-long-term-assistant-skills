@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from .atomic_io import native_path as _native_path
+from .dispatch_policy import profile_weights
 
 SCHEMA_VERSION = "3.0"
 LEGACY_SCHEMA_VERSION = "2.0"
@@ -29,7 +30,7 @@ FACT_SOURCES = {"hook-payload", "host-attested-hook-payload", "unavailable"}
 REASONING_EFFORTS = {"none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"}
 KNOWN_CODEX_MODELS = {"gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.5",
                       "gpt-5.4", "gpt-5.4-mini", "gpt-5.3-codex-spark"}
-DISPATCH_PROFILES = {"", "luna-low", "luna-medium", "terra-medium", "terra-high"}
+DISPATCH_PROFILES = {"", *profile_weights()}
 SENSITIVE_KEY = re.compile(r"(prompt|content|message|response|completion|patch|diff|code|token|secret|password|authorization|cookie|api.?key|private.?key)", re.I)
 PROHIBITED_MODEL_KEYS = {
     "model", "modelname", "actualmodel", "actualreasoningeffort", "runtimemodel",
