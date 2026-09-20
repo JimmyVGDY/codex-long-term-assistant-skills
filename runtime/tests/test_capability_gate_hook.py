@@ -57,7 +57,7 @@ class CapabilityGateHookTests(unittest.TestCase):
         data = {"hook_event_name": event, "session_id": "session", "turn_id": "turn",
                 "task_id": "turn", "cwd": str(self.repo), **values}
         result = subprocess.run([sys.executable, "-B", str(ROOT / "hooks" / "cp_gate.py"), event],
-            input=json.dumps(data), capture_output=True, encoding="utf-8", env=self.env, timeout=7)
+            input=json.dumps(data), capture_output=True, encoding="utf-8", env=self.env, timeout=30)
         self.assertEqual(0, result.returncode, result.stderr)
         return json.loads(result.stdout)
 

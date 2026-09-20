@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 245,
-  "payload_digest": "f95d3f4ee1762c31612f29156ca2fd5d47ffea1fb23e78b5eed21ff233d67855",
+  "payload_digest": "cd4917470e321feff16a118cf4aea3220d8b6c3ee1ee8d94989e49a3dd7c4d42",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -1158,8 +1158,8 @@
     },
     {
       "path": "runtime/tests/test_capability_gate_hook.py",
-      "sha256": "3faae499a2e7640c0b3556137e42860a82273faa264331b93f29b89d933e54d0",
-      "size": 22120
+      "sha256": "754d31459ea1f19b225bf52600908be65ddb42e5ca18d80b0d06cb513cd56f5d",
+      "size": 22121
     },
     {
       "path": "runtime/tests/test_capability_gate_local_exception.py",
