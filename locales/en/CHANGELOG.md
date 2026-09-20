@@ -2,6 +2,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.11.2 - 2026-09-20
+
+- Advance the frozen compatibility window to official stable Codex CLI 0.155.1, retain the ten preceding stable releases from 0.155.0 through 0.151.0, and remove 0.150.1 from the active window.
+- Freeze npm integrity and tarball SHA-256, the official tag commit, and Hook/apply_patch source digests. Windows CLI, isolated Plugin, and synthetic Hook contracts pass; the stable compatibility matrix validates Ubuntu independently.
+- Synchronize the package version, bilingual release material, builder, verifier, installation/recovery documentation, and tag artifact links to V7.11.2. Future, prerelease, and out-of-window hosts continue to fail closed.
+
 ## 7.11.1 - 2026-09-18
 
 - Fix the 17-to-9 score regression after adding valid evidence. reviewer-matrix-v3 / luna-evidence-v2 jointly optimizes root-group and dimension constraints with deterministic whole-solution ties.

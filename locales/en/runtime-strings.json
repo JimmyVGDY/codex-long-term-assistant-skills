@@ -762,9 +762,9 @@
     },
     "scripts/semantic-lint.py": {
       "preserve": [
-        "[OK] V7.11.1 语义校验通过：Codex 0.155.0、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致",
-        "manifest 版本不是 7.11.1",
-        "缺少 %s -> V7.11.1 升级声明",
+        "[OK] V7.11.2 语义校验通过：Codex 0.155.1、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致",
+        "manifest 版本不是 7.11.2",
+        "缺少 %s -> V7.11.2 升级声明",
         "%s 证据必须为 JSON 对象",
         "%s 证据无法读取: %s",
         "AUTO 能力注册表不是 C01-C25 完整映射",
@@ -824,7 +824,7 @@
     },
     "scripts/verify-release.py": {
       "preserve": [
-        "V7.11.1 端到端发行验证",
+        "V7.11.2 端到端发行验证",
         "%s 证据必须为 JSON 对象",
         "%s 证据无法读取: %s",
         "AUTO 能力注册表不是 C01-C25 完整映射",

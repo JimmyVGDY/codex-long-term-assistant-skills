@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "version": "7.11.2",
+  "ok": true,
+  "scope": "Package-only validation passed on 2026-09-20; account installation and public release are separate gates.",
+  "codex_0_155_1": {
+    "official_artifact": "VERIFIED",
+    "source_contract": "VERIFIED",
+    "windows_cli_contract": "PASS",
+    "windows_isolated_plugin": "PASS",
+    "synthetic_hook": "PASS",
+    "real_host": "NOT_EVALUATED",
+    "ubuntu": "NOT_EVALUATED (stable compatibility workflow)"
+  },
+  "public_release_created": false,
+  "compatibility_registry_digest": "85120c90f12de804c93942bc597c7a47c33377c06fe70625a8aaee46f9d4c872",
+  "payload_identity": {
+    "file_count": 245,
+    "sha256": "f95d3f4ee1762c31612f29156ca2fd5d47ffea1fb23e78b5eed21ff233d67855"
+  },
+  "full_package_validation": {
+    "ok": true,
+    "evidence_scope": "package-only",
+    "version": "7.11.2",
+    "skill_count": 10,
+    "reviewer_count": 7,
+    "task_outcome_event": "3.0",
+    "execution_authorization": "NONE",
+    "automatic_self_modification": false,
+    "dispatch_policy": "PASS",
+    "privacy_boundary": "PASS",
+    "python_compatibility": {
+      "minimum": "3.11",
+      "validated_runtime": "3.11.9"
+    },
+    "semantic_lint": "PASS",
+    "routing_case_schema": "PASS (45 cases)",
+    "plugin_payload_manifest": "PASS",
+    "codex_compatibility_registry": "PASS (11 frozen stable releases)",
+    "codex_compatibility_matrix": "NOT_EVALUATED (separate Windows/Ubuntu workflow)",
+    "worktree_side_effect_gate": "PASS",
+    "unit_regression_tests": "PASS (563 package + 231 runtime)",
+    "validation_evidence": {
+      "package_test_count": 563,
+      "runtime_test_count": 231,
+      "package_test_command": "python -m unittest discover -s tests -p test_*.py",
+      "runtime_test_command": "python -m unittest discover -s runtime/tests -p test_*.py",
+      "dispatch_policy_command": "python scripts/dispatch-policy-acceptance.py"
+    }
+  }
+}

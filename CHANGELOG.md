@@ -2,6 +2,12 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.11.2 - 2026-09-20
+
+- 将冻结兼容窗口推进到官方稳定版 Codex CLI 0.155.1，保留 0.155.0 至 0.151.0 的前十个稳定发行版，并将 0.150.1 移出活动窗口。
+- 冻结 npm 完整性与 tarball SHA-256、官方标签 commit、Hook 与 apply_patch 源码摘要；Windows CLI、隔离 Plugin 和合成 Hook 契约通过，Ubuntu 由稳定版兼容矩阵独立验证。
+- 包版本、双语发布材料、构建器、验证器、安装/恢复文档和标签制品链接同步到 V7.11.2；未来版、预发布版和窗口外版本继续失败关闭。
+
 ## 7.11.1 - 2026-09-18
 
 - 修复新增有效证据可能使复审评分从 17 降至 9 的问题：新策略 reviewer-matrix-v3 / luna-evidence-v2 同时满足根因组与维度约束，求最大可计分组合，并固定全组合并列规则。

@@ -28,7 +28,7 @@ class V64ReleaseTests(unittest.TestCase):
         cls.root = Path(cls.temporary.name)
         cls.builder = load_script("build_release_v65", "build-release.py")
         cls.verifier = load_script("verify_release_v65", "verify-release.py")
-        cls.artifact = cls.root / "Codex-Skills-V7.11.1-zh-CN.zip"
+        cls.artifact = cls.root / "Codex-Skills-V7.11.2-zh-CN.zip"
         cls.build = cls.builder.build_release(cls.artifact, "zh-CN")
 
     @classmethod
@@ -37,12 +37,12 @@ class V64ReleaseTests(unittest.TestCase):
 
     def evidence(self):
         digest = json.loads((ROOT / "PLUGIN_PAYLOAD_MANIFEST.json").read_text(encoding="utf-8"))["payload_digest"]
-        package = {"ok": True, "version": "7.11.1"}
-        witness = {"ok": True, "reproducible": True, "version": "7.11.1",
+        package = {"ok": True, "version": "7.11.2"}
+        witness = {"ok": True, "reproducible": True, "version": "7.11.2",
                    "artifact_sha256": hashlib.sha256(self.artifact.read_bytes()).hexdigest()}
         plugin = {"installed": [{"pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
                                   "name": "codex-cross-project-engineering-assistant",
-                                  "marketplaceName": "cp-assistant-local", "version": "7.11.1",
+                                  "marketplaceName": "cp-assistant-local", "version": "7.11.2",
                                   "installed": True, "enabled": True}]}
         lifecycle = {"ok": True, "schema_version": "2.0", "project_id": "project-v65",
                      "repo_fingerprint": "sha256:" + "b" * 64,
@@ -57,7 +57,7 @@ class V64ReleaseTests(unittest.TestCase):
                      "exit_code": 0, "pass": True}],
                 "privacy": {"host_model_information_collected": False,
                             "host_model_information_exported": False}}
-        host = {"codex_version": "codex-cli 0.155.0", "capability_profile": {"ok": True}}
+        host = {"codex_version": "codex-cli 0.155.1", "capability_profile": {"ok": True}}
         report = {key: {"ok": True, "payload_digest": digest} for key in ("source", "marketplace", "cache")}
         return package, witness, plugin, lifecycle, gate, host, report
 

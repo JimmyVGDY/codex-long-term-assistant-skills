@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：V7.11.1 稳定版兼容注册表契约测试。
+"""中文：V7.11.2 稳定版兼容注册表契约测试。
 
-English: V7.11.1 stable-release compatibility registry contract tests.
+English: V7.11.2 stable-release compatibility registry contract tests.
 """
 from __future__ import annotations
 
@@ -32,18 +32,18 @@ from codex_compatibility import (  # noqa: E402
 
 REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 EXPECTED_VERSIONS = [
-    "0.155.0", "0.154.0", "0.153.4", "0.153.3", "0.153.2", "0.153.1", "0.153.0",
-    "0.152.1", "0.152.0", "0.151.0", "0.150.1",
+    "0.155.1", "0.155.0", "0.154.0", "0.153.4", "0.153.3", "0.153.2", "0.153.1",
+    "0.153.0", "0.152.1", "0.152.0", "0.151.0",
 ]
 
 
 class RegistryTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.registry = load_registry(REGISTRY_PATH, "7.11.1")
+        self.registry = load_registry(REGISTRY_PATH, "7.11.2")
 
     def test_registry_is_exact_frozen_stable_window(self) -> None:
         self.assertEqual(EXPECTED_VERSIONS, [item["version"] for item in self.registry["versions"]])
-        self.assertEqual("0.155.0", self.registry["window_policy"]["anchor"])
+        self.assertEqual("0.155.1", self.registry["window_policy"]["anchor"])
         self.assertEqual(10, self.registry["window_policy"]["preceding_stable_releases"])
         self.assertEqual(64, len(canonical_digest(self.registry)))
 
@@ -199,11 +199,11 @@ class RegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="cp-v742-artifact-") as temporary:
             path = Path(temporary) / "codex.tgz"
             path.write_bytes(payload)
-            report = verify_artifact_file(registry, "0.155.0", path)
+            report = verify_artifact_file(registry, "0.155.1", path)
             self.assertEqual(artifact["tarball_sha256"], report["tarball_sha256"])
             path.write_bytes(payload + b"tampered")
             with self.assertRaises(CompatibilityError):
-                verify_artifact_file(registry, "0.155.0", path)
+                verify_artifact_file(registry, "0.155.1", path)
 
     def test_hook_alias_registry_matches_runtime_adapter(self) -> None:
         tree = ast.parse((ROOT / "hooks" / "cp_hook.py").read_text(encoding="utf-8"))
@@ -226,7 +226,7 @@ class RegistryTests(unittest.TestCase):
 class PluginListNormalizerTests(unittest.TestCase):
     PACKAGE = "codex-cross-project-engineering-assistant"
     MARKETPLACE = "cp-assistant-local"
-    VERSION = "7.11.1"
+    VERSION = "7.11.2"
 
     def setUp(self) -> None:
         registry = load_registry(REGISTRY_PATH)

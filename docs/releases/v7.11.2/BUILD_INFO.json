@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "version": "7.11.2",
+  "build_kind": "local-candidate",
+  "supported_locales": ["zh-CN", "en"],
+  "python_minimum": "3.11",
+  "ci_python_versions": ["3.11", "3.13"],
+  "codex_anchor": "0.155.1",
+  "stable_release_window_size": 11,
+  "compatibility_registry_digest": "85120c90f12de804c93942bc597c7a47c33377c06fe70625a8aaee46f9d4c872",
+  "install_state_schema_version": 3,
+  "review_state_schema_version": 8,
+  "review_result_schema_version": 5,
+  "delegation_budget_schema_version": "3.0",
+  "skill_count": 10,
+  "reviewer_count": 7,
+  "enhancement_hook_count": 8,
+  "execution_authorization": "NONE",
+  "package_validation_is_host_acceptance": false,
+  "public_release_created": false
+}
