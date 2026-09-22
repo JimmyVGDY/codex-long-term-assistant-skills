@@ -1212,7 +1212,11 @@
         "当前诊断源包校验失败。": "The diagnostic source package failed verification.",
         "受管状态无法可靠读取。": "Managed state could not be read reliably.",
         "核对受管状态与已知备份，保留未知文件。": "Inspect managed state and known backups; preserve unknown files."
-      }
+      },
+      "preserve": [
+        "Windows Hook 无法从系统目录 API 验证本机 cmd.exe，拒绝从 PATH 或配置路径查找 / Windows Hook could not verify local cmd.exe through the system-directory API; refusing to resolve it from PATH or a configured path",
+        "Windows Hook %s 包含不能安全跨 Shell 传递的字符 %r；拒绝生成受管命令 / Windows Hook %s contains %r, which cannot be passed safely across shells; refusing to generate the managed command"
+      ]
     },
     "runtime/cp_runtime/resume.py": {
       "plain": {

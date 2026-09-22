@@ -379,6 +379,98 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertGreater(launcher.count(b'\r\n'),0)
         self.assertNotIn(b'\n',launcher.replace(b'\r\n',b''))
 
+    def test_agent_pretooluse_command_supplies_fail_closed_event_fallback(self):
+        command=package_manager.hook_fragment(ROOT/'hooks'/'cp_hook.py')['PreToolUse'][0]['hooks'][0]['command']
+        self.assertIn(' PreToolUse',command)
+        result=subprocess.run(
+            [sys.executable,'-B',str(ROOT/'hooks'/'cp_hook.py'),'PreToolUse'],
+            input=b'{}',capture_output=True,env=self.env,timeout=15,
+        )
+        self.assertEqual(0,result.returncode,result.stderr.decode('utf-8','replace'))
+        response=json.loads(result.stdout.decode('utf-8'))
+        detail=response['hookSpecificOutput']
+        self.assertEqual('PreToolUse',detail['hookEventName'])
+        self.assertEqual('deny',detail['permissionDecision'])
+
+    @unittest.skipUnless(os.name == 'nt', 'native Windows Hook shell binding regression')
+    def test_windows_hook_command_reaches_fixed_python_through_cmd_and_powershell(self):
+        marker_dir=Path(self.tmp.name)/'hook path with spaces'
+        marker_dir.mkdir()
+        marker=marker_dir/'hook marker.py'
+        marker.write_text(
+            "import hashlib, json, sys\n"
+            "raw = sys.stdin.buffer.read()\n"
+            "exit_code = int(__import__('os').environ['CP_HOOK_MARKER_EXIT'])\n"
+            "print(json.dumps({'argv': sys.argv[1:], 'bytes': len(raw), "
+            "'sha256': hashlib.sha256(raw).hexdigest(), 'executable': sys.executable, "
+            "'planned_exit': exit_code}, sort_keys=True))\n"
+            "raise SystemExit(exit_code)\n",
+            encoding='utf-8',
+        )
+        fragment=package_manager.hook_fragment(marker)
+        command=fragment['PreToolUse'][0]['hooks'][0]['command']
+        import ctypes
+        buffer=ctypes.create_unicode_buffer(32768)
+        self.assertGreater(ctypes.windll.kernel32.GetSystemDirectoryW(buffer,len(buffer)),0)
+        system_cmd=str(Path(buffer.value)/'cmd.exe')
+        self.assertTrue(command.startswith(system_cmd+' /D /V:OFF /S /C '))
+        self.assertIn('PreToolUse',command)
+        self.assertIn(sys.executable,command)
+        payload=json.dumps({'hook_event_name': 'PreToolUse', 'tool_name': 'spawn_agent',
+                            'message': 'UTF-8 中文'},ensure_ascii=False,separators=(',',':')).encode('utf-8')
+        expected_digest=__import__('hashlib').sha256(payload).hexdigest()
+        cmd_raw='cmd.exe /D /S /C "'+command+'"'
+        launches=(
+            # 中文：Codex 对 CMD /C 使用带外层引号的 raw_arg。
+            # English: Codex uses raw_arg with an outer pair of quotes for CMD /C.
+            ('cmd', cmd_raw),
+            ('powershell', ['powershell.exe','-NoLogo','-NoProfile','-NonInteractive',
+                            '-ExecutionPolicy','RemoteSigned','-Command',command]),
+        )
+        for shell, args in launches:
+            with self.subTest(shell=shell):
+                env={**self.env,'CP_HOOK_MARKER_EXIT':'0'}
+                result=subprocess.run(args,input=payload,capture_output=True,env=env,timeout=15)
+                self.assertEqual(0,result.returncode,result.stdout.decode('utf-8','replace')+result.stderr.decode('utf-8','replace'))
+                summary=json.loads(result.stdout.decode('utf-8'))
+                self.assertEqual(['PreToolUse'],summary['argv'])
+                self.assertEqual(len(payload),summary['bytes'])
+                self.assertEqual(expected_digest,summary['sha256'])
+                self.assertEqual(sys.executable,summary['executable'])
+                self.assertEqual(0,summary['planned_exit'])
+
+            # 中文：非零 Hook 退出码必须经 CMD 原始参数路径传回。
+            # English: A non-zero Hook exit must propagate through the CMD raw-argument path.
+        failed=subprocess.run(
+            cmd_raw,input=payload,capture_output=True,
+            env={**self.env,'CP_HOOK_MARKER_EXIT':'23'},timeout=15,
+        )
+        self.assertEqual(23,failed.returncode,failed.stdout.decode('utf-8','replace')+failed.stderr.decode('utf-8','replace'))
+        self.assertEqual(23,json.loads(failed.stdout.decode('utf-8'))['planned_exit'])
+
+    @unittest.skipUnless(os.name == 'nt', 'native Windows Hook shell binding regression')
+    def test_windows_hook_command_rejects_shell_expanding_paths(self):
+        quote_marker=Path(self.tmp.name)/"hook'marker.py"
+        quote_marker.write_text("raise SystemExit(0)\n",encoding='utf-8')
+        with self.assertRaises(package_manager.InstallError):
+            package_manager.hook_fragment(quote_marker)
+        for unsafe in ('hook&marker.py','hook$marker.py','hook%marker.py','hook`marker.py',
+                       'hook;marker.py','hook|marker.py','hook^marker.py','hook"marker.py'):
+            with self.subTest(unsafe=unsafe):
+                with self.assertRaises(package_manager.InstallError):
+                    package_manager.hook_fragment(Path(self.tmp.name)/unsafe)
+
+    @unittest.skipUnless(os.name == 'nt', 'native Windows Hook shell binding regression')
+    def test_windows_hook_command_does_not_trust_systemroot(self):
+        import ctypes
+        buffer=ctypes.create_unicode_buffer(32768)
+        self.assertGreater(ctypes.windll.kernel32.GetSystemDirectoryW(buffer,len(buffer)),0)
+        system_cmd=str(Path(buffer.value)/'cmd.exe')
+        for untrusted in ('relative-system-root',r'\\server\share',r'C:\does-not-exist'):
+            with self.subTest(untrusted=untrusted), mock.patch.dict(os.environ,{'SystemRoot':untrusted}):
+                command=package_manager.hook_fragment(Path(self.tmp.name)/'hook.py')['Stop'][0]['hooks'][0]['command']
+                self.assertTrue(command.startswith(system_cmd+' /D /V:OFF /S /C '))
+
     def test_plugin_tools_prefer_versioned_cache_over_stale_standalone_runtime(self):
         stale_runtime=self.codex/'runtime'/'cp_runtime'
         (stale_runtime/'evolution').mkdir(parents=True)

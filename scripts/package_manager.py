@@ -589,20 +589,84 @@ def _native_apply_patch_operation_supported(profile: Optional[Mapping[str, Any]]
     )
 
 
-def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
-    command = '"%s" "%s"' % (sys.executable.replace('"', '\\"'), str(script_path).replace('"', '\\"'))
-    gate_path = script_path.with_name("cp_gate.py")
-    gate_command = '"%s" "%s"' % (
-        sys.executable.replace('"', '\\"'), str(gate_path).replace('"', '\\"'),
+def _windows_hook_command(python_executable: str, script_path: Path, expected_hook: str = "") -> str:
+    """Return the Windows shell-neutral Hook command with a fixed interpreter.
+
+    中文：Windows 原生 Hook 可能由 PowerShell 或 CMD 启动。路径中的空格由
+    cmd.exe 的双引号处理；其余会被任一 shell 展开或重新解释的字符拒绝写入，
+    不能静默生成看似可用、实际不保真的受管命令。
+
+    English: Native Windows Hooks may be started by PowerShell or CMD. Quotes
+    preserve spaces for cmd.exe; reject characters either shell would expand or
+    reinterpret instead of silently writing an unfaithful managed command.
+    """
+    try:
+        import ctypes
+        # 中文：不从 PATH 或可伪造的 SystemRoot 拼接 cmd.exe；只接受 Windows API
+        # 返回的本机系统目录。
+        # English: Do not compose cmd.exe from PATH or a forgeable SystemRoot; accept
+        # only the local system directory returned by the Windows API.
+        buffer = ctypes.create_unicode_buffer(32768)
+        count = ctypes.windll.kernel32.GetSystemDirectoryW(buffer, len(buffer))
+        system_directory = buffer.value if 0 < count < len(buffer) else ""
+    except (AttributeError, OSError):
+        system_directory = ""
+    cmd_path = Path(system_directory) / "cmd.exe" if system_directory else None
+    if (cmd_path is None or not cmd_path.is_absolute() or str(cmd_path).startswith("\\\\")
+            or not _io_path(cmd_path).is_file()):
+        raise InstallError(
+            "Windows Hook 无法从系统目录 API 验证本机 cmd.exe，拒绝从 PATH 或配置路径查找 / "
+            "Windows Hook could not verify local cmd.exe through the system-directory API; "
+            "refusing to resolve it from PATH or a configured path"
+        )
+    cmd_executable = str(cmd_path)
+    paths = (("cmd.exe", cmd_executable), ("Python executable", str(python_executable)),
+             ("Hook script", str(script_path)))
+    for label, value in paths:
+        forbidden = next((char for char in ('"', "'", '\r', '\n', '%', '&', '$', '`', ';', '|',
+                                             '<', '>', '(', ')', '^') if char in value), None)
+        if label == "cmd.exe" and " " in value:
+            forbidden = " "
+        if forbidden is not None:
+            raise InstallError(
+                "Windows Hook %s 包含不能安全跨 Shell 传递的字符 %r；拒绝生成受管命令 / "
+                "Windows Hook %s contains %r, which cannot be passed safely across shells; "
+                "refusing to generate the managed command" % (label, forbidden, label, forbidden)
+            )
+    suffix = (" " + expected_hook) if expected_hook else ""
+    # 中文：外层引号由 cmd.exe /S /C 消费；内层引号让固定 Python 与 Hook 路径在
+    # 含空格时仍作为字面参数传递。
+    # English: The outer pair is consumed by cmd.exe /S /C; the inner pairs keep
+    # the fixed Python executable and Hook path literal when either contains spaces.
+    return '%s /D /V:OFF /S /C ""%s" "%s"%s"' % (
+        cmd_executable, python_executable, script_path, suffix,
     )
+
+
+def _hook_command(script_path: Path, expected_hook: str = "") -> str:
+    if os.name == "nt":
+        return _windows_hook_command(sys.executable, script_path, expected_hook)
+    command = '"%s" "%s"' % (
+        sys.executable.replace('"', '\\"'), str(script_path).replace('"', '\\"'),
+    )
+    return command + ((" " + expected_hook) if expected_hook else "")
+
+
+def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
+    command = _hook_command(script_path)
+    pretool_command = _hook_command(script_path, "PreToolUse")
+    posttool_command = _hook_command(script_path, "PostToolUse")
+    gate_path = script_path.with_name("cp_gate.py")
+    gate_pretool_command = _hook_command(gate_path, "PreToolUse")
+    gate_posttool_command = _hook_command(gate_path, "PostToolUse")
     fragment = {
         "PreToolUse": [
-            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": command, "timeout": 5}]},
-            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_command + " PreToolUse", "timeout": 5}]},
+            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": pretool_command, "timeout": 5}]},
+            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_pretool_command, "timeout": 5}]},
         ],
         "PostToolUse": [
-            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_command + " PostToolUse", "timeout": 5}]},
-            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": command + " PostToolUse", "timeout": 5}]},
+            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_posttool_command, "timeout": 5}]},
+            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": posttool_command, "timeout": 5}]},
         ],
         "SubagentStart": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
