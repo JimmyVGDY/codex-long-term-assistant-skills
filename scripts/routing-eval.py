@@ -70,9 +70,81 @@ def validate_cases(data: Dict[str, object]) -> List[Dict[str, object]]:
         if sets["required"] & sets["forbidden"]:
             die("{} 的 required 与 forbidden 冲突".format(case_id))
         max_active = item.get("max_active")
-        if not isinstance(max_active, int) or max_active < 0 or max_active > 4:
+        if type(max_active) is not int or max_active < 0 or max_active > 4:
             die("{}.max_active 必须在 0～4".format(case_id))
+        phases = item.get("phases")
+        if phases is not None:
+            if not isinstance(phases, list) or not phases:
+                die(case_id + ".phases 必须是非空数组")
+            phase_ids = set()
+            for phase in phases:
+                if not isinstance(phase, dict) or not re.fullmatch(r"[a-z][a-z0-9-]*", str(phase.get("id", ""))):
+                    die(case_id + ".phases.id 无效")
+                if phase["id"] in phase_ids:
+                    die(case_id + ".phases.id 重复")
+                phase_ids.add(phase["id"])
+                validate_cases({"schema_version": 1, "cases": [{
+                    **phase, "prompt": "phase contract", "phases": None,
+                }]})
+                phase_skills = set(phase["required"]) | set(phase["optional"])
+                if not phase_skills <= (sets["required"] | sets["optional"]):
+                    die(case_id + ".phases 引用了任务范围外的 Skill")
+                if phase.get("exception_above", 3) != 3:
+                    die(case_id + ".phases.exception_above 必须为 3")
     return cases  # type: ignore[return-value]
+
+
+def phase_findings(case: Mapping[str, Any], observation: Mapping[str, Any]) -> List[str]:
+    """中文：只对显式分阶段用例检查当期加载与超额理由，保留旧观察格式。
+
+    English: Check phase activation and justified exceptions only for opted-in cases.
+    """
+    rules = case.get("phases")
+    if not rules:
+        reason = observation.get("exception_reason", "")
+        if not isinstance(reason, str) or len(reason) > 500 or any(char in reason for char in "\r\n\x00"):
+            return ["ACTIVATION_EXCEPTION_INVALID"]
+        if len(observation.get("activated", [])) > 3 and not reason.strip():
+            return ["ACTIVATION_EXCEPTION_REQUIRED"]
+        return []
+    observations = observation.get("phases")
+    if not isinstance(observations, list) or not observations:
+        return ["PHASE_EVIDENCE_MISSING"]
+    expected = {rule["id"]: rule for rule in rules}
+    seen, union, findings = set(), set(), []
+    for item in observations:
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str):
+            findings.append("PHASE_OBSERVATION_INVALID")
+            continue
+        phase_id = item["id"]
+        if phase_id not in expected or phase_id in seen:
+            findings.append("PHASE_UNKNOWN_OR_DUPLICATE:" + phase_id)
+            continue
+        seen.add(phase_id)
+        active = item.get("activated")
+        if not isinstance(active, list) or any(not isinstance(skill, str) or not skill for skill in active):
+            findings.append("PHASE_ACTIVATION_INVALID:" + phase_id)
+            continue
+        if len(active) != len(set(active)):
+            findings.append("PHASE_ACTIVATION_DUPLICATE:" + phase_id)
+        active = set(active)
+        union.update(active)
+        rule = expected[phase_id]
+        allowed = set(rule["required"]) | set(rule["optional"])
+        if set(rule["required"]) - active or set(rule["forbidden"]) & active or active - allowed:
+            findings.append("PHASE_SKILL_MISMATCH:" + phase_id)
+        if len(active) > rule["max_active"]:
+            findings.append("PHASE_ACTIVE_LIMIT:" + phase_id)
+        reason = item.get("exception_reason", "")
+        if not isinstance(reason, str) or len(reason) > 500:
+            findings.append("PHASE_EXCEPTION_INVALID:" + phase_id)
+        elif len(active) > rule.get("exception_above", 3) and not reason.strip():
+            findings.append("PHASE_EXCEPTION_REQUIRED:" + phase_id)
+    if seen != set(expected):
+        findings.append("PHASE_COVERAGE_INCOMPLETE")
+    if union != set(observation.get("activated", [])):
+        findings.append("PHASE_UNION_MISMATCH")
+    return findings
 
 
 def _require_timezone_timestamp(value: object, label: str) -> str:
@@ -198,6 +270,17 @@ def _verify_host_report(item: Mapping[str, object], evidence_root: Path) -> tupl
         raise ValueError(case_id + ".report_file 的 ACTIVATED_SKILLS 格式无效")
     if len(activated) != len(set(activated)):
         raise ValueError(case_id + ".report_file 的 ACTIVATED_SKILLS 存在重复")
+    if "phases" in item:
+        try:
+            phases = json.loads(_marker(text, "PHASE_OBSERVATIONS", case_id + ".report_file"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(case_id + ".report_file 的 PHASE_OBSERVATIONS 无效") from exc
+        if phases != item["phases"]:
+            raise ValueError(case_id + ".phases 与已封存报告不一致")
+    if item.get("exception_reason"):
+        reason = _marker(text, "ACTIVATION_EXCEPTION_REASON", case_id + ".report_file")
+        if reason != item["exception_reason"]:
+            raise ValueError(case_id + ".exception_reason does not match the sealed host report")
     return activated, len(payload)
 
 
@@ -306,7 +389,8 @@ def evaluate_host_acceptance(
         forbidden = sorted(set(case["forbidden"]) & activated)  # type: ignore[arg-type]
         unrecognized = sorted(activated - known_skills)
         too_many = len(activated) > int(case["max_active"])
-        status = "PASS" if not absent and not forbidden and not unrecognized and not too_many else "FAILED"
+        phase_errors = phase_findings(case, item)
+        status = "PASS" if not absent and not forbidden and not unrecognized and not too_many and not phase_errors else "FAILED"
         if status == "PASS":
             passed += 1
         else:
@@ -320,6 +404,7 @@ def evaluate_host_acceptance(
             "activated_unrecognized": unrecognized,
             "active_count": len(activated),
             "max_active": int(case["max_active"]),
+            "phase_findings": phase_errors,
             "task_id": item["task_id"],
             "observed_at": item["observed_at"],
             "evidence_source": item["evidence_source"],
@@ -399,7 +484,10 @@ def command_template(args: argparse.Namespace) -> None:
         "schema_version": 1,
         "instructions": "在 Codex 中逐条发送 prompt，记录实际激活的 Skill 名称。不要根据 expected 手工补齐。",
         "observations": [
-            {"id": item["id"], "activated": [], "notes": ""} for item in cases
+            {"id": item["id"], "activated": [], "notes": "", "exception_reason": "", **(
+                {"phases": [{"id": phase["id"], "activated": [], "exception_reason": ""}
+                            for phase in item["phases"]]} if item.get("phases") else {})}
+            for item in cases
         ],
     }
     path = Path(args.output)
@@ -447,6 +535,10 @@ def command_host_template(args: argparse.Namespace) -> None:
                 "fresh_session": True,
                 "explicit_skill_names_in_prompt": False,
                 "notes": "",
+                "exception_reason": "",
+                **({"phases": [{"id": phase["id"], "activated": [], "exception_reason": ""}
+                               for phase in case_map[case_id]["phases"]]}
+                   if case_map[case_id].get("phases") else {}),
             }
             for case_id in profile["required_case_ids"]  # type: ignore[union-attr]
         ],
@@ -472,25 +564,29 @@ def command_evaluate(args: argparse.Namespace) -> None:
             die("observation.activated 必须是字符串数组")
         if item["id"] in observed_map:
             die("observation.id 重复: " + item["id"])
-        observed_map[item["id"]] = set(activated)
+        if len(activated) != len(set(activated)):
+            die("observation.activated 存在重复")
+        observed_map[item["id"]] = item
 
     failed = 0
     for case_id, case in case_map.items():
-        activated = observed_map.get(case_id)
-        if activated is None:
+        observation = observed_map.get(case_id)
+        if observation is None:
             print("[MISS] {} 未记录".format(case_id))
             failed += 1
             continue
+        activated = set(observation["activated"])
         required = set(case["required"])
         forbidden = set(case["forbidden"])
         missing = sorted(required - activated)
         unexpected = sorted(forbidden & activated)
         too_many = len(activated) > int(case["max_active"])
-        if missing or unexpected or too_many:
+        phase_errors = phase_findings(case, observation)
+        if missing or unexpected or too_many or phase_errors:
             failed += 1
             print(
-                "[FAIL] {} missing={} forbidden={} active={}/{}".format(
-                    case_id, missing, unexpected, len(activated), case["max_active"]
+                "[FAIL] {} missing={} forbidden={} active={}/{} phases={}".format(
+                    case_id, missing, unexpected, len(activated), case["max_active"], phase_errors
                 )
             )
         else:

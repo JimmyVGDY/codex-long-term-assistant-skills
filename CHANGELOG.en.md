@@ -4,6 +4,13 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.12.0 - 2026-09-23
+
+- The candidate adds phase-aware SessionEnd permission fallback, execution-result-driven validation evidence, positive/negative governance-Skill and phase-routing regression cases, and explicit `status --quick` diagnostics; default `status` retains the complete check.
+- The complete validation report no longer asserts capability success from filenames or fixed strings: missing required tests, all skips, failures, errors, subtest failures, unexpected successes, timeouts, or corrupted reports remain non-`PASS`.
+- Update the package, Plugin, compatibility registry, bilingual documentation, and candidate release material to V7.12.0 while retaining Codex CLI 0.155.1 and its eleven-release stable window.
+- Local package/runtime validation, SessionEnd recovery regressions and installed quick-status measurements are recorded in the release reports. The experimental LIGHT shortcut is withheld after the comparison; original LIGHT instructions remain. Final host acceptance, remote CI, artifact provenance and publication require separate readback.
+
 ## 7.11.2 - 2026-09-20
 
 - Advance the frozen compatibility window to official stable Codex CLI 0.155.1, retain the ten preceding stable releases from 0.155.0 through 0.151.0, and remove 0.150.1 from the active window.

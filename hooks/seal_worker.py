@@ -17,7 +17,8 @@ sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.seal_queue import (  # noqa: E402
-    BOOTSTRAP_EVENT_MAX_BYTES, SealQueueError, prepare_session_end, process_queue,
+    BOOTSTRAP_EVENT_MAX_BYTES, SealQueueError, prepare_session_end_with_recovery,
+    process_queue, recover_pending_session_end,
 )
 from cp_runtime.evolution.incremental import automation_tick  # noqa: E402
 
@@ -26,7 +27,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="V6.6 delayed event seal worker")
     parser.add_argument("--queue", required=True); parser.add_argument("--keyring")
     parser.add_argument("--max-jobs", type=int, default=100)
-    parser.add_argument("--bootstrap-event-b64"); args = parser.parse_args()
+    parser.add_argument("--bootstrap-event-b64"); parser.add_argument("--recover-pending", action="store_true")
+    args = parser.parse_args()
     queue = Path(args.queue)
     keyring = Path(args.keyring) if args.keyring else None
     if args.bootstrap_event_b64:
@@ -42,8 +44,11 @@ def main() -> None:
             raise SealQueueError("BOOTSTRAP_EVENT_INVALID") from exc
         if not isinstance(event, dict):
             raise SealQueueError("BOOTSTRAP_EVENT_INVALID")
-        prepare_session_end(queue, event, keyring)
+        queue = Path(prepare_session_end_with_recovery(queue, event, keyring)["queue"])
+    recovery = recover_pending_session_end(queue, keyring) if args.recover_pending else None
     report = process_queue(queue, keyring, args.max_jobs)
+    if recovery is not None:
+        report["recovery"] = recovery
     if report["ok"] and report["completed"]:
         try:
             if keyring is not None:
@@ -59,4 +64,9 @@ if __name__ == "__main__":
     try: main()
     except SealQueueError as exc:
         print(json.dumps({"ok": False, "error_code": str(exc)}, ensure_ascii=False), file=sys.stderr)
+        raise SystemExit(2)
+    except Exception:
+        # 中文：detached worker 不得通过 stderr 泄露异常文本或 bootstrap 内容。
+        # English: A detached worker must not leak exception text or bootstrap content through stderr.
+        print(json.dumps({"ok": False, "error_code": "WORKER_OPERATION_FAILED"}, ensure_ascii=False), file=sys.stderr)
         raise SystemExit(2)

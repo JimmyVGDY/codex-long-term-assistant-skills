@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：V7.11.2 稳定版兼容注册表契约测试。
+"""中文：V7.12.0 稳定版兼容注册表契约测试。
 
-English: V7.11.2 stable-release compatibility registry contract tests.
+English: V7.12.0 stable-release compatibility registry contract tests.
 """
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import ast
 import base64
 import copy
 import hashlib
+import importlib.util
 import json
 import sys
 import tempfile
@@ -37,15 +38,30 @@ EXPECTED_VERSIONS = [
 ]
 
 
+def _load_release_script(name: str, filename: str):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / filename)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class RegistryTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.registry = load_registry(REGISTRY_PATH, "7.11.2")
+        self.registry = load_registry(REGISTRY_PATH, "7.12.0")
 
     def test_registry_is_exact_frozen_stable_window(self) -> None:
         self.assertEqual(EXPECTED_VERSIONS, [item["version"] for item in self.registry["versions"]])
         self.assertEqual("0.155.1", self.registry["window_policy"]["anchor"])
         self.assertEqual(10, self.registry["window_policy"]["preceding_stable_releases"])
         self.assertEqual(64, len(canonical_digest(self.registry)))
+
+    def test_release_consumers_pin_the_current_registry_summary(self) -> None:
+        current = canonical_digest(self.registry)
+        verifier = _load_release_script("verify_release_current_registry", "verify-release.py")
+        attestation = _load_release_script("release_attestation_current_registry", "release-attestation.py")
+        self.assertEqual(current, verifier.COMPATIBILITY_REGISTRY_DIGEST)
+        self.assertEqual(current, attestation.COMPATIBILITY_REGISTRY_DIGEST)
 
     def test_every_version_resolves_declared_profiles(self) -> None:
         for version in EXPECTED_VERSIONS:
@@ -226,7 +242,7 @@ class RegistryTests(unittest.TestCase):
 class PluginListNormalizerTests(unittest.TestCase):
     PACKAGE = "codex-cross-project-engineering-assistant"
     MARKETPLACE = "cp-assistant-local"
-    VERSION = "7.11.2"
+    VERSION = "7.12.0"
 
     def setUp(self) -> None:
         registry = load_registry(REGISTRY_PATH)

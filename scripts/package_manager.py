@@ -2813,8 +2813,147 @@ def _diagnostic_facts(scope: str, mode: Optional[str], repo_path: Optional[str],
     return data
 
 
+def _quick_installation_facts_once(scope: str, mode: Optional[str], repo_path: Optional[str]) -> Dict[str, Any]:
+    """中文：在不校验宿主或 payload 的条件下读取有界持久安装事实。
+
+    English: Read bounded persisted installation facts without host or payload validation.
+
+    中文：快速状态刻意只是观察层；它不能把持久状态提升为当前注册、已加载运行时或完整性结论，也不会修复 journal 或写入缓存。
+    English: Quick status is deliberately an observation tier. It must never promote persisted state into a current registration, loaded-runtime, or integrity claim, and it never repairs a journal or writes a cache.
+    """
+    repo = None
+    non_git = False
+    if scope == "repo":
+        try:
+            repo = git_root(Path(repo_path or "."))
+        except InstallError:
+            non_git = True
+    source_state_path = state_path(scope, repo) if not non_git else None
+    state, state_read_error = _diagnostic_object(source_state_path) if source_state_path else ({}, None)
+    state_error = state_read_error
+    if state and (type(state.get("schema_version")) is not int or
+                  state.get("schema_version") not in {1, 2, 3} or state.get("package") != PACKAGE):
+        state_error = "INSTALLATION_STATE_IDENTITY_INVALID"
+    for key in ("components", "managed_hashes", "payload_identity"):
+        if key in state and not isinstance(state[key], dict):
+            state_error = "INSTALLATION_STATE_FIELDS_INVALID"
+    base_state, base_read_error = _diagnostic_object(base_state_path()) if scope == "user" else ({}, None)
+    base_state_error = base_read_error
+    if base_state and (
+            base_state.get("schema_version") != 1 or base_state.get("package") != PACKAGE
+            or base_state.get("marketplace") != BASE_MARKETPLACE
+            or Path(str(base_state.get("market_root", ""))) != base_marketplace_root()
+            or base_state.get("status", "INSTALLED") not in {"INSTALLING", "INSTALLED", "RECOVERY_REQUIRED"}):
+        base_state_error = "BASE_STATE_IDENTITY_INVALID"
+    mode_error = _mode_error(state.get("mode"))
+    selected_mode = mode if mode in {"plugin", "standalone"} else _normalized_mode(state.get("mode"))
+    if state.get("mode") in {"plugin", "standalone"} and mode and mode != state["mode"]:
+        mode_error = "REQUESTED_MODE_MISMATCH"
+    live, transaction_error = (None, None)
+    if not non_git:
+        live, transaction_error = _diagnostic_journal(scope, repo)
+
+    components = state.get("components") if isinstance(state.get("components"), dict) else {}
+    enhancement = components.get("enhancement") if isinstance(components.get("enhancement"), dict) else {}
+    declared = enhancement.get("status") if enhancement else None
+    if state_error or mode_error:
+        file_status = "UNVERIFIED"
+    elif not state:
+        file_status = "MISSING"
+    elif declared in {"MANAGED", "INSTALLED", "PLUGIN_MANAGED"}:
+        file_status = "DECLARED_MANAGED"
+    else:
+        file_status = "DECLARED_UNVERIFIED"
+    if base_state_error:
+        base_file_status = "UNVERIFIED"
+    elif base_state:
+        base_file_status = "DECLARED_MANAGED" if base_state.get("status", "INSTALLED") == "INSTALLED" else "DECLARED_UNVERIFIED"
+    else:
+        base_file_status = "MISSING"
+
+    causes: List[Dict[str, str]] = []
+    action: Optional[Dict[str, Any]] = None
+    overall = "UNKNOWN"
+    if live:
+        # 中文：活动事务优先于格式错误的状态；恢复是唯一能安全建立新快照的可操作路径。
+        # English: A live transaction takes precedence over a malformed state; recovery is the only actionable path that can safely establish a new snapshot.
+        overall = "BLOCKED"
+        causes.append({"id": "installation-transaction", "detail": "TRANSACTION_INCOMPLETE"})
+        args = [sys.executable, str(ROOT / "scripts" / "package_manager.py"), "recover", "--scope", scope]
+        if scope == "repo" and repo:
+            args.extend(["--repo-path", str(repo)])
+        action = _action_detail("RECOVER_INSTALLATION_TRANSACTION", "WRITE", args,
+                                "存在未收敛安装事务。", "显式恢复既有事务后重新完整校验。", scope)
+    elif transaction_error or state_error or base_state_error or mode_error:
+        overall = "BLOCKED"
+        reason = transaction_error or state_error or base_state_error or mode_error or "INSTALLATION_STATE_UNVERIFIED"
+        causes.append({"id": "installation-state", "detail": str(reason)})
+        action = _action_detail("INSPECT_MANAGED_STATE", "MANUAL", [],
+                                "受管状态无法可靠读取。", "核对受管状态与已知备份，保留未知文件。", scope)
+    elif non_git:
+        causes.append({"id": "repository", "detail": "NON_GIT_DIRECTORY"})
+    elif not state and not base_state:
+        causes.append({"id": "installation-state", "detail": "INSTALLATION_STATE_MISSING"})
+        action = _verify_action(scope, selected_mode, str(repo) if repo else None)
+
+    return {
+        "schema": "cp-assistant-quick-status/1", "query_tier": "QUICK", "collected_at": time.time(),
+        "current_check": "NOT_EVALUATED",
+        "package": PACKAGE, "version": VERSION, "scope": scope, "mode": selected_mode,
+        "repo_path": str(repo) if repo else str(Path(repo_path or ".").absolute()) if scope == "repo" else None,
+        "git_repository": not non_git if scope == "repo" else None,
+        "overall": overall, "state_error": state_error, "base_state_error": base_state_error, "mode_error": mode_error,
+        "transaction_error": transaction_error, "live_transaction": live,
+        "installation_state": {"status": "UNREADABLE" if state_error or base_state_error else
+                                 "ENHANCED_PRESENT" if state else "BASE_ONLY" if base_state else "MISSING",
+                               "declared_version": state.get("version"), "declared_mode": state.get("mode")},
+        "base_installation_state": {"status": "UNREADABLE" if base_state_error else "PRESENT" if base_state else "MISSING",
+                                    "declared_version": base_state.get("version"), "declared_status": base_state.get("status")},
+        "enhancement_installation_state": {"status": "UNREADABLE" if state_error else "PRESENT" if state else "MISSING",
+                                           "declared_version": state.get("version"), "declared_mode": state.get("mode")},
+        "file_state": {"status": file_status, "enhancement_declared_status": declared,
+                       "base_status": base_file_status},
+        "registration_state": {"status": "NOT_EVALUATED", "reason": "QUICK_HOST_PROBE_SKIPPED"},
+        "loaded_state": {"status": "NOT_EVALUATED", "reason": "QUICK_CURRENT_TASK_LOAD_NOT_CHECKED"},
+        "control_state": {"status": "NOT_EVALUATED", "reason": "QUICK_CONTROL_PREREQUISITES_NOT_CHECKED"},
+        "last_full_validation_at": None,
+        "not_evaluated": ["HOST_PROBE", "SOURCE_PAYLOAD_VERIFICATION", "MARKETPLACE_PAYLOAD_VERIFICATION",
+                          "CACHE_PAYLOAD_VERIFICATION", "STABILITY_REREAD", "CONTROL_PREREQUISITES"],
+        "causes": causes, "cause": causes, "next_action_detail": action,
+        "read_only": True, "authorization_evidence": False,
+        "_quick_stability": {"state": state, "state_error": state_error,
+                              "base_state": base_state, "base_state_error": base_state_error,
+                              "transaction": live, "transaction_error": transaction_error},
+    }
+
+
+def _quick_installation_facts(scope: str, mode: Optional[str], repo_path: Optional[str]) -> Dict[str, Any]:
+    """中文：返回一对稳定的有界持久状态观察。
+
+    English: Return a stable pair of bounded persisted-state observations.
+
+    中文：该复读刻意排除宿主、payload 和控制探测；状态变化不能安全继承第一次快照的恢复动作，因此返回 UNKNOWN 并给出只读完整校验。
+    English: This re-read intentionally excludes host, payload and control probing. A changed state cannot safely inherit a recovery action chosen from the first snapshot, so it is returned as UNKNOWN with a read-only full verification.
+    """
+    first = _quick_installation_facts_once(scope, mode, repo_path)
+    second = _quick_installation_facts_once(scope, mode, repo_path)
+    stable = first.pop("_quick_stability") == second.pop("_quick_stability")
+    if not stable:
+        first["overall"] = "UNKNOWN"
+        first["sample_error"] = "INSTALLATION_CHANGED_DURING_READ"
+        first["causes"] = [*first["causes"], {"id": "installation-state", "detail": first["sample_error"]}]
+        first["cause"] = first["causes"]
+        first["next_action_detail"] = _verify_action(scope, first["mode"], first.get("repo_path"))
+    return first
+
+
 def status(scope: str, mode: Optional[str], repo_path: Optional[str], summary: bool = False,
-           profile_path: Optional[str] = None) -> None:
+           profile_path: Optional[str] = None, quick: bool = False) -> None:
+    if quick:
+        # 中文：--profile 在 QUICK 中刻意无效：不评估控制检查，快速输出不能授权操作。
+        # English: --profile intentionally has no effect in QUICK: control checks are not evaluated and quick output cannot authorize an operation.
+        print(json.dumps(_quick_installation_facts(scope, mode, repo_path), ensure_ascii=False, indent=2))
+        return
     data = _diagnostic_facts(scope, mode, repo_path, profile_path)
     data["ux"] = _ux_summary(data)
     print(json.dumps(status_summary(data) if summary else data, ensure_ascii=False, indent=2))
@@ -3056,6 +3195,8 @@ def main() -> None:
     status_parser.add_argument("--repo-path")
     status_parser.add_argument("--profile", help="Explicit project profile for control-prerequisite diagnostics; never changes policy")
     status_parser.add_argument("--json",action="store_true")
+    status_parser.add_argument("--quick", action="store_true",
+                               help="Read bounded persisted facts only; skips host probing, payload verification, and stability rereads")
     recover_parser=sub.add_parser("recover")
     recover_parser.add_argument("--scope",choices=["user","repo"],default="user")
     recover_parser.add_argument("--repo-path")
@@ -3075,7 +3216,7 @@ def main() -> None:
         ok = doctor(False, args.scope, args.repo_path, summary=not args.json, profile_path=args.profile)
         if args.strict and not ok: raise SystemExit(2)
         return
-    if args.command=="status": status(args.scope,args.mode,args.repo_path,summary=not args.json,profile_path=args.profile); return
+    if args.command=="status": status(args.scope,args.mode,args.repo_path,summary=not args.json,profile_path=args.profile,quick=args.quick); return
     if args.command=="inventory":
         print(json.dumps(inventory(args.scope,args.mode,args.repo_path),ensure_ascii=False,indent=2)); return
     if args.command=="recover":

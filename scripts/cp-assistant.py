@@ -33,7 +33,7 @@ def print_help() -> None:
     print("Commands: help, install-base, status, doctor, verify, inventory,")
     print("          install-enhancement, recover, resume")
     print("help and install-base do not require the enhancement runtime.")
-    print("status, doctor, inventory and resume support --json; verify does not.")
+    print("status, doctor, inventory and resume support --json; status also supports --quick.")
     print("recover and install commands write managed installation state.")
     print("Use --help after a command for its options.")
 
@@ -67,18 +67,25 @@ def _line(value) -> str:
 def _render(data: dict) -> None:
     view = data.get("ux") if isinstance(data.get("ux"), dict) else data
     print("状态： " + _line(view.get("overall", "UNKNOWN")))
+    if data.get("query_tier"):
+        print("查询层级： " + _line(data["query_tier"]))
+    if data.get("current_check"):
+        print("当前完整检查： " + _line(data["current_check"]))
     if view.get("available"):
         print(_line(view["available"]))
     affected = view.get("affected") or []
     if affected:
         print("受影响： " + _line(", ".join(map(str, affected))))
-    causes = view.get("cause") or []
+    causes = view.get("cause") or data.get("causes") or []
     if causes:
         print("原因： " + _line("; ".join(str(item.get("detail", "")) for item in causes[:3])))
     action = view.get("next_action_detail") or {}
     next_action = action.get("display_command") or action.get("expected_result") or data.get("next_action")
     if next_action:
         print("下一步： " + _line(next_action))
+    not_evaluated = data.get("not_evaluated") or []
+    if not_evaluated:
+        print("未检查： " + _line(", ".join(map(str, not_evaluated))))
     if "items" in data:
         print("受管条目： " + str(len(data["items"])))
     print("完整记录：使用 --json")

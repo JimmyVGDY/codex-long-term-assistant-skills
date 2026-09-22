@@ -14,7 +14,7 @@ function Write-CpAssistantHelp {
     Write-Output "Codex Cross Project Assistant daily entry"
     Write-Output "Usage: cp-assistant.ps1 <command> [options]"
     Write-Output "Commands: help, install-base, status, doctor, verify, inventory,"
-    Write-Output "          install-enhancement, recover, resume"
+    Write-Output "          install-enhancement, recover, resume (status supports --quick)"
     Write-Output "help and install-base do not require Python. Management commands require Python 3.11+."
 }
 

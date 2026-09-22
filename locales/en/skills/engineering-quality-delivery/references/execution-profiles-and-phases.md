@@ -13,6 +13,7 @@
 - Escalate when real data, irreversible change, public contracts, cross-service scope, authorization, or high-resource risk appears.
 - Once in `STRICT`, do not deescalate automatically to save time. Record reason, explicit authorization, and retained risk.
 - Availability of multi-agent or long-term-memory features does not require them for every task.
+- Record current activation per phase. Four skills used sequentially do not imply four simultaneous skills; explain a necessary exception above the default combination rather than merely raising its count limit.
 
 ## 2. Phase State Machine
 

@@ -9,7 +9,7 @@ case "$command" in
   help|--help|-h)
     printf '%s\n' 'Codex Cross Project Assistant daily entry' \
       'Usage: cp-assistant.sh <command> [options]' \
-      'Commands: help, install-base, status, doctor, verify, inventory, install-enhancement, recover, resume' \
+      'Commands: help, install-base, status, doctor, verify, inventory, install-enhancement, recover, resume (status supports --quick)' \
       'help and install-base do not require Python. Management commands require Python 3.11+.'
     exit 0
     ;;

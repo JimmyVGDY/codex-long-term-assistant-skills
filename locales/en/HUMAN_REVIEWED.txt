@@ -382,3 +382,8 @@ docs/releases/v7.11.1/AUDIT_REPORT.md
 docs/releases/v7.11.2/RELEASE_NOTES.md
 docs/releases/v7.11.2/VALIDATION_REPORT.md
 docs/releases/v7.11.2/AUDIT_REPORT.md
+
+# V7.12.0 translations compared by the implementing agent; not human attestation.
+docs/releases/v7.12.0/RELEASE_NOTES.md
+docs/releases/v7.12.0/VALIDATION_REPORT.md
+docs/releases/v7.12.0/AUDIT_REPORT.md

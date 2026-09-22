@@ -1,6 +1,6 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.11.2",
-  "description": "Cross-project engineering assistant V7.11.2: score evidence and budgets from Luna to select among ten independent Reviewer combinations.",
+  "version": "7.12.0",
+  "description": "Cross-project engineering assistant V7.12.0: reliability, executed-test evidence, and day-to-day diagnostics improvements.",
   "skills": "./skills/"
 }

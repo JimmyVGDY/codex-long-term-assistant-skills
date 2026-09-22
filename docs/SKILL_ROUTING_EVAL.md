@@ -16,6 +16,16 @@
 - `forbidden`：当前请求不应激活；
 - `max_active`：最大活动 Skill 数量。
 
+当前用例集包含受控演进的跨任务收益、成本校准和提案正例，以及普通修复、独立复审、长期任务的反例。实际数量由用例文件读取。
+
+## 分阶段观察与例外
+
+`phases` 是 schema 1 的可选扩展：每个阶段有独立 `id`、`required/optional/forbidden` 和 `max_active`。观察中的 `phases` 逐阶段记录 `activated` 与 `exception_reason`；顶层 `activated` 是阶段并集，不代表这些能力同时加载。缺失阶段、重复阶段、阶段并集不一致或违反阶段边界均不通过。
+
+同阶段超过三个能力须给出非空必要性说明，且仍不得超过该阶段上限或激活 forbidden。无 phases 的旧用例继续解析；若实际激活超过三个，同样须在观察的 `exception_reason` 说明原因。提高 `max_active` 本身不构成豁免。
+
+真实宿主观察仍使用 schema 2。原始最终报告除现有标记外，分阶段观察包含一行 `PHASE_OBSERVATIONS=<JSON数组>`；非分阶段的超额说明使用 `ACTIVATION_EXCEPTION_REASON=<单行说明>`。评分器核对报告字节摘要和这些字段，禁止事后手工补理由。它验证的是宿主最终报告，不是独立路由 trace。
+
 ## 执行
 
 ```bash

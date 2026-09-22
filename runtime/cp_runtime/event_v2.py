@@ -197,6 +197,27 @@ def project_id_for(repo_fingerprint: str, cwd: str = "") -> str:
     return (slug[:48] + "-" + suffix)[:128]
 
 
+def project_identity_for(cwd: str = "") -> Tuple[str, str]:
+    """中文：单次解析仓库身份，结果保持兼容且不缓存或省略历史校验。
+
+    English: Resolve a stable repository fingerprint and project id from one source read.
+
+    The returned values intentionally match stable_repo_fingerprint() and
+    project_id_for() for the same cwd.  It is a convenience for one hook/event
+    preparation, not a cache: each caller still resolves current repository
+    identity and append_event still verifies the complete stored history.
+    """
+    explicit = os.environ.get("CP_PROJECT_ID", "").strip()
+    root, remote = _repo_identity_source(cwd)
+    fingerprint = repo_fingerprint_for_identity(str(root), remote)
+    if explicit and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", explicit):
+        return fingerprint, explicit
+    source = remote or str(root)
+    suffix = sha256_hex(source)[:10]
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", root.name).strip("-._") or "project"
+    return fingerprint, (slug[:48] + "-" + suffix)[:128]
+
+
 def _validate_identity_and_terminal(payload: Mapping[str, Any]) -> Tuple[str, str, str]:
     event_type = _text(payload.get("event_type")).upper()
     if event_type not in EVENT_TYPES:

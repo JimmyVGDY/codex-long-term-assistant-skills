@@ -12,6 +12,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.12.0 | [Notes](v7.12.0/RELEASE_NOTES.md) | [Audit](v7.12.0/AUDIT_REPORT.md) | [Validation](v7.12.0/VALIDATION_REPORT.md) | 候选：F06 定向证据与 F04 本机采样已记录；F01/F02/F03、整包验证、远端矩阵、账户安装和公开发布待完成 | [JSON](v7.12.0/BUILD_INFO.json) | [JSON](v7.12.0/PACKAGE_VALIDATION.json) |
 | 7.11.2 | [Notes](v7.11.2/RELEASE_NOTES.md) | [Audit](v7.11.2/AUDIT_REPORT.md) | [Validation](v7.11.2/VALIDATION_REPORT.md) | Codex CLI 0.155.1 官方制品、源码合同、Windows 隔离单元与 563 package + 231 runtime 包级验证通过；远端矩阵、账户安装和公开发布分列读回 | [JSON](v7.11.2/BUILD_INFO.json) | [JSON](v7.11.2/PACKAGE_VALIDATION.json) |
 | 7.8.1 | [Notes](v7.8.1/RELEASE_NOTES.md) | [Audit](v7.8.1/AUDIT_REPORT.md) | [Validation](v7.8.1/VALIDATION_REPORT.md) | 修复 AGENTS 受管区块 inventory 哈希误报；423 package + 205 runtime 本地候选通过 | [JSON](v7.8.1/BUILD_INFO.json) | [JSON](v7.8.1/PACKAGE_VALIDATION.json) |
 | 7.8.0 | [Notes](v7.8.0/RELEASE_NOTES.md) | [Audit](v7.8.0/AUDIT_REPORT.md) | [Validation](v7.8.0/VALIDATION_REPORT.md) | 合入 Codex 0.154.0 兼容修复并修正 Windows 路径别名后，422 package + 205 runtime 本地候选通过；公开发布、匿名下载和账户生效分列读回 | [JSON](v7.8.0/BUILD_INFO.json) | [JSON](v7.8.0/PACKAGE_VALIDATION.json) |

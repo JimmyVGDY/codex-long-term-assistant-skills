@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "version": "7.12.0",
+  "ok": true,
+  "scope": "Local integrated working-tree candidate; package-only execution evidence. Public release and native/account acceptance are separate.",
+  "source_head": "6641ed24626925b3445a88014621ed530f8c2ee8",
+  "source_is_uncommitted_candidate": true,
+  "full_package_validation": {
+    "ok": true,
+    "evidence_scope": "package-only",
+    "suites": {
+      "package": {
+        "executed": 617,
+        "outcomes": {
+          "PASS": 616,
+          "SKIPPED": 1
+        }
+      },
+      "runtime": {
+        "executed": 231,
+        "outcomes": {
+          "PASS": 231
+        }
+      }
+    },
+    "python": "3.12.14",
+    "executed_report_sha256": "d8a0278d3f7972d1bf04e09b48872314ec5fb38f49bb395877028c8cf82fcfa4"
+  },
+  "required_capability_groups": 19,
+  "feature_mapping_followup": {
+    "status": "PASS",
+    "focused_tests": 9,
+    "method": "Reproject unchanged executed test IDs, then run focused evidence tests; not a second full-suite execution."
+  },
+  "local_feature_evidence": {
+    "F01": {
+      "targeted_tests": 50,
+      "stress_repetitions": 16,
+      "status": "PASS"
+    },
+    "F03": {
+      "history_validation": "PRESERVED",
+      "identity_reads_per_execution": 1,
+      "scale_samples": {
+        "100": 20,
+        "1000": 20,
+        "10000": 20
+      },
+      "complexity_improvement_claimed": false
+    },
+    "F04": {
+      "targeted_tests": 50,
+      "installed_current_pairs": 20,
+      "installed_current_median_ms": {
+        "full": 2924.6905,
+        "quick": 110.248
+      },
+      "installed_current_p95_ms": {
+        "full": 3521.541,
+        "quick": 115.587
+      },
+      "local_reduction_percent": 96.23,
+      "scope": "same-account concurrent native sampling; quick is not full validation or authorization"
+    },
+    "F05": {
+      "passed_cases": 52,
+      "native_host_cases": 16,
+      "native_host_status": "FIRST_COHORT_FAILED_CONTRACT_FIXED_COHORT_PENDING",
+      "first_cohort": {
+        "PASS": 8,
+        "FAILED": 8,
+        "missing": 0
+      }
+    },
+    "F02": {
+      "simple": {
+        "baseline_pass": 5,
+        "candidate_pass": 5,
+        "tool_median": {
+          "baseline": 6,
+          "candidate": 5,
+          "change_percent": -16.7
+        },
+        "duration_median_seconds": {
+          "baseline": 98.657,
+          "candidate": 101.468
+        },
+        "twenty_percent_suggestion_met": false,
+        "acceleration_shown": false
+      },
+      "ordinary": {
+        "baseline": {
+          "PASS": 3,
+          "UNKNOWN_TIMEOUT": 2,
+          "successful_tool_counts": [
+            8,
+            13,
+            11
+          ]
+        },
+        "candidate": {
+          "PASS": 5,
+          "successful_tool_counts": [
+            7,
+            13,
+            10,
+            7,
+            7
+          ]
+        }
+      },
+      "resume": {
+        "initial_environment": {
+          "baseline_pass": 0,
+          "candidate_pass": 0,
+          "samples_each": 5,
+          "reason": "external synthetic context denied; retained separately"
+        },
+        "readable_workspace": {
+          "baseline_pass": 5,
+          "candidate_pass": 4,
+          "candidate_failed": 1,
+          "samples_each": 5
+        },
+        "causal_attribution": "NOT_ESTABLISHED"
+      },
+      "delivery_decision": "RETAIN_ORIGINAL_LIGHT_RULES"
+    }
+  },
+  "local_installation_readback": {
+    "status": "PASS",
+    "payload_count": 245,
+    "records": [
+      "installed",
+      "enabled",
+      "compatible"
+    ],
+    "payload_digest": "b8c7d0c24f1a044a58f25c3324143e51ec5e634e9857c6f571dbef87e6f77450",
+    "backup_exists": true,
+    "report_sha256": "0f6bbd2acd300198780f0e2d241c7d07f540590fe4319ed302cbbfece66c7f6b",
+    "fresh_final_payload_task_acceptance": "PENDING"
+  },
+  "public_release_created": false,
+  "native_benchmark": "COMPLETE_LIGHT_SHORTCUT_WITHHELD",
+  "artifact_rebuild_after_documentation_update": "PENDING",
+  "note": "This record captures pre-publication evidence. Final commit CI, rebuilt artifact provenance, public release and installation readbacks outside this local host must be verified independently.",
+  "local_account_installation": "FINAL_PAYLOAD_READBACK_PASS",
+  "post_rollback_targeted_validation": {
+    "routing_tests": 20,
+    "status": "PASS"
+  },
+  "full_run_scope": "Integrated measurement candidate before LIGHT rollback; final commit needs its own CI."
+}

@@ -14,7 +14,7 @@ function Write-CpAssistantHelp {
     Write-Output "Codex 跨项目助手日常入口"
     Write-Output "Usage: cp-assistant.ps1 <command> [options]"
     Write-Output "Commands: help, install-base, status, doctor, verify, inventory,"
-    Write-Output "          install-enhancement, recover, resume"
+    Write-Output "          install-enhancement, recover, resume (status supports --quick)"
     Write-Output "help 与 install-base 无需 Python；管理命令需要 Python 3.11+。"
 }
 

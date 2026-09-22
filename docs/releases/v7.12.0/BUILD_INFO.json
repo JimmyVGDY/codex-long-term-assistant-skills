@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "version": "7.12.0",
+  "build_kind": "local-candidate",
+  "supported_locales": [
+    "zh-CN",
+    "en"
+  ],
+  "python_minimum": "3.11",
+  "ci_python_versions": [
+    "3.11",
+    "3.13"
+  ],
+  "codex_anchor": "0.155.1",
+  "stable_release_window_size": 11,
+  "execution_authorization": "NONE",
+  "package_validation_is_host_acceptance": false,
+  "validation_status": "LOCAL_EVIDENCE_COMPLETE_PENDING_FINAL_HOST_AND_REMOTE_CI",
+  "payload_manifest_status": "PASS",
+  "public_release_created": false,
+  "payload_digest": "b8c7d0c24f1a044a58f25c3324143e51ec5e634e9857c6f571dbef87e6f77450"
+}

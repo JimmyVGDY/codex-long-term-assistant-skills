@@ -1,6 +1,6 @@
 {
-  "release_name": "Review scoring fix and Codex stable compatibility",
-  "generated_for": "Codex CLI 0.154.0 Plugin-first engineering assistance with ten registered Reviewer combinations, Luna-based evidence scoring, versioned budgets, and explicit native dispatch references",
+  "release_name": "Reliability, validation evidence, and day-to-day diagnostics improvements",
+  "generated_for": "Codex CLI 0.155.1 Plugin-first engineering assistance with phase-aware SessionEnd fallback, executed-test validation evidence, governance routing regression coverage, and explicit quick-status diagnostics",
   "skills": {
     "backend-engineering": {
       "display_name": "General Backend Engineering",

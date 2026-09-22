@@ -2,7 +2,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-V7.11.2 advances the frozen compatibility window to official stable Codex CLI 0.155.1 while retaining the ten independent Reviewer combinations and the separation between base installation and optional enhancement. Read public delivery status back from GitHub Releases and workflows.
+V7.12.0 advances the frozen compatibility window to official stable Codex CLI 0.155.1 while retaining the ten independent Reviewer combinations and the separation between base installation and optional enhancement. Read public delivery status back from GitHub Releases and workflows.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -23,7 +23,7 @@ V7.11.2 advances the frozen compatibility window to official stable Codex CLI 0.
   <img alt="Codex CLI 0.155.1" src="https://img.shields.io/badge/Codex%20CLI-0.155.1-111827">
 </p>
 
-V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.11.2 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
+V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.12.0 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Four daily paths](#four-daily-paths-and-the-unified-entry) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -50,7 +50,7 @@ The extracted source tree and release ZIPs provide the same `cp-assistant` entry
 .\scripts\cp-assistant.ps1 recover --scope user
 ```
 
-`status`, `doctor`, `inventory`, and `resume` are read-only. `install-base`, `install-enhancement`, and `recover` are write operations. `resume` accepts a bound Profile/State/Evidence set or an explicitly supplied legacy Markdown checkpoint directory. It reports the stage, checkpoint, repository changes, evidence needing revalidation, and one next action; it does not create a Profile, repair checkpoints, or continue a task. Add `--json` for the machine-readable view.
+`status`, `doctor`, `inventory`, and `resume` are read-only. `install-base`, `install-enhancement`, and `recover` are write operations. `resume` accepts a bound Profile/State/Evidence set or an explicitly supplied legacy Markdown checkpoint directory. It reports the stage, checkpoint, repository changes, evidence needing revalidation, and one next action; it does not create a Profile, repair checkpoints, or continue a task. Default `status` retains the complete check; use the lower-cost diagnostic view only when explicitly requesting `status --quick`. Add `--json` for the machine-readable view.
 
 On POSIX, replace the path with `./scripts/cp-assistant.sh`. See the [user guide](docs/USER_GUIDE.md) for the four paths.
 
@@ -82,12 +82,12 @@ Use the existing enhanced installer only when the task needs recoverable long-ru
 
 ## Downloads
 
-The links below target V7.11.2 tag artifacts. They may be unavailable before the tag workflow completes; read formal status back from GitHub Releases.
+The links below target V7.12.0 tag artifacts. They may be unavailable before the tag workflow completes; read formal status back from GitHub Releases.
 
 | Distribution | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V7.11.2-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.11.2/Codex-Skills-V7.11.2-zh-CN.zip) |
-| `Codex-Skills-V7.11.2-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.11.2/Codex-Skills-V7.11.2-en.zip) |
+| `Codex-Skills-V7.12.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.12.0/Codex-Skills-V7.12.0-zh-CN.zip) |
+| `Codex-Skills-V7.12.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.12.0/Codex-Skills-V7.12.0-en.zip) |
 
 [Open the latest Release, checksums, and build witnesses](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -161,7 +161,7 @@ Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not 
 
 The base installation does not require the package Python runtime; the enhancement runtime requires Python 3.11 or later; public CI is configured to validate both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
 
-The V7.11.2 window is `0.155.1`, `0.155.0`, `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, and `0.151.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
+The V7.12.0 window is `0.155.1`, `0.155.0`, `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, and `0.151.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
 ## First install and upgrade
 
@@ -200,7 +200,7 @@ Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration
 - [Contributing guide](.github/CONTRIBUTING.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.md) · [V7.11.2 release notes](docs/releases/v7.11.2/RELEASE_NOTES.md)
+- [Changelog](CHANGELOG.md) · [V7.12.0 release notes](docs/releases/v7.12.0/RELEASE_NOTES.md)
 
 ## Local validation
 
@@ -216,7 +216,7 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. An authorized public Release is created and read back separately.
 
 ```shell
-gh attestation verify Codex-Skills-V7.11.2-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.12.0-en.zip --repo OWNER/REPOSITORY
 ```
 
 See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.md) for the complete gates and new-version procedure.

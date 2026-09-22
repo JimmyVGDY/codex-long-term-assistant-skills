@@ -16,6 +16,16 @@ Each case contains:
 - `forbidden`: must not activate for the current request;
 - `max_active`: maximum active Skill count.
 
+The current cases include positive cross-task value, cost-calibration and proposal-governance scenarios, plus negative ordinary repair, independent-review and long-task cases. Counts come from the case file.
+
+## Phase Observations and Exceptions
+
+`phases` is an optional schema-1 extension. Each phase defines its own `id`, `required/optional/forbidden` and `max_active`. Observations record per-phase `activated` and `exception_reason`; top-level `activated` is their union, not simultaneous loading. Missing/duplicate phases, inconsistent unions and phase-contract violations cannot pass.
+
+More than three capabilities in one phase needs a non-empty justification while respecting that phase's maximum and forbidden set. Legacy unphased cases remain readable; an observation activating more than three also needs `exception_reason`. Raising `max_active` alone is not an exemption.
+
+Real-host observations remain schema 2. In addition to existing markers, phased final reports include one `PHASE_OBSERVATIONS=<JSON array>` line; an unphased excess uses `ACTIVATION_EXCEPTION_REASON=<single-line reason>`. The evaluator binds these fields to report bytes and their digest, preventing a justification from being added after capture. This validates host final reports, not an independent routing trace.
+
 ## Execution
 
 ```bash
