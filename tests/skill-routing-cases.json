@@ -740,7 +740,7 @@
     },
     {
       "id": "phased-long-task-review",
-      "prompt": "一个跨天 Python 后端改造正在从实施转到独立复审。分别说明实施阶段和复审阶段需要的工程能力，只读取当前任务资料，不实际改代码；如果某阶段需要超过三个能力，说明必要性。",
+      "prompt": "这个跨天的 Python 后端改造已完成实施，当前进入独立复审。复审会逐项判断 Python 业务规则、异常和并发状态是否正确，并核对已有测试证据。请分别说明实施和复审阶段各自承担这些工作的完整工程能力，包含此前已载入且该阶段仍然采用的能力；只读取当前任务资料，不实际改代码。若某阶段超过三个能力，说明必要性。",
       "required": ["backend-engineering", "engineering-quality-delivery", "long-running-task-memory", "multi-agent-independent-review"],
       "optional": [],
       "forbidden": ["controlled-evolution-governance"],
