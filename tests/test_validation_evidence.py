@@ -64,8 +64,46 @@ class ValidationEvidenceTests(unittest.TestCase):
             self.assertEqual("FAIL", row["status"])
             self.assertIn("SUBTEST_FAILURE", row["reason_codes"])
             self.assertIn("ERROR", row["reason_codes"])
+            self.assertEqual(["RuntimeError"], report["test_cases"][0]["error_class_codes"])
             self.assertNotIn("SECRET_TEST_BODY", json.dumps(report))
             self.assertNotIn("SECRET_ERROR_BODY", json.dumps(report))
+        finally:
+            temporary.cleanup()
+
+    def test_error_class_codes_do_not_expose_custom_exception_names_or_messages(self) -> None:
+        report, _, temporary = self._collect(
+            "import unittest\nclass SECRET_CUSTOM_EXCEPTION_NAME(Exception): pass\nclass Probe(unittest.TestCase):\n def test_case(self): raise SECRET_CUSTOM_EXCEPTION_NAME('SECRET_CUSTOM_EXCEPTION_BODY')\n"
+        )
+        try:
+            self.assertEqual(["UNCLASSIFIED_EXCEPTION"], report["test_cases"][0]["error_class_codes"])
+            serialized = json.dumps(report)
+            self.assertNotIn("SECRET_CUSTOM_EXCEPTION_NAME", serialized)
+            self.assertNotIn("SECRET_CUSTOM_EXCEPTION_BODY", serialized)
+        finally:
+            temporary.cleanup()
+
+    def test_error_class_codes_are_optional_for_legacy_reports_and_allowlisted_when_present(self) -> None:
+        report, test_id, temporary = self._collect(
+            "import unittest\nclass Probe(unittest.TestCase):\n def test_case(self): raise RuntimeError('SECRET_LEGACY_BODY')\n"
+        )
+        try:
+            legacy = dict(report)
+            legacy["test_cases"] = [{key: value for key, value in report["test_cases"][0].items() if key != "error_class_codes"}]
+            legacy["report_sha256"] = validation_evidence._with_digest(
+                {key: value for key, value in legacy.items() if key != "report_sha256"}
+            )["report_sha256"]
+            self.assertEqual(legacy, validation_evidence.validate_evidence_report(legacy))
+            row = validation_evidence.evaluate_capabilities((legacy,), {"probe": (test_id,)})["probe"]
+            self.assertEqual("FAIL", row["status"])
+
+            for codes in (["SECRET_CUSTOM_EXCEPTION_NAME"], [{}], [[]], [123], ["RuntimeError", "RuntimeError"]):
+                malformed = dict(report)
+                malformed["test_cases"] = [dict(report["test_cases"][0], error_class_codes=codes)]
+                malformed["report_sha256"] = validation_evidence._with_digest(
+                    {key: value for key, value in malformed.items() if key != "report_sha256"}
+                )["report_sha256"]
+                with self.assertRaisesRegex(validation_evidence.EvidenceError, "error class codes invalid"):
+                    validation_evidence.validate_evidence_report(malformed)
         finally:
             temporary.cleanup()
 

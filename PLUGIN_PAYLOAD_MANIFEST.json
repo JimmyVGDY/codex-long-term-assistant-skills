@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 245,
-  "payload_digest": "b8c7d0c24f1a044a58f25c3324143e51ec5e634e9857c6f571dbef87e6f77450",
+  "payload_digest": "be78741f82a310e5af03eeb1095799aff18be697c12c06c9d51f0ffa3e2ed0cb",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -563,8 +563,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/SKILL.md",
-      "sha256": "4f93dc9b35d6677df74844855b661a93684a24df7a3bc9d36f7c4216f7e473de",
-      "size": 3568
+      "sha256": "11a122ad51609f600267a292cb9b945dc9295c382ed199b686e6d12a1f7699ef",
+      "size": 4111
     },
     {
       "path": "skills/multi-agent-independent-review/agents/openai.yaml",

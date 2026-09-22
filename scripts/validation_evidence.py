@@ -3,8 +3,8 @@
 
 English: Collect concise, integrity-bound unittest evidence for package validation.
 
-中文：报告只保留测试标识与结果类别，不保存断言正文、回溯、标准输出、标准错误或子测试参数。
-English: The report keeps identifiers and outcome classes only; it never stores assertion text, tracebacks, stdout, stderr, or subtest parameters.
+中文：报告只保留测试标识、结果类别和固定白名单中的异常类别代码，不保存断言正文、回溯、标准输出、标准错误或子测试参数。
+English: The report keeps identifiers, outcome classes, and fixed-allowlist exception-class codes only; it never stores assertion text, tracebacks, stdout, stderr, or subtest parameters.
 """
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import platform
+import subprocess
 import sys
 import unittest
 from collections import Counter, defaultdict
@@ -24,6 +25,10 @@ SCHEMA_VERSION = "validation-evidence/1"
 SUCCESS = "PASS"
 NON_PASSING = {"FAILURE", "ERROR", "SUBTEST_FAILURE", "UNEXPECTED_SUCCESS"}
 OUTCOME_STATUSES = NON_PASSING | {SUCCESS, "SKIPPED", "EXPECTED_FAILURE", "NOT_REPORTED"}
+ERROR_CLASS_CODES = frozenset({
+    "TimeoutExpired", "IntegrityError", "PermissionError", "FileNotFoundError",
+    "OSError", "CalledProcessError", "RuntimeError", "UNCLASSIFIED_EXCEPTION",
+})
 
 # 中文：每项都是可执行 unittest 标识，而不是文件级代理；选中用例覆盖能力名称所指的性质。
 # English: Each item is an executable unittest identifier, rather than a file-level proxy. The selected cases exercise the property named by the capability.
@@ -172,6 +177,30 @@ def _skip_code(reason: str) -> str:
     return "SKIPPED"
 
 
+def _error_class_code(err: Any) -> str:
+    """中文：仅返回固定诊断码，不保留异常控制的文本或类名。
+
+    English: Return a fixed diagnostic code without retaining exception-controlled text or names.
+    """
+    error = err[1] if isinstance(err, tuple) and len(err) > 1 and isinstance(err[1], BaseException) else None
+    if isinstance(error, subprocess.TimeoutExpired):
+        return "TimeoutExpired"
+    if isinstance(error, subprocess.CalledProcessError):
+        return "CalledProcessError"
+    if isinstance(error, PermissionError):
+        return "PermissionError"
+    if isinstance(error, FileNotFoundError):
+        return "FileNotFoundError"
+    if isinstance(error, OSError):
+        return "OSError"
+    error_type = type(error)
+    if error_type.__module__ == "cp_runtime.integrity" and error_type.__qualname__ == "IntegrityError":
+        return "IntegrityError"
+    if isinstance(error, RuntimeError):
+        return "RuntimeError"
+    return "UNCLASSIFIED_EXCEPTION"
+
+
 class _RecordingResult(unittest.TestResult):
     def __init__(self) -> None:
         super().__init__()
@@ -191,7 +220,7 @@ class _RecordingResult(unittest.TestResult):
 
     def addError(self, test: unittest.TestCase, err: Any) -> None:  # noqa: N802
         super().addError(test, err)
-        self._record(test, "ERROR")
+        self._record(test, "ERROR", error_class_code=_error_class_code(err))
 
     def addSkip(self, test: unittest.TestCase, reason: str) -> None:  # noqa: N802
         super().addSkip(test, reason)
@@ -243,6 +272,9 @@ def collect_unittest(start_dir: Path, pattern: str = "test_*.py", suite_name: st
         skip_codes = sorted({item["skip_reason_code"] for item in outcomes if "skip_reason_code" in item})
         if skip_codes:
             entry["skip_reason_codes"] = skip_codes
+        error_class_codes = sorted({item["error_class_code"] for item in outcomes if "error_class_code" in item})
+        if error_class_codes:
+            entry["error_class_codes"] = error_class_codes
         cases.append(entry)
     counts = Counter(status for item in cases for status in item["statuses"])
     report = {
@@ -293,6 +325,13 @@ def validate_evidence_report(value: Mapping[str, Any]) -> dict[str, Any]:
             raise EvidenceError("validation evidence test outcomes invalid")
         if any(status not in OUTCOME_STATUSES for status in item["statuses"]):
             raise EvidenceError("validation evidence outcome status invalid")
+        error_class_codes = item.get("error_class_codes")
+        if error_class_codes is not None:
+            if ("ERROR" not in item["statuses"] or not isinstance(error_class_codes, list)
+                    or not error_class_codes
+                    or any(not isinstance(code, str) or code not in ERROR_CLASS_CODES for code in error_class_codes)
+                    or error_class_codes != sorted(set(error_class_codes))):
+                raise EvidenceError("validation evidence error class codes invalid")
         actual_counts.update(item["statuses"])
     if dict(sorted(actual_counts.items())) != report["outcome_counts"]:
         raise EvidenceError("validation evidence outcome counts mismatch")

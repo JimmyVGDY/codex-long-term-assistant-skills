@@ -831,6 +831,12 @@
       ]
     },
     "scripts/verify-release.py": {
+      "plain": {
+        "派发策略门禁 V3 case_count 无效": "Invalid V3 dispatch-policy case_count",
+        "派发策略门禁 privacy 无效": "Invalid dispatch-policy privacy declaration",
+        "派发策略门禁报告 schema 不受支持": "Unsupported dispatch-policy report schema",
+        "派发策略门禁 V3 报告范围或契约无效": "Invalid V3 dispatch-policy scope or contract"
+      },
       "preserve": [
         "V7.12.0 端到端发行验证",
         "%s 证据必须为 JSON 对象",
