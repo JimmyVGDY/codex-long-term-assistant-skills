@@ -30,6 +30,9 @@ VERSION = "7.12.0"
 TARGET_CODEX_VERSION = "0.155.1"
 COMPATIBILITY_REGISTRY_DIGEST = "0311182b7231e979f98a2ebee49ba4838ba794f5541e208afc5e7a66f920fbbd"
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
+LEGACY_DISPATCH_POLICY_SCHEMA_VERSION = "2.0"
+DISPATCH_POLICY_SCHEMA_VERSION = "3.0"
+SYNTHETIC_POLICY_EVIDENCE_SCOPE = "synthetic-policy-only"
 
 
 class AttestationError(RuntimeError):
@@ -74,27 +77,57 @@ def _plugin_item(plugin_list: Mapping[str, Any]) -> Dict[str, Any]:
     raise AttestationError("target Plugin was not found in Codex readback")
 
 
-def _dispatch_policy_valid(report: Mapping[str, Any]) -> bool:
-    if report.get("ok") is not True or report.get("schema_version") != "2.0" \
+def _dispatch_policy_details(report: Mapping[str, Any]) -> Dict[str, Any]:
+    schema_version = report.get("schema_version")
+    if schema_version == LEGACY_DISPATCH_POLICY_SCHEMA_VERSION:
+        evidence_scope = "legacy-schema-v2-unscoped"
+    elif schema_version == DISPATCH_POLICY_SCHEMA_VERSION:
+        required_fields = {
+            "ok", "schema_version", "evidence_scope", "dispatch_policy_status",
+            "automatic_ceiling_profile", "registered_reviewer_ceiling_profile",
+            "selection_scoring", "case_count", "cases", "privacy",
+        }
+        if set(report) != required_fields \
+                or report.get("evidence_scope") != SYNTHETIC_POLICY_EVIDENCE_SCOPE \
+                or report.get("registered_reviewer_ceiling_profile") != "astra-high" \
+                or not isinstance(report.get("selection_scoring"), str) \
+                or not report["selection_scoring"]:
+            raise AttestationError("dispatch-policy V3 scope or contract is invalid")
+        evidence_scope = SYNTHETIC_POLICY_EVIDENCE_SCOPE
+    else:
+        raise AttestationError("dispatch-policy report schema is unsupported")
+    if report.get("ok") is not True \
             or report.get("dispatch_policy_status") != "PASS" \
             or report.get("automatic_ceiling_profile") != "terra-high":
-        return False
+        raise AttestationError("dispatch-policy report is invalid")
     rows = report.get("cases")
     if not isinstance(rows, list) or not rows:
-        return False
+        raise AttestationError("dispatch-policy cases are invalid")
+    if schema_version == DISPATCH_POLICY_SCHEMA_VERSION and (
+            type(report.get("case_count")) is not int
+            or report["case_count"] != len(rows)):
+        raise AttestationError("dispatch-policy V3 case_count is invalid")
     case_ids = set()
     for row in rows:
         if not isinstance(row, dict) or row.get("pass") is not True or row.get("exit_code") != 0:
-            return False
+            raise AttestationError("dispatch-policy case failed")
         case_id = str(row.get("case_id") or "")
         if not case_id or case_id in case_ids or row.get("observed") != row.get("expected"):
-            return False
+            raise AttestationError("dispatch-policy case is invalid")
         if {"model", "reasoning_effort", "actual" + "_model", "runtime" + "_model"}.intersection(row):
-            return False
+            raise AttestationError("dispatch-policy report exposes host model identity")
         case_ids.add(case_id)
-    privacy = report.get("privacy") or {}
-    return privacy.get("host_model_information_collected") is False \
-        and privacy.get("host_model_information_exported") is False
+    privacy = report.get("privacy")
+    if not isinstance(privacy, Mapping) \
+            or privacy.get("host_model_information_collected") is not False \
+            or privacy.get("host_model_information_exported") is not False:
+        raise AttestationError("dispatch-policy privacy declaration is invalid")
+    return {
+        "schema_version": schema_version,
+        "evidence_scope": evidence_scope,
+        "automatic_ceiling_profile": "terra-high",
+        "required_cases": len(rows),
+    }
 
 
 def _codex_version(version_evidence: Path | None = None) -> str:
@@ -153,9 +186,9 @@ def create_attestation(
         raise AttestationError("lifecycle evidence does not contain the complete required sequence")
     if not lifecycle.get("project_id") or not lifecycle.get("repo_fingerprint"):
         raise AttestationError("lifecycle evidence lacks project/repository binding")
-    if unified.get("status", {}).get("dispatch_policy") != "PASS" \
-            or not _dispatch_policy_valid(dispatch_policy):
-        raise AttestationError("installed PreToolUse dispatch-policy evidence is not valid")
+    if unified.get("status", {}).get("dispatch_policy") != "PASS":
+        raise AttestationError("dispatch-policy evidence is not valid")
+    dispatch_policy_details = _dispatch_policy_details(dispatch_policy)
     privacy = lifecycle.get("privacy") or {}
     if privacy.get("host_model_information_read") is not False \
             or privacy.get("host_model_information_exported") is not False:
@@ -211,6 +244,7 @@ def create_attestation(
             "plugin_host_end_to_end": "PASS",
             "real_lifecycle": "PASS",
             "dispatch_policy": "PASS",
+            "dispatch_policy_evidence_scope": dispatch_policy_details["evidence_scope"],
             "unified_release_verification": "PASS",
             "payload_identity": "PASS",
             "compatibility_registry_digest": COMPATIBILITY_REGISTRY_DIGEST,

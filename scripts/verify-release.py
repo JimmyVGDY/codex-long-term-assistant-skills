@@ -24,6 +24,9 @@ COMPATIBILITY_REGISTRY_DIGEST = "0311182b7231e979f98a2ebee49ba4838ba794f5541e208
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
+LEGACY_DISPATCH_POLICY_SCHEMA_VERSION = "2.0"
+DISPATCH_POLICY_SCHEMA_VERSION = "3.0"
+SYNTHETIC_POLICY_EVIDENCE_SCOPE = "synthetic-policy-only"
 
 
 class VerificationError(RuntimeError):
@@ -81,9 +84,26 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
 
 
 def _verify_dispatch_policy(report: Mapping[str, Any]) -> Dict[str, Any]:
+    schema_version = report.get("schema_version")
+    if schema_version == LEGACY_DISPATCH_POLICY_SCHEMA_VERSION:
+        evidence_scope = "legacy-schema-v2-unscoped"
+    elif schema_version == DISPATCH_POLICY_SCHEMA_VERSION:
+        required_fields = {
+            "ok", "schema_version", "evidence_scope", "dispatch_policy_status",
+            "automatic_ceiling_profile", "registered_reviewer_ceiling_profile",
+            "selection_scoring", "case_count", "cases", "privacy",
+        }
+        if set(report) != required_fields \
+                or report.get("evidence_scope") != SYNTHETIC_POLICY_EVIDENCE_SCOPE \
+                or report.get("registered_reviewer_ceiling_profile") != "astra-high" \
+                or not isinstance(report.get("selection_scoring"), str) \
+                or not report["selection_scoring"]:
+            raise VerificationError("派发策略门禁 V3 报告范围或契约无效")
+        evidence_scope = SYNTHETIC_POLICY_EVIDENCE_SCOPE
+    else:
+        raise VerificationError("派发策略门禁报告 schema 不受支持")
     if (
         report.get("ok") is not True
-        or report.get("schema_version") != "2.0"
         or report.get("dispatch_policy_status") != "PASS"
         or report.get("automatic_ceiling_profile") != "terra-high"
     ):
@@ -91,6 +111,10 @@ def _verify_dispatch_policy(report: Mapping[str, Any]) -> Dict[str, Any]:
     rows = report.get("cases")
     if not isinstance(rows, list) or not rows:
         raise VerificationError("派发策略门禁 cases 无效")
+    if schema_version == DISPATCH_POLICY_SCHEMA_VERSION and (
+            type(report.get("case_count")) is not int
+            or report["case_count"] != len(rows)):
+        raise VerificationError("派发策略门禁 V3 case_count 无效")
     ids = set()
     for row in rows:
         if not isinstance(row, dict) or row.get("pass") is not True or row.get("exit_code") != 0:
@@ -102,11 +126,18 @@ def _verify_dispatch_policy(report: Mapping[str, Any]) -> Dict[str, Any]:
         prohibited = {"model", "reasoning_effort", "actual" + "_model", "runtime" + "_model"}
         if prohibited.intersection(row):
             raise VerificationError("派发策略证据包含宿主模型身份字段")
-    privacy = report.get("privacy") or {}
+    privacy = report.get("privacy")
+    if not isinstance(privacy, Mapping):
+        raise VerificationError("派发策略门禁 privacy 无效")
     if privacy.get("host_model_information_collected") is not False \
             or privacy.get("host_model_information_exported") is not False:
         raise VerificationError("派发策略报告的模型身份隐私声明无效")
-    return {"automatic_ceiling_profile": "terra-high", "required_cases": len(rows)}
+    return {
+        "schema_version": schema_version,
+        "evidence_scope": evidence_scope,
+        "automatic_ceiling_profile": "terra-high",
+        "required_cases": len(rows),
+    }
 
 
 def verify_release(

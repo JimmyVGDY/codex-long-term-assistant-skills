@@ -645,7 +645,7 @@
     },
     {
       "id": "ai-gpu-worker-boundary",
-      "prompt": "排查多模态 GPU Worker 的 OOM、队列并发、任务取消和失败恢复，不执行生产操作。",
+      "prompt": "排查承载多模态模型推理与生成的 GPU Worker：同时检查推理/生成任务的取消与失败恢复语义，以及 OOM 和队列并发资源问题。不执行生产操作。",
       "required": [
         "ai-engineering",
         "data-middleware-infrastructure"
@@ -724,7 +724,7 @@
     },
     {
       "id": "ordinary-review-not-evolution",
-      "prompt": "对当前已完成的 Python 改动做一次独立只读复审，检查业务行为和测试遗漏，不分析历史任务或调整策略。",
+      "prompt": "当前 Python 业务改动已完成，主实现者的自测仍有未覆盖的异常路径。请由独立 Reviewer 使用单独上下文做一次只读复审，检查业务行为和测试遗漏；不分析历史任务或调整策略。",
       "required": ["multi-agent-independent-review"],
       "optional": ["backend-engineering", "engineering-quality-delivery"],
       "forbidden": ["controlled-evolution-governance"],

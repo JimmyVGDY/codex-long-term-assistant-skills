@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import subprocess
@@ -40,20 +41,11 @@ def run_script(script: Path, arguments: list[str], environment: dict[str, str] |
 
 
 def dispatch_policy_report() -> dict:
-    return {
-        "ok": True,
-        "schema_version": "2.0",
-        "dispatch_policy_status": "PASS",
-        "automatic_ceiling_profile": "terra-high",
-        "cases": [
-            {"case_id": "allow-low", "expected": "allow", "observed": "allow", "exit_code": 0, "pass": True},
-            {"case_id": "deny-high", "expected": "deny", "observed": "deny", "exit_code": 0, "pass": True},
-        ],
-        "privacy": {
-            "host_model_information_collected": False,
-            "host_model_information_exported": False,
-        },
-    }
+    spec = importlib.util.spec_from_file_location("dispatch_policy_v64", ROOT / "scripts" / "dispatch-policy-acceptance.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.evaluate()
 
 
 class V64ReleaseDeliveryTests(unittest.TestCase):
@@ -181,6 +173,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         payload = json.loads(attestation.read_text(encoding="utf-8"))
         self.assertEqual("2.0", payload["schema_version"])
         self.assertEqual("PASS", payload["validation"]["dispatch_policy"])
+        self.assertEqual("synthetic-policy-only", payload["validation"]["dispatch_policy_evidence_scope"])
         serialized = json.dumps(payload, ensure_ascii=False)
         self.assertNotIn("actual_subagent_models", serialized)
         self.assertNotIn("runtime_model", serialized)
@@ -188,6 +181,20 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             ATTEST, ["verify", "--attestation", str(attestation), "--artifact", str(artifact)], environment
         )
         self.assertTrue(json.loads(verified.stdout)["ok"])
+
+    def test_attestation_rejects_tampered_generated_policy_contract(self):
+        module_spec = importlib.util.spec_from_file_location("release_attestation_v64", ATTEST)
+        assert module_spec and module_spec.loader
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        for mutation in (
+            lambda report: report.__setitem__("evidence_scope", "host-dispatch-receipt"),
+            lambda report: report.__setitem__("case_count", float(report["case_count"])),
+        ):
+            report = dispatch_policy_report()
+            mutation(report)
+            with self.assertRaises(module.AttestationError):
+                module._dispatch_policy_details(report)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import copy
 import sys
 import tempfile
 import unittest
@@ -28,8 +29,10 @@ class V64ReleaseTests(unittest.TestCase):
         cls.root = Path(cls.temporary.name)
         cls.builder = load_script("build_release_v65", "build-release.py")
         cls.verifier = load_script("verify_release_v65", "verify-release.py")
+        cls.dispatch_policy = load_script("dispatch_policy_v65", "dispatch-policy-acceptance.py")
         cls.artifact = cls.root / "Codex-Skills-V7.12.0-zh-CN.zip"
         cls.build = cls.builder.build_release(cls.artifact, "zh-CN")
+        cls.generated_dispatch_policy = cls.dispatch_policy.evaluate()
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -49,14 +52,7 @@ class V64ReleaseTests(unittest.TestCase):
                      "privacy": {"host_model_information_read": False,
                                  "host_model_information_exported": False},
                      "event_chain": {"valid": True, "head": "c" * 64}}
-        gate = {"ok": True, "schema_version": "2.0", "dispatch_policy_status": "PASS",
-                "automatic_ceiling_profile": "terra-high", "cases": [
-                    {"case_id": "allow-low", "expected": "allow", "observed": "allow",
-                     "exit_code": 0, "pass": True},
-                    {"case_id": "deny-high", "expected": "deny", "observed": "deny",
-                     "exit_code": 0, "pass": True}],
-                "privacy": {"host_model_information_collected": False,
-                            "host_model_information_exported": False}}
+        gate = copy.deepcopy(self.generated_dispatch_policy)
         host = {"codex_version": "codex-cli 0.155.1", "capability_profile": {"ok": True}}
         report = {key: {"ok": True, "payload_digest": digest} for key in ("source", "marketplace", "cache")}
         return package, witness, plugin, lifecycle, gate, host, report
@@ -81,6 +77,33 @@ class V64ReleaseTests(unittest.TestCase):
         evidence[4]["cases"][0]["observed"] = "deny"
         with self.assertRaises(self.verifier.VerificationError):
             self.verifier.verify_release(self.artifact, *evidence)
+
+    def test_unified_verifier_rejects_tampered_or_incomplete_generated_policy_scope(self) -> None:
+        for mutation in (
+            lambda report: report.__setitem__("evidence_scope", "host-dispatch-receipt"),
+            lambda report: report.pop("evidence_scope"),
+            lambda report: report.__setitem__("case_count", report["case_count"] - 1),
+            lambda report: report.__setitem__("case_count", float(report["case_count"])),
+            lambda report: report.__setitem__("host_dispatch_id", "forged"),
+        ):
+            evidence = list(self.evidence())
+            mutation(evidence[4])
+            with self.assertRaises(self.verifier.VerificationError):
+                self.verifier.verify_release(self.artifact, *evidence)
+
+    def test_unified_verifier_keeps_legacy_v2_dispatch_policy_compatible(self) -> None:
+        evidence = list(self.evidence())
+        evidence[4] = {
+            "ok": True, "schema_version": "2.0", "dispatch_policy_status": "PASS",
+            "automatic_ceiling_profile": "terra-high", "cases": [
+                {"case_id": "allow-low", "expected": "allow", "observed": "allow",
+                 "exit_code": 0, "pass": True},
+            ],
+            "privacy": {"host_model_information_collected": False,
+                        "host_model_information_exported": False},
+        }
+        result = self.verifier.verify_release(self.artifact, *evidence)
+        self.assertEqual("legacy-schema-v2-unscoped", result["evidence"]["dispatch_policy"]["evidence_scope"])
 
     def test_unified_verifier_rejects_tampered_compatibility_registry(self) -> None:
         tampered = self.root / "tampered-compatibility-registry.zip"
