@@ -7,7 +7,10 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 - 候选版新增阶段感知的 SessionEnd 权限兜底、执行结果驱动的验证证据、治理 Skill 正反例与阶段路由回归，以及显式 `status --quick` 诊断入口；默认 `status` 继续执行完整检查。
 - 完整验证报告不再以测试文件名或固定字符串声明能力通过：必需用例缺失、全跳过、失败、错误、subTest 失败、意外成功、超时或损坏报告均保持非 `PASS`。
 - 更新包、Plugin、兼容注册表、双语文档与候选发行材料至 V7.12.0；保持 Codex CLI 0.155.1 锚点和 11 个稳定版窗口。
-- 已记录本地整包与运行时验证、SessionEnd 恢复回归及安装后的快速状态测量。LIGHT 快捷路径经对照后暂不交付，保留原执行规则；最终宿主验收、远端 CI、制品来源证明与公开发布分别读回。
+- 已记录本地整包与运行时验证、SessionEnd 恢复回归及快速状态测量。LIGHT 快捷路径经对照后暂不交付，保留原执行规则；20 对快速状态样本属于旧 payload `948c`，当前 payload 尚未重测。
+- 固定 profile 的宿主路由组合覆盖为 13 个保留原始证据加 3 个定向补充任务，`HOST_FINAL_REPORT` 记录 16 个实际独立任务均通过、无缺失；不把它表述为单一 cohort 通过率或独立 router trace。Windows PowerShell 的 Hook 启动修复使用固定 `cmd.exe /D /V:OFF /S /C` 包装器；受管安装 exit 0，真实原生 Hook 生命周期仍待验收。
+- 安装器只更新 `hooks.json`，保留 `hooks.state` 的可信摘要；新包装器会使当前 10 条受管 Hook 显示为 modified。升级后需在 Codex 正常 `/hooks` 界面审查并信任它们，不使用 bypass；full status 通过不等于已信任或生命周期已通过。
+- 最终宿主生命周期、远端 CI、制品来源证明与公开发布分别读回。
 
 ## 7.11.2 - 2026-09-20
 

@@ -50,6 +50,8 @@
     },
     "F04": {
       "targeted_tests": 50,
+      "measurement_payload": "historical_948c",
+      "current_payload_remeasured": false,
       "installed_current_pairs": 20,
       "installed_current_median_ms": {
         "full": 2924.6905,
@@ -60,16 +62,27 @@
         "quick": 115.587
       },
       "local_reduction_percent": 96.23,
-      "scope": "same-account concurrent native sampling; quick is not full validation or authorization"
+      "scope": "historical same-account concurrent native sampling; quick is not full validation or authorization"
     },
     "F05": {
       "passed_cases": 52,
       "native_host_cases": 16,
-      "native_host_status": "FIRST_COHORT_FAILED_CONTRACT_FIXED_COHORT_PENDING",
-      "first_cohort": {
-        "PASS": 8,
-        "FAILED": 8,
-        "missing": 0
+      "native_host_status": "PASS_COMBINED_COVERAGE_HOST_FINAL_REPORT",
+      "original_cohort": {
+        "PASS": 13,
+        "FAILED": 3,
+        "missing": 0,
+        "failures_retained": true
+      },
+      "combined_coverage": {
+        "composition": "13_original_plus_3_targeted_followups",
+        "actual_independent_tasks": 16,
+        "PASS": 16,
+        "missing": 0,
+        "evidence_scope": "HOST_FINAL_REPORT",
+        "single_cohort_pass_rate_claimed": false,
+        "router_trace_observed": false,
+        "profile_limited": true
       }
     },
     "F02": {
@@ -139,6 +152,25 @@
     "backup_exists": true,
     "report_sha256": "0f6bbd2acd300198780f0e2d241c7d07f540590fe4319ed302cbbfece66c7f6b",
     "fresh_final_payload_task_acceptance": "PENDING"
+  },
+  "windows_hook_fixed_installation": {
+    "status": "INSTALL_EXIT_0_LIFECYCLE_PENDING",
+    "payload_digest": "be78741f82a310e5af03eeb1095799aff18be697c12c06c9d51f0ffa3e2ed0cb",
+    "payload_count_per_root": 245,
+    "matching_roots": [
+      "repo",
+      "marketplace",
+      "cache"
+    ],
+    "supplemental_host_readback": [
+      "installed",
+      "enabled"
+    ],
+    "formal_full_status": "PASS",
+    "hooks_state_trusted_hashes": "PRESERVED_BY_INSTALLER",
+    "managed_hooks_requiring_normal_review_and_trust": 10,
+    "hook_trust_status": "MODIFIED_PENDING_NORMAL_HOOK_REVIEW",
+    "actual_native_hook_lifecycle": "PENDING"
   },
   "public_release_created": false,
   "native_benchmark": "COMPLETE_LIGHT_SHORTCUT_WITHHELD",
