@@ -46,7 +46,30 @@
         "1000": 20,
         "10000": 20
       },
-      "complexity_improvement_claimed": false
+      "complexity_improvement_claimed": false,
+      "controlled_matrix": {
+        "groups": 5,
+        "samples_per_group": 20,
+        "all_valid": true,
+        "failures": 0,
+        "fresh_process_pre_read_comparison": true,
+        "active_boundary": {
+          "records": 1286,
+          "bytes": 1049376
+        },
+        "rollover": {
+          "2MiB_non_rollover_samples": 20,
+          "1MiB_rollover_samples": 20,
+          "complete_verification": true
+        },
+        "concurrent_append": {
+          "fixtures": 20,
+          "threads_per_fixture": 4,
+          "appends": 80,
+          "count_ids_head_valid": true
+        },
+        "os_cache_cold": "UNVERIFIED"
+      }
     },
     "F04": {
       "targeted_tests": 50,
@@ -62,7 +85,40 @@
         "quick": 115.587
       },
       "local_reduction_percent": 96.23,
-      "scope": "historical same-account concurrent native sampling; quick is not full validation or authorization"
+      "scope": "historical same-account concurrent native sampling; quick is not full validation or authorization",
+      "component_sampling_v2": {
+        "source_head": "306f3ed5ccf7d78cdce92e128c1ad849dfe30e64",
+        "pairs": 20,
+        "total_invocations": 40,
+        "method": "real in-process status() with thin wrappers",
+        "hashes_unchanged": true,
+        "full": {
+          "semantic_PASS": 20,
+          "median_ms": 2383.559,
+          "p95_ms": 2493.692
+        },
+        "quick": {
+          "exit_0": 20,
+          "semantic": "NOT_EVALUATED",
+          "median_ms": 4.788,
+          "p95_ms": 5.475
+        },
+        "full_component_median_ms": {
+          "host": 2011.035,
+          "source_payload": 107.783,
+          "marketplace": 116.599,
+          "cache": 121.033,
+          "state_initial": 2.293,
+          "stability_reread": 2.585
+        },
+        "read_bytes": {
+          "each_payload": 1740070,
+          "state": 7893,
+          "host_parent_wrapper_only": 341
+        },
+        "cli_end_to_end_comparable": false,
+        "instrumentation_overhead_calibrated": false
+      }
     },
     "F05": {
       "passed_cases": 52,
@@ -173,6 +229,41 @@
     "actual_native_hook_lifecycle": "PENDING"
   },
   "public_release_created": false,
+  "current_linux_ci": {
+    "source_head": "306f3ed5ccf7d78cdce92e128c1ad849dfe30e64",
+    "linux_jobs_succeeded": 2,
+    "ubuntu_python_3_13_15_actual_report": {
+      "package": {
+        "executed": 626,
+        "PASS": 608,
+        "SKIP": 18
+      },
+      "runtime": {
+        "executed": 231,
+        "PASS": 225,
+        "SKIP": 6
+      },
+      "checkout": "3cc8d22c2a60df59112a5caef07f7ecfa97833e1",
+      "tree": "ef4fbf24383e7e5a1fab60faa42cd87366dbc810",
+      "source_tree_exact_match": true
+    },
+    "windows": "PENDING"
+  },
+  "previous_ci_failure": {
+    "source_head": "e7b6fd1",
+    "platform": "Windows",
+    "python": "3.13",
+    "package": {
+      "PASS": 624,
+      "SKIP": 1,
+      "ERROR": 1
+    },
+    "runtime": {
+      "PASS": 231
+    },
+    "error": "TimeoutExpired in test_plugin_install_replaces_managed_base_state_with_enhancement",
+    "product_root_cause": "UNCONFIRMED"
+  },
   "native_benchmark": "COMPLETE_LIGHT_SHORTCUT_WITHHELD",
   "artifact_rebuild_after_documentation_update": "PENDING",
   "note": "This record captures pre-publication evidence. Final commit CI, rebuilt artifact provenance, public release and installation readbacks outside this local host must be verified independently.",

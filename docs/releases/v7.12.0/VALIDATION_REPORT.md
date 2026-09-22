@@ -13,6 +13,15 @@
 
 - F02 三场景评估已完成。simple 工具调用中位数从 6 降为 5（-16.7%，未达到 20% 建议目标），时长未改善；resume 的基线为 5/5 通过而候选 4/5。候选快捷路径暂不交付并恢复原 LIGHT 规则。结果不将质量下降或失败归因于规则本身，也不支持通用、稳定或因果的效率结论。
 
+## F03/F04 受控测量补充
+
+| 项目 | 已确认结果 | 适用边界 |
+| --- | --- | --- |
+| F03 受控矩阵 | 5 组各 20 次，全部有效、0 失败：fresh-process 无预读与显式预读、1,286 条记录/1,049,376 B 的 active 边界、2 MiB 阈值 20 次不 rollover 与 1 MiB 阈值 20 次 rollover，均执行完整验证；20 个 fixture × 4 线程的 80 次 append，其计数、ID 与 head 全部有效。 | 未驱逐 OS 缓存，OS 冷缓存未验证；不声明复杂度收益。 |
+| F04 组件诊断 | 当前 `306f3ed` 的安装账户执行 20 对、40 次真实 in-process `status()` 薄包装器诊断，前后哈希未变。full 20/20 为语义 `PASS`，总中位数/p95 为 2383.559/2493.692 ms；quick 20/20 exit 0，但语义为 `NOT_EVALUATED`，总中位数/p95 为 4.788/5.475 ms。 | 不是 CLI 端到端测量，不能与旧 CLI 110.248 ms 直接比较或据此另算发布提升率；未单独校准 instrumentation 开销。 |
+
+F04 full 的分项中位数为 host 2011.035 ms、source payload 107.783 ms、marketplace 116.599 ms、cache 121.033 ms、state initial 2.293 ms、stability reread 2.585 ms。每个 payload 读取 1,740,070 B，state 读取 7,893 B；host 的 341 B 只表示被包装父进程读取，不能代表子 CLI 的全部 I/O。
+
 ## 独立复审、安装与交付边界
 
 安全复审第二轮通过。交付复审第二轮仅指出发行文档滞后，现已修正；两轮均为逻辑只读复审，不代表系统隔离。上述完整执行针对基于 `6641ed24626925b3445a88014621ed530f8c2ee8` 的未提交集成候选；执行报告摘要见相邻 `PACKAGE_VALIDATION.json`。Windows Hook 修复后，受管安装以 exit 0 完成，当前 payload `be78741f82a310e5af03eeb1095799aff18be697c12c06c9d51f0ffa3e2ed0cb` 在 repo、marketplace、cache 均为 245 文件且摘要一致；补充宿主读回确认 installed、enabled。真实原生 Hook 生命周期、最终提交 CI 与公开发行仍需独立验收。
@@ -20,6 +29,7 @@
 ## 尚待完成的交付证据
 
 - 真实原生 Hook 生命周期、最终提交 CI、完整远端矩阵、公开 Release 和账户外安装需分别读回；不会预写为通过。
+- 当前 `306f3ed` 的两个 Linux CI job 已成功。仅 Ubuntu Python 3.13.15 的实际报告统计为包测试 626 项（608 PASS、18 SKIP）和 runtime 231 项（225 PASS、6 SKIP），不把这些计数归为两个 job 的共同统计。该报告 checkout 为 `3cc8d22c2a60df59112a5caef07f7ecfa97833e1`，工作树为 `ef4fbf24383e7e5a1fab60faa42cd87366dbc810`，已核验与 `306f3ed5ccf7d78cdce92e128c1ad849dfe30e64` 对应 CI 树一致；Windows 仍未完成，不把矩阵预写为全通过。此前 617 项证据中的 `test_event_scaling` 5 个 ID 属于 package suite，不属于 runtime。
 - 双语 ZIP 已有两次可重复候选构建，但本次文档更新后必须重建，旧 ZIP 不作为最终公开资产。
 
 `RELEASE_COMPLETE` 与 `INCIDENT_EFFECTIVE` 分别判断。本记录构建时为 `RELEASE_COMPLETE=false`、`INCIDENT_EFFECTIVE=UNVERIFIED`；它不证明已打开会话或其他业务现场生效。

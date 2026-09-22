@@ -10,6 +10,15 @@
 - F05 had 52 passing cases. The original 16 independent host tasks had 13 PASS and three FAILED results, retained as history. The fixed profile, scorer and runner, plus SHA-256-bound unchanged evidence bytes for 13 original cases and three targeted follow-up tasks, produce `HOST_FINAL_REPORT` combined coverage: 16 actual independent tasks observed, 16 PASS and none missing. This does not claim a single-cohort pass rate or an independent router trace, and applies only to this profile.
 - Documentation consistency, strict localization, internal links, privacy boundaries, semantic checks and a strict documentation-site build passed. F03 retains full-history validation on every append and combines only same-event repository identity reads; scale measurements do not establish a faster history-validation algorithm.
 
+## F03/F04 controlled measurement supplement
+
+| Area | Confirmed result | Boundary |
+| --- | --- | --- |
+| F03 controlled matrix | Five groups of 20 were all valid with zero failures: fresh-process without pre-read versus explicit pre-read; 1,286 records / 1,049,376 B active boundary; 20 non-rollovers at 2 MiB versus 20 rollovers at 1 MiB, all with complete verification; and 80 appends from 20 fixtures × four threads with count, IDs and head all valid. | The OS cache was not purged, so OS-cold behavior is unverified; no complexity improvement is claimed. |
+| F04 component diagnostic | On the installed account at `306f3ed`, 20 pairs / 40 real in-process `status()` calls used thin wrappers and left all hashes unchanged. Full was semantic `PASS` for 20/20, with 2383.559 ms median and 2493.692 ms p95; quick exited 0 for 20/20 but semantic status is `NOT_EVALUATED`, with 4.788/5.475 ms median/p95. | This is not a CLI end-to-end measurement, cannot be compared directly with the historical 110.248 ms CLI result, and does not support a new release headline percentage. Instrumentation overhead was not separately calibrated. |
+
+F04 full component medians were 2011.035 ms host, 107.783 ms source payload, 116.599 ms marketplace, 121.033 ms cache, 2.293 ms state initial, and 2.585 ms stability reread. Each payload read 1,740,070 B and state read 7,893 B. The host 341 B counts only parent-process wrapper reads, not all child-CLI I/O.
+
 ## Independent review and evidence scope
 
 Two logical-readonly review rounds confirmed repairs for root-role collisions, authenticated recovery and release-digest drift, with no remaining confirmed code blockers. This report reflects executed facts; later document edits still require their own consistency/build checks.
@@ -20,5 +29,6 @@ The full execution applies to an uncommitted integrated candidate based on `6641
 
 - F02 completed three-scenario evaluation. The simple tool median changed from 6 to 5 (-16.7%, below the suggested 20% target), duration did not improve, and resume baseline passed 5/5 while candidate passed 4/5. The candidate shortcut is not delivered and the original LIGHT rule is restored. This does not attribute quality loss or failure to the rule and does not support general, stable, or causal efficiency claims.
 - Documentation changes require rebuilding the previously reproducible bilingual ZIP candidates. Actual native Hook lifecycle, the complete remote matrix, final-commit CI, public Release, and account-external installation each require separate readback.
+- Two Linux CI jobs for current `306f3ed` succeeded. Only the actual Ubuntu Python 3.13.15 report has the following counts: 626 package tests (608 PASS, 18 SKIP) and 231 runtime tests (225 PASS, 6 SKIP); they are not a combined count for both jobs. Its checkout was `3cc8d22c2a60df59112a5caef07f7ecfa97833e1` and tree `ef4fbf24383e7e5a1fab60faa42cd87366dbc810`, verified to match the CI tree for `306f3ed5ccf7d78cdce92e128c1ad849dfe30e64`. Windows is incomplete, so the full matrix is not pre-claimed. The five `test_event_scaling` IDs in the earlier 617-test evidence belong to the package suite, not runtime.
 
 `RELEASE_COMPLETE` and `INCIDENT_EFFECTIVE` are evaluated separately. At this record's build time they are `RELEASE_COMPLETE=false` and `INCIDENT_EFFECTIVE=UNVERIFIED`; this does not establish effectiveness in already-open tasks or other business environments. Later public-release and installation results belong in a separate delivery record, without rewriting published tags or artifacts.
