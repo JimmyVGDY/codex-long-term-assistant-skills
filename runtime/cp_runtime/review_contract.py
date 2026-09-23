@@ -148,7 +148,15 @@ def validate_result(value: Mapping[str, Any], *, expected_assignment: Mapping[st
         raise DispatchPolicyError("REVIEW_RESULT_COST_MISMATCH")
     _strings(value["checked_scope"], "checked_scope")
     _strings(value["unverified_items"], "unverified_items")
-    findings = value["findings"]
+    validate_findings(value["findings"], value["status"])
+    return dict(value)
+
+
+def validate_findings(findings: Any, status: str) -> None:
+    """中文：新旧结果共用 Finding 语义，独立保留外层版本契约。
+
+    English: Share finding semantics without reinterpreting versioned envelopes.
+    """
     if not isinstance(findings, list) or len(findings) > 64:
         raise DispatchPolicyError("REVIEW_FINDING_LIMIT")
     ids: set[str] = set()
@@ -167,11 +175,10 @@ def validate_result(value: Mapping[str, Any], *, expected_assignment: Mapping[st
             raise DispatchPolicyError("REVIEW_FINDING_BOOLEAN")
         _strings(finding["required_validation"], "required_validation")
         _strings(finding["regression_evidence"], "regression_evidence")
-    if value["status"] == "pass" and findings:
+    if status == "pass" and findings:
         raise DispatchPolicyError("REVIEW_PASS_WITH_FINDINGS")
-    if any(item["blocking"] for item in findings) and value["status"] not in {"blocking", "incomplete"}:
+    if any(item["blocking"] for item in findings) and status not in {"blocking", "incomplete"}:
         raise DispatchPolicyError("REVIEW_BLOCKING_STATUS_MISMATCH")
-    return dict(value)
 
 
 def default_isolation() -> dict[str, Any]:

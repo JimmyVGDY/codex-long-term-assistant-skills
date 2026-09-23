@@ -1,0 +1,105 @@
+{
+  "schema_version": "desktop-host-contract/1",
+  "host_surface": "codex-desktop",
+  "management_version_is_runtime_version": false,
+  "native_acceptance_required": true,
+  "source": {
+    "url": "https://learn.chatgpt.com/docs/hooks",
+    "checked_on": "2026-09-23",
+    "evidence": "OFFICIAL_DOCS_CURRENT",
+    "assertions": [
+      "ASYNC_COMMAND_HOOKS",
+      "APPLY_PATCH_PRE_POST",
+      "TOOL_USE_ID",
+      "TOOL_RESPONSE"
+    ]
+  },
+  "management": {
+    "marketplace_profile": "local-interface-v2",
+    "plugin_cli_profile": "remote-capable-v2",
+    "plugin_json_profile": "plugin-list-v1",
+    "commands": {
+      "marketplace_add": "fa991053b32a60c82ddc07a3bf0456c73b9a1aadb8160ccef786f60668328316",
+      "marketplace_remove": "6dc98546d6981b7623b390e79fc7865bcd40488ba03860966e80205d1c29a893",
+      "plugin_add": "9835785c0d21c7cea49336e910ec3ebd2fce2241f022a3b4c3297b53a13a4d5a",
+      "plugin_remove": "1866b6ffa4066189d554ba77ceae69e01774dcefbbd76c2a18d1591304add277"
+    }
+  },
+  "runtime": {
+    "hook_profile": "hook-json-v1",
+    "apply_patch_result_profile": "result-v156",
+    "native_async_user_prompt_submit": {
+      "status": "SUPPORTED",
+      "evidence": "OFFICIAL_DOCS_CURRENT",
+      "registration": "OPTIONAL_USER_PROMPT_SUBMIT"
+    },
+    "native_apply_patch_operation": {
+      "status": "SUPPORTED",
+      "evidence": "OFFICIAL_DOCS_CURRENT",
+      "registration": "REQUIRED_APPLY_PATCH_PRE_POST"
+    }
+  },
+  "wire_profiles": {
+    "marketplace": {
+      "local-interface-v2": {
+        "managed_top_level_fields": [
+          "name",
+          "plugins"
+        ],
+        "managed_interface_fields": [
+          "displayName"
+        ],
+        "display_name": "Codex Cross Project Assistant Local Package",
+        "emit_owner": false
+      }
+    },
+    "plugin_cli": {
+      "remote-capable-v2": {
+        "required_commands": [
+          "marketplace_add",
+          "marketplace_remove",
+          "plugin_add",
+          "plugin_remove"
+        ],
+        "remote_marketplace_available": true
+      },
+      "snapshot-v1": {
+        "required_commands": [
+          "marketplace_add",
+          "marketplace_remove",
+          "plugin_add",
+          "plugin_remove"
+        ],
+        "remote_marketplace_available": false
+      }
+    },
+    "plugin_json": {
+      "plugin-list-v1": {
+        "top_level_fields": [
+          "installed",
+          "available"
+        ],
+        "required_target_fields": [
+          "pluginId",
+          "name",
+          "marketplaceName",
+          "version",
+          "installed",
+          "enabled",
+          "installPolicy",
+          "authPolicy"
+        ],
+        "optional_target_fields": [
+          "source",
+          "marketplaceSource"
+        ],
+        "install_policies": [
+          "AVAILABLE"
+        ],
+        "auth_policies": [
+          "ON_INSTALL"
+        ]
+      }
+    }
+  }
+}

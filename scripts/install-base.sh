@@ -3,6 +3,7 @@ set -eu
 
 package_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 codex_home=${CODEX_HOME:-"$HOME/.codex"}
+desktop_component=${CP_ASSISTANT_DESKTOP_COMPONENT:-"$codex_home/plugins/.plugin-appserver/codex"}
 base_state="$codex_home/cp-assistant-base-state.json"
 market_root="$HOME/.agents/plugins/cp-assistant-base-marketplace"
 plugin_root="$market_root/plugins/codex-cross-project-engineering-assistant"
@@ -117,14 +118,15 @@ remove_managed_base() {
 recover_partial() {
   reject_link_ancestors "$codex_home"
   reject_link_ancestors "$market_root"
-  codex plugin remove 'codex-cross-project-engineering-assistant@cp-assistant-base' || fail 'Base recovery could not remove the registered Plugin; keep the recovery state and repair Codex registration first.'
-  codex plugin marketplace remove 'cp-assistant-base' || fail 'Base recovery could not remove the registered Marketplace; keep the recovery state and repair Codex registration first.'
+  "$desktop_component" plugin remove 'codex-cross-project-engineering-assistant@cp-assistant-base' || fail 'Base recovery could not remove the registered Plugin; keep the recovery state and repair Codex registration first.'
+  "$desktop_component" plugin marketplace remove 'cp-assistant-base' || fail 'Base recovery could not remove the registered Marketplace; keep the recovery state and repair Codex registration first.'
   remove_managed_base || fail 'Base recovery found drifted or unsafe managed assets; keep the recovery state and repair them explicitly.'
   rm -f -- "$base_state"
 }
 
 reject_link_ancestors "$base_state"
 reject_link_ancestors "$codex_home/cp-assistant-v6-state.json"
+[ -x "$desktop_component" ] || fail 'DESKTOP_COMPONENT_REQUIRED: start Codex Desktop or configure its bundled management component.'
 if [ -e "$base_state" ]; then
   if grep -Fq '"package":"codex-cross-project-engineering-assistant"' "$base_state" \
     && grep -Fq '"marketplace":"cp-assistant-base"' "$base_state" \
@@ -169,8 +171,8 @@ cleanup() {
   result=$?
   trap - 0
   if [ "$result" -ne 0 ] && [ "$committed" -ne 1 ] && [ -e "$base_state" ]; then
-    if codex plugin remove 'codex-cross-project-engineering-assistant@cp-assistant-base' \
-      && codex plugin marketplace remove 'cp-assistant-base'; then
+    if "$desktop_component" plugin remove 'codex-cross-project-engineering-assistant@cp-assistant-base' \
+      && "$desktop_component" plugin marketplace remove 'cp-assistant-base'; then
       if remove_managed_base && rm -f -- "$base_state"; then
         :
       else
@@ -203,9 +205,9 @@ cat > "$market_manifest" <<'JSON'
   }]
 }
 JSON
-codex plugin marketplace add "$market_root"
-codex plugin add 'codex-cross-project-engineering-assistant@cp-assistant-base'
-codex plugin list --json
+"$desktop_component" plugin marketplace add "$market_root"
+"$desktop_component" plugin add 'codex-cross-project-engineering-assistant@cp-assistant-base'
+"$desktop_component" plugin list --marketplace cp-assistant-base --json
 write_state INSTALLED
 committed=1
 trap - 0

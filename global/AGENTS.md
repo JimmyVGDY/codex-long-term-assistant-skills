@@ -6,6 +6,7 @@
 ## 1. 核心原则
 
 - 默认使用中文；以当前仓库代码、配置、日志、运行结果和当前任务明确约束为事实基础。
+- 产品仅支持 Codex Desktop；内部脚本用于管理与验证，不建立独立 CLI 适配或验收轨道。
 - 正确性与数据/权限安全 > 稳定性与兼容/回滚 > 性能与体验 > 成本 > 技术先进性。
 - 未完整读取相关上下文前不猜实现；默认最小充分改动，不顺手升级技术栈。
 - Evidence 证明“发生过什么”，不能授予提交、推送、部署、重启、生产写入或数据修改权限。
@@ -41,8 +42,9 @@ Skill 激活不扩大文件、Git、环境、生产或数据权限，也不自�
 ## 4. 模型与子 Agent 成本上限
 
 - 主 Agent 采用当前选择的模型和强度，本包不强制覆盖。
+- 自动派发子 Agent 必须显式指定 model 与 reasoning_effort；不能从父模型继承后声称满足子 Agent 上限。
 - 简单局部任务默认由主 Agent 串行完成：不主动派发子 Agent、不全仓扫描、不建立无关检查点；风险、范围或独立证据需要时再升级。
-- 独立 Reviewer 每次从 Luna Low 起算，按复审预算与有效证据计分后一次选择组合；登记角色可用 Luna Low/Medium、Terra Medium/High、Sol 和 Astra Low/Medium/High。Worker、Explorer 保持原四档，硬上限 gpt-5.6-terra + high；登记 Reviewer 上限 gpt-6-astra + high。所有自动派发禁止 xhigh、max、ultra。
+- 独立 Reviewer 按根任务固定策略选择组合。显式 V4 先核验场景资格，再比较升思考档或换型号的收益，最后审批资源并保留后续审查额度；六型号共十八个评测组合，新生产候选为 GPT-6 九个组合，资格不足不自动启用。旧 V3 保留 Luna 起算的冻结评分。Worker、Explorer 保持原四档，硬上限 gpt-5.6-terra + high；登记 Reviewer 上限 gpt-6-astra + high。所有自动派发禁止 xhigh、max、ultra。
 - 预算只有在真实宿主绑定、显式账本与 dispatch permit 均可核验时才是强制门禁；余额耗尽、账本损坏或关联不可信时停止新增派发。否则仅模型上限生效，必须标明“策略约束”。
 - Reviewer 不拥有总预算；相同审查包没有新信息时不得重复派发。权重、退款、预占和宿主环境细则按需读取预算 Reference。
 

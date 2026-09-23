@@ -5,6 +5,8 @@ description: Use for databases, SQL, transaction locks, Redis, messaging, search
 
 # Data, Middleware, and Infrastructure
 
+The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+
 1. Establish component versions, topology, ownership, contracts, capacity, environment, and operational boundaries.
 2. For databases, inspect plans, indexes, transaction locks, DDL compatibility, rollout, and rollback.
 3. For Redis, inspect penetration, stampede, avalanche, hot keys, large keys, TTL, and lock ownership.

@@ -2,6 +2,14 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.13.0 - 2026-09-24
+
+- Add six models and eighteen Low/Medium/High evaluation combinations. V4 production candidates are the nine GPT-6 Luna, Sol and Astra combinations, gated by scenario qualification and gain evidence. Frozen V3 remains the default and existing tasks retain their original policy.
+- Add scenario-bound qualification, gain and cost cards to compare higher reasoning effort with a different model. Protect later review and repair budgets, and separately constrain cumulative Astra attempts and inflight concurrency.
+- Add the V4 ledger, V9/V6 review, version-isolated observations, frozen paired experiment suites and bounded Desktop task-name/lifecycle identity linkage. Unknown receipts never imply completion or refunds.
+- Target Codex Desktop only. Management-component compatibility and real native acceptance remain separate. Preserve historical readers and recovery formats without a standalone CLI support track.
+- Local package validation and affected checks after repair are complete. The candidate is installed and verified; its changed pre-dispatch Hook still needs normal trust review. Model screening remains incomplete, with no new-model default activation or completed public release claimed.
+
 ## 7.12.0 - 2026-09-23
 
 - The candidate adds phase-aware SessionEnd permission fallback, execution-result-driven validation evidence, positive/negative governance-Skill and phase-routing regression cases, and explicit `status --quick` diagnostics; default `status` retains the complete check.

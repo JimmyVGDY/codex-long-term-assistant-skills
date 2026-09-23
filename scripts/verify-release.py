@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：失败关闭的 V7.12.0 端到端发行验证器。
+"""中文：失败关闭的 V7.13.0 端到端发行验证器。
 
-English: Fail-closed V7.12.0 end-to-end release verifier.
+English: Fail-closed V7.13.0 end-to-end release verifier.
 """
 from __future__ import annotations
 
@@ -17,8 +17,14 @@ from typing import Any, Dict, Mapping
 
 from codex_compatibility import canonical_digest, load_registry
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
+import desktop_host
 
-VERSION = "7.12.0"
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "runtime"))
+DESKTOP_CONTRACT = desktop_host.load_contract(ROOT / "config" / "desktop-host-contract-v1.json")
+DESKTOP_CONTRACT_DIGEST = canonical_digest(DESKTOP_CONTRACT)
+
+VERSION = "7.13.0"
 TARGET_CODEX_VERSION = "0.156.0"
 COMPATIBILITY_REGISTRY_DIGEST = "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8"
 PACKAGE = "codex-cross-project-engineering-assistant"
@@ -71,12 +77,16 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
             manifest = load_manifest(package_root / MANIFEST_NAME)
             report = verify_payload(package_root, manifest, package=PACKAGE, version=VERSION)
             registry = load_registry(
-                package_root / "config" / "codex-compatibility-v1.json", VERSION,
+                package_root / "config" / "codex-compatibility-v1.json", "7.12.0",
             )
             registry_digest = canonical_digest(registry)
             if registry_digest != COMPATIBILITY_REGISTRY_DIGEST:
                 raise VerificationError("artifact compatibility registry digest mismatch")
             report["compatibility_registry_digest"] = registry_digest
+            desktop = desktop_host.load_contract(package_root / "config" / "desktop-host-contract-v1.json")
+            if canonical_digest(desktop) != DESKTOP_CONTRACT_DIGEST:
+                raise VerificationError("artifact Desktop contract digest mismatch")
+            report["desktop_contract_digest"] = DESKTOP_CONTRACT_DIGEST
             report["locale"] = package_root.name.removeprefix("Codex-Skills-V%s-" % VERSION)
             return report
         except (PayloadIntegrityError, ValueError) as exc:
@@ -204,10 +214,11 @@ def verify_release(
     version_text = str(codex_evidence.get("codex_version") or "")
     capability = codex_evidence.get("capability_profile") or {}
     if not (
-        re.search(r"(?:^|\s)%s(?:\s|$)" % re.escape(TARGET_CODEX_VERSION), version_text)
-        and capability.get("ok") is True
+        codex_evidence.get("host_surface") == "codex-desktop"
+        and desktop_host.verified_capability(capability, DESKTOP_CONTRACT)
+        and version_text == "codex-cli " + str(capability.get("codex_version", ""))
     ):
-        raise VerificationError("Codex %s 或 Plugin capability 未证明" % TARGET_CODEX_VERSION)
+        raise VerificationError("Desktop component contract evidence is not verified")
     reports = [payload_report.get(name) for name in ("source", "marketplace", "cache")]
     if not all(isinstance(item, dict) and item.get("ok") is True for item in reports):
         raise VerificationError("安装 payload 报告不完整")
@@ -218,11 +229,13 @@ def verify_release(
 
     return {
         "ok": True,
-        "schema_version": 2,
+        "schema_version": 3,
+        "host_surface": "codex-desktop",
         "version": VERSION,
         "artifact_sha256": artifact_hash,
         "payload_digest": artifact_payload["payload_digest"],
         "compatibility_registry_digest": artifact_payload["compatibility_registry_digest"],
+        "desktop_contract_digest": artifact_payload["desktop_contract_digest"],
         "project_id": project_id,
         "repo_fingerprint": repo_fingerprint,
         "status": {
@@ -241,6 +254,7 @@ def verify_release(
         "evidence": {
             "plugin": matches[0],
             "codex_version": version_text,
+            "management_version_is_runtime_version": False,
             "event_chain_head": (lifecycle.get("event_chain") or {}).get("head"),
             "dispatch_policy": dispatch_policy,
         },
@@ -248,7 +262,7 @@ def verify_release(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.12.0 端到端发行验证")
+    parser = argparse.ArgumentParser(description="V7.13.0 端到端发行验证")
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--package-validation", required=True)
     parser.add_argument("--build-witness", required=True)

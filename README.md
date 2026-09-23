@@ -2,7 +2,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-V7.12.0 将冻结兼容窗口推进到官方稳定版 Codex CLI 0.156.0，并保留十档独立复审组合、基础安装与可选增强分离等既有边界。发布状态以 GitHub Release 和工作流读回为准。
+V7.13.0 候选面向 Codex Desktop，新增型号与思考强度的场景资格、配对收益和预算审批。六型号共 18 个评测组合，默认启用受真实证据约束；5.6 与旧任务保留兼容解释器。发布状态以 GitHub Release 和工作流读回为准。
 
 # Codex 跨项目长期技术助手
 
@@ -20,10 +20,10 @@ V7.12.0 将冻结兼容窗口推进到官方稳定版 Codex CLI 0.156.0，并保
   <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/github/license/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <img alt="增强运行时 Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
-  <img alt="Codex CLI 0.156.0" src="https://img.shields.io/badge/Codex%20CLI-0.156.0-111827">
+  <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0。V7.12.0 保留这些安全边界，并将基础 Skill 与可选增强运行时解耦；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
+V7.13.0 保留消息与 Stop 非阻断、Operation v2、基础 Skill 与可选增强分离等边界。门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。型号定位、思考收益与冷启动条件见[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [四条日常路径](#四条日常路径与统一入口) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#首次安装与升级) · [文档](#文档与协作)
 
@@ -146,15 +146,15 @@ flowchart LR
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Windows 原生 Codex CLI 0.156.0 + Plugin | 当前实机锚点 | 目标版本的账户安装、`verify` 与项目外新 CLI 任务将在 S8/S9 独立读回 | Desktop 重启后的新会话未验证 |
-| Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 async、Pre/Post schema 与成功结果响应源码证据受注册表约束 | 跨版本真实宿主矩阵未逐台验收 |
-| Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | 本次发布的远端 CI 结果单独以 Actions 页面为准 |
-| standalone 模式 | 显式兼容模式 | 本地安装结构、inventory、非 Git BASIC 和回归测试覆盖 | 未作为本次账户 Plugin 验收替代 |
+| Codex Desktop + Plugin | 唯一产品目标 | 本机管理组件及既有插件登记只读探针通过 | 新候选安装、加载与原生 V4 派发仍需分别验收 |
+
+| Windows / Ubuntu Python 矩阵 | 包级发布门禁 | Python 3.11/3.13 测试与构建 | 不代表桌面原生验收；远端结果以 Actions 为准 |
+| 旧安装布局与冻结策略 | 兼容恢复 | 既有状态、账本与解释器继续保留 | 不建立独立 CLI 产品适配或验收轨道 |
 | macOS | 未验证 | 无当前 CI 或宿主验收证据 | 状态保持 `UNVERIFIED` |
 
 基础安装无需本包 Python runtime；增强运行时的 Python 最低版本为 3.11；公开 CI 配置为在 Windows 与 Ubuntu 上验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
 
-V7.12.0 窗口为 `0.156.0`、`0.155.1`、`0.155.0`、`0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`。补丁发行独立计数；未来版、预发布版和窗口外版本不会自动接纳。
+桌面管理组件可使用内部预发布号。安装核验按组件摘要、命令和登记结构进行；组件版本不等于桌面任务运行版本。旧稳定版注册表仅保留历史读取与恢复语义。
 
 V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。门禁默认关闭，流程证据也不代表业务语义正确；公开 Release 仍须以受权操作与读回为准。
 

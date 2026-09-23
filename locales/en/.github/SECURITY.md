@@ -6,7 +6,7 @@ Chinese version: [SECURITY.md](https://github.com/JimmyVGDY/codex-long-term-assi
 
 | Version | Status |
 | --- | --- |
-| <!-- cp-fact:package-version -->7.12.0<!-- /cp-fact --> | Currently maintained |
+| <!-- cp-fact:package-version -->7.13.0<!-- /cp-fact --> | Currently maintained |
 | 7.6.0 | Earlier maintenance line; upgrade to the current release recommended |
 | 7.4.4 | Security fixes only |
 | 7.4.3 | Security fixes only |

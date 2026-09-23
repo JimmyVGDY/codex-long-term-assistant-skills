@@ -18,6 +18,8 @@ description: >-
 
 ## 模型与委派成本
 
+本段仅适用于 Worker/Explorer 的普通委派；登记 Reviewer 按 [独立复审技能](../multi-agent-independent-review/SKILL.md) 的根任务固定策略选型。主 Agent 模型与强度保持当前选择。
+
 - 格式整理、字段提取、模板填充、README 和既有材料重构优先 `luna-low`；接口/代码证据归纳和普通正式文档使用 `luna-medium`。
 - 多方案综合、架构取舍和跨材料冲突判断使用 `terra-medium`；高风险架构、事故归因或不可逆方案论证才使用 `terra-high`。
 - 复杂技术结论优先由领域 Skill 形成，本 Skill 负责结构化表达，避免在文档阶段重复高强度推理。

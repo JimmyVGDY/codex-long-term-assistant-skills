@@ -34,6 +34,8 @@ description: >-
 
 ## 模型与委派成本
 
+本段仅适用于 Worker/Explorer 的普通委派；登记 Reviewer 按 [独立复审技能](../multi-agent-independent-review/SKILL.md) 的根任务固定策略选型。主 Agent 模型与强度保持当前选择。
+
 - 调用位置、配置、模型清单、Schema 和状态字段定位优先 `luna-low`；明确的输出校验、错误分类和用例检查使用 `luna-medium`。
 - RAG 数据流、Agent 权限、生成状态机和普通多模型路由使用 `terra-medium`；高风险工具执行、跨租户检索、不可逆生成副作用和复杂 GPU 调度才使用 `terra-high`。
 - 子 Agent 不接收无关 Prompt、模型输入输出、敏感文档或完整生产日志，只返回结构化证据和未验证项。

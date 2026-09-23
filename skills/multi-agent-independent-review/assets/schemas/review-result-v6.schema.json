@@ -1,0 +1,362 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cross Project Reviewer Result V6",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "baseline_sha256",
+    "boundary_id",
+    "checked_scope",
+    "cost_basis",
+    "cost_ref",
+    "decision_ref",
+    "findings",
+    "gain_ref",
+    "identity",
+    "isolation_level",
+    "packet_sha256",
+    "permit_id",
+    "phase",
+    "policy_digest",
+    "policy_id",
+    "profile_id",
+    "qualification_ref",
+    "reserved_units",
+    "result_id",
+    "review_kind",
+    "review_state_ref",
+    "reviewer",
+    "schema_version",
+    "slot_id",
+    "status",
+    "summary",
+    "supersedes",
+    "unverified_items"
+  ],
+  "properties": {
+    "review_kind": {
+      "enum": [
+        "initial",
+        "repair"
+      ]
+    },
+    "profile_id": {
+      "enum": [
+        "g56-luna-high",
+        "g56-luna-low",
+        "g56-luna-medium",
+        "g56-sol-high",
+        "g56-sol-low",
+        "g56-sol-medium",
+        "g56-terra-high",
+        "g56-terra-low",
+        "g56-terra-medium",
+        "g6-astra-high",
+        "g6-astra-low",
+        "g6-astra-medium",
+        "g6-luna-high",
+        "g6-luna-low",
+        "g6-luna-medium",
+        "g6-sol-high",
+        "g6-sol-low",
+        "g6-sol-medium"
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "dimension",
+          "severity",
+          "evidence_level",
+          "blocking",
+          "summary",
+          "location",
+          "root_cause_group",
+          "required_validation",
+          "disposition",
+          "adoption_reason",
+          "repaired",
+          "regression_prevented",
+          "regression_evidence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "dimension": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "blocking",
+              "high",
+              "medium",
+              "low",
+              "suggestion"
+            ]
+          },
+          "evidence_level": {
+            "enum": [
+              "confirmed",
+              "high-probability",
+              "inference",
+              "unverified"
+            ]
+          },
+          "blocking": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "root_cause_group": {
+            "type": "string"
+          },
+          "required_validation": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disposition": {
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "REPAIRED",
+              "REGRESSION_PREVENTED",
+              "REJECTED",
+              "DEFERRED",
+              "OUT_OF_SCOPE",
+              "DUPLICATE",
+              "INSUFFICIENT_EVIDENCE"
+            ]
+          },
+          "adoption_reason": {
+            "enum": [
+              "CORRECTNESS",
+              "SECURITY",
+              "COMPATIBILITY",
+              "PERFORMANCE",
+              "DATA_CONTRACT",
+              "REGRESSION_PREVENTION",
+              "OUT_OF_SCOPE",
+              "DUPLICATE",
+              "INSUFFICIENT_EVIDENCE",
+              "DEFERRED",
+              "REJECTED",
+              "UNSPECIFIED"
+            ]
+          },
+          "repaired": {
+            "type": "boolean"
+          },
+          "regression_prevented": {
+            "type": "boolean"
+          },
+          "regression_evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "slot_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "schema_version": {
+      "const": 6
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "budget_id",
+        "project_id",
+        "repo_fingerprint",
+        "task_id"
+      ],
+      "properties": {
+        "budget_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+        },
+        "task_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+        },
+        "project_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+        },
+        "repo_fingerprint": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "packet_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "isolation_level": {
+      "enum": [
+        "system-readonly",
+        "logical-readonly",
+        "tool-restricted",
+        "self-review",
+        "unknown"
+      ]
+    },
+    "boundary_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "baseline_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "result_id": {
+      "type": "string",
+      "pattern": "^RVR6_[a-f0-9]{64}$"
+    },
+    "checked_scope": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 4096
+      },
+      "maxItems": 256,
+      "minItems": 0
+    },
+    "reserved_units": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cost_basis": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "supersedes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^sha256:[a-f0-9]{64}$"
+      },
+      "maxItems": 10,
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "unverified_items": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 4096
+      },
+      "maxItems": 256,
+      "minItems": 0
+    },
+    "review_state_ref": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "reviewer": {
+      "enum": [
+        "cp_review_functional_business",
+        "cp_review_compatibility_regression",
+        "cp_review_security_access",
+        "cp_review_performance_resources",
+        "cp_review_data_contract",
+        "cp_review_state_concurrency",
+        "cp_review_test_delivery"
+      ]
+    },
+    "permit_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "qualification_ref": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "decision_ref": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "gain_ref": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        {
+          "const": ""
+        }
+      ]
+    },
+    "phase": {
+      "enum": [
+        "pre",
+        "post"
+      ]
+    },
+    "cost_ref": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "policy_id": {
+      "const": "reviewer-matrix-v4"
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "nonblocking",
+        "blocking",
+        "incomplete"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 16384
+    }
+  },
+  "$comment": "Shape only. Runtime additionally binds the exact root permit, current baseline, result status and findings.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "pass",
+              "nonblocking",
+              "blocking"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "checked_scope": {
+            "minItems": 1
+          },
+          "summary": {
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ]
+}

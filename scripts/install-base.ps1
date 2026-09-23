@@ -51,6 +51,7 @@ function Assert-NoReparseAncestor {
 
 $packageRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $codexHome = if ($env:CODEX_HOME) { [System.IO.Path]::GetFullPath($env:CODEX_HOME) } else { Join-Path $env:USERPROFILE '.codex' }
+$desktopComponent = if ($env:CP_ASSISTANT_DESKTOP_COMPONENT) { [System.IO.Path]::GetFullPath($env:CP_ASSISTANT_DESKTOP_COMPONENT) } else { Join-Path $codexHome 'plugins\.plugin-appserver\codex.exe' }
 $baseState = Join-Path $codexHome 'cp-assistant-base-state.json'
 $enhancementState = Join-Path $codexHome 'cp-assistant-v6-state.json'
 $marketRoot = Join-Path $env:USERPROFILE '.agents\plugins\cp-assistant-base-marketplace'
@@ -189,9 +190,9 @@ function Remove-EmptyDirectory {
 function Remove-PartialBaseInstall {
     Assert-NoReparseAncestor -Path $codexHome
     Assert-NoReparseAncestor -Path $marketRoot
-    & codex plugin remove 'codex-cross-project-engineering-assistant@cp-assistant-base'
+    & $desktopComponent plugin remove 'codex-cross-project-engineering-assistant@cp-assistant-base'
     if ($LASTEXITCODE -ne 0) { throw "Base recovery could not remove Plugin registration: $LASTEXITCODE" }
-    & codex plugin marketplace remove 'cp-assistant-base'
+    & $desktopComponent plugin marketplace remove 'cp-assistant-base'
     if ($LASTEXITCODE -ne 0) { throw "Base recovery could not remove Marketplace registration: $LASTEXITCODE" }
     foreach ($name in @('.codex-plugin', 'skills', 'hooks')) {
         Remove-PayloadTree -Source (Join-Path $packageRoot $name) -Destination (Join-Path $pluginRoot $name)
@@ -215,6 +216,9 @@ Assert-NoReparseAncestor -Path $enhancementState
 Assert-NoReparseAncestor -Path $marketRoot
 Assert-NoReparseAncestor -Path $pluginRoot
 Assert-NoReparseAncestor -Path $marketManifest
+if (-not (Test-Path -LiteralPath $desktopComponent -PathType Leaf)) {
+    throw 'DESKTOP_COMPONENT_REQUIRED: start Codex Desktop or configure its bundled management component.'
+}
  $baseStateItem = Get-ExactFileSystemItem -Path $baseState
  if ($null -ne $baseStateItem) {
     try { $existingState = Get-Content -LiteralPath $baseState -Raw | ConvertFrom-Json -ErrorAction Stop }
@@ -261,11 +265,11 @@ try {
     New-Item -ItemType Directory -Path $manifestDirectory -Force | Out-Null
     Assert-NoReparseAncestor -Path $marketManifest
     [System.IO.File]::WriteAllText($marketManifest, ($manifest | ConvertTo-Json -Depth 8), $utf8NoBom)
-    & codex plugin marketplace add $marketRoot
+    & $desktopComponent plugin marketplace add $marketRoot
     if ($LASTEXITCODE -ne 0) { throw "Codex Marketplace registration failed: $LASTEXITCODE" }
-    & codex plugin add 'codex-cross-project-engineering-assistant@cp-assistant-base'
+    & $desktopComponent plugin add 'codex-cross-project-engineering-assistant@cp-assistant-base'
     if ($LASTEXITCODE -ne 0) { throw "Base Plugin installation failed: $LASTEXITCODE" }
-    & codex plugin list --json
+    & $desktopComponent plugin list --marketplace cp-assistant-base --json
     if ($LASTEXITCODE -ne 0) { throw "Base Plugin readback failed: $LASTEXITCODE" }
     Write-BaseState -Status 'INSTALLED'
 } catch {

@@ -1,25 +1,25 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.12.0",
+  "version": "7.13.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 245,
-  "payload_digest": "4d16bf233697500fd2f4087f356037dbe61aa93af61670b289b44cd0b1a0abc7",
+  "file_count": 265,
+  "payload_digest": "8341c90485123a131c507492e7e89b49eb2996d4bc75c17925cbc64d51db3d01",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "c6c704b50407eae907af854e84a723d4259661f42a3783178f897c5ba54b6d5b",
-      "size": 219
+      "sha256": "2102e5fb329394472cbc46572a4ef46e3579369e963fe27a3a6cdc5a2809da91",
+      "size": 774
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
-      "sha256": "8417a4d1fdb4d9ae3a858df019cb2264e8d1f3e627954e21ea9e97fae09c0f14",
-      "size": 3500
+      "sha256": "5429e4988628f9fb933db971088724521f3f952b40aaef971b345f3009ac7d4c",
+      "size": 3719
     },
     {
       "path": "skills/ai-engineering/agents/openai.yaml",
@@ -58,8 +58,8 @@
     },
     {
       "path": "skills/backend-engineering/SKILL.md",
-      "sha256": "f69facdb17621ad266b9f34c2df7e763e34e79c560274c16cb2f6673ba414f26",
-      "size": 3651
+      "sha256": "d7db240173d1d95cc2c9620cad7293f4bf35e2da049f944bb624b6e13ec1c4a9",
+      "size": 3870
     },
     {
       "path": "skills/backend-engineering/agents/openai.yaml",
@@ -173,8 +173,8 @@
     },
     {
       "path": "skills/data-middleware-infrastructure/SKILL.md",
-      "sha256": "7396b9872349ecdd9b2551a7819ebda7c4ec072b550b23113e433e35c0dadd86",
-      "size": 2215
+      "sha256": "2cde6165bd33603a4a35e249c5f4d0749729ac83e875214c19a4e06dd68f57d9",
+      "size": 2434
     },
     {
       "path": "skills/data-middleware-infrastructure/agents/openai.yaml",
@@ -208,8 +208,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/SKILL.md",
-      "sha256": "e515d02d8c95094acbbce5bd05d88542e5b9fc59ef2a25054d617acf61eab8d1",
-      "size": 4970
+      "sha256": "87dbc9ef5d96cd5ddf036c590165aea84f37554651b2d7659bdaab8690456c44",
+      "size": 5189
     },
     {
       "path": "skills/engineering-quality-delivery/agents/openai.yaml",
@@ -288,8 +288,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/scripts/execution_guard.py",
-      "sha256": "0f532a7d6a99cb2fdbf36e32cfde6002e7daa5103ad7649fd74da18f2230b4d7",
-      "size": 26608
+      "sha256": "4b617b701e89b689ace570ffcdfed0d26546d2095f2aea82954efe9e7b93c6ea",
+      "size": 26740
     },
     {
       "path": "skills/engineering-quality-delivery/tests/test_execution_guard.py",
@@ -303,8 +303,8 @@
     },
     {
       "path": "skills/frontend-engineering/SKILL.md",
-      "sha256": "d096f12eaef8eb1780a0906ddf3948af701b4bdddb56b6e0751b9fb61209a7e3",
-      "size": 6281
+      "sha256": "07174d040ce7d5cf7524d2cfbebf634573c34125c7970816110a61ae36771d8f",
+      "size": 6500
     },
     {
       "path": "skills/frontend-engineering/agents/openai.yaml",
@@ -393,8 +393,8 @@
     },
     {
       "path": "skills/log-observability-analysis/SKILL.md",
-      "sha256": "348367c02d6ea386cb2200cefc23de1236372608c9427398b6b0f79827c10121",
-      "size": 2001
+      "sha256": "3e950e86763055c9f133fbcf0c45b3b71fcae43cb4558e249bb2d24bbf298bbd",
+      "size": 2220
     },
     {
       "path": "skills/log-observability-analysis/agents/openai.yaml",
@@ -458,8 +458,8 @@
     },
     {
       "path": "skills/long-running-task-memory/SKILL.md",
-      "sha256": "cebc3b85bed7f673a72ab076dcf14ca15c9f116d47912d3400a6cb3f67520e77",
-      "size": 3234
+      "sha256": "fe486b865abb684d7f32414102acaaeb69f823ecec4eb68a6b0920fac411335f",
+      "size": 3453
     },
     {
       "path": "skills/long-running-task-memory/agents/openai.yaml",
@@ -563,8 +563,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/SKILL.md",
-      "sha256": "11a122ad51609f600267a292cb9b945dc9295c382ed199b686e6d12a1f7699ef",
-      "size": 4111
+      "sha256": "4433c2836f2247bbb59570b91d172d5fb775585c3531a9018fc7bd4b452ec288",
+      "size": 4388
     },
     {
       "path": "skills/multi-agent-independent-review/agents/openai.yaml",
@@ -575,6 +575,11 @@
       "path": "skills/multi-agent-independent-review/assets/schemas/review-result-v4.schema.json",
       "sha256": "3c523bc043c3ac254524c2fd5f5abe2115b7b2b8667f9a82eec74f884586568a",
       "size": 6268
+    },
+    {
+      "path": "skills/multi-agent-independent-review/assets/schemas/review-result-v6.schema.json",
+      "sha256": "e08676e155e5d3ea7d1424d807eb622b961b27adb80f150f4985690eeac5f69d",
+      "size": 8015
     },
     {
       "path": "skills/multi-agent-independent-review/assets/schemas/review-result.schema.json",
@@ -647,19 +652,34 @@
       "size": 1487
     },
     {
-      "path": "skills/multi-agent-independent-review/references/reviewer-model-routing.md",
+      "path": "skills/multi-agent-independent-review/references/reviewer-model-routing-v3.md",
       "sha256": "afd1a3a3f696a63967f3445c7bce3e2adeda02d56f653b0091224954f98b5847",
       "size": 7262
     },
     {
+      "path": "skills/multi-agent-independent-review/references/reviewer-model-routing.md",
+      "sha256": "7912a01b6d5c4a495641e33c2334a596bc576e2b7d3cffc8ad693579c4c6f518",
+      "size": 6729
+    },
+    {
+      "path": "skills/multi-agent-independent-review/references/routing-v4-contracts.md",
+      "sha256": "2ade62ab5a45834db40be2083661f0b03957f51b29f5ceee04f40c7265e00d77",
+      "size": 16156
+    },
+    {
       "path": "skills/multi-agent-independent-review/scripts/review_controller.py",
-      "sha256": "9d467ad33aa8d77fa6a547e4cdaf5aa90e1258138fc1deb082685536403d6225",
-      "size": 80605
+      "sha256": "29670a4067b1c49a2ffccdc52b82a0d225001985bedd4920a1dcfc64f7490c45",
+      "size": 82382
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
       "sha256": "21766c7eb9e3575d506ab024002e0906e49676ada084618a673d3aaa20316902",
       "size": 33559
+    },
+    {
+      "path": "skills/multi-agent-independent-review/scripts/routing_v4.py",
+      "sha256": "c2760c91c1d18db548f6dc0836c59e3c96ad46c2050cf001cab477581c5de590",
+      "size": 421
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/scoped_review.py",
@@ -673,8 +693,8 @@
     },
     {
       "path": "skills/technical-document-writing/SKILL.md",
-      "sha256": "4599f2d309be78f6851f66d2ce7c415b8636fdfc9080b3e800af2f946030fdd9",
-      "size": 2103
+      "sha256": "cdc7cc5756a64aaaeb6ef369105647705e622a5e967cc0d6b054d3ec2a5e3fd6",
+      "size": 2322
     },
     {
       "path": "skills/technical-document-writing/agents/openai.yaml",
@@ -788,8 +808,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "34c812ad7993c03ad555d9f1f6127e298448a4dfeca4c54ab336ee3f028773e3",
-      "size": 34471
+      "sha256": "fea3acab4266f6cd5037baf205a60ece8313d100c91e1fcf2bf8e9cad425a2a9",
+      "size": 38273
     },
     {
       "path": "hooks/enhancement-hooks.json",
@@ -820,6 +840,16 @@
       "path": "runtime/cp_runtime/atomic_io.py",
       "sha256": "5ab0b7c1316f313e9b5fb847ad73531354c8308ba3a83f21dccf4167c90bed60",
       "size": 1572
+    },
+    {
+      "path": "runtime/cp_runtime/budget_v4.py",
+      "sha256": "6fc545bcd50c68de5d5669ef3485f7261df920fed7630b8f1691c413bf4d079e",
+      "size": 52869
+    },
+    {
+      "path": "runtime/cp_runtime/calibration_v4.py",
+      "sha256": "ae8e2c90715e5830b732862a49b88851a8b4cd23dbf6688af78f0fa0c0868c93",
+      "size": 9166
     },
     {
       "path": "runtime/cp_runtime/capability_cli.py",
@@ -868,8 +898,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_registry.py",
-      "sha256": "64716fe1047b6b52a4e85c84d57652c8a636e00c4d34a126194ddff0c6ac4e8a",
-      "size": 17987
+      "sha256": "65306c1b6689b889f5b2edf1a7e219238be41b5815f1338353915d720e2d886d",
+      "size": 18065
     },
     {
       "path": "runtime/cp_runtime/capability_registry_cli.py",
@@ -897,9 +927,14 @@
       "size": 2478
     },
     {
+      "path": "runtime/cp_runtime/data/calibration-sample-v4.schema.json",
+      "sha256": "71a287d0129466cd72b65c5e8683ee9dc456ffe77a1015e6939e66401d40ef62",
+      "size": 5138
+    },
+    {
       "path": "runtime/cp_runtime/data/capability-registry-v1.json",
-      "sha256": "ab10aa901f0c3e72bbbbe033effe0ac506a7832a40256a25292fbd69934f4e24",
-      "size": 13089
+      "sha256": "71ea0f6990261c37cc7e29a72f62dfd75620ff7262a882b78e90197d4d9f775b",
+      "size": 13164
     },
     {
       "path": "runtime/cp_runtime/data/dispatch-policy-v1.json",
@@ -917,9 +952,14 @@
       "size": 4568
     },
     {
+      "path": "runtime/cp_runtime/data/dispatch-policy-v4.json",
+      "sha256": "252b31137594fec87e62a6903026cad105a12a9ee9c9d04a853dadd12e4bae0f",
+      "size": 4609
+    },
+    {
       "path": "runtime/cp_runtime/delegation_budget.py",
-      "sha256": "5a84a4b5799d46b0bdb299b61c929a382ead6060c78754742768759f7763312c",
-      "size": 89447
+      "sha256": "8839fc8fe32a0a5fef98642b59eafe5e89c9e540893e5145e2e0e681dfab2e6b",
+      "size": 90251
     },
     {
       "path": "runtime/cp_runtime/delegation_calibration.py",
@@ -933,8 +973,8 @@
     },
     {
       "path": "runtime/cp_runtime/dispatch_policy.py",
-      "sha256": "13757b514303fb62ab028094cdfd756f4a9e5643a4516501d26365797a3c3cb2",
-      "size": 23637
+      "sha256": "a98333c4702aef8b40c183173bce23838e0c30078d3536f40756b987b19ee271",
+      "size": 24258
     },
     {
       "path": "runtime/cp_runtime/event_archive.py",
@@ -1118,13 +1158,73 @@
     },
     {
       "path": "runtime/cp_runtime/review_contract.py",
-      "sha256": "4c40d519b65900654e1dee50a1f3afc01247227135d523fe2348f06b91b980d2",
-      "size": 12474
+      "sha256": "c018aa96c1b9cc73b18d59baa39b972e0ef90d10a81c543146bb7388d27b317a",
+      "size": 12718
     },
     {
       "path": "runtime/cp_runtime/review_matrix.py",
       "sha256": "40b2cb75d34ad7dca4dd5e9746698c797b7ffa1914228b34c780734af19ccd4a",
       "size": 35354
+    },
+    {
+      "path": "runtime/cp_runtime/review_v4.py",
+      "sha256": "c433b906bbc773ffbbbcc115a2ec4dcf5bc31aabf839e29a8fc8a428a510dc13",
+      "size": 16241
+    },
+    {
+      "path": "runtime/cp_runtime/routing_cards.py",
+      "sha256": "95f6920f175b7898ce951c74430cf68fb82d21285eeae2eaedc71d2fbc237825",
+      "size": 23218
+    },
+    {
+      "path": "runtime/cp_runtime/routing_cli_v4.py",
+      "sha256": "c571e20794aee30c2b5ce11989a66ba4243250a330eb43a769e22247d96fc609",
+      "size": 8495
+    },
+    {
+      "path": "runtime/cp_runtime/routing_context_v4.py",
+      "sha256": "35140264f505a688ede67bb25d599cab92281cdd4b4c4d4051b5acc82eb5dd22",
+      "size": 18394
+    },
+    {
+      "path": "runtime/cp_runtime/routing_contract.py",
+      "sha256": "5e94254506a88ee95d8bc36dd85cf5454748108dd48fcb77203f36a98f8560ab",
+      "size": 11776
+    },
+    {
+      "path": "runtime/cp_runtime/routing_controls_v4.py",
+      "sha256": "b6129f9e730ee55cbf6de449521ea66aa042418e3898ea5f9386235f5d49df61",
+      "size": 8960
+    },
+    {
+      "path": "runtime/cp_runtime/routing_evaluation_v4.py",
+      "sha256": "a9c9c6a17618fc9b8315ab2a5342b5ce7647888befb9d65191c2e2113f1d712c",
+      "size": 13313
+    },
+    {
+      "path": "runtime/cp_runtime/routing_hook_v4.py",
+      "sha256": "e46d8c8cf867b7587506fdbb0805fbb1dbfcd4c94a86bfd642a74ea6cb944dc1",
+      "size": 8301
+    },
+    {
+      "path": "runtime/cp_runtime/routing_phase_plan.py",
+      "sha256": "7b5d39fb5a78816e609daa2891e60c115f54333b317e2f4dbd6558b4beacc215",
+      "size": 12456
+    },
+    {
+      "path": "runtime/cp_runtime/routing_registry_v4.py",
+      "sha256": "c234740ccef398629a0815abcf84f570aab9d669079206ab7b7c41105fb98e91",
+      "size": 4663
+    },
+    {
+      "path": "runtime/cp_runtime/routing_statistics.py",
+      "sha256": "87b26b284dbf456118d33d607049668ab51af29c4b3671cdc5f1f63704782205",
+      "size": 5572
+    },
+    {
+      "path": "runtime/cp_runtime/routing_v4.py",
+      "sha256": "64e2a26c5210f90663218c06f6b7aee859b46dfd09c85f2d0a64c5fb1909bd06",
+      "size": 18230
     },
     {
       "path": "runtime/cp_runtime/seal_queue.py",

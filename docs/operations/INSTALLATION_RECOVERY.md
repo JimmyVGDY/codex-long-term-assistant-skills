@@ -2,10 +2,10 @@
 
 ## 适用范围
 
-- 目标宿主：Windows 原生 Codex CLI 0.156.0。
+- 产品目标：Codex Desktop；管理组件与桌面任务运行能力分别核验。
 - 基础安装无需本包 Python runtime；仅增强运行时需 Python 3.11 或更高版本。
 - 推荐形态：账户级 Plugin。
-- 可升级版本：<!-- cp-fact:upgrade-sources -->7.11.2, 7.11.1, 7.11.0, 7.10.0, 7.9.2, 7.9.1, 7.9.0, 7.8.1, 7.8.0, 7.7.1, 7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->。
+- 可升级版本：<!-- cp-fact:upgrade-sources -->7.12.0, 7.11.2, 7.11.1, 7.11.0, 7.10.0, 7.9.2, 7.9.1, 7.9.0, 7.8.1, 7.8.0, 7.7.1, 7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->。
 - 受管对象：本包 Marketplace payload、manifest 条目、Plugin cache、Reviewer、全局规则和安装状态。
 
 安装器不改写 `config.toml`，不删除未知 Skill、Agent、Hook、MCP、项目上下文、Event、Snapshot、Assessment、Proposal 或历史备份。
@@ -57,7 +57,6 @@ python scripts\package_manager.py doctor
 python scripts\package_manager.py install --scope user --mode plugin --dry-run
 python scripts\package_manager.py install --scope user --mode plugin
 python scripts\package_manager.py verify --scope user --mode plugin
-codex plugin list --json
 ```
 
 dry-run 应明确显示：
@@ -80,7 +79,7 @@ Codex 0.156.0 的本地 Marketplace manifest 必须包含顶层 `interface.displ
 
 安装前 `doctor` 检查：
 
-- Codex 版本属于当前冻结注册表的 11 个稳定版之一，锚点为 0.156.0；
+- 桌面自带管理组件存在，命令摘要与插件登记结构符合当前 Desktop 契约；
 - `plugin list --json` 可执行；
 - Marketplace add/remove 与 Plugin add/remove 命令存在；
 - state schema 可识别；
@@ -121,7 +120,6 @@ python scripts\package_manager.py doctor --recover
 ```powershell
 python scripts\package_manager.py recover --scope user
 python scripts\package_manager.py verify --scope user --mode plugin
-codex plugin list --json
 ```
 
 若正式安装已提交但需回到旧版本，可从保留的升级备份和旧正式包执行明确版本恢复。恢复完成后应确认原版本 installed/enabled、原 cache digest、原 state、主配置哈希和历史项目上下文数量。
@@ -167,4 +165,6 @@ UserPromptSubmit / Stop / Interrupt → 不消费旧 GateTask 控制状态
 
 配置 `enabled=true`、增强已加载和业务语义适用是不同结论。V7.12.0 只接受 Hook 建立的 Operation v2 起点、不同 B 的许可领取与匹配 PostTool 回执；旧 GateTask 回执不能授权原生写入。已打开会话可能仍使用旧 Plugin 快照，升级后应在新任务中读回实际行为。shell/MCP 等入口不能保证写前拦截。
 
-冻结窗口内 11 个 Codex CLI 版本具有逐版本官方 UserPromptSubmit async 源码证据；真实 Desktop 与其他宿主仍需各自读回。旧门禁启用与停用入口见[能力索引与流程入口](../CAPABILITY_INDEX.md)，但本补丁不把旧任务生命周期恢复为写入授权。
+当前官方 Hook 文档与管理组件探针分别提供接口证据；实际桌面 Hook 加载与调用仍需单独读回。旧稳定版记录仅用于历史恢复。旧门禁启用与停用入口见[能力索引与流程入口](../CAPABILITY_INDEX.md)，但本补丁不把旧任务生命周期恢复为写入授权。
+
+内部路由管理入口：源码包使用 `scripts/routing-v4.py`，已安装插件使用独立复审 Skill 的 `skills/multi-agent-independent-review/scripts/routing_v4.py`。严格 V4 根预算需已安装增强运行时及真实桌面绑定；基础模式仅报告策略约束。

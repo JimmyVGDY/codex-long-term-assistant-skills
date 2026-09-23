@@ -20,7 +20,7 @@ Thank you for contributing to the Codex Cross-Project Engineering Assistant. Eve
 - Keep changes minimal and sufficient. Do not bundle unrelated refactors, dependency upgrades, or formatting.
 - Provide separate Chinese and English natural-language documents. Use clean paired Chinese/English blocks for source comments and docstrings.
 - Do not hard-code a model or reasoning effort in Reviewer TOML files.
-- Do not weaken `execution_authorization=NONE`, the Terra High automatic ceiling, project isolation, the hash chain, or privacy boundaries.
+- Preserve `execution_authorization=NONE`, project isolation, hash-chain and privacy boundaries. Worker/Explorer assignments stop at Terra High; registered Reviewers follow the root's fixed policy with an Astra High ceiling. Automatic dispatch never uses xhigh/max/ultra.
 - When adding runtime files, update the matching tests, English coverage, and release-build gates.
 
 ## Commit format

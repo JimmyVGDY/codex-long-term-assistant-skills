@@ -5,6 +5,8 @@ description: Use for browser, WebView, desktop renderer, JavaScript or TypeScrip
 
 # Frontend Engineering
 
+The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+
 For behavior changes, also use the [quality-delivery entry](../engineering-quality-delivery/SKILL.md), including its capability-index actions before editing and before closing. Stack rules alone do not cover shared-component index maintenance.
 
 1. Identify framework, version, Node version, package manager, lock file, rendering mode, runtime carrier, and client/server boundary before applying framework semantics.

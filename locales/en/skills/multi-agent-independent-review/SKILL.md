@@ -13,12 +13,16 @@ description: Use for risk-based design gates, independent reviews of behavior ch
 The execution steps below apply to actual review after its gate is satisfied.
 
 1. Select the execution profile, shared DelegationBudget, Reviewer effort, and model profile independently. Reviewer state does not charge the total budget twice.
-2. Start every assignment at Luna Low and one point. Add budget-mode and valid-evidence points, then dispatch once. Registered Reviewers have ten combinations up to Astra High; workers/explorers retain four. No xhigh/max/ultra, direct premium default, or preliminary calls merely to climb tiers. Read reviewer-model-routing.md for the frozen scoring rules.
+2. Read the root's frozen policy first. Explicit V4 checks scenario qualification, paired gains and actual resources in that order. Its evaluation catalog has 18 combinations; the new production pool has nine GPT-6 profiles. Missing approved qualifications require independent evaluation, not selection by model name. V3 retains its frozen Luna Low scoring. Workers/explorers retain four profiles; automatic effort is capped at High. Read reviewer-model-routing.md.
 3. Bind every Review Packet to Project ID, Task ID, Git baseline, Task Envelope, packet hash, validation summary, assigned scope, and a matching Reviewer permit in `delegation-budget.py` when unified accounting is active. For scoped review, also use `scripts/scoped_review.py` to fingerprint targets, statically discovered dependencies, configuration, and authority files. Unknown dynamic dependencies are `INCOMPLETE`, relevant changes are `STALE`, and scoped PASS never means release-wide PASS.
 4. Read summary and statistics first, then assigned diff and direct dependencies, then expand only when evidence remains insufficient.
 5. Collect one round before deduplication, root-cause clustering, conflict resolution, and centralized repair.
 6. After repair, refresh only affected evidence and packet content. Stop repeated review when the packet is unchanged or no new information exists.
-7. Defaults: parallel <=3, cumulative <=6, post-implementation rounds <=2, repair rounds <=2, Terra High reviewers <=1; Sol/Astra attempts <=2, premium parallelism <=1, Astra High <=1. Apply the stricter root-budget and controller limits.
+7. Defaults: parallel <=3, cumulative <=6, post-implementation rounds <=2 and repair rounds <=2. V3 additionally limits Terra High reviewers to one, Sol/Astra attempts to two with one at a time, and Astra High to one. V4 verifies its fixed root resource vector and complete phase allocation. Apply the stricter root-budget and controller limits.
+
+V4 uses the repository-root `scripts/routing-v4.py`: Budget V4, State V9, Result V6 and
+Sample V4. Never mix V4 and V3 units, states, results or observations. Existing tasks
+do not automatically migrate.
 
 Independent context is not system read-only. A writable parent without sandbox-denial evidence supports only `logical-readonly`. Review evidence never authorizes modification, commit, push, deployment, restart, or production operation.
 

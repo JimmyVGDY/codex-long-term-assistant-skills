@@ -387,3 +387,13 @@ docs/releases/v7.11.2/AUDIT_REPORT.md
 docs/releases/v7.12.0/RELEASE_NOTES.md
 docs/releases/v7.12.0/VALIDATION_REPORT.md
 docs/releases/v7.12.0/AUDIT_REPORT.md
+
+# V4 routing pairs compared by the implementing agent; no human-review attestation.
+docs/MODEL_ROUTING_V4_CONTRACTS.md
+skills/multi-agent-independent-review/references/reviewer-model-routing-v3.md
+skills/multi-agent-independent-review/references/routing-v4-contracts.md
+
+# V7.13 candidate pairs checked by the implementing agent; release state remains explicit.
+docs/releases/v7.13.0/RELEASE_NOTES.md
+docs/releases/v7.13.0/VALIDATION_REPORT.md
+docs/releases/v7.13.0/AUDIT_REPORT.md

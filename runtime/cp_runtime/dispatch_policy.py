@@ -15,10 +15,12 @@ from typing import Any, Iterable, Mapping
 LEGACY_POLICY_ID = "four-tier-v1"
 PREVIOUS_POLICY_ID = "reviewer-matrix-v2"
 CURRENT_POLICY_ID = "reviewer-matrix-v3"
+V4_POLICY_ID = "reviewer-matrix-v4"
 POLICY_FILES = {
     LEGACY_POLICY_ID: "dispatch-policy-v1.json",
     PREVIOUS_POLICY_ID: "dispatch-policy-v2.json",
     CURRENT_POLICY_ID: "dispatch-policy-v3.json",
+    V4_POLICY_ID: "dispatch-policy-v4.json",
 }
 CONTEXT_FIELDS = {"project_id", "task_id", "repo_fingerprint", "packet_sha256", "baseline_sha256"}
 ATOM_FIELDS = {"evidence_ref", "correlation_ref", "dimension", "level"}
@@ -49,8 +51,11 @@ def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-@lru_cache(maxsize=3)
+@lru_cache(maxsize=4)
 def _policy_bytes(policy_id: str) -> bytes:
+    if policy_id == V4_POLICY_ID:
+        from .routing_contract import policy as v4_policy
+        return canonical_json(v4_policy()).encode("utf-8")
     filename = POLICY_FILES.get(policy_id)
     if filename is None:
         raise DispatchPolicyError("POLICY_VERSION_UNSUPPORTED")
@@ -113,6 +118,8 @@ def profile_spec(profile: str, policy_id: str = CURRENT_POLICY_ID) -> dict[str, 
 
 
 def profile_weights(policy_id: str = CURRENT_POLICY_ID) -> dict[str, int]:
+    if policy_id == V4_POLICY_ID:
+        raise DispatchPolicyError("V4_COSTS_REQUIRE_SCENARIO_CARDS")
     return {name: item["units"] for name, item in policy(policy_id)["profiles"].items()}
 
 
@@ -149,12 +156,17 @@ def requirement_profiles(agent_type: str, requested: Iterable[str] | None = None
 
 
 def is_premium(profile: str, policy_id: str = CURRENT_POLICY_ID) -> bool:
+    if policy_id == V4_POLICY_ID:
+        return profile_spec(profile, policy_id)["resource_group"] == "astra"
     return profile_spec(profile, policy_id)["family"] in {"sol", "astra"}
 
 
 def resolve_request(model: str, effort: str, default_profile: str, agent_type: str,
                     policy_id: str = CURRENT_POLICY_ID) -> tuple[str, str]:
     """中文：只解释请求，不推断执行型号；English: resolve a request, never host identity."""
+    if policy_id == V4_POLICY_ID:
+        from .routing_contract import resolve_request as v4_resolve
+        return v4_resolve(model, effort, agent_type), "explicit-request"
     if not isinstance(model, str) or not isinstance(effort, str):
         raise DispatchPolicyError("REQUEST_INVALID")
     model, effort = model.strip().lower(), effort.strip().lower()

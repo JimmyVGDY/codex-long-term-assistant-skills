@@ -1011,6 +1011,18 @@ def _project_legacy_budget(records: List[Dict[str, Any]]) -> Dict[str, Any]:
 def read_budget(path: Path) -> Dict[str, Any]:
     path = Path(path)
     with OwnerTokenLock(path, timeout=1.5):
+        if path.is_file():
+            with path.open("rb") as stream:
+                first_line = stream.readline(8_388_609)
+            if len(first_line) > 8_388_608:
+                raise DelegationBudgetError("预算首记录超过有界读取上限")
+            try:
+                header = json.loads(first_line) if first_line.strip() else {}
+            except (ValueError, UnicodeError):
+                header = {}
+            if isinstance(header, dict) and header.get("schema_version") == "4.0":
+                from .budget_v4 import _read_events, replay
+                return replay(_read_events(path))
         records = _read_records_unlocked(path)
         if records and records[0].get("schema_version") == LEGACY_SCHEMA_VERSION:
             return _project_legacy_budget(records)
@@ -1496,6 +1508,9 @@ def close_budget(path: Path, *, conclusion: str) -> Dict[str, Any]:
 
 def reservation_for_host_dispatch(path: Path, host_dispatch_id: str) -> Optional[str]:
     state = read_budget(path)
+    if state["schema_version"] == "4.0":
+        from .routing_contract import ref
+        return state["host_dispatches"].get(ref(_identifier(host_dispatch_id, "host_dispatch_id")))
     host_ref = sha256_ref(_identifier(host_dispatch_id, "host_dispatch_id"))
     for reservation_id, item in state["reservations"].items():
         if item.get("host_dispatch_ref") == host_ref:

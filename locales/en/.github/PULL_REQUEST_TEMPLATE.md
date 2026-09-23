@@ -26,5 +26,5 @@
 - [ ] Chinese and English documents and runtime language are synchronized.
 - [ ] No credentials, private paths, or sensitive content were added.
 - [ ] Reviewer definitions do not hard-code a model or reasoning effort.
-- [ ] Automatic dispatch stays within Terra High and controlled evolution remains at `execution_authorization=NONE`.
+- [ ] Worker/Explorer assignments stop at Terra High; registered Reviewers follow the fixed policy and stop at Astra High; automatic dispatch never uses xhigh/max/ultra, and controlled evolution remains at `execution_authorization=NONE`.
 - [ ] Commit messages follow `<type> | <Chinese summary>`.

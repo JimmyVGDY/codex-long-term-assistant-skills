@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "version": "7.13.0",
+  "ok": false,
+  "scope": "Candidate delivery; package evidence is valid within its recorded baselines, native gate and model qualification remain incomplete.",
+  "source_head": "3ca41960b645146bc663644e06f4d2970850fdff",
+  "source_is_uncommitted_candidate": true,
+  "local_full_validation": {
+    "status": "PASS",
+    "report_sha256": "bf4ac8bb320e25840dcd2e8ea9a8a75cf398ab6788b00de1a9768b2660c46d35",
+    "payload_digest": "56e99267f2341a46d5435ff39cb46646c827b3ef0e41c183ee797d71c6ecaeef",
+    "package": {
+      "executed": 740,
+      "passed": 739,
+      "skipped": 1
+    },
+    "runtime": {
+      "executed": 231,
+      "passed": 231,
+      "skipped": 0
+    },
+    "baseline_note": "Before the final Astra inflight fix."
+  },
+  "affected_validation_after_fix": {
+    "v4": {
+      "passed": 111,
+      "seconds": 91.362
+    },
+    "compatibility_and_evidence": {
+      "passed": 129,
+      "seconds": 66.306
+    },
+    "synthetic_host_fixtures": true,
+    "not_additive_full_suite_total": true
+  },
+  "documentation_checks": {
+    "semantic": "PASS",
+    "bilingual": "PASS",
+    "projections": "PASS",
+    "modified_skill_entrypoints": 16
+  },
+  "desktop_installation": {
+    "status": "PASS",
+    "version": "7.13.0",
+    "payload_digest": "904f4708d4e98407d74ee86baae14f38213d714e1727b1c627e7089eb52cddf8",
+    "scope": "Source, marketplace, cache and managed installation readback; not native gate effectiveness."
+  },
+  "native_v4_dispatch": "FAILED_NO_PRETOOL_RESERVATION",
+  "modified_pretool_hook_trust": "PENDING_NORMAL_REVIEW",
+  "model_quality_qualification": "NOT_EVALUATED",
+  "actual_unqualified_model_calls": 1,
+  "public_release_created": false,
+  "known_limits": [
+    "Windows normal-account context was required for DPAPI and source-capture checks.",
+    "PowerShell policy adjustment applied only to test child processes.",
+    "Management component version is not a Desktop runtime version.",
+    "No real billing measurement or production model qualification is claimed."
+  ]
+}

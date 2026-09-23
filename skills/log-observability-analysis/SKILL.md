@@ -18,6 +18,8 @@ description: >-
 
 ## 模型与委派成本
 
+本段仅适用于 Worker/Explorer 的普通委派；登记 Reviewer 按 [独立复审技能](../multi-agent-independent-review/SKILL.md) 的根任务固定策略选型。主 Agent 模型与强度保持当前选择。
+
 - 时间窗提取、traceId 关联、异常去重、聚类和清单整理优先 `luna-low`；范围明确的时间线和单调用链候选分析使用 `luna-medium`。
 - 跨服务因果判断、证据冲突和复杂资源瓶颈使用 `terra-medium`；只有生产高风险、复杂并发或安全事件裁决才使用 `terra-high`。
 - 日志量大不等于推理难度高；按服务、时间窗和证据域分片，禁止多个子 Agent 重复扫描同一原始日志。

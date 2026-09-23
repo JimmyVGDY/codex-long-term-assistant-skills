@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "scripts" / "build-release.py"
 ATTEST = ROOT / "scripts" / "release-attestation.py"
 LIFECYCLE = ROOT / "scripts" / "lifecycle-acceptance.py"
-VERSION = "7.12.0"
+VERSION = "7.13.0"
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v3 import append_event, make_event, project_id_for, stable_repo_fingerprint
 
@@ -147,6 +147,10 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             "validation.json": {"ok": True},
             "witness.json": {"ok": True, "reproducible": True, "artifact_sha256": digest},
             "unified.json": {
+                "schema_version": 3, "host_surface": "codex-desktop",
+                "desktop_contract_digest": hashlib.sha256(json.dumps(
+                    json.loads((ROOT / "config" / "desktop-host-contract-v1.json").read_text(encoding="utf-8")),
+                    ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest(),
                 "ok": True, "version": VERSION, "artifact_sha256": digest,
                 "compatibility_registry_digest": "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8",
                 "status": {key: "PASS" for key in (
@@ -171,7 +175,8 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             "--codex-version-evidence", str(version), "--output", str(attestation),
         ], environment)
         payload = json.loads(attestation.read_text(encoding="utf-8"))
-        self.assertEqual("2.0", payload["schema_version"])
+        self.assertEqual("3.0", payload["schema_version"])
+        self.assertEqual("codex-desktop", payload["host"]["surface"])
         self.assertEqual("PASS", payload["validation"]["dispatch_policy"])
         self.assertEqual("synthetic-policy-only", payload["validation"]["dispatch_policy_evidence_scope"])
         serialized = json.dumps(payload, ensure_ascii=False)
