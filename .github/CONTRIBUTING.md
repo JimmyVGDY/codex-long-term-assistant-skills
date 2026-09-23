@@ -1,6 +1,6 @@
 # 贡献指南
 
-English: [CONTRIBUTING.en.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CONTRIBUTING.en.md)
+English: [CONTRIBUTING.en.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/.github/CONTRIBUTING.en.md)
 
 感谢参与 Codex 跨项目长期技术助手。改动应保持安全边界、双语一致性与可回滚性。
 
@@ -9,11 +9,12 @@ English: [CONTRIBUTING.en.md](https://github.com/JimmyVGDY/codex-long-term-assis
 1. 先搜索现有 Issue 与 Pull Request，避免重复工作。
 2. 缺陷修复应提供最小复现、实际结果、预期结果与环境信息。
 3. 行为变化较大的方案宜先建立 Issue，明确范围、兼容性和验证口径。
-4. 漏洞或敏感信息不得进入公开 Issue，处理方式见 [安全策略](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.md)。
+4. 漏洞或敏感信息不得进入公开 Issue，处理方式见 [安全策略](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/.github/SECURITY.md)。
 
 ## 开发约定
 
-- 从 `main` 建立短期分支，推荐前缀：`feat/`、`fix/`、`docs/`、`test/`、`ci/`。
+- 从 `master` 建立短期分支，推荐前缀：`feat/`、`fix/`、`docs/`、`test/`、`ci/`。
+- 长期仅保留 `master`；临时开发分支合并完成后，删除本地和远端引用。清理前核对未合并内容并保留工作树改动。
 - 保持最小充分改动，不夹带无关重构、依赖升级或格式化。
 - 自然语言资料提供独立中文、英文版本；代码注释与 Docstring 使用整齐的中英配对格式。
 - Reviewer TOML 不写死模型或推理强度。

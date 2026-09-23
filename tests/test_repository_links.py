@@ -60,11 +60,21 @@ class RepositoryLinkTests(unittest.TestCase):
         self.assertTrue(report["ok"], report["findings"])
 
     def test_repository_github_urls_map_to_local_files(self) -> None:
-        value = (
-            "https://github.com/example-owner/codex-long-term-assistant-skills/"
-            "blob/main/.github/CONTRIBUTING.en.md"
-        )
-        self.assertEqual(".github/CONTRIBUTING.en.md", self.checker.repository_target(value))
+        for branch in ("master", "main"):
+            with self.subTest(branch=branch):
+                value = (
+                    "https://github.com/example-owner/codex-long-term-assistant-skills/"
+                    f"blob/{branch}/.github/CONTRIBUTING.en.md#development-conventions"
+                )
+                self.assertEqual(
+                    ".github/CONTRIBUTING.en.md#development-conventions",
+                    self.checker.repository_target(value),
+                )
+                raw = (
+                    "https://raw.githubusercontent.com/example-owner/"
+                    f"codex-long-term-assistant-skills/{branch}/.github/CONTRIBUTING.en.md"
+                )
+                self.assertEqual(".github/CONTRIBUTING.en.md", self.checker.repository_target(raw))
 
 
 if __name__ == "__main__":

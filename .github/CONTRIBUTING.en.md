@@ -2,7 +2,7 @@
 
 # Contributing guide
 
-Chinese version: [CONTRIBUTING.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/CONTRIBUTING.md)
+Chinese version: [CONTRIBUTING.md](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/.github/CONTRIBUTING.md)
 
 Thank you for contributing to the Codex Cross-Project Engineering Assistant. Every change should preserve safety boundaries, bilingual consistency, and rollback capability.
 
@@ -11,11 +11,12 @@ Thank you for contributing to the Codex Cross-Project Engineering Assistant. Eve
 1. Search existing Issues and Pull Requests to avoid duplicate work.
 2. A defect report should include a minimal reproduction, actual result, expected result, and environment details.
 3. Open an Issue before a substantial behavior change to define scope, compatibility, and validation evidence.
-4. Never place vulnerabilities or sensitive information in a public Issue. Follow the [security policy](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/SECURITY.en.md).
+4. Never place vulnerabilities or sensitive information in a public Issue. Follow the [security policy](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/.github/SECURITY.en.md).
 
 ## Development conventions
 
-- Create a short-lived branch from `main`; recommended prefixes are `feat/`, `fix/`, `docs/`, `test/`, and `ci/`.
+- Create a short-lived branch from `master`; recommended prefixes are `feat/`, `fix/`, `docs/`, `test/`, and `ci/`.
+- Keep `master` as the only long-lived branch. After merging temporary development branches, remove their local and remote references; check unmerged work and preserve working-tree changes before cleanup.
 - Keep changes minimal and sufficient. Do not bundle unrelated refactors, dependency upgrades, or formatting.
 - Provide separate Chinese and English natural-language documents. Use clean paired Chinese/English blocks for source comments and docstrings.
 - Do not hard-code a model or reasoning effort in Reviewer TOML files.

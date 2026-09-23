@@ -119,20 +119,22 @@ def issue(code: str, source: Path, line: int, target: str, detail: str = "") -> 
 
 
 def repository_target(target: str) -> str | None:
-    """中文：把当前仓库 main 分支的 GitHub URL 映射回本地路径。
+    """中文：把当前仓库 master 及历史 main 分支的 GitHub URL 映射回本地路径。
 
-    English: Map GitHub URLs for this repository's main branch back to local paths.
+    English: Map GitHub URLs for master and historical main links back to local paths.
     """
     parsed = urllib.parse.urlsplit(target)
     parts = parsed.path.strip("/").split("/")
     if parsed.netloc.lower() == "github.com" and len(parts) >= 4 and parts[1] == REPOSITORY_NAME:
         remainder = "/".join(parts[2:])
-        for kind in ("blob/main/", "tree/main/"):
-            if remainder.startswith(kind):
-                return urllib.parse.unquote(remainder[len(kind):]) + (
-                    f"#{parsed.fragment}" if parsed.fragment else "")
+        for branch in ("master", "main"):
+            for kind in ("blob", "tree"):
+                prefix = f"{kind}/{branch}/"
+                if remainder.startswith(prefix):
+                    return urllib.parse.unquote(remainder[len(prefix):]) + (
+                        f"#{parsed.fragment}" if parsed.fragment else "")
     if (parsed.netloc.lower() == "raw.githubusercontent.com" and len(parts) >= 4
-            and parts[1] == REPOSITORY_NAME and parts[2] == "main"):
+            and parts[1] == REPOSITORY_NAME and parts[2] in {"master", "main"}):
         return urllib.parse.unquote("/".join(parts[3:]))
     return None
 

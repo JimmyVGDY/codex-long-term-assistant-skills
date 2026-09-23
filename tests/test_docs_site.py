@@ -75,7 +75,7 @@ class DocumentationSiteTests(unittest.TestCase):
             self.assertNotIn("README.en.md", chinese_home)
             self.assertNotIn("INSTALLATION_RECOVERY.en.md", english_home)
             self.assertIn(
-                "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/.github/",
+                "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/.github/",
                 english_home,
             )
             for language in ("zh-CN", "en"):

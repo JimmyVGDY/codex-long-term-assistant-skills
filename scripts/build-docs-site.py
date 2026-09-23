@@ -22,7 +22,7 @@ if str(ROOT / "scripts") not in sys.path:
 from documentation import audit as audit_documentation, current_documents, load_catalog, rewrite_links
 DEFAULT_OUTPUT = ROOT / "dist" / "docs-source"
 SITE_TEMPLATE = ROOT / ".github" / "docs-site"
-REPOSITORY_BLOB = "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/"
+REPOSITORY_BLOB = "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/"
 PACKAGE_VERSION = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"]
 CURRENT_RELEASE_DIRECTORY = f"v{PACKAGE_VERSION}"
 CURRENT_VERSION_SERIES = ".".join(PACKAGE_VERSION.split(".")[:2])

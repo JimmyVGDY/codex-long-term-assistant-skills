@@ -179,7 +179,7 @@ class V73BilingualReleaseTests(unittest.TestCase):
         }
         canonical_prefix = (
             "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/"
-            "blob/main/.github/"
+            "blob/master/.github/"
         )
         markdown_link = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
         for path in (ROOT / ".github").glob("*.md"):

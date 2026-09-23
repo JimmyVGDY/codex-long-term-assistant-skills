@@ -2,14 +2,14 @@ name: 链接检查 / Link Check
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "**.md"
       - "scripts/check-links.py"
       - "tests/test_repository_links.py"
       - ".github/workflows/links.yml"
   pull_request:
-    branches: [main]
+    branches: [master]
     paths:
       - "**.md"
       - "scripts/check-links.py"

@@ -2,7 +2,7 @@ name: 文档站 / Documentation Site
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "README.md"
       - "README.en.md"
