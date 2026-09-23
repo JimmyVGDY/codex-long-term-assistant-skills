@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import subprocess
@@ -13,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "scripts" / "build-release.py"
 ATTEST = ROOT / "scripts" / "release-attestation.py"
 LIFECYCLE = ROOT / "scripts" / "lifecycle-acceptance.py"
-VERSION = "7.11.2"
+VERSION = "7.12.0"
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v3 import append_event, make_event, project_id_for, stable_repo_fingerprint
 
@@ -40,20 +41,11 @@ def run_script(script: Path, arguments: list[str], environment: dict[str, str] |
 
 
 def dispatch_policy_report() -> dict:
-    return {
-        "ok": True,
-        "schema_version": "2.0",
-        "dispatch_policy_status": "PASS",
-        "automatic_ceiling_profile": "terra-high",
-        "cases": [
-            {"case_id": "allow-low", "expected": "allow", "observed": "allow", "exit_code": 0, "pass": True},
-            {"case_id": "deny-high", "expected": "deny", "observed": "deny", "exit_code": 0, "pass": True},
-        ],
-        "privacy": {
-            "host_model_information_collected": False,
-            "host_model_information_exported": False,
-        },
-    }
+    spec = importlib.util.spec_from_file_location("dispatch_policy_v64", ROOT / "scripts" / "dispatch-policy-acceptance.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.evaluate()
 
 
 class V64ReleaseDeliveryTests(unittest.TestCase):
@@ -156,7 +148,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             "witness.json": {"ok": True, "reproducible": True, "artifact_sha256": digest},
             "unified.json": {
                 "ok": True, "version": VERSION, "artifact_sha256": digest,
-                "compatibility_registry_digest": "85120c90f12de804c93942bc597c7a47c33377c06fe70625a8aaee46f9d4c872",
+                "compatibility_registry_digest": "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8",
                 "status": {key: "PASS" for key in (
                     "package", "artifact", "host", "plugin", "lifecycle", "dispatch_policy", "payload"
                 )},
@@ -166,7 +158,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         for name, value in evidence.items():
             (self.root / name).write_text(json.dumps(value), encoding="utf-8")
         version = self.root / "version.txt"
-        version.write_text("codex-cli 0.155.1\n", encoding="utf-8")
+        version.write_text("codex-cli 0.156.0\n", encoding="utf-8")
         attestation = self.root / "attestation.json"
         environment = {**os.environ, "CP_ASSISTANT_ATTESTATION_HMAC_KEY": "test-key-v743"}
         run_script(ATTEST, [
@@ -181,6 +173,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         payload = json.loads(attestation.read_text(encoding="utf-8"))
         self.assertEqual("2.0", payload["schema_version"])
         self.assertEqual("PASS", payload["validation"]["dispatch_policy"])
+        self.assertEqual("synthetic-policy-only", payload["validation"]["dispatch_policy_evidence_scope"])
         serialized = json.dumps(payload, ensure_ascii=False)
         self.assertNotIn("actual_subagent_models", serialized)
         self.assertNotIn("runtime_model", serialized)
@@ -188,6 +181,20 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             ATTEST, ["verify", "--attestation", str(attestation), "--artifact", str(artifact)], environment
         )
         self.assertTrue(json.loads(verified.stdout)["ok"])
+
+    def test_attestation_rejects_tampered_generated_policy_contract(self):
+        module_spec = importlib.util.spec_from_file_location("release_attestation_v64", ATTEST)
+        assert module_spec and module_spec.loader
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        for mutation in (
+            lambda report: report.__setitem__("evidence_scope", "host-dispatch-receipt"),
+            lambda report: report.__setitem__("case_count", float(report["case_count"])),
+        ):
+            report = dispatch_policy_report()
+            mutation(report)
+            with self.assertRaises(module.AttestationError):
+                module._dispatch_policy_details(report)
 
 
 if __name__ == "__main__":

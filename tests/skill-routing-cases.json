@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "V7.3 路由回归：覆盖四个通用主领域、最小充分加载、执行档位、Luna/Terra 子 Agent 分级、独立上下文 Reviewer、证据有效性和跨技术栈识别。",
+  "description": "路由回归：覆盖四个主领域、治理正反例、按阶段最小加载与例外理由、执行档位、独立复审和证据边界。",
   "cases": [
     {
       "id": "java-concept-readonly",
@@ -645,7 +645,7 @@
     },
     {
       "id": "ai-gpu-worker-boundary",
-      "prompt": "排查多模态 GPU Worker 的 OOM、队列并发、任务取消和失败恢复，不执行生产操作。",
+      "prompt": "排查承载多模态模型推理与生成的 GPU Worker：同时检查推理/生成任务的取消与失败恢复语义，以及 OOM 和队列并发资源问题。不执行生产操作。",
       "required": [
         "ai-engineering",
         "data-middleware-infrastructure"
@@ -689,6 +689,79 @@
         "engineering-quality-delivery"
       ],
       "max_active": 1
+    },
+    {
+      "id": "cross-task-review-value",
+      "prompt": "基于本项目已核验的多任务结果，比较独立复审的采纳、遗漏和返修，提出待人工决策的流程改进建议，不执行改动。",
+      "required": ["controlled-evolution-governance"],
+      "optional": ["technical-document-writing", "multi-agent-independent-review"],
+      "forbidden": ["frontend-engineering", "backend-engineering"],
+      "max_active": 3
+    },
+    {
+      "id": "reviewer-cost-calibration",
+      "prompt": "离线评估本项目历史 Reviewer 成本和收益样本，检查可比性与样本量，给出是否调整模型路由的提案，不修改策略。",
+      "required": ["controlled-evolution-governance"],
+      "optional": ["multi-agent-independent-review"],
+      "forbidden": ["backend-engineering", "frontend-engineering"],
+      "max_active": 2
+    },
+    {
+      "id": "optimization-proposal-lifecycle",
+      "prompt": "核对跨任务优化提案的证据来源、项目隔离和人工决策状态，说明接受提案之后还需要哪些实施授权，不执行提案。",
+      "required": ["controlled-evolution-governance"],
+      "optional": ["engineering-quality-delivery", "technical-document-writing"],
+      "forbidden": ["frontend-engineering"],
+      "max_active": 3
+    },
+    {
+      "id": "single-python-fix-not-evolution",
+      "prompt": "修复当前 Python 函数在空列表时的返回值，运行已有定向测试；只做这个局部修复，不提交。",
+      "required": ["backend-engineering", "engineering-quality-delivery"],
+      "optional": [],
+      "forbidden": ["controlled-evolution-governance", "long-running-task-memory", "multi-agent-independent-review"],
+      "max_active": 2
+    },
+    {
+      "id": "ordinary-review-not-evolution",
+      "prompt": "当前 Python 业务改动已完成，主实现者的自测仍有未覆盖的异常路径。请由独立 Reviewer 使用单独上下文做一次只读复审，检查业务行为和测试遗漏；不分析历史任务或调整策略。",
+      "required": ["multi-agent-independent-review"],
+      "optional": ["backend-engineering", "engineering-quality-delivery"],
+      "forbidden": ["controlled-evolution-governance"],
+      "max_active": 3
+    },
+    {
+      "id": "ordinary-long-task-not-evolution",
+      "prompt": "继续这个跨天的 Python 模块改造，恢复当前任务状态，核对代码和检查点，按原范围实施并验证；不分析跨任务统计。",
+      "required": ["long-running-task-memory", "engineering-quality-delivery", "backend-engineering"],
+      "optional": [],
+      "forbidden": ["controlled-evolution-governance"],
+      "max_active": 3
+    },
+    {
+      "id": "phased-long-task-review",
+      "prompt": "这个跨天的 Python 后端改造已完成实施，当前进入独立复审。复审会逐项判断 Python 业务规则、异常和并发状态是否正确，并核对已有测试证据。请分别说明实施和复审阶段各自承担这些工作的完整工程能力，包含此前已载入且该阶段仍然采用的能力；只读取当前任务资料，不实际改代码。若某阶段超过三个能力，说明必要性。",
+      "required": ["backend-engineering", "engineering-quality-delivery", "long-running-task-memory", "multi-agent-independent-review"],
+      "optional": [],
+      "forbidden": ["controlled-evolution-governance"],
+      "max_active": 4,
+      "phases": [
+        {
+          "id": "implement",
+          "required": ["backend-engineering", "engineering-quality-delivery", "long-running-task-memory"],
+          "optional": [],
+          "forbidden": ["multi-agent-independent-review", "controlled-evolution-governance"],
+          "max_active": 3
+        },
+        {
+          "id": "review",
+          "required": ["backend-engineering", "engineering-quality-delivery", "multi-agent-independent-review"],
+          "optional": ["long-running-task-memory"],
+          "forbidden": ["controlled-evolution-governance"],
+          "max_active": 4,
+          "exception_above": 3
+        }
+      ]
     }
   ]
 }

@@ -53,6 +53,10 @@ class HostRoutingAcceptanceTests(unittest.TestCase):
             "TASK_ID=%s\nOBSERVED_AT=%s\nACTIVATED_SKILLS=%s\n"
             % (item["task_id"], item["observed_at"], activated)
         )
+        if "phases" in item:
+            content += "PHASE_OBSERVATIONS=" + json.dumps(item["phases"], ensure_ascii=False) + "\n"
+        if item.get("exception_reason"):
+            content += "ACTIVATION_EXCEPTION_REASON=" + item["exception_reason"] + "\n"
         item["report_sha256"] = self.write_evidence(item["report_file"], content)
 
     def valid_results(self) -> dict:
@@ -71,11 +75,16 @@ class HostRoutingAcceptanceTests(unittest.TestCase):
                 "explicit_skill_names_in_prompt": False,
                 "notes": "",
             })
+            if case.get("phases"):
+                observations[-1]["phases"] = [
+                    {"id": phase["id"], "activated": list(phase["required"]), "exception_reason": ""}
+                    for phase in case["phases"]
+                ]
             self.seal_observation(observations[-1])
         host_readback = (
             "CODEX_VERSION=0.154.0\n"
             "PLUGIN_ID=codex-cross-project-engineering-assistant\n"
-            "PLUGIN_VERSION=7.11.2\n"
+            "PLUGIN_VERSION=7.12.0\n"
             "INSTALLED=true\nENABLED=true\n"
         )
         results = {
@@ -84,7 +93,7 @@ class HostRoutingAcceptanceTests(unittest.TestCase):
             "host": {
                 "codex_version": "0.154.0",
                 "plugin_id": "codex-cross-project-engineering-assistant",
-                "plugin_version": "7.11.2",
+                "plugin_version": "7.12.0",
                 "installed": True,
                 "enabled": True,
                 "observed_at": "2026-09-02T12:00:00+08:00",
@@ -103,7 +112,7 @@ class HostRoutingAcceptanceTests(unittest.TestCase):
             self.cases, self.profile, self.valid_results(), self.evidence_root
         )
         self.assertEqual("PASS", report["status"])
-        self.assertEqual(11, report["summary"]["independent_tasks"])
+        self.assertEqual(len(self.profile["required_case_ids"]), report["summary"]["independent_tasks"])
         self.assertEqual("HOST_FINAL_REPORT", report["evidence_scope"])
         self.assertEqual("SHA256_VERIFIED_BYTES", report["evidence_binding"])
         self.assertFalse(report["router_trace_observed"])
@@ -119,6 +128,36 @@ class HostRoutingAcceptanceTests(unittest.TestCase):
         )
         self.assertEqual("PARTIAL", report["status"])
         self.assertEqual(1, report["summary"]["missing"])
+
+    def test_phase_report_is_bound_and_missing_exception_fails(self) -> None:
+        results = self.valid_results()
+        item = next(row for row in results["observations"] if row["id"] == "phased-long-task-review")
+        item["phases"][1]["activated"].append("long-running-task-memory")
+        with self.assertRaisesRegex(ValueError, "phases.*不一致"):
+            self.module.evaluate_host_acceptance(self.cases, self.profile, results, self.evidence_root)
+        self.seal_observation(item)
+        report = self.module.evaluate_host_acceptance(self.cases, self.profile, results, self.evidence_root)
+        self.assertEqual("FAILED", report["status"])
+        row = next(row for row in report["cases"] if row["id"] == item["id"])
+        self.assertIn("PHASE_EXCEPTION_REQUIRED:review", row["phase_findings"])
+        item["phases"][1]["exception_reason"] = "Cross-session evidence handoff is needed in this review."
+        self.seal_observation(item)
+        report = self.module.evaluate_host_acceptance(self.cases, self.profile, results, self.evidence_root)
+        self.assertEqual("PASS", report["status"])
+
+    def test_unphased_exception_is_bound_to_report_bytes(self) -> None:
+        results = self.valid_results()
+        item = next(row for row in results["observations"] if row["id"] == "architecture-document")
+        case = self.case_map[item["id"]]
+        item["activated"] = case["required"] + case["optional"]
+        self.seal_observation(item)
+        report = self.module.evaluate_host_acceptance(self.cases, self.profile, results, self.evidence_root)
+        self.assertEqual("FAILED", report["status"])
+        item["exception_reason"] = "The current architecture spans application, AI and storage contracts."
+        with self.assertRaisesRegex(ValueError, "ACTIVATION_EXCEPTION_REASON"):
+            self.module.evaluate_host_acceptance(self.cases, self.profile, results, self.evidence_root)
+        self.seal_observation(item)
+        self.assertEqual("PASS", self.module.evaluate_host_acceptance(self.cases, self.profile, results, self.evidence_root)["status"])
 
     def test_forbidden_activation_fails(self) -> None:
         results = self.valid_results()

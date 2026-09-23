@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.11.2",
-  "release_name": "复审评分修复与 Codex 稳定版适配",
-  "generated_for": "Codex CLI 0.155.1 Plugin-first engineering assistance with ten registered Reviewer combinations, Luna-based evidence scoring, versioned budgets, and explicit native dispatch references",
+  "version": "7.12.0",
+  "release_name": "可靠性、验证证据与日常诊断优化",
+  "generated_for": "Codex CLI 0.156.0 Plugin-first engineering assistance with phase-aware SessionEnd fallback, executed-test validation evidence, governance routing regression coverage, and explicit quick-status diagnostics",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -669,6 +669,7 @@
     ]
   },
   "upgrade_from": [
+    "7.11.2",
     "7.11.1",
     "7.11.0",
     "7.10.0",
@@ -829,8 +830,9 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "anchor": "0.155.1",
+    "anchor": "0.156.0",
     "verified_versions": [
+      "0.156.0",
       "0.155.1",
       "0.155.0",
       "0.154.0",
@@ -840,8 +842,7 @@
       "0.153.1",
       "0.153.0",
       "0.152.1",
-      "0.152.0",
-      "0.151.0"
+      "0.152.0"
     ],
     "window_policy": "current-plus-ten-preceding-stable-releases-patch-counts",
     "registry": "config/codex-compatibility-v1.json",

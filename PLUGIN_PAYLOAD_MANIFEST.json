@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.11.2",
+  "version": "7.12.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,12 +9,12 @@
     "runtime"
   ],
   "file_count": 245,
-  "payload_digest": "cd4917470e321feff16a118cf4aea3220d8b6c3ee1ee8d94989e49a3dd7c4d42",
+  "payload_digest": "4d16bf233697500fd2f4087f356037dbe61aa93af61670b289b44cd0b1a0abc7",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "a4556317fb2769d9960d0461415c9286d4fa5a65c0a953c205c06afb34f1f57c",
-      "size": 240
+      "sha256": "c6c704b50407eae907af854e84a723d4259661f42a3783178f897c5ba54b6d5b",
+      "size": 219
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -248,8 +248,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/execution-profiles-and-phases.md",
-      "sha256": "12ff9e3c32d8c1ed270973ea17cad32139d069ee9b560d53bbed01e55ad2e9b1",
-      "size": 2603
+      "sha256": "ea1bbb325a797e3030ee12346a391b31ce278feb72761a48e406cbbb109c98e2",
+      "size": 2793
     },
     {
       "path": "skills/engineering-quality-delivery/references/project-binding-approval-finalization.md",
@@ -563,8 +563,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/SKILL.md",
-      "sha256": "4f93dc9b35d6677df74844855b661a93684a24df7a3bc9d36f7c4216f7e473de",
-      "size": 3568
+      "sha256": "11a122ad51609f600267a292cb9b945dc9295c382ed199b686e6d12a1f7699ef",
+      "size": 4111
     },
     {
       "path": "skills/multi-agent-independent-review/agents/openai.yaml",
@@ -788,8 +788,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "055a92784e989b5656377825a810df3c002aa81f2b7023d330af7b89b8e0e32b",
-      "size": 34357
+      "sha256": "34c812ad7993c03ad555d9f1f6127e298448a4dfeca4c54ab336ee3f028773e3",
+      "size": 34471
     },
     {
       "path": "hooks/enhancement-hooks.json",
@@ -803,8 +803,8 @@
     },
     {
       "path": "hooks/seal_worker.py",
-      "sha256": "f2a64ab6fa6c4c399e382765bdb9868a4ec4fb2a948838b3552f28fdbe81f35f",
-      "size": 2514
+      "sha256": "9066fbcf4a52d079e0bcd57f087a9a6f8e50f0b060c0c77de90df5eb96530e3a",
+      "size": 3193
     },
     {
       "path": "runtime/cp_runtime/__init__.py",
@@ -943,8 +943,8 @@
     },
     {
       "path": "runtime/cp_runtime/event_v2.py",
-      "sha256": "204dad7d933cabac094a2fbbb2b1c347e80d547769d4e6229a364346f72b5156",
-      "size": 34998
+      "sha256": "15a67dede3ef9a41ee442538dd9f38fed71cf990285685683ba8497ee7b98758",
+      "size": 36059
     },
     {
       "path": "runtime/cp_runtime/event_v3.py",
@@ -1128,8 +1128,8 @@
     },
     {
       "path": "runtime/cp_runtime/seal_queue.py",
-      "sha256": "718c003aef75db316c746c58e54a0bbd39d7e22dd167ba4bd4d39f05937042c5",
-      "size": 19448
+      "sha256": "f9a7e818f2aefc10cb0320f237327cec2376ac4d01c40e57d13e51ca97bab236",
+      "size": 44027
     },
     {
       "path": "runtime/tests/test_capability_budget_paths.py",

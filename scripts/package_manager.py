@@ -589,20 +589,84 @@ def _native_apply_patch_operation_supported(profile: Optional[Mapping[str, Any]]
     )
 
 
-def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
-    command = '"%s" "%s"' % (sys.executable.replace('"', '\\"'), str(script_path).replace('"', '\\"'))
-    gate_path = script_path.with_name("cp_gate.py")
-    gate_command = '"%s" "%s"' % (
-        sys.executable.replace('"', '\\"'), str(gate_path).replace('"', '\\"'),
+def _windows_hook_command(python_executable: str, script_path: Path, expected_hook: str = "") -> str:
+    """Return the Windows shell-neutral Hook command with a fixed interpreter.
+
+    中文：Windows 原生 Hook 可能由 PowerShell 或 CMD 启动。路径中的空格由
+    cmd.exe 的双引号处理；其余会被任一 shell 展开或重新解释的字符拒绝写入，
+    不能静默生成看似可用、实际不保真的受管命令。
+
+    English: Native Windows Hooks may be started by PowerShell or CMD. Quotes
+    preserve spaces for cmd.exe; reject characters either shell would expand or
+    reinterpret instead of silently writing an unfaithful managed command.
+    """
+    try:
+        import ctypes
+        # 中文：不从 PATH 或可伪造的 SystemRoot 拼接 cmd.exe；只接受 Windows API
+        # 返回的本机系统目录。
+        # English: Do not compose cmd.exe from PATH or a forgeable SystemRoot; accept
+        # only the local system directory returned by the Windows API.
+        buffer = ctypes.create_unicode_buffer(32768)
+        count = ctypes.windll.kernel32.GetSystemDirectoryW(buffer, len(buffer))
+        system_directory = buffer.value if 0 < count < len(buffer) else ""
+    except (AttributeError, OSError):
+        system_directory = ""
+    cmd_path = Path(system_directory) / "cmd.exe" if system_directory else None
+    if (cmd_path is None or not cmd_path.is_absolute() or str(cmd_path).startswith("\\\\")
+            or not _io_path(cmd_path).is_file()):
+        raise InstallError(
+            "Windows Hook 无法从系统目录 API 验证本机 cmd.exe，拒绝从 PATH 或配置路径查找 / "
+            "Windows Hook could not verify local cmd.exe through the system-directory API; "
+            "refusing to resolve it from PATH or a configured path"
+        )
+    cmd_executable = str(cmd_path)
+    paths = (("cmd.exe", cmd_executable), ("Python executable", str(python_executable)),
+             ("Hook script", str(script_path)))
+    for label, value in paths:
+        forbidden = next((char for char in ('"', "'", '\r', '\n', '%', '&', '$', '`', ';', '|',
+                                             '<', '>', '(', ')', '^') if char in value), None)
+        if label == "cmd.exe" and " " in value:
+            forbidden = " "
+        if forbidden is not None:
+            raise InstallError(
+                "Windows Hook %s 包含不能安全跨 Shell 传递的字符 %r；拒绝生成受管命令 / "
+                "Windows Hook %s contains %r, which cannot be passed safely across shells; "
+                "refusing to generate the managed command" % (label, forbidden, label, forbidden)
+            )
+    suffix = (" " + expected_hook) if expected_hook else ""
+    # 中文：外层引号由 cmd.exe /S /C 消费；内层引号让固定 Python 与 Hook 路径在
+    # 含空格时仍作为字面参数传递。
+    # English: The outer pair is consumed by cmd.exe /S /C; the inner pairs keep
+    # the fixed Python executable and Hook path literal when either contains spaces.
+    return '%s /D /V:OFF /S /C ""%s" "%s"%s"' % (
+        cmd_executable, python_executable, script_path, suffix,
     )
+
+
+def _hook_command(script_path: Path, expected_hook: str = "") -> str:
+    if os.name == "nt":
+        return _windows_hook_command(sys.executable, script_path, expected_hook)
+    command = '"%s" "%s"' % (
+        sys.executable.replace('"', '\\"'), str(script_path).replace('"', '\\"'),
+    )
+    return command + ((" " + expected_hook) if expected_hook else "")
+
+
+def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
+    command = _hook_command(script_path)
+    pretool_command = _hook_command(script_path, "PreToolUse")
+    posttool_command = _hook_command(script_path, "PostToolUse")
+    gate_path = script_path.with_name("cp_gate.py")
+    gate_pretool_command = _hook_command(gate_path, "PreToolUse")
+    gate_posttool_command = _hook_command(gate_path, "PostToolUse")
     fragment = {
         "PreToolUse": [
-            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": command, "timeout": 5}]},
-            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_command + " PreToolUse", "timeout": 5}]},
+            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": pretool_command, "timeout": 5}]},
+            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_pretool_command, "timeout": 5}]},
         ],
         "PostToolUse": [
-            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_command + " PostToolUse", "timeout": 5}]},
-            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": command + " PostToolUse", "timeout": 5}]},
+            {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_posttool_command, "timeout": 5}]},
+            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": posttool_command, "timeout": 5}]},
         ],
         "SubagentStart": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
@@ -1875,7 +1939,8 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     # 中文：增强运行时始终是账户级受管组件；基础 Plugin 自身不加载它。
     # English: Enhancement runtime is always an account-managed component; the base Plugin itself never loads it.
     targets.extend([("runtime", ch / "runtime" / "cp_runtime"), ("hook-script", ch / "cp-assistant-hooks" / "cp_hook.py"),
-                    ("gate-worker", ch / "cp-assistant-hooks" / "cp_gate.py"), ("hooks-json", ch / "hooks.json")])
+                    ("gate-worker", ch / "cp-assistant-hooks" / "cp_gate.py"),
+                    ("seal-worker", ch / "cp-assistant-hooks" / "seal_worker.py"), ("hooks-json", ch / "hooks.json")])
     for _label, target in targets:
         reject_link_ancestors(target.parent)
     old_state = load_json(state_path("user"), {}) or {}
@@ -1962,6 +2027,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             dst = ch / "runtime" / "cp_runtime"; copy_atomic(ROOT / "runtime" / "cp_runtime", dst); _record_applied(journal, "runtime", dst)
             dst = ch / "cp-assistant-hooks" / "cp_hook.py"; copy_atomic(ROOT / "hooks" / "cp_hook.py", dst); _record_applied(journal, "hook-script", dst)
             dst = ch / "cp-assistant-hooks" / "cp_gate.py"; copy_atomic(ROOT / "hooks" / "cp_gate.py", dst); _record_applied(journal, "gate-worker", dst)
+            dst = ch / "cp-assistant-hooks" / "seal_worker.py"; copy_atomic(ROOT / "hooks" / "seal_worker.py", dst); _record_applied(journal, "seal-worker", dst)
             merge_hooks(
                 ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py",
                 _standalone_hook_profile(),
@@ -2294,9 +2360,10 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                     ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py",
                     _standalone_hook_profile(),
                 ))
-        for script_name in ("cp-runtime.py", "evolution.py"):
-            dst = ch / "tools" / script_name
-            src = ROOT / "scripts" / script_name
+        for directory, script_name in (("tools", "cp-runtime.py"), ("tools", "evolution.py"),
+                                       ("cp-assistant-hooks", "seal_worker.py")):
+            dst = ch / directory / script_name
+            src = ROOT / ("scripts" if directory == "tools" else "hooks") / script_name
             if not _io_path(dst).is_file():
                 errors.append("缺少账户工具 %s" % script_name)
             elif tree_sha256(dst) != tree_sha256(src):
@@ -2678,12 +2745,15 @@ def _diagnostic_facts_once(scope: str, mode: Optional[str], repo_path: Optional[
             codex_home() / "tools" / "cp-runtime.py", codex_home() / "tools" / "evolution.py",
             codex_home() / "cp-assistant-hooks" / "cp_hook.py",
             codex_home() / "cp-assistant-hooks" / "cp_gate.py",
+            codex_home() / "cp-assistant-hooks" / "seal_worker.py",
             *[codex_home() / "agents" / item.name for item in agent_files()],
         ]:
             try:
                 reject_link_ancestors(path)
                 if not _io_path(path).is_file():
                     component_errors["enhancement"].append("ENHANCEMENT_FILE_MISSING")
+                elif path.name == "seal_worker.py" and tree_sha256(path) != managed_hashes.get(str(path)):
+                    component_errors["enhancement"].append("ENHANCEMENT_FILE_DRIFT")
             except (OSError, InstallError):
                 component_errors["enhancement"].append("ENHANCEMENT_PATH_UNREADABLE_OR_UNSAFE")
         if selected_mode == "plugin" and isinstance(installed_version, str) and re.fullmatch(r"\d+\.\d+\.\d+", installed_version):
@@ -2813,8 +2883,147 @@ def _diagnostic_facts(scope: str, mode: Optional[str], repo_path: Optional[str],
     return data
 
 
+def _quick_installation_facts_once(scope: str, mode: Optional[str], repo_path: Optional[str]) -> Dict[str, Any]:
+    """中文：在不校验宿主或 payload 的条件下读取有界持久安装事实。
+
+    English: Read bounded persisted installation facts without host or payload validation.
+
+    中文：快速状态刻意只是观察层；它不能把持久状态提升为当前注册、已加载运行时或完整性结论，也不会修复 journal 或写入缓存。
+    English: Quick status is deliberately an observation tier. It must never promote persisted state into a current registration, loaded-runtime, or integrity claim, and it never repairs a journal or writes a cache.
+    """
+    repo = None
+    non_git = False
+    if scope == "repo":
+        try:
+            repo = git_root(Path(repo_path or "."))
+        except InstallError:
+            non_git = True
+    source_state_path = state_path(scope, repo) if not non_git else None
+    state, state_read_error = _diagnostic_object(source_state_path) if source_state_path else ({}, None)
+    state_error = state_read_error
+    if state and (type(state.get("schema_version")) is not int or
+                  state.get("schema_version") not in {1, 2, 3} or state.get("package") != PACKAGE):
+        state_error = "INSTALLATION_STATE_IDENTITY_INVALID"
+    for key in ("components", "managed_hashes", "payload_identity"):
+        if key in state and not isinstance(state[key], dict):
+            state_error = "INSTALLATION_STATE_FIELDS_INVALID"
+    base_state, base_read_error = _diagnostic_object(base_state_path()) if scope == "user" else ({}, None)
+    base_state_error = base_read_error
+    if base_state and (
+            base_state.get("schema_version") != 1 or base_state.get("package") != PACKAGE
+            or base_state.get("marketplace") != BASE_MARKETPLACE
+            or Path(str(base_state.get("market_root", ""))) != base_marketplace_root()
+            or base_state.get("status", "INSTALLED") not in {"INSTALLING", "INSTALLED", "RECOVERY_REQUIRED"}):
+        base_state_error = "BASE_STATE_IDENTITY_INVALID"
+    mode_error = _mode_error(state.get("mode"))
+    selected_mode = mode if mode in {"plugin", "standalone"} else _normalized_mode(state.get("mode"))
+    if state.get("mode") in {"plugin", "standalone"} and mode and mode != state["mode"]:
+        mode_error = "REQUESTED_MODE_MISMATCH"
+    live, transaction_error = (None, None)
+    if not non_git:
+        live, transaction_error = _diagnostic_journal(scope, repo)
+
+    components = state.get("components") if isinstance(state.get("components"), dict) else {}
+    enhancement = components.get("enhancement") if isinstance(components.get("enhancement"), dict) else {}
+    declared = enhancement.get("status") if enhancement else None
+    if state_error or mode_error:
+        file_status = "UNVERIFIED"
+    elif not state:
+        file_status = "MISSING"
+    elif declared in {"MANAGED", "INSTALLED", "PLUGIN_MANAGED"}:
+        file_status = "DECLARED_MANAGED"
+    else:
+        file_status = "DECLARED_UNVERIFIED"
+    if base_state_error:
+        base_file_status = "UNVERIFIED"
+    elif base_state:
+        base_file_status = "DECLARED_MANAGED" if base_state.get("status", "INSTALLED") == "INSTALLED" else "DECLARED_UNVERIFIED"
+    else:
+        base_file_status = "MISSING"
+
+    causes: List[Dict[str, str]] = []
+    action: Optional[Dict[str, Any]] = None
+    overall = "UNKNOWN"
+    if live:
+        # 中文：活动事务优先于格式错误的状态；恢复是唯一能安全建立新快照的可操作路径。
+        # English: A live transaction takes precedence over a malformed state; recovery is the only actionable path that can safely establish a new snapshot.
+        overall = "BLOCKED"
+        causes.append({"id": "installation-transaction", "detail": "TRANSACTION_INCOMPLETE"})
+        args = [sys.executable, str(ROOT / "scripts" / "package_manager.py"), "recover", "--scope", scope]
+        if scope == "repo" and repo:
+            args.extend(["--repo-path", str(repo)])
+        action = _action_detail("RECOVER_INSTALLATION_TRANSACTION", "WRITE", args,
+                                "存在未收敛安装事务。", "显式恢复既有事务后重新完整校验。", scope)
+    elif transaction_error or state_error or base_state_error or mode_error:
+        overall = "BLOCKED"
+        reason = transaction_error or state_error or base_state_error or mode_error or "INSTALLATION_STATE_UNVERIFIED"
+        causes.append({"id": "installation-state", "detail": str(reason)})
+        action = _action_detail("INSPECT_MANAGED_STATE", "MANUAL", [],
+                                "受管状态无法可靠读取。", "核对受管状态与已知备份，保留未知文件。", scope)
+    elif non_git:
+        causes.append({"id": "repository", "detail": "NON_GIT_DIRECTORY"})
+    elif not state and not base_state:
+        causes.append({"id": "installation-state", "detail": "INSTALLATION_STATE_MISSING"})
+        action = _verify_action(scope, selected_mode, str(repo) if repo else None)
+
+    return {
+        "schema": "cp-assistant-quick-status/1", "query_tier": "QUICK", "collected_at": time.time(),
+        "current_check": "NOT_EVALUATED",
+        "package": PACKAGE, "version": VERSION, "scope": scope, "mode": selected_mode,
+        "repo_path": str(repo) if repo else str(Path(repo_path or ".").absolute()) if scope == "repo" else None,
+        "git_repository": not non_git if scope == "repo" else None,
+        "overall": overall, "state_error": state_error, "base_state_error": base_state_error, "mode_error": mode_error,
+        "transaction_error": transaction_error, "live_transaction": live,
+        "installation_state": {"status": "UNREADABLE" if state_error or base_state_error else
+                                 "ENHANCED_PRESENT" if state else "BASE_ONLY" if base_state else "MISSING",
+                               "declared_version": state.get("version"), "declared_mode": state.get("mode")},
+        "base_installation_state": {"status": "UNREADABLE" if base_state_error else "PRESENT" if base_state else "MISSING",
+                                    "declared_version": base_state.get("version"), "declared_status": base_state.get("status")},
+        "enhancement_installation_state": {"status": "UNREADABLE" if state_error else "PRESENT" if state else "MISSING",
+                                           "declared_version": state.get("version"), "declared_mode": state.get("mode")},
+        "file_state": {"status": file_status, "enhancement_declared_status": declared,
+                       "base_status": base_file_status},
+        "registration_state": {"status": "NOT_EVALUATED", "reason": "QUICK_HOST_PROBE_SKIPPED"},
+        "loaded_state": {"status": "NOT_EVALUATED", "reason": "QUICK_CURRENT_TASK_LOAD_NOT_CHECKED"},
+        "control_state": {"status": "NOT_EVALUATED", "reason": "QUICK_CONTROL_PREREQUISITES_NOT_CHECKED"},
+        "last_full_validation_at": None,
+        "not_evaluated": ["HOST_PROBE", "SOURCE_PAYLOAD_VERIFICATION", "MARKETPLACE_PAYLOAD_VERIFICATION",
+                          "CACHE_PAYLOAD_VERIFICATION", "STABILITY_REREAD", "CONTROL_PREREQUISITES"],
+        "causes": causes, "cause": causes, "next_action_detail": action,
+        "read_only": True, "authorization_evidence": False,
+        "_quick_stability": {"state": state, "state_error": state_error,
+                              "base_state": base_state, "base_state_error": base_state_error,
+                              "transaction": live, "transaction_error": transaction_error},
+    }
+
+
+def _quick_installation_facts(scope: str, mode: Optional[str], repo_path: Optional[str]) -> Dict[str, Any]:
+    """中文：返回一对稳定的有界持久状态观察。
+
+    English: Return a stable pair of bounded persisted-state observations.
+
+    中文：该复读刻意排除宿主、payload 和控制探测；状态变化不能安全继承第一次快照的恢复动作，因此返回 UNKNOWN 并给出只读完整校验。
+    English: This re-read intentionally excludes host, payload and control probing. A changed state cannot safely inherit a recovery action chosen from the first snapshot, so it is returned as UNKNOWN with a read-only full verification.
+    """
+    first = _quick_installation_facts_once(scope, mode, repo_path)
+    second = _quick_installation_facts_once(scope, mode, repo_path)
+    stable = first.pop("_quick_stability") == second.pop("_quick_stability")
+    if not stable:
+        first["overall"] = "UNKNOWN"
+        first["sample_error"] = "INSTALLATION_CHANGED_DURING_READ"
+        first["causes"] = [*first["causes"], {"id": "installation-state", "detail": first["sample_error"]}]
+        first["cause"] = first["causes"]
+        first["next_action_detail"] = _verify_action(scope, first["mode"], first.get("repo_path"))
+    return first
+
+
 def status(scope: str, mode: Optional[str], repo_path: Optional[str], summary: bool = False,
-           profile_path: Optional[str] = None) -> None:
+           profile_path: Optional[str] = None, quick: bool = False) -> None:
+    if quick:
+        # 中文：--profile 在 QUICK 中刻意无效：不评估控制检查，快速输出不能授权操作。
+        # English: --profile intentionally has no effect in QUICK: control checks are not evaluated and quick output cannot authorize an operation.
+        print(json.dumps(_quick_installation_facts(scope, mode, repo_path), ensure_ascii=False, indent=2))
+        return
     data = _diagnostic_facts(scope, mode, repo_path, profile_path)
     data["ux"] = _ux_summary(data)
     print(json.dumps(status_summary(data) if summary else data, ensure_ascii=False, indent=2))
@@ -2832,7 +3041,8 @@ def _inventory_candidates(scope: str, mode: str, repo: Optional[Path]) -> List[P
     else:
         paths.extend(user_skills_home() / name for name in skill_names() + deprecated_skill_names())
         paths.extend([ch / "runtime" / "cp_runtime", ch / "cp-assistant-hooks" / "cp_hook.py",
-                      ch / "cp-assistant-hooks" / "cp_gate.py", ch / "hooks.json"])
+                      ch / "cp-assistant-hooks" / "cp_gate.py",
+                      ch / "cp-assistant-hooks" / "seal_worker.py", ch / "hooks.json"])
     return paths
 
 
@@ -3056,6 +3266,8 @@ def main() -> None:
     status_parser.add_argument("--repo-path")
     status_parser.add_argument("--profile", help="Explicit project profile for control-prerequisite diagnostics; never changes policy")
     status_parser.add_argument("--json",action="store_true")
+    status_parser.add_argument("--quick", action="store_true",
+                               help="Read bounded persisted facts only; skips host probing, payload verification, and stability rereads")
     recover_parser=sub.add_parser("recover")
     recover_parser.add_argument("--scope",choices=["user","repo"],default="user")
     recover_parser.add_argument("--repo-path")
@@ -3075,7 +3287,7 @@ def main() -> None:
         ok = doctor(False, args.scope, args.repo_path, summary=not args.json, profile_path=args.profile)
         if args.strict and not ok: raise SystemExit(2)
         return
-    if args.command=="status": status(args.scope,args.mode,args.repo_path,summary=not args.json,profile_path=args.profile); return
+    if args.command=="status": status(args.scope,args.mode,args.repo_path,summary=not args.json,profile_path=args.profile,quick=args.quick); return
     if args.command=="inventory":
         print(json.dumps(inventory(args.scope,args.mode,args.repo_path),ensure_ascii=False,indent=2)); return
     if args.command=="recover":

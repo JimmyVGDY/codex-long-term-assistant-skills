@@ -1,9 +1,16 @@
 ---
 name: multi-agent-independent-review
-description: Use for risk-based design gates and independent functional, compatibility, security, performance, contract, concurrency, and delivery reviews.
+description: Use for risk-based design gates, independent reviews of behavior changes, or checking system-read-only isolation before review. Exclude routine low-risk self-checks and formatting without behavioral impact; do not dispatch reviewers for formality.
 ---
 
 # Independent Multi-Agent Review
+
+## Entry and Phase Boundaries
+
+- When checking only the review-isolation gate, read the relevant rules and report available or blocked from host evidence; do not initialize packets or ledgers, or dispatch reviewers. Reading this Skill neither proves system-read-only isolation nor grants authority. Stop when required system isolation cannot be proved.
+- Retain the relevant primary domain capability when independently reviewing implementation behavior. Review procedure and quality evidence do not replace domain judgment. Keep cross-phase memory only for current recovery or state maintenance, and explain combinations above the default limit.
+
+The execution steps below apply to actual review after its gate is satisfied.
 
 1. Select the execution profile, shared DelegationBudget, Reviewer effort, and model profile independently. Reviewer state does not charge the total budget twice.
 2. Start every assignment at Luna Low and one point. Add budget-mode and valid-evidence points, then dispatch once. Registered Reviewers have ten combinations up to Astra High; workers/explorers retain four. No xhigh/max/ultra, direct premium default, or preliminary calls merely to climb tiers. Read reviewer-model-routing.md for the frozen scoring rules.

@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "version": "7.12.0",
+  "ok": true,
+  "scope": "Local integrated working-tree candidate; package-only execution evidence. Public release and native/account acceptance are separate.",
+  "source_head": "6641ed24626925b3445a88014621ed530f8c2ee8",
+  "source_is_uncommitted_candidate": true,
+  "full_package_validation": {
+    "ok": true,
+    "evidence_scope": "package-only",
+    "suites": {
+      "package": {
+        "executed": 617,
+        "outcomes": {
+          "PASS": 616,
+          "SKIPPED": 1
+        }
+      },
+      "runtime": {
+        "executed": 231,
+        "outcomes": {
+          "PASS": 231
+        }
+      }
+    },
+    "python": "3.12.14",
+    "executed_report_sha256": "d8a0278d3f7972d1bf04e09b48872314ec5fb38f49bb395877028c8cf82fcfa4"
+  },
+  "required_capability_groups": 19,
+  "feature_mapping_followup": {
+    "status": "PASS",
+    "focused_tests": 9,
+    "method": "Reproject unchanged executed test IDs, then run focused evidence tests; not a second full-suite execution."
+  },
+  "local_feature_evidence": {
+    "F01": {
+      "targeted_tests": 50,
+      "stress_repetitions": 16,
+      "status": "PASS"
+    },
+    "F03": {
+      "history_validation": "PRESERVED",
+      "identity_reads_per_execution": 1,
+      "scale_samples": {
+        "100": 20,
+        "1000": 20,
+        "10000": 20
+      },
+      "complexity_improvement_claimed": false,
+      "controlled_matrix": {
+        "groups": 5,
+        "samples_per_group": 20,
+        "all_valid": true,
+        "failures": 0,
+        "fresh_process_pre_read_comparison": true,
+        "active_boundary": {
+          "records": 1286,
+          "bytes": 1049376
+        },
+        "rollover": {
+          "2MiB_non_rollover_samples": 20,
+          "1MiB_rollover_samples": 20,
+          "complete_verification": true
+        },
+        "concurrent_append": {
+          "fixtures": 20,
+          "threads_per_fixture": 4,
+          "appends": 80,
+          "count_ids_head_valid": true
+        },
+        "os_cache_cold": "UNVERIFIED"
+      }
+    },
+    "F04": {
+      "targeted_tests": 50,
+      "measurement_payload": "historical_948c",
+      "current_payload_remeasured": false,
+      "installed_current_pairs": 20,
+      "installed_current_median_ms": {
+        "full": 2924.6905,
+        "quick": 110.248
+      },
+      "installed_current_p95_ms": {
+        "full": 3521.541,
+        "quick": 115.587
+      },
+      "local_reduction_percent": 96.23,
+      "scope": "historical same-account concurrent native sampling; quick is not full validation or authorization",
+      "component_sampling_v2": {
+        "source_head": "306f3ed5ccf7d78cdce92e128c1ad849dfe30e64",
+        "pairs": 20,
+        "total_invocations": 40,
+        "method": "real in-process status() with thin wrappers",
+        "hashes_unchanged": true,
+        "full": {
+          "semantic_PASS": 20,
+          "median_ms": 2383.559,
+          "p95_ms": 2493.692
+        },
+        "quick": {
+          "exit_0": 20,
+          "semantic": "NOT_EVALUATED",
+          "median_ms": 4.788,
+          "p95_ms": 5.475
+        },
+        "full_component_median_ms": {
+          "host": 2011.035,
+          "source_payload": 107.783,
+          "marketplace": 116.599,
+          "cache": 121.033,
+          "state_initial": 2.293,
+          "stability_reread": 2.585
+        },
+        "read_bytes": {
+          "each_payload": 1740070,
+          "state": 7893,
+          "host_parent_wrapper_only": 341
+        },
+        "cli_end_to_end_comparable": false,
+        "instrumentation_overhead_calibrated": false
+      }
+    },
+    "F05": {
+      "passed_cases": 52,
+      "native_host_cases": 16,
+      "native_host_status": "PASS_COMBINED_COVERAGE_HOST_FINAL_REPORT",
+      "original_cohort": {
+        "PASS": 13,
+        "FAILED": 3,
+        "missing": 0,
+        "failures_retained": true
+      },
+      "combined_coverage": {
+        "composition": "13_original_plus_3_targeted_followups",
+        "actual_independent_tasks": 16,
+        "PASS": 16,
+        "missing": 0,
+        "evidence_scope": "HOST_FINAL_REPORT",
+        "single_cohort_pass_rate_claimed": false,
+        "router_trace_observed": false,
+        "profile_limited": true
+      }
+    },
+    "F02": {
+      "simple": {
+        "baseline_pass": 5,
+        "candidate_pass": 5,
+        "tool_median": {
+          "baseline": 6,
+          "candidate": 5,
+          "change_percent": -16.7
+        },
+        "duration_median_seconds": {
+          "baseline": 98.657,
+          "candidate": 101.468
+        },
+        "twenty_percent_suggestion_met": false,
+        "acceleration_shown": false
+      },
+      "ordinary": {
+        "baseline": {
+          "PASS": 3,
+          "UNKNOWN_TIMEOUT": 2,
+          "successful_tool_counts": [
+            8,
+            13,
+            11
+          ]
+        },
+        "candidate": {
+          "PASS": 5,
+          "successful_tool_counts": [
+            7,
+            13,
+            10,
+            7,
+            7
+          ]
+        }
+      },
+      "resume": {
+        "initial_environment": {
+          "baseline_pass": 0,
+          "candidate_pass": 0,
+          "samples_each": 5,
+          "reason": "external synthetic context denied; retained separately"
+        },
+        "readable_workspace": {
+          "baseline_pass": 5,
+          "candidate_pass": 4,
+          "candidate_failed": 1,
+          "samples_each": 5
+        },
+        "causal_attribution": "NOT_ESTABLISHED"
+      },
+      "delivery_decision": "RETAIN_ORIGINAL_LIGHT_RULES"
+    }
+  },
+  "local_installation_readback": {
+    "status": "PASS",
+    "payload_count": 245,
+    "records": [
+      "installed",
+      "enabled",
+      "compatible"
+    ],
+    "payload_digest": "b8c7d0c24f1a044a58f25c3324143e51ec5e634e9857c6f571dbef87e6f77450",
+    "backup_exists": true,
+    "report_sha256": "0f6bbd2acd300198780f0e2d241c7d07f540590fe4319ed302cbbfece66c7f6b",
+    "fresh_final_payload_task_acceptance": "PENDING"
+  },
+  "windows_hook_fixed_installation": {
+    "status": "INSTALL_EXIT_0_LIFECYCLE_PENDING",
+    "payload_digest": "be78741f82a310e5af03eeb1095799aff18be697c12c06c9d51f0ffa3e2ed0cb",
+    "payload_count_per_root": 245,
+    "matching_roots": [
+      "repo",
+      "marketplace",
+      "cache"
+    ],
+    "supplemental_host_readback": [
+      "installed",
+      "enabled"
+    ],
+    "formal_full_status": "PASS",
+    "hooks_state_trusted_hashes": "PRESERVED_BY_INSTALLER",
+    "managed_hooks_requiring_normal_review_and_trust": 10,
+    "hook_trust_status": "MODIFIED_PENDING_NORMAL_HOOK_REVIEW",
+    "actual_native_hook_lifecycle": "PENDING",
+    "scope": "Historical be787 candidate before account worker delivery fix"
+  },
+  "public_release_created": false,
+  "current_linux_ci": {
+    "source_head": "306f3ed5ccf7d78cdce92e128c1ad849dfe30e64",
+    "linux_jobs_succeeded": 2,
+    "ubuntu_python_3_13_15_actual_report": {
+      "package": {
+        "executed": 626,
+        "PASS": 608,
+        "SKIP": 18
+      },
+      "runtime": {
+        "executed": 231,
+        "PASS": 225,
+        "SKIP": 6
+      },
+      "checkout": "3cc8d22c2a60df59112a5caef07f7ecfa97833e1",
+      "tree": "ef4fbf24383e7e5a1fab60faa42cd87366dbc810",
+      "source_tree_exact_match": true
+    },
+    "windows": "PASS_ON_HISTORICAL_306F3ED",
+    "scope": "Historical 306f3ed source; not final CLI 0.156.0 implementation CI"
+  },
+  "previous_ci_failure": {
+    "source_head": "e7b6fd1",
+    "platform": "Windows",
+    "python": "3.13",
+    "package": {
+      "PASS": 624,
+      "SKIP": 1,
+      "ERROR": 1
+    },
+    "runtime": {
+      "PASS": 231
+    },
+    "error": "TimeoutExpired in test_plugin_install_replaces_managed_base_state_with_enhancement",
+    "product_root_cause": "UNCONFIRMED"
+  },
+  "native_benchmark": "COMPLETE_LIGHT_SHORTCUT_WITHHELD",
+  "artifact_rebuild_after_documentation_update": "PENDING",
+  "note": "This record captures pre-publication evidence. Final commit CI, rebuilt artifact provenance, public release and installation readbacks outside this local host must be verified independently.",
+  "local_account_installation": "FINAL_PAYLOAD_READBACK_PASS",
+  "post_rollback_targeted_validation": {
+    "routing_tests": 20,
+    "status": "PASS"
+  },
+  "full_run_scope": "Integrated measurement candidate before LIGHT rollback; final commit needs its own CI.",
+  "codex_0156_local_acceptance": {
+    "version": "0.156.0",
+    "windows_cli_contract": "CLI_CONTRACT_PASS",
+    "isolated_plugin": "ISOLATED_PLUGIN_PASS",
+    "synthetic_hook": "SYNTHETIC_HOOK_PASS",
+    "registry_digest": "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8",
+    "targeted_compatibility_release_tests": 39,
+    "worker_layout_targeted_tests": 47,
+    "validation_evidence_tests": 11,
+    "installation": "PASS",
+    "payload_digest": "4d16bf233697500fd2f4087f356037dbe61aa93af61670b289b44cd0b1a0abc7",
+    "file_count": 245,
+    "backup_exists": true,
+    "native_lifecycle": {
+      "status": "PASS",
+      "fresh_parent_child": true,
+      "marker_success": true,
+      "required_events": {
+        "SESSION_ENDED": 1,
+        "SUBAGENT_STARTED": 1,
+        "SUBAGENT_STOPPED": 1,
+        "TASK_COMPLETED": 1,
+        "TURN_OPENED": 1
+      },
+      "seal_status": "SEALED_CURRENT",
+      "sealed_record_count": 5,
+      "report_sha256": "7e559b24d04d956ba40ed20e936b49dae8b126d40e6819ffd526734ddb8a038b",
+      "windows_sandbox": "unelevated",
+      "permission_policy": "read-only",
+      "global_config_unchanged": true
+    },
+    "configured_elevated_mode": "BLOCKED_AT_DIRECTORY_PIN_ON_THIS_HOST",
+    "elevated_readonly_reproduction": {
+      "ntstatus": "0xc000050b",
+      "win32_error": 4395
+    },
+    "fresh_routing_profile": {
+      "status": "PASS_COMBINED_COVERAGE",
+      "composition": "13 original + 3 supplemental",
+      "observed": 16,
+      "passed": 16,
+      "missing": 0,
+      "scope": "HOST_FINAL_REPORT",
+      "single_cohort_pass_rate_claimed": false,
+      "original_host_error_retained": true,
+      "report_sha256": "19686b607e83d4174c432afcbd1b9cb8dae019c5ca38e8633b6541558a7b8ec9"
+    },
+    "final_commit_ci": "PENDING"
+  }
+}

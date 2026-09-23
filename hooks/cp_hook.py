@@ -28,6 +28,7 @@ if hasattr(sys.stderr, "reconfigure"):
 ROOT = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v3 import append_event, project_id_for, stable_repo_fingerprint  # noqa: E402
+from cp_runtime.event_v2 import project_identity_for  # noqa: E402
 from cp_runtime.delegation_budget import (  # noqa: E402
     DelegationBudgetError, mark_completed, mark_started, profile_for, read_budget,
     reserve_budget, sha256_ref,
@@ -37,7 +38,7 @@ from cp_runtime.delegation_budget import (  # noqa: E402
 from cp_runtime.dispatch_policy import DispatchPolicyError, policy, resolve_request  # noqa: E402
 from cp_runtime.dispatch_context import verify_root_binding  # noqa: E402
 from cp_runtime.common import RuntimeContractError, repo_snapshot  # noqa: E402
-from cp_runtime.seal_queue import launch_worker  # noqa: E402
+from cp_runtime.seal_queue import append_lifecycle_event, launch_worker, resolve_event_path  # noqa: E402
 from cp_runtime.evolution.task_feedback import consume_for_hook  # noqa: E402
 from cp_runtime.capability_gate_hook import INPUT_LIMIT, supervise  # noqa: E402
 
@@ -333,14 +334,14 @@ def _event(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[str,
     if not event_type:
         return None
     cwd = str(_lookup(data, *HOOK_ALIASES["cwd"]) or os.getcwd())
-    fingerprint = stable_repo_fingerprint(cwd)
+    fingerprint, observed_project_id = project_identity_for(cwd)
     session_id = str(_lookup(data, *HOOK_ALIASES["session_id"]) or "")
     turn_id = str(_lookup(data, *HOOK_ALIASES["turn_id"]) or "")
     task_id = str(_lookup(data, *HOOK_ALIASES["task_id"]) or turn_id or session_id)
     if event_type == "SESSION_ENDED" and not (session_id or turn_id or task_id):
         _session_end_diagnostic({
             "session_id": "", "turn_id": "", "task_id": "",
-            "project_id": project_id_for(fingerprint, cwd), "repo_fingerprint": fingerprint,
+            "project_id": observed_project_id, "repo_fingerprint": fingerprint,
         }, "SESSION_END_IDENTITY_UNAVAILABLE")
         return None
     terminal_value = _lookup(data, *HOOK_ALIASES["terminal_outcome"]) if event_type == "TASK_COMPLETED" and allow_feedback else None
@@ -355,7 +356,6 @@ def _event(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[str,
     approved_profile = ""
     permit_ref = ""
     reserved_units = 0
-    observed_project_id = project_id_for(fingerprint, cwd)
     reservation_id = str(_lookup(data, *HOOK_ALIASES["reservation_id"]) or data.get("_cp_reservation_id") or "").strip()
     ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
     if reservation_id and ledger_text:
@@ -417,7 +417,12 @@ def _data_path(event: Mapping[str, Any]) -> Path:
                 configured = drive + ":\\" + rest if rest else drive + ":\\"
         codex_home = Path(configured) if configured else (Path.home() / ".codex")
         root = codex_home / "project-context" / event["project_id"]
-    return root / "feedback" / "task-outcome-v3.jsonl"
+    primary = root / "feedback" / "task-outcome-v3.jsonl"
+    # 中文：SessionEnd 不在父 Hook 读取根目录；其 detached worker 负责恢复。
+    # English: SessionEnd must not read roots in the parent Hook. Its detached worker resolves recovery.
+    if event.get("event_type") == "SESSION_ENDED":
+        return primary
+    return resolve_event_path(event, primary.parent / "seal-queue-v3")
 
 
 def _sandbox_fallback_path(event: Mapping[str, Any]) -> Path:
@@ -470,7 +475,8 @@ def _enqueue_and_launch(event_path: Path, event: Mapping[str, Any]) -> None:
     # 中文：SessionEnd Hook 只构造有上限、已净化的事件并启动 detached worker；事件链扫描、语义去重、追加、DPAPI、签名与封印全部移出宿主 3 秒预算。
     # English: The SessionEnd Hook only builds a capped, sanitized event and starts a detached worker. Chain scanning, semantic deduplication, append, DPAPI, signing, and sealing all run outside the host's three-second budget.
     try:
-        worker = launch_worker(ROOT, queue, bootstrap_event=queued_event)
+        worker = launch_worker(ROOT, queue, bootstrap_event=queued_event,
+                               worker_script=Path(__file__).with_name("seal_worker.py"))
         if worker.get("test_wait_status") == "EXITED" and int(worker.get("worker_exit_code", 0)) != 0:
             _session_end_diagnostic(event, "SEAL_WORKER_EXITED_FAILED")
     except Exception:
@@ -492,19 +498,12 @@ def _observe(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[st
             if event["event_type"] == "SESSION_ENDED":
                 _enqueue_and_launch(event_path, event)
             else:
-                append_event(event_path, event, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
+                append_lifecycle_event(event, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
         except PermissionError:
-            try:
-                event_path = _sandbox_fallback_path(event)
-                if event["event_type"] == "SESSION_ENDED":
-                    _enqueue_and_launch(event_path, event)
-                else:
-                    append_event(event_path, event, os.environ.get("CP_ASSISTANT_HMAC_KEY"))
-            except Exception:
-                # 中文：观察失败不打断开发任务；模型上限门禁已在前面独立失败关闭。
-                # English: Observation failure does not interrupt engineering work; the model-ceiling guard has already failed closed independently.
-                if event["event_type"] == "SESSION_ENDED":
-                    _session_end_diagnostic(event, "SESSION_END_FALLBACK_ENQUEUE_FAILED")
+            # 中文：普通生命周期事件也必须经同一根选择锁；不能在 Hook 中另建链。
+            # English: Ordinary lifecycle events also use the root-selection lock and never create an alternate chain in the Hook.
+            if event["event_type"] == "SESSION_ENDED":
+                _session_end_diagnostic(event, "SESSION_END_ENQUEUE_FAILED")
         except Exception:
             # 中文：数据损坏或哈希链错误不得通过创建新链绕过。
             # English: Data corruption or hash-chain failure must not be bypassed by creating a fresh chain.

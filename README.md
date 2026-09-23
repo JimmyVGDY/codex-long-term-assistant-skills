@@ -2,7 +2,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-V7.11.2 将冻结兼容窗口推进到官方稳定版 Codex CLI 0.155.1，并保留十档独立复审组合、基础安装与可选增强分离等既有边界。发布状态以 GitHub Release 和工作流读回为准。
+V7.12.0 将冻结兼容窗口推进到官方稳定版 Codex CLI 0.156.0，并保留十档独立复审组合、基础安装与可选增强分离等既有边界。发布状态以 GitHub Release 和工作流读回为准。
 
 # Codex 跨项目长期技术助手
 
@@ -20,10 +20,10 @@ V7.11.2 将冻结兼容窗口推进到官方稳定版 Codex CLI 0.155.1，并保
   <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/github/license/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <img alt="增强运行时 Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
-  <img alt="Codex CLI 0.155.1" src="https://img.shields.io/badge/Codex%20CLI-0.155.1-111827">
+  <img alt="Codex CLI 0.156.0" src="https://img.shields.io/badge/Codex%20CLI-0.156.0-111827">
 </p>
 
-V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0。V7.11.2 保留这些安全边界，并将基础 Skill 与可选增强运行时解耦；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
+V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7.7.1 将兼容窗口前移到 Codex CLI 0.154.0。V7.12.0 保留这些安全边界，并将基础 Skill 与可选增强运行时解耦；门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [四条日常路径](#四条日常路径与统一入口) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#首次安装与升级) · [文档](#文档与协作)
 
@@ -50,18 +50,18 @@ V7.6.2 已恢复消息与 Stop 非阻断边界；V7.7.0 新增 Operation v2；V7
 .\scripts\cp-assistant.ps1 recover --scope user
 ```
 
-`status`、`doctor`、`inventory` 和 `resume` 只读；`install-base`、`install-enhancement` 和 `recover` 是写操作。`resume` 支持绑定 Profile/State/Evidence，也支持只提供明确的旧 Markdown 检查点目录；它只报告阶段、检查点、仓库变化、需重验项和一个下一步，不创建 Profile、不修复检查点、不续跑任务。需要机器 JSON 时追加 `--json`。
+`status`、`doctor`、`inventory` 和 `resume` 只读；`install-base`、`install-enhancement` 和 `recover` 是写操作。`resume` 支持绑定 Profile/State/Evidence，也支持只提供明确的旧 Markdown 检查点目录；它只报告阶段、检查点、仓库变化、需重验项和一个下一步，不创建 Profile、不修复检查点、不续跑任务。默认 `status` 保留完整检查；只有明确指定 `status --quick` 时才使用低成本诊断视图。需要机器 JSON 时追加 `--json`。
 
 POSIX 将上述路径替换为 `./scripts/cp-assistant.sh`。四条路径的完整说明见 [使用说明](docs/USER_GUIDE.md)。
 
 ## 下载
 
-以下链接指向 V7.11.2 标签制品；标签发布前可能暂不可用，正式状态以 GitHub Release 读回为准。
+以下链接指向 V7.12.0 标签制品；标签发布前可能暂不可用，正式状态以 GitHub Release 读回为准。
 
 | 发行包 | 适用界面 | 下载 |
 | --- | --- | --- |
-| `Codex-Skills-V7.11.2-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.11.2/Codex-Skills-V7.11.2-zh-CN.zip) |
-| `Codex-Skills-V7.11.2-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.11.2/Codex-Skills-V7.11.2-en.zip) |
+| `Codex-Skills-V7.12.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.12.0/Codex-Skills-V7.12.0-zh-CN.zip) |
+| `Codex-Skills-V7.12.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.12.0/Codex-Skills-V7.12.0-en.zip) |
 
 [查看最新 Release、校验和与构建见证](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
 
@@ -146,7 +146,7 @@ flowchart LR
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Windows 原生 Codex CLI 0.155.1 + Plugin | 当前实机锚点 | 目标版本的账户安装、`verify` 与项目外新 CLI 任务将在 S8/S9 独立读回 | Desktop 重启后的新会话未验证 |
+| Windows 原生 Codex CLI 0.156.0 + Plugin | 当前实机锚点 | 目标版本的账户安装、`verify` 与项目外新 CLI 任务将在 S8/S9 独立读回 | Desktop 重启后的新会话未验证 |
 | Windows + 11 个固定 Codex 稳定版 | 冻结兼容窗口 | 11/11 官方 async、Pre/Post schema 与成功结果响应源码证据受注册表约束 | 跨版本真实宿主矩阵未逐台验收 |
 | Windows / Ubuntu GitHub 矩阵 | 发布门禁 | 工作流配置为双系统 Python 3.11/3.13 验证与 11 版本重放 | 本次发布的远端 CI 结果单独以 Actions 页面为准 |
 | standalone 模式 | 显式兼容模式 | 本地安装结构、inventory、非 Git BASIC 和回归测试覆盖 | 未作为本次账户 Plugin 验收替代 |
@@ -154,7 +154,7 @@ flowchart LR
 
 基础安装无需本包 Python runtime；增强运行时的 Python 最低版本为 3.11；公开 CI 配置为在 Windows 与 Ubuntu 上验证 3.11 和 3.13。其他环境组合应先执行 `doctor`、`dry-run` 和 `verify`，再判断可用状态。
 
-V7.11.2 窗口为 `0.155.1`、`0.155.0`、`0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`、`0.151.0`。补丁发行独立计数；未来版、预发布版和窗口外版本不会自动接纳。
+V7.12.0 窗口为 `0.156.0`、`0.155.1`、`0.155.0`、`0.154.0`、`0.153.4`、`0.153.3`、`0.153.2`、`0.153.1`、`0.153.0`、`0.152.1`、`0.152.0`。补丁发行独立计数；未来版、预发布版和窗口外版本不会自动接纳。
 
 V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。门禁默认关闭，流程证据也不代表业务语义正确；公开 Release 仍须以受权操作与读回为准。
 
@@ -190,7 +190,7 @@ luna-low -> luna-medium -> terra-medium -> terra-high
 - [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
 - [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
 - [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · [V7.11.2 发行说明](docs/releases/v7.11.2/RELEASE_NOTES.md)
+- [版本记录](CHANGELOG.md) · [V7.12.0 发行说明](docs/releases/v7.12.0/RELEASE_NOTES.md)
 
 ## 本地验证
 
@@ -206,7 +206,7 @@ python scripts\validate-package.py
 `Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。公开 Release 由受权操作创建并单独读回。
 
 ```shell
-gh attestation verify Codex-Skills-V7.11.2-zh-CN.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.12.0-zh-CN.zip --repo OWNER/REPOSITORY
 ```
 
 完整门禁和新版本发布步骤见 [Release 自动化与制品来源证明](docs/releases/RELEASE_AUTOMATION.md)。

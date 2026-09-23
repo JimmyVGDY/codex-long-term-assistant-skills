@@ -81,7 +81,7 @@ if args[:2] == ['plugin','add']:
     if len(args) > 2 and args[2] == '--help': emit_help('plugin_add'); raise SystemExit(0)
     home.mkdir(parents=True,exist_ok=True)
     state.write_text(json.dumps({'installed':True,'selector':args[2]}),encoding='utf-8')
-    version=os.environ.get('FAKE_PLUGIN_VERSION','7.11.2')
+    version=os.environ.get('FAKE_PLUGIN_VERSION','7.12.0')
     source=Path(market_file.read_text(encoding='utf-8'))/'plugins'/'codex-cross-project-engineering-assistant'
     cache=home/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/version
     if io_path(cache).exists(): shutil.rmtree(io_path(cache))
@@ -98,7 +98,7 @@ if args == ['plugin','list','--json']:
     if state.exists():
         selector=json.loads(state.read_text(encoding='utf-8')).get('selector','codex-cross-project-engineering-assistant@cp-assistant-local')
         name,market=selector.split('@',1)
-        installed=[{'pluginId':selector,'name':name,'marketplaceName':market,'version':os.environ.get('FAKE_PLUGIN_VERSION','7.11.2'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
+        installed=[{'pluginId':selector,'name':name,'marketplaceName':market,'version':os.environ.get('FAKE_PLUGIN_VERSION','7.12.0'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
     print(json.dumps({'installed':installed,'available':[]})); raise SystemExit(0)
 print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemExit(2)
 """,encoding='utf-8')
@@ -121,6 +121,54 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
             'FAKE_CODEX_CONTRACT_FIXTURE':str(ROOT/'tests'/'fixtures'/'codex-cli-help-v1.json'),
             'PATH':str(self.bin)+os.pathsep+os.environ.get('PATH','')
         }
+
+    def test_account_session_end_uses_managed_sibling_worker(self):
+        from cp_runtime.event_v3 import read_event_chain
+        from cp_runtime.integrity import init_keyring, verify_event_seals
+
+        run(['install', '--scope', 'user', '--mode', 'standalone'], self.env)
+        worker = self.codex / 'cp-assistant-hooks' / 'seal_worker.py'
+        self.assertEqual((ROOT / 'hooks' / 'seal_worker.py').read_bytes(), worker.read_bytes())
+        keyring = Path(self.tmp.name) / 'event-keyring.json'
+        init_keyring(keyring)
+        data_root = Path(self.tmp.name) / 'events'
+        environment = {
+            **self.env, 'CP_ASSISTANT_DATA': str(data_root),
+            'CP_ASSISTANT_KEYRING_PATH': str(keyring),
+            'CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS': '2000',
+        }
+        environment.pop('PLUGIN_ROOT', None)
+        payload = {'hook_event_name': 'SessionEnd', 'session_id': 'installed-session',
+                   'turn_id': 'installed-turn', 'task_id': 'installed-task', 'cwd': str(self.home)}
+        result = subprocess.run(
+            [sys.executable, '-B', str(self.codex / 'cp-assistant-hooks' / 'cp_hook.py')],
+            input=json.dumps(payload), env=environment, cwd=self.home, text=True,
+            encoding='utf-8', capture_output=True, timeout=10,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn('SEAL_WORKER_', result.stderr)
+        event_files = list(data_root.rglob('task-outcome-v3.jsonl'))
+        self.assertEqual(1, len(event_files))
+        events = read_event_chain(event_files[0])['events']
+        self.assertEqual(['SESSION_ENDED'], [event['event_type'] for event in events])
+        self.assertEqual('SEALED_CURRENT', verify_event_seals(event_files[0], keyring_path=keyring)['seal_status'])
+
+        original = worker.read_bytes()
+        worker.write_bytes(b'changed worker\n')
+        drifted = run(['verify', '--scope', 'user', '--mode', 'standalone'], self.env, 1)
+        self.assertIn('seal_worker.py', drifted.stdout)
+        status = json.loads(run(['status', '--scope', 'user', '--mode', 'standalone', '--json'], self.env).stdout)
+        self.assertIn('ENHANCEMENT_FILE_DRIFT', status['component_errors']['enhancement'])
+        worker.write_bytes(original)
+        worker.unlink()
+        missing = run(['verify', '--scope', 'user', '--mode', 'standalone'], self.env, 1)
+        self.assertIn('seal_worker.py', missing.stdout)
+        status = json.loads(run(['status', '--scope', 'user', '--mode', 'standalone', '--json'], self.env).stdout)
+        self.assertIn('ENHANCEMENT_FILE_MISSING', status['component_errors']['enhancement'])
+        worker.write_bytes(original)
+        run(['verify', '--scope', 'user', '--mode', 'standalone'], self.env)
+        run(['uninstall', '--scope', 'user', '--mode', 'standalone'], self.env)
+        self.assertFalse(worker.exists())
 
     def assert_installed_tools_run(self):
         for name in ('cp-runtime.py','evolution.py'):
@@ -379,6 +427,98 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertGreater(launcher.count(b'\r\n'),0)
         self.assertNotIn(b'\n',launcher.replace(b'\r\n',b''))
 
+    def test_agent_pretooluse_command_supplies_fail_closed_event_fallback(self):
+        command=package_manager.hook_fragment(ROOT/'hooks'/'cp_hook.py')['PreToolUse'][0]['hooks'][0]['command']
+        self.assertIn(' PreToolUse',command)
+        result=subprocess.run(
+            [sys.executable,'-B',str(ROOT/'hooks'/'cp_hook.py'),'PreToolUse'],
+            input=b'{}',capture_output=True,env=self.env,timeout=15,
+        )
+        self.assertEqual(0,result.returncode,result.stderr.decode('utf-8','replace'))
+        response=json.loads(result.stdout.decode('utf-8'))
+        detail=response['hookSpecificOutput']
+        self.assertEqual('PreToolUse',detail['hookEventName'])
+        self.assertEqual('deny',detail['permissionDecision'])
+
+    @unittest.skipUnless(os.name == 'nt', 'native Windows Hook shell binding regression')
+    def test_windows_hook_command_reaches_fixed_python_through_cmd_and_powershell(self):
+        marker_dir=Path(self.tmp.name)/'hook path with spaces'
+        marker_dir.mkdir()
+        marker=marker_dir/'hook marker.py'
+        marker.write_text(
+            "import hashlib, json, sys\n"
+            "raw = sys.stdin.buffer.read()\n"
+            "exit_code = int(__import__('os').environ['CP_HOOK_MARKER_EXIT'])\n"
+            "print(json.dumps({'argv': sys.argv[1:], 'bytes': len(raw), "
+            "'sha256': hashlib.sha256(raw).hexdigest(), 'executable': sys.executable, "
+            "'planned_exit': exit_code}, sort_keys=True))\n"
+            "raise SystemExit(exit_code)\n",
+            encoding='utf-8',
+        )
+        fragment=package_manager.hook_fragment(marker)
+        command=fragment['PreToolUse'][0]['hooks'][0]['command']
+        import ctypes
+        buffer=ctypes.create_unicode_buffer(32768)
+        self.assertGreater(ctypes.windll.kernel32.GetSystemDirectoryW(buffer,len(buffer)),0)
+        system_cmd=str(Path(buffer.value)/'cmd.exe')
+        self.assertTrue(command.startswith(system_cmd+' /D /V:OFF /S /C '))
+        self.assertIn('PreToolUse',command)
+        self.assertIn(sys.executable,command)
+        payload=json.dumps({'hook_event_name': 'PreToolUse', 'tool_name': 'spawn_agent',
+                            'message': 'UTF-8 中文'},ensure_ascii=False,separators=(',',':')).encode('utf-8')
+        expected_digest=__import__('hashlib').sha256(payload).hexdigest()
+        cmd_raw='cmd.exe /D /S /C "'+command+'"'
+        launches=(
+            # 中文：Codex 对 CMD /C 使用带外层引号的 raw_arg。
+            # English: Codex uses raw_arg with an outer pair of quotes for CMD /C.
+            ('cmd', cmd_raw),
+            ('powershell', ['powershell.exe','-NoLogo','-NoProfile','-NonInteractive',
+                            '-ExecutionPolicy','RemoteSigned','-Command',command]),
+        )
+        for shell, args in launches:
+            with self.subTest(shell=shell):
+                env={**self.env,'CP_HOOK_MARKER_EXIT':'0'}
+                result=subprocess.run(args,input=payload,capture_output=True,env=env,timeout=15)
+                self.assertEqual(0,result.returncode,result.stdout.decode('utf-8','replace')+result.stderr.decode('utf-8','replace'))
+                summary=json.loads(result.stdout.decode('utf-8'))
+                self.assertEqual(['PreToolUse'],summary['argv'])
+                self.assertEqual(len(payload),summary['bytes'])
+                self.assertEqual(expected_digest,summary['sha256'])
+                self.assertEqual(sys.executable,summary['executable'])
+                self.assertEqual(0,summary['planned_exit'])
+
+            # 中文：非零 Hook 退出码必须经 CMD 原始参数路径传回。
+            # English: A non-zero Hook exit must propagate through the CMD raw-argument path.
+        failed=subprocess.run(
+            cmd_raw,input=payload,capture_output=True,
+            env={**self.env,'CP_HOOK_MARKER_EXIT':'23'},timeout=15,
+        )
+        self.assertEqual(23,failed.returncode,failed.stdout.decode('utf-8','replace')+failed.stderr.decode('utf-8','replace'))
+        self.assertEqual(23,json.loads(failed.stdout.decode('utf-8'))['planned_exit'])
+
+    @unittest.skipUnless(os.name == 'nt', 'native Windows Hook shell binding regression')
+    def test_windows_hook_command_rejects_shell_expanding_paths(self):
+        quote_marker=Path(self.tmp.name)/"hook'marker.py"
+        quote_marker.write_text("raise SystemExit(0)\n",encoding='utf-8')
+        with self.assertRaises(package_manager.InstallError):
+            package_manager.hook_fragment(quote_marker)
+        for unsafe in ('hook&marker.py','hook$marker.py','hook%marker.py','hook`marker.py',
+                       'hook;marker.py','hook|marker.py','hook^marker.py','hook"marker.py'):
+            with self.subTest(unsafe=unsafe):
+                with self.assertRaises(package_manager.InstallError):
+                    package_manager.hook_fragment(Path(self.tmp.name)/unsafe)
+
+    @unittest.skipUnless(os.name == 'nt', 'native Windows Hook shell binding regression')
+    def test_windows_hook_command_does_not_trust_systemroot(self):
+        import ctypes
+        buffer=ctypes.create_unicode_buffer(32768)
+        self.assertGreater(ctypes.windll.kernel32.GetSystemDirectoryW(buffer,len(buffer)),0)
+        system_cmd=str(Path(buffer.value)/'cmd.exe')
+        for untrusted in ('relative-system-root',r'\\server\share',r'C:\does-not-exist'):
+            with self.subTest(untrusted=untrusted), mock.patch.dict(os.environ,{'SystemRoot':untrusted}):
+                command=package_manager.hook_fragment(Path(self.tmp.name)/'hook.py')['Stop'][0]['hooks'][0]['command']
+                self.assertTrue(command.startswith(system_cmd+' /D /V:OFF /S /C '))
+
     def test_plugin_tools_prefer_versioned_cache_over_stale_standalone_runtime(self):
         stale_runtime=self.codex/'runtime'/'cp_runtime'
         (stale_runtime/'evolution').mkdir(parents=True)
@@ -409,7 +549,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['install','--scope','user','--mode','plugin'],self.env)
         state_path=self.codex/'cp-assistant-v6-state.json'
         state_bytes=state_path.read_bytes()
-        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.11.2'
+        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.12.0'
 
         def assert_tools_fail_closed():
             for name in ('cp-runtime.py','evolution.py'):
@@ -529,7 +669,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_install_rejects_wrong_registered_version(self):
         env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
         result=run(['install','--scope','user','--mode','plugin'],env,2)
-        self.assertIn('version=7.11.2',result.stderr)
+        self.assertIn('version=7.12.0',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
@@ -599,10 +739,10 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_doctor_reads_codex_version(self):
         r=run(['doctor','--json'],self.env)
         data=json.loads(r.stdout)
-        self.assertEqual(data['target_codex'],'0.155.1')
+        self.assertEqual(data['target_codex'],'0.156.0')
         self.assertEqual(
-            ['0.155.1','0.155.0','0.154.0','0.153.4','0.153.3','0.153.2','0.153.1',
-             '0.153.0','0.152.1','0.152.0','0.151.0'],
+            ['0.156.0','0.155.1','0.155.0','0.154.0','0.153.4','0.153.3','0.153.2',
+             '0.153.1','0.153.0','0.152.1','0.152.0'],
             data['supported_codex_versions'],
         )
         self.assertIn('0.154.0',data['codex_version'])
@@ -615,7 +755,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['doctor','--recover'],self.env)
         self.assertFalse(journal.exists())
         status=json.loads(run(['status','--json'],self.env).stdout)
-        self.assertEqual('7.11.2',status['version'])
+        self.assertEqual('7.12.0',status['version'])
         self.assertIn('live_transaction',status)
 
     def test_mode_switch_is_refused_without_force(self):
@@ -650,12 +790,12 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_host_unknown_version_fails_closed(self):
         bad={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.145.0'}
         result=run(['install','--scope','user','--mode','plugin'],bad,2)
-        self.assertIn('0.151.0',result.stderr)
+        self.assertIn('0.152.0',result.stderr)
 
     def test_plugin_host_exited_0_149_1_fails_closed(self):
         exited={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.149.1'}
         result=run(['install','--scope','user','--mode','plugin'],exited,2)
-        self.assertIn('0.151.0',result.stderr)
+        self.assertIn('0.152.0',result.stderr)
 
     def test_plugin_host_previous_stable_version_is_supported(self):
         previous={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.152.1'}
