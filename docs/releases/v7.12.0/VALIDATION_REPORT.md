@@ -22,14 +22,26 @@
 
 F04 full 的分项中位数为 host 2011.035 ms、source payload 107.783 ms、marketplace 116.599 ms、cache 121.033 ms、state initial 2.293 ms、stability reread 2.585 ms。每个 payload 读取 1,740,070 B，state 读取 7,893 B；host 的 341 B 只表示被包装父进程读取，不能代表子 CLI 的全部 I/O。
 
+## Codex 0.156.0 与账户封存闭环
+
+兼容窗口按既定规则前移至 `0.156.0` 及此前十个稳定发行版；固定 npm 摘要、官方源码 commit 和接口证据。Windows 隔离安装/卸载、CLI 与合成 Hook 契约通过，兼容及发布定向检查共 39 项通过。
+
+实机发现账户 Hook 曾从未安装的目录寻找 `seal_worker.py`。修复后安装器把该文件作为受管组件备份、部署、校验和卸载；Hook 固定调用同目录 worker，入口缺失在创建进程前拒绝。47 项恢复/延迟 worker/已安装路径检查及 11 项验证证据测试通过，覆盖缺失、篡改和卸载。该交付路径修复经过 INLINE 定向核对，不据此声称新增独立 Reviewer 结论。
+
+全新父子任务在 `0.156.0` 完成，五类真实生命周期事件各一条，当前 5 条记录为 `SEALED_CURRENT`；十条 Hook 的当前定义均已信任。当前安装 payload 为 `4d16bf233697500fd2f4087f356037dbe61aa93af61670b289b44cd0b1a0abc7`，源码、市场、缓存的 245 文件摘要一致，备份存在。
+
+本机配置的 elevated 沙箱在目录固定步骤失败；按官方原语的只读复现返回 `0xc000050b` / Windows `4395`。验收仅为对应进程使用官方 `unelevated` 回退和只读策略，全局配置摘要前后相同。上述通过不表示 elevated 初始化已修复，也不证明其他环境或已打开任务生效。配置依据见[官方 Windows 沙箱回退说明](https://learn.chatgpt.com/docs/config-file/config-basic#windows-sandbox-mode)。
+
 ## 独立复审、安装与交付边界
 
-安全复审第二轮通过。交付复审第二轮仅指出发行文档滞后，现已修正；两轮均为逻辑只读复审，不代表系统隔离。上述完整执行针对基于 `6641ed24626925b3445a88014621ed530f8c2ee8` 的未提交集成候选；执行报告摘要见相邻 `PACKAGE_VALIDATION.json`。Windows Hook 修复后，受管安装以 exit 0 完成，当前 payload `be78741f82a310e5af03eeb1095799aff18be697c12c06c9d51f0ffa3e2ed0cb` 在 repo、marketplace、cache 均为 245 文件且摘要一致；补充宿主读回确认 installed、enabled。真实原生 Hook 生命周期、最终提交 CI 与公开发行仍需独立验收。
+安全复审第二轮通过。交付复审第二轮仅指出发行文档滞后，现已修正；两轮均为逻辑只读复审，不代表系统隔离。上述完整执行针对基于 `6641ed24626925b3445a88014621ed530f8c2ee8` 的未提交集成候选；执行报告摘要见相邻 `PACKAGE_VALIDATION.json`。Windows Hook 修复后，受管安装以 exit 0 完成，先前候选 payload `be78741f82a310e5af03eeb1095799aff18be697c12c06c9d51f0ffa3e2ed0cb` 在 repo、marketplace、cache 均为 245 文件且摘要一致；补充宿主读回确认 installed、enabled。后续实机结果见上节；最终提交 CI 与公开发行仍需独立验收。
 
 ## 尚待完成的交付证据
 
-- 真实原生 Hook 生命周期、最终提交 CI、完整远端矩阵、公开 Release 和账户外安装需分别读回；不会预写为通过。
-- 当前 `306f3ed` 的两个 Linux CI job 已成功。仅 Ubuntu Python 3.13.15 的实际报告统计为包测试 626 项（608 PASS、18 SKIP）和 runtime 231 项（225 PASS、6 SKIP），不把这些计数归为两个 job 的共同统计。该报告 checkout 为 `3cc8d22c2a60df59112a5caef07f7ecfa97833e1`，工作树为 `ef4fbf24383e7e5a1fab60faa42cd87366dbc810`，已核验与 `306f3ed5ccf7d78cdce92e128c1ad849dfe30e64` 对应 CI 树一致；Windows 仍未完成，不把矩阵预写为全通过。此前 617 项证据中的 `test_event_scaling` 5 个 ID 属于 package suite，不属于 runtime。
+- 最终提交 CI、完整远端矩阵、公开 Release 和账户外安装需分别读回；不会预写为通过。
+- 当前 `306f3ed` 的两个 Linux CI job 已成功。仅 Ubuntu Python 3.13.15 的实际报告统计为包测试 626 项（608 PASS、18 SKIP）和 runtime 231 项（225 PASS、6 SKIP），不把这些计数归为两个 job 的共同统计。该报告 checkout 为 `3cc8d22c2a60df59112a5caef07f7ecfa97833e1`，工作树为 `ef4fbf24383e7e5a1fab60faa42cd87366dbc810`，已核验与 `306f3ed5ccf7d78cdce92e128c1ad849dfe30e64` 对应 CI 树一致；该旧基线的 Windows 检查随后也已通过；此结论不替代新兼容窗口及 worker 修复的最终提交 CI。此前 617 项证据中的 `test_event_scaling` 5 个 ID 属于 package suite，不属于 runtime。
 - 双语 ZIP 已有两次可重复候选构建，但本次文档更新后必须重建，旧 ZIP 不作为最终公开资产。
 
 `RELEASE_COMPLETE` 与 `INCIDENT_EFFECTIVE` 分别判断。本记录构建时为 `RELEASE_COMPLETE=false`、`INCIDENT_EFFECTIVE=UNVERIFIED`；它不证明已打开会话或其他业务现场生效。
+
+- 新增 `0.156.0` 宿主验收：13 个原始独立任务通过，一项宿主执行错误中止原批次；保留失败后补验该项及两项未启动场景。验证原始元数据、投影、报告和实际任务 ID 后，13＋3 的组合覆盖满足原 16 场景 profile，全部通过且无缺失。运行条件为临时 `unelevated`＋只读，仍是 `HOST_FINAL_REPORT`，不表示单批次全部成功或独立 router trace。

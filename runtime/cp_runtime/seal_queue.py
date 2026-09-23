@@ -874,8 +874,11 @@ def process_queue(queue: Path, keyring_path: Optional[Path] = None, max_jobs: in
 
 
 def launch_worker(plugin_root: Path, queue: Path, keyring_path: Optional[Path] = None,
-                  bootstrap_event: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
-    script = Path(plugin_root) / "hooks" / "seal_worker.py"
+                  bootstrap_event: Optional[Mapping[str, Any]] = None, *,
+                  worker_script: Optional[Path] = None) -> Dict[str, Any]:
+    # 中文：账户 Hook 与封印入口同目录；默认路径保留源码和 Plugin 调用兼容。
+    # English: Account Hooks use their sibling entry point; retain the source/Plugin default.
+    script = Path(worker_script) if worker_script is not None else Path(plugin_root) / "hooks" / "seal_worker.py"
     command = [sys.executable, "-B", str(script), "--queue", str(queue), "--max-jobs", "100"]
     if keyring_path is not None:
         command.extend(["--keyring", str(keyring_path)])
@@ -894,6 +897,8 @@ def launch_worker(plugin_root: Path, queue: Path, keyring_path: Optional[Path] =
                                    | getattr(subprocess, "CREATE_NO_WINDOW", 0))
     else:
         kwargs["start_new_session"] = True
+    if not script.is_file():
+        raise SealQueueError("SEAL_WORKER_ENTRYPOINT_MISSING")
     process = subprocess.Popen(command, **kwargs)
     wait_ms = int(os.environ.get("CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS", "0") or "0")
     if wait_ms > 0:

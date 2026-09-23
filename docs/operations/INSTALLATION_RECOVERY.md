@@ -2,7 +2,7 @@
 
 ## 适用范围
 
-- 目标宿主：Windows 原生 Codex CLI 0.155.1。
+- 目标宿主：Windows 原生 Codex CLI 0.156.0。
 - 基础安装无需本包 Python runtime；仅增强运行时需 Python 3.11 或更高版本。
 - 推荐形态：账户级 Plugin。
 - 可升级版本：<!-- cp-fact:upgrade-sources -->7.11.2, 7.11.1, 7.11.0, 7.10.0, 7.9.2, 7.9.1, 7.9.0, 7.8.1, 7.8.0, 7.7.1, 7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->。
@@ -70,7 +70,7 @@ dry-run 应明确显示：
 - 完整回滚动作；
 - 无路径越界或链接型路径风险。
 
-Codex 0.155.1 的本地 Marketplace manifest 必须包含顶层 `interface.displayName`。升级器会在备份后移除旧 `owner`、生成受控的 `interface.displayName`，并保留其他未知外部字段；`codex plugin list --json` 恢复正常后才继续激活。
+Codex 0.156.0 的本地 Marketplace manifest 必须包含顶层 `interface.displayName`。升级器会在备份后移除旧 `owner`、生成受控的 `interface.displayName`，并保留其他未知外部字段；`codex plugin list --json` 恢复正常后才继续激活。
 
 基础 Plugin payload 不注册 Hook。增强安装才在账户级 `hooks.json` 注册可选观察与受控写入 Hook；`verify` 会逐条核验本包拥有的 matcher、命令和事件参数，同时保留第三方 Hook。版本未知、门禁文件缺失或任一受管条目漂移时，受控操作验证失败关闭；基础任务仍可继续，不伪造 Operation v2 宿主支持。
 
@@ -80,7 +80,7 @@ Codex 0.155.1 的本地 Marketplace manifest 必须包含顶层 `interface.displ
 
 安装前 `doctor` 检查：
 
-- Codex 版本属于当前冻结注册表的 11 个稳定版之一，锚点为 0.155.1；
+- Codex 版本属于当前冻结注册表的 11 个稳定版之一，锚点为 0.156.0；
 - `plugin list --json` 可执行；
 - Marketplace add/remove 与 Plugin add/remove 命令存在；
 - state schema 可识别；

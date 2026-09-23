@@ -19,8 +19,8 @@ from codex_compatibility import canonical_digest, load_registry
 from payload_integrity import MANIFEST_NAME, PayloadIntegrityError, load_manifest, verify_payload
 
 VERSION = "7.12.0"
-TARGET_CODEX_VERSION = "0.155.1"
-COMPATIBILITY_REGISTRY_DIGEST = "0311182b7231e979f98a2ebee49ba4838ba794f5541e208afc5e7a66f920fbbd"
+TARGET_CODEX_VERSION = "0.156.0"
+COMPATIBILITY_REGISTRY_DIGEST = "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE

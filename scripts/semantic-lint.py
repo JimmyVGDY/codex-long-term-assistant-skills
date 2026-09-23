@@ -112,4 +112,4 @@ errors.extend('Documentation drift: ' + str(item) for item in documentation['fin
 if errors:
     for e in errors: print('[FAIL]',e)
     raise SystemExit(1)
-print('[OK] V7.12.0 语义校验通过：Codex 0.155.1、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致')
+print('[OK] V7.12.0 语义校验通过：Codex 0.156.0、AUTO 注册、onboarding/1、Operation v2、11 个稳定版兼容和分功能自救边界一致')

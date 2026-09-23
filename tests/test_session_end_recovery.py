@@ -65,6 +65,12 @@ class SessionEndRecoveryTests(unittest.TestCase):
     def recovery_paths(self) -> tuple[Path, Path, Path]:
         return seal_queue._recovery_paths(self.fallback_root, self.project_id)
 
+    def test_missing_worker_entry_is_rejected_before_process_creation(self) -> None:
+        with mock.patch.object(seal_queue.subprocess, "Popen") as start:
+            with self.assertRaisesRegex(seal_queue.SealQueueError, "SEAL_WORKER_ENTRYPOINT_MISSING"):
+                seal_queue.launch_worker(self.root, self.queue, bootstrap_event=self.event())
+        start.assert_not_called()
+
     def receipt_path(self, root: Path, event: dict[str, object]) -> Path:
         return seal_queue._receipt_path(root, event)
 

@@ -475,7 +475,8 @@ def _enqueue_and_launch(event_path: Path, event: Mapping[str, Any]) -> None:
     # 中文：SessionEnd Hook 只构造有上限、已净化的事件并启动 detached worker；事件链扫描、语义去重、追加、DPAPI、签名与封印全部移出宿主 3 秒预算。
     # English: The SessionEnd Hook only builds a capped, sanitized event and starts a detached worker. Chain scanning, semantic deduplication, append, DPAPI, signing, and sealing all run outside the host's three-second budget.
     try:
-        worker = launch_worker(ROOT, queue, bootstrap_event=queued_event)
+        worker = launch_worker(ROOT, queue, bootstrap_event=queued_event,
+                               worker_script=Path(__file__).with_name("seal_worker.py"))
         if worker.get("test_wait_status") == "EXITED" and int(worker.get("worker_exit_code", 0)) != 0:
             _session_end_diagnostic(event, "SEAL_WORKER_EXITED_FAILED")
     except Exception:

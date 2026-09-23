@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 245,
-  "payload_digest": "be78741f82a310e5af03eeb1095799aff18be697c12c06c9d51f0ffa3e2ed0cb",
+  "payload_digest": "4d16bf233697500fd2f4087f356037dbe61aa93af61670b289b44cd0b1a0abc7",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -788,8 +788,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "7cf2e0be7cc5e817c2c88fdd01d40d8b69ec39fdefeb7e76e8b994d616d86f3e",
-      "size": 34382
+      "sha256": "34c812ad7993c03ad555d9f1f6127e298448a4dfeca4c54ab336ee3f028773e3",
+      "size": 34471
     },
     {
       "path": "hooks/enhancement-hooks.json",
@@ -1128,8 +1128,8 @@
     },
     {
       "path": "runtime/cp_runtime/seal_queue.py",
-      "sha256": "62b7720d12fe3649e95b25bceb7d3a95d6e75cc7746018a98af3557ca790b00c",
-      "size": 43623
+      "sha256": "f9a7e818f2aefc10cb0320f237327cec2376ac4d01c40e57d13e51ca97bab236",
+      "size": 44027
     },
     {
       "path": "runtime/tests/test_capability_budget_paths.py",

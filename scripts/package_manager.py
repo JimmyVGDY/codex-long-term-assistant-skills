@@ -1939,7 +1939,8 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     # 中文：增强运行时始终是账户级受管组件；基础 Plugin 自身不加载它。
     # English: Enhancement runtime is always an account-managed component; the base Plugin itself never loads it.
     targets.extend([("runtime", ch / "runtime" / "cp_runtime"), ("hook-script", ch / "cp-assistant-hooks" / "cp_hook.py"),
-                    ("gate-worker", ch / "cp-assistant-hooks" / "cp_gate.py"), ("hooks-json", ch / "hooks.json")])
+                    ("gate-worker", ch / "cp-assistant-hooks" / "cp_gate.py"),
+                    ("seal-worker", ch / "cp-assistant-hooks" / "seal_worker.py"), ("hooks-json", ch / "hooks.json")])
     for _label, target in targets:
         reject_link_ancestors(target.parent)
     old_state = load_json(state_path("user"), {}) or {}
@@ -2026,6 +2027,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             dst = ch / "runtime" / "cp_runtime"; copy_atomic(ROOT / "runtime" / "cp_runtime", dst); _record_applied(journal, "runtime", dst)
             dst = ch / "cp-assistant-hooks" / "cp_hook.py"; copy_atomic(ROOT / "hooks" / "cp_hook.py", dst); _record_applied(journal, "hook-script", dst)
             dst = ch / "cp-assistant-hooks" / "cp_gate.py"; copy_atomic(ROOT / "hooks" / "cp_gate.py", dst); _record_applied(journal, "gate-worker", dst)
+            dst = ch / "cp-assistant-hooks" / "seal_worker.py"; copy_atomic(ROOT / "hooks" / "seal_worker.py", dst); _record_applied(journal, "seal-worker", dst)
             merge_hooks(
                 ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py",
                 _standalone_hook_profile(),
@@ -2358,9 +2360,10 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                     ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py",
                     _standalone_hook_profile(),
                 ))
-        for script_name in ("cp-runtime.py", "evolution.py"):
-            dst = ch / "tools" / script_name
-            src = ROOT / "scripts" / script_name
+        for directory, script_name in (("tools", "cp-runtime.py"), ("tools", "evolution.py"),
+                                       ("cp-assistant-hooks", "seal_worker.py")):
+            dst = ch / directory / script_name
+            src = ROOT / ("scripts" if directory == "tools" else "hooks") / script_name
             if not _io_path(dst).is_file():
                 errors.append("缺少账户工具 %s" % script_name)
             elif tree_sha256(dst) != tree_sha256(src):
@@ -2742,12 +2745,15 @@ def _diagnostic_facts_once(scope: str, mode: Optional[str], repo_path: Optional[
             codex_home() / "tools" / "cp-runtime.py", codex_home() / "tools" / "evolution.py",
             codex_home() / "cp-assistant-hooks" / "cp_hook.py",
             codex_home() / "cp-assistant-hooks" / "cp_gate.py",
+            codex_home() / "cp-assistant-hooks" / "seal_worker.py",
             *[codex_home() / "agents" / item.name for item in agent_files()],
         ]:
             try:
                 reject_link_ancestors(path)
                 if not _io_path(path).is_file():
                     component_errors["enhancement"].append("ENHANCEMENT_FILE_MISSING")
+                elif path.name == "seal_worker.py" and tree_sha256(path) != managed_hashes.get(str(path)):
+                    component_errors["enhancement"].append("ENHANCEMENT_FILE_DRIFT")
             except (OSError, InstallError):
                 component_errors["enhancement"].append("ENHANCEMENT_PATH_UNREADABLE_OR_UNSAFE")
         if selected_mode == "plugin" and isinstance(installed_version, str) and re.fullmatch(r"\d+\.\d+\.\d+", installed_version):
@@ -3035,7 +3041,8 @@ def _inventory_candidates(scope: str, mode: str, repo: Optional[Path]) -> List[P
     else:
         paths.extend(user_skills_home() / name for name in skill_names() + deprecated_skill_names())
         paths.extend([ch / "runtime" / "cp_runtime", ch / "cp-assistant-hooks" / "cp_hook.py",
-                      ch / "cp-assistant-hooks" / "cp_gate.py", ch / "hooks.json"])
+                      ch / "cp-assistant-hooks" / "cp_gate.py",
+                      ch / "cp-assistant-hooks" / "seal_worker.py", ch / "hooks.json"])
     return paths
 
 

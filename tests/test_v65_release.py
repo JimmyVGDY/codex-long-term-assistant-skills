@@ -53,7 +53,7 @@ class V64ReleaseTests(unittest.TestCase):
                                  "host_model_information_exported": False},
                      "event_chain": {"valid": True, "head": "c" * 64}}
         gate = copy.deepcopy(self.generated_dispatch_policy)
-        host = {"codex_version": "codex-cli 0.155.1", "capability_profile": {"ok": True}}
+        host = {"codex_version": "codex-cli 0.156.0", "capability_profile": {"ok": True}}
         report = {key: {"ok": True, "payload_digest": digest} for key in ("source", "marketplace", "cache")}
         return package, witness, plugin, lifecycle, gate, host, report
 

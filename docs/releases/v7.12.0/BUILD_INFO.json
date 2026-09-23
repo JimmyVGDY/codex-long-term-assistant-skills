@@ -11,7 +11,7 @@
     "3.11",
     "3.13"
   ],
-  "codex_anchor": "0.155.1",
+  "codex_anchor": "0.156.0",
   "stable_release_window_size": 11,
   "execution_authorization": "NONE",
   "package_validation_is_host_acceptance": false,

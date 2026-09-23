@@ -125,7 +125,7 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
             "ok": True, "reproducible": True, "artifact_sha256": digest}), encoding="utf-8")
         unified = self.root / "unified.json"; unified.write_text(json.dumps({
             "ok": True, "version": "7.12.0", "artifact_sha256": digest,
-            "compatibility_registry_digest": "0311182b7231e979f98a2ebee49ba4838ba794f5541e208afc5e7a66f920fbbd",
+            "compatibility_registry_digest": "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8",
             "status": {name: "PASS" for name in ("package", "artifact", "host", "plugin", "lifecycle", "dispatch_policy", "payload")}}), encoding="utf-8")
         dispatch_policy = self.root / "dispatch-policy.json"; dispatch_policy.write_text(json.dumps({
             "ok": True, "schema_version": "2.0", "dispatch_policy_status": "PASS",
@@ -136,7 +136,7 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
                  "exit_code": 0, "pass": True}],
             "privacy": {"host_model_information_collected": False,
                         "host_model_information_exported": False}}), encoding="utf-8")
-        version = self.root / "version.txt"; version.write_text("codex-cli 0.155.1\n", encoding="utf-8")
+        version = self.root / "version.txt"; version.write_text("codex-cli 0.156.0\n", encoding="utf-8")
         args = (artifact, plugin, lifecycle, validation, witness, unified, version)
         first = attestation_module.create_attestation(*args, keyring_path=self.keyring,
                                                        event_file_path=event_file,

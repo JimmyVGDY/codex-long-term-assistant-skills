@@ -6,7 +6,7 @@ Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-ass
 
 ## Preconditions
 
-- Native Windows Codex CLI 0.155.1.
+- Native Windows Codex CLI 0.156.0.
 - The base installation has no package Python-runtime prerequisite; only the enhancement runtime needs Python 3.11 or later.
 - Extract the archive before running commands.
 - Supported managed upgrades: <!-- cp-fact:upgrade-sources -->7.11.2, 7.11.1, 7.11.0, 7.10.0, 7.9.2, 7.9.1, 7.9.0, 7.8.1, 7.8.0, 7.7.1, 7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->.
@@ -56,7 +56,7 @@ codex plugin list --json
 
 Dry-run acceptance requires prior-version detection, a bounded backup, contained destinations, rejected link and reparse ancestors, preserved unknown files, and a complete rollback plan.
 
-Codex 0.155.1 requires top-level `interface.displayName` in a local Marketplace manifest. After backup, the upgrader removes the legacy `owner`, writes a controlled `interface.displayName`, preserves other unknown external fields, and proceeds only after `codex plugin list --json` recovers.
+Codex 0.156.0 requires top-level `interface.displayName` in a local Marketplace manifest. After backup, the upgrader removes the legacy `owner`, writes a controlled `interface.displayName`, preserves other unknown external fields, and proceeds only after `codex plugin list --json` recovers.
 
 The base Plugin payload registers no Hooks. Enhancement installation registers optional observation and controlled-write Hooks in account-level `hooks.json`; `verify` checks this package's matcher, command, and event arguments while preserving third-party Hooks. An unknown version, a missing gate worker, or a drifted managed entry fails controlled-operation verification closed without preventing ordinary base tasks.
 

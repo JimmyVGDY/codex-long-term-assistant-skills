@@ -75,9 +75,9 @@ A hard-coded model overrides bounded scheduling and `[agents]` defaults, breakin
 
 ## 6. Plugin and Hooks
 
-V7.12.0 uses a frozen registry for the Plugin, Marketplace, and PreToolUse/PostToolUse interfaces in Codex CLI 0.155.1 and the ten preceding stable releases. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.12.0`, and, for enhancement installation, the schema-3 host snapshot is `HOST_COMPATIBLE`. Files present on disk do not establish installation or enablement.
+V7.12.0 uses a frozen registry for the Plugin, Marketplace, and PreToolUse/PostToolUse interfaces in Codex CLI 0.156.0 and the ten preceding stable releases. Plugin registration is established only when `codex plugin list --json` reads back `installed=true`, `enabled=true`, and `version=7.12.0`, and, for enhancement installation, the schema-3 host snapshot is `HOST_COMPATIBLE`. Files present on disk do not establish installation or enablement.
 
-The base Plugin registers no Hooks. The optional enhancement registers eight event types and nine account entries in account-level `hooks.json`; PreToolUse has separate dispatch and write matchers. On Windows, `hooks\cp_hook.cmd` selects an available Python launcher without an extra `python3.exe` shim. SessionEnd keeps a three-second host budget: the Hook only constructs a capped, body-free sanitized Event V3 and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe. It neither scans nor writes the event chain. Outside the Hook budget, the worker validates stable lifecycle identity, semantically deduplicates, persists the terminal event, creates the signed job, and seals the chain. Every queue entry point rejects missing stable lifecycle IDs, and an unsealed `seal_required` chain cannot enter Evolution.
+The base Plugin registers no Hooks. The optional enhancement registers eight event types and ten account entries in account-level `hooks.json`; PreToolUse/PostToolUse separate dispatch and write matchers. Windows account registrations pin the system `cmd.exe` and the installation-time Python interpreter; review and trust updated definitions in the normal `/hooks` UI. SessionEnd keeps a three-second host budget: the Hook only constructs a capped, body-free sanitized Event V3 and dispatches a detached worker without waiting, using a command argument instead of a synchronous pipe. It neither scans nor writes the event chain. Outside the Hook budget, the worker validates stable lifecycle identity, semantically deduplicates, persists the terminal event, creates the signed job, and seals the chain. Every queue entry point rejects missing stable lifecycle IDs, and an unsealed `seal_required` chain cannot enter Evolution.
 
 ## 7. Automatic model ceiling
 
@@ -104,7 +104,7 @@ See [installation and recovery](INSTALLATION_RECOVERY.md) for the complete `doct
 
 ## Optional project gate and effective loading
 
-The optional enhancement covers eight event types and nine account registrations, while project gates default to disabled. In V7.12.0, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy; unconfigured or disabled policies remain neutral.
+The optional enhancement covers eight event types and ten account registrations, while project gates default to disabled. In V7.12.0, `UserPromptSubmit` is asynchronous observation, `Stop` is neutral observation, and `Interrupt` remains host-controlled. Canonical `apply_patch` advances Operation v2 through PreToolUse/PostToolUse only for an explicitly enabled policy; unconfigured or disabled policies remain neutral.
 
 ```text
 Unconfigured or disabled ───────────────→ native writes preserve host behavior

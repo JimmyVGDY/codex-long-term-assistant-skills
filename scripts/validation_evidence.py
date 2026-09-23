@@ -34,6 +34,8 @@ ERROR_CLASS_CODES = frozenset({
 # English: Each item is an executable unittest identifier, rather than a file-level proxy. The selected cases exercise the property named by the capability.
 CAPABILITY_TEST_MAP: dict[str, tuple[str, ...]] = {
     "session_end_recovery": (
+        "test_session_end_recovery.SessionEndRecoveryTests.test_missing_worker_entry_is_rejected_before_process_creation",
+        "test_package_manager_security.PackageManagerV64Tests.test_account_session_end_uses_managed_sibling_worker",
         "test_session_end_recovery.SessionEndRecoveryTests.test_preappend_permission_failure_uses_v7_and_pins_later_events",
         "test_session_end_recovery.SessionEndRecoveryTests.test_root_role_collision_rejects_equal_and_nested_configured_data_roots",
         "test_session_end_recovery.SessionEndRecoveryTests.test_recovery_receipt_tampering_never_creates_a_job",

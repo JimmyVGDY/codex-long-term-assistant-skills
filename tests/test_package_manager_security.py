@@ -122,6 +122,54 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
             'PATH':str(self.bin)+os.pathsep+os.environ.get('PATH','')
         }
 
+    def test_account_session_end_uses_managed_sibling_worker(self):
+        from cp_runtime.event_v3 import read_event_chain
+        from cp_runtime.integrity import init_keyring, verify_event_seals
+
+        run(['install', '--scope', 'user', '--mode', 'standalone'], self.env)
+        worker = self.codex / 'cp-assistant-hooks' / 'seal_worker.py'
+        self.assertEqual((ROOT / 'hooks' / 'seal_worker.py').read_bytes(), worker.read_bytes())
+        keyring = Path(self.tmp.name) / 'event-keyring.json'
+        init_keyring(keyring)
+        data_root = Path(self.tmp.name) / 'events'
+        environment = {
+            **self.env, 'CP_ASSISTANT_DATA': str(data_root),
+            'CP_ASSISTANT_KEYRING_PATH': str(keyring),
+            'CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS': '2000',
+        }
+        environment.pop('PLUGIN_ROOT', None)
+        payload = {'hook_event_name': 'SessionEnd', 'session_id': 'installed-session',
+                   'turn_id': 'installed-turn', 'task_id': 'installed-task', 'cwd': str(self.home)}
+        result = subprocess.run(
+            [sys.executable, '-B', str(self.codex / 'cp-assistant-hooks' / 'cp_hook.py')],
+            input=json.dumps(payload), env=environment, cwd=self.home, text=True,
+            encoding='utf-8', capture_output=True, timeout=10,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn('SEAL_WORKER_', result.stderr)
+        event_files = list(data_root.rglob('task-outcome-v3.jsonl'))
+        self.assertEqual(1, len(event_files))
+        events = read_event_chain(event_files[0])['events']
+        self.assertEqual(['SESSION_ENDED'], [event['event_type'] for event in events])
+        self.assertEqual('SEALED_CURRENT', verify_event_seals(event_files[0], keyring_path=keyring)['seal_status'])
+
+        original = worker.read_bytes()
+        worker.write_bytes(b'changed worker\n')
+        drifted = run(['verify', '--scope', 'user', '--mode', 'standalone'], self.env, 1)
+        self.assertIn('seal_worker.py', drifted.stdout)
+        status = json.loads(run(['status', '--scope', 'user', '--mode', 'standalone', '--json'], self.env).stdout)
+        self.assertIn('ENHANCEMENT_FILE_DRIFT', status['component_errors']['enhancement'])
+        worker.write_bytes(original)
+        worker.unlink()
+        missing = run(['verify', '--scope', 'user', '--mode', 'standalone'], self.env, 1)
+        self.assertIn('seal_worker.py', missing.stdout)
+        status = json.loads(run(['status', '--scope', 'user', '--mode', 'standalone', '--json'], self.env).stdout)
+        self.assertIn('ENHANCEMENT_FILE_MISSING', status['component_errors']['enhancement'])
+        worker.write_bytes(original)
+        run(['verify', '--scope', 'user', '--mode', 'standalone'], self.env)
+        run(['uninstall', '--scope', 'user', '--mode', 'standalone'], self.env)
+        self.assertFalse(worker.exists())
+
     def assert_installed_tools_run(self):
         for name in ('cp-runtime.py','evolution.py'):
             tool=self.codex/'tools'/name
@@ -691,10 +739,10 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_doctor_reads_codex_version(self):
         r=run(['doctor','--json'],self.env)
         data=json.loads(r.stdout)
-        self.assertEqual(data['target_codex'],'0.155.1')
+        self.assertEqual(data['target_codex'],'0.156.0')
         self.assertEqual(
-            ['0.155.1','0.155.0','0.154.0','0.153.4','0.153.3','0.153.2','0.153.1',
-             '0.153.0','0.152.1','0.152.0','0.151.0'],
+            ['0.156.0','0.155.1','0.155.0','0.154.0','0.153.4','0.153.3','0.153.2',
+             '0.153.1','0.153.0','0.152.1','0.152.0'],
             data['supported_codex_versions'],
         )
         self.assertIn('0.154.0',data['codex_version'])
@@ -742,12 +790,12 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_host_unknown_version_fails_closed(self):
         bad={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.145.0'}
         result=run(['install','--scope','user','--mode','plugin'],bad,2)
-        self.assertIn('0.151.0',result.stderr)
+        self.assertIn('0.152.0',result.stderr)
 
     def test_plugin_host_exited_0_149_1_fails_closed(self):
         exited={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.149.1'}
         result=run(['install','--scope','user','--mode','plugin'],exited,2)
-        self.assertIn('0.151.0',result.stderr)
+        self.assertIn('0.152.0',result.stderr)
 
     def test_plugin_host_previous_stable_version_is_supported(self):
         previous={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.152.1'}

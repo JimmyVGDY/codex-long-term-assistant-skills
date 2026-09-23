@@ -4,7 +4,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-V7.12.0 advances the frozen compatibility window to official stable Codex CLI 0.155.1 while retaining the ten independent Reviewer combinations and the separation between base installation and optional enhancement. Read public delivery status back from GitHub Releases and workflows.
+V7.12.0 advances the frozen compatibility window to official stable Codex CLI 0.156.0 while retaining the ten independent Reviewer combinations and the separation between base installation and optional enhancement. Read public delivery status back from GitHub Releases and workflows.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -22,7 +22,7 @@ V7.12.0 advances the frozen compatibility window to official stable Codex CLI 0.
   <a href="https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <a href="LICENSE"><img alt="Apache-2.0" src="https://img.shields.io/github/license/JimmyVGDY/codex-long-term-assistant-skills"></a>
   <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
-  <img alt="Codex CLI 0.155.1" src="https://img.shields.io/badge/Codex%20CLI-0.155.1-111827">
+  <img alt="Codex CLI 0.156.0" src="https://img.shields.io/badge/Codex%20CLI-0.156.0-111827">
 </p>
 
 V7.6.2 restored the non-blocking message and Stop boundary; V7.7.0 added Operation v2; and V7.7.1 moved the compatibility window to Codex CLI 0.154.0. V7.12.0 retains those safety boundaries while separating base Skills from optional enhancement runtime. The gate remains off by default, and capability level is neither semantic correctness nor authority.
@@ -155,7 +155,7 @@ Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not 
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Native Windows Codex CLI 0.155.1 + Plugin | Current real-host anchor | Target-version account installation, `verify`, and a projectless fresh CLI task will be read back independently in S8/S9 | A restarted Desktop session remains unverified |
+| Native Windows Codex CLI 0.156.0 + Plugin | Current real-host anchor | Target-version account installation, `verify`, and a projectless fresh CLI task will be read back independently in S8/S9 | A restarted Desktop session remains unverified |
 | Windows + eleven pinned stable Codex releases | Frozen compatibility window | The registry binds 11/11 official async, Pre/Post schema, and result-response source evidence | The cross-version real-host matrix has not been run on every host |
 | Windows / Ubuntu GitHub matrix | Release gate | The workflow is configured for Python 3.11/3.13 and eleven-version replay on both systems | Refer to GitHub Actions for this release's remote CI state |
 | standalone mode | Explicit fallback | Local installation structure, inventory, non-Git BASIC, and regression coverage | It is not a substitute for this account Plugin acceptance |
@@ -163,7 +163,7 @@ Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not 
 
 The base installation does not require the package Python runtime; the enhancement runtime requires Python 3.11 or later; public CI is configured to validate both 3.11 and 3.13 on Windows and Ubuntu. For any other environment combination, run `doctor`, `dry-run`, and `verify` before deciding its usable status.
 
-The V7.12.0 window is `0.155.1`, `0.155.0`, `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, `0.152.0`, and `0.151.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
+The V7.12.0 window is `0.156.0`, `0.155.1`, `0.155.0`, `0.154.0`, `0.153.4`, `0.153.3`, `0.153.2`, `0.153.1`, `0.153.0`, `0.152.1`, and `0.152.0`. Patch releases count independently; future, prerelease, and other out-of-window hosts are not admitted automatically.
 
 ## First install and upgrade
 

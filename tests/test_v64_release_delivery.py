@@ -148,7 +148,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
             "witness.json": {"ok": True, "reproducible": True, "artifact_sha256": digest},
             "unified.json": {
                 "ok": True, "version": VERSION, "artifact_sha256": digest,
-                "compatibility_registry_digest": "0311182b7231e979f98a2ebee49ba4838ba794f5541e208afc5e7a66f920fbbd",
+                "compatibility_registry_digest": "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8",
                 "status": {key: "PASS" for key in (
                     "package", "artifact", "host", "plugin", "lifecycle", "dispatch_policy", "payload"
                 )},
@@ -158,7 +158,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         for name, value in evidence.items():
             (self.root / name).write_text(json.dumps(value), encoding="utf-8")
         version = self.root / "version.txt"
-        version.write_text("codex-cli 0.155.1\n", encoding="utf-8")
+        version.write_text("codex-cli 0.156.0\n", encoding="utf-8")
         attestation = self.root / "attestation.json"
         environment = {**os.environ, "CP_ASSISTANT_ATTESTATION_HMAC_KEY": "test-key-v743"}
         run_script(ATTEST, [

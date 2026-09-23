@@ -226,7 +226,8 @@
     "hooks_state_trusted_hashes": "PRESERVED_BY_INSTALLER",
     "managed_hooks_requiring_normal_review_and_trust": 10,
     "hook_trust_status": "MODIFIED_PENDING_NORMAL_HOOK_REVIEW",
-    "actual_native_hook_lifecycle": "PENDING"
+    "actual_native_hook_lifecycle": "PENDING",
+    "scope": "Historical be787 candidate before account worker delivery fix"
   },
   "public_release_created": false,
   "current_linux_ci": {
@@ -247,7 +248,8 @@
       "tree": "ef4fbf24383e7e5a1fab60faa42cd87366dbc810",
       "source_tree_exact_match": true
     },
-    "windows": "PENDING"
+    "windows": "PASS_ON_HISTORICAL_306F3ED",
+    "scope": "Historical 306f3ed source; not final CLI 0.156.0 implementation CI"
   },
   "previous_ci_failure": {
     "source_head": "e7b6fd1",
@@ -272,5 +274,54 @@
     "routing_tests": 20,
     "status": "PASS"
   },
-  "full_run_scope": "Integrated measurement candidate before LIGHT rollback; final commit needs its own CI."
+  "full_run_scope": "Integrated measurement candidate before LIGHT rollback; final commit needs its own CI.",
+  "codex_0156_local_acceptance": {
+    "version": "0.156.0",
+    "windows_cli_contract": "CLI_CONTRACT_PASS",
+    "isolated_plugin": "ISOLATED_PLUGIN_PASS",
+    "synthetic_hook": "SYNTHETIC_HOOK_PASS",
+    "registry_digest": "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8",
+    "targeted_compatibility_release_tests": 39,
+    "worker_layout_targeted_tests": 47,
+    "validation_evidence_tests": 11,
+    "installation": "PASS",
+    "payload_digest": "4d16bf233697500fd2f4087f356037dbe61aa93af61670b289b44cd0b1a0abc7",
+    "file_count": 245,
+    "backup_exists": true,
+    "native_lifecycle": {
+      "status": "PASS",
+      "fresh_parent_child": true,
+      "marker_success": true,
+      "required_events": {
+        "SESSION_ENDED": 1,
+        "SUBAGENT_STARTED": 1,
+        "SUBAGENT_STOPPED": 1,
+        "TASK_COMPLETED": 1,
+        "TURN_OPENED": 1
+      },
+      "seal_status": "SEALED_CURRENT",
+      "sealed_record_count": 5,
+      "report_sha256": "7e559b24d04d956ba40ed20e936b49dae8b126d40e6819ffd526734ddb8a038b",
+      "windows_sandbox": "unelevated",
+      "permission_policy": "read-only",
+      "global_config_unchanged": true
+    },
+    "configured_elevated_mode": "BLOCKED_AT_DIRECTORY_PIN_ON_THIS_HOST",
+    "elevated_readonly_reproduction": {
+      "ntstatus": "0xc000050b",
+      "win32_error": 4395
+    },
+    "fresh_routing_profile": {
+      "status": "PASS_COMBINED_COVERAGE",
+      "composition": "13 original + 3 supplemental",
+      "observed": 16,
+      "passed": 16,
+      "missing": 0,
+      "scope": "HOST_FINAL_REPORT",
+      "single_cohort_pass_rate_claimed": false,
+      "original_host_error_retained": true,
+      "report_sha256": "19686b607e83d4174c432afcbd1b9cb8dae019c5ca38e8633b6541558a7b8ec9"
+    },
+    "final_commit_ci": "PENDING"
+  }
 }
