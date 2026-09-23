@@ -47,7 +47,8 @@ class PackageManagerUxTests(unittest.TestCase):
             directory.mkdir(parents=True, exist_ok=True)
             (directory / "SKILL.md").write_text("fixture", encoding="utf-8")
         for relative in ("tools/cp-runtime.py", "tools/evolution.py",
-                         "cp-assistant-hooks/cp_hook.py", "cp-assistant-hooks/cp_gate.py"):
+                         "cp-assistant-hooks/cp_hook.py", "cp-assistant-hooks/cp_gate.py",
+                         "cp-assistant-hooks/seal_worker.py"):
             target = home / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("fixture", encoding="utf-8")
@@ -64,7 +65,11 @@ class PackageManagerUxTests(unittest.TestCase):
                  "components": {"enhancement": {"status": "MANAGED"}},
                  "payload_identity": {"cache_digest": payload["payload_digest"],
                                       "marketplace_digest": payload["payload_digest"]},
-                 "managed_hashes": {str(runtime): package_manager.tree_sha256(runtime)}}
+                 "managed_hashes": {
+                     str(runtime): package_manager.tree_sha256(runtime),
+                     str(home / "cp-assistant-hooks" / "seal_worker.py"):
+                         package_manager.tree_sha256(home / "cp-assistant-hooks" / "seal_worker.py"),
+                 }}
         if include_base:
             state["components"]["base"] = {"status": "PLUGIN_MANAGED" if mode == "plugin" else "STANDALONE_SKILLS"}
         state_file = home / "cp-assistant-v6-state.json"
