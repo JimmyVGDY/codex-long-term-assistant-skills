@@ -118,7 +118,8 @@ class WindowsRootPathAliasTests(unittest.TestCase):
                                 directory=self.directory)
             with self.assertRaises(PermissionError):
                 require_external_state(alias / "new-state.json", self.fixture.repo)
-            # The proven ordinary-path containment does not require an alias probe.
+            # 中文：普通路径的包含判断已足够，不额外探测别名。
+            # English: Proven ordinary-path containment needs no alias probe.
             self.assertTrue(inside(self.fixture.repo / "new-state.json", self.fixture.repo))
 
     def test_managed_root_is_never_an_alias_replacement_target(self):

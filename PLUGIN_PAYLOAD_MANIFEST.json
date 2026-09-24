@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.13.2",
+  "version": "7.13.3",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 265,
-  "payload_digest": "3268e1c874dffbb2e991300d262cbf7ffebe0f9c9edfb18234f79344da90174a",
+  "file_count": 266,
+  "payload_digest": "c2aa92e7f2e0c3dc15dde30ad0216262295e69823e16d2208f50be0a24f8ed0d",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "0905826150c82a2efb6dec030f359a9015af31174c5b3a1d812a301541a0765a",
-      "size": 780
+      "sha256": "e90b294b05abfe2218264977dcc35c33ba93ac231fd0255d5e6334538e0f7dc2",
+      "size": 826
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -808,8 +808,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "fea3acab4266f6cd5037baf205a60ece8313d100c91e1fcf2bf8e9cad425a2a9",
-      "size": 38273
+      "sha256": "172f9c3f10f4a6c30887a449edcac6858b586963f5a19e0ef94fb9e4bea1da4c",
+      "size": 38327
     },
     {
       "path": "hooks/enhancement-hooks.json",
@@ -843,8 +843,8 @@
     },
     {
       "path": "runtime/cp_runtime/budget_v4.py",
-      "sha256": "6fc545bcd50c68de5d5669ef3485f7261df920fed7630b8f1691c413bf4d079e",
-      "size": 52869
+      "sha256": "45ca2b5f175f37b7eeb88af41dffdfdc121c437bfd91ecc5d13b21a6659844ed",
+      "size": 53725
     },
     {
       "path": "runtime/cp_runtime/calibration_v4.py",
@@ -918,8 +918,8 @@
     },
     {
       "path": "runtime/cp_runtime/common.py",
-      "sha256": "f7b86df1021a770a42c453c3598d0666fe48f9ffcd0ffa1f29113552aa437fc3",
-      "size": 12987
+      "sha256": "ec6087df228dd9a88c135ccc959b186ca1c2dcf70d67c91c45a56d0923825589",
+      "size": 12997
     },
     {
       "path": "runtime/cp_runtime/contracts.py",
@@ -1142,6 +1142,11 @@
       "size": 16123
     },
     {
+      "path": "runtime/cp_runtime/path_identity.py",
+      "sha256": "36d4749959f94ba0b1adf456448805cecce8c53c02ee2beb4fcc7653b028d122",
+      "size": 2982
+    },
+    {
       "path": "runtime/cp_runtime/project.py",
       "sha256": "b2854be1189cffef652e991452af9de1cac45e1172de123d82581aedf6931a2b",
       "size": 14672
@@ -1183,8 +1188,8 @@
     },
     {
       "path": "runtime/cp_runtime/routing_context_v4.py",
-      "sha256": "35140264f505a688ede67bb25d599cab92281cdd4b4c4d4051b5acc82eb5dd22",
-      "size": 18394
+      "sha256": "e1582b4a1e78466cee85973c987442b825d5843fc9de2663aea85a02519ecbd1",
+      "size": 18428
     },
     {
       "path": "runtime/cp_runtime/routing_contract.py",
@@ -1203,8 +1208,8 @@
     },
     {
       "path": "runtime/cp_runtime/routing_hook_v4.py",
-      "sha256": "e46d8c8cf867b7587506fdbb0805fbb1dbfcd4c94a86bfd642a74ea6cb944dc1",
-      "size": 8301
+      "sha256": "a8424cea906fef6d4f425477b5b757f651157d2010d69e7957eb14f3baf4c6fb",
+      "size": 8869
     },
     {
       "path": "runtime/cp_runtime/routing_phase_plan.py",
@@ -1213,8 +1218,8 @@
     },
     {
       "path": "runtime/cp_runtime/routing_registry_v4.py",
-      "sha256": "c234740ccef398629a0815abcf84f570aab9d669079206ab7b7c41105fb98e91",
-      "size": 4663
+      "sha256": "6b538392e06b329966b2c19fe5a8fd254442611d0bfeff9780f0a507b02e50d3",
+      "size": 6698
     },
     {
       "path": "runtime/cp_runtime/routing_statistics.py",

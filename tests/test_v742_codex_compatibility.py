@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：V7.13.2 稳定版兼容注册表契约测试。
+"""中文：V7.13.3 稳定版兼容注册表契约测试。
 
-English: V7.13.2 stable-release compatibility registry contract tests.
+English: V7.13.3 stable-release compatibility registry contract tests.
 """
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ def _load_release_script(name: str, filename: str):
 
 class RegistryTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.registry = load_registry(REGISTRY_PATH, "7.13.2")
+        self.registry = load_registry(REGISTRY_PATH, "7.13.3")
 
     def test_registry_is_exact_frozen_stable_window(self) -> None:
         self.assertEqual(EXPECTED_VERSIONS, [item["version"] for item in self.registry["versions"]])
@@ -246,7 +246,7 @@ class RegistryTests(unittest.TestCase):
 class PluginListNormalizerTests(unittest.TestCase):
     PACKAGE = "codex-cross-project-engineering-assistant"
     MARKETPLACE = "cp-assistant-local"
-    VERSION = "7.13.2"
+    VERSION = "7.13.3"
 
     def setUp(self) -> None:
         registry = load_registry(REGISTRY_PATH)

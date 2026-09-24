@@ -4,7 +4,7 @@ English: [README.en.md](README.en.md)
 
 本页按使用阶段组织当前包的规范文档。历版报告与构建信息按版本集中保存，历史校验路径、引用关系与可复现证据继续保留。
 
-> 版本口径：V<!-- cp-fact:package-version -->7.13.2<!-- /cp-fact --> 是当前包版本；TaskOutcomeEvent V3、组件 Manifest 和策略版本是协议或数据格式标识。旧包版本只在迁移说明和“发行与历史”中出现，不代表当前规则仍按旧版本运行。
+> 版本口径：V<!-- cp-fact:package-version -->7.13.3<!-- /cp-fact --> 是当前包版本；TaskOutcomeEvent V3、组件 Manifest 和策略版本是协议或数据格式标识。旧包版本只在迁移说明和“发行与历史”中出现，不代表当前规则仍按旧版本运行。
 
 ## 开始使用
 
@@ -31,15 +31,15 @@ English: [README.en.md](README.en.md)
 - [受控演进操作](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [自演进架构](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [当前验证报告索引](VALIDATION_REPORT.md)
-- [V7.13.2 包内验证报告](releases/v7.13.2/VALIDATION_REPORT.md)
-- [V7.13.2 审计报告](releases/v7.13.2/AUDIT_REPORT.md)
+- [V7.13.3 包内验证报告](releases/v7.13.3/VALIDATION_REPORT.md)
+- [V7.13.3 审计报告](releases/v7.13.3/AUDIT_REPORT.md)
 - [组件复用验收](COMPONENT_REUSE_ACCEPTANCE.md)
 - [文档维护与事实校验](DOCUMENTATION_MAINTENANCE.md)
 
 ## 发行与历史
 
 - [历版发行资料索引](releases/README.md)
-- [V7.13.2 发行说明](releases/v7.13.2/RELEASE_NOTES.md)
+- [V7.13.3 发行说明](releases/v7.13.3/RELEASE_NOTES.md)
 - [版本记录](../CHANGELOG.md)
 - [公开重建资料索引](history/README.md)
 - [公开重建版本索引](history/RELEASE_ARCHIVES.md)

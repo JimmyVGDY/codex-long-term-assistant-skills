@@ -404,3 +404,8 @@ docs/releases/v7.13.2/AUDIT_REPORT.md
 docs/releases/v7.13.1/RELEASE_NOTES.md
 docs/releases/v7.13.1/VALIDATION_REPORT.md
 docs/releases/v7.13.1/AUDIT_REPORT.md
+
+# V7.13.3 pairs inspected by the implementing agent; external acceptance remains separate.
+docs/releases/v7.13.3/RELEASE_NOTES.md
+docs/releases/v7.13.3/VALIDATION_REPORT.md
+docs/releases/v7.13.3/AUDIT_REPORT.md

@@ -1,16 +1,24 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.13.2",
-  "description": "Cross-project engineering assistant V7.13.2: GPT-6 compatibility support, recovery protection, and verifiable delivery.",
-  "author": {"name": "Project maintainers"},
+  "version": "7.13.3",
+  "description": "Cross-project engineering assistant V7.13.3: Windows Desktop path aliases, budget identity, and recovery protection.",
+  "author": {
+    "name": "Project maintainers"
+  },
   "interface": {
     "displayName": "Cross-project Engineering Assistant",
     "shortDescription": "Engineering skills, model routing and independent review",
     "longDescription": "Engineering skills, task-specific model and reasoning selection, independent review and verifiable delivery for Codex Desktop.",
     "developerName": "Cross-project Engineering Assistant",
     "category": "Productivity",
-    "capabilities": ["Interactive", "Read", "Write"],
-    "defaultPrompt": ["Inspect the current project and propose an implementation and validation plan."]
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Inspect the current project and propose an implementation and validation plan."
+    ]
   },
   "skills": "./skills/"
 }

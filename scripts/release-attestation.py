@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：创建并验证隐私有界的 V7.13.2 发行证明。
+"""中文：创建并验证隐私有界的 V7.13.3 发行证明。
 
-English: Create and verify a privacy-bounded V7.13.2 release attestation.
+English: Create and verify a privacy-bounded V7.13.3 release attestation.
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ from codex_compatibility import canonical_digest  # noqa: E402
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "7.13.2"
+VERSION = "7.13.3"
 TARGET_CODEX_VERSION = "0.156.1"
 COMPATIBILITY_REGISTRY_DIGEST = "5db8226c99f4314b8681694d275c87adc645a0ab9963f1f93f057020a32efaaa"
 DESKTOP_CONTRACT_DIGEST = canonical_digest(desktop_host.load_contract(ROOT / "config" / "desktop-host-contract-v1.json"))
@@ -384,7 +384,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.13.2 release attestation")
+    parser = argparse.ArgumentParser(description="V7.13.3 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)

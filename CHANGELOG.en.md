@@ -4,6 +4,13 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.13.3 - 2026-09-25
+
+- Fix missed budget bindings for Windows Desktop path aliases while preserving historical fingerprints and ledger events.
+- Serialize registration per task and compare equivalent lifecycle proofs under the ledger lock; unavailable identity, conflicts, or disappearing bindings reject the operation.
+- Align external-state and managed-root protection while preserving support for valid child targets that do not exist yet.
+- Keep frozen V3 defaults, GPT-5.6 compatibility, and GPT-6 qualification gates unchanged; full package, installation, and native admission are accepted separately.
+
 ## 7.13.2 - 2026-09-25
 
 - Advance the frozen compatibility window to Codex CLI 0.156.1, retain the ten preceding stable releases from 0.156.0 through 0.152.1, and remove 0.152.0 from the active window.
