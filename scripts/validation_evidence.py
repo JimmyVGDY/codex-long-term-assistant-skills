@@ -271,6 +271,10 @@ class _RecordingResult(unittest.TestResult):
         self.subtest_count += 1
         if err is not None:
             self._record(test, "SUBTEST_FAILURE")
+            # 中文：沿用 unittest 对异常的区分及现有 ERROR 诊断合同。
+            # English: Preserve unittest's exception distinction and the existing ERROR diagnostic contract.
+            if not issubclass(err[0], test.failureException):
+                self._record(test, "ERROR", error_class_code=_error_class_code(err))
 
 
 def _canonical_bytes(value: Mapping[str, Any]) -> bytes:

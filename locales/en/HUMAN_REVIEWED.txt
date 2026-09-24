@@ -397,3 +397,7 @@ skills/multi-agent-independent-review/references/routing-v4-contracts.md
 docs/releases/v7.13.0/RELEASE_NOTES.md
 docs/releases/v7.13.0/VALIDATION_REPORT.md
 docs/releases/v7.13.0/AUDIT_REPORT.md
+
+docs/releases/v7.13.1/RELEASE_NOTES.md
+docs/releases/v7.13.1/VALIDATION_REPORT.md
+docs/releases/v7.13.1/AUDIT_REPORT.md

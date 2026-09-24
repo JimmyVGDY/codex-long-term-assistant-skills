@@ -2592,6 +2592,15 @@ def recover_transaction(scope: str, repo_path: Optional[str] = None) -> None:
     for record in reversed(journal.get("records") or []):
         try:
             target = Path(record["target"]); _recheck_target(target, scope, repo)
+            source = None
+            merge_target = scope == "user" and target.name in {"hooks.json", "AGENTS.md"}
+            # 中文：先核验普通目标的恢复来源，再检查所有权和删除当前文件。
+            # English: Verify an ordinary target's recovery source before ownership checks and deletion.
+            if record.get("existed") and not merge_target:
+                assert backup is not None
+                source = backup / str(record.get("backup_relative") or "")
+                if not source.exists() or tree_sha256(source) != record.get("sha256"):
+                    raise InstallError("备份完整性失败: %s" % source)
             if not _target_owned(record, journal):
                 raise InstallError("目标已发生未知漂移，保留: %s" % target)
             previous = backup / str(record.get("backup_relative") or "") if backup and record.get("existed") else None
@@ -2601,12 +2610,8 @@ def recover_transaction(scope: str, repo_path: Optional[str] = None) -> None:
                 restore_global_agents(target, previous); continue
             io_target = _io_path(target)
             if io_target.exists() or io_target.is_symlink(): remove_path(target)
-            if record.get("existed"):
-                assert backup is not None
-                src = backup / str(record.get("backup_relative") or "")
-                if not src.exists() or tree_sha256(src) != record.get("sha256"):
-                    raise InstallError("备份完整性失败: %s" % src)
-                copy_atomic(src, target)
+            if source is not None:
+                copy_atomic(source, target)
         except Exception as exc:
             journal["rollback_errors"].append("%s: %s" % (record.get("target"), exc))
     if scope == "user" and journal.get("mode") == "plugin" and _codex_available():

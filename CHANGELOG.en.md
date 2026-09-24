@@ -4,6 +4,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.13.1 - 2026-09-24
+
+- Verify ordinary managed-file recovery backups before deletion; missing or corrupt backups preserve the current file and pending transaction.
+- Retain existing ERROR classification and fixed exception types for non-assertion subtest exceptions, without expanding the report schema or recording private bodies.
+- Continue GPT-6 compatibility support with frozen V3 as default. Native dispatch, model qualification, and default activation still require separate acceptance. Preserve V7.13.0 as a candidate without completed release acceptance; full patch validation, artifacts, and publication are read back separately.
+
 ## 7.13.0 - 2026-09-24
 
 - Add six models and eighteen Low/Medium/High evaluation combinations. V4 production candidates are the nine GPT-6 Luna, Sol and Astra combinations, gated by scenario qualification and gain evidence. Frozen V3 remains the default and existing tasks retain their original policy.
