@@ -127,7 +127,7 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
             "schema_version": 3, "host_surface": "codex-desktop",
             "desktop_contract_digest": attestation_module.DESKTOP_CONTRACT_DIGEST,
             "ok": True, "version": "7.13.3", "artifact_sha256": digest,
-            "compatibility_registry_digest": "5db8226c99f4314b8681694d275c87adc645a0ab9963f1f93f057020a32efaaa",
+            "compatibility_registry_digest": "90e0e00dbd31bcb58de2dd4daa7a3c90daa4036e9d0841b9085a6b2ccf3c6269",
             "status": {name: "PASS" for name in ("package", "artifact", "host", "plugin", "lifecycle", "dispatch_policy", "payload")}}), encoding="utf-8")
         dispatch_policy = self.root / "dispatch-policy.json"; dispatch_policy.write_text(json.dumps({
             "ok": True, "schema_version": "2.0", "dispatch_policy_status": "PASS",
