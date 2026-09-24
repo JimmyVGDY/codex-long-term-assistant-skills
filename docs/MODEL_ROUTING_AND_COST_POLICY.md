@@ -10,7 +10,7 @@
 V4 是显式启用的 `reviewer-matrix-v4 / quality-gain-routing-v1`。
 没有已批准的场景资格时返回 `CALIBRATION_REQUIRED`；不把测试夹具晋升为资格，
 也不在账本中途切回 V3。已有策略和初始化前明确选择的兼容路径使用
-[冻结 V3 规则](../skills/multi-agent-independent-review/references/reviewer-model-routing-v3.md)。
+[冻结 V3 规则](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/skills/multi-agent-independent-review/references/reviewer-model-routing-v3.md)。
 V1/V2/V3 的策略文件、费用语义、旧账本和结果解释器继续保留。
 
 ## 型号定位与评测假设

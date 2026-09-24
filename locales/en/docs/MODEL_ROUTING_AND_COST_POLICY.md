@@ -13,7 +13,7 @@ V4 is explicitly activated as `reviewer-matrix-v4 / quality-gain-routing-v1`.
 Missing approved scenario qualifications return `CALIBRATION_REQUIRED`. Synthetic
 fixtures cannot supply qualification, and an existing ledger cannot switch to V3.
 Existing tasks and compatibility paths explicitly selected before initialization use
-the [frozen V3 rules](../skills/multi-agent-independent-review/references/reviewer-model-routing-v3.md).
+the [frozen V3 rules](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/locales/en/skills/multi-agent-independent-review/references/reviewer-model-routing-v3.md).
 V1/V2/V3 policy files, resource semantics, ledgers and result readers remain supported.
 
 ## Model positioning and evaluation hypotheses
