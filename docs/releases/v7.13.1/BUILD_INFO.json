@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "version": "7.13.1",
+  "host_surface": "codex-desktop",
+  "release_scope": "COMPATIBILITY_SUPPORT",
+  "default_policy_id": "reviewer-matrix-v3",
+  "gpt6_production_default_enabled": false,
+  "native_enforcement_accepted": false,
+  "public_release_created": false,
+  "record_scope": "Pre-publication patch source snapshot; external CI, tag, assets, provenance and installation are verified separately.",
+  "build_kind": "compatibility-support-patch-source-snapshot",
+  "supported_locales": [
+    "zh-CN",
+    "en"
+  ],
+  "python_minimum": "3.11",
+  "ci_python_versions": [
+    "3.11",
+    "3.13"
+  ],
+  "standalone_cli_support": false,
+  "execution_authorization": "NONE",
+  "package_validation_is_host_acceptance": false,
+  "validation_status": "TARGETED_PASS_FULL_PATCH_PENDING",
+  "payload_manifest_status": "PASS",
+  "payload_digest": "29fb04d0c71635ba038e75d2588df594d16c6046b64fc675e544326a25693531"
+}

@@ -10,6 +10,9 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 MANAGER=ROOT/'scripts'/'package_manager.py'
+# 中文：完整安装/恢复夹具包含多次宿主探针和文件事务，不能被比宿主单次 60 秒上限更短的外层等待截断。
+# English: Complete install/recovery fixtures include several host probes and file transactions; their outer wait must exceed a single host command's 60-second limit.
+MANAGER_FIXTURE_TIMEOUT_SECONDS=120
 sys.path.insert(0,str(ROOT/'scripts'))
 SPEC=importlib.util.spec_from_file_location('package_manager_under_test',MANAGER)
 assert SPEC and SPEC.loader
@@ -25,7 +28,7 @@ def io_path(path: Path) -> Path:
 
 
 def run(args, env, expected=0):
-    r=subprocess.run([sys.executable,'-B',str(MANAGER),*args],env=env,text=True,encoding='utf-8',capture_output=True,timeout=30)
+    r=subprocess.run([sys.executable,'-B',str(MANAGER),*args],env=env,text=True,encoding='utf-8',capture_output=True,timeout=MANAGER_FIXTURE_TIMEOUT_SECONDS)
     if r.returncode!=expected:
         raise AssertionError(f'rc={r.returncode}, expected={expected}\nstdout={r.stdout}\nstderr={r.stderr}')
     return r
@@ -81,7 +84,7 @@ if args[:2] == ['plugin','add']:
     if len(args) > 2 and args[2] == '--help': emit_help('plugin_add'); raise SystemExit(0)
     home.mkdir(parents=True,exist_ok=True)
     state.write_text(json.dumps({'installed':True,'selector':args[2]}),encoding='utf-8')
-    version=os.environ.get('FAKE_PLUGIN_VERSION','7.13.0')
+    version=os.environ.get('FAKE_PLUGIN_VERSION','7.13.1')
     source=Path(market_file.read_text(encoding='utf-8'))/'plugins'/'codex-cross-project-engineering-assistant'
     cache=home/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/version
     if io_path(cache).exists(): shutil.rmtree(io_path(cache))
@@ -98,7 +101,7 @@ if args[:2] == ['plugin','list']:
     if state.exists():
         selector=json.loads(state.read_text(encoding='utf-8')).get('selector','codex-cross-project-engineering-assistant@cp-assistant-local')
         name,market=selector.split('@',1)
-        installed=[{'pluginId':selector,'name':name,'marketplaceName':market,'version':os.environ.get('FAKE_PLUGIN_VERSION','7.13.0'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
+        installed=[{'pluginId':selector,'name':name,'marketplaceName':market,'version':os.environ.get('FAKE_PLUGIN_VERSION','7.13.1'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
     if '--marketplace' in args:
         requested=args[args.index('--marketplace')+1]
         installed=[item for item in installed if item['marketplaceName']==requested]
@@ -553,7 +556,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['install','--scope','user','--mode','plugin'],self.env)
         state_path=self.codex/'cp-assistant-v6-state.json'
         state_bytes=state_path.read_bytes()
-        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.13.0'
+        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.13.1'
 
         def assert_tools_fail_closed():
             for name in ('cp-runtime.py','evolution.py'):
@@ -673,7 +676,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_install_rejects_wrong_registered_version(self):
         env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
         result=run(['install','--scope','user','--mode','plugin'],env,2)
-        self.assertIn('version=7.13.0',result.stderr)
+        self.assertIn('version=7.13.1',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
@@ -761,7 +764,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['doctor','--recover'],self.env)
         self.assertFalse(journal.exists())
         status=json.loads(run(['status','--json'],self.env).stdout)
-        self.assertEqual('7.13.0',status['version'])
+        self.assertEqual('7.13.1',status['version'])
         self.assertIn('live_transaction',status)
 
     def test_mode_switch_is_refused_without_force(self):
@@ -894,6 +897,42 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         result=run(['doctor','--recover'],self.env,2)
         self.assertIn('未知漂移',result.stderr)
         self.assertEqual('external drift',agent.read_text(encoding='utf-8'))
+
+    def _assert_recovery_preserves_owned_file_with_invalid_backup(self, missing):
+        target=self.codex/'agents'/'cp-review-security-access.toml'
+        target.parent.mkdir(parents=True)
+        current=b'current managed contents'
+        target.write_bytes(current)
+        backup=Path(self.tmp.name)/'backup'
+        previous=backup/'items'/'agent.toml'
+        previous.parent.mkdir(parents=True)
+        previous.write_bytes(b'previous managed contents')
+        previous_hash=package_manager.tree_sha256(previous)
+        with mock.patch.object(package_manager,'codex_home',return_value=self.codex), \
+             mock.patch.object(package_manager,'_codex_available',return_value=False):
+            journal=package_manager._new_journal('user','plugin',None,[('agent:cp-review-security-access.toml',target)])
+            journal.update({'stage':'APPLYING','backup':str(backup),
+                            'records':[{'label':'agent:cp-review-security-access.toml','target':str(target),
+                                        'existed':True,'kind':'file','backup_relative':'items/agent.toml',
+                                        'sha256':previous_hash}],
+                            'applied_hashes':{str(target):package_manager.tree_sha256(target)}})
+            journal_path=Path(journal['journal_path'])
+            package_manager.write_json_atomic(journal_path,journal)
+            if missing:
+                previous.unlink()
+            else:
+                previous.write_bytes(b'corrupted backup contents')
+            with self.assertRaises(package_manager.InstallError):
+                package_manager.recover_transaction('user')
+            self.assertTrue(target.is_file(),'Invalid backup must not remove the current managed file')
+            self.assertEqual(current,target.read_bytes())
+            self.assertEqual('RECOVERY_REQUIRED',json.loads(journal_path.read_text(encoding='utf-8'))['stage'])
+
+    def test_recovery_preserves_owned_file_with_corrupt_backup(self):
+        self._assert_recovery_preserves_owned_file_with_invalid_backup(False)
+
+    def test_recovery_preserves_owned_file_with_missing_backup(self):
+        self._assert_recovery_preserves_owned_file_with_invalid_backup(True)
 
     def test_source_and_symlink_targets_rejected(self):
         bad={**self.env,'CODEX_HOME':str(ROOT)}

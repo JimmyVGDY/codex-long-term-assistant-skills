@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.13.0",
-  "release_name": "GPT-6 审查路由与桌面兼容",
+  "version": "7.13.1",
+  "release_name": "GPT-6 兼容支持与恢复保护",
   "generated_for": "Codex Desktop engineering assistance with scenario-qualified GPT-6 model and reasoning selection, phase-preserving budgets, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -709,7 +709,8 @@
     "7.5.0",
     "7.5.1",
     "7.6.0",
-    "7.12.0"
+    "7.12.0",
+    "7.13.0"
   ],
   "release_validation": {
     "python_syntax": true,

@@ -82,6 +82,23 @@ class ValidationEvidenceTests(unittest.TestCase):
         finally:
             temporary.cleanup()
 
+    def test_subtest_exception_keeps_existing_error_class_contract_without_private_text(self) -> None:
+        report, test_id, temporary = self._collect(
+            "import subprocess, unittest\nclass Probe(unittest.TestCase):\n def test_case(self):\n  with self.subTest(value='SECRET_SUBTEST_PARAMETER'):\n   raise subprocess.TimeoutExpired('SECRET_COMMAND', 30, output='SECRET_OUTPUT', stderr='SECRET_STDERR')\n"
+        )
+        try:
+            case = report["test_cases"][0]
+            self.assertEqual(["SUBTEST_FAILURE", "ERROR"], case["statuses"])
+            self.assertEqual(["TimeoutExpired"], case["error_class_codes"])
+            self.assertEqual(report, validation_evidence.validate_evidence_report(report))
+            self.assertFalse(validation_evidence.suite_passed(report))
+            self.assertEqual("FAIL", validation_evidence.evaluate_capabilities((report,), {"probe": (test_id,)})["probe"]["status"])
+            serialized = json.dumps(report)
+            for secret in ("SECRET_SUBTEST_PARAMETER", "SECRET_COMMAND", "SECRET_OUTPUT", "SECRET_STDERR"):
+                self.assertNotIn(secret, serialized)
+        finally:
+            temporary.cleanup()
+
     def test_error_class_codes_are_optional_for_legacy_reports_and_allowlisted_when_present(self) -> None:
         report, test_id, temporary = self._collect(
             "import unittest\nclass Probe(unittest.TestCase):\n def test_case(self): raise RuntimeError('SECRET_LEGACY_BODY')\n"
@@ -134,7 +151,7 @@ class ValidationEvidenceTests(unittest.TestCase):
     def test_current_source_metadata_and_tampered_report_structure_fail_closed(self) -> None:
         metadata = validation_evidence.package_metadata(ROOT)
         self.assertEqual("codex-cross-project-engineering-assistant", metadata["package"])
-        self.assertEqual("7.13.0", metadata["version"])
+        self.assertEqual("7.13.1", metadata["version"])
         self.assertEqual(10, metadata["skill_count"])
         self.assertEqual(7, metadata["reviewer_count"])
         self.assertIs(False, metadata["automatic_self_modification"])

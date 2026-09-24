@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：失败关闭的 V7.13.0 端到端发行验证器。
+"""中文：失败关闭的 V7.13.1 端到端发行验证器。
 
-English: Fail-closed V7.13.0 end-to-end release verifier.
+English: Fail-closed V7.13.1 end-to-end release verifier.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT / "runtime"))
 DESKTOP_CONTRACT = desktop_host.load_contract(ROOT / "config" / "desktop-host-contract-v1.json")
 DESKTOP_CONTRACT_DIGEST = canonical_digest(DESKTOP_CONTRACT)
 
-VERSION = "7.13.0"
+VERSION = "7.13.1"
 TARGET_CODEX_VERSION = "0.156.0"
 COMPATIBILITY_REGISTRY_DIGEST = "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8"
 PACKAGE = "codex-cross-project-engineering-assistant"
@@ -262,7 +262,7 @@ def verify_release(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.13.0 端到端发行验证")
+    parser = argparse.ArgumentParser(description="V7.13.1 端到端发行验证")
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--package-validation", required=True)
     parser.add_argument("--build-witness", required=True)

@@ -1,6 +1,6 @@
 <!-- Generated from locales/en/docs/USER_GUIDE.md; edit that source and run scripts/documentation.py sync. -->
 
-# V7.13.0 Operating Guide
+# V7.13.1 Operating Guide
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE/)
 

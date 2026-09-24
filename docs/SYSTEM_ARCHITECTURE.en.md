@@ -4,7 +4,7 @@
 
 [Current location](architecture/SYSTEM_ARCHITECTURE.en.md)
 
-# V7.13.0 Current System Architecture and Security Boundaries
+# V7.13.1 Current System Architecture and Security Boundaries
 
 > Status: `active`. This page describes the current V7.12.0 package architecture. Earlier design and release evidence is retained only for historical traceability.
 

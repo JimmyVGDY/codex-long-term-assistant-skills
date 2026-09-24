@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "version": "7.13.1",
+  "host_surface": "codex-desktop",
+  "release_scope": "COMPATIBILITY_SUPPORT",
+  "default_policy_id": "reviewer-matrix-v3",
+  "gpt6_production_default_enabled": false,
+  "native_enforcement_accepted": false,
+  "public_release_created": false,
+  "record_scope": "Pre-publication patch source snapshot; external CI, tag, assets, provenance and installation are verified separately.",
+  "ok": false,
+  "targeted_validation": {
+    "recovery": {
+      "passed": 6,
+      "seconds": 20.793
+    },
+    "validation_evidence": {
+      "passed": 12,
+      "seconds": 0.311
+    },
+    "scope": "Code-fix baseline before release metadata synchronization; full current baseline remains pending."
+  },
+  "full_patch_validation": "PENDING",
+  "patch_installation": "PENDING",
+  "model_quality_qualification": "NOT_EVALUATED",
+  "native_v4_dispatch": "NOT_ACCEPTED",
+  "original_intermittent_ci_failure_cause": "UNCONFIRMED",
+  "source_binding": "Exact committed source is established by the release source manifest, tag and provenance; this record has no self-referential commit hash.",
+  "installer_fixture_timeout_seconds": 120,
+  "product_and_hook_timeouts_changed": false,
+  "current_ci_observation": {
+    "baseline": "1d91fafe6e5d3339f2f3cba3873f9dc02c28e605",
+    "status": "FAILED_ONE_WINDOWS_INSTALLER_FIXTURE_TIMEOUT",
+    "other_matrix_configurations_passed": 3,
+    "new_deadline_full_validation": "PENDING"
+  }
+}
