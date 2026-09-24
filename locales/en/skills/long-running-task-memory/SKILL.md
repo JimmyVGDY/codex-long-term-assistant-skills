@@ -5,6 +5,8 @@ description: Use for cross-session, multi-stage, multi-module, multi-repository,
 
 # Long-Running Task Memory
 
+The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+
 1. Keep task control state, authorization, evidence, and next action in a repository-external agent directory. Code, Git, configuration, and runtime results remain the technical source of truth.
 2. Maintain `CURRENT_TASK.md` and `PROGRESS.md`; add `PLAN.md` for multi-stage work.
 3. Write event-driven checkpoints at recoverable nodes, before and after high-risk actions, and before pause or context compaction.

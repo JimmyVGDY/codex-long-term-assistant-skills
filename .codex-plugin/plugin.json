@@ -1,6 +1,16 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.12.0",
-  "description": "跨项目长期技术助手 V7.12.0：可靠性、执行测试证据与日常诊断优化。",
+  "version": "7.13.0",
+  "description": "跨项目长期技术助手 V7.13.0：GPT-6 审查路由、思考收益与桌面兼容。",
+  "author": {"name": "Project maintainers"},
+  "interface": {
+    "displayName": "跨项目长期技术助手",
+    "shortDescription": "工程技能、模型路由与独立复审",
+    "longDescription": "为 Codex 桌面端提供工程技能、按任务选择模型与思考强度、独立复审和可核验的交付流程。",
+    "developerName": "Cross-project Engineering Assistant",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": ["检查当前项目并给出实施与验证计划。"]
+  },
   "skills": "./skills/"
 }

@@ -242,7 +242,8 @@ def command_init(args: argparse.Namespace) -> None:
             "execution_profile": args.profile,
             "reviewer_budget": args.reviewer_budget,
             "reviewer_policy": {"policy_id": args.reviewer_policy, "policy_digest": policy_digest(args.reviewer_policy),
-                                "selection_mode": "luna-first-evidence-score" if args.reviewer_policy != LEGACY_POLICY_ID else "legacy-four-tier"},
+                                "selection_mode": ("quality-gain-routing-v1" if args.reviewer_policy == "reviewer-matrix-v4" else
+                                                   "luna-first-evidence-score" if args.reviewer_policy != LEGACY_POLICY_ID else "legacy-four-tier")},
             "model_profile": args.model_profile,
             "host_surface": args.host_surface,
             "legacy_reviewer_budget": args.reviewer_budget,

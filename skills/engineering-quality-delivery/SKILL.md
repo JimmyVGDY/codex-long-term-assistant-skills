@@ -35,6 +35,8 @@ description: >-
 
 ## 模型与委派成本
 
+本段仅适用于 Worker/Explorer 的普通委派；登记 Reviewer 按 [独立复审技能](../multi-agent-independent-review/SKILL.md) 的根任务固定策略选型。主 Agent 模型与强度保持当前选择。
+
 - 构建结果、测试报告、覆盖率、diff 和交付证据收集优先 `luna-low`；范围明确的测试缺口和兼容核对使用 `luna-medium`。
 - 普通回归范围、实施边界和交付判断使用 `terra-medium`；生产、不可逆迁移、复杂回滚或阻塞冲突才使用 `terra-high`。
 - `STRICT` 只表示流程门禁更严格，不自动把主 Agent 或全部 Reviewer 升级到 High；证据可复用时禁止重复执行等价验证。

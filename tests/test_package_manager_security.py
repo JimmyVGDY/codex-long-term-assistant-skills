@@ -58,7 +58,7 @@ if 'plugin-remove' in failures and args[:2] == ['plugin','remove']:
     print('injected plugin remove failure',file=sys.stderr); raise SystemExit(9)
 if 'marketplace-remove' in failures and args[:3] == ['plugin','marketplace','remove']:
     print('injected marketplace remove failure',file=sys.stderr); raise SystemExit(9)
-if 'plugin-list' in failures and args == ['plugin','list','--json']:
+if 'plugin-list' in failures and args[:2] == ['plugin','list']:
     print('injected plugin list failure',file=sys.stderr); raise SystemExit(9)
 help_fixture=json.loads(Path(os.environ['FAKE_CODEX_CONTRACT_FIXTURE']).read_text(encoding='utf-8'))
 def emit_help(name):
@@ -81,7 +81,7 @@ if args[:2] == ['plugin','add']:
     if len(args) > 2 and args[2] == '--help': emit_help('plugin_add'); raise SystemExit(0)
     home.mkdir(parents=True,exist_ok=True)
     state.write_text(json.dumps({'installed':True,'selector':args[2]}),encoding='utf-8')
-    version=os.environ.get('FAKE_PLUGIN_VERSION','7.12.0')
+    version=os.environ.get('FAKE_PLUGIN_VERSION','7.13.0')
     source=Path(market_file.read_text(encoding='utf-8'))/'plugins'/'codex-cross-project-engineering-assistant'
     cache=home/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/version
     if io_path(cache).exists(): shutil.rmtree(io_path(cache))
@@ -91,14 +91,17 @@ if args[:2] == ['plugin','remove']:
     if len(args) > 2 and args[2] == '--help': emit_help('plugin_remove'); raise SystemExit(0)
     state.unlink(missing_ok=True)
     print('plugin removed'); raise SystemExit(0)
-if args == ['plugin','list','--json']:
+if args[:2] == ['plugin','list']:
     if os.environ.get('FAKE_LIST_INVALID_UNTIL_MARKETPLACE_ADD') == '1' and not market_file.exists():
         print('configured marketplace manifest is invalid',file=sys.stderr); raise SystemExit(2)
     installed=[]
     if state.exists():
         selector=json.loads(state.read_text(encoding='utf-8')).get('selector','codex-cross-project-engineering-assistant@cp-assistant-local')
         name,market=selector.split('@',1)
-        installed=[{'pluginId':selector,'name':name,'marketplaceName':market,'version':os.environ.get('FAKE_PLUGIN_VERSION','7.12.0'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
+        installed=[{'pluginId':selector,'name':name,'marketplaceName':market,'version':os.environ.get('FAKE_PLUGIN_VERSION','7.13.0'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
+    if '--marketplace' in args:
+        requested=args[args.index('--marketplace')+1]
+        installed=[item for item in installed if item['marketplaceName']==requested]
     print(json.dumps({'installed':installed,'available':[]})); raise SystemExit(0)
 print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemExit(2)
 """,encoding='utf-8')
@@ -116,6 +119,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
             'HOME':str(self.home),
             'USERPROFILE':str(self.home),
             'CODEX_HOME':str(self.codex),
+            'CP_ASSISTANT_DESKTOP_COMPONENT':str(self.bin / ('codex.cmd' if os.name == 'nt' else 'codex')),
             'PYTHONDONTWRITEBYTECODE':'1',
             'PYTHONIOENCODING':'utf-8',
             'FAKE_CODEX_CONTRACT_FIXTURE':str(ROOT/'tests'/'fixtures'/'codex-cli-help-v1.json'),
@@ -399,9 +403,9 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertFalse((self.codex/'cp-assistant-hooks'/'cp_gate.py').exists())
 
     def test_plugin_unknown_host_rejects_static_async_payload_before_account_write(self):
-        unknown={**self.env,'FAKE_CODEX_VERSION':'codex-cli 0.154.1'}
+        unknown={**self.env,'FAKE_CODEX_VERSION':'unknown component format'}
         result=run(['install','--scope','user','--mode','plugin'],unknown,2)
-        self.assertIn('仅支持已验证的 Codex CLI',result.stderr)
+        self.assertIn('DESKTOP_COMPONENT_CONTRACT_UNVERIFIED',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.home/'.agents'/'plugins'/'cp-assistant-marketplace').exists())
 
@@ -549,7 +553,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['install','--scope','user','--mode','plugin'],self.env)
         state_path=self.codex/'cp-assistant-v6-state.json'
         state_bytes=state_path.read_bytes()
-        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.12.0'
+        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.13.0'
 
         def assert_tools_fail_closed():
             for name in ('cp-runtime.py','evolution.py'):
@@ -669,7 +673,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_install_rejects_wrong_registered_version(self):
         env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
         result=run(['install','--scope','user','--mode','plugin'],env,2)
-        self.assertIn('version=7.12.0',result.stderr)
+        self.assertIn('version=7.13.0',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
@@ -739,11 +743,13 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_doctor_reads_codex_version(self):
         r=run(['doctor','--json'],self.env)
         data=json.loads(r.stdout)
-        self.assertEqual(data['target_codex'],'0.156.0')
+        self.assertEqual(data['host_surface'],'codex-desktop')
+        self.assertIsNone(data['target_codex'])
+        self.assertEqual([],data['supported_codex_versions'])
         self.assertEqual(
             ['0.156.0','0.155.1','0.155.0','0.154.0','0.153.4','0.153.3','0.153.2',
              '0.153.1','0.153.0','0.152.1','0.152.0'],
-            data['supported_codex_versions'],
+            data['legacy_codex_versions'],
         )
         self.assertIn('0.154.0',data['codex_version'])
 
@@ -755,7 +761,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['doctor','--recover'],self.env)
         self.assertFalse(journal.exists())
         status=json.loads(run(['status','--json'],self.env).stdout)
-        self.assertEqual('7.12.0',status['version'])
+        self.assertEqual('7.13.0',status['version'])
         self.assertIn('live_transaction',status)
 
     def test_mode_switch_is_refused_without_force(self):
@@ -787,20 +793,23 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['verify','--scope','user','--mode','standalone'],self.env)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
 
-    def test_plugin_host_unknown_version_fails_closed(self):
-        bad={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.145.0'}
-        result=run(['install','--scope','user','--mode','plugin'],bad,2)
-        self.assertIn('0.152.0',result.stderr)
+    def test_desktop_component_new_build_uses_contract_not_stable_window(self):
+        newer={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.156.1-alpha.2'}
+        run(['install','--scope','user','--mode','plugin'],newer)
+        run(['verify','--scope','user','--mode','plugin'],newer)
 
-    def test_plugin_host_exited_0_149_1_fails_closed(self):
-        exited={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.149.1'}
-        result=run(['install','--scope','user','--mode','plugin'],exited,2)
-        self.assertIn('0.152.0',result.stderr)
+    def test_standalone_path_client_does_not_replace_desktop_component(self):
+        missing=dict(self.env)
+        missing.pop('CP_ASSISTANT_DESKTOP_COMPONENT')
+        result=run(['install','--scope','user','--mode','plugin'],missing,2)
+        self.assertIn('DESKTOP_COMPONENT_REQUIRED',result.stderr)
+        self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
 
-    def test_plugin_host_previous_stable_version_is_supported(self):
+    def test_desktop_component_changed_command_wire_fails_closed(self):
         previous={**self.env, 'FAKE_CODEX_VERSION':'codex-cli 0.152.1'}
-        run(['install','--scope','user','--mode','plugin'],previous)
-        run(['verify','--scope','user','--mode','plugin'],previous)
+        result=run(['install','--scope','user','--mode','plugin'],previous,2)
+        self.assertIn('摘要与冻结兼容注册表不一致',result.stderr)
+        self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
 
     def test_plugin_host_help_digest_drift_fails_before_account_write(self):
         drifted={**self.env, 'FAKE_HELP_DRIFT':'plugin_add'}

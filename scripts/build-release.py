@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：构建并验证字节级可复现的 V7.12.0 语言发行包。
+"""中文：构建并验证字节级可复现的 V7.13.0 语言发行包。
 
-English: Build and verify byte-reproducible V7.12.0 locale-specific archives.
+English: Build and verify byte-reproducible V7.13.0 locale-specific archives.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from runtime_localization import RuntimeLocalizationError, load_mapping, localiz
 from release_source import MANIFEST_NAME as SOURCE_MANIFEST, SourceError, capture, relative_path
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "7.12.0"
+VERSION = "7.13.0"
 PACKAGE = "codex-cross-project-engineering-assistant"
 SUPPORTED_LOCALES = ("zh-CN", "en")
 FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)
@@ -88,6 +88,17 @@ def _copy_source(source: Path, target: Path) -> None:
         destination = target / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(path, destination)
+
+
+def _normalize_cmd_newlines(staging: Path) -> None:
+    # 中文：只规范暂存区的 Windows 启动脚本，消除 Git 检出换行差异。
+    # English: Canonicalize staged Windows launchers without rewriting source or frozen ledgers.
+    for path in release_files(staging):
+        if path.suffix.lower() == ".cmd":
+            content = path.read_bytes()
+            normalized = content.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+            if normalized != content:
+                path.write_bytes(normalized)
 
 
 def _apply_overlay(staging: Path, locale: str, source_root: Path) -> None:
@@ -159,6 +170,7 @@ def _prepare_staging(locale: str, parent: Path) -> Path:
     capture(ROOT, source_root)
     _copy_source(source_root, staging)
     _apply_overlay(staging, locale, source_root)
+    _normalize_cmd_newlines(staging)
     manifest = json.loads((staging / "manifest.json").read_text(encoding="utf-8-sig"))
     plugin = json.loads((staging / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8-sig"))
     if manifest.get("version") != VERSION or plugin.get("version") != VERSION:
@@ -257,7 +269,7 @@ def reproducible_build(output: Path, witness: Path, locale: str) -> Dict[str, An
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.12.0 deterministic bilingual release builder")
+    parser = argparse.ArgumentParser(description="V7.13.0 deterministic bilingual release builder")
     subparsers = parser.add_subparsers(dest="command", required=True)
     build_parser = subparsers.add_parser("build")
     build_parser.add_argument("--output", required=True)

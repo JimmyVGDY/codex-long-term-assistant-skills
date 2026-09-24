@@ -30,7 +30,7 @@ class V64ReleaseTests(unittest.TestCase):
         cls.builder = load_script("build_release_v65", "build-release.py")
         cls.verifier = load_script("verify_release_v65", "verify-release.py")
         cls.dispatch_policy = load_script("dispatch_policy_v65", "dispatch-policy-acceptance.py")
-        cls.artifact = cls.root / "Codex-Skills-V7.12.0-zh-CN.zip"
+        cls.artifact = cls.root / "Codex-Skills-V7.13.0-zh-CN.zip"
         cls.build = cls.builder.build_release(cls.artifact, "zh-CN")
         cls.generated_dispatch_policy = cls.dispatch_policy.evaluate()
 
@@ -40,12 +40,12 @@ class V64ReleaseTests(unittest.TestCase):
 
     def evidence(self):
         digest = json.loads((ROOT / "PLUGIN_PAYLOAD_MANIFEST.json").read_text(encoding="utf-8"))["payload_digest"]
-        package = {"ok": True, "version": "7.12.0"}
-        witness = {"ok": True, "reproducible": True, "version": "7.12.0",
+        package = {"ok": True, "version": "7.13.0"}
+        witness = {"ok": True, "reproducible": True, "version": "7.13.0",
                    "artifact_sha256": hashlib.sha256(self.artifact.read_bytes()).hexdigest()}
         plugin = {"installed": [{"pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
                                   "name": "codex-cross-project-engineering-assistant",
-                                  "marketplaceName": "cp-assistant-local", "version": "7.12.0",
+                                  "marketplaceName": "cp-assistant-local", "version": "7.13.0",
                                   "installed": True, "enabled": True}]}
         lifecycle = {"ok": True, "schema_version": "2.0", "project_id": "project-v65",
                      "repo_fingerprint": "sha256:" + "b" * 64,
@@ -53,7 +53,9 @@ class V64ReleaseTests(unittest.TestCase):
                                  "host_model_information_exported": False},
                      "event_chain": {"valid": True, "head": "c" * 64}}
         gate = copy.deepcopy(self.generated_dispatch_policy)
-        host = {"codex_version": "codex-cli 0.156.0", "capability_profile": {"ok": True}}
+        from v4_fixtures import desktop_capability
+        host = {"host_surface": "codex-desktop", "codex_version": "codex-cli 0.155.0-alpha.16",
+                "capability_profile": desktop_capability(self.verifier.DESKTOP_CONTRACT)}
         report = {key: {"ok": True, "payload_digest": digest} for key in ("source", "marketplace", "cache")}
         return package, witness, plugin, lifecycle, gate, host, report
 

@@ -17,11 +17,11 @@ description: >-
 
 1. 先读取 `references/multi-agent-independent-review-workflow.md`，只加载当前阶段需要的分片。
 2. 分别选择执行流程、统一 DelegationBudget、Reviewer 工作强度和模型档位；Reviewer 只管理轮次与 Finding，不重复扣减总预算。
-3. 每次从 Luna Low 的 1 分起算，按复审预算模式和有效证据加分，重算后一次派发。登记 Reviewer 可用十种组合，最高 Astra High；Worker/Explorer 仍为原四档。禁止 xhigh/max/ultra；不得默认直接使用 Sol/Astra，也不为升级先调用低档。规则与权重见 reviewer-model-routing.md。
+3. 先读取根任务固定策略。显式 V4 按场景资格、配对收益、实际资源顺序判断；18 个评测组合中，新生产候选为 GPT-6 九个组合。没有已批准资格时先完成独立评测，不能按型号名称强行派发。旧 V3 继续使用 Luna Low 起算的冻结评分。Worker/Explorer 仍为原四档；所有自动派发最高 High。规则见 reviewer-model-routing.md。
 4. 使用 `review_packet.py` 生成统一审查包并检查 freshness；范围复审额外使用 `scoped_review.py` 绑定目标、静态依赖、配置和权威文件。未知动态依赖必须标为 `INCOMPLETE`，相关指纹变化必须 `STALE`；范围 PASS 不等于全仓发行 PASS。使用 `review_controller.py` 记录隔离、轮次、统一预算 permit 引用、packet hash、模型档位、结果和停止状态。总成本由 `delegation-budget.py` 统一计费。审查包必须与当前 Project ID、Task ID、Git 基线和 Task Envelope 一致。
 5. Reviewer 先读摘要和统计，只展开分配范围；同一轮收齐后统一去重、根因聚类和集中修复，不边审边改。
 6. 修复后只重跑受影响验证、刷新 packet 并定向复核；相同 Reviewer/相同 packet、无新信息或已无问题通过时停止重复派发。
-7. 默认并行不超过 3、累计不超过 6、实施后不超过 2 轮、集中修复不超过 2 轮、Terra High 不超过 1 个；Sol/Astra 合计不超过 2 次、同时 1 个、Astra High 不超过 1 次。所有限制取根预算与控制器更严格者。
+7. 默认并行不超过 3、累计不超过 6、实施后不超过 2 轮、集中修复不超过 2 轮。V3 另限 Terra High 不超过 1 个、Sol/Astra 合计不超过 2 次且同时 1 个、Astra High 不超过 1 次；V4 从固定根资源向量与阶段分配核验各项上限。所有限制取根预算与控制器更严格者。
 
 ## 独立上下文与权限
 
@@ -37,8 +37,9 @@ description: >-
 - 范围依赖伴随清单：`scripts/scoped_review.py`
 - 结果 Schema：`assets/schemas/review-result.schema.json`
 - 模型策略：`references/reviewer-model-routing.md`
+- V4 管理：仓库根目录 `scripts/routing-v4.py`；根预算 V4、状态 V9、结果 V6、观察样本 V4。
 
-> 只在独立判断能增加有效信息时派发 Reviewer；默认从 Luna 起算，由证据和预算决定最终组合。新任务使用 V8/V5/V3 契约，旧任务保留原策略。
+> 只在独立判断能增加有效信息时派发 Reviewer。先识别固定策略，再选择对应控制器；V4 与 V3 的费用、状态、结果和观察样本不得混算。旧任务不自动升级。
 
 ## 与受控演进的边界
 

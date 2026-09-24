@@ -218,7 +218,8 @@
         "同一宿主 Agent 不能归属两个派发": "One host agent cannot belong to two dispatches",
         "宿主 Agent 生命周期回执非法": "Invalid host agent lifecycle receipt",
         "未关联生命周期回执达到有界上限": "Unassociated lifecycle receipts reached the bounded limit",
-        "宿主生命周期事件重复": "Duplicate host lifecycle event"
+        "宿主生命周期事件重复": "Duplicate host lifecycle event",
+        "预算首记录超过有界读取上限": "The first budget record exceeds the bounded read limit"
       }
     },
     "runtime/cp_runtime/delegation_calibration.py": {
@@ -828,14 +829,20 @@
         "要求",
         "谁谁谁",
         "账户 Skill 目标不是 $HOME/.agents/skills"
-      ]
+      ],
+      "plain": {
+        "[OK] V7.13.0 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.13.0 semantic validation passed: Desktop scope, AUTO registry, onboarding/1, Operation v2 and frozen historical readers agree",
+        "manifest 版本不是 7.13.0": "manifest version is not 7.13.0",
+        "缺少 %s -> V7.13.0 升级声明": "Missing %s -> V7.13.0 upgrade declaration"
+      }
     },
     "scripts/verify-release.py": {
       "plain": {
         "派发策略门禁 V3 case_count 无效": "Invalid V3 dispatch-policy case_count",
         "派发策略门禁 privacy 无效": "Invalid dispatch-policy privacy declaration",
         "派发策略门禁报告 schema 不受支持": "Unsupported dispatch-policy report schema",
-        "派发策略门禁 V3 报告范围或契约无效": "Invalid V3 dispatch-policy scope or contract"
+        "派发策略门禁 V3 报告范围或契约无效": "Invalid V3 dispatch-policy scope or contract",
+        "V7.13.0 端到端发行验证": "V7.13.0 end-to-end release validation"
       },
       "preserve": [
         "V7.12.0 端到端发行验证",
@@ -1615,7 +1622,10 @@
         "未知旧版 Reviewer 档位，拒绝隐式降级": "Unknown legacy Reviewer profile; refusing an implicit downgrade",
         "旧状态请使用 review_packet.py result-template": "Use review_packet.py result-template for legacy states",
         "旧复审状态不支持 V8 reconciliation": "Legacy review states do not support V8 reconciliation",
-        "未知复审状态格式，拒绝写入": "Unknown review state schema; refusing to write"
+        "未知复审状态格式，拒绝写入": "Unknown review state schema; refusing to write",
+        "V9 需要 V4 根账本；系统只读须另有已核验隔离证明": "V9 requires a V4 root ledger; system-readonly needs separate verified isolation evidence",
+        "V9 缺少系统只读证据": "V9 has no system-readonly evidence",
+        "V9 派发/结果使用 scripts/routing-v4.py；旧参数不能覆盖新协议绑定": "Use scripts/routing-v4.py for V9 dispatch/results; legacy arguments cannot override new protocol bindings"
       }
     },
     "skills/multi-agent-independent-review/scripts/review_packet.py": {

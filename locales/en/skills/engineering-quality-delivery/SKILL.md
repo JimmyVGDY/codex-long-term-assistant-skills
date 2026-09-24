@@ -5,6 +5,8 @@ description: Use when behavior changes or work includes validation, Git, approva
 
 # Engineering Quality and Delivery
 
+The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+
 Before adding features, fixing bugs, refactoring, or changing shared implementations, read [Component and Module Reuse](references/component-module-reuse.md) and assess existing capabilities in proportion to the task. Read-only work and changes without behavioral impact do not trigger this rule.
 
 Follow the [shared capability-index workflow](references/capability-index-workflow.md) for applicable actions:

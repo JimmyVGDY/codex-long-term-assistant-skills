@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：创建并验证隐私有界的 V7.12.0 发行证明。
+"""中文：创建并验证隐私有界的 V7.13.0 发行证明。
 
-English: Create and verify a privacy-bounded V7.12.0 release attestation.
+English: Create and verify a privacy-bounded V7.13.0 release attestation.
 """
 from __future__ import annotations
 
@@ -23,12 +23,15 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import (IntegrityError, active_secret, default_keyring_path,  # noqa: E402
                                   secret_by_id, verify_event_seals)
+import desktop_host  # noqa: E402
+from codex_compatibility import canonical_digest  # noqa: E402
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "7.12.0"
+VERSION = "7.13.0"
 TARGET_CODEX_VERSION = "0.156.0"
 COMPATIBILITY_REGISTRY_DIGEST = "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8"
+DESKTOP_CONTRACT_DIGEST = canonical_digest(desktop_host.load_contract(ROOT / "config" / "desktop-host-contract-v1.json"))
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 LEGACY_DISPATCH_POLICY_SCHEMA_VERSION = "2.0"
 DISPATCH_POLICY_SCHEMA_VERSION = "3.0"
@@ -133,15 +136,13 @@ def _dispatch_policy_details(report: Mapping[str, Any]) -> Dict[str, Any]:
 def _codex_version(version_evidence: Path | None = None) -> str:
     if version_evidence is not None:
         value = version_evidence.read_text(encoding="utf-8-sig").strip()
-        if not re.search(r"(?:^|\s)%s(?:\s|$)" % re.escape(TARGET_CODEX_VERSION), value):
-            raise AttestationError("observed Codex version is not %s" % TARGET_CODEX_VERSION)
-        return value
-    result = subprocess.run(["codex", "--version"], text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=30)
-    if result.returncode != 0:
-        raise AttestationError("codex --version failed")
-    value = (result.stdout or result.stderr or "").strip()
-    if not re.search(r"(?:^|\s)%s(?:\s|$)" % re.escape(TARGET_CODEX_VERSION), value):
-        raise AttestationError("observed Codex version is not %s" % TARGET_CODEX_VERSION)
+    else:
+        from package_manager import _codex_version_text
+        value = _codex_version_text()
+    try:
+        desktop_host.parse_component_version(value)
+    except ValueError as exc:
+        raise AttestationError("Desktop component version evidence is invalid") from exc
     return value
 
 
@@ -176,6 +177,8 @@ def create_attestation(
     if reproducibility.get("artifact_sha256") != artifact_sha256:
         raise AttestationError("deterministic build evidence is not bound to the target artifact")
     if unified.get("ok") is not True or unified.get("version") != VERSION \
+            or unified.get("schema_version") != 3 or unified.get("host_surface") != "codex-desktop" \
+            or unified.get("desktop_contract_digest") != DESKTOP_CONTRACT_DIGEST \
             or unified.get("artifact_sha256") != artifact_sha256 \
             or unified.get("compatibility_registry_digest") != COMPATIBILITY_REGISTRY_DIGEST \
             or set((unified.get("status") or {}).values()) != {"PASS"}:
@@ -206,7 +209,7 @@ def create_attestation(
     if codex_version_evidence_path is not None:
         evidence_paths["codex_version"] = codex_version_evidence_path
     attestation: Dict[str, Any] = {
-        "schema_version": "2.0",
+        "schema_version": "3.0",
         "package": PACKAGE,
         "version": VERSION,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -216,6 +219,7 @@ def create_attestation(
             "size": artifact.stat().st_size,
         },
         "host": {
+            "surface": "codex-desktop", "management_version_is_runtime_version": False,
             "os": platform.system(),
             "codex_version": _codex_version(codex_version_evidence_path),
             "python_version": platform.python_version(),
@@ -248,6 +252,7 @@ def create_attestation(
             "unified_release_verification": "PASS",
             "payload_identity": "PASS",
             "compatibility_registry_digest": COMPATIBILITY_REGISTRY_DIGEST,
+            "desktop_contract_digest": DESKTOP_CONTRACT_DIGEST,
         },
         "security": {
             "execution_authorization": "NONE",
@@ -350,6 +355,10 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
         raise AttestationError("artifact size does not match attestation")
     if attestation.get("version") != VERSION:
         raise AttestationError("attestation version mismatch")
+    if attestation.get("schema_version") == "3.0" and (
+            (attestation.get("host") or {}).get("surface") != "codex-desktop" or
+            (attestation.get("validation") or {}).get("desktop_contract_digest") != DESKTOP_CONTRACT_DIGEST):
+        raise AttestationError("attestation Desktop contract mismatch")
     plugin = attestation.get("plugin") or {}
     if not (plugin.get("installed") is True and plugin.get("enabled") is True and plugin.get("version") == VERSION):
         raise AttestationError("attested Plugin state is incomplete")
@@ -375,7 +384,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.12.0 release attestation")
+    parser = argparse.ArgumentParser(description="V7.13.0 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)

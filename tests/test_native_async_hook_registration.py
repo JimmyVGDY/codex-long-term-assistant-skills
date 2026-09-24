@@ -60,7 +60,8 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
         self.assertEqual("apply_patch|Edit|Write", fragment["PostToolUse"][0]["matcher"])
         self.assertEqual("Agent|spawn_agent", fragment["PostToolUse"][1]["matcher"])
         self.assertIn("cp_hook.py", fragment["PostToolUse"][1]["hooks"][0]["command"])
-        self.assertEqual(["Agent|spawn_agent", "apply_patch|Edit|Write"],
+        self.assertEqual(["Agent|spawn_agent|followup_task|send_message|send_input|resume_agent",
+                          "apply_patch|Edit|Write"],
                          [entry["matcher"] for entry in fragment["PreToolUse"]])
         self.assertIn("cp_gate.py", fragment["PreToolUse"][1]["hooks"][0]["command"])
         self.assertIn("cp_gate.py", fragment["PostToolUse"][0]["hooks"][0]["command"])
@@ -85,6 +86,7 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
 
     def test_plugin_preflight_rejects_frozen_version_with_unknown_async_capability(self) -> None:
         probe = {
+            "registry_schema": 1,
             "version_ok": True,
             "codex_version": "0.154.0",
             "codex_version_output": "codex-cli 0.154.0",
@@ -104,6 +106,7 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
 
     def test_plugin_preflight_rejects_unknown_apply_patch_operation_contract(self) -> None:
         probe = {
+            "registry_schema": 1,
             "version_ok": True,
             "codex_version": "0.154.0",
             "codex_version_output": "codex-cli 0.154.0",

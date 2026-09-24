@@ -44,21 +44,21 @@ class V73BilingualReleaseTests(unittest.TestCase):
         cls.archives = {}
         cls.reports = {}
         for locale in ("zh-CN", "en"):
-            archive = cls.root / ("Codex-Skills-V7.12.0-%s.zip" % locale)
+            archive = cls.root / ("Codex-Skills-V7.13.0-%s.zip" % locale)
             witness = cls.root / ("witness-%s.json" % locale)
             cls.reports[locale] = cls.builder.reproducible_build(archive, witness, locale)
             cls.archives[locale] = archive
         cls.english_root = cls.root / "english-extracted"
         with zipfile.ZipFile(cls.archives["en"]) as archive:
             archive.extractall(cls.english_root)
-        cls.english_root = cls.english_root / "Codex-Skills-V7.12.0-en"
+        cls.english_root = cls.english_root / "Codex-Skills-V7.13.0-en"
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.temporary.cleanup()
 
     def _entries(self, locale: str):
-        root = "Codex-Skills-V7.12.0-%s/" % locale
+        root = "Codex-Skills-V7.13.0-%s/" % locale
         with zipfile.ZipFile(self.archives[locale]) as archive:
             return root, {name.removeprefix(root): archive.read(name) for name in archive.namelist()}
 
@@ -71,8 +71,8 @@ class V73BilingualReleaseTests(unittest.TestCase):
             self.assertEqual(locale, report["locale"])
             _, entries = self._entries(locale)
             self.assertEqual(locale, json.loads(entries["config/locale.json"])["locale"])
-            self.assertEqual("7.12.0", json.loads(entries["manifest.json"])["version"])
-            self.assertEqual("7.12.0", json.loads(entries[".codex-plugin/plugin.json"])["version"])
+            self.assertEqual("7.13.0", json.loads(entries["manifest.json"])["version"])
+            self.assertEqual("7.13.0", json.loads(entries[".codex-plugin/plugin.json"])["version"])
 
     def test_v72_upgrade_path_is_declared_in_manifest_and_bilingual_guides(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
@@ -86,6 +86,28 @@ class V73BilingualReleaseTests(unittest.TestCase):
         for locale in ("zh-CN", "en"):
             _, entries = self._entries(locale)
             self.assertIn("7.2.0", entries["docs/INSTALLATION_RECOVERY.md"].decode("utf-8"))
+
+    def test_cmd_checkout_newlines_do_not_change_archive(self) -> None:
+        source_before = (ROOT / "scripts" / "evolution.cmd").read_bytes()
+        apply_overlay = self.builder._apply_overlay
+
+        def lf_checkout_overlay(staging, locale, source_root):
+            apply_overlay(staging, locale, source_root)
+            for path in self.builder.release_files(staging):
+                if path.suffix.lower() == ".cmd":
+                    path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n"))
+
+        for locale in ("zh-CN", "en"):
+            with self.subTest(locale=locale):
+                _, entries = self._entries(locale)
+                launcher = entries["scripts/evolution.cmd"]
+                self.assertIn(b"\r\n", launcher)
+                self.assertNotIn(b"\n", launcher.replace(b"\r\n", b""))
+                archive = self.root / ("lf-checkout-%s.zip" % locale)
+                with mock.patch.object(self.builder, "_apply_overlay", side_effect=lf_checkout_overlay):
+                    self.builder.build_release(archive, locale)
+                self.assertEqual(self.archives[locale].read_bytes(), archive.read_bytes())
+        self.assertEqual(source_before, (ROOT / "scripts" / "evolution.cmd").read_bytes())
 
     def test_v746_semantic_lint_requires_immediate_previous_upgrade_source(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
@@ -110,9 +132,9 @@ class V73BilingualReleaseTests(unittest.TestCase):
     def test_english_primary_surfaces_are_english_and_overlay_sources_are_not_shipped(self) -> None:
         _, entries = self._entries("en")
         primary = ["README.md", "CHANGELOG.md", "global/AGENTS.md",
-                   "docs/releases/v7.12.0/RELEASE_NOTES.md",
-                   "docs/releases/v7.12.0/VALIDATION_REPORT.md",
-                   "docs/releases/v7.12.0/AUDIT_REPORT.md",
+                   "docs/releases/v7.13.0/RELEASE_NOTES.md",
+                   "docs/releases/v7.13.0/VALIDATION_REPORT.md",
+                   "docs/releases/v7.13.0/AUDIT_REPORT.md",
                    "docs/USER_GUIDE_V7.6.md", "docs/INSTALLATION_RECOVERY.md",
                    "docs/CODEX_CONFIG_GUIDE.md", ".codex-plugin/plugin.json"]
         primary.extend("skills/%s/SKILL.md" % item["name"] for item in json.loads(entries["manifest.json"])["skills"])
@@ -199,7 +221,7 @@ class V73BilingualReleaseTests(unittest.TestCase):
                              for name in root_files))
         for name in ("CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md"):
             self.assertTrue((ROOT / ".github" / name).is_file(), name)
-        current = ROOT / "docs" / "releases" / "v7.12.0"
+        current = ROOT / "docs" / "releases" / "v7.13.0"
         for name in ("RELEASE_NOTES.md", "AUDIT_REPORT.md", "VALIDATION_REPORT.md",
                      "BUILD_INFO.json", "PACKAGE_VALIDATION.json"):
             self.assertTrue((current / name).is_file(), name)
@@ -282,7 +304,7 @@ class V73BilingualReleaseTests(unittest.TestCase):
         auditor = _load_localization_auditor()
         completed = subprocess.CompletedProcess(
             args=[], returncode=0,
-            stdout=b"README.md\0dist/package-validation-v7.12.0.json\0")
+            stdout=b"README.md\0dist/package-validation-v7.13.0.json\0")
         with mock.patch.object(auditor.subprocess, "run", return_value=completed):
             paths = auditor.tracked_files()
         self.assertEqual([auditor.ROOT / "README.md"], paths)

@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "version": "7.13.0",
+  "build_kind": "compatibility-support-source-snapshot",
+  "host_surface": "codex-desktop",
+  "supported_locales": [
+    "zh-CN",
+    "en"
+  ],
+  "python_minimum": "3.11",
+  "ci_python_versions": [
+    "3.11",
+    "3.13"
+  ],
+  "standalone_cli_support": false,
+  "execution_authorization": "NONE",
+  "package_validation_is_host_acceptance": false,
+  "validation_status": "CODE_AND_ARTIFACTS_VERIFIED_NATIVE_PENDING",
+  "payload_manifest_status": "PASS",
+  "public_release_created": false,
+  "payload_digest": "8341c90485123a131c507492e7e89b49eb2996d4bc75c17925cbc64d51db3d01",
+  "release_scope": "COMPATIBILITY_SUPPORT",
+  "default_policy_id": "reviewer-matrix-v3",
+  "gpt6_production_default_enabled": false,
+  "native_enforcement_accepted": false,
+  "source_validation_commit": "a7c8f07018f0e2a3da306179d88a18d7010ef1c7",
+  "record_scope": "Pre-publication source snapshot; actual publication is verified from the tag, release assets and provenance."
+}

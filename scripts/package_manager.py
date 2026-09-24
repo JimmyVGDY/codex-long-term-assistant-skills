@@ -37,6 +37,7 @@ from payload_integrity import (MANIFEST_NAME as PAYLOAD_MANIFEST_NAME,
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
+import desktop_host  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
 
@@ -57,7 +58,8 @@ MARKETPLACE = "cp-assistant-local"
 BASE_MARKETPLACE = "cp-assistant-base"
 BASE_STATE_FILE = "cp-assistant-base-state.json"
 COMPATIBILITY_REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
-COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH, VERSION)
+COMPATIBILITY_REGISTRY = load_registry(COMPATIBILITY_REGISTRY_PATH)
+DESKTOP_CONTRACT = desktop_host.load_contract(ROOT / "config" / "desktop-host-contract-v1.json")
 TARGET_CODEX_VERSION = str(COMPATIBILITY_REGISTRY["window_policy"]["anchor"])
 # 中文：当前包按冻结的稳定发行序列支持当前版和前十个稳定发行版。
 # English: The current package supports the frozen current stable release and ten preceding stable releases.
@@ -583,7 +585,7 @@ def _native_apply_patch_operation_supported(profile: Optional[Mapping[str, Any]]
     return (
         isinstance(capability, Mapping)
         and capability.get("status") == "SUPPORTED"
-        and capability.get("evidence") == "OFFICIAL_SOURCE_TAG"
+        and capability.get("evidence") in {"OFFICIAL_SOURCE_TAG", "OFFICIAL_DOCS_CURRENT"}
         and capability.get("registration") == "REQUIRED_APPLY_PATCH_PRE_POST"
         and isinstance((profile or {}).get("apply_patch_result_profile"), str)
     )
@@ -661,7 +663,7 @@ def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None
     gate_posttool_command = _hook_command(gate_path, "PostToolUse")
     fragment = {
         "PreToolUse": [
-            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": pretool_command, "timeout": 5}]},
+            {"matcher": "Agent|spawn_agent|followup_task|send_message|send_input|resume_agent", "hooks": [{"type": "command", "command": pretool_command, "timeout": 5}]},
             {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_pretool_command, "timeout": 5}]},
         ],
         "PostToolUse": [
@@ -1330,30 +1332,60 @@ def plugin_payload_source(tmp: Path) -> Path:
 
 
 def _codex_executable() -> str:
-    configured = os.environ.get("CP_ASSISTANT_CODEX_EXECUTABLE", "").strip()
-    if configured:
-        candidate = Path(configured).expanduser().resolve(strict=True)
-        if not candidate.is_file():
-            raise InstallError("CP_ASSISTANT_CODEX_EXECUTABLE 不是文件")
-        return str(candidate)
-    exe = shutil.which("codex")
-    if not exe:
-        raise InstallError("未找到 codex CLI；Plugin 模式需要已验证的 Codex CLI 版本。可改用 --mode standalone")
-    return exe
+    component = desktop_host.component_path(codex_home())
+    if component is not None:
+        return str(component)
+    raise InstallError("DESKTOP_COMPONENT_REQUIRED: start Codex Desktop or set CP_ASSISTANT_DESKTOP_COMPONENT to its bundled management component")
 
 
 def _codex_available() -> bool:
-    """中文：返回已配置或通过 PATH 发现的 Codex 是否可用。
+    """中文：仅检测桌面配套管理组件，不从 PATH 选择独立客户端。
 
-    English: Return whether a configured or PATH-discovered Codex executable is available.
+    English: Detect only the Desktop management component, never a PATH client.
     """
-    configured = os.environ.get("CP_ASSISTANT_CODEX_EXECUTABLE", "").strip()
-    if configured:
+    try:
+        return desktop_host.component_path(codex_home()) is not None
+    except (OSError, CompatibilityError):
+        return False
+
+
+def _desktop_mode() -> bool:
+    return desktop_host.component_path(codex_home()) is not None
+
+
+def _management_version(output: str) -> str:
+    return desktop_host.parse_component_version(output) if _desktop_mode() else parse_codex_version_output(output)
+
+
+def _host_profile(version: str, registry_schema: Any = None) -> Dict[str, Any]:
+    is_desktop = _desktop_mode() if registry_schema is None else registry_schema == desktop_host.SCHEMA
+    return desktop_host.profile(DESKTOP_CONTRACT, version) if is_desktop else profile_for_version(COMPATIBILITY_REGISTRY, version)
+
+
+def _wire_profiles(profile: Mapping[str, Any]) -> Mapping[str, Any]:
+    return (DESKTOP_CONTRACT["wire_profiles"] if profile.get("registry_digest") == canonical_digest(DESKTOP_CONTRACT)
+            else COMPATIBILITY_REGISTRY["profiles"])
+
+
+def _list_plugins(**run_options: Any) -> subprocess.CompletedProcess[str]:
+    if not _desktop_mode():
+        return _run_codex(["plugin", "list", "--json"], check=False, **run_options)
+    combined: Dict[str, Any] = {"installed": [], "available": []}
+    for marketplace in (MARKETPLACE, BASE_MARKETPLACE):
+        result = _run_codex(["plugin", "list", "--marketplace", marketplace, "--json"], check=False, **run_options)
+        if result.returncode:
+            return result
         try:
-            return Path(configured).expanduser().resolve(strict=True).is_file()
-        except OSError:
-            return False
-    return shutil.which("codex") is not None
+            payload = json.loads(result.stdout)
+            if not isinstance(payload, dict) or set(payload) != set(combined):
+                raise ValueError("DESKTOP_PLUGIN_LIST_FIELDS")
+            for key in combined:
+                if not isinstance(payload[key], list):
+                    raise ValueError("DESKTOP_PLUGIN_LIST_ARRAY")
+                combined[key].extend(payload[key])
+        except (ValueError, TypeError):
+            return subprocess.CompletedProcess(result.args, 2, "", "DESKTOP_PLUGIN_LIST_SCHEMA")
+    return subprocess.CompletedProcess(["desktop-plugin-list"], 0, json.dumps(combined), "")
 
 
 def _run_codex(args: List[str], timeout: int = 60, check: bool = True,
@@ -1403,7 +1435,7 @@ def _remove_base_marketplace(check: bool = True) -> None:
 
 
 def _base_plugin_active() -> bool:
-    result = _run_codex(["plugin", "list", "--json"], check=False)
+    result = _list_plugins()
     if result.returncode != 0:
         return False
     try:
@@ -1483,14 +1515,14 @@ def _standalone_hook_profile() -> Optional[Dict[str, Any]]:
     English: Resolve standalone Hook capability only from ``codex --version`` without invoking Plugin CLI.
     """
     try:
-        version = parse_codex_version_output(_codex_version_text())
-        return profile_for_version(COMPATIBILITY_REGISTRY, version)
+        version = _management_version(_codex_version_text())
+        return _host_profile(version)
     except (CompatibilityError, InstallError, OSError):
         return None
 
 
 def _plugin_activation_status(expected_version: Optional[str] = None) -> Tuple[bool, str]:
-    result = _run_codex(["plugin", "list", "--json"], check=False)
+    result = _list_plugins()
     if result.returncode != 0:
         return False, (result.stderr or result.stdout or "codex plugin list failed").strip()
     try:
@@ -1498,9 +1530,9 @@ def _plugin_activation_status(expected_version: Optional[str] = None) -> Tuple[b
     except json.JSONDecodeError:
         return False, "codex plugin list --json 返回了非 JSON 数据"
     try:
-        host_version = parse_codex_version_output(_codex_version_text())
-        host_profile = profile_for_version(COMPATIBILITY_REGISTRY, host_version)
-        json_profile = COMPATIBILITY_REGISTRY["profiles"]["plugin_json"][host_profile["plugin_json_profile"]]
+        host_version = _management_version(_codex_version_text())
+        host_profile = _host_profile(host_version)
+        json_profile = _wire_profiles(host_profile)["plugin_json"][host_profile["plugin_json_profile"]]
         normalized = normalize_plugin_list(
             data, PACKAGE, MARKETPLACE, expected_version, json_profile,
         )
@@ -1539,8 +1571,8 @@ def _probe_plugin_host(timeout: Optional[int] = None) -> Dict[str, Any]:
         version_result = _run_codex(["--version"], check=False, **run_options)
         version_text = (version_result.stdout or version_result.stderr or "").rstrip("\r\n")
     try:
-        version = parse_codex_version_output(version_text)
-        version_profile = profile_for_version(COMPATIBILITY_REGISTRY, version)
+        version = _management_version(version_text)
+        version_profile = _host_profile(version)
         version_ok = True
         version_error = ""
     except CompatibilityError as exc:
@@ -1552,9 +1584,9 @@ def _probe_plugin_host(timeout: Optional[int] = None) -> Dict[str, Any]:
     version_output_digest = hashlib.sha256(version_text.encode("utf-8")).hexdigest()
     version_contract_ok = bool(
         version_profile
-        and version_output_digest == expected_evidence.get("version_output_sha256")
+        and (_desktop_mode() or version_output_digest == expected_evidence.get("version_output_sha256"))
     )
-    result = _run_codex(["plugin", "list", "--json"], check=False, **run_options)
+    result = _list_plugins(**run_options)
     try:
         data = json.loads(result.stdout or "")
     except json.JSONDecodeError:
@@ -1563,7 +1595,7 @@ def _probe_plugin_host(timeout: Optional[int] = None) -> Dict[str, Any]:
     registrations: Dict[str, Any] = {"checked": False, "base": None, "enhancement": None}
     if result.returncode == 0 and version_profile is not None:
         try:
-            diagnostic_profile = COMPATIBILITY_REGISTRY["profiles"]["plugin_json"][version_profile["plugin_json_profile"]]
+            diagnostic_profile = _wire_profiles(version_profile)["plugin_json"][version_profile["plugin_json_profile"]]
             registrations["base"] = normalize_plugin_list(
                 data, PACKAGE, BASE_MARKETPLACE, None, diagnostic_profile,
                 require_active=False, other_marketplaces=(MARKETPLACE,),
@@ -1580,7 +1612,7 @@ def _probe_plugin_host(timeout: Optional[int] = None) -> Dict[str, Any]:
     list_ok = False
     if result.returncode == 0 and version_profile is not None:
         try:
-            json_profile = COMPATIBILITY_REGISTRY["profiles"]["plugin_json"][version_profile["plugin_json_profile"]]
+            json_profile = _wire_profiles(version_profile)["plugin_json"][version_profile["plugin_json_profile"]]
             normalized_target = normalize_plugin_list(data, PACKAGE, MARKETPLACE, None, json_profile)
             list_ok = True
         except CompatibilityError as exc:
@@ -1617,8 +1649,8 @@ def _probe_plugin_host(timeout: Optional[int] = None) -> Dict[str, Any]:
         "codex_version": version,
         "executable_path": str(executable),
         "executable_sha256": sha256_file(executable),
-        "registry_schema": COMPATIBILITY_REGISTRY["schema_version"],
-        "registry_digest": canonical_digest(COMPATIBILITY_REGISTRY),
+        "registry_schema": desktop_host.SCHEMA if _desktop_mode() else COMPATIBILITY_REGISTRY["schema_version"],
+        "registry_digest": canonical_digest(DESKTOP_CONTRACT if _desktop_mode() else COMPATIBILITY_REGISTRY),
         "marketplace_profile": version_profile["marketplace_profile"] if version_profile else None,
         "plugin_cli_profile": version_profile["plugin_cli_profile"] if version_profile else None,
         "plugin_json_profile": version_profile["plugin_json_profile"] if version_profile else None,
@@ -1700,18 +1732,21 @@ def _validate_host_binding(binding: Any) -> bool:
     """
     if not isinstance(binding, dict) or set(binding) != _HOST_BINDING_KEYS:
         return False
+    if binding.get("registry_schema") == desktop_host.SCHEMA:
+        return desktop_host.valid_binding(binding, DESKTOP_CONTRACT)
     version = binding.get("codex_version")
     try:
-        version_profile = profile_for_version(COMPATIBILITY_REGISTRY, version)
+        version_profile = _host_profile(version, binding.get("registry_schema"))
     except CompatibilityError:
         return False
     if not isinstance(binding.get("executable_path"), str) or not binding["executable_path"]:
         return False
     if not _valid_sha256(binding.get("executable_sha256")) or not _valid_sha256(binding.get("registry_digest")):
         return False
-    if binding.get("registry_schema") != COMPATIBILITY_REGISTRY["schema_version"]:
+    if binding.get("registry_schema") not in {COMPATIBILITY_REGISTRY["schema_version"], desktop_host.SCHEMA}:
         return False
-    if binding.get("registry_digest") != canonical_digest(COMPATIBILITY_REGISTRY):
+    registry = DESKTOP_CONTRACT if binding.get("registry_schema") == desktop_host.SCHEMA else COMPATIBILITY_REGISTRY
+    if binding.get("registry_digest") != canonical_digest(registry):
         return False
     for key in ("marketplace_profile", "plugin_cli_profile", "plugin_json_profile",
                 "hook_profile", "apply_patch_result_profile"):
@@ -1808,11 +1843,11 @@ def _isolated_plugin_preflight(profile: Mapping[str, Any]) -> Dict[str, Any]:
 
     English: Exercise add/list/remove against an isolated CODEX_HOME before account writes.
     """
-    version_profile = profile_for_version(COMPATIBILITY_REGISTRY, str(profile["codex_version"]))
-    marketplace_profile = COMPATIBILITY_REGISTRY["profiles"]["marketplace"][
+    version_profile = _host_profile(str(profile["codex_version"]), profile["registry_schema"])
+    marketplace_profile = _wire_profiles(version_profile)["marketplace"][
         version_profile["marketplace_profile"]
     ]
-    json_profile = COMPATIBILITY_REGISTRY["profiles"]["plugin_json"][
+    json_profile = _wire_profiles(version_profile)["plugin_json"][
         version_profile["plugin_json_profile"]
     ]
     with tempfile.TemporaryDirectory(prefix="cp-plugin-preflight-") as td:
@@ -1830,7 +1865,7 @@ def _isolated_plugin_preflight(profile: Mapping[str, Any]) -> Dict[str, Any]:
             added_market = True
             _run_codex(["plugin", "add", "%s@%s" % (PACKAGE, MARKETPLACE)], home_override=isolated_home)
             added_plugin = True
-            result = _run_codex(["plugin", "list", "--json"], home_override=isolated_home)
+            result = _list_plugins(home_override=isolated_home)
             try:
                 payload = json.loads(result.stdout or "")
                 normalized = normalize_plugin_list(
@@ -1864,11 +1899,9 @@ def _require_plugin_host() -> Dict[str, Any]:
     """
     profile = _probe_plugin_host()
     if not profile["version_ok"]:
-        raise InstallError("Plugin 模式仅支持已验证的 Codex CLI %s；当前: %s" %
-                           (", ".join(SUPPORTED_CODEX_VERSIONS),
-                            profile["codex_version_output"] or "未知"))
+        raise InstallError("DESKTOP_COMPONENT_CONTRACT_UNVERIFIED: " + str(profile.get("version_error") or "unknown version format"))
     try:
-        version_profile = profile_for_version(COMPATIBILITY_REGISTRY, str(profile["codex_version"]))
+        version_profile = _host_profile(str(profile["codex_version"]), profile["registry_schema"])
     except CompatibilityError as exc:
         raise InstallError("Plugin 宿主兼容档案无效，拒绝静态 async Hook 安装") from exc
     if not _native_async_user_prompt_submit_supported(version_profile):
@@ -2049,10 +2082,9 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                 payload_report(payload_target)
                 _record_applied(journal, "plugin-payload", payload_target)
                 marketplace_path = plugin_marketplace_manifest()
-                host_version_profile = profile_for_version(
-                    COMPATIBILITY_REGISTRY, str(capability_profile["codex_version"]),
-                )
-                marketplace_profile = COMPATIBILITY_REGISTRY["profiles"]["marketplace"][
+                host_version_profile = _host_profile(str(capability_profile["codex_version"]),
+                                                      capability_profile["registry_schema"])
+                marketplace_profile = _wire_profiles(host_version_profile)["marketplace"][
                     host_version_profile["marketplace_profile"]
                 ]
                 marketplace = _merged_marketplace_manifest(
@@ -3224,7 +3256,10 @@ def doctor(recover: bool = False, scope: str = "user", repo_path: Optional[str] 
     capability = data.get("capability_profile") or {}
     base = next((item for item in ux["capabilities"] if item["id"] == "base-plugin"), {})
     data.update({
-        "target_codex": TARGET_CODEX_VERSION, "supported_codex_versions": list(SUPPORTED_CODEX_VERSIONS),
+        "host_surface": "codex-desktop", "target_codex": None, "supported_codex_versions": [],
+        "legacy_codex_versions": list(SUPPORTED_CODEX_VERSIONS),
+        "desktop_contract_digest": canonical_digest(DESKTOP_CONTRACT),
+        "management_version_is_runtime_version": False,
         "python": sys.executable, "python_version": ".".join(map(str, sys.version_info[:3])),
         "home": str(Path.home()), "codex_home": str(codex_home()), "user_skills_home": str(user_skills_home()),
         "plugin_marketplace_root": str(plugin_marketplace_root()), "skill_count": len(skill_names()),

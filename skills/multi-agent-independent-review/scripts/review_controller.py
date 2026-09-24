@@ -1600,6 +1600,32 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = build_parser().parse_args()
     try:
+        v4 = args.command == "init" and args.policy_id == "reviewer-matrix-v4"
+        state_path = Path(args.review_dir).expanduser().resolve() / STATE_FILE
+        if args.command != "init" and state_path.is_file():
+            with state_path.open("r", encoding="utf-8-sig") as source:
+                v4 = json.load(source).get("schema_version") == 9
+        if v4:
+            from cp_runtime import review_v4
+            from cp_runtime.routing_contract import read_document
+            directory = Path(args.review_dir).expanduser().resolve()
+            if args.command == "init":
+                if not args.delegation_ledger or args.strict_readonly_required:
+                    die("V9 需要 V4 根账本；系统只读须另有已核验隔离证明")
+                value = review_v4.initialize(directory, ledger_path=Path(args.delegation_ledger),
+                                             boundary_id=args.boundary_id)
+            elif args.command in {"status", "validate", "reconcile"}:
+                value = review_v4.reconcile(directory)
+                if getattr(args, "require_strict_readonly", False) and value["isolation_level"] != "system-readonly":
+                    die("V9 缺少系统只读证据")
+            elif args.command == "close":
+                mapped = {"pass": "PASS", "passed": "PASS", "failed": "FAILED",
+                          "incomplete": "PARTIAL", "cancelled": "CANCELLED"}
+                value = review_v4.close(directory, conclusion=mapped.get(args.conclusion, args.conclusion.upper()))
+            else:
+                die("V9 派发/结果使用 scripts/routing-v4.py；旧参数不能覆盖新协议绑定")
+            print(json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2))
+            return
         matrix = args.command == "init" and args.policy_id != LEGACY_POLICY_ID
         if args.command != "init":
             path = Path(args.review_dir).expanduser().resolve() / STATE_FILE

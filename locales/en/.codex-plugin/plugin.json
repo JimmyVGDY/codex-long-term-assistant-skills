@@ -1,6 +1,16 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.12.0",
-  "description": "Cross-project engineering assistant V7.12.0: reliability, executed-test evidence, and day-to-day diagnostics improvements.",
+  "version": "7.13.0",
+  "description": "Cross-project engineering assistant V7.13.0: GPT-6 review routing, reasoning gains and Desktop support.",
+  "author": {"name": "Project maintainers"},
+  "interface": {
+    "displayName": "Cross-project Engineering Assistant",
+    "shortDescription": "Engineering skills, model routing and independent review",
+    "longDescription": "Engineering skills, task-specific model and reasoning selection, independent review and verifiable delivery for Codex Desktop.",
+    "developerName": "Cross-project Engineering Assistant",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": ["Inspect the current project and propose an implementation and validation plan."]
+  },
   "skills": "./skills/"
 }

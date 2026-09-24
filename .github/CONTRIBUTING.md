@@ -18,7 +18,7 @@ English: [CONTRIBUTING.en.md](https://github.com/JimmyVGDY/codex-long-term-assis
 - 保持最小充分改动，不夹带无关重构、依赖升级或格式化。
 - 自然语言资料提供独立中文、英文版本；代码注释与 Docstring 使用整齐的中英配对格式。
 - Reviewer TOML 不写死模型或推理强度。
-- 不削弱 `execution_authorization=NONE`、Terra High 自动上限、项目隔离、哈希链与隐私边界。
+- 不削弱 `execution_authorization=NONE`、项目隔离、哈希链与隐私边界。Worker/Explorer 上限为 Terra High；登记 Reviewer 按根任务固定策略选型，上限为 Astra High，自动派发禁止 xhigh/max/ultra。
 - 新增运行时文件时同步更新对应测试、英文覆盖与发行构建门禁。
 
 ## 提交格式

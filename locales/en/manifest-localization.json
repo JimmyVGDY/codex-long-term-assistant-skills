@@ -1,6 +1,6 @@
 {
-  "release_name": "Reliability, validation evidence, and day-to-day diagnostics improvements",
-  "generated_for": "Codex CLI 0.155.1 Plugin-first engineering assistance with phase-aware SessionEnd fallback, executed-test validation evidence, governance routing regression coverage, and explicit quick-status diagnostics",
+  "release_name": "GPT-6 review routing and Desktop support",
+  "generated_for": "Codex Desktop engineering assistance with scenario-qualified GPT-6 model and reasoning selection, phase-preserving budgets, and frozen legacy recovery",
   "skills": {
     "backend-engineering": {
       "display_name": "General Backend Engineering",
@@ -28,7 +28,7 @@
     },
     "multi-agent-independent-review": {
       "display_name": "Independent Multi-Agent Review",
-      "description": "Use for risk-based design gates and independent functional, compatibility, security, performance, contract, concurrency, and delivery reviews."
+      "description": "Use for independent review of high-risk designs and behavior changes; verify scenario qualification, model/effort gains, root budgets and future review holds under the frozen task policy."
     },
     "technical-document-writing": {
       "display_name": "Technical Documentation",

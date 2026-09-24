@@ -26,5 +26,5 @@
 - [ ] 中文、英文资料与运行时自然语言已同步。
 - [ ] 未引入凭据、私有路径或敏感正文。
 - [ ] Reviewer 未写死模型与推理强度。
-- [ ] 自动流程未超过 Terra High，受控演进仍为 `execution_authorization=NONE`。
+- [ ] Worker/Explorer 不超过 Terra High；登记 Reviewer 按固定策略且不超过 Astra High；自动派发不使用 xhigh/max/ultra，受控演进仍为 `execution_authorization=NONE`。
 - [ ] 提交信息符合 `<类型> | <中文说明>`。

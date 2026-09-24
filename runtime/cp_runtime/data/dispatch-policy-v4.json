@@ -1,0 +1,67 @@
+{
+  "schema_version": 2,
+  "policy_id": "reviewer-matrix-v4",
+  "algorithm_id": "quality-gain-routing-v1",
+  "host_surface": "codex-desktop",
+  "cost_formula_version": "review-weight-v3",
+  "profiles": {
+    "g56-luna-low": {"model": "gpt-5.6-luna", "family": "luna", "generation": "5.6", "effort": "low", "lifecycle": "compatibility", "resource_group": "ordinary"},
+    "g56-luna-medium": {"model": "gpt-5.6-luna", "family": "luna", "generation": "5.6", "effort": "medium", "lifecycle": "compatibility", "resource_group": "ordinary"},
+    "g56-luna-high": {"model": "gpt-5.6-luna", "family": "luna", "generation": "5.6", "effort": "high", "lifecycle": "evaluation", "resource_group": "ordinary"},
+    "g56-terra-low": {"model": "gpt-5.6-terra", "family": "terra", "generation": "5.6", "effort": "low", "lifecycle": "evaluation", "resource_group": "ordinary"},
+    "g56-terra-medium": {"model": "gpt-5.6-terra", "family": "terra", "generation": "5.6", "effort": "medium", "lifecycle": "compatibility", "resource_group": "ordinary"},
+    "g56-terra-high": {"model": "gpt-5.6-terra", "family": "terra", "generation": "5.6", "effort": "high", "lifecycle": "compatibility", "resource_group": "ordinary"},
+    "g56-sol-low": {"model": "gpt-5.6-sol", "family": "sol", "generation": "5.6", "effort": "low", "lifecycle": "compatibility", "resource_group": "ordinary"},
+    "g56-sol-medium": {"model": "gpt-5.6-sol", "family": "sol", "generation": "5.6", "effort": "medium", "lifecycle": "compatibility", "resource_group": "ordinary"},
+    "g56-sol-high": {"model": "gpt-5.6-sol", "family": "sol", "generation": "5.6", "effort": "high", "lifecycle": "compatibility", "resource_group": "ordinary"},
+    "g6-luna-low": {"model": "gpt-6-luna", "family": "luna", "generation": "6", "effort": "low", "lifecycle": "candidate", "resource_group": "ordinary"},
+    "g6-luna-medium": {"model": "gpt-6-luna", "family": "luna", "generation": "6", "effort": "medium", "lifecycle": "candidate", "resource_group": "ordinary"},
+    "g6-luna-high": {"model": "gpt-6-luna", "family": "luna", "generation": "6", "effort": "high", "lifecycle": "candidate", "resource_group": "ordinary"},
+    "g6-sol-low": {"model": "gpt-6-sol", "family": "sol", "generation": "6", "effort": "low", "lifecycle": "candidate", "resource_group": "ordinary"},
+    "g6-sol-medium": {"model": "gpt-6-sol", "family": "sol", "generation": "6", "effort": "medium", "lifecycle": "candidate", "resource_group": "ordinary"},
+    "g6-sol-high": {"model": "gpt-6-sol", "family": "sol", "generation": "6", "effort": "high", "lifecycle": "candidate", "resource_group": "ordinary"},
+    "g6-astra-low": {"model": "gpt-6-astra", "family": "astra", "generation": "6", "effort": "low", "lifecycle": "candidate", "resource_group": "astra"},
+    "g6-astra-medium": {"model": "gpt-6-astra", "family": "astra", "generation": "6", "effort": "medium", "lifecycle": "candidate", "resource_group": "astra"},
+    "g6-astra-high": {"model": "gpt-6-astra", "family": "astra", "generation": "6", "effort": "high", "lifecycle": "candidate", "resource_group": "astra"}
+  },
+  "reviewer_roles": [
+    "cp_review_functional_business", "cp_review_compatibility_regression",
+    "cp_review_security_access", "cp_review_performance_resources",
+    "cp_review_data_contract", "cp_review_state_concurrency", "cp_review_test_delivery"
+  ],
+  "role_profiles": {
+    "reviewer": ["g6-luna-low", "g6-luna-medium", "g6-luna-high", "g6-sol-low", "g6-sol-medium", "g6-sol-high", "g6-astra-low", "g6-astra-medium", "g6-astra-high"],
+    "worker": ["g56-luna-low", "g56-luna-medium", "g56-terra-medium", "g56-terra-high"],
+    "explorer": ["g56-luna-low", "g56-luna-medium", "g56-terra-medium", "g56-terra-high"]
+  },
+  "thresholds": {
+    "min_independent_cases": 30,
+    "family_alpha_ppm": 50000,
+    "noninferiority_margin_bp": 500,
+    "absolute_quality_floor_bp": 9000,
+    "false_block_margin_bp": 200,
+    "material_quality_gain_bp": 300,
+    "near_best_gain_bp": 100,
+    "material_cost_gain_bp": 1500,
+    "balanced_cost_ratio": [2, 1],
+    "balanced_latency_ratio": [6, 5]
+  },
+  "limits": {
+    "max_profiles": 18,
+    "max_astra_parallel": 1,
+    "max_slots": 10,
+    "max_search_states": 50000,
+    "max_cards": 512,
+    "max_cases": 10000,
+    "max_repetitions": 20,
+    "max_ledger_records": 4096,
+    "max_document_bytes": 1048576,
+    "max_experiment_bytes": 8388608,
+    "max_ledger_bytes": 8388608
+  },
+  "activation": {
+    "production_requires_qualification": true,
+    "synthetic_production_allowed": false,
+    "legacy_policy_fallback": "explicit-before-root-initialization"
+  }
+}

@@ -5,6 +5,8 @@ description: Use for technical plans, architecture, implementation plans, API or
 
 # Technical Documentation
 
+The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+
 1. Establish audience, purpose, decision, scope, evidence sources, output format, and modification authority.
 2. Separate confirmed facts, external material, engineering inference, assumptions, and unverified states.
 3. Select and trim the closest template. Avoid imposing a large structure on a small document.

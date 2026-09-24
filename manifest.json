@@ -1,8 +1,8 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.12.0",
-  "release_name": "可靠性、验证证据与日常诊断优化",
-  "generated_for": "Codex CLI 0.156.0 Plugin-first engineering assistance with phase-aware SessionEnd fallback, executed-test validation evidence, governance routing regression coverage, and explicit quick-status diagnostics",
+  "version": "7.13.0",
+  "release_name": "GPT-6 审查路由与桌面兼容",
+  "generated_for": "Codex Desktop engineering assistance with scenario-qualified GPT-6 model and reasoning selection, phase-preserving budgets, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
     "zh-CN",
@@ -58,7 +58,7 @@
     {
       "name": "multi-agent-independent-review",
       "display_name": "多 Agent 独立复审",
-      "description": "高风险设计与行为变更的独立复审；从 Luna 起算，以有效证据和复审预算评分选择十种模型组合，统一预算、精确可接受集合和定向复核。",
+      "description": "高风险设计与行为变更的独立复审；按固定策略核验场景资格、模型与思考强度收益、根预算和后续审查保留量，保留旧任务解释器。",
       "source_mapping": "new/multi-agent-independent-review"
     },
     {
@@ -708,7 +708,8 @@
     "7.4.6",
     "7.5.0",
     "7.5.1",
-    "7.6.0"
+    "7.6.0",
+    "7.12.0"
   ],
   "release_validation": {
     "python_syntax": true,
@@ -858,7 +859,8 @@
     "plugin_cli": "codex plugin add",
     "release_builder": "scripts/build-release.py",
     "release_attestation": "scripts/release-attestation.py",
-    "lifecycle_acceptance": "scripts/lifecycle-acceptance.py"
+    "lifecycle_acceptance": "scripts/lifecycle-acceptance.py",
+    "support_scope": "frozen-historical-readers"
   },
   "controlled_evolution_v75": {
     "task_feedback_schema": "task-feedback/1",
@@ -871,5 +873,28 @@
     "cross_ledger_calibration": true,
     "automatic_self_modification": false,
     "execution_authorization": "NONE"
+  },
+  "desktop_support": {
+    "host_surface": "codex-desktop",
+    "standalone_cli_support": false,
+    "management_contract": "config/desktop-host-contract-v1.json",
+    "management_version_is_runtime_version": false,
+    "native_acceptance_required": true
+  },
+  "reviewer_routing_v4": {
+    "policy_id": "reviewer-matrix-v4",
+    "algorithm_id": "quality-gain-routing-v1",
+    "policy_source": "runtime/cp_runtime/data/dispatch-policy-v4.json",
+    "activation": "explicit-with-approved-scenario-qualification",
+    "model_count": 6,
+    "evaluation_profile_count": 18,
+    "production_candidate_count": 9,
+    "budget_schema_version": "4.0",
+    "review_state_schema_version": 9,
+    "review_result_schema_version": 6,
+    "calibration_schema_version": "4.0",
+    "production_synthetic_allowed": false,
+    "legacy_tasks_automatically_migrated": false,
+    "installed_entry": "skills/multi-agent-independent-review/scripts/routing_v4.py"
   }
 }

@@ -36,6 +36,8 @@ For behavior changes, also use the [quality-delivery entry](../engineering-quali
 
 ## Model and delegation cost
 
+The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+
 - Prefer Luna Low for file, symbol, configuration, and version location; Luna Medium for bounded null, exception, resource-release, and compatibility scans.
 - Use Terra Medium for ordinary business rules and multi-file call chains. Reserve Terra High for access, core state, financial or inventory consistency, complex concurrency, and cross-service consistency.
 - Stack detection is candidate evidence only. Split subagents by independent application or evidence domain and do not rescan the same call chain.

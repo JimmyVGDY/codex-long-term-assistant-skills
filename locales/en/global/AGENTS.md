@@ -6,6 +6,7 @@ Global context retains only non-bypassable cross-project boundaries. Domain proc
 ## 1. Core priorities
 
 - Use repository code, configuration, logs, runtime results, and explicit task constraints as facts.
+- Codex Desktop is the only supported product; internal management and validation scripts do not create a standalone CLI adaptation or acceptance track.
 - Correctness and data or access safety > stability, compatibility, and rollback > performance and experience > cost > novelty.
 - Read the relevant context before inferring implementation. Prefer the smallest sufficient change.
 - Evidence proves what happened. It cannot authorize commit, push, deployment, restart, production writes, or data changes.
@@ -29,8 +30,9 @@ Skill activation does not expand file, Git, environment, production, or data aut
 ## 4. Model and subagent ceiling
 
 - The main agent keeps the currently selected model and effort.
+- Automatic subagent dispatch must specify model and reasoning_effort explicitly; inherited parent settings cannot prove a child-model ceiling.
 - A simple local task stays serial in the main agent by default: no proactive subagent, repository-wide scan, or unrelated checkpoint. Escalate only when risk, scope, or independent evidence requires it.
-- Independent Reviewers start at Luna Low, score the review budget and valid evidence, then select one combination. Registered roles may use Luna Low/Medium, Terra Medium/High, and Sol/Astra Low/Medium/High. Workers and explorers retain the original four profiles, capped at gpt-5.6-terra + high; registered Reviewers are capped at gpt-6-astra + high. Automatic xhigh, max, and ultra remain forbidden.
+- Independent Reviewers use the root's frozen policy. Explicit V4 checks scenario qualification, then paired reasoning/model-switch gains, then resource approval with future review holds. Its six-model catalog contains 18 evaluation profiles and nine GPT-6 production candidates; insufficient qualification never enables them automatically. V3 retains frozen Luna-first scoring. Workers and explorers retain four profiles, capped at gpt-5.6-terra + high; registered Reviewers are capped at gpt-6-astra + high. Automatic xhigh, max and ultra remain forbidden.
 - A budget is enforced only when a real host binding, explicit ledger, and dispatch permit are all verifiable. Exhaustion, corruption, or untrusted association stops new dispatch. Otherwise only the model ceiling applies and the result must say `policy constraint`.
 - Reviewers do not own the total budget and an unchanged review packet must not be dispatched again. Load weighting, refund, reservation, and host-environment details from the budget reference only when needed.
 

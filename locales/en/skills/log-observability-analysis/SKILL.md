@@ -5,6 +5,8 @@ description: Use for logs, metrics, distributed traces, profiling, alerts, and c
 
 # Log and Observability Analysis
 
+The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+
 1. Establish environment, time zone, time window, source, completeness, sensitivity, query cost, and authorization boundary.
 2. Correlate logs, metrics, traces, profiles, alerts, and change events on one timeline before forming candidate causes.
 3. Correlation is not causation. Distinguish pre-request logging from confirmed transport and response evidence.

@@ -23,6 +23,8 @@ description: >-
 
 ## 模型与委派成本
 
+本段仅适用于 Worker/Explorer 的普通委派；登记 Reviewer 按 [独立复审技能](../multi-agent-independent-review/SKILL.md) 的根任务固定策略选型。主 Agent 模型与强度保持当前选择。
+
 - 本 Skill 默认不派生子 Agent；读取、格式整理、检查点、投影候选和交接摘要属于 `luna-low` 或 `luna-medium`。
 - 复杂技术冲突由对应领域 Skill 使用 Terra 判断，记忆 Skill 只持久化已审核结论，不重复推理。
 

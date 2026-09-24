@@ -43,6 +43,8 @@ from cp_runtime.evolution.task_feedback import consume_for_hook  # noqa: E402
 from cp_runtime.capability_gate_hook import INPUT_LIMIT, supervise  # noqa: E402
 
 _VERIFIED_ROOT = object()
+REENTRY_TOOLS = {"followup_task", "collaboration.followup_task", "send_message", "collaboration.send_message",
+                 "send_input", "resume_agent"}
 HOOK_ALIASES = {
     "hook_event_name": ("hook_event_name", "hookEventName", "event_name", "event"),
     "tool_name": ("tool_name", "toolName", "tool"),
@@ -172,25 +174,67 @@ def _verify_budget_root(state: Mapping[str, Any], data: Mapping[str, Any]) -> No
                         cwd=cwd, host_session_id=str(session))
 
 
+def _budget_path(data: Mapping[str, Any]) -> str:
+    from cp_runtime.routing_registry_v4 import lookup
+    explicit = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
+    session = _lookup_strict(data, "root_session_id", "rootSessionId") or _lookup_strict(data, *HOOK_ALIASES["session_id"])
+    cwd = str(_lookup_strict(data, *HOOK_ALIASES["cwd"]) or "")
+    registered = lookup(cwd=cwd, host_session_id=str(session or ""))
+    if explicit and registered and Path(explicit).expanduser().resolve() != registered.resolve():
+        raise DelegationBudgetError("DESKTOP_ROOT_BUDGET_CONFLICT")
+    return str(registered) if registered else explicit
+
+
 def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     if str(_lookup_strict(data, *HOOK_ALIASES["hook_event_name"]) or "") != "PreToolUse":
         return None
     tool = str(_lookup_strict(data, *HOOK_ALIASES["tool_name"]) or "").lower()
-    if tool not in {"agent", "spawn_agent"}:
+    if tool in REENTRY_TOOLS:
+        ledger_text = _budget_path(data)
+        if ledger_text and read_budget(Path(ledger_text))["schema_version"] == "4.0":
+            return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                "permissionDecisionReason": _policy_message("budget_denied") + " (V4_FRESH_DISPATCH_REQUIRED)"}}
+        return None
+    if tool not in {"agent", "spawn_agent", "collaboration.spawn_agent"}:
         return None
     args = _tool_input(data)
     model = str(_lookup_strict(args, *HOOK_ALIASES["model"]) or "").strip().lower()
     effort = str(_lookup_strict(args, *HOOK_ALIASES["reasoning_effort"]) or "").strip().lower()
     role = str(_lookup_strict(args, *HOOK_ALIASES["agent_type"]) or "").strip().lower()
     reason = ""
+    ledger_text = _budget_path(data)
+    bound_state = None
+    if ledger_text:
+        try:
+            bound_state = read_budget(Path(ledger_text).expanduser().resolve())
+            if bound_state["schema_version"] == "4.0":
+                from cp_runtime.routing_hook_v4 import pretool
+                reserved = pretool(Path(ledger_text).expanduser().resolve(), data, args,
+                                   lookup=_lookup_strict, aliases=HOOK_ALIASES)
+                if isinstance(data, dict):
+                    data["_cp_reservation_id"] = reserved["reservation_id"]
+                    data["_cp_root_verified"] = _VERIFIED_ROOT
+                return None
+        except (RuntimeError, ValueError, OSError, TimeoutError):
+            return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                          "permissionDecisionReason": _policy_message("budget_denied")}}
     try:
-        if role in policy()["reviewer_roles"] and (not model or not effort):
-            raise DispatchPolicyError("EXPLICIT_REVIEW_TUPLE_REQUIRED")
-        resolve_request(model, effort, "luna-low", role)
-    except DispatchPolicyError:
+        selected_policy = bound_state["policy_id"] if bound_state and bound_state["schema_version"] == "3.0" else None
+        if not model or not effort:
+            raise DispatchPolicyError("EXPLICIT_SUBAGENT_TUPLE_REQUIRED")
+        if selected_policy:
+            resolve_request(model, effort, bound_state["default_dispatch_profile"], role, selected_policy)
+        elif bound_state:
+            profile_for(model, effort, bound_state["default_dispatch_profile"])
+        else:
+            try:
+                resolve_request(model, effort, "luna-low", role)
+            except DispatchPolicyError:
+                from cp_runtime.routing_contract import resolve_request as resolve_v4_request
+                resolve_v4_request(model, effort, role)
+    except ValueError:
         reason = _policy_message("effort_ceiling" if effort in {"xhigh", "max", "ultra"} else "model_ceiling")
     if not reason:
-        ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
         if not ledger_text:
             if os.environ.get("CP_DELEGATION_BUDGET_REQUIRED", "").strip() == "1":
                 reason = _policy_message("budget_unconfigured")
@@ -259,11 +303,23 @@ def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
 
     English: Join exact native tool receipts to lifecycle IDs; missing receipts never imply a refund.
     """
-    ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
-    if not ledger_text or hook_name not in {"PostToolUse", "SubagentStart", "SubagentStop"}:
+    if hook_name not in {"PostToolUse", "SubagentStart", "SubagentStop"}:
+        return
+    ledger_text = _budget_path(data)
+    if not ledger_text:
         return
     ledger = Path(ledger_text).expanduser().resolve()
     state = read_budget(ledger)
+    if state["schema_version"] == "4.0":
+        from cp_runtime.routing_hook_v4 import lifecycle
+        reservation = lifecycle(ledger, data, hook_name, args=_tool_input(data) if hook_name == "PostToolUse" else {},
+                                lookup=_lookup_strict, aliases=HOOK_ALIASES)
+        if reservation and isinstance(data, dict):
+            for alias in HOOK_ALIASES["reservation_id"]:
+                data.pop(alias, None)
+            data["_cp_reservation_id"] = reservation
+            data["_cp_root_verified"] = _VERIFIED_ROOT
+        return
     if hook_name == "PostToolUse":
         tool = str(_lookup_strict(data, *HOOK_ALIASES["tool_name"]) or "").lower()
         if state["schema_version"] != "3.0" or tool not in {"agent", "spawn_agent"}:
@@ -357,21 +413,30 @@ def _event(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[str,
     permit_ref = ""
     reserved_units = 0
     reservation_id = str(_lookup(data, *HOOK_ALIASES["reservation_id"]) or data.get("_cp_reservation_id") or "").strip()
-    ledger_text = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
+    ledger_text = _budget_path(data) if reservation_id else ""
     if reservation_id and ledger_text:
         try:
             budget = read_budget(Path(ledger_text).expanduser().resolve())
             reservation = budget.get("reservations", {}).get(reservation_id) or {}
-            if budget["schema_version"] == "3.0":
+            if budget["schema_version"] in {"3.0", "4.0"}:
                 if data.get("_cp_root_verified") is not _VERIFIED_ROOT or not reservation:
                     raise DelegationBudgetError("未核验的 V3 关联不能进入根任务观察")
                 observed_project_id = budget["identity"]["project_id"]
                 task_id = budget["identity"]["task_id"]
                 fingerprint = budget["identity"]["repo_fingerprint"]
-            approved_profile = str(reservation.get("approved_profile") or reservation.get("requested_profile") or "")
-            reserved_units = int(reservation.get("charged_units", reservation.get("units", 0)))
-            permit_ref = (reservation["dispatch_ref"] if budget["schema_version"] == "3.0" else
-                          "sha256:" + hashlib.sha256(reservation_id.encode("utf-8")).hexdigest())
+            if budget["schema_version"] == "4.0":
+                from cp_runtime.routing_contract import ref as routing_ref
+                # 中文：V3 观察保留冻结档位和单位；新档位以 V4 账本和样本为权威。
+                # English: V3 telemetry retains its frozen profile/unit vocabulary.
+                # V4 budget and Sample V4 remain authoritative for new profiles.
+                permit_ref = routing_ref(reservation["permit_id"])
+                metadata["budget_schema"] = "4.0"
+                metadata["budget_observation"] = "ledger-only"
+            else:
+                approved_profile = str(reservation.get("approved_profile") or reservation.get("requested_profile") or "")
+                reserved_units = int(reservation.get("charged_units", reservation.get("units", 0)))
+                permit_ref = (reservation["dispatch_ref"] if budget["schema_version"] == "3.0" else
+                              "sha256:" + hashlib.sha256(reservation_id.encode("utf-8")).hexdigest())
         except (DelegationBudgetError, OSError, TimeoutError, TypeError, ValueError):
             approved_profile = ""
             permit_ref = ""

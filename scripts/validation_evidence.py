@@ -33,6 +33,36 @@ ERROR_CLASS_CODES = frozenset({
 # 中文：每项都是可执行 unittest 标识，而不是文件级代理；选中用例覆盖能力名称所指的性质。
 # English: Each item is an executable unittest identifier, rather than a file-level proxy. The selected cases exercise the property named by the capability.
 CAPABILITY_TEST_MAP: dict[str, tuple[str, ...]] = {
+    "reviewer_routing_v4": (
+        "test_routing_v4_contract_statistics.V4ContractTests.test_catalog_has_eighteen_tuples_but_default_reviewer_pool_has_nine",
+        "test_routing_v4_cards.CardTests.test_insufficient_samples_cannot_be_promoted_by_qualified_boolean",
+        "test_routing_v4_evaluation.EvaluationTests.test_complete_experiment_requires_every_trial_and_keeps_quality_unqualified",
+        "test_routing_v4_evaluation.EvaluationTests.test_multiple_scenarios_share_one_budget_and_keep_protocol_specific_traces",
+    ),
+    "delegation_budget_v4": (
+        "test_routing_v4_process.ProcessTests.test_two_processes_cannot_consume_one_permit_twice",
+        "test_routing_v4_process.ProcessTests.test_killed_writer_releases_os_lock_without_half_reservation",
+        "test_routing_v4_hook.V4HookTests.test_registered_task_reserves_without_parent_environment_mutation",
+        "test_routing_v4_hook.V4HookTests.test_corrupt_entry_fails_closed_and_other_sessions_remain_unbound",
+        "test_routing_v4_hook.V4HookTests.test_desktop_uuid_stop_before_task_tree_receipt_links_once",
+        "test_routing_v4_hook.V4HookTests.test_task_tree_identity_rejects_foreign_metadata_and_paths",
+        "test_routing_v4_budget.BudgetTests.test_identity_link_cannot_assign_one_uuid_to_two_reserved_calls",
+        "test_routing_v4_budget.BudgetTests.test_known_unsuccessful_stop_only_accepts_incomplete_without_refund",
+        "test_routing_v4_budget.BudgetTests.test_reserved_repair_and_new_evidence_retry_resolve_blockers_in_same_root",
+        "test_routing_v4_budget.AstraConcurrencyTests.test_second_astra_is_blocked_but_ordinary_parallelism_remains_available",
+        "test_routing_v4_budget.AstraConcurrencyTests.test_atomic_reservation_rejects_a_loader_that_hides_active_astra",
+    ),
+    "review_state_v9_and_observation_v4": (
+        "test_routing_v4_review.ReviewV4Tests.test_prepared_permit_prevents_closing_before_host_decision",
+        "test_routing_v4_review.ReviewV4Tests.test_projection_interruption_recovers_committed_result_from_content_store",
+        "test_routing_v4_calibration.CalibrationTests.test_forged_finalized_flag_or_changed_metrics_cannot_enter_report",
+        "test_routing_v4_publication.PublicationTests.test_two_outputs_cannot_consume_one_approval_twice",
+    ),
+    "desktop_component_contract": (
+        "test_desktop_host.DesktopHostTests.test_internal_prerelease_is_not_rejected_as_a_standalone_cli_version",
+        "test_desktop_host.DesktopHostTests.test_changed_component_commands_fail_before_installation",
+        "test_desktop_host.DesktopHostTests.test_corrupt_saved_binding_cannot_claim_current_desktop_compatibility",
+    ),
     "session_end_recovery": (
         "test_session_end_recovery.SessionEndRecoveryTests.test_missing_worker_entry_is_rejected_before_process_creation",
         "test_package_manager_security.PackageManagerV64Tests.test_account_session_end_uses_managed_sibling_worker",
