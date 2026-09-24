@@ -12,6 +12,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.13.2 | [Notes](v7.13.2/RELEASE_NOTES.md) | [Audit](v7.13.2/AUDIT_REPORT.md) | [Validation](v7.13.2/VALIDATION_REPORT.md) | Codex CLI 0.156.1 兼容候选；包、账户、CI、标签、资产、provenance 与公开下载门禁分别读回 | [JSON](v7.13.2/BUILD_INFO.json) | [JSON](v7.13.2/PACKAGE_VALIDATION.json) |
 | 7.13.1 | [Notes](v7.13.1/RELEASE_NOTES.md) | [Audit](v7.13.1/AUDIT_REPORT.md) | [Validation](v7.13.1/VALIDATION_REPORT.md) | 补丁候选：恢复保护及异常分类定向验证通过；完整验证、制品、安装和公开发行待完成；冻结 V3 默认 | [JSON](v7.13.1/BUILD_INFO.json) | [JSON](v7.13.1/PACKAGE_VALIDATION.json) |
 | 7.13.0 | [Notes](v7.13.0/RELEASE_NOTES.md) | [Audit](v7.13.0/AUDIT_REPORT.md) | [Validation](v7.13.0/VALIDATION_REPORT.md) | 标签候选未公开，最终发行验证失败；保留原始记录，后续补丁单独验证 | [JSON](v7.13.0/BUILD_INFO.json) | [JSON](v7.13.0/PACKAGE_VALIDATION.json) |
 | 7.12.0 | [Notes](v7.12.0/RELEASE_NOTES.md) | [Audit](v7.12.0/AUDIT_REPORT.md) | [Validation](v7.12.0/VALIDATION_REPORT.md) | 候选：F06 定向证据与 F04 本机采样已记录；F01/F02/F03、整包验证、远端矩阵、账户安装和公开发布待完成 | [JSON](v7.12.0/BUILD_INFO.json) | [JSON](v7.12.0/PACKAGE_VALIDATION.json) |

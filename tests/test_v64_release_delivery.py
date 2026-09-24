@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "scripts" / "build-release.py"
 ATTEST = ROOT / "scripts" / "release-attestation.py"
 LIFECYCLE = ROOT / "scripts" / "lifecycle-acceptance.py"
-VERSION = "7.13.1"
+VERSION = "7.13.2"
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v3 import append_event, make_event, project_id_for, stable_repo_fingerprint
 
@@ -152,7 +152,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
                     json.loads((ROOT / "config" / "desktop-host-contract-v1.json").read_text(encoding="utf-8")),
                     ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest(),
                 "ok": True, "version": VERSION, "artifact_sha256": digest,
-                "compatibility_registry_digest": "132795b3ac1b7ae0f52d534e96c2cba3bc02fbf2ca9c81eca8c44804a866b9f8",
+                "compatibility_registry_digest": "5db8226c99f4314b8681694d275c87adc645a0ab9963f1f93f057020a32efaaa",
                 "status": {key: "PASS" for key in (
                     "package", "artifact", "host", "plugin", "lifecycle", "dispatch_policy", "payload"
                 )},
@@ -162,7 +162,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         for name, value in evidence.items():
             (self.root / name).write_text(json.dumps(value), encoding="utf-8")
         version = self.root / "version.txt"
-        version.write_text("codex-cli 0.156.0\n", encoding="utf-8")
+        version.write_text("codex-cli 0.156.1\n", encoding="utf-8")
         attestation = self.root / "attestation.json"
         environment = {**os.environ, "CP_ASSISTANT_ATTESTATION_HMAC_KEY": "test-key-v743"}
         run_script(ATTEST, [

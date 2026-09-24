@@ -834,9 +834,9 @@
         "[OK] V7.13.0 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.13.0 semantic validation passed: Desktop scope, AUTO registry, onboarding/1, Operation v2 and frozen historical readers agree",
         "manifest 版本不是 7.13.0": "manifest version is not 7.13.0",
         "缺少 %s -> V7.13.0 升级声明": "Missing %s -> V7.13.0 upgrade declaration",
-        "[OK] V7.13.1 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.13.1 semantic validation passed: Desktop scope, AUTO registry, onboarding/1, Operation v2 and frozen historical readers agree",
-        "manifest 版本不是 7.13.1": "manifest version is not 7.13.1",
-        "缺少 %s -> V7.13.1 升级声明": "Missing %s -> V7.13.1 upgrade declaration"
+        "[OK] V7.13.2 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.13.2 semantic validation passed: Desktop scope, AUTO registry, onboarding/1, Operation v2 and frozen historical readers agree",
+        "manifest 版本不是 7.13.2": "manifest version is not 7.13.2",
+        "缺少 %s -> V7.13.2 升级声明": "Missing %s -> V7.13.2 upgrade declaration"
       }
     },
     "scripts/verify-release.py": {
@@ -846,7 +846,7 @@
         "派发策略门禁报告 schema 不受支持": "Unsupported dispatch-policy report schema",
         "派发策略门禁 V3 报告范围或契约无效": "Invalid V3 dispatch-policy scope or contract",
         "V7.13.0 端到端发行验证": "V7.13.0 end-to-end release validation",
-        "V7.13.1 端到端发行验证": "V7.13.1 end-to-end release validation"
+        "V7.13.2 端到端发行验证": "V7.13.2 end-to-end release validation"
       },
       "preserve": [
         "V7.12.0 端到端发行验证",

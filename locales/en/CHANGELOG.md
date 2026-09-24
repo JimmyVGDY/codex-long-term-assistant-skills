@@ -2,6 +2,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.13.2 - 2026-09-25
+
+- Advance the frozen compatibility window to Codex CLI 0.156.1, retain the ten preceding stable releases from 0.156.0 through 0.152.1, and remove 0.152.0 from the active window.
+- Freeze official npm, tag-commit, and source-contract evidence; the 0.156.1 Hook/apply_patch hashes continue to use `result-v156`.
+- Preserve the Codex Desktop-only product boundary, frozen V3 default, and V7.13.1 recovery protections. GPT-6 Sol/Luna visibility does not activate production defaults.
+
 ## 7.13.1 - 2026-09-24
 
 - Verify ordinary managed-file recovery backups before deletion; missing or corrupt backups preserve the current file and pending transaction.

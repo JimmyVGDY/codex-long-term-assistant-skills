@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.13.1",
-  "description": "跨项目长期技术助手 V7.13.1：GPT-6 兼容支持、恢复保护与可核验的交付。",
+  "version": "7.13.2",
+  "description": "跨项目长期技术助手 V7.13.2：GPT-6 兼容支持、恢复保护与可核验的交付。",
   "author": {"name": "Project maintainers"},
   "interface": {
     "displayName": "跨项目长期技术助手",

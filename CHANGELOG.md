@@ -2,6 +2,12 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.13.2 - 2026-09-25
+
+- 将冻结兼容窗口推进到 Codex CLI 0.156.1，保留 0.156.0 至 0.152.1 的前十个稳定发行，并将 0.152.0 移出活动窗口。
+- 冻结官方 npm、标签提交与源码合同证据；0.156.1 的 Hook/apply_patch 摘要继续复用 `result-v156`。
+- 保留 Codex Desktop-only 产品边界、冻结 V3 默认策略和 V7.13.1 恢复保护；GPT-6 Sol/Luna 可见性不等于生产默认启用。
+
 ## 7.13.1 - 2026-09-24
 
 - 在删除普通受管文件前核验恢复备份，备份缺失或损坏时保留当前文件及待处理事务。
