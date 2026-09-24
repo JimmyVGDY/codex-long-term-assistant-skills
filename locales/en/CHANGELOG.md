@@ -8,7 +8,8 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 - Add scenario-bound qualification, gain and cost cards to compare higher reasoning effort with a different model. Protect later review and repair budgets, and separately constrain cumulative Astra attempts and inflight concurrency.
 - Add the V4 ledger, V9/V6 review, version-isolated observations, frozen paired experiment suites and bounded Desktop task-name/lifecycle identity linkage. Unknown receipts never imply completion or refunds.
 - Target Codex Desktop only. Management-component compatibility and real native acceptance remain separate. Preserve historical readers and recovery formats without a standalone CLI support track.
-- Local package validation and affected checks after repair are complete. The candidate is installed and verified; its changed pre-dispatch Hook still needs normal trust review. Model screening remains incomplete, with no new-model default activation or completed public release claimed.
+- Normalize staged Windows launchers to CRLF so different Git checkout settings cannot change archive contents or checksums. Source files and frozen ledgers retain their original bytes.
+- Local package validation and affected checks after repair are complete. The candidate is installed and verified; native budget admission and model screening remain incomplete, with no new-model default activation or completed public release claimed.
 
 ## 7.12.0 - 2026-09-23
 

@@ -87,6 +87,28 @@ class V73BilingualReleaseTests(unittest.TestCase):
             _, entries = self._entries(locale)
             self.assertIn("7.2.0", entries["docs/INSTALLATION_RECOVERY.md"].decode("utf-8"))
 
+    def test_cmd_checkout_newlines_do_not_change_archive(self) -> None:
+        source_before = (ROOT / "scripts" / "evolution.cmd").read_bytes()
+        apply_overlay = self.builder._apply_overlay
+
+        def lf_checkout_overlay(staging, locale, source_root):
+            apply_overlay(staging, locale, source_root)
+            for path in self.builder.release_files(staging):
+                if path.suffix.lower() == ".cmd":
+                    path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n"))
+
+        for locale in ("zh-CN", "en"):
+            with self.subTest(locale=locale):
+                _, entries = self._entries(locale)
+                launcher = entries["scripts/evolution.cmd"]
+                self.assertIn(b"\r\n", launcher)
+                self.assertNotIn(b"\n", launcher.replace(b"\r\n", b""))
+                archive = self.root / ("lf-checkout-%s.zip" % locale)
+                with mock.patch.object(self.builder, "_apply_overlay", side_effect=lf_checkout_overlay):
+                    self.builder.build_release(archive, locale)
+                self.assertEqual(self.archives[locale].read_bytes(), archive.read_bytes())
+        self.assertEqual(source_before, (ROOT / "scripts" / "evolution.cmd").read_bytes())
+
     def test_v746_semantic_lint_requires_immediate_previous_upgrade_source(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
         semantic_lint = (ROOT / "scripts" / "semantic-lint.py").read_text(encoding="utf-8")

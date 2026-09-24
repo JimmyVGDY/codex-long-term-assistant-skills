@@ -90,6 +90,17 @@ def _copy_source(source: Path, target: Path) -> None:
         shutil.copyfile(path, destination)
 
 
+def _normalize_cmd_newlines(staging: Path) -> None:
+    # 中文：只规范暂存区的 Windows 启动脚本，消除 Git 检出换行差异。
+    # English: Canonicalize staged Windows launchers without rewriting source or frozen ledgers.
+    for path in release_files(staging):
+        if path.suffix.lower() == ".cmd":
+            content = path.read_bytes()
+            normalized = content.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+            if normalized != content:
+                path.write_bytes(normalized)
+
+
 def _apply_overlay(staging: Path, locale: str, source_root: Path) -> None:
     locale_path = staging / "config" / "locale.json"
     locale_path.parent.mkdir(parents=True, exist_ok=True)
@@ -159,6 +170,7 @@ def _prepare_staging(locale: str, parent: Path) -> Path:
     capture(ROOT, source_root)
     _copy_source(source_root, staging)
     _apply_overlay(staging, locale, source_root)
+    _normalize_cmd_newlines(staging)
     manifest = json.loads((staging / "manifest.json").read_text(encoding="utf-8-sig"))
     plugin = json.loads((staging / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8-sig"))
     if manifest.get("version") != VERSION or plugin.get("version") != VERSION:
