@@ -2,7 +2,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-The V7.13.2 candidate targets Codex Desktop and adds scenario qualification, paired gains and resource approval for model/effort choices. Six models provide 18 evaluation profiles; activation requires real evidence. GPT-5.6 and existing tasks retain frozen readers. Read publication status from GitHub Releases and workflows.
+The V7.13.3 candidate targets Codex Desktop and adds scenario qualification, paired gains and resource approval for model/effort choices. Six models provide 18 evaluation profiles; activation requires real evidence. GPT-5.6 and existing tasks retain frozen readers. Read publication status from GitHub Releases and workflows.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -23,7 +23,7 @@ The V7.13.2 candidate targets Codex Desktop and adds scenario qualification, pai
   <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.13.2 retains non-blocking message/Stop behavior, Operation v2 and separation of base Skills from optional enhancement. The gate remains off by default; capability level establishes neither semantic correctness nor authority. See the [model policy](docs/MODEL_ROUTING_AND_COST_POLICY.md) for positioning, reasoning gains and cold-start conditions.
+V7.13.3 retains non-blocking message/Stop behavior, Operation v2 and separation of base Skills from optional enhancement. The gate remains off by default; capability level establishes neither semantic correctness nor authority. See the [model policy](docs/MODEL_ROUTING_AND_COST_POLICY.md) for positioning, reasoning gains and cold-start conditions.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Four daily paths](#four-daily-paths-and-the-unified-entry) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 

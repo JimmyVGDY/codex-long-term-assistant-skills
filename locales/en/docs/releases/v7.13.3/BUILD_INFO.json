@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "version": "7.13.3",
+  "host_surface": "codex-desktop",
+  "release_scope": "WINDOWS_PATH_IDENTITY_PATCH",
+  "default_policy_id": "reviewer-matrix-v3",
+  "gpt6_production_default_enabled": false,
+  "native_enforcement_accepted": false,
+  "public_release_created": false,
+  "record_scope": "Pre-publication source snapshot; CI, artifacts, provenance, installation and native admission are verified separately.",
+  "standalone_cli_support": false,
+  "build_kind": "desktop-path-identity-source-snapshot",
+  "supported_locales": [
+    "zh-CN",
+    "en"
+  ],
+  "python_minimum": "3.11",
+  "ci_python_versions": [
+    "3.11",
+    "3.13"
+  ],
+  "execution_authorization": "NONE",
+  "package_validation_is_host_acceptance": false,
+  "validation_status": "TARGETED_PASS_FULL_PATCH_PENDING",
+  "payload_manifest_status": "PASS",
+  "payload_digest": "c2aa92e7f2e0c3dc15dde30ad0216262295e69823e16d2208f50be0a24f8ed0d"
+}

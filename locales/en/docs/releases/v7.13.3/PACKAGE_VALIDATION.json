@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "version": "7.13.3",
+  "host_surface": "codex-desktop",
+  "release_scope": "WINDOWS_PATH_IDENTITY_PATCH",
+  "default_policy_id": "reviewer-matrix-v3",
+  "gpt6_production_default_enabled": false,
+  "native_enforcement_accepted": false,
+  "public_release_created": false,
+  "record_scope": "Pre-publication source snapshot; CI, artifacts, provenance, installation and native admission are verified separately.",
+  "standalone_cli_support": false,
+  "ok": false,
+  "targeted_validation": {
+    "windows_regressions": 18,
+    "existing_v4_regressions": 111,
+    "scope": "See validation record for the exact revision boundary"
+  },
+  "full_patch_validation": "PENDING",
+  "patch_installation": "PENDING",
+  "model_quality_qualification": "NOT_EVALUATED",
+  "native_v4_dispatch": "NOT_ACCEPTED"
+}

@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.13.2",
-  "release_name": "GPT-6 兼容支持与恢复保护",
+  "version": "7.13.3",
+  "release_name": "Windows 桌面路径与预算身份修复",
   "generated_for": "Codex Desktop engineering assistance with scenario-qualified GPT-6 model and reasoning selection, phase-preserving budgets, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -669,6 +669,7 @@
     ]
   },
   "upgrade_from": [
+    "7.13.2",
     "7.13.1",
     "7.11.2",
     "7.11.1",

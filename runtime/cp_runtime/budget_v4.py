@@ -783,16 +783,28 @@ def record_observation(path: Path, *, agent_id: str, phase: str, outcome: str = 
 
 
 def link_host_identity(path: Path, *, reservation_id: str, task_path: str, agent_id: str,
-                       dispatch_key: str, role: str, proof_ref: str) -> dict[str, Any]:
+                       dispatch_key: str, role: str, proof_ref: str,
+                       verified_proof_aliases: tuple[str, ...] = ()) -> dict[str, Any]:
     _agent_identifier(task_path); _agent_identifier(agent_id); identifier(dispatch_key)
     if task_path != "/root/" + dispatch_key:
         fail("V4_IDENTITY_LINK_TASK_MISMATCH")
+    # 中文：适配器最多提供两个已核验文件表示；旧摘要的选择在账本锁内完成。
+    # English: At most two verified file spellings are offered; reuse is decided under the ledger lock.
+    if not isinstance(verified_proof_aliases, tuple) or len(verified_proof_aliases) > 2:
+        fail("V4_IDENTITY_PROOF_ALIASES")
+    for alias in verified_proof_aliases:
+        sha(alias)
+    if verified_proof_aliases and proof_ref not in verified_proof_aliases:
+        fail("V4_IDENTITY_PROOF_ALIASES")
+    accepted_proofs = {proof_ref, *verified_proof_aliases}
     data = {"reservation_id": reservation_id, "task_path_ref": ref(task_path), "agent_ref": ref(agent_id),
             "dispatch_ref": ref(dispatch_key), "role": role, "proof_ref": proof_ref}
     def previous(state):
         old = state["host_identity_links"].get(reservation_id)
         if old is not None:
-            if old != data:
+            if ({key: value for key, value in old.items() if key != "proof_ref"}
+                    != {key: value for key, value in data.items() if key != "proof_ref"}
+                    or old["proof_ref"] not in accepted_proofs):
                 fail("V4_IDENTITY_LINK_CONFLICT")
             return state
         return None

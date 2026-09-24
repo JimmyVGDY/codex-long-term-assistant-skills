@@ -38,6 +38,7 @@ from cp_runtime.delegation_budget import (  # noqa: E402
 from cp_runtime.dispatch_policy import DispatchPolicyError, policy, resolve_request  # noqa: E402
 from cp_runtime.dispatch_context import verify_root_binding  # noqa: E402
 from cp_runtime.common import RuntimeContractError, repo_snapshot  # noqa: E402
+from cp_runtime.path_identity import same_path  # noqa: E402
 from cp_runtime.seal_queue import append_lifecycle_event, launch_worker, resolve_event_path  # noqa: E402
 from cp_runtime.evolution.task_feedback import consume_for_hook  # noqa: E402
 from cp_runtime.capability_gate_hook import INPUT_LIMIT, supervise  # noqa: E402
@@ -180,7 +181,7 @@ def _budget_path(data: Mapping[str, Any]) -> str:
     session = _lookup_strict(data, "root_session_id", "rootSessionId") or _lookup_strict(data, *HOOK_ALIASES["session_id"])
     cwd = str(_lookup_strict(data, *HOOK_ALIASES["cwd"]) or "")
     registered = lookup(cwd=cwd, host_session_id=str(session or ""))
-    if explicit and registered and Path(explicit).expanduser().resolve() != registered.resolve():
+    if explicit and registered and not same_path(Path(explicit).expanduser(), registered):
         raise DelegationBudgetError("DESKTOP_ROOT_BUDGET_CONFLICT")
     return str(registered) if registered else explicit
 

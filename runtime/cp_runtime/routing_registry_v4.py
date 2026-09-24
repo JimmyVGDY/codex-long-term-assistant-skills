@@ -12,6 +12,7 @@ from typing import Any
 from . import budget_v4
 from .common import atomic_write_json, require_external_state, resolve_codex_home
 from .event_v2 import OwnerTokenLock, stable_repo_fingerprint
+from .path_identity import path_aliases
 from .routing_context_v4 import verify_root
 from .routing_contract import exact, fail, identifier, read_document, ref
 
@@ -19,15 +20,37 @@ FIELDS = {"schema_version", "session_ref", "repo_fingerprint", "identity", "ledg
           "root_binding_ref", "status"}
 
 
+def _directory(directory: Path | None = None) -> Path:
+    return (directory or Path(os.environ.get("CP_ROUTING_BINDINGS_ROOT") or
+                              resolve_codex_home() / "cp-assistant" / "desktop-routing")).resolve()
+
+
 def _entry(cwd: str, host_session_id: str, directory: Path | None = None) -> Path:
     identifier(host_session_id, "DESKTOP_ROOT_SESSION_REQUIRED")
     if not cwd:
         fail("DESKTOP_ROOT_CWD_REQUIRED")
     repo = Path(cwd).resolve()
-    base = directory or Path(os.environ.get("CP_ROUTING_BINDINGS_ROOT") or
-                             resolve_codex_home() / "cp-assistant" / "desktop-routing")
+    base = _directory(directory)
     key = ref({"session_ref": ref(host_session_id), "repo_fingerprint": stable_repo_fingerprint(str(repo))})
     return base.resolve() / (key[7:] + ".json")
+
+
+def _existing(cwd: str, host_session_id: str, directory: Path | None):
+    # 中文：只检查当前根的至多两个等价键，不扫描其他任务或改写旧指纹。
+    # English: Probe only the equivalent root keys; never scan bindings or rewrite fingerprints.
+    found = {}
+    for alias in path_aliases(Path(cwd)):
+        candidate = _entry(str(alias), host_session_id, directory)
+        if candidate.exists():
+            found[candidate] = str(alias)
+    if len(found) > 1:
+        fail("DESKTOP_BINDING_ALIAS_CONFLICT")
+    return next(iter(found.items())) if found else None
+
+
+def _session_lock(host_session_id: str, directory: Path | None) -> Path:
+    identifier(host_session_id, "DESKTOP_ROOT_SESSION_REQUIRED")
+    return _directory(directory) / (".root-session-" + ref(host_session_id)[7:])
 
 
 def _read(path: Path, cwd: str, host_session_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -54,16 +77,19 @@ def bind(ledger_path: Path, *, cwd: str, host_session_id: str,
     verify_root(state, cwd=cwd, host_session_id=host_session_id)
     if state["closed"]:
         fail("DESKTOP_BINDING_LEDGER_CLOSED")
-    path = _entry(cwd, host_session_id, directory)
+    # 中文：使用账本中已冻结的表示作为登记键，调用方别名不能建立第二个根。
+    # English: The frozen ledger spelling owns the key; aliases cannot create another root.
+    path = _entry(state["root_binding"]["repo_path"], host_session_id, directory)
     require_external_state(path, Path(cwd).resolve())
     value = {"schema_version": "desktop-routing-binding/1", "session_ref": ref(host_session_id),
              "repo_fingerprint": state["identity"]["repo_fingerprint"], "identity": state["identity"],
              "ledger_path": str(ledger_path.resolve()), "root_binding_ref": ref(state["root_binding"]),
              "status": "active"}
     path.parent.mkdir(parents=True, exist_ok=True)
-    with OwnerTokenLock(path, timeout=2):
-        if path.exists():
-            prior, _ = _read(path, cwd, host_session_id)
+    with OwnerTokenLock(_session_lock(host_session_id, directory), timeout=2):
+        existing = _existing(cwd, host_session_id, directory)
+        if existing:
+            prior, _ = _read(existing[0], existing[1], host_session_id)
             if prior != value:
                 fail("DESKTOP_ROOT_ALREADY_BOUND")
         else:
@@ -76,11 +102,16 @@ def lookup(*, cwd: str, host_session_id: str, directory: Path | None = None) -> 
     # English: Missing host identity cannot identify any task. Never scan other bindings.
     if not cwd or not host_session_id:
         return None
-    path = _entry(cwd, host_session_id, directory)
-    if not path.exists():
+    existing = _existing(cwd, host_session_id, directory)
+    if existing is None:
         return None
-    require_external_state(path, Path(cwd).resolve())
-    value, _ = _read(path, cwd, host_session_id)
+    require_external_state(existing[0], Path(cwd).resolve())
+    with OwnerTokenLock(_session_lock(host_session_id, directory), timeout=2):
+        existing = _existing(cwd, host_session_id, directory)
+        if existing is None:
+            fail("DESKTOP_BINDING_DISAPPEARED")
+        value, state = _read(existing[0], existing[1], host_session_id)
+        verify_root(state, cwd=cwd, host_session_id=host_session_id)
     # 中文：墓碑继续指向已关闭账本，防止后续调用退回策略模式或重置预算。
     # English: A tombstone continues to select the closed ledger, so a later request
     # cannot silently fall back to policy-only admission or reset its budget.
@@ -88,9 +119,17 @@ def lookup(*, cwd: str, host_session_id: str, directory: Path | None = None) -> 
 
 
 def retire(*, cwd: str, host_session_id: str, directory: Path | None = None) -> dict[str, Any]:
-    path = _entry(cwd, host_session_id, directory)
-    with OwnerTokenLock(path, timeout=2):
-        value, state = _read(path, cwd, host_session_id)
+    existing = _existing(cwd, host_session_id, directory)
+    if existing is None:
+        fail("DESKTOP_BINDING_MISSING")
+    require_external_state(existing[0], Path(cwd).resolve())
+    with OwnerTokenLock(_session_lock(host_session_id, directory), timeout=2):
+        existing = _existing(cwd, host_session_id, directory)
+        if existing is None:
+            fail("DESKTOP_BINDING_DISAPPEARED")
+        path, alias = existing
+        value, state = _read(path, alias, host_session_id)
+        verify_root(state, cwd=cwd, host_session_id=host_session_id)
         if not state["closed"]:
             fail("DESKTOP_BINDING_ACTIVE_LEDGER")
         value["status"] = "closed"

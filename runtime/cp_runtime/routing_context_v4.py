@@ -64,10 +64,11 @@ def build_root_binding(envelope_path: Path, host_session_id: str) -> tuple[dict[
 
 
 def verify_root(state: Mapping[str, Any], *, cwd: str, host_session_id: str) -> None:
+    from .path_identity import same_path
     declared, binding = build_root_binding(Path(state["sources"]["root_envelope"]), host_session_id)
     if any(state["identity"][key] != value for key, value in declared.items()) \
             or dict(state["root_binding"]) != binding \
-            or Path(cwd).resolve() != Path(binding["repo_path"]).resolve():
+            or not same_path(Path(cwd), Path(binding["repo_path"])):
         fail("V4_ROOT_BINDING_MISMATCH")
 
 
