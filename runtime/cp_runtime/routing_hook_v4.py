@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from . import budget_v4
-from .common import resolve_codex_home
+from .common import inside, resolve_codex_home
+from .path_identity import path_aliases, same_path
 from .routing_context_v4 import loader, verify_root
 from .routing_contract import fail, ref
 
@@ -35,7 +36,8 @@ def _session_identity(data: Mapping[str, Any], *, session: str, cwd: str, agent_
         if not path.is_absolute():
             return None
         path = path.resolve(strict=True)
-        path.relative_to((resolve_codex_home() / "sessions").resolve(strict=True))
+        if not inside(path, (resolve_codex_home() / "sessions").resolve(strict=True)):
+            return None
         if path.suffix != ".jsonl" or not path.name.endswith(agent_id + ".jsonl"):
             return None
         with path.open("rb") as stream:
@@ -48,7 +50,7 @@ def _session_identity(data: Mapping[str, Any], *, session: str, cwd: str, agent_
         spawn = meta["source"]["subagent"]["thread_spawn"]
         task_path = spawn["agent_path"]
         if event["type"] != "session_meta" or meta["id"] != agent_id \
-                or Path(meta["cwd"]).resolve() != Path(cwd).resolve() \
+                or not same_path(Path(meta["cwd"]), Path(cwd)) \
                 or spawn["parent_thread_id"] != session or type(spawn["depth"]) is not int or spawn["depth"] != 1 \
                 or spawn["agent_role"] != data.get("agent_type") \
                 or not isinstance(task_path, str) or not re.fullmatch(r"/root/[a-z0-9_]{1,64}", task_path):
@@ -146,9 +148,14 @@ def lifecycle(path: Path, data: Mapping[str, Any], hook_name: str, *, args: Mapp
                        if state["permits"][attempt["permit_id"]]["dispatch_ref"] == ref(dispatch_key)
                        and state["permits"][attempt["permit_id"]]["role"] == header["role"]]
             if len(matches) == 1:
+                proof_ref = ref(header)
+                # 中文：不根据锁外快照猜旧摘要；账本原子比较已核验的等价证明。
+                # English: Do not select from a stale snapshot; the ledger compares verified proofs atomically.
+                proofs = tuple(sorted({ref({**header, "header_source_ref": ref(str(alias))})
+                                       for alias in path_aliases(Path(data["agent_transcript_path"]))}))
                 budget_v4.link_host_identity(path, reservation_id=matches[0]["reservation_id"],
                     task_path=header["task_path"], agent_id=agent_id, dispatch_key=dispatch_key,
-                    role=header["role"], proof_ref=ref(header))
+                    role=header["role"], proof_ref=proof_ref, verified_proof_aliases=proofs)
     outcome = str(lookup(data, *aliases["terminal_outcome"]) or "UNKNOWN").upper()
     budget_v4.record_observation(path, agent_id=agent_id, phase="start" if hook_name == "SubagentStart" else "stop",
                                  outcome="UNKNOWN" if hook_name == "SubagentStart" else outcome)

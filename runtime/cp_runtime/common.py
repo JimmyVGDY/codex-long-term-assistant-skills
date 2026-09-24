@@ -149,11 +149,8 @@ def append_jsonl(path: Path, value: Dict[str, Any]) -> None:
 
 
 def inside(child: Path, parent: Path) -> bool:
-    try:
-        child.resolve().relative_to(parent.resolve())
-        return True
-    except ValueError:
-        return False
+    from .path_identity import path_is_within
+    return path_is_within(child, parent)
 
 
 def require_external_state(path: Path, repo: Path, allow_inside_repo: bool = False) -> None:
@@ -341,9 +338,10 @@ def tree_sha256(path: Path) -> str:
 
 
 def assert_managed_target(target: Path, managed_root: Path) -> None:
+    from .path_identity import same_path
     resolved_target = target.expanduser().resolve()
     resolved_root = managed_root.expanduser().resolve()
-    if resolved_target == resolved_root:
+    if same_path(resolved_target, resolved_root):
         raise RuntimeContractError("禁止把受管根目录本身作为替换目标")
     if not inside(resolved_target, resolved_root):
         raise RuntimeContractError(f"目标路径越界: {resolved_target}")
