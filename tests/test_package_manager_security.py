@@ -10,6 +10,9 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 MANAGER=ROOT/'scripts'/'package_manager.py'
+# 中文：完整安装/恢复夹具包含多次宿主探针和文件事务，不能被比宿主单次 60 秒上限更短的外层等待截断。
+# English: Complete install/recovery fixtures include several host probes and file transactions; their outer wait must exceed a single host command's 60-second limit.
+MANAGER_FIXTURE_TIMEOUT_SECONDS=120
 sys.path.insert(0,str(ROOT/'scripts'))
 SPEC=importlib.util.spec_from_file_location('package_manager_under_test',MANAGER)
 assert SPEC and SPEC.loader
@@ -25,7 +28,7 @@ def io_path(path: Path) -> Path:
 
 
 def run(args, env, expected=0):
-    r=subprocess.run([sys.executable,'-B',str(MANAGER),*args],env=env,text=True,encoding='utf-8',capture_output=True,timeout=30)
+    r=subprocess.run([sys.executable,'-B',str(MANAGER),*args],env=env,text=True,encoding='utf-8',capture_output=True,timeout=MANAGER_FIXTURE_TIMEOUT_SECONDS)
     if r.returncode!=expected:
         raise AssertionError(f'rc={r.returncode}, expected={expected}\nstdout={r.stdout}\nstderr={r.stderr}')
     return r

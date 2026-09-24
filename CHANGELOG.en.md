@@ -8,6 +8,7 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 - Verify ordinary managed-file recovery backups before deletion; missing or corrupt backups preserve the current file and pending transaction.
 - Retain existing ERROR classification and fixed exception types for non-assertion subtest exceptions, without expanding the report schema or recording private bodies.
+- Use a 120-second process deadline for installer integration fixtures that perform multiple host probes and file transactions; functional assertions, production command limits, and Hook deadlines remain unchanged.
 - Continue GPT-6 compatibility support with frozen V3 as default. Native dispatch, model qualification, and default activation still require separate acceptance. Preserve V7.13.0 as a candidate without completed release acceptance; full patch validation, artifacts, and publication are read back separately.
 
 ## 7.13.0 - 2026-09-24

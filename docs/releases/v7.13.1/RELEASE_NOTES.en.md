@@ -6,6 +6,7 @@ This version continues GPT-6 compatibility support for Codex Desktop only. Froze
 
 - Verify an ordinary managed file's backup before removing the current file. A missing or corrupt backup preserves the current file and leaves the recovery transaction pending.
 - Non-assertion subtest exceptions retain the existing `SUBTEST_FAILURE` and `ERROR` statuses plus a fixed exception-class code. The report schema, allowlist, and private-body restrictions are unchanged. Status counts can overlap; use executed-test counts for the number of tests.
+- Increase the installer integration-test process deadline from 30 to 120 seconds so multiple probes and file transactions are not cut off before the host's existing 60-second per-command limit. Functional assertions, production command limits, and Hook deadlines remain unchanged.
 - Preserve GPT-5.6 compatibility and comparison paths, along with frozen readers for existing policies, ledgers, and results. Model positioning, reasoning gains, and budget constraints remain separate checks rather than an automatic ranking by model name or price tier.
 - Preserve the V7.13.0 tag as a candidate that did not complete final release acceptance. This patch uses a new version and tag.
 

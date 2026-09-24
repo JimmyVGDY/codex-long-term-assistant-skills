@@ -25,5 +25,13 @@
   "model_quality_qualification": "NOT_EVALUATED",
   "native_v4_dispatch": "NOT_ACCEPTED",
   "original_intermittent_ci_failure_cause": "UNCONFIRMED",
-  "source_binding": "Exact committed source is established by the release source manifest, tag and provenance; this record has no self-referential commit hash."
+  "source_binding": "Exact committed source is established by the release source manifest, tag and provenance; this record has no self-referential commit hash.",
+  "installer_fixture_timeout_seconds": 120,
+  "product_and_hook_timeouts_changed": false,
+  "current_ci_observation": {
+    "baseline": "1d91fafe6e5d3339f2f3cba3873f9dc02c28e605",
+    "status": "FAILED_ONE_WINDOWS_INSTALLER_FIXTURE_TIMEOUT",
+    "other_matrix_configurations_passed": 3,
+    "new_deadline_full_validation": "PENDING"
+  }
 }
