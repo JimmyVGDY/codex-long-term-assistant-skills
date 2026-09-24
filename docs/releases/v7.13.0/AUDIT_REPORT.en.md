@@ -10,4 +10,6 @@ The final narrow recheck confirmed the Astra snapshot and atomic-reservation fix
 
 Implementation review used six actual calls and 32 frozen-V3 proxy units, including one narrow third-round exception without increasing total-call or unit ceilings. This is policy accounting, not billing or OS isolation. Source findings are resolved or explicitly adjudicated; failed native admission and model screening remain separate unfinished work.
 
+The later newline correction affects release staging and related documentation only. It passed 20 bilingual regressions and complete CI without changing model/budget runtime code or adding an independent Reviewer. Compatibility support retains the old default; source review is not evidence of GPT-6 quality or native-budget acceptance.
+
 Source, package, installation, loading, dispatch, commit, push and public publication need separate confirmation. Model quality and reasoning gains retain empirical gates; fixtures and model names cannot replace them.

@@ -2,9 +2,9 @@
   "schema_version": 2,
   "version": "7.13.0",
   "ok": false,
-  "scope": "Candidate delivery; package evidence is valid within its recorded baselines, native gate and model qualification remain incomplete.",
-  "source_head": "3ca41960b645146bc663644e06f4d2970850fdff",
-  "source_is_uncommitted_candidate": true,
+  "scope": "Compatibility-support source evidence. Frozen V3 remains default; native enforcement, model qualification and later default activation are not accepted.",
+  "source_head": "a7c8f07018f0e2a3da306179d88a18d7010ef1c7",
+  "source_is_uncommitted_candidate": false,
   "local_full_validation": {
     "status": "PASS",
     "report_sha256": "bf4ac8bb320e25840dcd2e8ea9a8a75cf398ab6788b00de1a9768b2660c46d35",
@@ -31,7 +31,11 @@
       "seconds": 66.306
     },
     "synthetic_host_fixtures": true,
-    "not_additive_full_suite_total": true
+    "not_additive_full_suite_total": true,
+    "packaging_bilingual": {
+      "passed": 20,
+      "scope": "Staging-only CMD newline normalization, archive identity and unchanged source bytes"
+    }
   },
   "documentation_checks": {
     "semantic": "PASS",
@@ -45,15 +49,35 @@
     "payload_digest": "904f4708d4e98407d74ee86baae14f38213d714e1727b1c627e7089eb52cddf8",
     "scope": "Source, marketplace, cache and managed installation readback; not native gate effectiveness."
   },
-  "native_v4_dispatch": "FAILED_NO_PRETOOL_RESERVATION",
-  "modified_pretool_hook_trust": "PENDING_NORMAL_REVIEW",
+  "native_v4_dispatch": "FAILED_NO_RESERVATION_OR_CREATION_RECEIPT",
+  "modified_pretool_hook_trust": "CONFIGURED_TRUSTED_ACTIVE_TASK_NOT_PROVEN",
   "model_quality_qualification": "NOT_EVALUATED",
-  "actual_unqualified_model_calls": 1,
+  "actual_unqualified_model_calls": 3,
   "public_release_created": false,
   "known_limits": [
-    "Windows normal-account context was required for DPAPI and source-capture checks.",
-    "PowerShell policy adjustment applied only to test child processes.",
-    "Management component version is not a Desktop runtime version.",
-    "No real billing measurement or production model qualification is claimed."
-  ]
+    "Compatibility support is separate from GPT-6 production-default activation.",
+    "Trusted configuration does not prove active native pre/post-dispatch enforcement; three unqualified calls are retained, with no model-quality scores.",
+    "Model qualification, direct effort/model-switch gains and attributable real billing remain unverified.",
+    "Python zlib-ng and standard zlib may emit different ZIP bytes; the standard-zlib local artifacts match CI byte-for-byte.",
+    "This file records source-stage evidence; public publication requires separate tag, asset and provenance readback."
+  ],
+  "release_scope": "COMPATIBILITY_SUPPORT",
+  "default_policy_id": "reviewer-matrix-v3",
+  "gpt6_production_default_enabled": false,
+  "ci_baseline": {
+    "head": "a7c8f07018f0e2a3da306179d88a18d7010ef1c7",
+    "run_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/35942327785",
+    "jobs_passed": 7,
+    "os": [
+      "windows-latest",
+      "ubuntu-latest"
+    ],
+    "python": [
+      "3.11",
+      "3.13"
+    ],
+    "reproducible_local_ci_zip_identity": "PASS_WITH_STANDARD_ZLIB",
+    "all_uncompressed_contents_match_zlib_ng_build": true,
+    "full_model_rollout_acceptance": false
+  }
 }

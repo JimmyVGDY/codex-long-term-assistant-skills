@@ -11,7 +11,7 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 - Add the V4 ledger, V9/V6 review, version-isolated observations, frozen paired experiment suites and bounded Desktop task-name/lifecycle identity linkage. Unknown receipts never imply completion or refunds.
 - Target Codex Desktop only. Management-component compatibility and real native acceptance remain separate. Preserve historical readers and recovery formats without a standalone CLI support track.
 - Normalize staged Windows launchers to CRLF so different Git checkout settings cannot change archive contents or checksums. Source files and frozen ledgers retain their original bytes.
-- Local package validation and affected checks after repair are complete. The candidate is installed and verified; native budget admission and model screening remain incomplete, with no new-model default activation or completed public release claimed.
+- This version delivers compatibility support: frozen V3 remains the default, and new models are available only for explicitly scoped evaluation. Code, cross-platform CI, candidate archives and installation are verified separately. Native budget admission and model qualification are not accepted; GPT-6 production defaults and enforced-budget effectiveness are not enabled or claimed.
 
 ## 7.12.0 - 2026-09-23
 
