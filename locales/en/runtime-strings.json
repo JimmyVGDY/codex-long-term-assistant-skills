@@ -1039,6 +1039,7 @@
     },
     "scripts/package_manager.py": {
       "plain": {
+        "无法分配唯一的程序载荷暂存目录": "Unable to allocate a unique program-payload staging directory",
         "增强 hooks.json 无法解析: %s": "Enhanced hooks.json could not be parsed: %s",
         "增强 hooks.json 的 hooks 不是对象": "Enhanced hooks.json has a non-object hooks field",
         "增强 Hook 缺少事件 %s": "Enhanced Hook event is missing: %s",

@@ -482,7 +482,25 @@ def remove_path(path: Path) -> None:
         io_path.unlink()
 
 
-def copy_atomic(src: Path, dst: Path) -> None:
+def _copy_staging_directory(parent: Path, readable_payload: bool) -> Path:
+    # 中文：Windows 的 mkdtemp 使用 0700；把它直接发布会保留私有 DACL。
+    # 中文：仅公开程序载荷继承目标父目录权限，状态与恢复副本继续采用原默认。
+    # English: Windows mkdtemp uses 0700, whose private DACL survives publication.
+    # Only public program payloads inherit the destination parent's permissions;
+    # state and restoration copies retain the existing private staging default.
+    if os.name != "nt" or not readable_payload:
+        return Path(tempfile.mkdtemp(prefix=".cp-", dir=str(_io_path(parent))))
+    for _attempt in range(10):
+        candidate = parent / (".cp-" + uuid.uuid4().hex[:8])
+        try:
+            _io_path(candidate).mkdir(mode=0o777)
+        except FileExistsError:
+            continue
+        return candidate
+    raise InstallError("无法分配唯一的程序载荷暂存目录")
+
+
+def copy_atomic(src: Path, dst: Path, *, readable_payload: bool = False) -> None:
     reject_link_ancestors(dst.parent)
     _io_path(dst.parent).mkdir(parents=True, exist_ok=True)
     reject_link_ancestors(dst.parent)
@@ -490,13 +508,16 @@ def copy_atomic(src: Path, dst: Path) -> None:
     # 中文：Windows MAX_PATH 限制，即使最终目标路径本身有效。
     # English: Keep the staging component short; repeating a long Plugin name and `payload`
     # English: can exceed legacy Windows MAX_PATH even when the final destination is valid.
-    tmp = Path(tempfile.mkdtemp(prefix=".cp-", dir=str(_io_path(dst.parent))))
+    tmp = _copy_staging_directory(dst.parent, readable_payload)
     try:
         io_src = _io_path(src)
         reject_tree_links(src)
         io_tmp = _io_path(tmp)
         if io_src.is_dir():
-            shutil.copytree(io_src, io_tmp, symlinks=False, dirs_exist_ok=True)
+            if readable_payload:
+                _copy_plugin_payload_tree(src, tmp, dirs_exist_ok=True)
+            else:
+                shutil.copytree(io_src, io_tmp, symlinks=False, dirs_exist_ok=True)
             staged = tmp
         else:
             staged = tmp / "f"
@@ -1312,11 +1333,12 @@ def _merged_marketplace_manifest(existing: Any, marketplace_profile: Optional[Ma
     return data
 
 
-def _copy_plugin_payload_tree(src: Path, dst: Path) -> None:
+def _copy_plugin_payload_tree(src: Path, dst: Path, *, dirs_exist_ok: bool = False) -> None:
     shutil.copytree(
         _io_path(src),
         _io_path(dst),
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+        dirs_exist_ok=dirs_exist_ok,
     )
 
 
@@ -2041,7 +2063,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         # 中文：安装 Reviewer Agent 定义。
         # English: Install Reviewer Agent definitions.
         for src in agent_files():
-            dst = ch / "agents" / src.name; copy_atomic(src, dst); _record_applied(journal, "agent:" + src.name, dst)
+            dst = ch / "agents" / src.name; copy_atomic(src, dst, readable_payload=True); _record_applied(journal, "agent:" + src.name, dst)
         for name in deprecated_skills:
             dst = sh / name
             if _io_path(dst).exists() or _io_path(dst).is_symlink():
@@ -2049,18 +2071,18 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             _record_applied(journal, "deprecated-skill:" + name, dst)
         for label, script_name in (("project-tool", "cp-runtime.py"), ("evolution-tool", "evolution.py")):
             dst = ch / "tools" / script_name
-            copy_atomic(ROOT / "scripts" / script_name, dst)
+            copy_atomic(ROOT / "scripts" / script_name, dst, readable_payload=True)
             _record_applied(journal, label, dst)
         if mode == "standalone":
             for name in current_skills:
-                dst = sh / name; copy_atomic(ROOT / "skills" / name, dst); _record_applied(journal, "skill:" + name, dst)
+                dst = sh / name; copy_atomic(ROOT / "skills" / name, dst, readable_payload=True); _record_applied(journal, "skill:" + name, dst)
         # 中文：Plugin 模式由基础 Plugin 唯一加载 Skills；安装器只接入按需增强运行时。
         # English: In Plugin mode, only the base Plugin loads Skills; this installer adds the optional enhancement runtime.
         if mode in {"standalone", "plugin"}:
-            dst = ch / "runtime" / "cp_runtime"; copy_atomic(ROOT / "runtime" / "cp_runtime", dst); _record_applied(journal, "runtime", dst)
-            dst = ch / "cp-assistant-hooks" / "cp_hook.py"; copy_atomic(ROOT / "hooks" / "cp_hook.py", dst); _record_applied(journal, "hook-script", dst)
-            dst = ch / "cp-assistant-hooks" / "cp_gate.py"; copy_atomic(ROOT / "hooks" / "cp_gate.py", dst); _record_applied(journal, "gate-worker", dst)
-            dst = ch / "cp-assistant-hooks" / "seal_worker.py"; copy_atomic(ROOT / "hooks" / "seal_worker.py", dst); _record_applied(journal, "seal-worker", dst)
+            dst = ch / "runtime" / "cp_runtime"; copy_atomic(ROOT / "runtime" / "cp_runtime", dst, readable_payload=True); _record_applied(journal, "runtime", dst)
+            dst = ch / "cp-assistant-hooks" / "cp_hook.py"; copy_atomic(ROOT / "hooks" / "cp_hook.py", dst, readable_payload=True); _record_applied(journal, "hook-script", dst)
+            dst = ch / "cp-assistant-hooks" / "cp_gate.py"; copy_atomic(ROOT / "hooks" / "cp_gate.py", dst, readable_payload=True); _record_applied(journal, "gate-worker", dst)
+            dst = ch / "cp-assistant-hooks" / "seal_worker.py"; copy_atomic(ROOT / "hooks" / "seal_worker.py", dst, readable_payload=True); _record_applied(journal, "seal-worker", dst)
             merge_hooks(
                 ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py",
                 _standalone_hook_profile(),
@@ -2078,7 +2100,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                     journal["crash_injected"] = True
                     write_json_atomic(Path(journal["journal_path"]), journal)
                     raise InstallError("测试 Marketplace 替换前崩溃注入；请执行 doctor --recover")
-                copy_atomic(src, payload_target)
+                copy_atomic(src, payload_target, readable_payload=True)
                 payload_report(payload_target)
                 _record_applied(journal, "plugin-payload", payload_target)
                 marketplace_path = plugin_marketplace_manifest()
@@ -2290,7 +2312,7 @@ def install_repo(repo_path: str, dry_run: bool) -> None:
                 remove_path(dst)
             _record_applied(journal, "deprecated-skill:" + name, dst)
         for name in skill_names():
-            dst = root / name; copy_atomic(ROOT / "skills" / name, dst); _record_applied(journal, "skill:" + name, dst)
+            dst = root / name; copy_atomic(ROOT / "skills" / name, dst, readable_payload=True); _record_applied(journal, "skill:" + name, dst)
         write_json_atomic(backup / "backup-manifest.json", {"records":records,"scope":"repo"})
         managed = {str(t):tree_sha256(t) for label,t in targets if label != "install-state"}
         state = dict(migrated_old_state)
