@@ -23,11 +23,11 @@
     "evidence_scope": "package-only",
     "version": "7.13.4",
     "status": "PASS",
-    "package_test_count": 766,
+    "package_test_count": 779,
     "runtime_test_count": 231,
     "validated_runtime": "3.14.7",
-    "package_report_sha256": "cd65027de2aae2a9a381985746c343724ea0f1cc3f44c8ca07800fce21217df7",
-    "runtime_report_sha256": "85824250b2b3f896ef59159cf7b16bc1f3f680c921e9d9c955359c2f817041b9"
+    "package_report_sha256": "daae8f81bfc4318af776f4f3e19a4a532d6b2905141b7ab14f352d0f941437c7",
+    "runtime_report_sha256": "d97c2726481cfc5f1cc167d4737457004e94cee61e7d8fa3bf5618e8d83e44b3"
   },
   "model_quality_qualification": "NOT_EVALUATED",
   "native_v4_dispatch": "NOT_ACCEPTED",

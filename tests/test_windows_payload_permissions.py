@@ -1,4 +1,7 @@
-"""Windows public payload deployment must retain inherited read-only access."""
+"""中文：Windows 公开载荷部署必须保留继承的只读访问。
+
+English: Windows public payload deployment must retain inherited read-only access.
+"""
 from __future__ import annotations
 
 import ctypes
@@ -57,7 +60,8 @@ class WindowsPayloadPermissionTests(unittest.TestCase):
         (self.source / "module.py").write_text("VALUE = 1\n", encoding="utf-8")
         self.destination = self.base / "installed"
         self.destination.mkdir()
-        # Only a disposable fixture gains an extra reader; no account ACL changes.
+        # 中文：仅一次性夹具增加额外读取者，不修改账户 ACL。
+        # English: Only a disposable fixture gains an extra reader; no account ACL changes.
         subprocess.run(
             ["icacls.exe", str(self.destination), "/grant", "*S-1-1-0:(OI)(CI)(RX)"],
             check=True, capture_output=True, timeout=15,
@@ -93,7 +97,9 @@ class WindowsPayloadPermissionTests(unittest.TestCase):
                 ace = ctypes.c_void_p()
                 if not security.GetAce(acl, index, ctypes.byref(ace)):
                     raise ctypes.WinError(ctypes.get_last_error())
-                if ctypes.c_ubyte.from_address(ace.value).value != 0:  # ACCESS_ALLOWED_ACE_TYPE
+                # 中文：零表示 ACCESS_ALLOWED_ACE_TYPE。
+                # English: Zero denotes ACCESS_ALLOWED_ACE_TYPE.
+                if ctypes.c_ubyte.from_address(ace.value).value != 0:
                     continue
                 sid = ctypes.c_wchar_p()
                 if not security.ConvertSidToStringSidW(ace.value + 8, ctypes.byref(sid)):
