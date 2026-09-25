@@ -16,7 +16,7 @@
   "compatibility_registry_digest": "3af296d04b66a66632aaf3ae0585ae21f8a8dcac35f0bb59998d971d6343a54d",
   "payload_identity": {
     "file_count": 266,
-    "sha256": "e024b41e5f946a63a3ee876e79581389bb02ae1f4637ed14d306d5b65c302d45"
+    "sha256": "d1bb3dde71ae0315027f75c04eb63b94aa7fbf11292f73cb6da8aaa2125e9f64"
   },
   "full_package_validation": {
     "ok": true,

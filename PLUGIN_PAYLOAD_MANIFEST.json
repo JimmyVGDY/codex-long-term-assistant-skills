@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 266,
-  "payload_digest": "e024b41e5f946a63a3ee876e79581389bb02ae1f4637ed14d306d5b65c302d45",
+  "payload_digest": "d1bb3dde71ae0315027f75c04eb63b94aa7fbf11292f73cb6da8aaa2125e9f64",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -808,8 +808,8 @@
     },
     {
       "path": "hooks/cp_hook.py",
-      "sha256": "172f9c3f10f4a6c30887a449edcac6858b586963f5a19e0ef94fb9e4bea1da4c",
-      "size": 38327
+      "sha256": "557629f090e3b6d6cfd572ac001c86620f73ac7554b8383b3fd46cf6d203ba3d",
+      "size": 38248
     },
     {
       "path": "hooks/enhancement-hooks.json",
@@ -973,8 +973,8 @@
     },
     {
       "path": "runtime/cp_runtime/dispatch_policy.py",
-      "sha256": "a98333c4702aef8b40c183173bce23838e0c30078d3536f40756b987b19ee271",
-      "size": 24258
+      "sha256": "27b2f040cb1b3df12e09dc12d29ab34b45a70478188b4a1d8f84ebc7d85d4ea4",
+      "size": 24794
     },
     {
       "path": "runtime/cp_runtime/event_archive.py",
@@ -1208,8 +1208,8 @@
     },
     {
       "path": "runtime/cp_runtime/routing_hook_v4.py",
-      "sha256": "a8424cea906fef6d4f425477b5b757f651157d2010d69e7957eb14f3baf4c6fb",
-      "size": 8869
+      "sha256": "6366f5722c707a982a8aaf2fc7afaa03db629e486b966d456e2b1f46f3e14b69",
+      "size": 8862
     },
     {
       "path": "runtime/cp_runtime/routing_phase_plan.py",
