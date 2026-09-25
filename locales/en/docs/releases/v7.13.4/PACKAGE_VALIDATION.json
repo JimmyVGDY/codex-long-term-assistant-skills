@@ -32,5 +32,9 @@
   "model_quality_qualification": "NOT_EVALUATED",
   "native_v4_dispatch": "NOT_ACCEPTED",
   "source_binding": "Exact committed source is established by the release source manifest, tag and provenance; this record has no self-referential commit hash.",
-  "ok": true
+  "ok": true,
+  "native_v4_reentry_denial": "PASS",
+  "native_positive_admission": "BLOCKED_OPAQUE_MESSAGE_TRANSPORT",
+  "native_positive_denial_reason": "V4_REQUEST_MESSAGE_MISMATCH",
+  "native_new_creations": 0
 }
