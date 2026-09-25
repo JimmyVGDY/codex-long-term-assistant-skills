@@ -4,7 +4,7 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 ## 7.13.4 - 2026-09-25
 
-- 将冻结兼容窗口推进到 Codex CLI 0.157.0，并将 0.152.1 移出活动窗口。
+- 修复 Windows 桌面安装权限与委派入口；既有稳定组件窗口仅作为内部契约回归参考，不构成独立 CLI 支持。
 - 冻结官方 npm、标签提交与源码合同证据；保留 Desktop-only、冻结 V3 与既有恢复/路径保护。
 - 修复 Windows 公开载荷 ACL 继承、Desktop 委派工具名规范化和 Pre/Post matcher 登记；原生正向准入仍因不透明加密消息正文而阻断，不降低正文校验。
 

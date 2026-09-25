@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
   "version": "7.13.4",
-  "release_name": "Windows 桌面路径与预算身份修复",
+  "release_name": "Windows 桌面权限与委派入口修复",
   "generated_for": "Codex Desktop engineering assistance with scenario-qualified GPT-6 model and reasoning selection, phase-preserving budgets, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [

@@ -6,7 +6,7 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 ## 7.13.4 - 2026-09-25
 
-- Advance the frozen compatibility window to Codex CLI 0.157.0 and remove 0.152.1 from the active window.
+- Fix Windows Desktop installation permissions and delegation entry points; existing stable-component windows remain internal contract-regression references, not standalone CLI support.
 - Freeze official npm, tag-commit, and source-contract evidence while preserving Desktop-only, frozen V3, recovery, and path protections.
 - Fix Windows public-payload ACL inheritance, Desktop delegation-name normalization, and Pre/Post matcher registration. Positive native admission remains blocked by opaque encrypted message transport; body validation is not weakened.
 

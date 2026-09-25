@@ -2,7 +2,7 @@
   "schema_version": 2,
   "version": "7.13.4",
   "host_surface": "codex-desktop",
-  "release_scope": "CODEX_CLI_COMPATIBILITY",
+  "release_scope": "DESKTOP_WINDOWS_DELEGATION_PATCH",
   "codex_0_157_0": {
     "official_artifact": "VERIFIED",
     "source_contract": "VERIFIED",
@@ -10,7 +10,8 @@
     "windows_isolated_plugin": "PASS",
     "synthetic_hook": "PASS",
     "real_host": "PENDING",
-    "ubuntu": "PENDING_REMOTE_MATRIX"
+    "ubuntu": "PENDING_REMOTE_MATRIX",
+    "evidence_scope": "internal-component-reference-only"
   },
   "public_release_created": false,
   "compatibility_registry_digest": "3af296d04b66a66632aaf3ae0585ae21f8a8dcac35f0bb59998d971d6343a54d",
@@ -36,5 +37,7 @@
   "native_v4_reentry_denial": "PASS",
   "native_positive_admission": "BLOCKED_OPAQUE_MESSAGE_TRANSPORT",
   "native_positive_denial_reason": "V4_REQUEST_MESSAGE_MISMATCH",
-  "native_new_creations": 0
+  "native_new_creations": 0,
+  "internal_component_records_are_desktop_acceptance": false,
+  "desktop_local_component": "0.155.0-alpha.16.4"
 }

@@ -1,10 +1,9 @@
 # V7.13.4 Validation Record
 
-- npm `latest` and GitHub `rust-v0.157.0` identify a non-prerelease stable release.
-- Official artifact integrity, SHA-256, tag commit, and Hook/apply_patch source hashes are frozen in the registry.
-- The window contains exactly 0.157.0 through 0.153.0; 0.152.1 fails closed.
-- Package, runtime, isolated Plugin, synthetic Hook, account, fresh-process, CI, tag, asset, provenance, and public-download gates are recorded separately.
-- Actual Desktop installation, verify/doctor, ordinary-sandbox payload read with write denial, and fresh-process Plugin loading pass.
-- Native V4 reentry denial passes. A positive native spawn is denied before charge/creation with `V4_REQUEST_MESSAGE_MISMATCH` because the Desktop message field is an opaque encrypted transport value. No body-validation weakening, receipt synthesis, or positive-admission claim is made.
-
-No remote or public state is claimed before readback.
+- Focused permissions, name normalization, full-name matching, and migration regressions passed; original failing controls remain recorded.
+- The final behavioral baseline passed 779 package tests and 231 runtime tests; report digests are in `PACKAGE_VALIDATION.json`. Later scope-wording corrections require separate projection, link, and package-integrity checks.
+- The actual local Desktop component was `0.155.0-alpha.16.4`. Installation, verify/doctor, ordinary-sandbox reads with writes denied, and fresh-process Plugin loading passed separately.
+- Native V4 reentry rejection passed. Positive creation was denied before execution because opaque encrypted message input does not match the approved plaintext digest, with reason `V4_REQUEST_MESSAGE_MISMATCH`; positive admission is not claimed.
+- The observed native input exposed no decoded-input metadata. The documented input-rewrite mechanism caused a decoding error in this encrypted self-message experiment. No child was created, and temporary Hooks/trust entries were restored.
+- Official stable-component artifacts/source digests and internal multi-version contract samples prove only their own checks; they do not replace actual Desktop acceptance.
+- CI, tag, assets, provenance, public downloads, and site readback remain separate gates. No completion claim precedes readback.

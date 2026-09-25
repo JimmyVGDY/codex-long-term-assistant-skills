@@ -2,7 +2,7 @@
   "schema_version": 2,
   "version": "7.13.4",
   "host_surface": "codex-desktop",
-  "release_scope": "CODEX_CLI_COMPATIBILITY",
+  "release_scope": "DESKTOP_WINDOWS_DELEGATION_PATCH",
   "codex_anchor": "0.157.0",
   "stable_release_window_size": 11,
   "compatibility_registry_digest": "3af296d04b66a66632aaf3ae0585ae21f8a8dcac35f0bb59998d971d6343a54d",
@@ -26,5 +26,8 @@
   "package_validation_is_host_acceptance": false,
   "validation_status": "PASS",
   "payload_manifest_status": "PASS",
-  "payload_digest": "d1bb3dde71ae0315027f75c04eb63b94aa7fbf11292f73cb6da8aaa2125e9f64"
+  "payload_digest": "d1bb3dde71ae0315027f75c04eb63b94aa7fbf11292f73cb6da8aaa2125e9f64",
+  "internal_component_records_are_desktop_acceptance": false,
+  "desktop_local_component": "0.155.0-alpha.16.4",
+  "component_window_scope": "internal-regression-reference; not Desktop admission"
 }

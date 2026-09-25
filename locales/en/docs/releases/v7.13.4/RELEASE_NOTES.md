@@ -1,14 +1,14 @@
 # V7.13.4 Release Notes
 
-V7.13.4 advances the frozen compatibility window to official stable Codex CLI 0.157.0 while preserving the Codex Desktop-only product boundary and V7.13.3 Windows path-identity fix.
+V7.13.4 fixes Windows installation permissions and delegation entry points in Codex Desktop. The product supports the Desktop app only. Existing stable-component records remain internal contract-regression references; they do not define standalone CLI support or Desktop version admission.
 
-- Freeze the eleven-version window at 0.157.0 through 0.153.0; 0.152.1 leaves the active window.
-- Register official npm integrity, tarball SHA-256, tag commit `00c972ed5d6ff6499317fd41b7f23605b8e6850d`, and unchanged Hook/apply_patch source hashes using `result-v156`.
-- Track upstream GPT-6 Sol/Luna catalog and Bedrock support, fullscreen transcripts, automatic background-server startup, conversation forking/import, rendering improvements, and network/voice/upload fixes.
-- Preserve frozen V3 defaults, GPT-5.6 compatibility, V7.13.1 recovery protection, and V7.13.3 normalized Windows root identity.
-- Preserve inherited read-only ACLs when deploying public Plugin/runtime payloads, while keeping state, backups, and Marketplace metadata private.
-- Normalize Desktop collaboration tool names and register explicit bare, dotted, and concatenated Pre/Post matcher alternatives without wildcard production matchers.
+- Preserve the destination parent's read access when installing public Plugin, Hook, and runtime payloads without adding write permission. Private state and restoration copies retain their existing rules.
+- Exclude generated Python bytecode so public runtime deployment matches the release payload.
+- Normalize bare, dotted, and Desktop-concatenated delegation tool names, and register complete names in one Pre/Post handler group to avoid missed or duplicate handling.
+- Preserve Windows path identity, recovery safeguards, frozen V3 defaults, and GPT-5.6 compatibility. The nine GPT-6 candidates remain subject to scenario qualification and real evidence.
 
-Native V4 reentry denial is verified. Positive native admission remains blocked because Desktop transports the message body as an opaque encrypted value; exact plaintext body binding is therefore unverified. This release does not weaken body validation, synthesize receipts, activate GPT-6 defaults, or claim model qualification/native positive PASS.
+Actual Desktop installation, ordinary-sandbox reads with writes denied, and V4 message-reentry rejection were verified. Positive creation still fails before execution with `V4_REQUEST_MESSAGE_MISMATCH`: this host supplies an opaque encrypted message without a verified plaintext-binding interface. A controlled plaintext-rewrite experiment also produced a decoding error and was not adopted. This release does not bypass validation, synthesize receipts, enable GPT-6 defaults, or claim model qualification or positive native admission.
 
-Commit, push, installation, CI, tag, Release, assets, provenance, and public effectiveness remain separate readback facts.
+Existing component samples from 0.157.0 through 0.153.0 and their official artifact/source digests remain internal references. They are not the Desktop app's supported-version window; acceptance must use the actual running Desktop component.
+
+Commit, push, installation, CI, tag, Release, assets, provenance, and public effectiveness require separate readback. Full model-performance evaluation, reasoning-effort gains, and default migration remain unfinished follow-up work.
