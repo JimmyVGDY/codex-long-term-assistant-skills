@@ -4,7 +4,7 @@ Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-ass
 
 This page organizes current package documentation by adoption stage. Historical reports and build metadata are grouped by version while preserving validation paths, references, and reproducibility evidence.
 
-> Version scope: V<!-- cp-fact:package-version -->7.13.3<!-- /cp-fact --> is the current package version. TaskOutcomeEvent V3, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
+> Version scope: V<!-- cp-fact:package-version -->7.13.4<!-- /cp-fact --> is the current package version. TaskOutcomeEvent V3, component manifests, and policy versions identify protocols or data formats. Earlier package versions appear only in migration guidance and the release/history archive; they do not define the current rules.
 
 ## Getting started
 
@@ -31,15 +31,15 @@ This page organizes current package documentation by adoption stage. Historical 
 - [Controlled-evolution operations](evolution/CONTROLLED_EVOLUTION_OPERATIONS.md)
 - [Self-evolution architecture](evolution/SELF_EVOLUTION_ARCHITECTURE.md)
 - [Current validation report index](VALIDATION_REPORT.md)
-- [V7.13.3 package validation report](releases/v7.13.3/VALIDATION_REPORT.md)
-- [V7.13.3 audit report](releases/v7.13.3/AUDIT_REPORT.md)
+- [V7.13.4 package validation report](releases/v7.13.4/VALIDATION_REPORT.md)
+- [V7.13.4 audit report](releases/v7.13.4/AUDIT_REPORT.md)
 - [Component reuse acceptance](COMPONENT_REUSE_ACCEPTANCE.md)
 - [Documentation maintenance and fact checks](DOCUMENTATION_MAINTENANCE.md)
 
 ## Release and history
 
 - [Release evidence index](releases/README.md)
-- [V7.13.3 release notes](releases/v7.13.3/RELEASE_NOTES.md)
+- [V7.13.4 release notes](releases/v7.13.4/RELEASE_NOTES.md)
 - [Changelog](../CHANGELOG.md)
 - [Public reconstruction index](history/README.md)
 - [Public reconstruction release index](history/RELEASE_ARCHIVES.md)

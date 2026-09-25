@@ -1,6 +1,6 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.13.3",
+  "version": "7.13.4",
   "release_name": "Windows 桌面路径与预算身份修复",
   "generated_for": "Codex Desktop engineering assistance with scenario-qualified GPT-6 model and reasoning selection, phase-preserving budgets, and frozen legacy recovery",
   "default_locale": "zh-CN",
@@ -669,6 +669,7 @@
     ]
   },
   "upgrade_from": [
+    "7.13.3",
     "7.13.2",
     "7.13.1",
     "7.11.2",
@@ -834,8 +835,9 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "anchor": "0.156.1",
+    "anchor": "0.157.0",
     "verified_versions": [
+      "0.157.0",
       "0.156.1",
       "0.156.0",
       "0.155.1",
@@ -845,8 +847,7 @@
       "0.153.3",
       "0.153.2",
       "0.153.1",
-      "0.153.0",
-      "0.152.1"
+      "0.153.0"
     ],
     "window_policy": "current-plus-ten-preceding-stable-releases-patch-counts",
     "registry": "config/codex-compatibility-v1.json",

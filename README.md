@@ -2,7 +2,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-V7.13.3 候选面向 Codex Desktop，新增型号与思考强度的场景资格、配对收益和预算审批。六型号共 18 个评测组合，默认启用受真实证据约束；5.6 与旧任务保留兼容解释器。发布状态以 GitHub Release 和工作流读回为准。
+V7.13.4 候选面向 Codex Desktop，新增型号与思考强度的场景资格、配对收益和预算审批。六型号共 18 个评测组合，默认启用受真实证据约束；5.6 与旧任务保留兼容解释器。发布状态以 GitHub Release 和工作流读回为准。
 
 # Codex 跨项目长期技术助手
 
@@ -23,7 +23,7 @@ V7.13.3 候选面向 Codex Desktop，新增型号与思考强度的场景资格�
   <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.13.3 保留消息与 Stop 非阻断、Operation v2、基础 Skill 与可选增强分离等边界。门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。型号定位、思考收益与冷启动条件见[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)。
+V7.13.4 保留消息与 Stop 非阻断、Operation v2、基础 Skill 与可选增强分离等边界。门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。型号定位、思考收益与冷启动条件见[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [四条日常路径](#四条日常路径与统一入口) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#首次安装与升级) · [文档](#文档与协作)
 

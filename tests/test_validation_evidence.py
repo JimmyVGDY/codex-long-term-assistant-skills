@@ -151,7 +151,7 @@ class ValidationEvidenceTests(unittest.TestCase):
     def test_current_source_metadata_and_tampered_report_structure_fail_closed(self) -> None:
         metadata = validation_evidence.package_metadata(ROOT)
         self.assertEqual("codex-cross-project-engineering-assistant", metadata["package"])
-        self.assertEqual("7.13.3", metadata["version"])
+        self.assertEqual("7.13.4", metadata["version"])
         self.assertEqual(10, metadata["skill_count"])
         self.assertEqual(7, metadata["reviewer_count"])
         self.assertIs(False, metadata["automatic_self_modification"])

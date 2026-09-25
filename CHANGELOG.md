@@ -2,6 +2,11 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.13.4 - 2026-09-25
+
+- 将冻结兼容窗口推进到 Codex CLI 0.157.0，并将 0.152.1 移出活动窗口。
+- 冻结官方 npm、标签提交与源码合同证据；保留 Desktop-only、冻结 V3 与既有恢复/路径保护。
+
 ## 7.13.3 - 2026-09-25
 
 - 修复 Windows 桌面任务路径别名导致的既有预算绑定遗漏，保留历史指纹与账本事件。

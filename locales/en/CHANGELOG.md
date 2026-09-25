@@ -2,6 +2,11 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.13.4 - 2026-09-25
+
+- Advance the frozen compatibility window to Codex CLI 0.157.0 and remove 0.152.1 from the active window.
+- Freeze official npm, tag-commit, and source-contract evidence while preserving Desktop-only, frozen V3, recovery, and path protections.
+
 ## 7.13.3 - 2026-09-25
 
 - Fix missed budget bindings for Windows Desktop path aliases while preserving historical fingerprints and ledger events.
