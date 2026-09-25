@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -58,13 +59,31 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
         for event in ("PreToolUse", "PostToolUse", "SubagentStart", "SubagentStop", "Stop", "Interrupt", "SessionEnd"):
             self.assertNotIn("async", fragment[event][0]["hooks"][0])
         self.assertEqual("apply_patch|Edit|Write", fragment["PostToolUse"][0]["matcher"])
-        self.assertEqual("Agent|spawn_agent", fragment["PostToolUse"][1]["matcher"])
         self.assertIn("cp_hook.py", fragment["PostToolUse"][1]["hooks"][0]["command"])
-        self.assertEqual(["Agent|spawn_agent|followup_task|send_message|send_input|resume_agent",
-                          "apply_patch|Edit|Write"],
-                         [entry["matcher"] for entry in fragment["PreToolUse"]])
+        self.assertEqual("apply_patch|Edit|Write", fragment["PreToolUse"][1]["matcher"])
         self.assertIn("cp_gate.py", fragment["PreToolUse"][1]["hooks"][0]["command"])
         self.assertIn("cp_gate.py", fragment["PostToolUse"][0]["hooks"][0]["command"])
+
+    def test_delegation_matchers_cover_full_desktop_names_without_duplicate_handlers(self) -> None:
+        fragment = package_manager.hook_fragment(self.script, self.supported)
+        for tool in ("spawn_agent", "followup_task", "send_message", "send_input", "resume_agent"):
+            for prefix in ("", "collaboration.", "collaboration"):
+                name = prefix + tool
+                with self.subTest(name=name):
+                    pre = [entry for entry in fragment["PreToolUse"]
+                           if re.fullmatch(entry["matcher"], name)]
+                    post = [entry for entry in fragment["PostToolUse"]
+                            if re.fullmatch(entry["matcher"], name)]
+                    self.assertEqual(1, len(pre))
+                    self.assertEqual(1 if tool == "spawn_agent" else 0, len(post))
+                    self.assertIn("cp_hook.py", pre[0]["hooks"][0]["command"])
+        for event in ("PreToolUse", "PostToolUse"):
+            self.assertEqual(1, sum(bool(re.fullmatch(entry["matcher"], "Agent"))
+                                    for entry in fragment[event]))
+            for name in ("Bash", "mcp__other__collaborationspawn_agent",
+                         "collaborationspawn_agent_extra", "collaborationXsend_message"):
+                self.assertFalse(any(re.fullmatch(entry["matcher"], name)
+                                     for entry in fragment[event]))
 
     def test_unknown_profile_omits_optional_hook_flag_and_preserves_events(self) -> None:
         fragment = package_manager.hook_fragment(self.script, self.unknown)
@@ -83,6 +102,24 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
             hooks = json.loads(path.read_text(encoding="utf-8"))["hooks"]
             self.assertEqual([], hooks.get("UserPromptSubmit", []))
             self.assertEqual("external", hooks["Stop"][0]["hooks"][0]["command"])
+
+    def test_old_delegation_matchers_are_replaced_and_foreign_hooks_preserved(self) -> None:
+        old = package_manager.hook_fragment(self.script, self.supported)
+        old["PreToolUse"][0]["matcher"] = "Agent|spawn_agent|followup_task|send_message|send_input|resume_agent"
+        old["PostToolUse"][1]["matcher"] = "Agent|spawn_agent"
+        foreign = {"matcher": "Bash", "hooks": [{"type": "command", "command": "external"}]}
+        old["PreToolUse"].append(foreign)
+        with tempfile.TemporaryDirectory(prefix="cp-desktop-matcher-upgrade-") as td:
+            path = Path(td) / "hooks.json"
+            path.write_text(json.dumps({"hooks": old}), encoding="utf-8")
+            self.assertTrue(package_manager._managed_hook_errors(path, self.script, self.supported))
+            package_manager.merge_hooks(path, self.script, self.supported)
+            self.assertEqual([], package_manager._managed_hook_errors(path, self.script, self.supported))
+            hooks = json.loads(path.read_text(encoding="utf-8"))["hooks"]
+            self.assertIn(foreign, hooks["PreToolUse"])
+            matching = [entry for entry in hooks["PreToolUse"]
+                        if re.fullmatch(entry.get("matcher", ""), "collaborationsend_message")]
+            self.assertEqual(1, len(matching))
 
     def test_plugin_preflight_rejects_frozen_version_with_unknown_async_capability(self) -> None:
         probe = {

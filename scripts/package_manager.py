@@ -675,6 +675,15 @@ def _hook_command(script_path: Path, expected_hook: str = "") -> str:
     return command + ((" " + expected_hook) if expected_hook else "")
 
 
+def _delegation_hook_matcher(*names: str) -> str:
+    # 中文：桌面按完整工具名匹配；显式覆盖裸名、点分名与拼接名，保持单个处理器。
+    # English: Match full Desktop names, including bare, dotted and concatenated
+    # forms, in one group so aliases cannot launch duplicate handlers.
+    aliases = ["Agent"] if "spawn_agent" in names else []
+    aliases.extend(prefix + name for name in names for prefix in ("", "collaboration.", "collaboration"))
+    return "|".join(re.escape(name) for name in aliases)
+
+
 def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     command = _hook_command(script_path)
     pretool_command = _hook_command(script_path, "PreToolUse")
@@ -684,12 +693,12 @@ def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None
     gate_posttool_command = _hook_command(gate_path, "PostToolUse")
     fragment = {
         "PreToolUse": [
-            {"matcher": "Agent|spawn_agent|followup_task|send_message|send_input|resume_agent", "hooks": [{"type": "command", "command": pretool_command, "timeout": 5}]},
+            {"matcher": _delegation_hook_matcher("spawn_agent", "followup_task", "send_message", "send_input", "resume_agent"), "hooks": [{"type": "command", "command": pretool_command, "timeout": 5}]},
             {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_pretool_command, "timeout": 5}]},
         ],
         "PostToolUse": [
             {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_posttool_command, "timeout": 5}]},
-            {"matcher": "Agent|spawn_agent", "hooks": [{"type": "command", "command": posttool_command, "timeout": 5}]},
+            {"matcher": _delegation_hook_matcher("spawn_agent"), "hooks": [{"type": "command", "command": posttool_command, "timeout": 5}]},
         ],
         "SubagentStart": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
