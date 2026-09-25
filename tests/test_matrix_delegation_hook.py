@@ -82,6 +82,17 @@ class MatrixDelegationHookTests(unittest.TestCase):
         self.assertEqual("synthetic-task", events[-1]["task_id"])
         self.assertEqual("sol-low", events[-1]["approved_dispatch_profile"])
 
+    def test_desktop_concatenated_name_preserves_v3_units_and_receipt(self):
+        payload = {**self.payload, "tool_name": "collaborationspawn_agent"}
+        self.invoke(payload)
+        self.invoke(payload)
+        state = read_budget(self.fixture.ledger)
+        self.assertEqual(1, state["usage"]["dispatches"])
+        self.assertEqual(10, state["usage"]["units"])
+        self.invoke({**payload, "hook_event_name": "PostToolUse",
+                     "tool_response": {"agent_id": "synthetic-child"}})
+        self.assertEqual(1, len(read_budget(self.fixture.ledger)["host_receipts"]))
+
     def test_changed_role_tuple_or_host_call_cannot_reuse_permit(self):
         self.invoke()
         before = self.fixture.ledger.read_bytes()

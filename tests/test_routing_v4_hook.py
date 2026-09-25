@@ -108,6 +108,33 @@ class V4HookTests(unittest.TestCase):
                      "tool_response": {"task_name": "/root/eval_one"}})
         self.assertEqual(1, len(read_budget(self.fixture.path)["host_receipts"]))
 
+    def test_concatenated_desktop_name_reserves_and_reconciles_once(self):
+        payload = {**self.payload, "tool_name": "collaborationspawn_agent"}
+        self.bind_registry()
+        self.assertEqual({}, self.invoke(payload))
+        self.assertEqual(1, len(read_budget(self.fixture.path)["reservations"]))
+        receipt = {**payload, "hook_event_name": "PostToolUse",
+                   "tool_response": {"task_name": "/root/eval_one"}}
+        self.invoke({**receipt, "tool_response": {"task_name": "/root/wrong_task"}})
+        self.assertFalse(read_budget(self.fixture.path)["host_receipts"])
+        self.invoke(receipt)
+        before = self.fixture.path.read_bytes()
+        self.invoke(receipt)
+        self.assertEqual(before, self.fixture.path.read_bytes())
+        self.assertEqual(1, len(read_budget(self.fixture.path)["host_receipts"]))
+
+    def test_concatenated_name_cannot_bypass_the_approved_message(self):
+        payload = copy.deepcopy(self.payload)
+        payload["tool_name"] = "collaborationspawn_agent"
+        payload["tool_input"]["message"] = "unapproved message"
+        self.denied(payload)
+        self.assertFalse(read_budget(self.fixture.path)["reservations"])
+
+    def test_other_tool_names_are_not_matched_by_delegation_suffix(self):
+        for name in ("mcp__foreign__collaborationspawn_agent", "collaborationspawn_agent_extra"):
+            self.assertEqual({}, self.invoke({**self.payload, "tool_name": name}))
+        self.assertFalse(read_budget(self.fixture.path)["reservations"])
+
     def test_cancelled_subagent_stop_cannot_be_recorded_as_a_pass(self):
         from cp_runtime.routing_contract import RoutingError, ref
         self.invoke()
@@ -235,7 +262,8 @@ class V4HookTests(unittest.TestCase):
                           directory=inside)
 
     def test_bound_v4_reentry_cannot_bypass_a_new_permit_or_mutate_the_trial_prompt(self):
-        for name in ("collaboration.followup_task", "collaboration.send_message", "send_input", "resume_agent"):
+        for name in ("collaboration.followup_task", "collaboration.send_message",
+                     "collaborationfollowup_task", "collaborationsend_message", "send_input", "resume_agent"):
             payload = {**self.payload, "tool_name": name,
                        "tool_input": {"target": "/root/prior_agent", "message": "new work"}}
             self.denied(payload)

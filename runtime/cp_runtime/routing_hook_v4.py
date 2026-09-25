@@ -13,11 +13,12 @@ from typing import Any, Callable, Mapping
 
 from . import budget_v4
 from .common import inside, resolve_codex_home
+from .dispatch_policy import delegation_tool_name
 from .path_identity import path_aliases, same_path
 from .routing_context_v4 import loader, verify_root
 from .routing_contract import fail, ref
 
-TOOLS = {"agent", "spawn_agent", "collaboration.spawn_agent"}
+TOOLS = {"agent", "spawn_agent"}
 NONCE_HEADER = re.compile(r"^CP_REVIEW_DISPATCH/2 ([0-9a-f]{64})\r?\n\r?\n")
 
 
@@ -111,7 +112,7 @@ def lifecycle(path: Path, data: Mapping[str, Any], hook_name: str, *, args: Mapp
     cwd = str(lookup(data, *aliases["cwd"]) or "")
     verify_root(state, cwd=cwd, host_session_id=session)
     if hook_name == "PostToolUse":
-        tool = str(lookup(data, *aliases["tool_name"]) or "").lower()
+        tool = delegation_tool_name(lookup(data, *aliases["tool_name"]))
         if tool not in TOOLS:
             return None
         response = data.get("tool_response")
@@ -126,7 +127,7 @@ def lifecycle(path: Path, data: Mapping[str, Any], hook_name: str, *, args: Mapp
         # 中文：只解析桌面工具明确的任务树回执，不扫描正文或从通用状态猜创建结果。
         # English: The task-tree interface is explicit in the Desktop tool contract.
         # Do not scan response prose or infer creation from generic status.
-        if not agent_id and tool in {"spawn_agent", "collaboration.spawn_agent"}:
+        if not agent_id and tool == "spawn_agent":
             value = response.get("task_name")
             requested_name = lookup(args, *aliases["task_name"])
             if isinstance(value, str) and isinstance(requested_name, str) \

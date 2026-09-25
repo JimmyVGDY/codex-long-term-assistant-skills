@@ -35,7 +35,7 @@ from cp_runtime.delegation_budget import (  # noqa: E402
     record_host_dispatch_receipt, record_host_agent_observation,
     reserve_native_review, native_review_nonce, NATIVE_DISPATCH_PREFIX,
 )
-from cp_runtime.dispatch_policy import DispatchPolicyError, policy, resolve_request  # noqa: E402
+from cp_runtime.dispatch_policy import DispatchPolicyError, delegation_tool_name, policy, resolve_request  # noqa: E402
 from cp_runtime.dispatch_context import verify_root_binding  # noqa: E402
 from cp_runtime.common import RuntimeContractError, repo_snapshot  # noqa: E402
 from cp_runtime.path_identity import same_path  # noqa: E402
@@ -44,8 +44,7 @@ from cp_runtime.evolution.task_feedback import consume_for_hook  # noqa: E402
 from cp_runtime.capability_gate_hook import INPUT_LIMIT, supervise  # noqa: E402
 
 _VERIFIED_ROOT = object()
-REENTRY_TOOLS = {"followup_task", "collaboration.followup_task", "send_message", "collaboration.send_message",
-                 "send_input", "resume_agent"}
+REENTRY_TOOLS = {"followup_task", "send_message", "send_input", "resume_agent"}
 HOOK_ALIASES = {
     "hook_event_name": ("hook_event_name", "hookEventName", "event_name", "event"),
     "tool_name": ("tool_name", "toolName", "tool"),
@@ -189,14 +188,14 @@ def _budget_path(data: Mapping[str, Any]) -> str:
 def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     if str(_lookup_strict(data, *HOOK_ALIASES["hook_event_name"]) or "") != "PreToolUse":
         return None
-    tool = str(_lookup_strict(data, *HOOK_ALIASES["tool_name"]) or "").lower()
+    tool = delegation_tool_name(_lookup_strict(data, *HOOK_ALIASES["tool_name"]))
     if tool in REENTRY_TOOLS:
         ledger_text = _budget_path(data)
         if ledger_text and read_budget(Path(ledger_text))["schema_version"] == "4.0":
             return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                 "permissionDecisionReason": _policy_message("budget_denied") + " (V4_FRESH_DISPATCH_REQUIRED)"}}
         return None
-    if tool not in {"agent", "spawn_agent", "collaboration.spawn_agent"}:
+    if tool not in {"agent", "spawn_agent"}:
         return None
     args = _tool_input(data)
     model = str(_lookup_strict(args, *HOOK_ALIASES["model"]) or "").strip().lower()
@@ -322,7 +321,7 @@ def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
             data["_cp_root_verified"] = _VERIFIED_ROOT
         return
     if hook_name == "PostToolUse":
-        tool = str(_lookup_strict(data, *HOOK_ALIASES["tool_name"]) or "").lower()
+        tool = delegation_tool_name(_lookup_strict(data, *HOOK_ALIASES["tool_name"]))
         if state["schema_version"] != "3.0" or tool not in {"agent", "spawn_agent"}:
             return
         _verify_budget_root(state, data)

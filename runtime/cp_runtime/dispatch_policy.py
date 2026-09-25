@@ -28,6 +28,20 @@ PROOF_FIELDS = {"evidence_ref", "context", "status", "source", "prior_result_ref
 SHA_REF = re.compile(r"^sha256:[a-f0-9]{64}$")
 SHA_HEX = re.compile(r"^[a-f0-9]{64}$")
 IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$")
+_DELEGATION_TOOL_ALIASES = {
+    prefix + name: name
+    for name in ("spawn_agent", "followup_task", "send_message", "send_input", "resume_agent")
+    for prefix in ("collaboration.", "collaboration")
+}
+
+
+def delegation_tool_name(value: Any) -> str:
+    """中文：只归一化桌面委派工具的明确命名形式，不按后缀识别其他工具。
+
+    English: Normalize explicit Desktop delegation names, never arbitrary suffixes.
+    """
+    name = str(value or "").lower()
+    return _DELEGATION_TOOL_ALIASES.get(name, name)
 
 
 class DispatchPolicyError(ValueError):
