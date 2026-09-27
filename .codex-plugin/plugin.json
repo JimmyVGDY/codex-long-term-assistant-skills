@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.13.5",
-  "description": "跨项目长期技术助手 V7.13.5：Codex Desktop 0.157.1 组件兼容与冻结证据。",
+  "version": "7.13.6",
+  "description": "跨项目长期技术助手 V7.13.6：Desktop V1 委派预算拦截修复。",
   "author": {
     "name": "Project maintainers"
   },

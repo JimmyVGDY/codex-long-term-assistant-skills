@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "version": "7.13.6",
+  "host_surface": "codex-desktop",
+  "release_scope": "DESKTOP_V1_REENTRY_BUDGET_FIX",
+  "compatibility_registry_digest": "d4a1de79d199f449dcc54849baadffe2249d01b79b03f302bbca439d1d79cf1b",
+  "default_policy_id": "reviewer-matrix-v3",
+  "gpt6_production_default_enabled": false,
+  "native_enforcement_accepted": false,
+  "local_v1_transport_admission": "PASS",
+  "native_acceptance_scope": "one local Desktop V1 gpt-6-luna/low transport probe; not general host or quality acceptance",
+  "public_release_created": false,
+  "record_scope": "Pre-publication source snapshot; CI, artifacts, final installation and public release verified separately.",
+  "standalone_cli_support": false,
+  "execution_authorization": "NONE",
+  "package_validation_is_host_acceptance": false
+}

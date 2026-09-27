@@ -12,6 +12,7 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.md) for vers
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.13.6 | [Notes](v7.13.6/RELEASE_NOTES.md) | [Audit](v7.13.6/AUDIT_REPORT.md) | [Validation](v7.13.6/VALIDATION_REPORT.md) | Desktop V1 budget reentry fix; local negative and single-dispatch lifecycle evidence; quality and broader host acceptance remain separate | [JSON](v7.13.6/BUILD_INFO.json) | [JSON](v7.13.6/PACKAGE_VALIDATION.json) |
 | 7.13.5 | [Notes](v7.13.5/RELEASE_NOTES.md) | [Audit](v7.13.5/AUDIT_REPORT.md) | [Validation](v7.13.5/VALIDATION_REPORT.md) | Codex Desktop 0.157.1 internal component compatibility; package, Desktop, CI, and publication are accepted separately | [JSON](v7.13.5/BUILD_INFO.json) | [JSON](v7.13.5/PACKAGE_VALIDATION.json) |
 | 7.13.4 | [Notes](v7.13.4/RELEASE_NOTES.md) | [Audit](v7.13.4/AUDIT_REPORT.md) | [Validation](v7.13.4/VALIDATION_REPORT.md) | Windows Desktop permissions and delegation fixes; reentry denial passed, positive native admission remains blocked | [JSON](v7.13.4/BUILD_INFO.json) | [JSON](v7.13.4/PACKAGE_VALIDATION.json) |
 | 7.13.3 | [Notes](v7.13.3/RELEASE_NOTES.md) | [Audit](v7.13.3/AUDIT_REPORT.md) | [Validation](v7.13.3/VALIDATION_REPORT.md) | Path-alias regressions and independent targeted inspection passed; release and native admission require separate acceptance | [JSON](v7.13.3/BUILD_INFO.json) | [JSON](v7.13.3/PACKAGE_VALIDATION.json) |

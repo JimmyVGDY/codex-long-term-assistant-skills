@@ -1,0 +1,19 @@
+{
+  "schema_version": 2,
+  "version": "7.13.6",
+  "host_surface": "codex-desktop",
+  "status": "PENDING_RELEASE_VALIDATION",
+  "compatibility_registry_digest": "d4a1de79d199f449dcc54849baadffe2249d01b79b03f302bbca439d1d79cf1b",
+  "implementation_validation": {
+    "commit": "e74c6b9b6ffeab7874b1f28db520dd47a27611e4",
+    "ok": false,
+    "version_label": "7.13.5",
+    "package_test_count": 783,
+    "runtime_test_count": 231
+  },
+  "local_v1_transport_admission": "PASS",
+  "model_quality_qualification": "NOT_EVALUATED",
+  "native_v4_all_channels": "NOT_ACCEPTED",
+  "public_release_created": false,
+  "source_binding": "Exact committed source established by release source manifest, tag and provenance."
+}

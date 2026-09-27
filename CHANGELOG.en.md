@@ -4,6 +4,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.13.6 - 2026-09-27
+
+- Register the two exact Desktop V1 messaging and resume names so reentry in a V4-bound task reaches the existing PreToolUse budget gate.
+- Preserve neutral behavior for unbound tasks, existing creation handling, message-digest checks, and historical ledgers without wildcard matching.
+- A real Desktop V1 run verified reentry denial and one GPT-6 Luna / Low reservation, creation receipt, completion, and charge. Evidence covers the tested local channel only; model quality qualification and GPT-6 defaults remain unchanged.
+
 ## 7.13.5 - 2026-09-27
 
 - Advance the frozen component window used by Codex Desktop to official stable 0.157.1, retaining the ten preceding stable releases and removing 0.153.0 from the active window.
