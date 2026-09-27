@@ -85,6 +85,21 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
                 self.assertFalse(any(re.fullmatch(entry["matcher"], name)
                                      for entry in fragment[event]))
 
+    def test_v1_reentry_canonical_names_match_only_pretool(self) -> None:
+        fragment = package_manager.hook_fragment(self.script, self.supported)
+        for name in ("multi_agent_v1send_input", "multi_agent_v1resume_agent"):
+            with self.subTest(name=name):
+                pre = [group for group in fragment["PreToolUse"]
+                       if re.fullmatch(group["matcher"], name)]
+                post = [group for group in fragment["PostToolUse"]
+                        if re.fullmatch(group["matcher"], name)]
+                self.assertEqual(1, len(pre))
+                self.assertEqual([], post)
+        for name in ("multi_agent_v1send_message", "multi_agent_v1send_input_extra",
+                     "mcp__foreign__multi_agent_v1send_input"):
+            self.assertFalse(any(re.fullmatch(group["matcher"], name)
+                                 for group in fragment["PreToolUse"]))
+
     def test_unknown_profile_omits_optional_hook_flag_and_preserves_events(self) -> None:
         fragment = package_manager.hook_fragment(self.script, self.unknown)
         self.assertNotIn("UserPromptSubmit", fragment)

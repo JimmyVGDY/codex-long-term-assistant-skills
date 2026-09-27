@@ -3,17 +3,17 @@
   "documents": [
     {
       "path": "docs/releases/v7.13.5/RELEASE_NOTES.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.13.5/RELEASE_NOTES.md"
     },
     {
       "path": "docs/releases/v7.13.5/VALIDATION_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.13.5/VALIDATION_REPORT.md"
     },
     {
       "path": "docs/releases/v7.13.5/AUDIT_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.13.5/AUDIT_REPORT.md"
     },
     {
@@ -900,6 +900,21 @@
       "path": "docs/releases/v7.13.3/AUDIT_REPORT.md",
       "status": "historical",
       "english_source": "locales/en/docs/releases/v7.13.3/AUDIT_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.13.6/RELEASE_NOTES.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.13.6/RELEASE_NOTES.md"
+    },
+    {
+      "path": "docs/releases/v7.13.6/VALIDATION_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.13.6/VALIDATION_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.13.6/AUDIT_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.13.6/AUDIT_REPORT.md"
     }
   ],
   "english_projections": [
@@ -1526,6 +1541,18 @@
     {
       "source": "locales/en/docs/releases/v7.13.3/AUDIT_REPORT.md",
       "target": "docs/releases/v7.13.3/AUDIT_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.13.6/RELEASE_NOTES.md",
+      "target": "docs/releases/v7.13.6/RELEASE_NOTES.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.13.6/VALIDATION_REPORT.md",
+      "target": "docs/releases/v7.13.6/VALIDATION_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.13.6/AUDIT_REPORT.md",
+      "target": "docs/releases/v7.13.6/AUDIT_REPORT.en.md"
     }
   ],
   "fact_files": {

@@ -272,6 +272,25 @@ class V4HookTests(unittest.TestCase):
         self.env.pop("CP_DELEGATION_BUDGET_REQUIRED")
         self.assertEqual({}, self.invoke(payload))
 
+    def test_v1_reentry_names_require_fresh_dispatch_and_do_not_charge(self):
+        before = self.fixture.path.read_bytes()
+        for name in ("multi_agent_v1send_input", "multi_agent_v1resume_agent"):
+            with self.subTest(name=name):
+                payload = {**self.payload, "tool_name": name,
+                           "tool_input": {"target": "prior-agent", "message": "new work"}}
+                result = self.invoke(payload)
+                self.assertEqual("deny", result["hookSpecificOutput"]["permissionDecision"])
+                self.assertIn("V4_FRESH_DISPATCH_REQUIRED",
+                              result["hookSpecificOutput"]["permissionDecisionReason"])
+                self.assertEqual(before, self.fixture.path.read_bytes())
+
+    def test_v1_reentry_names_remain_neutral_without_a_bound_budget(self):
+        self.env.pop("CP_DELEGATION_BUDGET_PATH")
+        self.env.pop("CP_DELEGATION_BUDGET_REQUIRED")
+        for name in ("multi_agent_v1send_input", "multi_agent_v1resume_agent"):
+            self.assertEqual({}, self.invoke({**self.payload, "tool_name": name,
+                "tool_input": {"target": "prior-agent", "message": "new work"}}))
+
     def test_ordinary_roles_cannot_inherit_an_unknown_parent_tuple(self):
         self.env.pop("CP_DELEGATION_BUDGET_PATH")
         self.env.pop("CP_DELEGATION_BUDGET_REQUIRED")
