@@ -681,6 +681,10 @@ def _delegation_hook_matcher(*names: str) -> str:
     # forms, in one group so aliases cannot launch duplicate handlers.
     aliases = ["Agent"] if "spawn_agent" in names else []
     aliases.extend(prefix + name for name in names for prefix in ("", "collaboration.", "collaboration"))
+    # 中文：只补充 V1 的两个规范重入名称，不扩大为后缀或通配匹配。
+    # English: Add only the two canonical V1 reentry names, without wildcard matching.
+    aliases.extend("multi_agent_v1" + name for name in names
+                   if name in {"send_input", "resume_agent"})
     return "|".join(re.escape(name) for name in aliases)
 
 

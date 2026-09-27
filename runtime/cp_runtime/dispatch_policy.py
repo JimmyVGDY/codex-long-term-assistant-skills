@@ -34,6 +34,12 @@ _DELEGATION_TOOL_ALIASES = {
     for prefix in ("collaboration.", "collaboration")
 }
 
+# 中文：V1 创建规范为裸名，消息与恢复操作使用带命名空间的拼接名。
+# English: V1 creation is canonicalized; reentry retains its flattened namespace.
+_DELEGATION_TOOL_ALIASES.update({
+    "multi_agent_v1" + name: name for name in ("send_input", "resume_agent")
+})
+
 
 def delegation_tool_name(value: Any) -> str:
     """中文：只归一化桌面委派工具的明确命名形式，不按后缀识别其他工具。
