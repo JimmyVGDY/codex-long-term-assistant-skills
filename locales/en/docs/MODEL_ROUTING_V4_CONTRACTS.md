@@ -209,3 +209,19 @@ real model quality.
 While a V4 root binding is active, followup_task, send_message, send_input and resume_agent cannot start another review or inject trial material. Admission rejects these calls. A new round requires a fresh independent dispatch and permit. Pause or cancellation does not imply a refund.
 
 `add-evidence` appends only current-baseline Evidence for the same project, task and existing scenarios. It cannot replace prior references, policy or spent resources. The event advances the selection revision, invalidating prepared permits; revoke unused permits before recalculating. A stale-baseline result may be retained only as incomplete and cannot close as PASS.
+
+## Explicit Desktop V2 context contract
+
+New Desktop coordination messages may be opaque transport data. The internal `scripts/routing-v5.py` entry point provides a separately versioned bounded evaluation path: request2, Budget5, root binding3, Review State10 and Result7. V4 plaintext checks and journal meanings remain frozen; an expected prompt digest is never substituted for an observed opaque-message digest.
+
+The controller snapshots the approved business prompt and explicitly listed material into an immutable bundle capped at8000 UTF-8 bytes. The exact parent session, child, named dispatch, role and depth must bind before a fixed reader exposes the material. A complete review requires a matching actual-output PostToolUse receipt and one context token. The controller attaches immutable attribution; the model supplies only semantic content. Changed material, helpers, baseline, calls or identities are rejected. Oversized bundles require a smaller scope, never silent truncation.
+
+Session identity is resolved before cwd, and closed bindings remain as tombstones. Resources are reserved atomically before creation; created failures/cancellation do not imply refunds or restored attempts. A single experiment cannot mix transport provenance versions.
+
+The new path currently permits EVALUATION only. Local interception, production tool coverage, model qualification and actual Desktop behavior are separate evidence boundaries; this is not system-readonly. Rollback first stops new V5 roots and retains readers until in-flight roots close. New state is never converted into old writable state.
+
+Registration creates pending intent only. An actual parent PreToolUse verifies the session, repository and journal before activation. The root-registration lock precedes the budget lock, and reservation rechecks registration. A ledger environment variable alone cannot authorize V5 dispatch; existing intent with missing registration is rejected.
+
+Evaluation prompts must include all source and material, with an empty artifacts array, so the preregistered prompt digest covers the actual input. Windows line endings are normalized to LF before hashing delivered bytes. The output envelope adds140 bytes: an8000-byte bundle produces at most8140 bytes, below the8192-byte limit.
+
+The controller derives supersedes from a verified transition; model content cannot supply it. The installed internal entry is tools/routing-v5.py and resolves the version cache through installation state. close or retire-desktop retains closed tombstones.

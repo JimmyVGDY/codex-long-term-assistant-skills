@@ -2,7 +2,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-The V7.13.6 candidate targets Codex Desktop, advances the internal frozen component window to official stable 0.157.1, and preserves existing permission, delegation, recovery, and model-routing boundaries. Standalone CLI execution is limited to internal management and compatibility regression, not a product-support track. Read publication status from GitHub Releases and workflows.
+The V7.14.0 candidate targets Codex Desktop, advances the internal frozen component window to official stable 0.157.1, and preserves existing permission, delegation, recovery, and model-routing boundaries. Standalone CLI execution is limited to internal management and compatibility regression, not a product-support track. Read publication status from GitHub Releases and workflows.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -23,7 +23,7 @@ The V7.13.6 candidate targets Codex Desktop, advances the internal frozen compon
   <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.13.6 retains non-blocking message/Stop behavior, Operation v2 and separation of base Skills from optional enhancement. The gate remains off by default; capability level establishes neither semantic correctness nor authority. See the [model policy](docs/MODEL_ROUTING_AND_COST_POLICY.md) for positioning, reasoning gains and cold-start conditions.
+V7.14.0 retains non-blocking message/Stop behavior, Operation v2 and separation of base Skills from optional enhancement. The gate remains off by default; capability level establishes neither semantic correctness nor authority. See the [model policy](docs/MODEL_ROUTING_AND_COST_POLICY.md) for positioning, reasoning gains and cold-start conditions.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Four daily paths](#four-daily-paths-and-the-unified-entry) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 

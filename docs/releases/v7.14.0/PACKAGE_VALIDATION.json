@@ -1,0 +1,30 @@
+{
+  "schema_version": 2,
+  "version": "7.14.0",
+  "evidence_scope": "local-source-evidence",
+  "status": "PENDING_REMOTE_RELEASE_VALIDATION",
+  "package": {
+    "executed": 814,
+    "pass": 813,
+    "platform_skipped": 1
+  },
+  "runtime_same_source_pass": 231,
+  "same_run_overall_pass": false,
+  "preserved_runtime_failure": "test_resume.ResumeViewTests.test_requested_evidence_count_is_not_truncated",
+  "runtime_followup": {
+    "isolated_count_checks": 3,
+    "full_runtime_pass": 231,
+    "assertions_or_timeouts_changed": false,
+    "original_cause": "UNCONFIRMED"
+  },
+  "routing_regression_pass": 144,
+  "independent_repair_review": "NONBLOCKING",
+  "local_v2_transport_admission": "PASS",
+  "native_attempts": 3,
+  "native_declared_proxy_units": 4,
+  "model_quality_qualification": "NOT_EVALUATED",
+  "gpt6_production_default_enabled": false,
+  "public_release_created": false,
+  "compatibility_registry_digest": "6bbf7eb1b9605b007534f858236f42f396a10cac071126b5eda2917a80c7f7a6",
+  "source_binding": "Final committed source, tag and provenance will supply exact public binding."
+}

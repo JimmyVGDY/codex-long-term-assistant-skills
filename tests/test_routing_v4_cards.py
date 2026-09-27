@@ -52,6 +52,24 @@ class CardTests(unittest.TestCase):
             with self.assertRaisesRegex(RoutingError, "BINDING"):
                 validate_experiment(data, trace_loader=changed, require_native=True)
 
+    def test_v2_context_traces_require_delivery_and_cannot_mix_transport_versions(self):
+        data = fx.experiment(30, origin="desktop-evaluation")
+        load = fx.trace_loader(data)
+        def context_trace(reference):
+            return {**load(reference), "schema_version": "desktop-evaluation-trace/2",
+                    "context_delivery_ref": ref("delivered:" + reference),
+                    "transport_mode": "desktop-authoritative-context/1"}
+        validate_experiment(data, trace_loader=context_trace, require_native=True)
+        def forged(reference):
+            return {**context_trace(reference), "context_delivery_ref": ""}
+        with self.assertRaises(ValueError):
+            validate_experiment(data, trace_loader=forged, require_native=True)
+        first = data["samples"][0]["receipt_ref"]
+        def mixed(reference):
+            return load(reference) if reference == first else context_trace(reference)
+        with self.assertRaisesRegex(ValueError, "TRANSPORT_MIXED"):
+            validate_experiment(data, trace_loader=mixed, require_native=True)
+
     def test_one_host_task_cannot_be_split_into_independent_clusters(self):
         data = fx.experiment(30)
         data["samples"][1]["task_ref"] = data["samples"][0]["task_ref"]

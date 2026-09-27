@@ -179,7 +179,10 @@ def _budget_path(data: Mapping[str, Any]) -> str:
     explicit = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
     session = _lookup_strict(data, "root_session_id", "rootSessionId") or _lookup_strict(data, *HOOK_ALIASES["session_id"])
     cwd = str(_lookup_strict(data, *HOOK_ALIASES["cwd"]) or "")
-    registered = lookup(cwd=cwd, host_session_id=str(session or ""))
+    from cp_runtime.routing_registry_v5 import lookup as lookup_context
+    registered = lookup_context(host_session_id=str(session or ""))
+    if registered is None:
+        registered = lookup(cwd=cwd, host_session_id=str(session or ""))
     if explicit and registered and not same_path(Path(explicit).expanduser(), registered):
         raise DelegationBudgetError("DESKTOP_ROOT_BUDGET_CONFLICT")
     return str(registered) if registered else explicit
@@ -191,7 +194,7 @@ def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     tool = delegation_tool_name(_lookup_strict(data, *HOOK_ALIASES["tool_name"]))
     if tool in REENTRY_TOOLS:
         ledger_text = _budget_path(data)
-        if ledger_text and read_budget(Path(ledger_text))["schema_version"] == "4.0":
+        if ledger_text and read_budget(Path(ledger_text))["schema_version"] in {"4.0", "5.0"}:
             return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
                 "permissionDecisionReason": _policy_message("budget_denied") + " (V4_FRESH_DISPATCH_REQUIRED)"}}
         return None
@@ -207,6 +210,13 @@ def _guard(data: Mapping[str, Any]) -> Dict[str, Any] | None:
     if ledger_text:
         try:
             bound_state = read_budget(Path(ledger_text).expanduser().resolve())
+            if bound_state["schema_version"] == "5.0":
+                from cp_runtime.routing_hook_v5 import pretool as context_pretool
+                reserved = context_pretool(Path(ledger_text).expanduser().resolve(), data, args)
+                if isinstance(data, dict):
+                    data["_cp_reservation_id"] = reserved["reservation_id"]
+                    data["_cp_root_verified"] = _VERIFIED_ROOT
+                return None
             if bound_state["schema_version"] == "4.0":
                 from cp_runtime.routing_hook_v4 import pretool
                 reserved = pretool(Path(ledger_text).expanduser().resolve(), data, args,
@@ -310,6 +320,10 @@ def _budget_lifecycle(data: Mapping[str, Any], hook_name: str) -> None:
         return
     ledger = Path(ledger_text).expanduser().resolve()
     state = read_budget(ledger)
+    if state["schema_version"] == "5.0":
+        from cp_runtime.routing_hook_v5 import lifecycle as context_lifecycle
+        return context_lifecycle(ledger, data, hook_name,
+            args=_tool_input(data) if hook_name == "PostToolUse" else {})
     if state["schema_version"] == "4.0":
         from cp_runtime.routing_hook_v4 import lifecycle
         reservation = lifecycle(ledger, data, hook_name, args=_tool_input(data) if hook_name == "PostToolUse" else {},
@@ -418,19 +432,19 @@ def _event(data: Mapping[str, Any], *, allow_feedback: bool = True) -> Dict[str,
         try:
             budget = read_budget(Path(ledger_text).expanduser().resolve())
             reservation = budget.get("reservations", {}).get(reservation_id) or {}
-            if budget["schema_version"] in {"3.0", "4.0"}:
+            if budget["schema_version"] in {"3.0", "4.0", "5.0"}:
                 if data.get("_cp_root_verified") is not _VERIFIED_ROOT or not reservation:
                     raise DelegationBudgetError("未核验的 V3 关联不能进入根任务观察")
                 observed_project_id = budget["identity"]["project_id"]
                 task_id = budget["identity"]["task_id"]
                 fingerprint = budget["identity"]["repo_fingerprint"]
-            if budget["schema_version"] == "4.0":
+            if budget["schema_version"] in {"4.0", "5.0"}:
                 from cp_runtime.routing_contract import ref as routing_ref
                 # 中文：V3 观察保留冻结档位和单位；新档位以 V4 账本和样本为权威。
                 # English: V3 telemetry retains its frozen profile/unit vocabulary.
                 # V4 budget and Sample V4 remain authoritative for new profiles.
                 permit_ref = routing_ref(reservation["permit_id"])
-                metadata["budget_schema"] = "4.0"
+                metadata["budget_schema"] = budget["schema_version"]
                 metadata["budget_observation"] = "ledger-only"
             else:
                 approved_profile = str(reservation.get("approved_profile") or reservation.get("requested_profile") or "")
@@ -614,6 +628,13 @@ def main() -> int:
             response = failure_response("PostToolUse", "OP_CANONICAL_INPUT")
         print(json.dumps(response, ensure_ascii=False))
         return 0
+    if hook_name in {"PreToolUse", "PostToolUse"} and data.get("agent_id"):
+        from cp_runtime.routing_hook_v5 import child_tool, registered_path
+        context_path = registered_path(data)
+        if context_path:
+            child_tool(context_path, data)
+            print("{}")
+            return 0
     if hook_name in {"PreToolUse", "PostToolUse"} and data.get("tool_name") == "apply_patch":
         response = supervise(ROOT, data)
         # 中文：空对象是宿主中性/许可响应；独立入口省略输出，受监督 Worker 仍输出 ``{}``。
@@ -631,14 +652,18 @@ def main() -> int:
         return 0
     if hook_name == "Interrupt" or (hook_name == "PreToolUse" and str(_lookup(data, *HOOK_ALIASES["tool_name"]) or "").lower() in {"apply_patch", "edit", "write"}):
         return 0
+    context_response = None
     try:
-        _budget_lifecycle(data, hook_name)
+        context_response = _budget_lifecycle(data, hook_name)
     except (DelegationBudgetError, DispatchPolicyError, RuntimeContractError, OSError, TimeoutError, ValueError) as exc:
         diagnostic = {"schema_version": "1.0", "component": "delegation-budget",
                       "status": "RECONCILIATION_FAILED", "hook": hook_name,
                       "error_ref": "sha256:" + hashlib.sha256(str(exc).encode("utf-8")).hexdigest()}
         print(json.dumps(diagnostic, ensure_ascii=False, sort_keys=True), file=sys.stderr)
     event = _observe(data)
+    if context_response:
+        print(json.dumps(context_response, ensure_ascii=True))
+        return 0
     # 中文：正常 Stop 处理返回宿主规定的中性响应；上方恢复逻辑确保 Windows 截断非 ASCII last_assistant_message 时仍能进入该分支。
     # English: Normal Stop handling returns the host-defined neutral response; the recovery above preserves this branch when Windows truncates a non-ASCII last_assistant_message.
     if hook_name in {"Stop", "SubagentStop"}:

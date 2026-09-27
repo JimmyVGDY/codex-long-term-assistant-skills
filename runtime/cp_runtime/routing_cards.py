@@ -151,8 +151,17 @@ def validate_experiment(value: Any, *, trace_loader: Callable[[str], Mapping[str
         if require_native:
             if row["receipt_ref"] not in trace_cache:
                 trace_cache[row["receipt_ref"]] = trace_loader(row["receipt_ref"])  # type: ignore[misc]
-            trace = exact(trace_cache[row["receipt_ref"]], TRACE_FIELDS, "NATIVE_TRACE_FIELDS")
-            if trace["schema_version"] != "desktop-evaluation-trace/1" \
+            raw_trace = trace_cache[row["receipt_ref"]]
+            is_context = raw_trace.get("schema_version") == "desktop-evaluation-trace/2"
+            fields = TRACE_FIELDS | {"context_delivery_ref", "transport_mode"} if is_context else TRACE_FIELDS
+            trace = exact(raw_trace, fields, "NATIVE_TRACE_FIELDS")
+            if is_context:
+                sha(trace["context_delivery_ref"])
+                if trace["transport_mode"] != "desktop-authoritative-context/1":
+                    fail("NATIVE_TRACE_CONTEXT_MODE")
+            if any(item.get("schema_version") != trace["schema_version"] for item in trace_cache.values()):
+                fail("NATIVE_TRACE_TRANSPORT_MIXED")
+            if trace["schema_version"] not in {"desktop-evaluation-trace/1", "desktop-evaluation-trace/2"} \
                     or trace["source"] != "verified-host-receipt" \
                     or trace["host_surface"] != HOST_SURFACE or trace["identity"] != expected_identity \
                     or trace["scenario_ref"] != ref(experiment_scenario) \

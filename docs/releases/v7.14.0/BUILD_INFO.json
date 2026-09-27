@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "version": "7.14.0",
+  "host_surface": "codex-desktop",
+  "release_scope": "DESKTOP_V2_AUTHORITATIVE_CONTEXT",
+  "compatibility_registry_digest": "6bbf7eb1b9605b007534f858236f42f396a10cac071126b5eda2917a80c7f7a6",
+  "default_policy_id": "reviewer-matrix-v3",
+  "gpt6_production_default_enabled": false,
+  "native_enforcement_accepted": false,
+  "local_v2_transport_admission": "PASS",
+  "public_release_created": false,
+  "record_scope": "Local candidate source evidence; CI/final artifact/publication remain separate.",
+  "standalone_cli_support": false,
+  "execution_authorization": "NONE",
+  "package_validation_is_host_acceptance": false,
+  "native_acceptance_scope": "Windows Desktop0.158.0-alpha.2.1; two complete named V2 context chains and one preserved initial schema rejection; ADMISSION_ONLY"
+}

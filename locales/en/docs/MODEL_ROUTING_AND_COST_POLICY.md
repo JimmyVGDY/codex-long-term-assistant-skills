@@ -115,3 +115,5 @@ policy, scenario and cost basis. Historical observations do not establish curren
 readiness and never automatically alter routing, budgets or configuration.
 
 See the [data and transaction contracts](MODEL_ROUTING_V4_CONTRACTS.md) for details.
+
+The bounded Desktop V2 context path uses a separate format for explicit evaluation only; it does not automatically replace the production policy above. See the [V2 context contract](MODEL_ROUTING_V4_CONTRACTS.md#explicit-desktop-v2-context-contract).

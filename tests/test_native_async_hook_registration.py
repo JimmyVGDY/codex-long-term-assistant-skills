@@ -71,34 +71,51 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
                 name = prefix + tool
                 with self.subTest(name=name):
                     pre = [entry for entry in fragment["PreToolUse"]
-                           if re.fullmatch(entry["matcher"], name)]
+                           if "cp_context.py" not in entry["hooks"][0]["command"] and re.fullmatch(entry["matcher"], name)]
                     post = [entry for entry in fragment["PostToolUse"]
-                            if re.fullmatch(entry["matcher"], name)]
+                            if "cp_context.py" not in entry["hooks"][0]["command"] and re.fullmatch(entry["matcher"], name)]
                     self.assertEqual(1, len(pre))
                     self.assertEqual(1 if tool == "spawn_agent" else 0, len(post))
                     self.assertIn("cp_hook.py", pre[0]["hooks"][0]["command"])
         for event in ("PreToolUse", "PostToolUse"):
             self.assertEqual(1, sum(bool(re.fullmatch(entry["matcher"], "Agent"))
-                                    for entry in fragment[event]))
+                                    for entry in fragment[event] if "cp_context.py" not in entry["hooks"][0]["command"]))
             for name in ("Bash", "mcp__other__collaborationspawn_agent",
                          "collaborationspawn_agent_extra", "collaborationXsend_message"):
                 self.assertFalse(any(re.fullmatch(entry["matcher"], name)
-                                     for entry in fragment[event]))
+                                     for entry in fragment[event] if "cp_context.py" not in entry["hooks"][0]["command"]))
 
     def test_v1_reentry_canonical_names_match_only_pretool(self) -> None:
         fragment = package_manager.hook_fragment(self.script, self.supported)
         for name in ("multi_agent_v1send_input", "multi_agent_v1resume_agent"):
             with self.subTest(name=name):
                 pre = [group for group in fragment["PreToolUse"]
-                       if re.fullmatch(group["matcher"], name)]
+                       if "cp_context.py" not in group["hooks"][0]["command"] and re.fullmatch(group["matcher"], name)]
                 post = [group for group in fragment["PostToolUse"]
-                        if re.fullmatch(group["matcher"], name)]
+                        if "cp_context.py" not in group["hooks"][0]["command"] and re.fullmatch(group["matcher"], name)]
                 self.assertEqual(1, len(pre))
                 self.assertEqual([], post)
         for name in ("multi_agent_v1send_message", "multi_agent_v1send_input_extra",
                      "mcp__foreign__multi_agent_v1send_input"):
             self.assertFalse(any(re.fullmatch(group["matcher"], name)
-                                 for group in fragment["PreToolUse"]))
+                                 for group in fragment["PreToolUse"] if "cp_context.py" not in group["hooks"][0]["command"]))
+
+    def test_context_guard_covers_local_tools_once_and_reinstalls_without_duplicates(self):
+        fragment = package_manager.hook_fragment(self.script, self.supported)
+        for event in ("PreToolUse", "PostToolUse"):
+            guards = [g for g in fragment[event] if "cp_context.py" in g["hooks"][0]["command"]]
+            self.assertEqual(1, len(guards))
+            for tool in ("Bash", "apply_patch", "collaborationspawn_agent", "mcp__example__tool"):
+                self.assertTrue(re.fullmatch(guards[0]["matcher"], tool))
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "hooks.json"
+            package_manager.merge_hooks(path, self.script, self.supported)
+            package_manager.merge_hooks(path, self.script, self.supported)
+            actual = json.loads(path.read_text())["hooks"]
+            for event in ("PreToolUse", "PostToolUse"):
+                self.assertEqual(1, sum("cp_context.py" in g["hooks"][0]["command"] for g in actual[event]))
+            package_manager.remove_managed_hooks(path)
+            self.assertTrue(all(not rows for rows in json.loads(path.read_text())["hooks"].values()))
 
     def test_unknown_profile_omits_optional_hook_flag_and_preserves_events(self) -> None:
         fragment = package_manager.hook_fragment(self.script, self.unknown)
@@ -133,7 +150,7 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
             hooks = json.loads(path.read_text(encoding="utf-8"))["hooks"]
             self.assertIn(foreign, hooks["PreToolUse"])
             matching = [entry for entry in hooks["PreToolUse"]
-                        if re.fullmatch(entry.get("matcher", ""), "collaborationsend_message")]
+                        if "cp_context.py" not in entry["hooks"][0]["command"] and re.fullmatch(entry.get("matcher", ""), "collaborationsend_message")]
             self.assertEqual(1, len(matching))
 
     def test_plugin_preflight_rejects_frozen_version_with_unknown_async_capability(self) -> None:

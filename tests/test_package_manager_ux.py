@@ -46,9 +46,10 @@ class PackageManagerUxTests(unittest.TestCase):
             directory = cache / "skills" / name if mode == "plugin" else skills / name
             directory.mkdir(parents=True, exist_ok=True)
             (directory / "SKILL.md").write_text("fixture", encoding="utf-8")
-        for relative in ("tools/cp-runtime.py", "tools/evolution.py",
+        for relative in ("tools/cp-runtime.py", "tools/evolution.py", "tools/routing-v5.py",
                          "cp-assistant-hooks/cp_hook.py", "cp-assistant-hooks/cp_gate.py",
-                         "cp-assistant-hooks/seal_worker.py"):
+                         "cp-assistant-hooks/seal_worker.py", "cp-assistant-hooks/cp_context.py",
+                         "cp-assistant-hooks/review_context_reader.py"):
             target = home / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("fixture", encoding="utf-8")
@@ -70,6 +71,11 @@ class PackageManagerUxTests(unittest.TestCase):
                      str(home / "cp-assistant-hooks" / "seal_worker.py"):
                          package_manager.tree_sha256(home / "cp-assistant-hooks" / "seal_worker.py"),
                  }}
+        for script_name in ("cp_context.py", "review_context_reader.py"):
+            target = home / "cp-assistant-hooks" / script_name
+            state["managed_hashes"][str(target)] = package_manager.tree_sha256(target)
+        target = home / "tools" / "routing-v5.py"
+        state["managed_hashes"][str(target)] = package_manager.tree_sha256(target)
         if include_base:
             state["components"]["base"] = {"status": "PLUGIN_MANAGED" if mode == "plugin" else "STANDALONE_SKILLS"}
         state_file = home / "cp-assistant-v6-state.json"
