@@ -1,0 +1,41 @@
+{
+  "schema_version": 2,
+  "version": "7.13.5",
+  "host_surface": "codex-desktop",
+  "release_scope": "DESKTOP_COMPONENT_COMPATIBILITY_PATCH",
+  "codex_0_157_1": {
+    "official_artifact": "VERIFIED",
+    "source_contract": "VERIFIED",
+    "windows_cli_contract": "PASS",
+    "windows_isolated_plugin": "PASS",
+    "synthetic_hook": "PASS",
+    "real_host": "PENDING",
+    "ubuntu": "PENDING_REMOTE_MATRIX",
+    "evidence_scope": "internal-component-reference-only"
+  },
+  "public_release_created": false,
+  "compatibility_registry_digest": "aa779e3d01128d0c17fe90f15d53761612ecaffe3889812cc39ac10a6d6ba7ee",
+  "payload_identity": {
+    "file_count": 266,
+    "sha256": "83f56d08b4aec9f56e1ba7a0dd222f391e02096b6c30f994bc1a8054a839f245"
+  },
+  "full_package_validation": {
+    "ok": true,
+    "evidence_scope": "package-only",
+    "version": "7.13.5",
+    "status": "PASS",
+    "package_test_count": 780,
+    "runtime_test_count": 231,
+    "validated_runtime": "3.14.7",
+    "package_report_sha256": "28a5b4d2344f38999394b72e6061b5fd19bad321889d270eb03fea7bc22aac86",
+    "runtime_report_sha256": "774e6ebbe3bb6800f46f0558d20faf99a1400b53471e04835f48de0fe2aadf61"
+  },
+  "model_quality_qualification": "NOT_EVALUATED",
+  "native_v4_dispatch": "NOT_ACCEPTED",
+  "source_binding": "Exact committed source is established by the release source manifest, tag and provenance; this record has no self-referential commit hash.",
+  "ok": true,
+  "internal_component_records_are_desktop_acceptance": false,
+  "desktop_local_component": "0.158.0-alpha.2.1",
+  "account_plugin_readback": "PASS",
+  "fresh_desktop_process": "PASS"
+}

@@ -2,6 +2,12 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.13.5 - 2026-09-27
+
+- 将 Codex Desktop 内部冻结组件窗口推进到官方稳定版 0.157.1，保留前十个稳定版本并将 0.153.0 移出活动窗口。
+- 冻结官方 npm、标签提交、Windows 二进制与源码合同证据；上游未提供可核验的功能亮点，不推断具体修复。
+- 保留 Desktop-only、V7.13.4 权限与委派修复、冻结 Reviewer 策略及原生准入失败关闭边界。
+
 ## 7.13.4 - 2026-09-25
 
 - 修复 Windows 桌面安装权限与委派入口；既有稳定组件窗口仅作为内部契约回归参考，不构成独立 CLI 支持。

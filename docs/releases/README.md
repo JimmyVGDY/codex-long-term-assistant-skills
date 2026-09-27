@@ -12,6 +12,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.13.5 | [Notes](v7.13.5/RELEASE_NOTES.md) | [Audit](v7.13.5/AUDIT_REPORT.md) | [Validation](v7.13.5/VALIDATION_REPORT.md) | Codex Desktop 0.157.1 内部组件兼容；包、Desktop、CI 与公开发行分层验收 | [JSON](v7.13.5/BUILD_INFO.json) | [JSON](v7.13.5/PACKAGE_VALIDATION.json) |
 | 7.13.4 | [Notes](v7.13.4/RELEASE_NOTES.md) | [Audit](v7.13.4/AUDIT_REPORT.md) | [Validation](v7.13.4/VALIDATION_REPORT.md) | Windows 桌面权限与委派入口修复；原生重入拒绝通过，正向准入保持阻断 | [JSON](v7.13.4/BUILD_INFO.json) | [JSON](v7.13.4/PACKAGE_VALIDATION.json) |
 | 7.13.3 | [Notes](v7.13.3/RELEASE_NOTES.md) | [Audit](v7.13.3/AUDIT_REPORT.md) | [Validation](v7.13.3/VALIDATION_REPORT.md) | 路径别名定向回归与独立任务核验通过；完整发行与原生准入分别验收 | [JSON](v7.13.3/BUILD_INFO.json) | [JSON](v7.13.3/PACKAGE_VALIDATION.json) |
 | 7.13.2 | [Notes](v7.13.2/RELEASE_NOTES.md) | [Audit](v7.13.2/AUDIT_REPORT.md) | [Validation](v7.13.2/VALIDATION_REPORT.md) | Codex CLI 0.156.1 兼容候选；包、账户、CI、标签、资产、provenance 与公开下载门禁分别读回 | [JSON](v7.13.2/BUILD_INFO.json) | [JSON](v7.13.2/PACKAGE_VALIDATION.json) |

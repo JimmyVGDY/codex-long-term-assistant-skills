@@ -4,6 +4,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.13.5 - 2026-09-27
+
+- Advance the frozen component window used by Codex Desktop to official stable 0.157.1, retaining the ten preceding stable releases and removing 0.153.0 from the active window.
+- Freeze official npm, tag-commit, Windows binary, and source-contract evidence. Upstream provides no verifiable feature highlights, so no specific fix is inferred.
+- Preserve Desktop-only scope, the V7.13.4 permission and delegation fixes, frozen reviewer policy, and fail-closed native-admission boundaries.
+
 ## 7.13.4 - 2026-09-25
 
 - Fix Windows Desktop installation permissions and delegation entry points; existing stable-component windows remain internal contract-regression references, not standalone CLI support.

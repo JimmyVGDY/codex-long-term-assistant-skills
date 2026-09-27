@@ -51,7 +51,9 @@ def main() -> int:
     parser.add_argument("--artifact")
     args = parser.parse_args()
     if args.codex_executable:
-        os.environ["CP_ASSISTANT_CODEX_EXECUTABLE"] = str(Path(args.codex_executable).resolve(strict=True))
+        os.environ["CP_ASSISTANT_DESKTOP_COMPONENT"] = str(
+            Path(args.codex_executable).resolve(strict=True)
+        )
     version_profile = profile_for_version(manager.COMPATIBILITY_REGISTRY, args.expected_version)
     evidence = version_profile["probe_evidence"]
     artifact_report = None
