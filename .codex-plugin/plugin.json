@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.13.6",
-  "description": "跨项目长期技术助手 V7.13.6：Desktop V1 委派预算拦截修复。",
+  "version": "7.14.0",
+  "description": "跨项目长期技术助手 V7.14.0：Desktop V2 有界审查上下文、独立版本账本及交付凭证。",
   "author": {
     "name": "Project maintainers"
   },

@@ -231,7 +231,19 @@ def _trace_loader(paths: list[str]):
         from .budget_v4 import export_traces
         if not loaded:
             for source in paths:
-                records = export_traces(Path(source))
+                # 中文：按显式新版本读取，旧 V4 账本解释器保持拒绝新事件。
+                # English: New trace reader is selected explicitly; V4 journal semantics stay frozen.
+                import json
+                with Path(source).open("rb") as stream:
+                    first = stream.readline(1_048_577)
+                if len(first) > 1_048_576:
+                    fail("NATIVE_TRACE_HEADER_TOO_LARGE")
+                version = json.loads(first).get("schema_version")
+                if version == "5.0":
+                    from .budget_v5 import export_traces as export_context_traces
+                    records = export_context_traces(Path(source))
+                else:
+                    records = export_traces(Path(source))
                 if set(records).intersection(cache):
                     fail("NATIVE_RECEIPT_SOURCE_AMBIGUOUS_OR_MISSING")
                 cache.update(records)

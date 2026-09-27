@@ -1020,6 +1020,9 @@ def read_budget(path: Path) -> Dict[str, Any]:
                 header = json.loads(first_line) if first_line.strip() else {}
             except (ValueError, UnicodeError):
                 header = {}
+            if isinstance(header, dict) and header.get("schema_version") == "5.0":
+                from .budget_v5 import _read_events, replay
+                return replay(_read_events(path))
             if isinstance(header, dict) and header.get("schema_version") == "4.0":
                 from .budget_v4 import _read_events, replay
                 return replay(_read_events(path))

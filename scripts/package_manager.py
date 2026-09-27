@@ -346,6 +346,24 @@ def tree_sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def payload_source_sha256(path: Path) -> str:
+    """中文：仅源载荷采用复制过滤；English: project source exactly as the public-payload copier does."""
+    io_root = _io_path(path)
+    reject_tree_links(path)
+    if io_root.is_file():
+        return sha256_file(io_root)
+    if not io_root.exists():
+        return "missing"
+    digest = hashlib.sha256()
+    for item in sorted((p for p in io_root.rglob("*") if p.is_file()), key=lambda p: p.as_posix()):
+        relative = item.relative_to(io_root)
+        if "__pycache__" in relative.parts or item.suffix in {".pyc", ".pyo"}:
+            continue
+        digest.update(relative.as_posix().encode("utf-8")); digest.update(b"\0")
+        digest.update(sha256_file(item).encode("ascii")); digest.update(b"\n")
+    return digest.hexdigest()
+
+
 def _normalize_host_path(raw: str) -> Path:
     value = str(raw).strip()
     if os.name == "nt":
@@ -693,6 +711,9 @@ def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None
     pretool_command = _hook_command(script_path, "PreToolUse")
     posttool_command = _hook_command(script_path, "PostToolUse")
     gate_path = script_path.with_name("cp_gate.py")
+    context_path = script_path.with_name("cp_context.py")
+    context_pretool_command = _hook_command(context_path, "PreToolUse")
+    context_posttool_command = _hook_command(context_path, "PostToolUse")
     gate_pretool_command = _hook_command(gate_path, "PreToolUse")
     gate_posttool_command = _hook_command(gate_path, "PostToolUse")
     fragment = {
@@ -710,6 +731,8 @@ def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None
         "Interrupt": [{"hooks": [{"type": "command", "command": command, "timeout": 3}]}],
         "SessionEnd": [{"hooks": [{"type": "command", "command": command, "timeout": 3}]}],
     }
+    fragment["PreToolUse"].append({"matcher": ".*", "hooks": [{"type": "command", "command": context_pretool_command, "timeout": 5}]})
+    fragment["PostToolUse"].append({"matcher": ".*", "hooks": [{"type": "command", "command": context_posttool_command, "timeout": 5}]})
     # 中文：UserPromptSubmit 是可选能力；没有可验证的宿主 profile 时完全不注册。
     # English: UserPromptSubmit is optional; omit it entirely without a verified host profile.
     if _native_async_user_prompt_submit_supported(profile):
@@ -764,7 +787,8 @@ def _is_managed_hook_entry(entry: Any) -> bool:
             continue
         command = str(hook.get("command") or "").replace("\\", "/").lower()
         if ("cp-assistant-hooks/cp_hook.py" in command
-                or "cp-assistant-hooks/cp_gate.py" in command):
+                or "cp-assistant-hooks/cp_gate.py" in command
+                or "cp-assistant-hooks/cp_context.py" in command):
             return True
     return False
 
@@ -1985,6 +2009,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
         ("install-state", state_path("user")),
         ("project-tool", ch / "tools" / "cp-runtime.py"),
         ("evolution-tool", ch / "tools" / "evolution.py"),
+        ("context-tool", ch / "tools" / "routing-v5.py"),
     ]
     targets.extend(("agent:" + p.name, ch / "agents" / p.name) for p in agent_files())
     legacy_targets = [("deprecated-skill:" + n, sh / n) for n in deprecated_skills]
@@ -2008,6 +2033,8 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     # English: Enhancement runtime is always an account-managed component; the base Plugin itself never loads it.
     targets.extend([("runtime", ch / "runtime" / "cp_runtime"), ("hook-script", ch / "cp-assistant-hooks" / "cp_hook.py"),
                     ("gate-worker", ch / "cp-assistant-hooks" / "cp_gate.py"),
+                    ("context-guard", ch / "cp-assistant-hooks" / "cp_context.py"),
+                    ("context-reader", ch / "cp-assistant-hooks" / "review_context_reader.py"),
                     ("seal-worker", ch / "cp-assistant-hooks" / "seal_worker.py"), ("hooks-json", ch / "hooks.json")])
     for _label, target in targets:
         reject_link_ancestors(target.parent)
@@ -2086,6 +2113,10 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             dst = ch / "tools" / script_name
             copy_atomic(ROOT / "scripts" / script_name, dst, readable_payload=True)
             _record_applied(journal, label, dst)
+        dst = ch / "tools" / "routing-v5.py"
+        copy_atomic(ROOT / "skills" / "multi-agent-independent-review" / "scripts" / "routing_v5.py",
+                    dst, readable_payload=True)
+        _record_applied(journal, "context-tool", dst)
         if mode == "standalone":
             for name in current_skills:
                 dst = sh / name; copy_atomic(ROOT / "skills" / name, dst, readable_payload=True); _record_applied(journal, "skill:" + name, dst)
@@ -2095,6 +2126,10 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             dst = ch / "runtime" / "cp_runtime"; copy_atomic(ROOT / "runtime" / "cp_runtime", dst, readable_payload=True); _record_applied(journal, "runtime", dst)
             dst = ch / "cp-assistant-hooks" / "cp_hook.py"; copy_atomic(ROOT / "hooks" / "cp_hook.py", dst, readable_payload=True); _record_applied(journal, "hook-script", dst)
             dst = ch / "cp-assistant-hooks" / "cp_gate.py"; copy_atomic(ROOT / "hooks" / "cp_gate.py", dst, readable_payload=True); _record_applied(journal, "gate-worker", dst)
+            for label, script_name in (("context-guard", "cp_context.py"), ("context-reader", "review_context_reader.py")):
+                dst = ch / "cp-assistant-hooks" / script_name
+                copy_atomic(ROOT / "hooks" / script_name, dst, readable_payload=True)
+                _record_applied(journal, label, dst)
             dst = ch / "cp-assistant-hooks" / "seal_worker.py"; copy_atomic(ROOT / "hooks" / "seal_worker.py", dst, readable_payload=True); _record_applied(journal, "seal-worker", dst)
             merge_hooks(
                 ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py",
@@ -2372,7 +2407,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
         for name in skill_names():
             dst=root/name; src=ROOT/"skills"/name
             if not _io_path(dst).is_dir(): errors.append("缺少 %s" % dst)
-            elif tree_sha256(dst)!=tree_sha256(src): errors.append("内容漂移 %s" % dst)
+            elif tree_sha256(dst)!=payload_source_sha256(src): errors.append("内容漂移 %s" % dst)
     else:
         ch=codex_home()
         if mode == "standalone":
@@ -2381,7 +2416,7 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
             for name in skill_names():
                 dst=user_skills_home()/name; src=ROOT/"skills"/name
                 if not _io_path(dst).is_dir(): errors.append("缺少 Skill %s" % name)
-                elif tree_sha256(dst)!=tree_sha256(src): errors.append("Skill 漂移 %s" % name)
+                elif tree_sha256(dst)!=payload_source_sha256(src): errors.append("Skill 漂移 %s" % name)
             if not _io_path(ch/"cp-assistant-hooks"/"cp_hook.py").is_file(): errors.append("缺少 standalone Hook")
             if not _io_path(ch/"cp-assistant-hooks"/"cp_gate.py").is_file(): errors.append("缺少 standalone 流程门禁 Worker")
         else:
@@ -2427,10 +2462,14 @@ def verify(scope: str, mode: str, repo_path: Optional[str]) -> None:
                     ch / "hooks.json", ch / "cp-assistant-hooks" / "cp_hook.py",
                     _standalone_hook_profile(),
                 ))
-        for directory, script_name in (("tools", "cp-runtime.py"), ("tools", "evolution.py"),
-                                       ("cp-assistant-hooks", "seal_worker.py")):
+        for directory, script_name in (("tools", "cp-runtime.py"), ("tools", "evolution.py"), ("tools", "routing-v5.py"),
+                                       ("cp-assistant-hooks", "seal_worker.py"),
+                                       ("cp-assistant-hooks", "cp_context.py"),
+                                       ("cp-assistant-hooks", "review_context_reader.py")):
             dst = ch / directory / script_name
             src = ROOT / ("scripts" if directory == "tools" else "hooks") / script_name
+            if script_name == "routing-v5.py":
+                src = ROOT / "skills" / "multi-agent-independent-review" / "scripts" / "routing_v5.py"
             if not _io_path(dst).is_file():
                 errors.append("缺少账户工具 %s" % script_name)
             elif tree_sha256(dst) != tree_sha256(src):
@@ -2815,16 +2854,19 @@ def _diagnostic_facts_once(scope: str, mode: Optional[str], repo_path: Optional[
             state_error = "INSTALLATION_VERSION_CONFLICT"
         for path in [
             codex_home() / "tools" / "cp-runtime.py", codex_home() / "tools" / "evolution.py",
+            codex_home() / "tools" / "routing-v5.py",
             codex_home() / "cp-assistant-hooks" / "cp_hook.py",
             codex_home() / "cp-assistant-hooks" / "cp_gate.py",
             codex_home() / "cp-assistant-hooks" / "seal_worker.py",
+            codex_home() / "cp-assistant-hooks" / "cp_context.py",
+            codex_home() / "cp-assistant-hooks" / "review_context_reader.py",
             *[codex_home() / "agents" / item.name for item in agent_files()],
         ]:
             try:
                 reject_link_ancestors(path)
                 if not _io_path(path).is_file():
                     component_errors["enhancement"].append("ENHANCEMENT_FILE_MISSING")
-                elif path.name == "seal_worker.py" and tree_sha256(path) != managed_hashes.get(str(path)):
+                elif path.name in {"seal_worker.py", "cp_context.py", "review_context_reader.py", "routing-v5.py"} and tree_sha256(path) != managed_hashes.get(str(path)):
                     component_errors["enhancement"].append("ENHANCEMENT_FILE_DRIFT")
             except (OSError, InstallError):
                 component_errors["enhancement"].append("ENHANCEMENT_PATH_UNREADABLE_OR_UNSAFE")
@@ -3106,7 +3148,8 @@ def _inventory_candidates(scope: str, mode: str, repo: Optional[Path]) -> List[P
         assert repo is not None
         return [repo / ".agents" / "skills" / name for name in skill_names() + deprecated_skill_names()]
     ch = codex_home()
-    paths = [ch / "AGENTS.md", ch / "tools" / "cp-runtime.py", ch / "tools" / "evolution.py"]
+    paths = [ch / "AGENTS.md", ch / "tools" / "cp-runtime.py", ch / "tools" / "evolution.py",
+             ch / "tools" / "routing-v5.py"]
     paths.extend(ch / "agents" / item.name for item in agent_files())
     if mode == "plugin":
         paths.extend([plugin_marketplace_payload(), plugin_marketplace_manifest(), plugin_cache_root()])
@@ -3114,6 +3157,8 @@ def _inventory_candidates(scope: str, mode: str, repo: Optional[Path]) -> List[P
         paths.extend(user_skills_home() / name for name in skill_names() + deprecated_skill_names())
         paths.extend([ch / "runtime" / "cp_runtime", ch / "cp-assistant-hooks" / "cp_hook.py",
                       ch / "cp-assistant-hooks" / "cp_gate.py",
+                      ch / "cp-assistant-hooks" / "cp_context.py",
+                      ch / "cp-assistant-hooks" / "review_context_reader.py",
                       ch / "cp-assistant-hooks" / "seal_worker.py", ch / "hooks.json"])
     return paths
 

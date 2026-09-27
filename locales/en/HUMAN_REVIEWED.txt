@@ -420,3 +420,8 @@ docs/releases/v7.13.3/AUDIT_REPORT.md
 docs/releases/v7.13.6/RELEASE_NOTES.md
 docs/releases/v7.13.6/VALIDATION_REPORT.md
 docs/releases/v7.13.6/AUDIT_REPORT.md
+
+# V7.14.0 language pairs checked by the implementing agent; not an independent review.
+docs/releases/v7.14.0/RELEASE_NOTES.md
+docs/releases/v7.14.0/AUDIT_REPORT.md
+docs/releases/v7.14.0/VALIDATION_REPORT.md

@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "scripts" / "build-release.py"
 ATTEST = ROOT / "scripts" / "release-attestation.py"
 LIFECYCLE = ROOT / "scripts" / "lifecycle-acceptance.py"
-VERSION = "7.13.6"
+VERSION = "7.14.0"
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v3 import append_event, make_event, project_id_for, stable_repo_fingerprint
 
@@ -152,7 +152,7 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
                     json.loads((ROOT / "config" / "desktop-host-contract-v1.json").read_text(encoding="utf-8")),
                     ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest(),
                 "ok": True, "version": VERSION, "artifact_sha256": digest,
-                "compatibility_registry_digest": "d4a1de79d199f449dcc54849baadffe2249d01b79b03f302bbca439d1d79cf1b",
+                "compatibility_registry_digest": "6bbf7eb1b9605b007534f858236f42f396a10cac071126b5eda2917a80c7f7a6",
                 "status": {key: "PASS" for key in (
                     "package", "artifact", "host", "plugin", "lifecycle", "dispatch_policy", "payload"
                 )},

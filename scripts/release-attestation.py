@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：创建并验证隐私有界的 V7.13.6 发行证明。
+"""中文：创建并验证隐私有界的 V7.14.0 发行证明。
 
-English: Create and verify a privacy-bounded V7.13.6 release attestation.
+English: Create and verify a privacy-bounded V7.14.0 release attestation.
 """
 from __future__ import annotations
 
@@ -28,9 +28,9 @@ from codex_compatibility import canonical_digest  # noqa: E402
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "7.13.6"
+VERSION = "7.14.0"
 TARGET_CODEX_VERSION = "0.157.1"
-COMPATIBILITY_REGISTRY_DIGEST = "d4a1de79d199f449dcc54849baadffe2249d01b79b03f302bbca439d1d79cf1b"
+COMPATIBILITY_REGISTRY_DIGEST = "6bbf7eb1b9605b007534f858236f42f396a10cac071126b5eda2917a80c7f7a6"
 DESKTOP_CONTRACT_DIGEST = canonical_digest(desktop_host.load_contract(ROOT / "config" / "desktop-host-contract-v1.json"))
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 LEGACY_DISPATCH_POLICY_SCHEMA_VERSION = "2.0"
@@ -384,7 +384,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.13.6 release attestation")
+    parser = argparse.ArgumentParser(description="V7.14.0 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)

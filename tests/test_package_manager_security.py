@@ -35,6 +35,44 @@ def run(args, env, expected=0):
 
 
 class PackageManagerV64Tests(unittest.TestCase):
+    def test_payload_source_hash_matches_copy_without_relaxing_destination_integrity(self):
+        source=Path(self.tmp.name)/'source'
+        target=Path(self.tmp.name)/'target'
+        (source/'__pycache__').mkdir(parents=True)
+        (source/'code.py').write_text('print(1)\n',encoding='utf-8')
+        (source/'__pycache__'/'code.pyc').write_bytes(b'ignored local source cache')
+        (source/'unused.pyo').write_bytes(b'ignored local source cache')
+        package_manager.copy_atomic(source,target,readable_payload=True)
+        self.assertEqual(package_manager.payload_source_sha256(source),package_manager.tree_sha256(target))
+        (target/'unexpected.pyc').write_bytes(b'unexpected installed file')
+        self.assertNotEqual(package_manager.payload_source_sha256(source),package_manager.tree_sha256(target))
+
+    def test_v5_context_entry_is_installed_owned_and_state_bound(self):
+        run(['install','--scope','user','--mode','plugin'],self.env)
+        entry=self.codex/'tools'/'routing-v5.py'
+        canonical=ROOT/'skills'/'multi-agent-independent-review'/'scripts'/'routing_v5.py'
+        self.assertEqual(canonical.read_bytes(),entry.read_bytes())
+        state=json.loads((self.codex/'cp-assistant-v6-state.json').read_text(encoding='utf-8'))
+        for target in (entry,self.codex/'cp-assistant-hooks'/'cp_context.py',
+                       self.codex/'cp-assistant-hooks'/'review_context_reader.py'):
+            self.assertEqual(package_manager.tree_sha256(target),state['managed_hashes'][str(target)])
+        help_result=subprocess.run([sys.executable,'-B',str(entry),'--help'],env=self.env,
+            capture_output=True,text=True,encoding='utf-8',timeout=30)
+        self.assertEqual(0,help_result.returncode,help_result.stderr)
+        self.assertIn('retire-desktop',help_result.stdout)
+        state_path=self.codex/'cp-assistant-v6-state.json'
+        self.assertTrue(state_path.resolve().is_relative_to(Path(self.tmp.name).resolve()))
+        saved=state_path.read_bytes()
+        state_path.unlink()
+        try:
+            rejected=subprocess.run([sys.executable,'-B',str(entry),'--help'],env=self.env,
+                capture_output=True,text=True,encoding='utf-8',timeout=30)
+            self.assertNotEqual(0,rejected.returncode)
+        finally:
+            state_path.write_bytes(saved)
+        run(['uninstall','--scope','user','--mode','plugin'],self.env)
+        self.assertFalse(entry.exists())
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(prefix='cp-v63-pm-')
         self.home=Path(self.tmp.name)/'home'; self.home.mkdir()
@@ -84,7 +122,7 @@ if args[:2] == ['plugin','add']:
     if len(args) > 2 and args[2] == '--help': emit_help('plugin_add'); raise SystemExit(0)
     home.mkdir(parents=True,exist_ok=True)
     state.write_text(json.dumps({'installed':True,'selector':args[2]}),encoding='utf-8')
-    version=os.environ.get('FAKE_PLUGIN_VERSION','7.13.6')
+    version=os.environ.get('FAKE_PLUGIN_VERSION','7.14.0')
     source=Path(market_file.read_text(encoding='utf-8'))/'plugins'/'codex-cross-project-engineering-assistant'
     cache=home/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/version
     if io_path(cache).exists(): shutil.rmtree(io_path(cache))
@@ -101,7 +139,7 @@ if args[:2] == ['plugin','list']:
     if state.exists():
         selector=json.loads(state.read_text(encoding='utf-8')).get('selector','codex-cross-project-engineering-assistant@cp-assistant-local')
         name,market=selector.split('@',1)
-        installed=[{'pluginId':selector,'name':name,'marketplaceName':market,'version':os.environ.get('FAKE_PLUGIN_VERSION','7.13.6'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
+        installed=[{'pluginId':selector,'name':name,'marketplaceName':market,'version':os.environ.get('FAKE_PLUGIN_VERSION','7.14.0'),'installed':True,'enabled':True,'installPolicy':'AVAILABLE','authPolicy':'ON_INSTALL'}]
     if '--marketplace' in args:
         requested=args[args.index('--marketplace')+1]
         installed=[item for item in installed if item['marketplaceName']==requested]
@@ -390,6 +428,8 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertEqual('PLUGIN_MANAGED',state['components']['base']['status'])
         self.assertEqual('MANAGED',state['components']['enhancement']['status'])
         self.assertTrue((self.codex/'cp-assistant-hooks'/'cp_gate.py').is_file())
+        self.assertTrue((self.codex/'cp-assistant-hooks'/'cp_context.py').is_file())
+        self.assertTrue((self.codex/'cp-assistant-hooks'/'review_context_reader.py').is_file())
 
     @unittest.skipUnless(os.name == 'nt', 'PowerShell base rollback regression')
     def test_uninstall_enhancement_restores_managed_base_install(self):
@@ -404,6 +444,8 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'cp-assistant-hooks'/'cp_hook.py').exists())
         self.assertFalse((self.codex/'cp-assistant-hooks'/'cp_gate.py').exists())
+        self.assertFalse((self.codex/'cp-assistant-hooks'/'cp_context.py').exists())
+        self.assertFalse((self.codex/'cp-assistant-hooks'/'review_context_reader.py').exists())
 
     def test_plugin_unknown_host_rejects_static_async_payload_before_account_write(self):
         unknown={**self.env,'FAKE_CODEX_VERSION':'unknown component format'}
@@ -556,7 +598,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['install','--scope','user','--mode','plugin'],self.env)
         state_path=self.codex/'cp-assistant-v6-state.json'
         state_bytes=state_path.read_bytes()
-        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.13.6'
+        cache=self.codex/'plugins'/'cache'/'cp-assistant-local'/'codex-cross-project-engineering-assistant'/'7.14.0'
 
         def assert_tools_fail_closed():
             for name in ('cp-runtime.py','evolution.py'):
@@ -676,7 +718,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_plugin_install_rejects_wrong_registered_version(self):
         env={**self.env,'FAKE_PLUGIN_VERSION':'6.2.0'}
         result=run(['install','--scope','user','--mode','plugin'],env,2)
-        self.assertIn('version=7.13.6',result.stderr)
+        self.assertIn('version=7.14.0',result.stderr)
         self.assertFalse((self.codex/'cp-assistant-v6-transaction.json').exists())
         self.assertFalse((self.codex/'cp-assistant-v6-state.json').exists())
         self.assertFalse((self.codex/'fake-codex-plugin-state.json').exists())
@@ -764,7 +806,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         run(['doctor','--recover'],self.env)
         self.assertFalse(journal.exists())
         status=json.loads(run(['status','--json'],self.env).stdout)
-        self.assertEqual('7.13.6',status['version'])
+        self.assertEqual('7.14.0',status['version'])
         self.assertIn('live_transaction',status)
 
     def test_mode_switch_is_refused_without_force(self):

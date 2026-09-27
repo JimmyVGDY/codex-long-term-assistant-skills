@@ -1,10 +1,10 @@
-# V7.13.6 Operating Guide
+# V7.14.0 Operating Guide
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE/)
 
 ## Quick start
 
-From the extracted V7.13.6 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
+From the extracted V7.14.0 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
 
 Simple local tasks run with the main Agent by default. A Profile, index, full scan, and budget ledger are not prerequisites. Add the optional enhancement through `install-user` only when needed; see [installation and recovery](operations/INSTALLATION_RECOVERY.md). The index, Hook, and budget procedures below apply to that enhancement. Strict budgeting requires a verifiable host binding, ledger, and dispatch permit; otherwise the model ceiling remains a policy constraint.
 
@@ -83,9 +83,9 @@ Budget V1 is read-only; V2 preserves original byte-level replay and continuation
 
 ## 5. Codex 0.157.1 scope
 
-V7.13.6 freezes an internal component window covering Codex CLI 0.157.1 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. The local Marketplace manifest requires `interface.displayName`, and future, prerelease, or out-of-window hosts are not admitted automatically. Version 0.157.1 is a maintenance release with no verifiable feature highlights, and its Hook and apply_patch contract hashes match 0.157.0. GPT-6 Sol/Luna visibility came from an earlier release and does not activate production defaults; Workers and Explorers keep their original Luna/Terra profiles, while registered Reviewers remain subject to scenario qualification, evidence, and budget gates.
+V7.14.0 freezes an internal component window covering Codex CLI 0.157.1 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. The local Marketplace manifest requires `interface.displayName`, and future, prerelease, or out-of-window hosts are not admitted automatically. Version 0.157.1 is a maintenance release with no verifiable feature highlights, and its Hook and apply_patch contract hashes match 0.157.0. GPT-6 Sol/Luna visibility came from an earlier release and does not activate production defaults; Workers and Explorers keep their original Luna/Terra profiles, while registered Reviewers remain subject to scenario qualification, evidence, and budget gates.
 
-Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.13.6`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
+Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.14.0`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
 
 ## Feedback and measured benefits
 
@@ -93,4 +93,4 @@ V7.9 retains the validation feedback introduced in V7.5, health gates, opt-in in
 
 ## Capability reuse and optional gates
 
-Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.13.6 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.13.6/VALIDATION_REPORT.md).
+Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.14.0 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.14.0/VALIDATION_REPORT.md).

@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.13.6",
-  "description": "Cross-project engineering assistant V7.13.6: Desktop V1 delegation budget guard fix.",
+  "version": "7.14.0",
+  "description": "Cross-project engineering assistant V7.14.0: bounded Desktop V2 review context, versioned budgets and delivery receipts.",
   "author": {
     "name": "Project maintainers"
   },
