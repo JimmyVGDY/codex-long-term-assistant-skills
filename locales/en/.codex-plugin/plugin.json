@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.14.0",
-  "description": "Cross-project engineering assistant V7.14.0: bounded Desktop V2 review context, versioned budgets and delivery receipts.",
+  "version": "7.14.1",
+  "description": "Cross-project engineering assistant V7.14.1: Codex Desktop 0.158.0 component compatibility and frozen evidence.",
   "author": {
     "name": "Project maintainers"
   },

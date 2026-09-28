@@ -2,6 +2,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.14.1 - 2026-09-28
+
+- Advance the frozen component window used by Codex Desktop to official stable 0.158.0, retain the ten preceding stable releases, and remove 0.153.1.
+- Add `result-v158`, referenced only by 0.158.0, to freeze apply_patch handler drift without rewriting the actual Desktop runtime contract.
+- Preserve the V7.14.0 authoritative Desktop V2 review-context protocol and validate the stable internal component, account Plugin, and fresh Desktop process as separate evidence layers.
+
 ## 7.14.0 - 2026-09-28
 
 - Add an opt-in bounded Desktop V2 review context. Opaque transport is audited separately; the runtime verifies and delivers approved material.

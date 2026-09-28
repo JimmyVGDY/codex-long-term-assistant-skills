@@ -2,6 +2,12 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.14.1 - 2026-09-28
+
+- 将 Codex Desktop 内部冻结组件窗口推进到官方稳定版 0.158.0，保留前十个稳定版并移出 0.153.1。
+- 新增仅由 0.158.0 使用的 `result-v158`，冻结 apply_patch handler 漂移，不改写实际 Desktop 运行合同。
+- 保留 V7.14.0 Desktop V2 权威审查上下文协议，并分层验证内部稳定组件、账户 Plugin 与新 Desktop 进程。
+
 ## 7.14.0 - 2026-09-28
 
 - 新增显式启用的 Desktop V2 有界审查上下文：密文仅作传输审计，运行时校验并交付批准材料。

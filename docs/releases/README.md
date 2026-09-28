@@ -12,6 +12,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.14.1 | [Notes](v7.14.1/RELEASE_NOTES.md) | [Audit](v7.14.1/AUDIT_REPORT.md) | [Validation](v7.14.1/VALIDATION_REPORT.md) | Codex Desktop 0.158.0 内部组件兼容；包、Desktop、CI 与公开发行分层验收 | [JSON](v7.14.1/BUILD_INFO.json) | [JSON](v7.14.1/PACKAGE_VALIDATION.json) |
 | 7.14.0 | [Notes](v7.14.0/RELEASE_NOTES.md) | [Audit](v7.14.0/AUDIT_REPORT.md) | [Validation](v7.14.0/VALIDATION_REPORT.md) | 候选：独立复核无阻塞；本机V2正向与冲突传输对照通过；质量资格、远端CI与公开发布另行核验 | [JSON](v7.14.0/BUILD_INFO.json) | [JSON](v7.14.0/PACKAGE_VALIDATION.json) |
 | 7.13.6 | [Notes](v7.13.6/RELEASE_NOTES.md) | [Audit](v7.13.6/AUDIT_REPORT.md) | [Validation](v7.13.6/VALIDATION_REPORT.md) | Desktop V1 预算重入修复；本机拒绝对照与单次派发链已核验；模型质量及其他宿主分别验收 | [JSON](v7.13.6/BUILD_INFO.json) | [JSON](v7.13.6/PACKAGE_VALIDATION.json) |
 | 7.13.5 | [Notes](v7.13.5/RELEASE_NOTES.md) | [Audit](v7.13.5/AUDIT_REPORT.md) | [Validation](v7.13.5/VALIDATION_REPORT.md) | Codex Desktop 0.157.1 内部组件兼容；包、Desktop、CI 与公开发行分层验收 | [JSON](v7.13.5/BUILD_INFO.json) | [JSON](v7.13.5/PACKAGE_VALIDATION.json) |

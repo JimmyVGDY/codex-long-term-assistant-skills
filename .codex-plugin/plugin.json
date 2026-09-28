@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.14.0",
-  "description": "跨项目长期技术助手 V7.14.0：Desktop V2 有界审查上下文、独立版本账本及交付凭证。",
+  "version": "7.14.1",
+  "description": "跨项目长期技术助手 V7.14.1：Codex Desktop 0.158.0 组件兼容与冻结证据。",
   "author": {
     "name": "Project maintainers"
   },
