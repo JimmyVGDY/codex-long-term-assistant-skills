@@ -429,4 +429,9 @@ docs/releases/v7.14.0/VALIDATION_REPORT.md
 # V7.14.1 language pairs checked by the implementing agent; external acceptance remains separate.
 docs/releases/v7.14.1/RELEASE_NOTES.md
 docs/releases/v7.14.1/AUDIT_REPORT.md
+
+# V7.14.2 language pairs checked by the implementing agent; independent review remains separate.
+docs/releases/v7.14.2/RELEASE_NOTES.md
+docs/releases/v7.14.2/VALIDATION_REPORT.md
+docs/releases/v7.14.2/AUDIT_REPORT.md
 docs/releases/v7.14.1/VALIDATION_REPORT.md
