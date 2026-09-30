@@ -17,7 +17,7 @@
   "package_validation_is_host_acceptance": false,
   "validation_status": "PASS",
   "payload_manifest_status": "PASS",
-  "payload_digest": "f5d72a2b514d5e5910e116ddb57a7444a852374141d87e35fdb2c0317b5ae1ba",
+  "payload_digest": "32914f2a33eb44224940c1480468bc3464365188dec1daeb5153a8f42d50b594",
   "internal_component_records_are_desktop_acceptance": false,
   "desktop_local_component": "0.158.0-alpha.2.1",
   "account_plugin_readback": "PASS",

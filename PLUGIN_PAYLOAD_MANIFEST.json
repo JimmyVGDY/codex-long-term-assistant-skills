@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 276,
-  "payload_digest": "f5d72a2b514d5e5910e116ddb57a7444a852374141d87e35fdb2c0317b5ae1ba",
+  "payload_digest": "32914f2a33eb44224940c1480468bc3464365188dec1daeb5153a8f42d50b594",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -1283,8 +1283,8 @@
     },
     {
       "path": "runtime/cp_runtime/seal_queue.py",
-      "sha256": "63148b07ad7751cae1328294d8d8a0fc47a35173a7126f562de16cbe78754dc6",
-      "size": 44316
+      "sha256": "d914317b117cdd7ff83ece40a411701f450e4dcd832af39d27cab2a914530d72",
+      "size": 44497
     },
     {
       "path": "runtime/tests/test_capability_budget_paths.py",

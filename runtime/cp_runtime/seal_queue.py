@@ -180,7 +180,8 @@ def _validate_managed_path(root: Path, target: Path, *, reparse_code: str = "REC
     relative = _lexical_relative(target, root)
     if relative is None:
         raise SealQueueError("QUEUE_ROOT_UNMANAGED")
-    # Lexical containment plus the lstat walk below is deliberate.  Resolving
+    # 中文：词法包含与下方 lstat 逐层检查是刻意设计；并发创建锁文件时不解析叶子路径，避免 Windows 长短路径混用造成误拒绝。
+    # English: Lexical containment plus the lstat walk below is deliberate. Resolving
     # a lock-file leaf while another process creates or replaces it can
     # transiently mix Windows long/short path spellings and falsely classify
     # an in-root file as unmanaged.  Every managed ancestor, including the
