@@ -180,14 +180,17 @@ def _validate_managed_path(root: Path, target: Path, *, reparse_code: str = "REC
     relative = _lexical_relative(target, root)
     if relative is None:
         raise SealQueueError("QUEUE_ROOT_UNMANAGED")
+    # Lexical containment plus the lstat walk below is deliberate.  Resolving
+    # a lock-file leaf while another process creates or replaces it can
+    # transiently mix Windows long/short path spellings and falsely classify
+    # an in-root file as unmanaged.  Every managed ancestor, including the
+    # leaf when present, is still rejected if it is a link/reparse point.
     current = root
     for part in ("", *relative.parts):
         if part:
             current = current / part
         if _is_reparse(current):
             raise SealQueueError(reparse_code)
-    if not _inside(target, root):
-        raise SealQueueError("QUEUE_ROOT_UNMANAGED")
     return target
 
 

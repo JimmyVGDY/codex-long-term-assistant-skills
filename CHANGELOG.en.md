@@ -4,6 +4,13 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.14.2 - 2026-09-30
+
+- Advance the Codex Desktop internal component window to official stable 0.159.0, retain the ten preceding stable releases, and remove 0.153.2.
+- Freeze official npm, tag-commit, and source-contract evidence; 0.159.0 matches 0.158.0 and therefore reuses `result-v158`.
+- Fix a Windows concurrent selection-lock race that could falsely classify an in-root recovery guard as unmanaged, while retaining link/reparse rejection.
+- Preserve Desktop-only product scope and keep package, account Plugin, fresh Desktop process, CI, tag, assets, provenance, publication, and anonymous downloads as separate evidence gates.
+
 ## 7.14.1 - 2026-09-28
 
 - Advance the frozen component window used by Codex Desktop to official stable 0.158.0, retain the ten preceding stable releases, and remove 0.153.1.
