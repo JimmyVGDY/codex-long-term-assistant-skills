@@ -11,6 +11,7 @@ import json
 import os
 import re
 import stat
+import subprocess
 import unicodedata
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,41 @@ class ReleaseWorkflowError(RuntimeError):
 
     English: Report a release input, boundary, or managed-artifact fail-closed violation.
     """
+
+
+def verify_commit_on_master(
+    root: Path = ROOT,
+    commit: str = "HEAD",
+    master_ref: str = "origin/master",
+) -> dict[str, str]:
+    """中文：失败关闭地证明候选提交已经属于可信远端 master 历史。
+
+    English: Fail closed unless the candidate commit belongs to trusted origin/master history.
+    """
+    root = root.resolve()
+
+    def git(*arguments: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+        result = subprocess.run(
+            ["git", "-C", str(root), *arguments],
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+        )
+        if check and result.returncode:
+            raise ReleaseWorkflowError(
+                "release master binding is unavailable: %s" % " ".join(arguments)
+            )
+        return result
+
+    commit_sha = git("rev-parse", "%s^{commit}" % commit).stdout.strip()
+    master_sha = git("rev-parse", "%s^{commit}" % master_ref).stdout.strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", commit_sha) \
+            or not re.fullmatch(r"[0-9a-f]{40}", master_sha):
+        raise ReleaseWorkflowError("release master binding returned an invalid commit")
+    if git("merge-base", "--is-ancestor", commit_sha, master_sha, check=False).returncode != 0:
+        raise ReleaseWorkflowError("release commit is not contained in origin/master")
+    return {"ok": "true", "commit": commit_sha, "master": master_sha}
 
 
 def _read_object(path: Path) -> dict[str, Any]:
@@ -265,6 +301,9 @@ def main() -> None:
     checksum_parser.add_argument("--output", required=True)
     verify_parser = subparsers.add_parser("verify-candidate")
     verify_parser.add_argument("--directory", required=True)
+    master_parser = subparsers.add_parser("verify-master")
+    master_parser.add_argument("--commit", default="HEAD")
+    master_parser.add_argument("--master-ref", default="origin/master")
     notes_parser = subparsers.add_parser("notes")
     notes_parser.add_argument("--output", required=True)
     arguments = parser.parse_args()
@@ -275,6 +314,9 @@ def main() -> None:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2))
     elif arguments.command == "verify-candidate":
         result = verify_candidate(Path(arguments.directory))
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2))
+    elif arguments.command == "verify-master":
+        result = verify_commit_on_master(commit=arguments.commit, master_ref=arguments.master_ref)
         print(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2))
     else:
         result = write_release_notes(Path(arguments.output))

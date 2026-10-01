@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.14.2",
+  "version": "7.14.3",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,11 +9,11 @@
     "runtime"
   ],
   "file_count": 276,
-  "payload_digest": "32914f2a33eb44224940c1480468bc3464365188dec1daeb5153a8f42d50b594",
+  "payload_digest": "74d117466f0dd7b78a87756eb0a088c0a996758ac41dcda8f8ab89713abc1b01",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "224d14cd729c7337fa6ada7ecd64492ff0ebaf985eee76595aba5ab8e60de007",
+      "sha256": "645d49b372a62e153f88877f643c0861a09e9d7fb1ff5c31131099b607f19560",
       "size": 819
     },
     {

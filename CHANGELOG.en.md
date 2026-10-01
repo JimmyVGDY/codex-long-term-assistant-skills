@@ -4,6 +4,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.14.3 - 2026-10-01
+
+- Advance the Codex Desktop internal component window to official stable 0.159.2, include stable 0.159.1, retain nine earlier stable releases, and remove 0.153.4/0.153.3.
+- Freeze official npm, tag-commit, and source-contract evidence for both patch releases; their Hook/apply_patch contracts match 0.159.0 and reuse `result-v158`.
+- Preserve Desktop-only product scope and keep package, account Plugin, fresh Desktop process, CI, tag, assets, provenance, publication, and anonymous downloads as separate evidence gates.
+
 ## 7.14.2 - 2026-09-30
 
 - Advance the Codex Desktop internal component window to official stable 0.159.0, retain the ten preceding stable releases, and remove 0.153.2.
