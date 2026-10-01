@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -66,6 +67,31 @@ class ReleaseAutomationTests(unittest.TestCase):
             self._fixture(root, plugin_version="6.6.0")
             with self.assertRaises(release_workflow.ReleaseWorkflowError):
                 release_workflow.release_metadata(root)
+
+    def test_release_commit_must_belong_to_origin_master(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(["git", "init", "-b", "master"], cwd=root, check=True,
+                           capture_output=True, text=True, encoding="utf-8")
+            subprocess.run(["git", "config", "user.name", "Release Test"], cwd=root, check=True)
+            subprocess.run(["git", "config", "user.email", "release@example.invalid"], cwd=root, check=True)
+            marker = root / "marker.txt"
+            marker.write_text("master\n", encoding="utf-8")
+            subprocess.run(["git", "add", "marker.txt"], cwd=root, check=True)
+            subprocess.run(["git", "commit", "-m", "master"], cwd=root, check=True,
+                           capture_output=True, text=True, encoding="utf-8")
+            master = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, check=True,
+                                    capture_output=True, text=True, encoding="utf-8").stdout.strip()
+            subprocess.run(["git", "update-ref", "refs/remotes/origin/master", master], cwd=root, check=True)
+            self.assertEqual(master, release_workflow.verify_commit_on_master(root)["commit"])
+
+            subprocess.run(["git", "switch", "-c", "feature"], cwd=root, check=True,
+                           capture_output=True, text=True, encoding="utf-8")
+            marker.write_text("feature\n", encoding="utf-8")
+            subprocess.run(["git", "commit", "-am", "feature"], cwd=root, check=True,
+                           capture_output=True, text=True, encoding="utf-8")
+            with self.assertRaises(release_workflow.ReleaseWorkflowError):
+                release_workflow.verify_commit_on_master(root)
 
     def test_metadata_rejects_unsafe_or_generic_release_names(self) -> None:
         cases = (
@@ -128,7 +154,7 @@ class ReleaseAutomationTests(unittest.TestCase):
             self.assertEqual(len(metadata), len(rendered.splitlines()))
 
     def test_github_metadata_renders_release_title_as_one_line(self) -> None:
-        metadata = release_workflow.release_metadata(ROOT, "v7.14.2")
+        metadata = release_workflow.release_metadata(ROOT, "v7.14.3")
         rendered = release_workflow._render_metadata(metadata, "github")
         expected = "release_title=%s" % metadata["release_title"]
         self.assertEqual(1, rendered.splitlines().count(expected))
@@ -229,6 +255,8 @@ class ReleaseAutomationTests(unittest.TestCase):
         self.assertIn("Release already exists; no assets were replaced.", workflow)
         self.assertIn("if: github.ref_type == 'tag'", workflow)
         self.assertIn("verify-candidate --directory candidate", workflow)
+        self.assertIn("fetch-depth: 0", workflow)
+        self.assertIn("verify-master --commit", workflow)
         self.assertIn("gh attestation verify", workflow)
         self.assertNotIn("candidate/*.zip", workflow)
         self.assertNotIn("candidate/*.json", workflow)
@@ -254,8 +282,8 @@ class ReleaseAutomationTests(unittest.TestCase):
             output = Path(temporary) / "notes.md"
             release_workflow.write_release_notes(output)
             value = output.read_text(encoding="utf-8")
-        self.assertIn("# V7.14.2 发行说明", value)
-        self.assertIn("# V7.14.2 Release Notes", value)
+        self.assertIn("# V7.14.3 发行说明", value)
+        self.assertIn("# V7.14.3 Release Notes", value)
         self.assertNotIn("English: [RELEASE_NOTES.en.md]", value)
         self.assertNotIn("Chinese: [RELEASE_NOTES.md]", value)
 
