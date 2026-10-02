@@ -2,6 +2,12 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.14.4 - 2026-10-02
+
+- 保留 Codex Desktop 0.159.2 组件窗口及 V7.14.3 全部兼容证据。
+- v7.14.3 不可变标签的 Windows Python 3.11 工作流连续三次无断言失败地超时后，将有界验证子进程时限从 1800 秒提升为 3600 秒。
+- 保留失败关闭的超时证据、Desktop-only 范围、master/tag 祖先门禁与全部独立发布门禁。
+
 ## 7.14.3 - 2026-10-01
 
 - 将 Codex Desktop 内部组件窗口推进到官方稳定版 0.159.2，纳入稳定版 0.159.1，保留更早九个稳定版并移出 0.153.4/0.153.3。

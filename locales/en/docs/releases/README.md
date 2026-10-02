@@ -12,6 +12,7 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.md) for vers
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.14.4 | [Notes](v7.14.4/RELEASE_NOTES.md) | [Audit](v7.14.4/AUDIT_REPORT.md) | [Validation](v7.14.4/VALIDATION_REPORT.md) | Codex Desktop 0.159.2 compatibility with a bounded slow-run validation fix; package, Desktop, CI, and publication remain separate | [JSON](v7.14.4/BUILD_INFO.json) | [JSON](v7.14.4/PACKAGE_VALIDATION.json) |
 | 7.14.3 | [Notes](v7.14.3/RELEASE_NOTES.md) | [Audit](v7.14.3/AUDIT_REPORT.md) | [Validation](v7.14.3/VALIDATION_REPORT.md) | Codex Desktop 0.159.2 internal component compatibility; package, Desktop, CI, and publication are accepted separately | [JSON](v7.14.3/BUILD_INFO.json) | [JSON](v7.14.3/PACKAGE_VALIDATION.json) |
 | 7.14.2 | [Notes](v7.14.2/RELEASE_NOTES.md) | [Audit](v7.14.2/AUDIT_REPORT.md) | [Validation](v7.14.2/VALIDATION_REPORT.md) | Codex Desktop 0.159.0 internal component compatibility; package, Desktop, CI, and publication are accepted separately | [JSON](v7.14.2/BUILD_INFO.json) | [JSON](v7.14.2/PACKAGE_VALIDATION.json) |
 | 7.14.1 | [Notes](v7.14.1/RELEASE_NOTES.md) | [Audit](v7.14.1/AUDIT_REPORT.md) | [Validation](v7.14.1/VALIDATION_REPORT.md) | Codex Desktop 0.158.0 internal component compatibility; package, Desktop, CI, and publication are accepted separately | [JSON](v7.14.1/BUILD_INFO.json) | [JSON](v7.14.1/PACKAGE_VALIDATION.json) |

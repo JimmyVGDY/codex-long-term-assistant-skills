@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
-COMMAND_TIMEOUT_SECONDS = 1800
+COMMAND_TIMEOUT_SECONDS = 3600
 MINIMUM_PYTHON = (3, 11)
 if sys.version_info < MINIMUM_PYTHON:
     raise RuntimeError("V7.4 完整验证需要 Python 3.11+，当前为 %s" % platform.python_version())
