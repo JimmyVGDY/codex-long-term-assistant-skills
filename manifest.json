@@ -1,6 +1,6 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.14.3",
+  "version": "7.14.4",
   "release_name": "Codex Desktop 0.159.2 组件兼容",
   "generated_for": "Codex Desktop engineering assistance with scenario-qualified GPT-6 model and reasoning selection, phase-preserving budgets, and frozen legacy recovery",
   "default_locale": "zh-CN",
@@ -669,6 +669,7 @@
     ]
   },
   "upgrade_from": [
+    "7.14.3",
     "7.14.2",
     "7.14.1",
     "7.14.0",

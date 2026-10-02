@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "version": "7.14.4",
+  "host_surface": "codex-desktop",
+  "release_scope": "DESKTOP_COMPONENT_COMPATIBILITY_PATCH",
+  "codex_0_159_2": {"official_artifact": "VERIFIED", "source_contract": "VERIFIED", "windows_cli_contract": "PASS", "windows_isolated_plugin": "PASS", "synthetic_hook": "PASS", "real_host": "PENDING", "ubuntu": "PENDING_REMOTE_MATRIX", "evidence_scope": "internal-component-reference-only"},
+  "public_release_created": false,
+  "compatibility_registry_digest": "95a75dac6341c0739f3c99e273645d3a54a73a609b15aee201bc1f3e00568526",
+  "payload_identity": {"file_count": 276, "sha256": "5880dcdbf1fdce207a4a0756bd0970908fb168664e9ff3bd5a466c374c124cc3"},
+  "full_package_validation": {"ok": true, "evidence_scope": "package-only", "version": "7.14.4", "status": "PASS", "package_test_count": 816, "runtime_test_count": 231, "validated_runtime": "3.14.7", "package_report_sha256": "470445c64c9f17941207a52efeef80026c361093f100cc74112dcff2ad164dbb", "runtime_report_sha256": "c4f7f78246a261f9bccfd316f5f3d08ccaf9fe886ffa8dec7602f866aae53e93"},
+  "source_binding": "Exact committed source is established by the release source manifest, tag and provenance; this record has no self-referential commit hash.",
+  "ok": true,
+  "internal_component_records_are_desktop_acceptance": false,
+  "desktop_local_component": "0.158.0-alpha.2.1",
+  "account_plugin_readback": "PASS",
+  "fresh_desktop_process": "PASS"
+}

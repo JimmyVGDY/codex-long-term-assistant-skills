@@ -2,6 +2,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.14.4 - 2026-10-02
+
+- Preserve the Codex Desktop 0.159.2 component window and all V7.14.3 compatibility evidence.
+- Raise the bounded validation subprocess timeout from 1800 to 3600 seconds after three immutable-tag Windows Python 3.11 runs timed out without assertion failures.
+- Preserve fail-closed timeout evidence, Desktop-only scope, the master/tag ancestry gate, and all independent publication gates.
+
 ## 7.14.3 - 2026-10-01
 
 - Advance the Codex Desktop internal component window to official stable 0.159.2, include stable 0.159.1, retain nine earlier stable releases, and remove 0.153.4/0.153.3.
