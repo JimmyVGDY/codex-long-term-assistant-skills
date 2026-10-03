@@ -2,13 +2,13 @@
 
 [Current location](USER_GUIDE.md)
 
-# V7.14.4 Operating Guide
+# V7.14.5 Operating Guide
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE/)
 
 ## Quick start
 
-From the extracted V7.14.4 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
+From the extracted V7.14.5 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
 
 Simple local tasks run with the main Agent by default. A Profile, index, full scan, and budget ledger are not prerequisites. Add the optional enhancement through `install-user` only when needed; see [installation and recovery](operations/INSTALLATION_RECOVERY.md). The index, Hook, and budget procedures below apply to that enhancement. Strict budgeting requires a verifiable host binding, ledger, and dispatch permit; otherwise the model ceiling remains a policy constraint.
 
@@ -85,11 +85,11 @@ Store only approved combinations, scoring, and cost proxies; never read, infer, 
 
 Budget V1 is read-only; V2 preserves original byte-level replay and continuation. V7/V4 reviews keep their old semantics. New tasks use separate V3 ledgers; unknown versions fail closed. Installation, registration, Hook behavior, native dispatch, and underlying identity are distinct evidence layers. Synthetic tests never replace host acceptance.
 
-## 5. Codex 0.159.2 scope
+## 5. Codex 0.160.0 scope
 
-V7.14.4 freezes an internal component window covering Codex CLI 0.159.2 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. The local Marketplace manifest requires `interface.displayName`, and future, prerelease, or out-of-window hosts are not admitted automatically. Version 0.159.1 adds GPT-6.1 Sol to bundled and Amazon Bedrock catalogs, without changing this package's reviewer qualification or production defaults. Version 0.159.2 backports Windows console-window suppression for background and sandboxed commands. Hook discovery/schema and apply_patch/context contracts match 0.159.0, so all active `0.159.x` versions reuse `result-v158`. Model visibility does not activate production defaults; Workers, Explorers, and registered Reviewers remain subject to existing qualification, evidence, and budget gates.
+V7.14.5 freezes an internal component window covering Codex CLI 0.160.0 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. The local Marketplace manifest requires `interface.displayName`, and future, prerelease, or out-of-window hosts are not admitted automatically. Version 0.160.0 adds workspace defaults for projectless sessions and queued-message recovery, fixes Windows sandbox, long-path permission, and background-console behavior, and caches Plugin manifests and remote connections; none of these changes alter this package's reviewer qualification or production defaults. The 0.159.1/0.159.2 model-catalog and Windows-backport evidence remains retained. Hook discovery/schema and apply_patch/context contracts match 0.159.0, so all active `0.159.x` releases plus 0.160.0 reuse `result-v158`; 0.154.0 has left the window and remains fail-closed. Model visibility does not activate production defaults; Workers, Explorers, and registered Reviewers remain subject to existing qualification, evidence, and budget gates.
 
-Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.14.4`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
+Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.14.5`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
 
 ## Feedback and measured benefits
 
@@ -97,4 +97,4 @@ V7.9 retains the validation feedback introduced in V7.5, health gates, opt-in in
 
 ## Capability reuse and optional gates
 
-Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.14.4 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.14.4/VALIDATION_REPORT.md).
+Use the [capability index](CAPABILITY_INDEX.md) for bounded initial scans and incremental updates. Recheck candidate source, semantic compatibility, and maintenance cost before reuse. Project gates are disabled by default. With an explicitly enabled policy, V7.14.5 routes canonical `apply_patch` through Operation v2: A creates an origin and is denied, a different B claims permission after preparation, and only B's matching PostToolUse receipt can complete verification. Legacy GateTask never becomes a new permit. See the [acceptance protocol](COMPONENT_REUSE_ACCEPTANCE.md) and [release validation](releases/v7.14.5/VALIDATION_REPORT.md).
