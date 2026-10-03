@@ -2,6 +2,12 @@
 
 English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
+## 7.14.5 - 2026-10-04
+
+- 将 Codex Desktop 内部组件窗口推进到官方稳定版 0.160.0，保留此前十个稳定版并移出 0.154.0。
+- 冻结官方 npm、注解标签提交与源码合同证据；0.160.0 继续复用 `result-v158`，并原子移除退出版本唯一使用的 `result-v154`。
+- 保持 Desktop-only 产品范围、3600 秒有界验证和 master/tag 祖先门禁；包、账户 Plugin、新 Desktop 进程、CI、标签、资产、provenance、公开发布与匿名下载继续分层验收。
+
 ## 7.14.4 - 2026-10-02
 
 - 保留 Codex Desktop 0.159.2 组件窗口及 V7.14.3 全部兼容证据。
