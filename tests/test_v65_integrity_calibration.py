@@ -106,7 +106,7 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
         plugin = self.root / "plugin.json"
         plugin.write_text(json.dumps({"installed": [{
             "pluginId": "codex-cross-project-engineering-assistant@cp-assistant-local",
-            "version": "7.14.5", "installed": True, "enabled": True}]}), encoding="utf-8")
+            "version": "7.14.6", "installed": True, "enabled": True}]}), encoding="utf-8")
         event_file = self.root / "attestation-events.jsonl"
         append_event(event_file, self.event(99))
         seal_state = seal_event_chain(event_file, keyring_path=self.keyring)
@@ -126,8 +126,8 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
         unified = self.root / "unified.json"; unified.write_text(json.dumps({
             "schema_version": 3, "host_surface": "codex-desktop",
             "desktop_contract_digest": attestation_module.DESKTOP_CONTRACT_DIGEST,
-            "ok": True, "version": "7.14.5", "artifact_sha256": digest,
-            "compatibility_registry_digest": "5539f0fd6cdd0615a99a98e38dd4ac6d05f1d801b7fb0cc9c807463d818249e6",
+            "ok": True, "version": "7.14.6", "artifact_sha256": digest,
+            "compatibility_registry_digest": "d7b909d340a2d877271c7affbd4579273e9f21417c1b2aa23e337841c23f3752",
             "status": {name: "PASS" for name in ("package", "artifact", "host", "plugin", "lifecycle", "dispatch_policy", "payload")}}), encoding="utf-8")
         dispatch_policy = self.root / "dispatch-policy.json"; dispatch_policy.write_text(json.dumps({
             "ok": True, "schema_version": "2.0", "dispatch_policy_status": "PASS",
@@ -138,7 +138,7 @@ class V65IntegrityCalibrationTests(unittest.TestCase):
                  "exit_code": 0, "pass": True}],
             "privacy": {"host_model_information_collected": False,
                         "host_model_information_exported": False}}), encoding="utf-8")
-        version = self.root / "version.txt"; version.write_text("codex-cli 0.160.0\n", encoding="utf-8")
+        version = self.root / "version.txt"; version.write_text("codex-cli 0.160.1\n", encoding="utf-8")
         args = (artifact, plugin, lifecycle, validation, witness, unified, version)
         first = attestation_module.create_attestation(*args, keyring_path=self.keyring,
                                                        event_file_path=event_file,

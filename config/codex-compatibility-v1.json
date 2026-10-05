@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "package_version": "7.14.5",
+  "package_version": "7.14.6",
   "window_policy": {
-    "anchor": "0.160.0",
+    "anchor": "0.160.1",
     "preceding_stable_releases": 10,
     "include_patch_releases": true,
     "include_prereleases": false,
-    "frozen_at": "2026-10-04",
+    "frozen_at": "2026-10-06",
     "release_order_source": "https://learn.chatgpt.com/docs/changelog?type=codex-cli",
-    "frozen_release_order_sha256": "22781769b436a82fd06d3f1d9de12363a807e855b129f86fde4bf2155ad760a0"
+    "frozen_release_order_sha256": "c91f70e78f156aa8d0cd224e1f84342b69ccb0db8556d366608386b9923090a5"
   },
   "profiles": {
     "marketplace": {
@@ -203,8 +203,67 @@
   },
   "versions": [
     {
-      "version": "0.160.0",
+      "version": "0.160.1",
       "stable_release_ordinal": 0,
+      "marketplace_profile": "local-interface-v2",
+      "plugin_cli_profile": "remote-capable-v2",
+      "plugin_json_profile": "plugin-list-v1",
+      "hook_profile": "hook-json-v1",
+      "apply_patch_result_profile": "result-v158",
+      "native_async_user_prompt_submit": {
+        "status": "SUPPORTED",
+        "evidence": "OFFICIAL_SOURCE_TAG",
+        "registration": "OPTIONAL_USER_PROMPT_SUBMIT",
+        "repository": "https://github.com/openai/codex",
+        "tag": "rust-v0.160.1",
+        "commit_sha": "d27764b82f7118f674371e6d6e76271d9d606edb",
+        "source_path": "codex-rs/hooks/src/engine/discovery.rs",
+        "source_sha256": "fd05ee932079df2b5128f170beaf0d8e5c8630a56eadbcf9de9f25806e772b04",
+        "verified_assertions": [
+          "USER_PROMPT_SUBMIT_EVENT",
+          "ASYNC_FIELD_PARSED",
+          "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"
+        ]
+      },
+      "native_apply_patch_operation": {
+        "status": "SUPPORTED",
+        "evidence": "OFFICIAL_SOURCE_TAG",
+        "registration": "REQUIRED_APPLY_PATCH_PRE_POST",
+        "repository": "https://github.com/openai/codex",
+        "tag": "rust-v0.160.1",
+        "commit_sha": "d27764b82f7118f674371e6d6e76271d9d606edb",
+        "source_path": "codex-rs/hooks/src/schema.rs",
+        "source_sha256": "162735b4d0c021c911cb3939b6130d2aad90cf5f865069a17b97c0cf02c53e14",
+        "verified_assertions": [
+          "PRE_TOOL_USE_INPUT",
+          "POST_TOOL_USE_INPUT",
+          "TOOL_USE_ID",
+          "TOOL_RESPONSE",
+          "POST_TOOL_BLOCK_OUTPUT"
+        ]
+      },
+      "artifact": {
+        "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.160.1.tgz",
+        "npm_integrity": "sha512-f1yrJhwgimKQI1kYQlxdPJcFwkNZxZrbz7Hf89EAcnLqkQ7TiESzr2FgSZn13Ga5RuHjlVUfurzwq10wk9zw2g==",
+        "tarball_sha256": "d84454cfa82f61add78b3270073c6e254923e89657c7f0dd1a88cc5659b4e0c0"
+      },
+      "probe_evidence": {
+        "version_output_sha256": "dfbd3cf8a872deb421d6bcda4beb00369769ca2b680f45c6b5c1767bd8d82e65",
+        "plugin_list_empty_sha256": "64c96bf69647760a3be455980e26a7bc4afc398a4a34b91a35f3313eff1d9665",
+        "marketplace_add_help_sha256": "fa991053b32a60c82ddc07a3bf0456c73b9a1aadb8160ccef786f60668328316",
+        "marketplace_remove_help_sha256": "6dc98546d6981b7623b390e79fc7865bcd40488ba03860966e80205d1c29a893",
+        "plugin_add_help_sha256": "9835785c0d21c7cea49336e910ec3ebd2fce2241f022a3b4c3297b53a13a4d5a",
+        "plugin_remove_help_sha256": "1866b6ffa4066189d554ba77ceae69e01774dcefbbd76c2a18d1591304add277",
+        "windows_cli_contract": "CLI_CONTRACT_PASS",
+        "windows_isolated_plugin": "ISOLATED_PLUGIN_PASS",
+        "ubuntu_cli_contract": "NOT_EVALUATED",
+        "synthetic_hook": "SYNTHETIC_HOOK_PASS",
+        "real_host": "NOT_EVALUATED"
+      }
+    },
+    {
+      "version": "0.160.0",
+      "stable_release_ordinal": 1,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -263,7 +322,7 @@
     },
     {
       "version": "0.159.2",
-      "stable_release_ordinal": 1,
+      "stable_release_ordinal": 2,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -322,7 +381,7 @@
     },
     {
       "version": "0.159.1",
-      "stable_release_ordinal": 2,
+      "stable_release_ordinal": 3,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -381,7 +440,7 @@
     },
     {
       "version": "0.159.0",
-      "stable_release_ordinal": 3,
+      "stable_release_ordinal": 4,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -440,7 +499,7 @@
     },
     {
       "version": "0.158.0",
-      "stable_release_ordinal": 4,
+      "stable_release_ordinal": 5,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -499,7 +558,7 @@
     },
     {
       "version": "0.157.1",
-      "stable_release_ordinal": 5,
+      "stable_release_ordinal": 6,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -558,7 +617,7 @@
     },
     {
       "version": "0.157.0",
-      "stable_release_ordinal": 6,
+      "stable_release_ordinal": 7,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -617,7 +676,7 @@
     },
     {
       "version": "0.156.1",
-      "stable_release_ordinal": 7,
+      "stable_release_ordinal": 8,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -676,7 +735,7 @@
     },
     {
       "version": "0.156.0",
-      "stable_release_ordinal": 8,
+      "stable_release_ordinal": 9,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -735,7 +794,7 @@
     },
     {
       "version": "0.155.1",
-      "stable_release_ordinal": 9,
+      "stable_release_ordinal": 10,
       "marketplace_profile": "local-interface-v2",
       "plugin_cli_profile": "remote-capable-v2",
       "plugin_json_profile": "plugin-list-v1",
@@ -780,65 +839,6 @@
       },
       "probe_evidence": {
         "version_output_sha256": "3591ec6f5ad055685a0c3ef090a0631ac45f6bb43fc3f6d4e69aae02ebfd6346",
-        "plugin_list_empty_sha256": "64c96bf69647760a3be455980e26a7bc4afc398a4a34b91a35f3313eff1d9665",
-        "marketplace_add_help_sha256": "fa991053b32a60c82ddc07a3bf0456c73b9a1aadb8160ccef786f60668328316",
-        "marketplace_remove_help_sha256": "6dc98546d6981b7623b390e79fc7865bcd40488ba03860966e80205d1c29a893",
-        "plugin_add_help_sha256": "9835785c0d21c7cea49336e910ec3ebd2fce2241f022a3b4c3297b53a13a4d5a",
-        "plugin_remove_help_sha256": "1866b6ffa4066189d554ba77ceae69e01774dcefbbd76c2a18d1591304add277",
-        "windows_cli_contract": "CLI_CONTRACT_PASS",
-        "windows_isolated_plugin": "ISOLATED_PLUGIN_PASS",
-        "ubuntu_cli_contract": "NOT_EVALUATED",
-        "synthetic_hook": "SYNTHETIC_HOOK_PASS",
-        "real_host": "NOT_EVALUATED"
-      }
-    },
-    {
-      "version": "0.155.0",
-      "stable_release_ordinal": 10,
-      "marketplace_profile": "local-interface-v2",
-      "plugin_cli_profile": "remote-capable-v2",
-      "plugin_json_profile": "plugin-list-v1",
-      "hook_profile": "hook-json-v1",
-      "apply_patch_result_profile": "result-v155",
-      "native_async_user_prompt_submit": {
-        "status": "SUPPORTED",
-        "evidence": "OFFICIAL_SOURCE_TAG",
-        "registration": "OPTIONAL_USER_PROMPT_SUBMIT",
-        "repository": "https://github.com/openai/codex",
-        "tag": "rust-v0.155.0",
-        "commit_sha": "f0a1b8f0849d90960bc406b848f32e5a129b0457",
-        "source_path": "codex-rs/hooks/src/engine/discovery.rs",
-        "source_sha256": "fd05ee932079df2b5128f170beaf0d8e5c8630a56eadbcf9de9f25806e772b04",
-        "verified_assertions": [
-          "USER_PROMPT_SUBMIT_EVENT",
-          "ASYNC_FIELD_PARSED",
-          "ASYNC_PROPAGATED_TO_COMMAND_HANDLER"
-        ]
-      },
-      "native_apply_patch_operation": {
-        "status": "SUPPORTED",
-        "evidence": "OFFICIAL_SOURCE_TAG",
-        "registration": "REQUIRED_APPLY_PATCH_PRE_POST",
-        "repository": "https://github.com/openai/codex",
-        "tag": "rust-v0.155.0",
-        "commit_sha": "f0a1b8f0849d90960bc406b848f32e5a129b0457",
-        "source_path": "codex-rs/hooks/src/schema.rs",
-        "source_sha256": "162735b4d0c021c911cb3939b6130d2aad90cf5f865069a17b97c0cf02c53e14",
-        "verified_assertions": [
-          "PRE_TOOL_USE_INPUT",
-          "POST_TOOL_USE_INPUT",
-          "TOOL_USE_ID",
-          "TOOL_RESPONSE",
-          "POST_TOOL_BLOCK_OUTPUT"
-        ]
-      },
-      "artifact": {
-        "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.155.0.tgz",
-        "npm_integrity": "sha512-35a85Hbwy9WXkDTJumLjTcmMgpR7BMdrTloWBVGjoA+FBCh7jb3+cYp2W+3U4klqGAjAskoIvQZv7/eedmCjHA==",
-        "tarball_sha256": "be7ee5f16f4c37d3a90e4edce35079cc65b62e5d83bad40f3613a6f2b45efbac"
-      },
-      "probe_evidence": {
-        "version_output_sha256": "798512955013444ace3097d950d19e7c47535772482888c5c48b98dce9b2cec1",
         "plugin_list_empty_sha256": "64c96bf69647760a3be455980e26a7bc4afc398a4a34b91a35f3313eff1d9665",
         "marketplace_add_help_sha256": "fa991053b32a60c82ddc07a3bf0456c73b9a1aadb8160ccef786f60668328316",
         "marketplace_remove_help_sha256": "6dc98546d6981b7623b390e79fc7865bcd40488ba03860966e80205d1c29a893",

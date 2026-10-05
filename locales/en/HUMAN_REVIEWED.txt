@@ -449,4 +449,9 @@ docs/releases/v7.14.4/AUDIT_REPORT.md
 docs/releases/v7.14.5/RELEASE_NOTES.md
 docs/releases/v7.14.5/VALIDATION_REPORT.md
 docs/releases/v7.14.5/AUDIT_REPORT.md
+
+# V7.14.6 language pairs checked by the implementing agent; independent review remains separate.
+docs/releases/v7.14.6/RELEASE_NOTES.md
+docs/releases/v7.14.6/VALIDATION_REPORT.md
+docs/releases/v7.14.6/AUDIT_REPORT.md
 docs/releases/v7.14.1/VALIDATION_REPORT.md

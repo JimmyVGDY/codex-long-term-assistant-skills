@@ -4,6 +4,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.14.6 - 2026-10-06
+
+- Advance the Codex Desktop internal component window to official stable 0.160.1, retain the ten preceding stable releases, and remove 0.155.0.
+- Freeze official npm, annotated-tag commit, and source-contract evidence. Version 0.160.1 continues to reuse `result-v158`, while 0.155.1 retains `result-v155`.
+- Preserve Desktop-only product scope, the 3600-second bounded validation, and the master/tag ancestry gate; package, account Plugin, fresh Desktop process, CI, tag, assets, provenance, publication, and anonymous downloads remain separate acceptance layers.
+
 ## 7.14.5 - 2026-10-04
 
 - Advance the Codex Desktop internal component window to official stable 0.160.0, retain the ten preceding stable releases, and remove 0.154.0.

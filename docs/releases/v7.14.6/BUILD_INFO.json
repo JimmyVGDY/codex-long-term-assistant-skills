@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "version": "7.14.6",
+  "host_surface": "codex-desktop",
+  "release_scope": "DESKTOP_COMPONENT_COMPATIBILITY_PATCH",
+  "codex_anchor": "0.160.1",
+  "stable_release_window_size": 11,
+  "compatibility_registry_digest": "d7b909d340a2d877271c7affbd4579273e9f21417c1b2aa23e337841c23f3752",
+  "public_release_created": false,
+  "record_scope": "Pre-publication source snapshot; account, CI, tag, assets, provenance and public downloads are verified separately.",
+  "build_kind": "compatibility-patch-source-snapshot",
+  "supported_locales": [
+    "zh-CN",
+    "en"
+  ],
+  "python_minimum": "3.11",
+  "ci_python_versions": [
+    "3.11",
+    "3.13"
+  ],
+  "standalone_cli_support": false,
+  "execution_authorization": "NONE",
+  "package_validation_is_host_acceptance": false,
+  "validation_status": "PASS",
+  "payload_manifest_status": "PASS",
+  "payload_digest": "e773f6c2de75e9dc60677e940406b3f41dc63c2adbc71cb3dd6baceece5da105",
+  "internal_component_records_are_desktop_acceptance": false,
+  "desktop_local_component": "0.160.0",
+  "account_plugin_readback": "PASS",
+  "fresh_desktop_process": "PASS"
+}
