@@ -12,6 +12,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.14.6 | [Notes](v7.14.6/RELEASE_NOTES.md) | [Audit](v7.14.6/AUDIT_REPORT.md) | [Validation](v7.14.6/VALIDATION_REPORT.md) | Codex Desktop 0.160.1 内部组件兼容；包、Desktop、CI 与公开发行继续分层验收 | [JSON](v7.14.6/BUILD_INFO.json) | [JSON](v7.14.6/PACKAGE_VALIDATION.json) |
 | 7.14.5 | [Notes](v7.14.5/RELEASE_NOTES.md) | [Audit](v7.14.5/AUDIT_REPORT.md) | [Validation](v7.14.5/VALIDATION_REPORT.md) | Codex Desktop 0.160.0 内部组件兼容；包、Desktop、CI 与公开发行继续分层验收 | [JSON](v7.14.5/BUILD_INFO.json) | [JSON](v7.14.5/PACKAGE_VALIDATION.json) |
 | 7.14.4 | [Notes](v7.14.4/RELEASE_NOTES.md) | [Audit](v7.14.4/AUDIT_REPORT.md) | [Validation](v7.14.4/VALIDATION_REPORT.md) | Codex Desktop 0.159.2 兼容与慢速运行有界验证修复；包、Desktop、CI 与公开发行继续分层验收 | [JSON](v7.14.4/BUILD_INFO.json) | [JSON](v7.14.4/PACKAGE_VALIDATION.json) |
 | 7.14.3 | [Notes](v7.14.3/RELEASE_NOTES.md) | [Audit](v7.14.3/AUDIT_REPORT.md) | [Validation](v7.14.3/VALIDATION_REPORT.md) | Codex Desktop 0.159.2 内部组件兼容；包、Desktop、CI 与公开发行分层验收 | [JSON](v7.14.3/BUILD_INFO.json) | [JSON](v7.14.3/PACKAGE_VALIDATION.json) |

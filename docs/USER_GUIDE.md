@@ -1,8 +1,8 @@
-# Codex 跨项目长期技术助手 V7.14.5 使用说明
+# Codex 跨项目长期技术助手 V7.14.6 使用说明
 
 ## 快速开始
 
-在解压后的 V7.14.5 包中，Windows 运行 `./scripts/install-base.ps1`，POSIX 运行 `./scripts/install-base.sh`，随后直接描述工程任务。基础 Plugin 加载十个 Skill，无需本包 Python runtime 或 API Key，不安装账户 Hook、Reviewer、全局规则或长期运行时状态。
+在解压后的 V7.14.6 包中，Windows 运行 `./scripts/install-base.ps1`，POSIX 运行 `./scripts/install-base.sh`，随后直接描述工程任务。基础 Plugin 加载十个 Skill，无需本包 Python runtime 或 API Key，不安装账户 Hook、Reviewer、全局规则或长期运行时状态。
 
 简单局部任务默认由主 Agent 完成；Profile、索引、全扫和预算台账不是开始任务的前提。需要时再通过 `install-user` 接入增强，详见[安装与恢复](operations/INSTALLATION_RECOVERY.md)。下方索引、Hook 与预算步骤适用于增强能力；严格预算仅在真实宿主绑定、账本和 dispatch permit 均可核验时强制执行，否则模型上限仅为策略约束。
 
@@ -79,11 +79,11 @@ Reviewer、Explorer、Worker 共用根任务预算，控制器不重复扣费。
 
 V1 预算只读；V2 按原字节规则读取和续写；V7/V4 复审保持原语义。新任务使用独立 V3 账本，未知版本失败关闭。安装、注册、Hook 行为、真实派发与实际型号分别是不同证据层，不以模拟测试代替宿主验收。
 
-## 5. Codex 0.160.0 边界
+## 5. Codex 0.160.1 边界
 
-V7.14.5 的内部组件窗口是 Codex CLI 0.160.0 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结；这不建立独立 CLI 产品支持。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.160.0 增加项目外 workspace 默认、断线后队列恢复，并修复 Windows 沙箱、长路径权限和后台控制台窗口问题，同时缓存 Plugin manifest 与远端连接；这些变化不改变本包的 Reviewer 资格或生产默认。0.159.1/0.159.2 的模型目录与 Windows 回移证据继续保留。Hook discovery/schema 与 apply_patch/context 合同和 0.159.0 一致，活动窗口内全部 `0.159.x` 版本及 0.160.0 复用 `result-v158`；0.154.0 已退出并继续失败关闭。模型可见性不等于生产默认启用；Worker/Explorer 和登记 Reviewer 继续受既有场景资格、证据和预算门禁约束。
+V7.14.6 的内部组件窗口是 Codex CLI 0.160.1 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结；这不建立独立 CLI 产品支持。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.160.1 回移 Windows 远程 stdio MCP 环境保留修复，在显式远程环境变量下继续传递 `SYSTEMROOT`、`TEMP` 和 `TMP`；这不改变本包的 Reviewer 资格、模型默认或 Operation v2 合同。0.160.0 的 workspace、队列恢复和 Windows 修复证据继续保留。Hook discovery/schema 与 apply_patch handler/context 合同未漂移，活动窗口内全部 `0.160.x`、`0.159.x` 及 0.158.0 复用 `result-v158`；0.155.0 已退出并继续失败关闭，0.155.1 仍使用 `result-v155`。模型可见性不等于生产默认启用；Worker/Explorer 和登记 Reviewer 继续受既有场景资格、证据和预算门禁约束。
 
-基础安装必须读回 `installed=true`、`enabled=true`、`version=7.14.5`、十个 Skill 与空 Plugin Hook 清单；增强安装还须核验 `HOST_COMPATIBLE` schema 3 快照、账户 Hook 和受管运行时资产。磁盘已有文件不等于 Plugin 已注册或已启用。
+基础安装必须读回 `installed=true`、`enabled=true`、`version=7.14.6`、十个 Skill 与空 Plugin Hook 清单；增强安装还须核验 `HOST_COMPATIBLE` schema 3 快照、账户 Hook 和受管运行时资产。磁盘已有文件不等于 Plugin 已注册或已启用。
 
 ## 任务反馈与优化收益
 
@@ -91,4 +91,4 @@ V7.14.5 的内部组件窗口是 Codex CLI 0.160.0 与此前十个稳定发行�
 
 ## 能力复用与可选门禁
 
-通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭；V7.14.5 只在显式启用策略下把规范 `apply_patch` 接入 Operation v2：A 创建起点并拒绝，准备后由不同 B 领取许可，匹配的 PostToolUse 回执后才能完成核验。旧 GateTask 永不转换为新许可。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.14.5/VALIDATION_REPORT.md)。
+通过[能力索引](CAPABILITY_INDEX.md)完成有界初扫与增量更新，复用前核对候选源码、业务适用性与维护成本。项目门禁默认关闭；V7.14.6 只在显式启用策略下把规范 `apply_patch` 接入 Operation v2：A 创建起点并拒绝，准备后由不同 B 领取许可，匹配的 PostToolUse 回执后才能完成核验。旧 GateTask 永不转换为新许可。参见[验收规程](COMPONENT_REUSE_ACCEPTANCE.md)和[发行验证](releases/v7.14.6/VALIDATION_REPORT.md)。

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：V7.14.5 稳定版兼容注册表契约测试。
+"""中文：V7.14.6 稳定版兼容注册表契约测试。
 
-English: V7.14.5 stable-release compatibility registry contract tests.
+English: V7.14.6 stable-release compatibility registry contract tests.
 """
 from __future__ import annotations
 
@@ -33,8 +33,8 @@ from codex_compatibility import (  # noqa: E402
 
 REGISTRY_PATH = ROOT / "config" / "codex-compatibility-v1.json"
 EXPECTED_VERSIONS = [
-    "0.160.0", "0.159.2", "0.159.1", "0.159.0", "0.158.0", "0.157.1", "0.157.0", "0.156.1", "0.156.0",
-    "0.155.1", "0.155.0",
+    "0.160.1", "0.160.0", "0.159.2", "0.159.1", "0.159.0", "0.158.0", "0.157.1", "0.157.0", "0.156.1",
+    "0.156.0", "0.155.1",
 ]
 
 
@@ -48,24 +48,25 @@ def _load_release_script(name: str, filename: str):
 
 class RegistryTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.registry = load_registry(REGISTRY_PATH, "7.14.5")
+        self.registry = load_registry(REGISTRY_PATH, "7.14.6")
 
     def test_registry_is_exact_frozen_stable_window(self) -> None:
         self.assertEqual(EXPECTED_VERSIONS, [item["version"] for item in self.registry["versions"]])
-        self.assertEqual("0.160.0", self.registry["window_policy"]["anchor"])
+        self.assertEqual("0.160.1", self.registry["window_policy"]["anchor"])
         self.assertEqual(10, self.registry["window_policy"]["preceding_stable_releases"])
         self.assertEqual(64, len(canonical_digest(self.registry)))
 
     def test_departed_versions_are_not_silently_accepted(self) -> None:
-        for version in ("0.154.0", "0.153.4", "0.153.3"):
+        for version in ("0.155.0", "0.154.0", "0.153.4", "0.153.3"):
             with self.subTest(version=version), self.assertRaises(CompatibilityError):
                 profile_for_version(self.registry, version)
 
-    def test_result_v158_is_shared_by_0_160_0_current_0_159_patches_and_0_158_0(self) -> None:
+    def test_result_v158_is_shared_by_0_160_x_current_0_159_patches_and_0_158_0(self) -> None:
         users = [item["version"] for item in self.registry["versions"]
                  if item["apply_patch_result_profile"] == "result-v158"]
-        self.assertEqual(["0.160.0", "0.159.2", "0.159.1", "0.159.0", "0.158.0"], users)
+        self.assertEqual(["0.160.1", "0.160.0", "0.159.2", "0.159.1", "0.159.0", "0.158.0"], users)
         self.assertEqual("result-v156", profile_for_version(self.registry, "0.157.1")["apply_patch_result_profile"])
+        self.assertEqual("result-v155", profile_for_version(self.registry, "0.155.1")["apply_patch_result_profile"])
 
     def test_release_consumers_pin_the_current_registry_summary(self) -> None:
         current = canonical_digest(self.registry)
@@ -231,11 +232,11 @@ class RegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="cp-v742-artifact-") as temporary:
             path = Path(temporary) / "codex.tgz"
             path.write_bytes(payload)
-            report = verify_artifact_file(registry, "0.160.0", path)
+            report = verify_artifact_file(registry, "0.160.1", path)
             self.assertEqual(artifact["tarball_sha256"], report["tarball_sha256"])
             path.write_bytes(payload + b"tampered")
             with self.assertRaises(CompatibilityError):
-                verify_artifact_file(registry, "0.160.0", path)
+                verify_artifact_file(registry, "0.160.1", path)
 
     def test_hook_alias_registry_matches_runtime_adapter(self) -> None:
         tree = ast.parse((ROOT / "hooks" / "cp_hook.py").read_text(encoding="utf-8"))
@@ -258,7 +259,7 @@ class RegistryTests(unittest.TestCase):
 class PluginListNormalizerTests(unittest.TestCase):
     PACKAGE = "codex-cross-project-engineering-assistant"
     MARKETPLACE = "cp-assistant-local"
-    VERSION = "7.14.5"
+    VERSION = "7.14.6"
 
     def setUp(self) -> None:
         registry = load_registry(REGISTRY_PATH)

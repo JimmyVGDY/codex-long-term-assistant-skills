@@ -516,7 +516,7 @@ class V66RuntimeDeepeningTests(unittest.TestCase):
         ignore_bytecode = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
         shutil.copytree(ROOT / "hooks", plugin / "hooks", ignore=ignore_bytecode)
         shutil.copytree(ROOT / "runtime", plugin / "runtime", ignore=ignore_bytecode)
-        profile = package_manager.profile_for_version(package_manager.COMPATIBILITY_REGISTRY, "0.155.0")
+        profile = package_manager.profile_for_version(package_manager.COMPATIBILITY_REGISTRY, "0.155.1")
         hooks = package_manager.hook_fragment(plugin / "hooks" / "cp_hook.py", profile)
         env = dict(os.environ, PLUGIN_ROOT=str(plugin), CP_ASSISTANT_DATA=str(self.data),
                    CP_ASSISTANT_KEYRING_PATH=str(self.keyring),
