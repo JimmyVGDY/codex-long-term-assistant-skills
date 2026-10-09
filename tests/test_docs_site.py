@@ -85,6 +85,11 @@ class DocumentationSiteTests(unittest.TestCase):
                                "runtime/cp_runtime/data/dispatch-policy-v2.json",
                                "tests/test_dispatch_policy.py"):
                     self.assertIn(self.builder.REPOSITORY_BLOB + source, rendered)
+                policy = (output / language / "docs/MODEL_ROUTING_AND_COST_POLICY.md").read_text(encoding="utf-8")
+                source = "skills/multi-agent-independent-review/references/reviewer-model-routing.md"
+                if language == "en":
+                    source = "locales/en/" + source
+                self.assertIn(self.builder.REPOSITORY_BLOB + source, policy)
 
     def test_source_links_preserve_fragments_and_site_boundaries(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cp-docs-source-links-") as temporary:
@@ -95,8 +100,13 @@ class DocumentationSiteTests(unittest.TestCase):
                     self.builder.REPOSITORY_BLOB + "tests/test_dispatch_policy.py#L10",
                     self.builder.rewrite_target(
                         page, output, "../../../tests/test_dispatch_policy.py#L10"))
+                skill = "skills/multi-agent-independent-review/references/reviewer-model-routing.md"
+                source = "locales/en/" + skill if language == "en" else skill
+                self.assertEqual(self.builder.REPOSITORY_BLOB + source + "#L10",
+                                 self.builder.rewrite_target(page, output, "../../../" + skill + "#L10"))
                 for target in ("../../USER_GUIDE.md", "../../../tests/missing.py",
-                               "../../../../tests/test_dispatch_policy.py"):
+                               "../../../../tests/test_dispatch_policy.py", "../../../skills/missing.md",
+                               "../../../../" + skill):
                     self.assertEqual(target, self.builder.rewrite_target(page, output, target))
 
     def test_historical_pages_are_marked_and_excluded_from_default_search(self) -> None:

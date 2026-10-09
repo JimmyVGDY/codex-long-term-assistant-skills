@@ -180,8 +180,8 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         environment = {
             **self.env, 'CP_ASSISTANT_DATA': str(data_root),
             'CP_ASSISTANT_KEYRING_PATH': str(keyring),
-            'CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS': '2000',
         }
+        environment.pop('CP_ASSISTANT_TEST_SEAL_WORKER_WAIT_MS', None)
         environment.pop('PLUGIN_ROOT', None)
         payload = {'hook_event_name': 'SessionEnd', 'session_id': 'installed-session',
                    'turn_id': 'installed-turn', 'task_id': 'installed-task', 'cwd': str(self.home)}
@@ -192,8 +192,21 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         )
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertNotIn('SEAL_WORKER_', result.stderr)
-        event_files = list(data_root.rglob('task-outcome-v3.jsonl'))
+        # 中文：封印由后台 worker 完成；测试在 Hook 之外等待真实结果，不假设两秒内完成。
+        # English: Sealing is asynchronous; wait outside the Hook for the real result instead of assuming two seconds.
+        deadline = time.monotonic() + 10
+        event_files = []
+        seal_status = 'NO_EVENT_FILE'
+        while time.monotonic() < deadline:
+            event_files = list(data_root.rglob('task-outcome-v3.jsonl'))
+            self.assertLessEqual(len(event_files), 1)
+            if event_files:
+                seal_status = verify_event_seals(event_files[0], keyring_path=keyring)['seal_status']
+                if seal_status == 'SEALED_CURRENT':
+                    break
+            time.sleep(0.05)
         self.assertEqual(1, len(event_files))
+        self.assertEqual('SEALED_CURRENT', seal_status)
         events = read_event_chain(event_files[0])['events']
         self.assertEqual(['SESSION_ENDED'], [event['event_type'] for event in events])
         self.assertEqual('SEALED_CURRENT', verify_event_seals(event_files[0], keyring_path=keyring)['seal_status'])
