@@ -37,7 +37,8 @@ Requirements:
 - the coordinator deduplicates, clusters root causes, adjudicates conflicts, and assigns severity;
 - form the minimum complete repair set before centralized repair;
 - rereview only affected scope after repair, expanding when a public boundary changed;
-- use `$multi-agent-independent-review` as the sole defaults authority: parallel 3, total 6, two postimplementation rounds, two centralized repair rounds, and one Terra High reviewer;
+- use `$multi-agent-independent-review` [script routing](../../multi-agent-independent-review/references/script-first-routing.md) and the versioned runtime policy as the sole defaults authority: scripts calculate profiles, attempts, concurrency and required holds for new tasks; legacy profile and round limits apply only to frozen compatibility;
+- missing independent reports, gain data or optional evidence permits default or bounded continuation while remaining unverified; confirmed blockers restrict their affected delivery action;
 - keep compatibility hard ceilings separate and never treat them as routine defaults;
 - after reaching a limit, stop automatic looping and retain blockers and unverified items rather than claiming a pass.
 

@@ -2,18 +2,63 @@
   "schema_version": 1,
   "documents": [
     {
-      "path": "docs/releases/v7.14.6/RELEASE_NOTES.md",
+      "path": "docs/releases/v7.15.2/RELEASE_NOTES.md",
       "status": "active",
+      "english_source": "locales/en/docs/releases/v7.15.2/RELEASE_NOTES.md"
+    },
+    {
+      "path": "docs/releases/v7.15.2/VALIDATION_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.15.2/VALIDATION_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.15.2/AUDIT_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.15.2/AUDIT_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.15.1/RELEASE_NOTES.md",
+      "status": "historical",
+      "english_source": "locales/en/docs/releases/v7.15.1/RELEASE_NOTES.md"
+    },
+    {
+      "path": "docs/releases/v7.15.1/VALIDATION_REPORT.md",
+      "status": "historical",
+      "english_source": "locales/en/docs/releases/v7.15.1/VALIDATION_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.15.1/AUDIT_REPORT.md",
+      "status": "historical",
+      "english_source": "locales/en/docs/releases/v7.15.1/AUDIT_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.15.0/RELEASE_NOTES.md",
+      "status": "historical",
+      "english_source": "locales/en/docs/releases/v7.15.0/RELEASE_NOTES.md"
+    },
+    {
+      "path": "docs/releases/v7.15.0/VALIDATION_REPORT.md",
+      "status": "historical",
+      "english_source": "locales/en/docs/releases/v7.15.0/VALIDATION_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.15.0/AUDIT_REPORT.md",
+      "status": "historical",
+      "english_source": "locales/en/docs/releases/v7.15.0/AUDIT_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.14.6/RELEASE_NOTES.md",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.14.6/RELEASE_NOTES.md"
     },
     {
       "path": "docs/releases/v7.14.6/VALIDATION_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.14.6/VALIDATION_REPORT.md"
     },
     {
       "path": "docs/releases/v7.14.6/AUDIT_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.14.6/AUDIT_REPORT.md"
     },
     {
@@ -1023,6 +1068,42 @@
     }
   ],
   "english_projections": [
+    {
+      "source": "locales/en/docs/releases/v7.15.2/RELEASE_NOTES.md",
+      "target": "docs/releases/v7.15.2/RELEASE_NOTES.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.15.2/VALIDATION_REPORT.md",
+      "target": "docs/releases/v7.15.2/VALIDATION_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.15.2/AUDIT_REPORT.md",
+      "target": "docs/releases/v7.15.2/AUDIT_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.15.1/RELEASE_NOTES.md",
+      "target": "docs/releases/v7.15.1/RELEASE_NOTES.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.15.1/VALIDATION_REPORT.md",
+      "target": "docs/releases/v7.15.1/VALIDATION_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.15.1/AUDIT_REPORT.md",
+      "target": "docs/releases/v7.15.1/AUDIT_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.15.0/RELEASE_NOTES.md",
+      "target": "docs/releases/v7.15.0/RELEASE_NOTES.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.15.0/VALIDATION_REPORT.md",
+      "target": "docs/releases/v7.15.0/VALIDATION_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.15.0/AUDIT_REPORT.md",
+      "target": "docs/releases/v7.15.0/AUDIT_REPORT.en.md"
+    },
     {
       "source": "locales/en/docs/releases/v7.14.6/RELEASE_NOTES.md",
       "target": "docs/releases/v7.14.6/RELEASE_NOTES.en.md"

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from . import budget_v5
-from .common import atomic_write_json, atomic_write_bytes, read_json, repo_snapshot, utc_now, require_external_state
+from .common import atomic_write_json, atomic_write_bytes, canonical_json, read_json, repo_snapshot, utc_now, require_external_state
 from .event_v2 import OwnerTokenLock
 from .review_contract import ISOLATION_LEVELS, STATUSES, validate_findings
 from .routing_contract import (
@@ -128,7 +128,8 @@ def reconcile(directory: Path) -> dict[str, Any]:
 
 def prepare(directory: Path, request: Mapping[str, Any], *, dispatch_key: str, depth: int,
             snapshot_loader: budget_v5.SnapshotLoader, transition: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    role_for(request["scenario"]["role"])
+    if role_for(request["scenario"]["role"]) != 'reviewer':
+        fail('REVIEW_V10_REVIEWER_ROLE_REQUIRED')
     with OwnerTokenLock(directory / STATE_FILE, timeout=2):
         state = read_state(directory)
         if state["status"] != "open" or request["task_id"] != state["identity"]["task_id"]:
@@ -183,16 +184,20 @@ def expected_result(ledger: Mapping[str, Any], permit_id: str, *, isolation_leve
                  context_bundle_ref=request["context_bundle"]["sha256"],
                  business_prompt_sha256=request["business_prompt_sha256"],
                  agent_ref=budget_v5.effective_agent_ref(ledger, rid),
-                 transport_mode="desktop-authoritative-context/1")
-    value["result_id"] = "RVR7_" + ref({key: value[key] for key in
+                 transport_mode=ledger["root_binding"]["context_runtime"]["transport_mode"])
+    from .review_vector_transport import result_fields
+    value.update(result_fields(ledger,request))
+    prefix = "RVR8_" if value["schema_version"] == 8 else "RVR7_"
+    value["result_id"] = prefix + ref({key: value[key] for key in
         ("review_state_ref", "identity", "boundary_id", "reviewer", "slot_id", "decision_ref", "permit_id")})[7:]
     return value
 
 
 def validate_result(value: Any, expected: Mapping[str, Any]) -> dict[str, Any]:
-    exact(value, RESULT_FIELDS, "REVIEW_V7_FIELDS")
+    fields = RESULT_FIELDS | ({"review_contract", "review_input_ref"} if expected["schema_version"] == 8 else set())
+    exact(value, fields, "REVIEW_V7_FIELDS")
     mutable = {"status", "findings", "checked_scope", "unverified_items", "summary", "supersedes"}
-    if any(value[key] != expected[key] for key in RESULT_FIELDS - mutable):
+    if any(value[key] != expected[key] for key in fields - mutable):
         fail("REVIEW_V7_ASSIGNMENT_MISMATCH")
     if value["status"] not in STATUSES:
         fail("REVIEW_V7_STATUS")
@@ -223,6 +228,30 @@ def record_result(directory: Path, result_path: Path, *, response_ref: str) -> d
     entry = state["entries"][value["permit_id"]]
     if not entry["reservation_id"]:
         fail("REVIEW_V7_HOST_RESERVATION_REQUIRED")
+    if value["transport_mode"] == "desktop-authoritative-context/2":
+        from .context_semantics_v2 import expand_semantics, SEMANTIC_FIELDS
+        original, original_ref = read_document(directory / "semantic" / (sha(response_ref)[7:] + ".json"))
+        from .review_vector_transport import decode
+        ledger = budget_v5.read_budget(Path(state["ledger_path"]))
+        accounting_path = directory / "semantic" / (response_ref[7:] + "-accounting.json")
+        semantic = expand_semantics(original) if accounting_path.exists() else decode(
+            ledger, ledger["permits"][value["permit_id"]]["request"], original)
+        if original_ref != response_ref or any(value[key] != semantic[key] for key in SEMANTIC_FIELDS):
+            fail("CONTEXT_V2_RESULT_SEMANTICS_MISMATCH")
+        native = ledger["context_finals"].get(entry["reservation_id"])
+        accounting = False
+        if accounting_path.exists():
+            note, _ = read_document(accounting_path)
+            exact(note, {"schema_version", "permit_id", "reason", "evidence_ref", "response_ref"},
+                  "CONTEXT_V2_ACCOUNTING_FIELDS")
+            if note["schema_version"] != "controller-failure-accounting/1" \
+                    or note["permit_id"] != value["permit_id"] or note["response_ref"] != response_ref \
+                    or note["reason"] != _failure_reason(ledger, entry["reservation_id"]) \
+                    or original != _failure_payload(value["permit_id"], note["reason"], sha(note["evidence_ref"])):
+                fail("CONTEXT_V2_ACCOUNTING_BINDING")
+            accounting = True
+        if native and not accounting and (native["response_ref"] != response_ref or native["semantic_ref"] != ref(semantic)):
+            fail("CONTEXT_V2_RESULT_SEMANTICS_MISMATCH")
     stored = directory / "results" / (file_ref[7:] + ".json")
     raw = result_path.read_bytes()
     if "sha256:" + hashlib.sha256(raw).hexdigest() != file_ref:
@@ -302,19 +331,28 @@ def record_semantic(directory: Path, permit_id: str, response_path: Path) -> dic
     payload, response_ref = read_document(response_path)
     if "sha256:" + hashlib.sha256(raw).hexdigest() != response_ref:
         fail("REVIEW_V7_RESPONSE_CHANGED")
-    exact(payload, {"status", "findings", "checked_scope", "unverified_items", "summary", "context_receipt"},
-          "REVIEW_V7_SEMANTIC_FIELDS")
     expected = result_template(directory, permit_id)
     state = read_state(directory)
     ledger = budget_v5.read_budget(Path(state["ledger_path"]))
     rid = state["entries"][permit_id]["reservation_id"]
     receipt = ledger["context_reads"].get(rid)
     delivery = ledger["context_deliveries"].get(rid)
-    if not delivery:
-        if payload["status"] != "incomplete" or payload["context_receipt"] != "":
-            fail("REVIEW_V7_CONTEXT_DELIVERY_REQUIRED")
-    elif not receipt or ref(payload["context_receipt"]) != receipt["nonce_ref"]:
-        fail("REVIEW_V7_CONTEXT_RECEIPT")
+    if expected["transport_mode"] == "desktop-authoritative-context/2":
+        from .review_vector_transport import decode
+        payload = decode(ledger, ledger["permits"][permit_id]["request"], payload)
+        if not delivery:
+            if payload["status"] != "incomplete":
+                fail("REVIEW_V7_CONTEXT_DELIVERY_REQUIRED")
+        elif ledger["context_finals"].get(rid, {}).get("response_ref") != response_ref:
+            fail("CONTEXT_V2_NATIVE_FINAL_REQUIRED")
+    else:
+        exact(payload, {"status", "findings", "checked_scope", "unverified_items", "summary", "context_receipt"},
+              "REVIEW_V7_SEMANTIC_FIELDS")
+        if not delivery:
+            if payload["status"] != "incomplete" or payload["context_receipt"] != "":
+                fail("REVIEW_V7_CONTEXT_DELIVERY_REQUIRED")
+        elif not receipt or ref(payload["context_receipt"]) != receipt["nonce_ref"]:
+            fail("REVIEW_V7_CONTEXT_RECEIPT")
     result = {**expected, **{k: v for k, v in payload.items() if k != "context_receipt"}}
     result["supersedes"] = budget_v5.result_supersedes(ledger, ledger["permits"][permit_id], payload["status"])
     validate_result(result, expected)
@@ -324,10 +362,67 @@ def record_semantic(directory: Path, permit_id: str, response_path: Path) -> dic
         fail("REVIEW_V7_SEMANTIC_COLLISION")
     if not stored_raw.exists():
         atomic_write_bytes(stored_raw, raw)
-    envelope_path = directory / "semantic" / (response_ref[7:] + "-envelope.json")
+    # 中文：相同原生回答字节可属于不同许可；共享内容寻址正文，但分别保留归属信封。第一版保持原存储合同，既有产物保留。
+    # English: Equal native answer bytes may belong to independent permits. Share the
+    # content-addressed body, but keep each attributed envelope separate. /1
+    # retains its historical storage contract and existing artifacts are kept.
+    envelope_key = ref({"response_ref": response_ref, "permit_id": permit_id})[7:] \
+        if expected["transport_mode"] == "desktop-authoritative-context/2" else response_ref[7:]
+    envelope_path = directory / "semantic" / (envelope_key + "-envelope.json")
     encoded = (json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
     if envelope_path.exists() and envelope_path.read_bytes() != encoded:
         fail("REVIEW_V7_ENVELOPE_COLLISION")
     if not envelope_path.exists():
         atomic_write_bytes(envelope_path, encoded)
     return record_result(directory, envelope_path, response_ref=response_ref)
+
+
+def _failure_reason(ledger, rid):
+    if ledger["root_binding"]["context_runtime"]["transport_mode"] != "desktop-authoritative-context/2" \
+            or ledger["reservations"][rid]["state"] != "COMPLETED":
+        fail("CONTEXT_V2_ACCOUNTING_TERMINAL_REQUIRED")
+    if ledger["reservations"][rid]["outcome"] in {"CANCELLED", "FAILED", "PARTIAL", "BLOCKED"}:
+        return "HOST_UNSUCCESSFUL"
+    if ledger["context_recovery"].get(rid, {}).get("status") == "DENIED":
+        return "READER_PROTOCOL_DENIED"
+    if rid not in ledger["context_deliveries"]:
+        return "MATERIAL_NOT_DELIVERED"
+    if rid not in ledger["context_finals"]:
+        return "NATIVE_FINAL_UNVERIFIED"
+    fail("CONTEXT_V2_ACCOUNTING_NO_FAILURE")
+
+
+def _failure_payload(permit_id, reason, evidence_ref):
+    return {"status": "incomplete", "findings": [], "checked_scope": [],
+            "unverified_items": [reason, "permit:" + permit_id, evidence_ref],
+            "summary": "Controller-only failure accounting: " + reason + ". This is not a verified model review."}
+
+
+def record_failure_accounting(directory: Path, permit_id: str, *, evidence_ref: str) -> dict[str, Any]:
+    """中文：只为已停止失败调用收口，不修补模型回答。English: account, never forge a model verdict."""
+    expected = result_template(directory, permit_id)
+    state = read_state(directory)
+    ledger = budget_v5.read_budget(Path(state["ledger_path"]))
+    rid = state["entries"][permit_id]["reservation_id"]
+    reason = _failure_reason(ledger, rid)
+    payload = _failure_payload(permit_id, reason, sha(evidence_ref))
+    raw = (canonical_json(payload) + "\n").encode("utf-8")
+    response_ref = "sha256:" + hashlib.sha256(raw).hexdigest()
+    target = directory / "semantic" / (response_ref[7:] + ".json")
+    note_path = target.with_name(response_ref[7:] + "-accounting.json")
+    note = {"schema_version": "controller-failure-accounting/1", "permit_id": permit_id,
+            "reason": reason, "evidence_ref": evidence_ref, "response_ref": response_ref}
+    for path, content in ((target, raw), (note_path, (canonical_json(note) + "\n").encode())):
+        if path.exists() and path.read_bytes() != content:
+            fail("CONTEXT_V2_ACCOUNTING_COLLISION")
+        if not path.exists():
+            atomic_write_bytes(path, content)
+    result = {**expected, **payload, "supersedes": []}
+    validate_result(result, expected)
+    envelope = target.with_name(response_ref[7:] + "-envelope.json")
+    content = (canonical_json(result) + "\n").encode()
+    if envelope.exists() and envelope.read_bytes() != content:
+        fail("CONTEXT_V2_ACCOUNTING_COLLISION")
+    if not envelope.exists():
+        atomic_write_bytes(envelope, content)
+    return record_result(directory, envelope, response_ref=response_ref)

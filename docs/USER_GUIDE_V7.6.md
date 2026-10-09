@@ -2,11 +2,11 @@
 
 [当前入口](USER_GUIDE.md)
 
-# Codex 跨项目长期技术助手 V7.14.6 使用说明
+# Codex 跨项目长期技术助手 V7.15.2 使用说明
 
 ## 快速开始
 
-在解压后的 V7.14.6 包中，Windows 运行 `./scripts/install-base.ps1`，POSIX 运行 `./scripts/install-base.sh`，随后直接描述工程任务。基础 Plugin 加载十个 Skill，无需本包 Python runtime 或 API Key，不安装账户 Hook、Reviewer、全局规则或长期运行时状态。
+在解压后的 V7.15.2 包中，Windows 运行 `./scripts/install-base.ps1`，POSIX 运行 `./scripts/install-base.sh`，随后直接描述工程任务。基础 Plugin 加载十个 Skill，无需本包 Python runtime 或 API Key，不安装账户 Hook、Reviewer、全局规则或长期运行时状态。
 
 简单局部任务默认由主 Agent 完成；Profile、索引、全扫和预算台账不是开始任务的前提。需要时再通过 `install-user` 接入增强，详见[安装与恢复](operations/INSTALLATION_RECOVERY.md)。下方索引、Hook 与预算步骤适用于增强能力；严格预算仅在真实宿主绑定、账本和 dispatch permit 均可核验时强制执行，否则模型上限仅为策略约束。
 
@@ -54,40 +54,38 @@
 5. 对变更源文件和实际采用的过期候选做限定更新；新增公共能力登记定位，迁移保留 ID。无变化或无关任务不重复扫描。
 6. PARTIAL、BLOCKED、FAILED、CANCELLED 保留原含义；禁用保留索引与历史回执。流程 PASS 不能代替业务语义与兼容验证。
 
-参数与启停方法见[能力索引](CAPABILITY_INDEX.md)链接的完整流程。下面的委派预算是按任务单独启用的另一项控制。
+参数与启停方法见[能力索引](CAPABILITY_INDEX.md)链接的完整流程。下方预算由增强运行时按根任务管理，基础Plugin不冒称强制预算已生效。
 
 ## 1. 委派预算与隐私边界
 
-Reviewer、Explorer、Worker 共用根任务预算，控制器不重复扣费。新任务采用 DelegationBudget V3、Reviewer 状态 V8、结果 V5；旧任务固定原策略。主 Agent 保持当前选择。Worker/Explorer 仍使用原四组合；登记 Reviewer 从 Luna Low 的基础 1 分开始，按复审预算模式和有效证据加分，算完后一次选择十组合之一，最高 Astra High。
+Reviewer、Explorer、Worker共用根任务预算。增强运行时的新默认`desktop-g6-deterministic-v1`使用GPT-6九档，信息不足使用Sol/medium，不要求统计资格。主Agent保持当前选择，旧根固定原策略和费用语义。
 
-代理单位不是实际价格或模型能力排名。完整组合、证据去重、质量约束、扩展额度和家族次数限制见[模型选择与预算](MODEL_ROUTING_AND_COST_POLICY.md)。没有满足质量约束且可负担的组合时停止派发。
+脚本计算事实、选型、预占、必需预留和重试；模型保留语义判断及允许范围内的调整建议，执行最终批准参数。规划单位不是实际价格或能力排名。见[模型选择与预算](MODEL_ROUTING_AND_COST_POLICY.md)。缺证据默认或降级继续；预算不足则排队、调整范围或继续本地工作，不虚构调用。
 
 ## 2. 使用顺序
 
-1. 绑定仓库外 Project Profile，建立采用新评分策略的 Task Envelope，选择 LIGHT、STANDARD 或 STRICT。
-2. 在仓库外初始化 V3 账本，使用 `--root-envelope` 和真实宿主 session 绑定。旧任务显式选择 `--policy-id four-tier-v1`；不能把旧信封静默解释成新策略。
-3. 每次先决定 INLINE 或 DELEGATE。Reviewer 的 `decide` 输入为 `--selection-input`、`--review-assignment` 与根信封；提交证据引用及路径，不提交计算结果。程序从 Luna 起算并固定最终组合与 permit。
-4. V8 控制器关联同一 permit、packet hash 和唯一复审槽位后，按宿主接口使用带 `task_name` 的参数或 `native_request_parameters` 一次派发。原生无任务名接口须将本次返回的 `native_message_prefix` 原样前置于 `message`；缺失、错误或重复消费的引用均拒绝，不按角色猜配许可。Reviewer 组合必须明确指定，不能隐式继承。
-5. 启动宿主时设置 `CP_DELEGATION_BUDGET_PATH`、`CP_DELEGATION_ENVELOPE_PATH`、`CP_DELEGATION_BUDGET_REQUIRED=1`。PreToolUse 验证真实根身份、当前基线、角色和 permit 后原子预占。
-6. PostToolUse 的工具调用 ID 和 Agent ID 回执与 SubagentStart/Stop 精确关联，允许乱序。V3 的 start/complete CLI 不可替代原生回执。无关联、超时或未知响应保持未完成，不能猜成 PASS 或退款。
-
-增强不会自动为任务建账本。未激活时仅为策略约束；严格预算配置缺失或损坏时拒绝派发。原生未创建响应尚无已核验适配时，不开放自动未启动退款；已启动、失败或取消不退费。
+1. 识别项目、任务与已有根策略。新任务按已授权默认模板初始化，旧根原样回放；改策略保留交接、历史费用和迟到事件归属。
+2. 从增强运行时的准备入口获取默认组合、允许调整范围、共享预算、门禁状态和下一步；未知事实保持UNKNOWN。
+3. 执行脚本精确参数；补读、拆分、调序或改变型号/强度时提交结构化申请，由脚本重算。没有长篇理由或收益卡不阻止默认任务。
+4. PreToolUse原子预占，回执和子任务终态按真实身份关联。通用status、超时或取消请求不能变成PASS或退款。
+5. 主/子工具、预审、复审、修复和安装采用一致的缺证据规则；继续可逆工作，已确认违规只限制对应动作。平台权限与信任不因此关闭。
+6. 基础Plugin仅加载Skill时，不声称存在增强运行时的强制账本或Hook保证；以当前安装读回为准。真实接口不可用时报告限制并继续可行本地工作。
 
 ## 3. 重试与切换
 
-缺失证据不构成升级理由。同家族增加强度与跨家族切换分别记录；再次复审绑定前次终态、结果引用与新证据，不能通过改名重新使用许可或重置次数。重试需要明确的新轮次或槽位，并继续受同一个根预算约束。
+按错误类别、根预算和总时限决定重试；运行中或终态不明时查询同一调用。同材料无新信息不反复重跑，必要降档不挤占升档次数；切策略或拆分不清零预算。用户明确指定的型号优先于默认，真实不可用或不可支付时说明具体冲突。
 
 ## 4. 成本与校准
 
-只保存批准组合、评分和成本代理，不读取、推断或保存宿主实际型号。比较样本固定项目、仓库、策略摘要、公式与声明比较对；旧单位不和新公式混算。主协调者带结果与验证引用最终化后才进入回放，样本不足保持 NO_CHANGE。Proposal 永久 `execution_authorization=NONE`。
+批准组合、规划单位与可获得的实际计量分开记录；模型语义建议不冒充已验证事实。自然发生的独立样本可供后续版本校准，样本不足维持当前参数并继续服务，不恢复资格前置。Proposal永久保持`execution_authorization=NONE`。
 
-V1 预算只读；V2 按原字节规则读取和续写；V7/V4 复审保持原语义。新任务使用独立 V3 账本，未知版本失败关闭。安装、注册、Hook 行为、真实派发与实际型号分别是不同证据层，不以模拟测试代替宿主验收。
+旧V1/V2/V3/V4账本和结果按冻结合同读取，不重新计费或判定。安装、注册、Hook、真实派发、验证通过和已生效分别读回；合成测试不替代Desktop原生验收。
 
 ## 5. Codex 0.160.1 边界
 
-V7.14.6 的内部组件窗口是 Codex CLI 0.160.1 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结；这不建立独立 CLI 产品支持。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.160.1 回移 Windows 远程 stdio MCP 环境保留修复，在显式远程环境变量下继续传递 `SYSTEMROOT`、`TEMP` 和 `TMP`；这不改变本包的 Reviewer 资格、模型默认或 Operation v2 合同。0.160.0 的 workspace、队列恢复和 Windows 修复证据继续保留。Hook discovery/schema 与 apply_patch handler/context 合同未漂移，活动窗口内全部 `0.160.x`、`0.159.x` 及 0.158.0 复用 `result-v158`；0.155.0 已退出并继续失败关闭，0.155.1 仍使用 `result-v155`。模型可见性不等于生产默认启用；Worker/Explorer 和登记 Reviewer 继续受既有场景资格、证据和预算门禁约束。
+V7.14.6 的内部组件窗口是 Codex CLI 0.160.1 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结；这不建立独立 CLI 产品支持。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.160.1 回移 Windows 远程 stdio MCP 环境保留修复，在显式远程环境变量下继续传递 `SYSTEMROOT`、`TEMP` 和 `TMP`；这不改变本包的 Reviewer 资格、模型默认或 Operation v2 合同。0.160.0 的 workspace、队列恢复和 Windows 修复证据继续保留。Hook discovery/schema 与 apply_patch handler/context 合同未漂移，活动窗口内全部 `0.160.x`、`0.159.x` 及 0.158.0 复用 `result-v158`；0.155.0 已退出并继续失败关闭，0.155.1 仍使用 `result-v155`。以上是V7.14.6组件兼容基线，不代表新默认模型策略；新任务采用上文6系列默认，资格门槛仅属于显式旧合同。
 
-基础安装必须读回 `installed=true`、`enabled=true`、`version=7.14.6`、十个 Skill 与空 Plugin Hook 清单；增强安装还须核验 `HOST_COMPATIBLE` schema 3 快照、账户 Hook 和受管运行时资产。磁盘已有文件不等于 Plugin 已注册或已启用。
+基础安装必须读回 `installed=true`、`enabled=true`、`version=7.15.2`、十个 Skill 与空 Plugin Hook 清单；增强安装还须核验 `HOST_COMPATIBLE` schema 3 快照、账户 Hook 和受管运行时资产。磁盘已有文件不等于 Plugin 已注册或已启用。
 
 ## 任务反馈与优化收益
 

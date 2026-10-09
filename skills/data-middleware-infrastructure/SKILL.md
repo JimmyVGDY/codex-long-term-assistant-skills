@@ -17,10 +17,11 @@ description: >-
 
 ## 模型与委派成本
 
-本段仅适用于 Worker/Explorer 的普通委派；登记 Reviewer 按 [独立复审技能](../multi-agent-independent-review/SKILL.md) 的根任务固定策略选型。主 Agent 模型与强度保持当前选择。
+主 Agent 保持当前选择。子 Agent 的型号、思考强度和预算采用[脚本决策与弹性规则](../multi-agent-independent-review/references/script-first-routing.md)；执行脚本返回的精确参数。
 
-- 配置搜索、清单提取、日志/执行计划整理优先 `luna-low`；范围明确的差异对比和初筛使用 `luna-medium`。
-- 普通 SQL、Redis、MQ、容器和资源判断使用 `terra-medium`；事务锁、消息一致性、缓存竞态、不可逆迁移和生产资源风险才使用 `terra-high`。
+- 新默认覆盖 GPT-6 Luna、Sol、Astra 的 low/medium/high；信息不足采用 Sol/medium，不以缺少理由、收益卡或历史样本阻止派发。
+- 模型保留语义判断和调整建议；脚本在既有权限、总预算和允许调整范围内重新计算后才改变调用参数。规模或单次检查失败不直接代表难度，也不必然升档。
+- 可计算的读取、去重、计数、预留和重试交脚本。缺证据走默认/降级路径，允许继续与验证通过分开记录。
 - 只委派相互独立的只读证据域；同一组件和同一调用链不得被多个子 Agent 从头重复扫描。
 
 ## 边界

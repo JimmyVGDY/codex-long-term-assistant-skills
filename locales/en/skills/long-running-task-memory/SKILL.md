@@ -5,7 +5,7 @@ description: Use for cross-session, multi-stage, multi-module, multi-repository,
 
 # Long-Running Task Memory
 
-The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+Keep the main agent's selection. For subagents, follow [script decisions and bounded flexibility](../multi-agent-independent-review/references/script-first-routing.md) and execute the returned exact parameters. The default pool contains GPT-6 Luna, Sol and Astra at low/medium/high; unknown work uses Sol/medium without requiring qualification, gain cards or a long justification. Models may propose semantic adjustments, but scripts recalculate them within the existing authorization and root budget. Missing evidence selects a default or degraded path and never becomes a fabricated PASS.
 
 1. Keep task control state, authorization, evidence, and next action in a repository-external agent directory. Code, Git, configuration, and runtime results remain the technical source of truth.
 2. Maintain `CURRENT_TASK.md` and `PROGRESS.md`; add `PLAN.md` for multi-stage work.
@@ -17,7 +17,7 @@ The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation
 8. Scan for credentials and maintain retention and access boundaries.
 9. For initial nontrivial development onboarding, index recovery, or shared-capability maintenance, follow the [capability-index workflow](../engineering-quality-delivery/references/capability-index-workflow.md). The index stores invalidatable factual locators; task summaries link IDs and evidence. The coordinator merges increments, while stable memory still requires projection and human review.
 
-Persist verified facts, evidence grade, authorization, state, blockers, risk, and next action—not hidden reasoning. This Skill normally uses Luna and does not create subagents by itself.
+Persist verified facts, evidence grade, authorization, state, blockers, risk, and next action—not hidden reasoning. This Skill keeps memory work serial by default and does not create subagents solely for checkpoint maintenance.
 
 ## Controlled-Evolution Boundary
 

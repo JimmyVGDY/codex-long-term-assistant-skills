@@ -5,7 +5,7 @@ description: Use for browser, WebView, desktop renderer, JavaScript or TypeScrip
 
 # Frontend Engineering
 
-The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+Keep the main agent's selection. For subagents, follow [script decisions and bounded flexibility](../multi-agent-independent-review/references/script-first-routing.md) and execute the returned exact parameters. The default pool contains GPT-6 Luna, Sol and Astra at low/medium/high; unknown work uses Sol/medium without requiring qualification, gain cards or a long justification. Models may propose semantic adjustments, but scripts recalculate them within the existing authorization and root budget. Missing evidence selects a default or degraded path and never becomes a fabricated PASS.
 
 For behavior changes, also use the [quality-delivery entry](../engineering-quality-delivery/SKILL.md), including its capability-index actions before editing and before closing. Stack rules alone do not cover shared-component index maintenance.
 
@@ -17,4 +17,4 @@ For behavior changes, also use the [quality-delivery entry](../engineering-quali
 6. After runtime behavior changes, run the real production build and scope-appropriate type, lint, unit, component, end-to-end, browser, SSR or hydration, mixed-runtime, performance, and interaction checks.
 7. Main-process, native mobile, IPC, file, process, updater, and bridge capabilities need additional security review.
 
-Use Luna for bounded discovery, Terra Medium for state and integration reasoning, and Terra High only for SSR or hydration, authorization routing, state races, shared micro-frontend contracts, or high-risk security.
+Use scripts for bounded discovery and evidence collection. Keep state, integration and business interpretation as semantic judgments; submit any profile adjustment through the shared decision path.

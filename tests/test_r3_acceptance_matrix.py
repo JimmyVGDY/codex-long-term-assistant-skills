@@ -54,8 +54,14 @@ class R3AcceptanceMatrixTests(unittest.TestCase):
         authority = (ROOT / "skills" / "multi-agent-independent-review" / "SKILL.md").read_text(encoding="utf-8")
         consumer = (ROOT / "skills" / "engineering-quality-delivery" / "references" /
                     "quality-review-completion.md").read_text(encoding="utf-8")
-        self.assertIn("默认并行不超过 3、累计不超过 6", authority)
-        self.assertIn("默认值只以 `$multi-agent-independent-review` 为权威", consumer)
+        from cp_runtime.g6_flexible_policy import policy
+        current = policy()
+        self.assertEqual(current["concurrency_defaults"]["STANDARD"]["parallel"], 3)
+        self.assertEqual(current["budget_templates"]["STANDARD"]["attempts"], 6)
+        self.assertEqual(current["concurrency_defaults"]["astra_parallel"], 1)
+        self.assertIn("references/script-first-routing.md", authority)
+        self.assertIn("默认值只以 `$multi-agent-independent-review`", consumer)
+        self.assertIn("script-first-routing.md", consumer)
         self.assertIn("兼容硬上限", consumer)
 
     def test_authorization_and_evidence_terms_remain_distinct(self):

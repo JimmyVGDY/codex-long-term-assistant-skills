@@ -16,7 +16,7 @@ SLOT_FIELDS = {"slot_id", "scenario", "condition", "depends_on", "status", "opti
                "active_reservation_ref", "accepted_result_ref", "release_evidence_ref", "independence_required"}
 OPTION_FIELDS = {"profile_id", "qualification_ref", "cost_ref", "resources"}
 PLAN_FIELDS = {"schema_version", "plan_id", "revision", "identity", "slots"}
-STATUSES = {"PENDING", "RESERVED", "AWAITING_RESULT", "SATISFIED", "WAIVED"}
+STATUSES = {"PENDING", "RESERVED", "AWAITING_RESULT", "SATISFIED", "WAIVED", "UNGRADABLE"}
 ZERO = {key: 0 for key in VECTOR_KEYS}
 
 
@@ -63,6 +63,11 @@ def validate_plan(value: Any, *, expected_identity: Mapping[str, str] | None = N
             fail("PHASE_SLOT_ACTIVE_REFERENCE_REQUIRED")
         if slot["status"] == "SATISFIED" and not slot["accepted_result_ref"]:
             fail("PHASE_SLOT_RESULT_REQUIRED")
+        if slot["status"] == "UNGRADABLE" and (slot["condition"] != "always" or slot["depends_on"]
+                                                 or slot["active_reservation_ref"]
+                                                 or not slot["accepted_result_ref"]
+                                                 or not slot["release_evidence_ref"]):
+            fail("PHASE_UNGRADABLE_PROOF_REQUIRED")
         if slot["status"] == "WAIVED" and (slot["condition"] != "repair-after-post"
                                           or not slot["release_evidence_ref"]):
             fail("PHASE_SLOT_WAIVER_INVALID")

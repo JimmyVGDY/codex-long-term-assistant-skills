@@ -18,7 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.delegation_budget import (bind_review_attempt, native_review_message_prefix,
                                          read_budget, record_decision, sha256_ref)  # noqa: E402
-from cp_runtime.dispatch_policy import profile_spec  # noqa: E402
+from cp_runtime.dispatch_policy import (CURRENT_POLICY_ID, DispatchPolicyError,
+                                        profile_spec, resolve_request)  # noqa: E402
 
 
 class MatrixDelegationHookTests(unittest.TestCase):
@@ -35,6 +36,7 @@ class MatrixDelegationHookTests(unittest.TestCase):
                             review_state_ref=sha256_ref("synthetic-review-state"), assignment=self.assignment,
                             native_dispatch_nonce=self.native_nonce)
         self.env = {**os.environ, "PYTHONUTF8": "1", "PYTHONDONTWRITEBYTECODE": "1",
+                    "CODEX_HOME": str(self.fixture.root / "codex-home"),
                     "CP_DELEGATION_BUDGET_PATH": str(self.fixture.ledger),
                     "CP_DELEGATION_ENVELOPE_PATH": str(self.fixture.envelope),
                     "CP_DELEGATION_BUDGET_REQUIRED": "1",
@@ -145,14 +147,17 @@ class MatrixDelegationHookTests(unittest.TestCase):
         self.assertFalse(state["association_complete"])
 
     def test_policy_only_six_new_tuples_work_only_for_registered_reviewers(self):
-        env = {**self.env, "CP_DELEGATION_BUDGET_PATH": "", "CP_DELEGATION_BUDGET_REQUIRED": "0"}
+        # 中文：冻结的 V3 策略解释器独立保留；无绑定的原生 Hook 现归 G6 默认。
+        # English: The frozen V3 policy interpreter remains independent; an unbound
+        # native Hook call now belongs to the G6 default.
         for profile in ("sol-low", "sol-medium", "sol-high", "astra-low", "astra-medium", "astra-high"):
-            spec = profile_spec(profile)
-            payload = copy.deepcopy(self.payload)
-            payload["tool_input"].update(model=spec["model"], reasoning_effort=spec["effort"])
-            self.assertEqual("", self.invoke(payload, env).stdout.strip())
-            payload["tool_input"]["agent_type"] = "explorer"
-            self.denied(payload, env)
+            spec = profile_spec(profile, CURRENT_POLICY_ID)
+            self.assertEqual(profile, resolve_request(spec["model"], spec["effort"],
+                                                      "luna-low", "cp_review_data_contract",
+                                                      CURRENT_POLICY_ID)[0])
+            with self.assertRaises(DispatchPolicyError):
+                resolve_request(spec["model"], spec["effort"], "luna-low",
+                                "explorer", CURRENT_POLICY_ID)
         self.assertEqual(0, read_budget(self.fixture.ledger)["usage"]["dispatches"])
 
     def test_native_callbacks_without_reservation_join_after_late_receipt(self):

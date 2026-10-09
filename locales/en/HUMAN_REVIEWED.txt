@@ -455,3 +455,17 @@ docs/releases/v7.14.6/RELEASE_NOTES.md
 docs/releases/v7.14.6/VALIDATION_REPORT.md
 docs/releases/v7.14.6/AUDIT_REPORT.md
 docs/releases/v7.14.1/VALIDATION_REPORT.md
+
+# V7.15 pairs compared by the coordinating agent; not a human-review attestation or publication authorization.
+docs/releases/v7.15.0/AUDIT_REPORT.md
+docs/releases/v7.15.0/RELEASE_NOTES.md
+docs/releases/v7.15.0/VALIDATION_REPORT.md
+docs/releases/v7.15.1/AUDIT_REPORT.md
+docs/releases/v7.15.1/RELEASE_NOTES.md
+docs/releases/v7.15.1/VALIDATION_REPORT.md
+skills/multi-agent-independent-review/references/script-first-routing.md
+
+# Coordinating-agent bilingual comparison only; not human approval or publication authority.
+docs/releases/v7.15.2/RELEASE_NOTES.md
+docs/releases/v7.15.2/VALIDATION_REPORT.md
+docs/releases/v7.15.2/AUDIT_REPORT.md

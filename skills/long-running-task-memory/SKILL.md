@@ -23,10 +23,12 @@ description: >-
 
 ## 模型与委派成本
 
-本段仅适用于 Worker/Explorer 的普通委派；登记 Reviewer 按 [独立复审技能](../multi-agent-independent-review/SKILL.md) 的根任务固定策略选型。主 Agent 模型与强度保持当前选择。
+主 Agent 保持当前选择。子 Agent 的型号、思考强度和预算采用[脚本决策与弹性规则](../multi-agent-independent-review/references/script-first-routing.md)；执行脚本返回的精确参数。
 
-- 本 Skill 默认不派生子 Agent；读取、格式整理、检查点、投影候选和交接摘要属于 `luna-low` 或 `luna-medium`。
-- 复杂技术冲突由对应领域 Skill 使用 Terra 判断，记忆 Skill 只持久化已审核结论，不重复推理。
+- 新默认覆盖 GPT-6 Luna、Sol、Astra 的 low/medium/high；信息不足采用 Sol/medium，不以缺少理由、收益卡或历史样本阻止派发。
+- 模型保留语义判断和调整建议；脚本在既有权限、总预算和允许调整范围内重新计算后才改变调用参数。规模或单次检查失败不直接代表难度，也不必然升档。
+- 可计算的读取、去重、计数、预留和重试交脚本。缺证据走默认/降级路径，允许继续与验证通过分开记录。
+- 复杂技术冲突由对应领域 Skill 形成结论；记忆 Skill 只持久化已审核事实，默认串行维护，不为记忆操作单独派发。
 
 ## 工具与边界
 
