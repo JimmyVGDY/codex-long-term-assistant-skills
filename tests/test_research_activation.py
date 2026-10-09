@@ -45,7 +45,7 @@ class MatrixActivationConsumers(unittest.TestCase):
             else:changed[field]=bad
             with self.subTest(field=field,bad=bad),self.assertRaisesRegex(ValueError,'DELIVERY_REQUIRED'):
                 activation.validate_definition(changed)
-        configured=runtime(ROOT/'hooks/review_context_reader.py',Path(sys.executable),transport_mode=MODE_V2,context_profile=CONTEXT_64K,ordinary_contract=self.definition['ordinary_contract'],delivery_contract=self.definition['delivery_contract'])
+        configured=runtime(ROOT/'hooks/review_context_reader.py',self.f.python_executable,transport_mode=MODE_V2,context_profile=CONTEXT_64K,ordinary_contract=self.definition['ordinary_contract'],delivery_contract=self.definition['delivery_contract'])
         state={'root_binding':{'context_runtime':validate_runtime(configured)}}
         self.assertTrue(wire_enabled(state))
         self.assertTrue(ordinary_enabled(configured,'worker'))
@@ -79,7 +79,7 @@ class MatrixActivationConsumers(unittest.TestCase):
         config=self.f.root/'matrix-root-config.json'
         atomic_write_json(config,{'budget_id':'matrix-root-budget','sources':{'root_envelope':str(envelope),'capability':str(capability),'card_sets':[],'evaluation_costs':'','evaluation_ref':'','evidence_paths':{}},'execution_mode':'PRODUCTION','capacity':capacity(),'role_capacity':{'reviewer':100,'worker':100,'explorer':100},'phase_capacity':{'pre':100,'post':100,'repair':100},'phase_plan':phase,'max_parallel':1,'max_depth':1})
         ledger=self.f.root/'matrix-root-budget.jsonl'
-        argv=['routing-v5','init','--config',str(config),'--root-envelope',str(envelope),'--reader',str(self.f.home/'cp-assistant-hooks/review_context_reader.py'),'--python',str(Path(sys.executable)),'--ledger',str(ledger),'--host-session-id',session]
+        argv=['routing-v5','init','--config',str(config),'--root-envelope',str(envelope),'--reader',str(self.f.home/'cp-assistant-hooks/review_context_reader.py'),'--python',str(self.f.python_executable),'--ledger',str(ledger),'--host-session-id',session]
         with patch.object(sys,'argv',argv),contextlib.redirect_stdout(io.StringIO()):cli.main()
         state=budget.read_budget(ledger)
         active_runtime=state['root_binding']['context_runtime']

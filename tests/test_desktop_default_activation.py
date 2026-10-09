@@ -65,6 +65,9 @@ class ActivationTests(unittest.TestCase):
             config['hooks'].setdefault(item['event'],[]).append({'matcher':item['matcher'],
                 'hooks':[{'type':'command','command':item['command']}]})
         atomic_write_json(self.home/'hooks.json',config)
+        # 中文：Linux 的 sys.executable 可能是符号链接；安装证据绑定真实解释器文件。
+        # English: Linux sys.executable may be a symlink; bind the actual interpreter file.
+        self.python_executable=Path(sys.executable).resolve(strict=True)
         now=datetime.now(timezone.utc)
         self.expires=(now+timedelta(days=1)).isoformat()
         self.definition={'schema_version':'desktop-default-activation/2','activation_id':'fixture-default',
@@ -79,7 +82,7 @@ class ActivationTests(unittest.TestCase):
             'installation':{'manifest':{'path':str(self.manifest),'sha256':self.file_ref(self.manifest)},
                 'source_root':str(self.source),'managed_root':str(self.managed),'cache_root':str(self.cache),
                 'enhancement_home':str(self.home),'required_hooks':self.hooks,
-                'python':{'path':str(Path(sys.executable)),'sha256':self.file_ref(Path(sys.executable))}}}
+                'python':{'path':str(self.python_executable),'sha256':self.file_ref(self.python_executable)}}}
         self.pointer=activation.pointer_for(self.identity)
         # 中文：事务测试隔离资格验证，后者由完整研究集成测试覆盖；此模拟不离开夹具。
         # English: Transaction tests isolate qualification validation, which has separate
