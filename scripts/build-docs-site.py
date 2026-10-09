@@ -202,8 +202,11 @@ def rewrite_target(path: Path, output: Path, target: str) -> str:
             repository_path = Path()
         # 中文：仅将站点未复制的实际源码文件转为仓库链接。
         # English: Link actual source files omitted from the site to the repository.
-        if (repository_path.parts and repository_path.parts[0] in {"runtime", "tests"}
+        if (repository_path.parts and repository_path.parts[0] in {"runtime", "tests", "skills"}
                 and (ROOT / repository_path).is_file()):
+            translated = Path("locales/en") / repository_path
+            if language == "en" and repository_path.parts[0] == "skills" and (ROOT / translated).is_file():
+                repository_path = translated
             return REPOSITORY_BLOB + repository_path.as_posix() + (marker + fragment if marker else "")
     destination: Path | None = None
     if language == "zh-CN" and path_part.endswith(".en.md"):
