@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：创建并验证隐私有界的 V7.14.6 发行证明。
+"""中文：创建并验证隐私有界的 V7.15.2 发行证明。
 
-English: Create and verify a privacy-bounded V7.14.6 release attestation.
+English: Create and verify a privacy-bounded V7.15.2 release attestation.
 """
 from __future__ import annotations
 
@@ -28,9 +28,9 @@ from codex_compatibility import canonical_digest  # noqa: E402
 
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
-VERSION = "7.14.6"
+VERSION = "7.15.2"
 TARGET_CODEX_VERSION = "0.160.1"
-COMPATIBILITY_REGISTRY_DIGEST = "d7b909d340a2d877271c7affbd4579273e9f21417c1b2aa23e337841c23f3752"
+COMPATIBILITY_REGISTRY_DIGEST = "5e1c70d26e848a85630fd3a95bb56cd56f37b49c83925e3e887c634b0638cb31"
 DESKTOP_CONTRACT_DIGEST = canonical_digest(desktop_host.load_contract(ROOT / "config" / "desktop-host-contract-v1.json"))
 PLUGIN_ID = "%s@%s" % (PACKAGE, MARKETPLACE)
 LEGACY_DISPATCH_POLICY_SCHEMA_VERSION = "2.0"
@@ -82,6 +82,15 @@ def _plugin_item(plugin_list: Mapping[str, Any]) -> Dict[str, Any]:
 
 def _dispatch_policy_details(report: Mapping[str, Any]) -> Dict[str, Any]:
     schema_version = report.get("schema_version")
+    if schema_version == "4.0":
+        script_root = str(ROOT / "scripts")
+        if script_root not in sys.path:
+            sys.path.insert(0, script_root)
+        from dispatch_policy_report import validate_current_report
+        try:
+            return validate_current_report(report)
+        except ValueError as exc:
+            raise AttestationError(str(exc)) from exc
     if schema_version == LEGACY_DISPATCH_POLICY_SCHEMA_VERSION:
         evidence_scope = "legacy-schema-v2-unscoped"
     elif schema_version == DISPATCH_POLICY_SCHEMA_VERSION:
@@ -256,7 +265,7 @@ def create_attestation(
         },
         "security": {
             "execution_authorization": "NONE",
-            "automatic_dispatch_ceiling_profile": "terra-high",
+            "automatic_dispatch_ceiling_profile": dispatch_policy_details["automatic_ceiling_profile"],
             "prompt_or_response_exported": False,
             "absolute_evidence_paths_exported": False,
         },
@@ -384,7 +393,7 @@ def verify_attestation(attestation_path: Path, artifact: Path, keyring_path: Pat
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.14.6 release attestation")
+    parser = argparse.ArgumentParser(description="V7.15.2 release attestation")
     subparsers = parser.add_subparsers(dest="command", required=True)
     create_parser = subparsers.add_parser("create")
     create_parser.add_argument("--artifact", required=True)

@@ -154,7 +154,34 @@ def _validate(request: Any, snapshot: Any) -> tuple[dict[str, Any], dict[str, An
     return normalized, copy.deepcopy(snapshot)
 
 
-def select(request: Mapping[str, Any], snapshot: Mapping[str, Any]) -> dict[str, Any]:
+def verified_option(snapshot: Mapping[str, Any], slot: Mapping[str, Any], option: Mapping[str, Any],
+                    execution_mode: str, ordinary_contract: str | None = None) -> bool:
+    """中文：共享复审选项校验；普通兼容委派使用自身的授权依据。
+    
+    English: Shared reviewer option validation; ordinary compatibility has its own authority.
+    """
+    if ordinary_contract is not None:
+        from .ordinary_routing_v5 import CONTRACT, option as ordinary_option
+        if ordinary_contract != CONTRACT:fail('ORDINARY_CONTRACT_REQUIRED')
+        if slot['scenario']['role'] in {'worker','explorer'}:
+            try:return option==ordinary_option(option['profile_id'],slot['scenario']) \
+                and option['profile_id'] in snapshot['capability']['available_profiles']
+            except RoutingError:return False
+    name=option['profile_id']
+    if name not in snapshot['capability']['available_profiles'] or name not in admitted(slot['scenario']['role'],execution_mode):
+        return False
+    scope=ref(scenario(slot['scenario']))
+    cost=next((c for c in snapshot['cards']['costs'] if ref(c)==option['cost_ref']),None)
+    if not cost or cost['profile_id']!=name or cost['scenario_ref']!=scope or cost['reserve_units']!=option['resources']['units']:
+        return False
+    if execution_mode=='EVALUATION':return True
+    quality=next((q for q in snapshot['cards']['qualification'] if ref(q)==option['qualification_ref']),None)
+    return bool(quality and quality['profile_id']==name and quality['scenario_ref']==scope
+                and quality['qualified'] is True
+                and quality['independent_cases']>=policy()['thresholds']['min_independent_cases'])
+
+
+def select(request: Mapping[str, Any], snapshot: Mapping[str, Any], *, ordinary_contract: str | None = None) -> dict[str, Any]:
     """中文：只选择并解释；English: never writes state or authorizes a host call."""
     try:
         request, snapshot = _validate(dict(request), dict(snapshot))
@@ -215,20 +242,7 @@ def select(request: Mapping[str, Any], snapshot: Mapping[str, Any]) -> dict[str,
     evaluation = request["execution_mode"] == "EVALUATION"
 
     def option_valid(other_slot: Mapping[str, Any], option: Mapping[str, Any]) -> bool:
-        name = option["profile_id"]
-        if name not in available or name not in admitted(other_slot["scenario"]["role"], request["execution_mode"]):
-            return False
-        scope = ref(scenario(other_slot["scenario"]))
-        cost = costs.get(option["cost_ref"])
-        if not cost or cost["profile_id"] != name or cost["scenario_ref"] != scope \
-                or cost["reserve_units"] != option["resources"]["units"]:
-            return False
-        if evaluation:
-            return True
-        quality = qualification.get(option["qualification_ref"])
-        return bool(quality and quality["profile_id"] == name and quality["scenario_ref"] == scope
-                    and quality["qualified"] is True
-                    and quality["independent_cases"] >= policy()["thresholds"]["min_independent_cases"])
+        return verified_option(snapshot,other_slot,option,request['execution_mode'],ordinary_contract=ordinary_contract)
 
     candidates = []
     deadline = request["constraints"]["deadline_ms"]

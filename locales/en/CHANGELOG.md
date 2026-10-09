@@ -2,6 +2,20 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## Unreleased
+
+Target version: 7.15.2. These are source-candidate feature changes; installation, native acceptance, commit and public-release states are recorded separately in the version validation report.
+
+- Default new tasks to script-controlled GPT-6 Luna/Sol/Astra low/medium/high profiles for Reviewers, Workers and Explorers. Ordinary or unknown work uses Sol/medium without statistical qualification, gain cards or historical samples as dispatch prerequisites.
+- Move scope measurement, default selection, planning weights, shared budgets, atomic reservations, required holds, retries and result checks into scripts. Models retain business judgment and bounded proposals; scripts recalculate exact parameters before execution. Scope or one failure does not establish difficulty.
+- Give active gates consistent default/degraded continuation paths. Missing evidence remains UNKNOWN without disabling gates or inventing PASS. Confirmed authorization, safety, identity, accounting and budget violations restrict their affected action; supervised-write boundaries remain.
+- Separate permit preparation, atomic reservation, native creation receipts, genuine terminal outcomes and no-start proof. Preserve in-flight, failed, cancelled and unknown accounting; reentry and recovery cannot omit charges, double-charge or reset limits.
+- Preserve old roots, unresolved records and late-event ownership during same-chat handoff. Replay V3/V4/V5 and previous research/reader contracts unchanged. Retain earlier context, output-attribution, payload-integrity and recovery fixes for compatibility, without promoting development results into default-model qualification.
+- Align bilingual core rules, Skill entries, user guides and model policy. Distinguish planning weights from actual fees, permission to continue from verified success, and source candidates from installed or published versions. Support Codex Desktop only; internal scripts do not create a standalone CLI product track.
+
+- Define computable metrics and whole-collection deadlines; enforce required-work profiles, hold transfer, no-start retries and split adjustment accounting. Stop derives minimal observations from existing journals without zero-filling unknown quality or actual charges.
+- Fix legacy Context Hook rejection of new G6 children, terminal accounting when final messages precede task_complete, and current/historical release-report consumers. Isolate legacy synthetic test accounts without relaxing runtime gates.
+
 ## 7.14.6 - 2026-10-06
 
 - Advance the Codex Desktop internal component window to official stable 0.160.1, retain the ten preceding stable releases, and remove 0.155.0.

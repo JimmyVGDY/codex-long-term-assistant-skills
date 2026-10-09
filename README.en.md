@@ -4,7 +4,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-The V7.14.6 candidate targets Codex Desktop, advances the internal frozen component window to official stable 0.160.1, and preserves existing permission, delegation, recovery, and model-routing boundaries. Standalone CLI execution is limited to internal management and compatibility regression, not a product-support track. Read publication status from GitHub Releases and workflows.
+The V7.15.2 source candidate targets Codex Desktop with script-first defaults and bounded adjustments across nine GPT-6 profiles for new tasks. Existing roots keep their original routing and accounting semantics. Standalone CLI execution remains limited to internal management and regression work. Local installation and GitHub publication require separate readback.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -25,7 +25,7 @@ The V7.14.6 candidate targets Codex Desktop, advances the internal frozen compon
   <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.14.6 retains non-blocking message/Stop behavior, Operation v2 and separation of base Skills from optional enhancement. The gate remains off by default; capability level establishes neither semantic correctness nor authority. See the [model policy](locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md) for positioning, reasoning gains and cold-start conditions.
+V7.15.2 retains non-blocking message/Stop behavior, Operation v2, and separation of base Skills from optional enhancement. The optional file gate remains off by default and is never temporarily disabled for missing routing gain cards. Capability level establishes neither semantic correctness nor authority. See the [model policy](locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md) for model and budget rules.
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Four daily paths](#four-daily-paths-and-the-unified-entry) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -149,13 +149,13 @@ dispatch_policy_status = PASS
 host_model_identity = NOT_COLLECTED
 ```
 
-Here, `dispatch_policy_status=PASS` only proves that automatic dispatch did not request a configuration above Terra High. It does not attest to the model that actually ran.
+This historical V7.6.0 example concerns that version's policy ceiling. It neither defines the new default pool nor attests to the model that actually ran.
 
 ## Compatibility matrix
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Codex Desktop + Plugin | Sole product target | Local read-only component and existing registration probes passed | Candidate installation, loading and native V4 dispatch need separate acceptance |
+| Codex Desktop + Plugin | Sole product target | Local read-only component and existing registration probes passed | Installation, loading, new default native dispatch and legacy replay need separate acceptance |
 
 | Windows / Ubuntu Python matrix | Package release gate | Python 3.11/3.13 tests and builds | This does not prove native Desktop acceptance; read remote results from Actions |
 | Old layouts and frozen policies | Compatibility recovery | Existing states, ledgers and readers remain | No standalone CLI product adaptation or acceptance track |
@@ -183,18 +183,11 @@ The installer detects an existing version, creates a bounded backup, rejects lin
 
 ## Model evidence boundary
 
-```ini
-dispatch_policy_status = PASS
-host_model_identity = NOT_COLLECTED
-```
+New tasks use `desktop-g6-deterministic-v1`. Scripts choose from all nine GPT-6 Luna/Sol/Astra low/medium/high profiles for Reviewers, Workers and Explorers. Ordinary or unknown work uses Sol/medium. Models retain semantic judgment and bounded adjustment proposals; actual calls use exact script-approved parameters.
 
-Ordinary Hook payloads do not provide a trusted, correlatable runtime-model attestation. A requested Luna or Terra profile is not proof of the model that actually ran. The automatic cost ladder is:
+Missing rationale, qualification cards, gain evidence, historical samples or optional material keeps gates enabled and returns a default/degraded path. Authorization, integrity and real budget constraints still restrict their affected action. Permission to continue does not establish verified success, and planning units are not actual fees or capability rankings. See [model selection and budget](locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md).
 
-```text
-luna-low -> luna-medium -> terra-medium -> terra-high
-```
-
-Automatic dispatch rejects Sol, `xhigh`, `max`, `ultra`, and every configuration above `gpt-5.6-terra + high`.
+Requested parameters do not attest to the underlying host model, which this package does not read or infer. Keep the main agent's selection; automatic xhigh/max/ultra remain forbidden. Retain 5.6 and V3/V4 for explicit compatibility and unchanged historical replay, without repricing old charges or outcomes.
 
 ## Documentation and collaboration
 

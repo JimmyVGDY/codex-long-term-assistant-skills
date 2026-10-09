@@ -35,6 +35,7 @@ class V4HookTests(unittest.TestCase):
         }
         self.env = {
             **os.environ, "PYTHONUTF8": "1", "PYTHONDONTWRITEBYTECODE": "1",
+            "CODEX_HOME": str(self.fixture.root / "codex-home"),
             "CP_DELEGATION_BUDGET_PATH": str(self.fixture.path),
             "CP_DELEGATION_ENVELOPE_PATH": str(self.fixture.envelope),
             "CP_DELEGATION_BUDGET_REQUIRED": "1",

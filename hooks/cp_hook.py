@@ -179,8 +179,8 @@ def _budget_path(data: Mapping[str, Any]) -> str:
     explicit = os.environ.get("CP_DELEGATION_BUDGET_PATH", "").strip()
     session = _lookup_strict(data, "root_session_id", "rootSessionId") or _lookup_strict(data, *HOOK_ALIASES["session_id"])
     cwd = str(_lookup_strict(data, *HOOK_ALIASES["cwd"]) or "")
-    from cp_runtime.routing_registry_v5 import lookup as lookup_context
-    registered = lookup_context(host_session_id=str(session or ""))
+    from cp_runtime.routing_hook_v5 import registered_path
+    registered = registered_path(data)
     if registered is None:
         registered = lookup(cwd=cwd, host_session_id=str(session or ""))
     if explicit and registered and not same_path(Path(explicit).expanduser(), registered):
@@ -599,7 +599,16 @@ def _optional_gate(data: Mapping[str, Any], hook_name: str) -> Dict[str, Any] | 
             # 中文：有界策略读取绝不打开 GateTask 或使用 PREPARED/PASS 证据；未配置或已停用策略保留宿主既有权限行为。
             # English: This bounded policy read never opens a GateTask or consults PREPARED/PASS evidence; unconfigured or disabled policy preserves host permissions.
             cwd = str(_lookup_strict(data, *HOOK_ALIASES["cwd"]) or os.getcwd())
-            return legacy_write_response() if _legacy_write_is_enabled(cwd) else None
+            if not _legacy_write_is_enabled(cwd):
+                return None
+            response = legacy_write_response()
+            from cp_runtime.g6_handoff_v1 import read as g6_read
+
+            session = str(_lookup_strict(data, *HOOK_ALIASES["session_id"]) or "")
+            if session and g6_read(session) is not None:
+                response["hookSpecificOutput"]["permissionDecisionReason"] += (
+                    " next_action=use_supervised_apply_patch_operation_v2")
+            return response
         except Exception:
             # 中文：已配置但不可读的策略不得静默放行旧版原生写入。
             # English: A configured but unreadable policy cannot silently permit a legacy native write.
@@ -628,12 +637,34 @@ def main() -> int:
             response = failure_response("PostToolUse", "OP_CANONICAL_INPUT")
         print(json.dumps(response, ensure_ascii=False))
         return 0
+    from cp_runtime.g6_hook_v1 import handle as g6_handle
+
+    g6_handled, g6_response = g6_handle(data, hook_name)
+    if g6_handled:
+        if hook_name in {"SubagentStart", "SubagentStop", "PostToolUse"}:
+            _observe(data)
+        if g6_response or hook_name in {"SubagentStop"}:
+            print(json.dumps(g6_response or {}, ensure_ascii=False))
+        return 0
     if hook_name in {"PreToolUse", "PostToolUse"} and data.get("agent_id"):
+        from cp_runtime.g6_handoff_v1 import route as g6_route
+
+        owner = g6_route(data)
+        if owner is not None and owner[0] == "new":
+            if data.get("tool_name") == "apply_patch":
+                response = supervise(ROOT, data)
+                if response:
+                    print(json.dumps(response, ensure_ascii=False))
+                return 0
+            gate = _optional_gate(data, hook_name)
+            if gate is not None:
+                print(json.dumps(gate, ensure_ascii=True))
+            return 0
         from cp_runtime.routing_hook_v5 import child_tool, registered_path
         context_path = registered_path(data)
         if context_path:
-            child_tool(context_path, data)
-            print("{}")
+            context_response = child_tool(context_path, data)
+            print(json.dumps(context_response, ensure_ascii=True))
             return 0
     if hook_name in {"PreToolUse", "PostToolUse"} and data.get("tool_name") == "apply_patch":
         response = supervise(ROOT, data)

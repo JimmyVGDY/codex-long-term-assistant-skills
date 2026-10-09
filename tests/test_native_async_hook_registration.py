@@ -66,6 +66,7 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
 
     def test_delegation_matchers_cover_full_desktop_names_without_duplicate_handlers(self) -> None:
         fragment = package_manager.hook_fragment(self.script, self.supported)
+        self.assertEqual(30, fragment["PreToolUse"][0]["hooks"][0]["timeout"])
         for tool in ("spawn_agent", "followup_task", "send_message", "send_input", "resume_agent"):
             for prefix in ("", "collaboration.", "collaboration"):
                 name = prefix + tool

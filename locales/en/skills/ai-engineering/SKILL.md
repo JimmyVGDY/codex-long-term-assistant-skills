@@ -33,10 +33,8 @@ Use this Skill for language- and provider-independent AI application and inferen
 
 ## Model and delegation cost
 
-The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+Keep the main agent's selection. For subagents, follow [script decisions and bounded flexibility](../multi-agent-independent-review/references/script-first-routing.md) and execute the returned exact parameters. The default pool contains GPT-6 Luna, Sol and Astra at low/medium/high; unknown work uses Sol/medium without requiring qualification, gain cards or a long justification. Models may propose semantic adjustments, but scripts recalculate them within the existing authorization and root budget. Missing evidence selects a default or degraded path and never becomes a fabricated PASS.
 
-- Prefer Luna Low for call-site, configuration, model, schema, and state-field location; Luna Medium for bounded output-validation and error-classification checks.
-- Use Terra Medium for RAG data flow, agent access, generation state, and ordinary multi-model routing. Reserve Terra High for high-risk tool execution, cross-tenant retrieval, irreversible generation effects, and complex GPU scheduling.
 - Do not send unrelated prompts, model outputs, sensitive documents, or full production logs to subagents. Return structured evidence and unverified items.
 
 ## Core principle

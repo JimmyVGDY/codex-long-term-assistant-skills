@@ -1,5 +1,7 @@
 # Desktop model selection, reasoning gains and budget approval
 
+> This page preserves explicit legacy V4 and compatibility replay semantics. New defaults use [script decisions and bounded flexibility](script-first-routing.md) without the statistical qualification prerequisite below.
+
 ## Scope and activation
 
 Codex Desktop is the only supported product surface. Internal management, build and

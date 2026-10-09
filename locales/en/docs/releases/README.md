@@ -12,6 +12,7 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.md) for vers
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.15.1 | [Notes](v7.15.1/RELEASE_NOTES.md) | [Audit](v7.15.1/AUDIT_REPORT.md) | [Validation](v7.15.1/VALIDATION_REPORT.md) | GPT-6 new-default source candidate; installation, Desktop, and publication need separate readback | Not generated | Not generated |
 | 7.14.6 | [Notes](v7.14.6/RELEASE_NOTES.md) | [Audit](v7.14.6/AUDIT_REPORT.md) | [Validation](v7.14.6/VALIDATION_REPORT.md) | Codex Desktop 0.160.1 internal component compatibility; package, Desktop, CI, and publication remain separate | [JSON](v7.14.6/BUILD_INFO.json) | [JSON](v7.14.6/PACKAGE_VALIDATION.json) |
 | 7.14.5 | [Notes](v7.14.5/RELEASE_NOTES.md) | [Audit](v7.14.5/AUDIT_REPORT.md) | [Validation](v7.14.5/VALIDATION_REPORT.md) | Codex Desktop 0.160.0 internal component compatibility; package, Desktop, CI, and publication remain separate | [JSON](v7.14.5/BUILD_INFO.json) | [JSON](v7.14.5/PACKAGE_VALIDATION.json) |
 | 7.14.4 | [Notes](v7.14.4/RELEASE_NOTES.md) | [Audit](v7.14.4/AUDIT_REPORT.md) | [Validation](v7.14.4/VALIDATION_REPORT.md) | Codex Desktop 0.159.2 compatibility with a bounded slow-run validation fix; package, Desktop, CI, and publication remain separate | [JSON](v7.14.4/BUILD_INFO.json) | [JSON](v7.14.4/PACKAGE_VALIDATION.json) |

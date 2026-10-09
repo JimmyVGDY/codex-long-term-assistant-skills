@@ -13,7 +13,7 @@ import re
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Callable, Mapping
 
-from .common import atomic_write_bytes, canonical_json, require_external_state, utc_now
+from .common import atomic_write_bytes, canonical_json, require_external_state, utc_now, parse_iso
 from .event_v2 import OwnerTokenLock
 from .routing_contract import (
     ALGORITHM_ID, POLICY_ID, RoutingError, VECTOR_KEYS, exact, fail, identifier,
@@ -42,14 +42,33 @@ EVENT_FIELDS = {
     "HOST_RECEIPT": {"reservation_id", "agent_ref", "disposition", "proof_ref"},
     "HOST_IDENTITY_LINKED": {"reservation_id", "task_path_ref", "agent_ref", "dispatch_ref", "role", "proof_ref"},
     "CONTEXT_READ_STARTED": {"reservation_id", "agent_ref", "call_ref", "bundle_ref", "output_ref", "nonce_ref", "command_ref"},
+    "CONTEXT_WIRE_DELIVERED": {"reservation_id","call_ref","raw_output_ref","wire_output_ref","raw_bytes","wire_bytes","delivery_contract"},
     "CONTEXT_DELIVERED": {"reservation_id", "call_ref", "output_ref"},
+    "CONTEXT_RECOVERY": {"reservation_id", "agent_ref", "call_ref", "command_ref", "action", "reason"},
+    "CONTEXT_READ_RECOVERED": {"reservation_id", "agent_ref", "call_ref", "bundle_ref", "output_ref", "nonce_ref", "command_ref"},
+    "CONTEXT_NOTIFY_ATTESTED": {"reservation_id","agent_ref","delivery_ref","response_ref","visible_proof"},
+    "CONTEXT_FINAL_ATTESTED": {"reservation_id", "agent_ref", "header_ref", "header_link_ref", "turn_ref", "response_ref", "delivery_ref", "semantic_ref", "semantic_status"},
+    "CONTEXT_RAW_FINAL_ATTESTED": {"reservation_id", "agent_ref", "header_ref", "header_link_ref", "turn_ref", "response_ref", "delivery_ref"},
+    "ORDINARY_FINAL_ATTESTED": {"reservation_id","agent_ref","header_ref","header_link_ref","turn_ref","response_ref"},
+    "ORDINARY_RESULT_ACCEPTED": {"reservation_id","response_ref","validation_ref","after_baseline_sha256","result_ref","status","supersedes"},
     "HOST_OBSERVED": {"agent_ref", "phase", "outcome"},
+    "HOST_TERMINAL_ERROR_RECOVERED": {"reservation_id", "agent_ref", "task_path_ref",
+                                      "transcript_bytes_sha256", "file_binding_ref",
+                                      "error_code", "evidence_ref", "evidence_path"},
+    "HISTORICAL_ATTEMPT_CARRIED": {"slot_id", "trial_ref", "profile_id", "scenario_ref",
+                                     "source_ledger_path", "source_ledger_head_hash",
+                                     "source_project_id", "source_repo_fingerprint", "source_task_id",
+                                     "source_reservation_id", "source_result_ref",
+                                     "source_grade_ref", "source_evidence_ref",
+                                     "carry_evidence_ref", "carry_evidence_path", "disposition"},
     "NOT_STARTED_RELEASED": {"reservation_id", "proof_ref"},
     "RESULT_ACCEPTED": {"reservation_id", "result_ref", "status", "response_ref", "baseline_sha256", "supersedes"},
     "SLOT_WAIVED": {"slot_id", "post_result_ref", "evidence_ref"},
     "PLAN_REVISED": {"plan", "witness", "reason_ref"},
     "EVIDENCE_ADDED": {"evidence_paths"},
     "EVALUATION_ADVANCED": {"slot_id", "previous_result_ref", "next_packet_sha256"},
+    "EVALUATION_UNGRADED_SEALED": {"slot_id", "trial_ref", "reservation_id",
+                                    "accepted_result_ref", "evidence_ref", "evidence_path", "reason_code"},
     "INLINE_SATISFIED": {"slot_id", "request", "selection"},
     "CLOSED": {"outcome", "evidence_ref"},
 }
@@ -58,6 +77,29 @@ ROOT_FIELDS = {"schema_version", "repo_path", "profile_path", "profile_binding_s
                "envelope_identity_ref", "host_session_ref", "policy_id", "policy_digest", "context_runtime"}
 SELECTED = {"CANDIDATE_SELECTED", "EVALUATION_SELECTED"}
 SnapshotLoader = Callable[[Mapping[str, Any], Mapping[str, Any], str], dict[str, Any]]
+
+
+def _ordinary(state,role):
+    from .ordinary_routing_v5 import enabled
+    return enabled(state['root_binding']['context_runtime'],role)
+
+
+def _allowed(state,role):
+    return admitted(role,'PRODUCTION' if _ordinary(state,role) else state['execution_mode'])
+
+
+def _select(state,request,snapshot):
+    return select(request,snapshot,ordinary_contract=state['root_binding']['context_runtime'].get('ordinary_contract'))
+
+
+def isolated_phase_evaluation(state):
+    from .routing_context_contract import ISOLATED_PHASES,ISOLATED_PHASES_V2
+    return state['execution_mode']=='EVALUATION' and state['root_binding']['context_runtime'].get('evaluation_contract') in {ISOLATED_PHASES,ISOLATED_PHASES_V2}
+
+
+def isolated_trial_completion(state):
+    from .routing_context_contract import ISOLATED_PHASES_V2
+    return state['execution_mode']=='EVALUATION' and state['root_binding']['context_runtime'].get('evaluation_contract')==ISOLATED_PHASES_V2
 
 
 def _stable(prefix: str, *values: str) -> str:
@@ -251,8 +293,24 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
         integer(data["max_depth"], "V5_MAX_DEPTH", minimum=1, maximum=3)
         if data["execution_mode"] not in {"PRODUCTION", "EVALUATION"}:
             fail("EXECUTION_MODE_INVALID")
+        if root['context_runtime'].get('research_contract') and data['execution_mode']!='EVALUATION':fail('RESEARCH_EVALUATION_ONLY')
+        if root['context_runtime'].get('bootstrap_contract') and (data['execution_mode']!='EVALUATION' or data['sources']['evaluation_costs'] or data['sources']['evaluation_ref'] or data['sources']['card_sets']):
+            fail('BOOTSTRAP_NO_STATISTICAL_SOURCES')
+        if root['context_runtime'].get('review_contract') and data['execution_mode']!='EVALUATION':
+            fail('VECTOR_DEVELOPMENT_ONLY')
+        if root['context_runtime'].get('evaluation_contract') and data['execution_mode']!='EVALUATION':
+            fail('V5_PHASE_EVALUATION_ONLY')
         plan = validate_plan(data["phase_plan"], expected_identity={
             key: event["identity"][key] for key in ("project_id", "repo_fingerprint")})
+        if root['context_runtime'].get('evaluation_contract') and any(
+                slot['condition']!='always' or slot['depends_on'] or role_for(slot['scenario']['role'])!='reviewer'
+                for slot in plan['slots']):
+            fail('V5_PHASE_EVALUATION_REQUIRES_ISOLATED_REVIEW_SLOTS')
+        if root['context_runtime'].get('review_contract') and any(
+                role_for(slot['scenario']['role'])!='reviewer' for slot in plan['slots']):
+            fail('VECTOR_REVIEWER_SLOTS_REQUIRED')
+        if root['context_runtime'].get('bootstrap_contract') and any(slot['scenario']['role'] not in policy()['reviewer_roles'] or slot['condition']!='always' or slot['depends_on'] for slot in plan['slots']):
+            fail('BOOTSTRAP_REVIEWER_SLOTS_ONLY')
         witness = feasible_witness(plan, capacity, role_capacity=data["role_capacity"],
                                    phase_capacity=data["phase_capacity"])
         if witness["status"] != "FEASIBLE" or witness != data["witness"]:
@@ -265,7 +323,7 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
             "phase_capacity": dict(data["phase_capacity"]), "max_parallel": data["max_parallel"],
             "max_depth": data["max_depth"], "phase_plan": plan, "phase_witness": witness,
             "permits": {}, "reservations": {}, "host_dispatches": {}, "host_receipts": {},
-            "host_observations": {}, "accepted_results": {}, "closed": False, "outcome": "UNKNOWN",
+            "host_observations": {}, "accepted_results": {}, "ungraded_seals": {}, "closed": False, "outcome": "UNKNOWN",
             "host_identity_links": {}, "context_reads": {}, "context_deliveries": {},
             "root_host_binding": {},
             "resource_revision": 1, "resource_ref": "",
@@ -274,6 +332,10 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
                              "phase_units": {key: 0 for key in ("pre", "post", "repair")},
                              "active": 0, "astra_active": 0},
         }
+        if root["context_runtime"]["transport_mode"] == "desktop-authoritative-context/2":
+            state.update(context_recovery={}, context_recovery_bindings={}, context_read_history={}, context_finals={}, context_raw_finals={})
+        if root['context_runtime'].get('ordinary_contract'):
+            state.update(ordinary_finals={},ordinary_results={})
     else:
         if state is None:
             fail("V5_INITIALIZATION_MISSING")
@@ -301,7 +363,7 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
                 key: value for key, value in choice.items() if key != "decision_ref"}):
                 fail("V5_SELECTION_INTEGRITY")
             spec = profile_spec(choice.get("approved_profile"))
-            if choice["approved_profile"] not in admitted(data["role"], state["execution_mode"]) \
+            if choice["approved_profile"] not in _allowed(state,data["role"]) \
                     or choice["request_parameters"] != {
                         "model": spec["model"], "reasoning_effort": spec["effort"], "agent_type": data["role"]}:
                 fail("V5_SELECTION_TUPLE_MISMATCH")
@@ -317,6 +379,8 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
             if _slot(state, data["slot_id"])["status"] != "PENDING":
                 fail("PHASE_SLOT_NOT_PENDING")
             if data["review_binding"]:
+                if _ordinary(state, data['role']):
+                    fail('ORDINARY_REVIEW_BINDING_DENIED')
                 binding = exact(data["review_binding"], {"review_state_ref", "boundary_id", "reviewer"},
                                 "V5_REVIEW_BINDING_FIELDS")
                 sha(binding["review_state_ref"]); identifier(binding["boundary_id"]); identifier(binding["reviewer"])
@@ -342,7 +406,7 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
                     if transition["reason"] != "HOST_UNAVAILABLE" or transition["prior_result_ref"]:
                         fail("V5_TRANSITION_RELEASE_PROOF")
                 else:
-                    old_result = state["accepted_results"].get(transition["prior_reservation_id"])
+                    old_result = state["accepted_results"].get(transition["prior_reservation_id"]) or state.get('ordinary_results',{}).get(transition['prior_reservation_id'])
                     if not old_result or old_result["result_ref"] != transition["prior_result_ref"]:
                         fail("V5_TRANSITION_RESULT_BINDING")
                     changed = any(data["request"][key] != previous_permit["request"][key]
@@ -352,7 +416,7 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
                         fail("V5_REPEAT_REQUIRES_NEW_EVIDENCE")
                     if transition["reason"] == "EVALUATION_NEXT" and state["execution_mode"] != "EVALUATION":
                         fail("V5_EVALUATION_TRANSITION_IN_PRODUCTION")
-            elif data["request"]["scenario"]["phase"] == "repair":
+            elif data["request"]["scenario"]["phase"] == "repair" and not isolated_phase_evaluation(state):
                 transition = exact(data["transition"], {"prior_reservation_id", "prior_result_ref", "reason"},
                                    "V5_REPAIR_TRANSITION_REQUIRED")
                 previous = state["reservations"].get(transition["prior_reservation_id"])
@@ -374,6 +438,10 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
                     or choice["cost_ref"] != selected_option["cost_ref"] \
                     or choice["qualification_ref"] != selected_option["qualification_ref"]:
                 fail("V5_SELECTION_OPTION_MISMATCH")
+            if _ordinary(state,data['role']):
+                from .ordinary_routing_v5 import CONTRACT,option
+                if choice.get('selection_basis')!=CONTRACT or selected_option!=option(choice['approved_profile'],data['request']['scenario']):
+                    fail('ORDINARY_FIXED_COST_REQUIRED')
             state["permits"][data["permit_id"]] = {**copy.deepcopy(data), "status": "PREPARED"}
         elif kind == "PREPARE_REVOKED":
             sha(data["reason_ref"])
@@ -455,23 +523,57 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
                 fail("V5_IDENTITY_LINK_CONFLICT")
             state["host_identity_links"][data["reservation_id"]] = copy.deepcopy(data)
             _project_host(state, data["reservation_id"])
-        elif kind == "CONTEXT_READ_STARTED":
+        elif kind == "CONTEXT_RECOVERY":
+            from .context_recovery_v2 import MODE, transition, deadline_for_runtime
+            if state["root_binding"]["context_runtime"]["transport_mode"] != MODE:
+                fail("CONTEXT_V2_MODE_REQUIRED")
+            rid = data["reservation_id"]
+            attempt = state["reservations"].get(rid)
+            link = state["host_identity_links"].get(rid)
+            if not attempt or attempt["state"] not in {"RESERVED", "STARTED"} or not link \
+                    or data["agent_ref"] != link["agent_ref"]:
+                fail("CONTEXT_V2_RECOVERY_BINDING")
+            sha(data["command_ref"]); sha(data["call_ref"])
+            binding = {name: data[name] for name in ("agent_ref", "command_ref")}
+            if state["context_recovery_bindings"].get(rid, binding) != binding or any(
+                    data["call_ref"] in item["calls"] for key, item in state["context_recovery"].items() if key != rid):
+                fail("CONTEXT_V2_RECOVERY_CONFLICT")
+            state["context_recovery"][rid] = transition(state["context_recovery"].get(rid), event=data["action"],
+                call_ref=data["call_ref"], now_ms=int(parse_iso(event["recorded_at"]).timestamp() * 1000),
+                reason=data["reason"], max_elapsed_ms=deadline_for_runtime(state["root_binding"]["context_runtime"]))
+            state["context_recovery_bindings"][rid] = binding
+        elif kind in {"CONTEXT_READ_STARTED", "CONTEXT_READ_RECOVERED"}:
             for name in ("agent_ref", "call_ref", "bundle_ref", "output_ref", "nonce_ref", "command_ref"):
                 sha(data[name])
             rid = data["reservation_id"]
             attempt = state["reservations"].get(rid)
             link = state["host_identity_links"].get(rid)
             receipt = state["host_receipts"].get(rid)
+            old = state["context_reads"].get(rid)
+            if kind == "CONTEXT_READ_RECOVERED":
+                if state["root_binding"]["context_runtime"]["transport_mode"] != "desktop-authoritative-context/2" \
+                        or not old or any(old[key] != data[key] for key in data if key != "call_ref"):
+                    fail("CONTEXT_V2_RECOVERED_READ_BINDING")
+            elif old:
+                fail("V5_CONTEXT_READ_BINDING")
             if not attempt or attempt["state"] not in {"RESERVED", "STARTED"} or not link or not receipt \
                     or receipt["disposition"] != "created" or link["agent_ref"] != data["agent_ref"] \
-                    or rid in state["context_reads"] or any(row["call_ref"] == data["call_ref"]
+                    or any(row["call_ref"] == data["call_ref"]
                         for row in state["context_reads"].values()):
                 fail("V5_CONTEXT_READ_BINDING")
+            if state["root_binding"]["context_runtime"]["transport_mode"] == "desktop-authoritative-context/2":
+                recovery = state["context_recovery"].get(rid, {})
+                if recovery.get("status") != "ADMITTED" or recovery.get("active_call") != data["call_ref"] \
+                        or state["context_recovery_bindings"][rid]["command_ref"] != data["command_ref"]:
+                    fail("CONTEXT_V2_READ_ADMISSION_REQUIRED")
+                state["context_read_history"].setdefault(rid, []).append(copy.deepcopy(data))
             request = state["permits"][attempt["permit_id"]]["request"]
             if request["context_bundle"]["sha256"] != data["bundle_ref"]:
                 fail("V5_CONTEXT_BUNDLE_BINDING")
             state["context_reads"][rid] = copy.deepcopy(data)
         elif kind == "CONTEXT_DELIVERED":
+            from . import notify_wire
+            if notify_wire.enabled(state):fail('WIRE_ATOMIC_EVENT_REQUIRED')
             rid = data["reservation_id"]
             started = state["context_reads"].get(rid)
             attempt = state["reservations"].get(rid)
@@ -480,12 +582,67 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
                         for name in ("call_ref", "output_ref")):
                 fail("V5_CONTEXT_DELIVERY_BINDING")
             state["context_deliveries"][rid] = copy.deepcopy(data)
+        elif kind == "CONTEXT_WIRE_DELIVERED":
+            from . import notify_wire
+            if not notify_wire.enabled(state) or data['delivery_contract']!=notify_wire.CONTRACT:fail('WIRE_OPT_IN_REQUIRED')
+            rid=data['reservation_id'];started=state['context_reads'].get(rid);attempt=state['reservations'].get(rid)
+            sha(data['raw_output_ref']);sha(data['wire_output_ref']);integer(data['raw_bytes'],'WIRE_RAW_BYTES',minimum=1,maximum=65536);integer(data['wire_bytes'],'WIRE_BYTES',minimum=1,maximum=notify_wire.MAX_WIRE)
+            if not started or not attempt or attempt['state'] not in {'RESERVED','STARTED'} or rid in state['context_deliveries'] or started['call_ref']!=data['call_ref'] or started['output_ref']!=data['raw_output_ref']:fail('WIRE_DELIVERY_BINDING')
+            state['context_deliveries'][rid]={'reservation_id':rid,'call_ref':data['call_ref'],'output_ref':data['raw_output_ref']}
+            state.setdefault('context_wire_deliveries',{})[rid]=copy.deepcopy(data)
+        elif kind == "CONTEXT_RAW_FINAL_ATTESTED":
+            if state["root_binding"]["context_runtime"]["transport_mode"] != "desktop-authoritative-context/2":
+                fail("CONTEXT_V2_MODE_REQUIRED")
+            for key,value in data.items():
+                if key != "reservation_id":
+                    sha(value)
+            rid=data["reservation_id"]
+            link=state["host_identity_links"].get(rid,{})
+            if rid in state["context_raw_finals"] or state["context_recovery"].get(rid,{}).get("status") != "DELIVERED" \
+                    or rid not in state["context_deliveries"] or data["delivery_ref"] != ref(state["context_deliveries"][rid]) \
+                    or data["agent_ref"] != link.get("agent_ref") or data["header_link_ref"] != link.get("proof_ref"):
+                fail("CONTEXT_V2_RAW_FINAL_BINDING")
+            state["context_raw_finals"][rid]=copy.deepcopy(data)
+        elif kind == 'CONTEXT_NOTIFY_ATTESTED':
+            from .notify_delivery import enabled,validate_proof
+            if not enabled(state):fail('NOTIFY_OPT_IN_REQUIRED')
+            rid=data['reservation_id'];native=state['context_raw_finals'].get(rid)
+            from . import notify_wire
+            proof=notify_wire.validate_proof(data['visible_proof']) if notify_wire.enabled(state) else validate_proof(data['visible_proof'])
+            if notify_wire.enabled(state):
+                delivery=state.get('context_wire_deliveries',{}).get(rid,{})
+                if proof['wire_output_ref']!=delivery.get('wire_output_ref') or proof['wire_bytes']!=delivery.get('wire_bytes'):fail('WIRE_ATTESTATION_BINDING')
+            if not native or data['agent_ref']!=native['agent_ref'] or data['response_ref']!=native['response_ref'] or data['delivery_ref']!=native['delivery_ref'] or proof['raw_output_ref']!=state['context_deliveries'][rid]['output_ref'] or rid in state.setdefault('context_notify_finals',{}):fail('NOTIFY_ATTESTATION_BINDING')
+            state['context_notify_finals'][rid]=copy.deepcopy(data)
+        elif kind == "CONTEXT_FINAL_ATTESTED":
+            if state["root_binding"]["context_runtime"]["transport_mode"] != "desktop-authoritative-context/2":
+                fail("CONTEXT_V2_MODE_REQUIRED")
+            for key, value in data.items():
+                if key not in {"reservation_id", "semantic_status"}:
+                    sha(value)
+            rid = data["reservation_id"]
+            link = state["host_identity_links"].get(rid, {})
+            if data["semantic_status"] not in {"pass", "nonblocking", "blocking", "incomplete"} \
+                    or rid in state["context_finals"] or state["context_recovery"].get(rid, {}).get("status") != "DELIVERED" \
+                    or rid not in state["context_deliveries"] or data["delivery_ref"] != ref(state["context_deliveries"][rid]) \
+                    or data["agent_ref"] != link.get("agent_ref") or data["header_link_ref"] != link.get("proof_ref"):
+                fail("CONTEXT_V2_FINAL_BINDING")
+            raw_final=state["context_raw_finals"].get(rid)
+            if raw_final and any(raw_final[key] != data[key] for key in raw_final):
+                fail("CONTEXT_V2_FINAL_RAW_CONFLICT")
+            from .notify_delivery import enabled
+            if enabled(state) and (rid not in state.get('context_notify_finals',{}) or state['context_notify_finals'][rid]['response_ref']!=data['response_ref']):fail('NOTIFY_FINAL_PROOF_REQUIRED')
+            state["context_finals"][rid] = copy.deepcopy(data)
         elif kind == "HOST_OBSERVED":
             sha(data["agent_ref"])
             if data["phase"] not in {"start", "stop"} or data["outcome"] not in {
                 "PASS", "BLOCKED", "FAILED", "CANCELLED", "PARTIAL", "UNKNOWN"}:
                 fail("V5_HOST_OBSERVATION")
             observations = state["host_observations"].setdefault(data["agent_ref"], {})
+            if data["phase"] == "stop" and any(
+                    recovered["agent_ref"] == data["agent_ref"]
+                    for recovered in state.get("host_terminal_recoveries", {}).values()):
+                fail("V5_RECOVERED_HOST_STOP_CONFLICT")
             if data["phase"] in observations:
                 fail("V5_DUPLICATE_OBSERVATION_EVENT")
             if data["phase"] == "start" and data["outcome"] != "UNKNOWN":
@@ -494,6 +651,77 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
             for rid, receipt in state["host_receipts"].items():
                 if effective_agent_ref(state, rid) == data["agent_ref"]:
                     _project_host(state, rid)
+        elif kind == "HOST_TERMINAL_ERROR_RECOVERED":
+            rid = data["reservation_id"]
+            for key in ("agent_ref", "task_path_ref", "file_binding_ref", "evidence_ref"):
+                sha(data[key])
+            _path(data["evidence_path"])
+            hex_digest(data["transcript_bytes_sha256"])
+            attempt = state["reservations"].get(rid)
+            receipt = state["host_receipts"].get(rid)
+            link = state["host_identity_links"].get(rid)
+            observed = state["host_observations"].get(data["agent_ref"], {})
+            if (state["execution_mode"] != "EVALUATION" or
+                    state["root_binding"]["context_runtime"].get("research_contract") not in {"desktop-research-campaign/1", "desktop-research-campaign/2"} or
+                    data["error_code"] != "server_overloaded" or
+                    not attempt or attempt["state"] != "STARTED" or
+                    not receipt or receipt["disposition"] != "created" or not link or
+                    not state["root_host_binding"] or
+                    effective_agent_ref(state, rid) != data["agent_ref"] or
+                    link["task_path_ref"] != data["task_path_ref"] or
+                    observed != {"start": "UNKNOWN"} or
+                    rid in state.get("host_terminal_recoveries", {}) or
+                    rid in state["context_reads"] or rid in state["context_deliveries"] or
+                    rid in state.get("context_recovery", {}) or
+                    rid in state.get("context_wire_deliveries", {}) or
+                    rid in state.get("context_notify_finals", {}) or
+                    rid in state.get("context_finals", {}) or
+                    rid in state.get("context_raw_finals", {}) or
+                    rid in state["accepted_results"]):
+                fail("V5_HOST_TERMINAL_RECOVERY_DENIED")
+            slot = _slot(state, state["permits"][attempt["permit_id"]]["slot_id"])
+            if slot["status"] != "RESERVED":
+                fail("V5_HOST_TERMINAL_RECOVERY_SLOT")
+            state.setdefault("host_terminal_recoveries", {})[rid] = copy.deepcopy(data)
+            attempt["state"], attempt["outcome"] = "COMPLETED", "FAILED"
+            state["_usage_cache"]["active"] -= 1
+            selected = state["permits"][attempt["permit_id"]]["selection"]["approved_profile"]
+            state["_usage_cache"]["astra_active"] -= int(profile_spec(selected)["resource_group"] == "astra")
+            slot["status"] = "AWAITING_RESULT"
+        elif kind == "HISTORICAL_ATTEMPT_CARRIED":
+            for key in ("trial_ref", "scenario_ref", "source_result_ref", "source_evidence_ref",
+                        "carry_evidence_ref"):
+                sha(data[key])
+            if data["source_grade_ref"]:
+                sha(data["source_grade_ref"])
+            _path(data["source_ledger_path"])
+            _path(data["carry_evidence_path"])
+            hex_digest(data["source_ledger_head_hash"])
+            sha(data["source_repo_fingerprint"])
+            identifier(data["source_project_id"])
+            identifier(data["source_task_id"])
+            identifier(data["source_reservation_id"])
+            profile_spec(data["profile_id"])
+            slot = _slot(state, data["slot_id"])
+            if (state["execution_mode"] != "EVALUATION" or
+                    state["root_binding"]["context_runtime"].get("research_contract") not in {"desktop-research-campaign/1", "desktop-research-campaign/2"} or
+                    slot["status"] != "PENDING" or slot["active_reservation_ref"] or
+                    data["slot_id"] != "trial_" + data["trial_ref"][7:59] or
+                    data["scenario_ref"] != ref(slot["scenario"]) or
+                    not any(option["profile_id"] == data["profile_id"] for option in slot["options"]) or
+                    data["source_project_id"] != state["identity"]["project_id"] or
+                    data["source_repo_fingerprint"] != state["identity"]["repo_fingerprint"] or
+                    data["source_task_id"] == state["identity"]["task_id"] or
+                    data["slot_id"] in state.get("historical_carries", {}) or
+                    any(carry["source_reservation_id"] == data["source_reservation_id"]
+                        for carry in state.get("historical_carries", {}).values()) or
+                    any(permit["slot_id"] == data["slot_id"] for permit in state["permits"].values()) or
+                    data["disposition"] not in {"MODEL_GRADED", "HOST_INFRA_UNGRADED", "READER_PROTOCOL_UNGRADED"} or
+                    (data["disposition"] == "MODEL_GRADED") != bool(data["source_grade_ref"])):
+                fail("V5_HISTORICAL_CARRY_DENIED")
+            state.setdefault("historical_carries", {})[data["slot_id"]] = copy.deepcopy(data)
+            slot["status"] = "SATISFIED"
+            slot["accepted_result_ref"] = data["source_result_ref"]
         elif kind == "NOT_STARTED_RELEASED":
             attempt = state["reservations"].get(data["reservation_id"])
             receipt = state["host_receipts"].get(data["reservation_id"])
@@ -512,9 +740,45 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
             slot = _slot(state, permit["slot_id"])
             slot["status"] = "PENDING"
             slot["active_reservation_ref"] = ""
+        elif kind == 'ORDINARY_FINAL_ATTESTED':
+            rid=data['reservation_id'];attempt=state['reservations'].get(rid)
+            if not attempt or attempt['state'] not in {'RESERVED','STARTED','COMPLETED'} \
+                    or not _ordinary(state,state['permits'][attempt['permit_id']]['role']):
+                fail('ORDINARY_FINAL_ROLE')
+            for key in ('agent_ref','header_ref','header_link_ref','turn_ref','response_ref'):sha(data[key])
+            if rid in state['ordinary_finals'] or data['agent_ref']!=effective_agent_ref(state,rid) \
+                    or data['header_link_ref']!=state['host_identity_links'].get(rid,{}).get('proof_ref'):
+                fail('ORDINARY_FINAL_BINDING')
+            state['ordinary_finals'][rid]=copy.deepcopy(data)
+        elif kind == 'ORDINARY_RESULT_ACCEPTED':
+            rid=data['reservation_id'];attempt=state['reservations'].get(rid)
+            if not attempt or attempt['state']!='COMPLETED' or not _ordinary(state,state['permits'][attempt['permit_id']]['role']):
+                fail('ORDINARY_RESULT_TERMINAL')
+            for key in ('response_ref','validation_ref','result_ref'):sha(data[key])
+            hex_digest(data['after_baseline_sha256'])
+            if rid in state['ordinary_results'] or state['ordinary_finals'].get(rid,{}).get('response_ref')!=data['response_ref'] \
+                    or state['host_receipts'].get(rid,{}).get('disposition')!='created' \
+                    or data['status'] not in {'pass','incomplete'}:
+                fail('ORDINARY_RESULT_BINDING')
+            if data['status']=='pass' and attempt['outcome'] in {'FAILED','CANCELLED','PARTIAL','BLOCKED'}:
+                fail('ORDINARY_RESULT_HOST_CONFLICT')
+            permit=state['permits'][attempt['permit_id']]
+            expected_supersedes=[r['result_ref'] for previous,r in state['ordinary_results'].items()
+                if state['permits'][state['reservations'][previous]['permit_id']]['slot_id']==permit['slot_id'] and r['status']=='incomplete'
+                and r['result_ref'] not in {x for result in state['ordinary_results'].values() for x in result['supersedes']}]
+            if data['supersedes']!=expected_supersedes:fail('ORDINARY_RESULT_SUPERSESSION')
+            slot=_slot(state,permit['slot_id'])
+            if slot['status']!='AWAITING_RESULT':fail('ORDINARY_RESULT_SLOT')
+            if data['result_ref']!=ref({k:v for k,v in data.items() if k!='result_ref'}):fail('ORDINARY_RESULT_INTEGRITY')
+            state['ordinary_results'][rid]=copy.deepcopy(data)
+            slot['active_reservation_ref']=''
+            slot['status']='SATISFIED' if data['status']=='pass' else 'PENDING'
+            if data['status']=='pass':slot['accepted_result_ref']=data['result_ref']
         elif kind == "RESULT_ACCEPTED":
             sha(data["result_ref"]); sha(data["response_ref"])
             attempt = state["reservations"].get(data["reservation_id"])
+            if attempt and _ordinary(state, state['permits'][attempt['permit_id']]['role']):
+                fail('ORDINARY_REVIEW_RESULT_DENIED')
             if not attempt or attempt["state"] != "COMPLETED" or data["reservation_id"] in state["accepted_results"]:
                 fail("V5_RESULT_REQUIRES_COMPLETED_ATTEMPT")
             permit = state["permits"][attempt["permit_id"]]
@@ -525,6 +789,13 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
                 fail("V5_RESULT_BINDING")
             if data["status"] != "incomplete" and data["reservation_id"] not in state["context_deliveries"]:
                 fail("V5_CONTEXT_DELIVERY_REQUIRED")
+            if state["root_binding"]["context_runtime"]["transport_mode"] == "desktop-authoritative-context/2" \
+                    and data["status"] != "incomplete":
+                rid = data["reservation_id"]
+                if state["context_recovery"].get(rid, {}).get("status") != "DELIVERED" \
+                        or state["context_finals"].get(rid, {}).get("response_ref") != data["response_ref"] \
+                        or state["context_finals"][rid]["semantic_status"] != data["status"]:
+                    fail("CONTEXT_V2_NATIVE_FINAL_REQUIRED")
             # 中文：已知的未完成终态不能被结果覆盖；UNKNOWN 仍需独立核验结果。
             # English: A known unsuccessful stop cannot be overridden by a completed
             # review. UNKNOWN never supplies a verdict; result validation is separate.
@@ -549,7 +820,8 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
                 if old_permit["slot_id"] != permit["slot_id"] and old_permit["slot_id"] not in slot["depends_on"]:
                     fail("V5_SUPERSEDES_SCOPE_MISMATCH")
             if data["status"] == "incomplete" or (
-                data["status"] == "blocking" and permit["request"]["scenario"]["phase"] in {"pre", "repair"}):
+                data["status"] == "blocking" and permit["request"]["scenario"]["phase"] in {"pre", "repair"}
+                and not isolated_trial_completion(state)):
                 slot["status"] = "PENDING"
                 slot["active_reservation_ref"] = ""
             else:
@@ -599,6 +871,44 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
             if previous_request["packet_sha256"] == data["next_packet_sha256"]:
                 fail("V5_EVALUATION_CASE_REUSE")
             slot["status"], slot["active_reservation_ref"] = "PENDING", ""
+        elif kind == "EVALUATION_UNGRADED_SEALED":
+            for key in ("trial_ref", "accepted_result_ref", "evidence_ref"):
+                sha(data[key])
+            _path(data["evidence_path"])
+            rid = data["reservation_id"]
+            attempt = state["reservations"].get(rid)
+            accepted = state["accepted_results"].get(rid)
+            permit = state["permits"].get(attempt["permit_id"]) if attempt else None
+            slot = _slot(state, data["slot_id"])
+            runtime = state["root_binding"]["context_runtime"]
+            if (state["execution_mode"] != "EVALUATION" or
+                    runtime.get("research_contract") != "desktop-research-campaign/2" or
+                    not attempt or attempt["state"] != "COMPLETED" or
+                    not permit or permit["slot_id"] != data["slot_id"] or
+                    state["host_receipts"].get(rid, {}).get("disposition") != "created" or
+                    not accepted or accepted["status"] != "incomplete" or
+                    accepted["result_ref"] != data["accepted_result_ref"] or
+                    accepted["supersedes"] or rid in state["ungraded_seals"] or
+                    slot["status"] != "PENDING" or slot["active_reservation_ref"] or
+                    slot["condition"] != "always" or slot["depends_on"] or
+                    data["slot_id"] != "trial_" + data["trial_ref"][7:59] or
+                    data["reason_code"] not in {"READER_PROTOCOL_DENIED", "HOST_CAPACITY_ERROR"}):
+                fail("RESEARCH_UNGRADED_SEAL_DENIED")
+            if data["reason_code"] == "READER_PROTOCOL_DENIED":
+                if (state["context_recovery"].get(rid, {}).get("status") != "DENIED" or
+                        rid not in state["context_reads"] or
+                        rid in state["context_deliveries"] or
+                        rid in state.get("context_wire_deliveries", {}) or
+                        rid in state["context_finals"] or
+                        rid in state["context_raw_finals"]):
+                    fail("RESEARCH_UNGRADED_READER_SOURCE")
+            elif (rid not in state.get("host_terminal_recoveries", {}) or
+                  attempt["outcome"] != "FAILED" or rid in state["context_reads"]):
+                fail("RESEARCH_UNGRADED_HOST_SOURCE")
+            state["ungraded_seals"][rid] = copy.deepcopy(data)
+            slot["status"] = "UNGRADABLE"
+            slot["accepted_result_ref"] = accepted["result_ref"]
+            slot["release_evidence_ref"] = data["evidence_ref"]
         elif kind == "INLINE_SATISFIED":
             slot = _slot(state, data["slot_id"])
             selection, request = data["selection"], data["request"]
@@ -623,11 +933,19 @@ def _apply(state: dict[str, Any] | None, event: Mapping[str, Any]) -> dict[str, 
             if data["outcome"] == "PASS" and any(slot["status"] not in {"SATISFIED", "WAIVED"}
                                                 for slot in state["phase_plan"]["slots"]):
                 fail("V5_CLOSE_UNFULFILLED_SCOPE")
+            if data["outcome"] == "PASS" and any(
+                    carry["disposition"] in {"HOST_INFRA_UNGRADED", "READER_PROTOCOL_UNGRADED"}
+                    for carry in state.get("historical_carries", {}).values()):
+                fail("V5_CLOSE_HISTORICAL_INFRA_FAILURE")
             resolved = {reference for item in state["accepted_results"].values()
                         for reference in item["supersedes"]}
             if data["outcome"] == "PASS" and any(item["status"] in {"blocking", "incomplete"}
                     and item["result_ref"] not in resolved for item in state["accepted_results"].values()):
                 fail("V5_CLOSE_UNRESOLVED_RESULTS")
+            ordinary_resolved={x for r in state.get('ordinary_results',{}).values() for x in r['supersedes']}
+            if data['outcome']=='PASS' and any(r['status']=='incomplete' and r['result_ref'] not in ordinary_resolved
+                                               for r in state.get('ordinary_results',{}).values()):
+                fail('ORDINARY_CLOSE_UNRESOLVED_RESULTS')
             state["closed"], state["outcome"] = True, data["outcome"]
         if ref(_economic_projection(state)) != before:
             state["resource_revision"] += 1
@@ -697,6 +1015,8 @@ def initialize(path: Path, *, declared_identity: Mapping[str, Any], root_binding
                phase_plan: Mapping[str, Any], max_parallel: int = 3, max_depth: int = 2) -> dict[str, Any]:
     declared_identity = _identity(dict(declared_identity))
     exact(dict(root_binding), ROOT_FIELDS, "V5_ROOT_BINDING_FIELDS")
+    if any(slot.get("status") == "UNGRADABLE" for slot in phase_plan.get("slots", [])):
+        fail("RESEARCH_UNGRADABLE_CANNOT_INITIALIZE")
     require_external_state(path.resolve(), Path(root_binding["repo_path"]).resolve())
     witness = feasible_witness(phase_plan, capacity, role_capacity=role_capacity, phase_capacity=phase_capacity)
     if witness["status"] != "FEASIBLE":
@@ -727,7 +1047,7 @@ def prepare(path: Path, request: Mapping[str, Any], *, dispatch_key: str, depth:
         snapshot = snapshot_loader(state, request, utc_now())
         request = copy.deepcopy(dict(request))
         request["expected"] = snapshot_references(snapshot)
-        choice = select(request, snapshot)
+        choice = _select(state,request,snapshot)
         if choice["status"] == "INLINE":
             _append(path, events, _event(state, state["identity"], "INLINE_SATISFIED",
                                          {"slot_id": request["slot_id"], "request": request, "selection": choice}))
@@ -789,7 +1109,7 @@ def approve_and_reserve(path: Path, *, permit_id: str, host_dispatch_id: str,
         if permit["status"] != "PREPARED":
             fail("PERMIT_ALREADY_CONSUMED")
         snapshot = snapshot_loader(state, permit["request"], utc_now())
-        choice = select(permit["request"], snapshot)
+        choice = _select(state,permit['request'],snapshot)
         if choice["status"] not in SELECTED or choice["decision_ref"] != permit["selection"]["decision_ref"]:
             fail("STALE_SNAPSHOT")
         rid = _stable("DBR5_", state["identity"]["budget_id"], host_ref)
@@ -938,8 +1258,36 @@ def advance_evaluation(path: Path, *, slot_id: str, previous_result_ref: str,
                    "previous_result_ref": previous_result_ref, "next_packet_sha256": next_packet_sha256})
 
 
+def seal_ungraded_evaluation(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
+    """中文：封存已核实的终态缺口，保留尝试费用，不生成评分。
+    
+    English: Seal a verified terminal gap without refunding its attempt or creating a grade.
+    """
+    return _mutate(path, "EVALUATION_UNGRADED_SEALED", dict(data))
+
+
 def close(path: Path, *, outcome: str, evidence_ref: str) -> dict[str, Any]:
     return _mutate(path, "CLOSED", {"outcome": outcome, "evidence_ref": evidence_ref})
+
+
+def ordinary_final_attested(path: Path,data: Mapping[str,Any]) -> dict[str,Any]:
+    def previous(state):
+        old=state.get('ordinary_finals',{}).get(data['reservation_id'])
+        if old:
+            if old!=dict(data):fail('ORDINARY_FINAL_CONFLICT')
+            return state
+        return None
+    return _mutate(path,'ORDINARY_FINAL_ATTESTED',data,previous)
+
+
+def ordinary_result_accepted(path: Path,data: Mapping[str,Any]) -> dict[str,Any]:
+    def previous(state):
+        old=state.get('ordinary_results',{}).get(data['reservation_id'])
+        if old:
+            if old!=dict(data):fail('ORDINARY_RESULT_CONFLICT')
+            return state
+        return None
+    return _mutate(path,'ORDINARY_RESULT_ACCEPTED',data,previous)
 
 
 def export_trace(path: Path, receipt_ref: str) -> dict[str, Any]:
@@ -949,6 +1297,8 @@ def export_trace(path: Path, receipt_ref: str) -> dict[str, Any]:
     """
     sha(receipt_ref)
     state = replay(_read_events(path))
+    from .research_bootstrap import deny_statistics
+    deny_statistics(state)
     if state["execution_mode"] != "EVALUATION" or not state["closed"]:
         fail("EVALUATION_TRACE_NOT_FINALIZED")
     matches = [(rid, value) for rid, value in state["host_receipts"].items() if ref(value) == receipt_ref]
@@ -966,8 +1316,12 @@ def export_traces(path: Path) -> dict[str, dict[str, Any]]:
     English: Replay each closed journal once and export a bounded trace index.
     """
     state = replay(_read_events(path))
+    from .research_bootstrap import deny_statistics
+    deny_statistics(state)
     if state["execution_mode"] != "EVALUATION" or not state["closed"]:
         fail("EVALUATION_TRACE_NOT_FINALIZED")
+    if state['root_binding']['context_runtime'].get('ordinary_contract') and not state['accepted_results']:
+        return {}
     from .routing_context_v4 import read_evaluations, choose_evaluation
     evaluations = read_evaluations(state)
     return {ref(receipt): _trace_from_state(state, rid, choose_evaluation(evaluations, case_ref=
@@ -977,6 +1331,8 @@ def export_traces(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def _trace_from_state(state: Mapping[str, Any], rid: str, evaluation: Mapping[str, Any]) -> dict[str, Any]:
+    from .review_vector_transport import enabled
+    if enabled(state):fail("VECTOR_LEGACY_QUALIFICATION_DENIED")
     receipt = state["host_receipts"][rid]
     receipt_ref = ref(receipt)
     result = state["accepted_results"].get(rid)
@@ -987,7 +1343,7 @@ def _trace_from_state(state: Mapping[str, Any], rid: str, evaluation: Mapping[st
     request = permit["request"]
     if rid not in state["context_deliveries"]:
         fail("V5_TRACE_CONTEXT_NOT_DELIVERED")
-    return {
+    trace = {
         "schema_version": "desktop-evaluation-trace/2", "host_surface": "codex-desktop",
         "identity": {key: state["identity"][key] for key in ("project_id", "repo_fingerprint")},
         "task_ref": effective_agent_ref(state, rid), "call_ref": attempt["host_dispatch_ref"],
@@ -997,8 +1353,27 @@ def _trace_from_state(state: Mapping[str, Any], rid: str, evaluation: Mapping[st
         "case_ref": request["evaluation_case_ref"], "scenario_ref": ref(request["scenario"]),
         "protocol_ref": evaluation["protocol_ref"],
         "context_delivery_ref": ref(state["context_deliveries"].get(rid, {})),
-        "transport_mode": "desktop-authoritative-context/1",
+        "transport_mode": state["root_binding"]["context_runtime"]["transport_mode"],
     }
+    if trace["transport_mode"] == "desktop-authoritative-context/2":
+        # 中文：此版本明确区别于旧资格传输；未另获生产资格前，旧卡片消费者拒绝使用。
+        # English: Explicitly distinct from the old qualification transport. Legacy card
+        # consumers reject this version until separate production qualification.
+        trace.update(schema_version="desktop-evaluation-trace/3",
+                     native_final_ref=ref(state["context_finals"][rid]) if rid in state["context_finals"] else "",
+                     recovery_ref=ref(state["context_recovery"][rid]),
+                     result_status=result["status"],
+                     native_response_verified=state["context_finals"].get(rid, {}).get("response_ref") == result["response_ref"])
+        raw=state["context_raw_finals"].get(rid)
+        if raw:
+            structured=state["context_finals"].get(rid,{})
+            trace.update(schema_version="desktop-evaluation-trace/4",response_ref=raw["response_ref"],
+                native_raw_final_ref=ref(raw),accounted_result_ref=result["result_ref"],
+                accounted_status=result["status"],host_outcome=attempt["outcome"],
+                native_final_ref=ref(structured) if structured else "",
+                result_status=structured.get("semantic_status","invalid"),
+                native_response_verified=True)
+    return trace
 
 
 def context_read_started(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
@@ -1012,6 +1387,55 @@ def context_read_started(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
             return state
         return None
     return _mutate(path, "CONTEXT_READ_STARTED", dict(data), previous)
+
+
+def context_read_recovered(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
+    def previous(state):
+        if state["reservations"].get(data["reservation_id"], {}).get("state") not in {"RESERVED", "STARTED"}:
+            fail("V5_CONTEXT_READ_TERMINAL")
+        if state["context_reads"].get(data["reservation_id"]) == dict(data):
+            return state
+        return None
+    return _mutate(path, "CONTEXT_READ_RECOVERED", dict(data), previous)
+
+
+def context_recovery(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
+    def previous(state):
+        if state["root_binding"]["context_runtime"]["transport_mode"] != "desktop-authoritative-context/2":
+            fail("CONTEXT_V2_MODE_REQUIRED")
+        rid = data["reservation_id"]
+        if data["action"] == "ATTEMPT" and state["reservations"].get(rid, {}).get("state") not in {"RESERVED", "STARTED"}:
+            fail("V5_CONTEXT_READ_TERMINAL")
+        old = state["context_recovery"].get(rid, {}).get("calls", {}).get(data["call_ref"], {}).get("events", {})
+        if data["action"] in old:
+            if old[data["action"]] != data["reason"] or state["context_recovery_bindings"][rid] != {
+                    key: data[key] for key in ("agent_ref", "command_ref")}:
+                fail("CONTEXT_V2_DUPLICATE_CONFLICT")
+            return state
+        return None
+    return _mutate(path, "CONTEXT_RECOVERY", dict(data), previous)
+
+
+def context_final_attested(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
+    def previous(state):
+        old = state.get("context_finals", {}).get(data["reservation_id"])
+        if old:
+            if old != dict(data):
+                fail("CONTEXT_V2_FINAL_CONFLICT")
+            return state
+        return None
+    return _mutate(path, "CONTEXT_FINAL_ATTESTED", dict(data), previous)
+
+
+def context_raw_final_attested(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
+    def previous(state):
+        old=state.get("context_raw_finals",{}).get(data["reservation_id"])
+        if old:
+            if old != dict(data):
+                fail("CONTEXT_V2_RAW_FINAL_CONFLICT")
+            return state
+        return None
+    return _mutate(path,"CONTEXT_RAW_FINAL_ATTESTED",dict(data),previous)
 
 
 def context_delivered(path: Path, *, reservation_id: str, call_ref: str, output_ref: str) -> dict[str, Any]:
@@ -1048,3 +1472,22 @@ def result_supersedes(state: Mapping[str, Any], permit: Mapping[str, Any], statu
     if not prior or prior["result_ref"] != transition["prior_result_ref"]:
         fail("V5_RESULT_PRIOR_BINDING")
     return [prior["result_ref"]] if prior["status"] in {"blocking", "incomplete"} else []
+
+
+def context_notify_attested(path: Path, data: Mapping[str,Any]) -> dict[str,Any]:
+    def previous(state):
+        prior=state.get('context_notify_finals',{}).get(data['reservation_id'])
+        if prior:
+            if prior!=dict(data):fail('NOTIFY_ATTESTATION_CONFLICT')
+            return state
+        return None
+    return _mutate(path,'CONTEXT_NOTIFY_ATTESTED',dict(data),previous)
+
+def context_wire_delivered(path: Path,data: Mapping[str,Any]) -> dict[str,Any]:
+    def previous(state):
+        old=state.get('context_wire_deliveries',{}).get(data['reservation_id'])
+        if old is not None:
+            if old!=dict(data) or state['closed']:fail('WIRE_DELIVERY_CONFLICT')
+            return state
+        return None
+    return _mutate(path,'CONTEXT_WIRE_DELIVERED',dict(data),previous)

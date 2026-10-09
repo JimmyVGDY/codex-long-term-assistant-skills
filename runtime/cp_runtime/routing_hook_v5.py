@@ -15,6 +15,13 @@ from .routing_registry_v5 import lookup, admission
 from .path_identity import path_is_within
 
 def registered_path(data):
+    from . import research_campaign
+    hp=research_campaign._head(data.get('session_id',''))
+    if hp.exists() and research_campaign._read(hp).get('schema_version')=='research-session-head/1':
+        return research_campaign.event_path(data)
+    from .research_seed import event_path
+    successor=event_path(data)
+    if successor is not None:return successor
     """中文：未登记任务保持中性；English: enforce canonical identity only for a known V5 root."""
     resolved = {}
     for name in ("session_id", "sessionId", "thread_id", "threadId", "root_session_id", "rootSessionId"):
@@ -50,7 +57,7 @@ def _identity(data):
         identifier(child)
     return session, child
 
-def _header(data, state):
+def _transcript_path(data):
     session, child = _identity(data)
     source = data.get("agent_transcript_path") if data.get("hook_event_name") == "SubagentStop" \
         else data.get("transcript_path")
@@ -60,10 +67,24 @@ def _header(data, state):
     home = (resolve_codex_home() / "sessions").resolve(strict=True)
     if not path_is_within(path, home) or not path.name.endswith(child + ".jsonl"):
         fail("V5_CHILD_HEADER_PATH")
+    return path
+
+
+def _header(data, state):
+    path = _transcript_path(data)
+    if state["root_binding"]["context_runtime"]["transport_mode"] == "desktop-authoritative-context/2":
+        from .context_final_v2 import read_bound_transcript
+        raw, binding = read_bound_transcript(path, header_only=True)
+        return _header_from_bytes(data, state, raw, binding)
     with path.open("rb") as stream:
         raw = stream.readline(131073)
     if len(raw) > 131072 or not raw.endswith(b"\n"):
         fail("V5_CHILD_HEADER_BOUND")
+    return _header_from_bytes(data, state, raw)
+
+
+def _header_from_bytes(data, state, raw, binding=None):
+    session, child = _identity(data)
     event = json.loads(raw, object_pairs_hook=_object, parse_constant=_constant)
     meta = event["payload"]
     spawn = meta["source"]["subagent"]["thread_spawn"]
@@ -77,13 +98,13 @@ def _header(data, state):
     if not same_path(Path(meta["cwd"]), Path(state["root_binding"]["repo_path"])):
         fail("V5_CHILD_REPOSITORY")
     return {"parent_ref": ref(session), "child_ref": ref(child), "task_path": task,
-            "role": spawn["agent_role"], "depth": 1, "header_ref": ref(event)}
+            "role": spawn["agent_role"], "depth": 1, "header_ref": ref(event), **(binding or {})}
 
-def _bind_child(path, data):
+def _bind_child(path, data, *, require_receipt=True, verified_header=None):
     state = budget.read_budget(path)
     if state["closed"]:
         fail("V5_BUDGET_CLOSED")
-    header = _header(data, state)
+    header = verified_header if verified_header is not None else _header(data, state)
     matches = [(rid, p) for rid, attempt in state["reservations"].items()
                if (p := state["permits"][attempt["permit_id"]])["dispatch_ref"] ==
                    ref(header["task_path"].rsplit("/", 1)[1]) and p["role"] == header["role"] and p["depth"] == 1]
@@ -95,7 +116,7 @@ def _bind_child(path, data):
         role=header["role"], proof_ref=ref(header))
     state = budget.read_budget(path)
     receipt = state["host_receipts"].get(rid)
-    if not receipt or receipt["disposition"] != "created":
+    if require_receipt and (not receipt or receipt["disposition"] != "created"):
         fail("V5_CREATION_RECEIPT_PENDING")
     return state, rid, permit
 
@@ -116,6 +137,18 @@ def pretool(path, data, args, **_unused):
     if len(matches) != 1:
         fail("V5_PERMIT_AMBIGUOUS")
     call_id = identifier(data.get("tool_use_id"))
+    from .ordinary_routing_v5 import enabled
+    if enabled(state['root_binding']['context_runtime'],args['agent_type']):
+        runtime=state['root_binding']['context_runtime']
+        bundle=load_bundle(matches[0]['request'],None if runtime.get('delivery_contract')=='same-call-notify/2' else runtime)
+        if args['message']!=bundle['business_prompt']:fail('ORDINARY_MESSAGE_BINDING')
+    from .research_seed import is_seed,reserve
+    from .research_campaign import SUPPORTED_CONTRACTS,reserve as campaign_reserve
+    research=state['root_binding']['context_runtime'].get('research_contract') in SUPPORTED_CONTRACTS
+    if is_seed(state) or research:
+        def callback(recheck):
+            return budget.approve_and_reserve(path,permit_id=matches[0]['permit_id'],host_dispatch_id=call_id,model=args['model'],effort=args['reasoning_effort'],agent_type=args['agent_type'],transport_audit_sha256=digest(args['message'].encode('utf-8')),snapshot_loader=loader(cwd=state['root_binding']['repo_path'],host_session_id=session),binding_guard=recheck)
+        return campaign_reserve(path,data,args,callback) if research else reserve(path,data,args,callback)
     with admission(path, session=session, cwd=str(data.get("cwd") or ""), host_call_id=call_id) as recheck:
         return budget.approve_and_reserve(path, permit_id=matches[0]["permit_id"],
             host_dispatch_id=call_id, model=args["model"], effort=args["reasoning_effort"],
@@ -128,6 +161,10 @@ def _grant_path(path, session, child):
 
 def _command(state, grant_path):
     runtime = validate_runtime(state["root_binding"]["context_runtime"], live=True)
+    if runtime["transport_mode"] == "desktop-authoritative-context/2":
+        from .desktop_context_call import reader_call
+        return reader_call(python_path=runtime["python_path"], reader_path=runtime["reader_path"],
+                           grant_path=str(grant_path))["parameters"]["cmd"]
     if any(c in str(grant_path) for c in "'\r\n\0"):
         fail("V5_GRANT_PATH")
     return "& '{}' -I -B '{}' '{}'".format(runtime["python_path"], runtime["reader_path"], grant_path)
@@ -137,6 +174,15 @@ def bootstrap(path, data):
     state = budget.read_budget(path)
     if not child or state["closed"]:
         fail("V5_BOOTSTRAP_IDENTITY")
+    from .ordinary_routing_v5 import enabled
+    if state['root_binding']['context_runtime'].get('ordinary_contract'):
+        state,rid,permit=_bind_child(path,data,require_receipt=False)
+        if enabled(state['root_binding']['context_runtime'],permit['role']):
+            budget.record_observation(path,agent_id=child,phase='start')
+            return {}
+    if state["root_binding"]["context_runtime"]["transport_mode"] == "desktop-authoritative-context/2":
+        from .routing_context_delivery_v2 import bootstrap as bootstrap_v2
+        return bootstrap_v2(path, data)
     command = _command(state, _grant_path(path, session, child))
     text = (
         "This Desktop review uses an authoritative controller-owned context. The user coordination text "
@@ -179,7 +225,15 @@ def child_tool(path, data):
     if not child:
         return {}
     state = budget.read_budget(path)
+    from .ordinary_routing_v5 import enabled
+    if enabled(state['root_binding']['context_runtime'],data.get('agent_type')):
+        state,_,permit=_bind_child(path,data)
+        if not enabled(state['root_binding']['context_runtime'],permit['role']):fail('ORDINARY_TOOL_ROLE')
+        return {}
     event = data["hook_event_name"]
+    if state["root_binding"]["context_runtime"]["transport_mode"] == "desktop-authoritative-context/2":
+        from .routing_context_delivery_v2 import child_tool as child_tool_v2
+        return child_tool_v2(path, data)
     grant_path = _grant_path(path, session, child)
     command = _command(state, grant_path)
     inputs = data.get("tool_input")
@@ -231,6 +285,12 @@ def child_tool(path, data):
     return {}
 
 def lifecycle(path, data, hook_name, *, args=None, **_unused):
+    if hook_name == 'PostToolUse' and not data.get('agent_id') and delegation_tool_name(data.get('tool_name')) != 'spawn_agent':
+        return {}
+    from .research_campaign import closed_duplicate as campaign_duplicate
+    if campaign_duplicate(path,data):return {}
+    from .research_seed import closed_duplicate
+    if closed_duplicate(path,data):return {}
     session, child = _identity(data)
     state = budget.read_budget(path)
     if hook_name == "SubagentStart":
@@ -247,6 +307,19 @@ def lifecycle(path, data, hook_name, *, args=None, **_unused):
         budget.record_receipt(path, host_dispatch_id=identifier(data.get("tool_use_id")), agent_id=task)
         return {}
     if hook_name == "SubagentStop":
+        from .ordinary_routing_v5 import enabled
+        if enabled(state['root_binding']['context_runtime'],data.get('agent_type')):
+            from .ordinary_delegation_v5 import attest_final
+            try:attest_final(path,data)
+            finally:budget.record_observation(path,agent_id=child,phase='stop',outcome=data.get('terminal_outcome','UNKNOWN'))
+            return {}
+        if state["root_binding"]["context_runtime"]["transport_mode"] == "desktop-authoritative-context/2":
+            from .routing_context_delivery_v2 import attest_final
+            try:
+                attest_final(path, data)
+            finally:
+                budget.record_observation(path, agent_id=child, phase="stop", outcome=data.get("terminal_outcome", "UNKNOWN"))
+            return {}
         # 中文：身份可先关联，缺回执时材料仍隔离。
         # English: Link identity before a delayed receipt, but keep material quarantined.
         try:

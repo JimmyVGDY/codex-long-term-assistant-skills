@@ -5,7 +5,7 @@ description: Use for technical plans, architecture, implementation plans, API or
 
 # Technical Documentation
 
-The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+Keep the main agent's selection. For subagents, follow [script decisions and bounded flexibility](../multi-agent-independent-review/references/script-first-routing.md) and execute the returned exact parameters. The default pool contains GPT-6 Luna, Sol and Astra at low/medium/high; unknown work uses Sol/medium without requiring qualification, gain cards or a long justification. Models may propose semantic adjustments, but scripts recalculate them within the existing authorization and root budget. Missing evidence selects a default or degraded path and never becomes a fabricated PASS.
 
 1. Establish audience, purpose, decision, scope, evidence sources, output format, and modification authority.
 2. Separate confirmed facts, external material, engineering inference, assumptions, and unverified states.

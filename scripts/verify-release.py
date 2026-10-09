@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：失败关闭的 V7.14.6 端到端发行验证器。
+"""中文：失败关闭的 V7.15.2 端到端发行验证器。
 
-English: Fail-closed V7.14.6 end-to-end release verifier.
+English: Fail-closed V7.15.2 end-to-end release verifier.
 """
 from __future__ import annotations
 
@@ -24,9 +24,9 @@ sys.path.insert(0, str(ROOT / "runtime"))
 DESKTOP_CONTRACT = desktop_host.load_contract(ROOT / "config" / "desktop-host-contract-v1.json")
 DESKTOP_CONTRACT_DIGEST = canonical_digest(DESKTOP_CONTRACT)
 
-VERSION = "7.14.6"
+VERSION = "7.15.2"
 TARGET_CODEX_VERSION = "0.160.1"
-COMPATIBILITY_REGISTRY_DIGEST = "d7b909d340a2d877271c7affbd4579273e9f21417c1b2aa23e337841c23f3752"
+COMPATIBILITY_REGISTRY_DIGEST = "5e1c70d26e848a85630fd3a95bb56cd56f37b49c83925e3e887c634b0638cb31"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
@@ -77,7 +77,7 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
             manifest = load_manifest(package_root / MANIFEST_NAME)
             report = verify_payload(package_root, manifest, package=PACKAGE, version=VERSION)
             registry = load_registry(
-                package_root / "config" / "codex-compatibility-v1.json", "7.14.6",
+                package_root / "config" / "codex-compatibility-v1.json", "7.15.2",
             )
             registry_digest = canonical_digest(registry)
             if registry_digest != COMPATIBILITY_REGISTRY_DIGEST:
@@ -95,6 +95,15 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
 
 def _verify_dispatch_policy(report: Mapping[str, Any]) -> Dict[str, Any]:
     schema_version = report.get("schema_version")
+    if schema_version == "4.0":
+        script_root = str(ROOT / "scripts")
+        if script_root not in sys.path:
+            sys.path.insert(0, script_root)
+        from dispatch_policy_report import validate_current_report
+        try:
+            return validate_current_report(report)
+        except ValueError as exc:
+            raise VerificationError(str(exc)) from exc
     if schema_version == LEGACY_DISPATCH_POLICY_SCHEMA_VERSION:
         evidence_scope = "legacy-schema-v2-unscoped"
     elif schema_version == DISPATCH_POLICY_SCHEMA_VERSION:
@@ -262,7 +271,7 @@ def verify_release(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.14.6 端到端发行验证")
+    parser = argparse.ArgumentParser(description="V7.15.2 端到端发行验证")
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--package-validation", required=True)
     parser.add_argument("--build-witness", required=True)

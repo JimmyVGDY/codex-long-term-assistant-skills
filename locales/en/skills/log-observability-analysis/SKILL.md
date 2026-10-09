@@ -5,7 +5,7 @@ description: Use for logs, metrics, distributed traces, profiling, alerts, and c
 
 # Log and Observability Analysis
 
-The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+Keep the main agent's selection. For subagents, follow [script decisions and bounded flexibility](../multi-agent-independent-review/references/script-first-routing.md) and execute the returned exact parameters. The default pool contains GPT-6 Luna, Sol and Astra at low/medium/high; unknown work uses Sol/medium without requiring qualification, gain cards or a long justification. Models may propose semantic adjustments, but scripts recalculate them within the existing authorization and root budget. Missing evidence selects a default or degraded path and never becomes a fabricated PASS.
 
 1. Establish environment, time zone, time window, source, completeness, sensitivity, query cost, and authorization boundary.
 2. Correlate logs, metrics, traces, profiles, alerts, and change events on one timeline before forming candidate causes.

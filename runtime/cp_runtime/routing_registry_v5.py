@@ -79,6 +79,9 @@ def bind(ledger_path, *, cwd, host_session_id, directory=None):
 def lookup(*, host_session_id, directory=None):
     if not host_session_id:
         return None
+    from .research_seed import lookup as seed_lookup
+    successor=seed_lookup(host_session_id,directory=directory)
+    if successor is not None:return successor
     path = _root(host_session_id, directory)
     if not path.exists():
         if _intent(host_session_id, directory).exists():

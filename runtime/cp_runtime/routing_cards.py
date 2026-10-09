@@ -38,6 +38,8 @@ PUBLICATION_FIELDS = {"schema_version", "publication_id", "revision", "identity"
 TRACE_FIELDS = {"schema_version", "host_surface", "identity", "task_ref", "call_ref",
                 "receipt_ref", "response_ref", "profile_id", "outcome", "source",
                 "prompt_ref", "case_ref", "scenario_ref", "protocol_ref"}
+CONTEXT_TRACE_FIELDS = TRACE_FIELDS | {"context_delivery_ref", "transport_mode",
+    "native_final_ref", "recovery_ref", "result_status", "native_response_verified"}
 
 
 def protocol_reference(value: Mapping[str, Any]) -> str:
@@ -52,9 +54,39 @@ def protocol_reference(value: Mapping[str, Any]) -> str:
 
 def validate_experiment(value: Any, *, trace_loader: Callable[[str], Mapping[str, Any]] | None = None,
                         require_native: bool = False) -> dict[str, Any]:
-    exact(value, EXPERIMENT_FIELDS, "EXPERIMENT_FIELDS")
-    if value["schema_version"] != "routing-experiment/1":
+    """中文：冻结的第一版消费者；新版原生传输必须显式启用。
+    
+    English: Frozen /1 consumer: newer native transport must be opted into explicitly.
+    """
+    return _validate_experiment(value, trace_loader=trace_loader, require_native=require_native, version=1)
+
+
+def validate_context_experiment(value: Any, *, trace_loader: Callable[[str], Mapping[str, Any]] | None = None,
+                                require_native: bool = False) -> dict[str, Any]:
+    """中文：第二版消费者显式读取独立归属的第二版传输回答。
+    
+    English: Explicit /2 consumer of independently attributed transport/2 answers.
+    """
+    return _validate_experiment(value, trace_loader=trace_loader, require_native=require_native, version=2)
+
+
+def _experiment(value: Any, **kwargs: Any) -> dict[str, Any]:
+    # 中文：版本分流只作用于新卡片构建与验证入口；既有 validate_experiment 调用保持第一版合同。
+    # English: Version dispatch is confined to new card-building/validation entrypoints.
+    # Existing callers of validate_experiment retain the original /1 contract.
+    validator = validate_context_experiment if isinstance(value, dict) \
+        and value.get("schema_version") == "routing-experiment/2" else validate_experiment
+    return validator(value, **kwargs)
+
+
+def _validate_experiment(value: Any, *, trace_loader: Callable[[str], Mapping[str, Any]] | None,
+                         require_native: bool, version: int) -> dict[str, Any]:
+    exact(value, EXPERIMENT_FIELDS | ({"qualification_source"} if version == 2 else set()), "EXPERIMENT_FIELDS")
+    if value["schema_version"] != f"routing-experiment/{version}":
         fail("EXPERIMENT_VERSION")
+    if version == 2:
+        from .qualification_study import validate_qualification_source
+        validate_qualification_source(value['qualification_source'])
     identifier(value["experiment_id"])
     expected_identity = identity(value["identity"])
     experiment_scenario = scenario(value["scenario"])
@@ -153,15 +185,48 @@ def validate_experiment(value: Any, *, trace_loader: Callable[[str], Mapping[str
                 trace_cache[row["receipt_ref"]] = trace_loader(row["receipt_ref"])  # type: ignore[misc]
             raw_trace = trace_cache[row["receipt_ref"]]
             is_context = raw_trace.get("schema_version") == "desktop-evaluation-trace/2"
-            fields = TRACE_FIELDS | {"context_delivery_ref", "transport_mode"} if is_context else TRACE_FIELDS
+            raw_final_trace = raw_trace.get("schema_version") == "desktop-evaluation-trace/4"
+            negative_trace=version==2 and value["qualification_source"].get("schema_version")=="study-qualification-source/2" and raw_trace.get("schema_version")=="desktop-evaluation-trace/5"
+            fields = (CONTEXT_TRACE_FIELDS | ({"native_raw_final_ref","accounted_result_ref","accounted_status","host_outcome"}
+                      if raw_final_trace else set())) if version == 2 else (
+                TRACE_FIELDS | {"context_delivery_ref", "transport_mode"} if is_context else TRACE_FIELDS)
+            if negative_trace:fields=CONTEXT_TRACE_FIELDS|{"negative_proof_ref","failure_kind","negative_verified"}
             trace = exact(raw_trace, fields, "NATIVE_TRACE_FIELDS")
-            if is_context:
+            if version == 2:
+                if trace["transport_mode"] != "desktop-authoritative-context/2":
+                    fail("NATIVE_TRACE_CONTEXT_MODE")
+                for key in ("context_delivery_ref", "recovery_ref"):
+                    sha(trace[key])
+                if raw_final_trace:
+                    sha(trace["native_raw_final_ref"]);sha(trace["accounted_result_ref"])
+                    if trace["host_outcome"] not in {"PASS","UNKNOWN"}:
+                        fail("NATIVE_TRACE_HOST_UNSUCCESSFUL")
+                    accounted = "incomplete" if trace["result_status"] == "invalid" else trace["result_status"]
+                    if trace["accounted_status"] != accounted:
+                        fail("NATIVE_TRACE_ACCOUNTING_MISMATCH")
+                if negative_trace:
+                    sha(trace["negative_proof_ref"])
+                    if trace["negative_verified"] is not True or trace["failure_kind"]!="MODEL_BOUNDARY_VIOLATION" or trace["result_status"]!="boundary-invalid" or row["passed"] or not row["boundary_failure"] or trace["native_final_ref"]!="" or trace["native_response_verified"] is not False:fail("RESEARCH_NEGATIVE_TRACE")
+                elif raw_final_trace and trace["result_status"] == "invalid":
+                    if trace["native_final_ref"] != "" or row["passed"]:
+                        fail("NATIVE_TRACE_RESPONSE_UNVERIFIED")
+                else:
+                    sha(trace["native_final_ref"])
+                statuses={"pass", "nonblocking", "blocking", "incomplete"} | ({"invalid"} if raw_final_trace else set())
+                if not negative_trace and (trace["native_response_verified"] is not True \
+                        or trace["result_status"] not in statuses \
+                        or (trace["result_status"] in {"incomplete","invalid"} and row["passed"])):
+                    fail("NATIVE_TRACE_RESPONSE_UNVERIFIED")
+            elif is_context:
                 sha(trace["context_delivery_ref"])
                 if trace["transport_mode"] != "desktop-authoritative-context/1":
                     fail("NATIVE_TRACE_CONTEXT_MODE")
-            if any(item.get("schema_version") != trace["schema_version"] for item in trace_cache.values()):
+            if value.get("qualification_source",{}).get("schema_version")!="study-qualification-source/2" and any(item.get("schema_version") != trace["schema_version"] for item in trace_cache.values()):
                 fail("NATIVE_TRACE_TRANSPORT_MIXED")
-            if trace["schema_version"] not in {"desktop-evaluation-trace/1", "desktop-evaluation-trace/2"} \
+            versions = {"desktop-evaluation-trace/3","desktop-evaluation-trace/4"} if version == 2 else {
+                "desktop-evaluation-trace/1", "desktop-evaluation-trace/2"}
+            if negative_trace:versions=versions|{"desktop-evaluation-trace/5"}
+            if trace["schema_version"] not in versions \
                     or trace["source"] != "verified-host-receipt" \
                     or trace["host_surface"] != HOST_SURFACE or trace["identity"] != expected_identity \
                     or trace["scenario_ref"] != ref(experiment_scenario) \
@@ -205,7 +270,7 @@ def derived_cards(experiment: Mapping[str, Any]) -> tuple[list[dict], list[dict]
 
     English: Derive cards from paired outcomes, never caller-provided scores.
     """
-    experiment = validate_experiment(experiment)
+    experiment = _experiment(experiment)
     grouped = _clusters(experiment)
     thresholds = policy()["thresholds"]
     qualifications: list[dict] = []
@@ -276,7 +341,7 @@ def validate_cost(value: Any, *, scenario_ref: str) -> dict[str, Any]:
 
 def build_bundle(experiment: Mapping[str, Any], costs: list[dict], *, bundle_id: str,
                  created_at: str, expires_at: str) -> dict[str, Any]:
-    experiment = validate_experiment(experiment)
+    experiment = _experiment(experiment)
     qualification, gains = derived_cards(experiment)
     if not isinstance(costs, list) or not costs or len(costs) > 18:
         fail("COST_CARD_LIMIT")
@@ -285,7 +350,8 @@ def build_bundle(experiment: Mapping[str, Any], costs: list[dict], *, bundle_id:
             or len({item["cost_basis"] for item in normalized}) != 1:
         fail("COST_CARD_DUPLICATE_OR_MIXED_BASIS")
     value = {
-        "schema_version": "routing-card-bundle/1", "bundle_id": identifier(bundle_id),
+        "schema_version": "routing-card-bundle/2" if experiment["schema_version"] == "routing-experiment/2"
+            else "routing-card-bundle/1", "bundle_id": identifier(bundle_id),
         "identity": dict(experiment["identity"]), "policy_id": POLICY_ID, "policy_digest": policy_digest(),
         "algorithm_id": ALGORITHM_ID, "origin": experiment["origin"],
         "created_at": created_at, "expires_at": expires_at, "experiment_ref": ref(experiment),
@@ -298,8 +364,13 @@ def build_bundle(experiment: Mapping[str, Any], costs: list[dict], *, bundle_id:
 def validate_bundle(bundle: Any, experiment: Mapping[str, Any], *, now: str,
                     trace_loader: Callable[[str], Mapping[str, Any]] | None = None,
                     production: bool = True) -> dict[str, Any]:
+    if production and experiment.get('qualification_source',{}).get('schema_version')=='study-qualification-source/2':
+        fail('RESEARCH_LEAF_AUDIT_ONLY_FINAL_CAMPAIGN_REQUIRED')
     exact(bundle, BUNDLE_FIELDS, "BUNDLE_FIELDS")
-    experiment = validate_experiment(experiment, trace_loader=trace_loader, require_native=production)
+    experiment = _experiment(experiment, trace_loader=trace_loader, require_native=production)
+    if production and experiment["schema_version"] == "routing-experiment/2":
+        from .qualification_study import require_experiment_study
+        require_experiment_study(experiment, now=now)
     rebuilt = build_bundle(experiment, bundle["costs"], bundle_id=bundle["bundle_id"],
                            created_at=bundle["created_at"], expires_at=bundle["expires_at"])
     if bundle != rebuilt:
@@ -333,7 +404,7 @@ def publish_bundle(publication_path: Path, bundle: Mapping[str, Any], experiment
 
     English: Consume issuer approval once; later roots activate its precise scope.
     """
-    experiment = validate_experiment(experiment, trace_loader=trace_loader, require_native=True)
+    experiment = _experiment(experiment, trace_loader=trace_loader, require_native=True)
     bundle = validate_bundle(bundle, experiment, now=now, trace_loader=trace_loader)
     snapshot = repo_snapshot(repo_path)
     require_external_state(publication_path.resolve(), repo_path.resolve())
