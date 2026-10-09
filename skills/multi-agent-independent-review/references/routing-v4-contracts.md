@@ -224,3 +224,218 @@ Sample V4 报告必须重新读取根账本、不可变 V6 结果和最终化 Ev
 V4 根绑定生效期间，followup_task、send_message、send_input 与 resume_agent 不开展新审查，也不向试验注入额外材料；这些调用在派发前拒绝。新轮次必须使用新的独立调用和许可。暂停/取消不据此退款。
 
 `add-evidence` 只追加同项目、同任务、当前基线和已有场景的 Evidence；不覆盖旧引用、不修改策略或已花费资源。追加事件推进选择修订，使旧准备许可失效；未消费许可须先撤销再重算。基线已过期的结果仅可保存为 incomplete，不能据此关闭为 PASS。
+
+## 8. 审查读取协议第二版（本地候选）
+
+`desktop-authoritative-context/2` 必须在新的评测根初始化时显式选择；默认仍是 `/1`。
+Budget 5 的不可变 `context_runtime.transport_mode` 固定本根的解释器，旧根不原地升级。
+这不建立独立 CLI 支持，也不改变冻结 V3 默认或生产工具覆盖门禁。
+
+- 控制器用同一个生成器构造固定读取命令、结构化参数和完整 `functions.exec` 程序。
+  普通 Windows 路径使用正斜杠，特殊命名空间通过 JSON 序列化保留；模型不自行转义。
+- 每个子任务最多三个读取尝试，总窗口五秒，从首次尝试起算。只有创建回执尚未到达、
+  成功输出是预期字节的严格前缀时可恢复。未知输出、非零退出、权限、身份、基线、
+  材料摘要和命令不一致均终止。同一宿主事件幂等；新模型派发仍正常扣减。
+  窗口同时约束重试准入与完成验收；超时后到达的材料保留为交付事实，但恢复不能通过。
+  这不承诺强制中断操作系统 I/O。
+- 原始尝试、失败原因、恢复读取及材料交付均保留。不会把旧 `/1` 试验中禁止重试的
+  失败重新判为通过，也不因读取恢复重复扣减模型派发额度。
+- 模型只提交五个语义字段；Finding 的采纳、修复和回归治理初值由控制器补齐。
+  取消抄写长回执的前提，是 `SubagentStop` 的可信子任务路径、关联会话头、材料交付
+  和该子任务唯一最终回答全部匹配。账本只记录最终回答及语义正文摘要。
+  首次关联固定日志规范路径及稳定文件身份；最终头部和正文来自同一个打开的句柄。
+  复制相同头部的另一份日志或替换原文件不能接管证明；正常追加仍可接受。
+  缺失或冲突保持不完整，不能由主协调者补造证明；取消不能被最终回答覆盖。
+  内部 `failure-accounting` 只为已停止且有可核对失败条件的调用生成显式控制器收口记录。
+  它只能是 `incomplete`，不能改写原回答或替代已验证成功；原生回答是否验证单独记录。
+- 新跟踪格式 `desktop-evaluation-trace/3` 含最终回答与恢复记录引用；旧资格卡消费者
+  不接受它。原生验收和生产资格是独立门禁，不由合成测试自动授予。
+- 分别报告材料送达、协议合格、已评分样本上的语义正确率、评分覆盖率与完整流程通过率。
+  读取失败不从完整流程分母消失。排除样本和失败尝试的资源消耗仍计入全部实际调用；
+  未知费用保持未知，不把代理估算当成账单。
+
+新版六例材料使用独立案例 ID、来源摘要、明确输入域和可执行预期判定。
+旧材料、旧 gold 和原评测结论保持历史原貌。本地验证不批准模型默认迁移。
+
+## 9. 读取协议第二版的资格证据（开发中）
+
+显式 `routing-experiment/2` 消费 `desktop-evaluation-trace/3` 或 `/4`，同一实验不混版本。
+旧实验 `/1` 继续拒绝新跟踪格式。新消费者核验原生回答、恢复、材料交付和已接受结果。
+`/4` 将原生原文证明与结构化语义证明分开：模型自己的不完整或格式错误回答可以计为
+失败样本，不能计为通过；没有原生原文、材料或工具证明的控制器收口仍不能充当模型样本。
+
+`routing-trial-result/2` 将主协调者评分绑定到原账本的结果引用、原始回答摘要、
+案例、金标准、评分规则、请求组合和重复编号，首次保存后不覆盖。
+原生审查结果和费用仍由原账本拥有；评分不会改写模型结论或补造原生回执。
+从磁盘实际字节计算金标准和评分规则摘要，不能使用尚未落盘的字符串摘要。
+相同回答正文可以来自不同真实调用；正文可按摘要共享，归属信封按派发分别保存。
+
+内部 `qualification-size-plan` 按现有精确区间计算零分歧条件下的参考样本量。
+一次比较需要252个独立干净案例、99个独立质量案例；干净案例属于质量案例，
+不能重复相加。它是规划参考，不替代真实区间、90%质量底线、关键失败和独立性门槛。
+模型存在收益或损失时仍以原算法重算；不得为通过而缩小比较族或拆分重复问题。
+
+内部 `qualification-grade`、`qualification-assemble` 只形成未发布的证据。
+新卡片绑定 `qualification_source`：总计划和全部试验来源文件的路径/摘要，以及可重算
+审计引用。发布和消费都重读全部登记账本及评分来源；缺段、在途、未评分、引用变化或
+重复调用不能通过，不能只传成功子集。既有生产拒绝、V3默认、5.6兼容和自动派发显式
+model/effort 的约束保持不变；完整证据仍不自动激活默认。
+
+`qualification-study/1` 在任何派发前固定所有 case/profile/repetition 单元、独立簇审阅
+Evidence、分段和总资源。每段最多64次尝试，各段资源之和不能超过总额度。同题/同根因
+或完全相同 Prompt 不得伪装成多个独立簇。原生根的费用卡绑定整个 study 摘要；改变计划
+或另开未登记账本不能补充额度。缺段时资源合计明确不完整，真实计费继续 UNKNOWN。
+
+工具证明同时核对原始日志位置/文件身份、最终回答、唯一控制器程序及实际模型可见输出。
+仅允许程序外层 ASCII 空白差异；新增调用、托管搜索、其他工具和外层输出截断均拒绝。
+本地 Hook 约束和事后使用核验仍是逻辑只读，不是系统隔离，也不能撤销工具副作用。
+官方覆盖限制见[Hook工具覆盖](https://learn.chatgpt.com/docs/hooks)。
+
+## 10. 本地默认激活（未取得资格时不生效）
+
+`desktop-default-activation/2` 新默认固定完整资格计划；`/1` 仅保留历史读取与显式恢复。
+`default-qualification-plan/1` 从冻结策略生成七正式角色 × pre/post/repair 的21单元，
+绑定18精确组合的完整原生开发筛选、事前审阅的冻结选择、包digest和正式协议引用。
+正式确认只比较每单元事前选定的一个GPT-6组合与5.6对照，保持原统计门槛；
+18组合不全部重复正式统计。开发与确认的来源问题、根因、簇或prompt重叠拒绝作为holdout。
+缺任一角色、阶段、筛选组合、完整分母或冻结正式协议均不能切默认。普通Worker/Explorer
+不进入Reviewer评测资格。项目最多登记100份来源，单任务仍只消费最多10份固定成员。
+
+激活仍按 PREPARED → INSTALLED_VERIFIED → ACTIVE 推进。消费批准前持久化同次操作意图，
+绑定源、任务、基线、批准指纹和原指针；ACTIVE或批准已写而指针未发布可用同次批准
+幂等恢复，不重复消费、不覆盖另一当前指针。独立批准的显式旧策略回滚可恢复缺失指针，
+回滚自身的指针写失败也可重试。过期、撤销、内容变化和资格不足仍失败关闭。
+
+当前Desktop的task_complete可省略尾随记忆引用元数据；仅接受与回显完全相同的正文及
+严格单个已知元数据容器。最终取证仍返回和哈希全部原始文本，不删除或改写元数据。
+带尾随元数据的回答仍不是协议JSON，不因此获得模型通过或统计资格。
+
+## 11. 显式64KB材料档
+
+新根可显式指定 `context_profile=bounded-review-64k/1`，仍使用读取协议 `/2` 的有限恢复
+与原生结果绑定。该档固定序列化bundle上限64000bytes、reader输出上限65536bytes，
+每个bundle最多64个材料快照。每次文件读取和总序列化结果都检查边界，拒绝链接、路径
+越界、摘要变化和超限，不截断后继续审查。旧根未登记该档时保持8000bytes。
+
+新档使用bundle/2，必须匹配根runtime档位；场景固定 `context_bucket=bounded-review-64k`
+与 `tools_profile=desktop-context-reader-64k-v1`。旧8KB资格不能直接升级到该档。
+控制器同时生成内层读取和外层code-mode的输出预算；实际模型可见输出仍须与交付摘要
+逐字节一致。上限放大是工具合同变化，不能由本地代码测试自动授予模型场景资格。
+
+Desktop 的 PostToolUse 可能提供截断的显示预览。64KB档仅在原始子任务日志中找到同一
+工具调用、同一轮次、同一工作目录和固定命令，且成功退出、原始stdout与聚合输出均与
+批准材料逐字节相等时，才可核验内层输出；预览还必须与该原生事件的格式化输出一致。
+缺失、重复、文件替换、命令或时间不符仍拒绝。外层code-mode的完整程序及模型可见字节
+继续独立核验，内层输出证明不能替代它。首行`// @exec`输出预算指令须完整保留。
+
+## 12. 普通委派与复审共用预算
+
+新默认的读取协议 `/2` 同时固定 `ordinary_contract=frozen-v3-four-tier/1`。未登记该标记
+的旧根保留原义。Worker/Explorer 仍仅用 GPT-5.6 Luna Low/Medium、Terra Medium/High，
+冻结权重为1/2/4/8；必须显式选一个档位，不从父模型继承，也不借用 Reviewer 资格卡。
+固定策略授权使用 `selection_basis` 区分于统计资格；不会生成经验质量或收益证明。
+
+普通委派先核验当前任务范围 Evidence、批准正文、模型能力和共享额度。后续预审、复审
+及返修槽位继续参加总资源与角色/阶段可行性计算。普通任务不支持承诺墙钟截止时间。
+实际派发正文必须与批准正文相等；独立 fork、父子原生身份、唯一 permit 和创建回执仍
+是门禁。创建回执到达前工具保持隔离；核验后普通任务可按其原任务范围和宿主权限使用
+正常工具，不能把 Reviewer 的固定读取器及逻辑只读限制套给 Worker/Explorer。
+
+普通结果使用独立的原生文本证明与 `ORDINARY_RESULT_ACCEPTED`，无需复审 JSON。
+原生完成不自动满足任务：父级须提供当前仓库/项目/任务的 validation Evidence，来源
+为 `parent-ordinary-task-validation`，并绑定 `ordinary-reservation:<reservation引用>`
+与 `ordinary-verdict:pass|incomplete`。明确失败、取消、部分完成或阻塞的宿主终态不能
+验收为 pass。incomplete 保留费用和历史；新增证据后重试须引用上一结果，精确覆盖未
+解决的旧结果。相同事件重放不重复扣费。普通结果不会进入 Reviewer 状态、资格评分或
+资格跟踪；新默认的准备还必须校验包内具备此普通委派合同。
+
+内部 `ordinary-prepare` 与 `ordinary-result` 管理该过程，仍不是独立 CLI 产品适配。
+生产根继续须具备完整 Reviewer 统计资格、有效项目激活和已安装内容读回。普通兼容测试
+不能授予新模型资格，也不能越过默认迁移门槛。
+
+## 13. 独立阶段评测
+
+正式阶段样本可在读取协议 `/2` 的新评测根显式登记
+`evaluation_contract=isolated-review-phases/1`。该合同仅适用于 EVALUATION：全部槽位
+必须为登记 Reviewer、condition=always、无工作流依赖。普通角色、生产根、旧读取协议
+和带有真实返修依赖的槽位均不能使用。未登记的旧根仍须有真实阻塞 post 结果，才可
+首次派发 repair；生产返修门禁保持原义。
+
+该评测核验模型如何审查冻结的 pre/post/repair 材料。repair 样本须在批准正文中提供
+原问题、前次报告、修复候选和对应验证材料；来源与 gold 审核不能被阶段标记替代。
+独立样本不创建生产阻塞结果、不覆盖真实前次复审，也不证明真实任务的阶段流转。
+请求/回执/材料/原生最终回答/全部评分分母与费用仍走同一原生证据链，不能以 controller
+收口或合成日志代替模型来源。新合同不改变统计门槛、不扩大分段或总资源；默认激活
+仍须完整统计资格及生产流程验收。内部 init 提供显式 --evaluation-contract 参数。
+
+## 14. 综合结果与案例适用性接口（未接入派发）
+
+`review-vector/1` 固定七个维度，模型只提供各维度的状态、Finding、检查范围、未验证项
+和摘要。控制器提供完整适用性scope：applicable、not-applicable、unknown；已确定
+的适用/不适用必须有Evidence引用。接口只检查结构，引用格式不证明实际Evidence已核验。
+模型不能把应检查或缺证据的维度改为not-applicable；未知维度须incomplete，有未验证
+依赖的维度不能完成。没有实际适用维度时总结果仍incomplete，不自动通过。
+
+`validated-review-vector/1`由控制器汇总，保留已确认的阻塞Finding，缺证据优先表现为
+incomplete。固定治理字段继续由原语义扩展器补齐；七维共享最多64个Finding、总回答
+最多1MiB。跨维度ID冲突、缺维度、未知维度和模型注入费用/回执字段均拒绝。
+
+`review-dimension-view/1`是同一结果的展示/评分视图，带同一vector_ref、原模型payload
+引用和scope引用；它不是独立模型调用、原生receipt、旧Result或已认证样本。旧消费者
+继续拒绝向量外层，不能将一个调用展开成七次预算扣费或七个独立问题。
+
+案例矩阵按phase×dimension×cluster聚合真实适用的clean/defect/critical标签；未知或
+不适用不填分母，同问题或根因跨cluster别名拒绝，变体clean标签冲突须先冻结选择。
+输出只报告覆盖缺口，不验证正式准入，也不授予统计资格。
+
+显式 `review_contract=integrated-review-development/1` 仅允许 transport/2 的 EVALUATION
+根，并与普通委派合同互斥。注册 Reviewer 仅作开发调用身份，不代表已发布综合角色。
+`integrated-review-input/1` 将 phase、instructions、scope 和带摘要的 materials 全部放入
+自包含 business_prompt；预登记摘要覆盖所有实际输入。scope 的引用必须对应实际交付的
+材料字节，仍不等于材料已获得独立金标准审核。模型须返回七维向量；Hook 绑定原生回答，
+控制器生成 Result 8，携带开发合同与完整输入引用（覆盖 scope），按总状态完成一次结果
+接收和预算记账；材料后来不可用时，取消/失败仍能按冻结输入身份收口。
+原始向量按内容摘要保留。未知维度导致 incomplete，已确认阻塞保留；取消与控制器失败
+收口不能成为通过。旧 Result 7、普通委派和原预算上限保持原义。
+
+本入口可运行三个阶段的开发桥接，不授予正式资格。旧 trace 和评分消费者明确拒绝此
+合同，生产根初始化也拒绝；综合角色、正式比较/资格消费者及容量扩展仍待实现与验收。
+不得把开发集结果复制成七个旧 Reviewer 样本，也不得据此安装或切换生产默认。
+
+
+## 12. 有限研究承接 seed（尚未原生验收）
+
+`bootstrap-code-review/1` 仅用于已经明确授权的代码复核，使用独立的
+`bootstrap-review-plan/1`、材料 manifest 和阶段 grant；没有统计 gold、clean 或
+critical 标签。传输继续复用 EVALUATION 预算机制，统计评分与 trace 导出明确拒绝此类型。
+新研究入口不修改旧 V4/V5 根、intent、封存结果或费用，也不发行资格或切换生产默认。
+
+阶段 approval 只消费一次；最多两个固定段、每段最多四次调用，唯一 claim 永久划拨预分配
+额度。摘要依赖为 plan → manifest → grant → admission → claim/transition → head，
+不回填祖先。`request_ref` 明确定义为严格 V5 request 将控制器动态 `expected` 置空后的
+完整内容摘要，其余业务字段均固定；动态快照仍由预算选择器核验。成本来源绑定独立材料
+引用，不能引用包含成本自身的 plan 摘要。过期/撤销后只恢复已耗额元数据，新的派发继续拒绝。
+
+锁顺序为 session → stage → ExpectedSpawn → budget。允许 spawn 之前保存唯一真实
+task_path/role/depth、host call 和 reservation 索引；Start 从原始可信头部定位，不依赖
+POST 先到或父 call-ID 出现在 Start。POST 使用固定 call 索引，旧子事件仍归原段。
+索引持久化失败保留预算事实并阻断重复 spawn，不推测退款或创建回执。
+
+这只是有限 bootstrap，完整 study/2、整轮 campaign 与正式统计消费尚未接通。
+通过合成事务/事件验证不代表 Desktop 原生验收或系统只读；原生代码复核前不进入正式研究。
+
+
+## 13. 显式同call通知交付
+
+`delivery_contract=same-call-notify/1` 仅与MODE_V2及64KB档组合；当前不与ordinary_contract或review_contract共用。原single-output程序/proof保持原解释。
+一次现有reader取得完整raw，再由同一固定Code Mode程序投递最多8片，每条完整UTF8通知载荷<28000bytes，全部原材料和64000bytes业务界不变。普通完成可能先到，notify非Promise；不以await/sleep推测完成。每条顶层metadata预算、同call、顺序/count/offset/hash、独立complete、小摘要和final先后均核验，缺失或不足拒绝。
+原reader事实与累计CONTEXT_NOTIFY_ATTESTED分开封存；最终模型回传complete收据，收据不是阅读证明。正式评分重新核验desktop-tool-surface/2全集且绑定同一raw/final，不能仅靠旧raw receipt。
+
+
+## 显式受信wire通知与派发意图元数据恢复
+
+`same-call-notify/2`保留`/1`允许的MODE_V2、bounded-review-64k/1及evaluation组合，仍拒绝ordinary/review_contract混用。无标记和`/1`历史解释不变；格式不授予生产、默认或模型资格。Python控制器按原construct/completion生成对象帧wire，固定reader验证raw/wire双摘要及重组关系；短程序只转发JSON.stringify帧和summary，无模型转录SHA算法。bundle≤64000、raw≤65536、wire≤196608、grant≤524288字节，50000 inner输出预算、单Code Mode/reader/reservation、原有限重试不变。实际PROGRAM、完整通知集合、每项真实宿主metadata预算、complete与final顺序仍严格验证。
+
+`CONTEXT_WIRE_DELIVERED`一个新版本事件同时派生raw兼容投影与wire绑定，旧交付事件不能建立`/2`事实；proof使用`desktop-tool-surface/3`并重新读取原始transcript与grant。未知版本、错摘要、错call、字段/长度漂移拒绝，不补判旧失败。
+
+`research_seed.recover_spawn_intent`只恢复原已准入stage的派发元数据，不spawn、不退款、不授新reader权限。父原生记录通过sessions下原路径、device/inode/header以及指定完整行的offset/length/hash绑定；允许之后追加，拒绝原区间改写、截断、换文件。created需原spawn call/result与同child原始header，沿原索引/身份/receipt幂等补齐；没有reservation的created拒绝。只有Start、无结果、一般error或未有真实否定证明均UNKNOWN，继续RECOVERY_REQUIRED。当前宿主无核验过的not-started结果格式，故不从异常推断未创建、不释放额度。历史已关闭账本不重新派发/升级。证据为逻辑来源核验，不是系统只读隔离或管理员篡改保护。

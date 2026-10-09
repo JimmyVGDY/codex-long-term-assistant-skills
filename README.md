@@ -2,7 +2,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-V7.14.6 候选面向 Codex Desktop，将内部冻结组件窗口推进到官方稳定版 0.160.1，并保留既有权限、委派、恢复和模型路由边界。独立 CLI 仅用于内部管理与兼容回归，不构成产品支持轨道；发布状态以 GitHub Release 和工作流读回为准。
+V7.15.2 源码候选面向 Codex Desktop，为新任务提供 GPT-6 九档脚本决策默认和有界调整；旧根保持原路由与账目语义。独立 CLI 仅用于内部管理与兼容回归，不构成产品支持轨道；安装和发布状态分别以本地及 GitHub 读回为准。
 
 # Codex 跨项目长期技术助手
 
@@ -23,7 +23,7 @@ V7.14.6 候选面向 Codex Desktop，将内部冻结组件窗口推进到官方�
   <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.14.6 保留消息与 Stop 非阻断、Operation v2、基础 Skill 与可选增强分离等边界。门禁仍默认关闭，能力档位不代表业务语义正确或权限已授予。型号定位、思考收益与冷启动条件见[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)。
+V7.15.2 保留消息与 Stop 非阻断、Operation v2、基础 Skill 与可选增强分离等边界。可选文件门禁仍默认关闭；启用后不会因缺少路由收益卡而被临时关闭。能力档位不代表业务语义正确或权限已授予。型号定位与预算口径见[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [四条日常路径](#四条日常路径与统一入口) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#首次安装与升级) · [文档](#文档与协作)
 
@@ -146,7 +146,7 @@ flowchart LR
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Codex Desktop + Plugin | 唯一产品目标 | 本机管理组件及既有插件登记只读探针通过 | 新候选安装、加载与原生 V4 派发仍需分别验收 |
+| Codex Desktop + Plugin | 唯一产品目标 | 本机管理组件及既有插件登记只读探针通过 | 安装、加载、新默认原生派发与旧策略回放需分别验收 |
 
 | Windows / Ubuntu Python 矩阵 | 包级发布门禁 | Python 3.11/3.13 测试与构建 | 不代表桌面原生验收；远端结果以 Actions 为准 |
 | 旧安装布局与冻结策略 | 兼容恢复 | 既有状态、账本与解释器继续保留 | 不建立独立 CLI 产品适配或验收轨道 |
@@ -156,7 +156,7 @@ flowchart LR
 
 桌面管理组件可使用内部预发布号。安装核验按组件摘要、命令和登记结构进行；组件版本不等于桌面任务运行版本。旧稳定版注册表仅保留历史读取与恢复语义。
 
-V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。门禁默认关闭，流程证据也不代表业务语义正确；公开 Release 仍须以受权操作与读回为准。
+V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。该段记录旧版本可选门禁的默认值；新默认对缺证据提供继续路径，不通过临时关门禁放行。流程证据不代表业务语义正确；公开Release仍以授权操作和读回为准。
 
 ## 首次安装与升级
 
@@ -176,13 +176,11 @@ codex plugin list --json
 
 ## 派发策略与模型身份隐私边界
 
-Agent 只使用批准派发档位、permit 引用与预留成本治理子任务；宿主实际模型身份和推理强度不纳入事件、预算、Reviewer、Evolution 或发布证明。自动成本阶梯为：
+新任务采用`desktop-g6-deterministic-v1`：脚本从GPT-6 Luna、Sol、Astra的low/medium/high九档为Reviewer、Worker、Explorer选择组合。一般任务或信息不足使用Sol/medium；模型保留语义判断和有界调整建议，实际调用采用脚本批准的精确参数。
 
-```text
-luna-low -> luna-medium -> terra-medium -> terra-high
-```
+缺少理由、资格卡、收益证明、历史样本或可选材料时，门禁保持开启并返回默认或降级路径。权限、完整性和真实预算限制仍针对相应动作生效；允许继续不等于验证通过。规划单位不是实际费用或模型能力排名。详见[模型选择与预算](docs/MODEL_ROUTING_AND_COST_POLICY.md)。
 
-自动流程拒绝 Sol、`xhigh`、`max`、`ultra` 及任何超过 `gpt-5.6-terra + high` 的配置。
+请求参数与宿主实际后台身份是不同事实；本包不读取或推断后台实际型号。主Agent保持当前选择；自动xhigh/max/ultra禁止。5.6和旧V3/V4只用于显式兼容与原账目回放，不将旧费用或结果按新规则重算。
 
 ## 文档与协作
 

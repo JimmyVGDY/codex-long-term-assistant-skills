@@ -27,14 +27,15 @@ Primary domains: general backend, frontend, AI, or data/middleware/infrastructur
 
 Skill activation does not expand file, Git, environment, production, or data authorization and does not increase model strength.
 
-## 4. Model and subagent ceiling
+## 4. Script decisions and subagent budget
 
-- The main agent keeps the currently selected model and effort.
-- Automatic subagent dispatch must specify model and reasoning_effort explicitly; inherited parent settings cannot prove a child-model ceiling.
-- A simple local task stays serial in the main agent by default: no proactive subagent, repository-wide scan, or unrelated checkpoint. Escalate only when risk, scope, or independent evidence requires it.
-- Independent Reviewers use the root's frozen policy. Explicit V4 checks scenario qualification, then paired reasoning/model-switch gains, then resource approval with future review holds. Its six-model catalog contains 18 evaluation profiles and nine GPT-6 production candidates; insufficient qualification never enables them automatically. V3 retains frozen Luna-first scoring. Workers and explorers retain four profiles, capped at gpt-5.6-terra + high; registered Reviewers are capped at gpt-6-astra + high. Automatic xhigh, max and ultra remain forbidden.
-- A budget is enforced only when a real host binding, explicit ledger, and dispatch permit are all verifiable. Exhaustion, corruption, or untrusted association stops new dispatch. Otherwise only the model ceiling applies and the result must say `policy constraint`.
-- Reviewers do not own the total budget and an unchanged review packet must not be dispatched again. Load weighting, refund, reservation, and host-environment details from the budget reference only when needed.
+- Keep the main agent's selected model and effort.
+- Scripts own measurable facts, selection, budgets, holds, concurrency, retries and result checks. Models retain semantic judgment and adjustment proposals, then execute the exact returned model, reasoning_effort and tool parameters; inherited parent settings do not establish a child ceiling.
+- Simple local work may remain serial. When delegation is needed, missing rationale, gain evidence, historical samples or optional material does not prevent dispatch. New defaults cover GPT-6 Luna/Sol/Astra at low/medium/high for Reviewers, Workers and Explorers; unknown work uses Sol/medium. Automatic xhigh/max/ultra remain forbidden.
+- Scripts recalculate profile, effort, scope or ordering adjustments within the existing authorization, shared budget and allowed adjustment range. Scope is not difficulty proof, a single failed check does not force escalation, and planning units are not actual fees.
+- Keep every project-owned workflow gate enabled. Missing evidence returns a default or degraded next action without disabling gates or inventing PASS. Confirmed authorization, safety, identity, ledger or budget violations restrict their affected action; other authorized work continues.
+- Enforced budgets need a real host binding, ledger and permit. Otherwise report a policy constraint. Initialize new tasks under the new policy; replay old V3/V4 policies and charges unchanged, retain 5.6 for explicit compatibility, and do not restart statistical qualification merely to enable defaults.
+- Reviewers do not own the root budget. Stop repeated dispatch of unchanged material without new information. The ledger owns required holds, actual attempts, cancellation and charges; splitting does not reset it. Load the matching Skill's script-routing reference as needed.
 
 ## 5. Change, validation, and review
 

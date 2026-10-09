@@ -14,7 +14,7 @@ description: >-
 4. 观察必须按 `project_id + repo_fingerprint` 双重隔离；任一不一致立即拒绝聚合。
 5. 原始事件先按 `event_id` 去重，再按 `task_id` 聚合；同一 Task 不得因生命周期事件数量更多而被重复加权。
 6. 终态结果只使用 `PASS/BLOCKED/FAILED/CANCELLED/PARTIAL/UNKNOWN`；禁止从通用 `status` 猜测任务成败。
-7. Reviewer、Explorer、Worker 共用根任务预算。登记 Reviewer 从 Luna 起算并按证据评分，可选择最高 Astra High；其他角色仍限原四档。xhigh/max/ultra 由 Hook 拒绝。宿主实际模型身份不读取、不推断，也不参与治理。
+7. Reviewer、Explorer、Worker 共用根任务预算；新任务采用脚本控制的 GPT-6 九档默认与有界调整，旧根按冻结策略回放。缺校准数据不妨碍默认委派；自动 xhigh/max/ultra 仍禁止。宿主实际模型身份不读取、不推断，也不参与治理。
 8. Hook 只采集最小结构化元数据，禁止保存原始 Prompt、完整回答、代码正文、Patch、Token、Cookie、API Key 或其他凭据。
 9. `health` 门禁通过后才运行分析；增量自动化必须按项目显式启用。保持 `NO_CHANGE/WAITING_FOR_TASKS/COOLDOWN` 安静，仅报告有意义的变化、新候选或需要处理的异常。
 10. 新提案固定可检验假设；实施验证与收益证明分开，收益报告读回时重验引用、窗口、独立样本和质量底线。已确认根因只生成待审回归候选，不自动实施或跨项目晋升。
@@ -48,6 +48,8 @@ Optimization Proposal
 
 ## 模型与成本原则
 
-治理分析默认先使用 Luna 处理机械聚合与读取，只有涉及跨任务语义冲突、高风险策略裁决时逐级升到 Terra；自动最高 `gpt-5.6-terra + high`，禁止用更强模型掩盖数据质量或路由问题。
+主 Agent 保持当前选择。子 Agent 的型号、思考强度和预算采用[脚本决策与弹性规则](../multi-agent-independent-review/references/script-first-routing.md)；执行脚本返回的精确参数。
+
+聚合、去重、窗口和成本计算交脚本；跨任务语义冲突保留模型判断和有界调整。缺少统计样本只意味着暂不更新策略参数，不阻止当前默认委派，也不能用更强模型掩盖数据损坏。
 
 DelegationBudget 校准只消费主协调 Agent 已最终化、项目身份完整、批准档位与成本依据明确的样本。离线回放不足最低样本时必须返回“不调整”；任何建议都保持 `execution_authorization=NONE`，不得直接修改预算或路由。

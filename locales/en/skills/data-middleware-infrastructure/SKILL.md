@@ -5,7 +5,7 @@ description: Use for databases, SQL, transaction locks, Redis, messaging, search
 
 # Data, Middleware, and Infrastructure
 
-The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+Keep the main agent's selection. For subagents, follow [script decisions and bounded flexibility](../multi-agent-independent-review/references/script-first-routing.md) and execute the returned exact parameters. The default pool contains GPT-6 Luna, Sol and Astra at low/medium/high; unknown work uses Sol/medium without requiring qualification, gain cards or a long justification. Models may propose semantic adjustments, but scripts recalculate them within the existing authorization and root budget. Missing evidence selects a default or degraded path and never becomes a fabricated PASS.
 
 1. Establish component versions, topology, ownership, contracts, capacity, environment, and operational boundaries.
 2. For databases, inspect plans, indexes, transaction locks, DDL compatibility, rollout, and rollback.

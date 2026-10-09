@@ -1,0 +1,85 @@
+{
+  "cases": [
+    {
+      "case_id": "workflow-v2-null-outcome",
+      "contract": "Review identity and terminal-enum normalization only. Event type is stripped and case-insensitively matched. The project identifier must be portable and the repository reference lowercase sha256 hex. Both missing terminal_outcome and explicit None mean UNKNOWN; non-null values are converted to stripped uppercase strings and must match the declared enum. Empty/unsupported non-null values fail. Ignore generic status. Return only validated event type, project id and repository reference.",
+      "expected_root_causes": [],
+      "expected_status": "pass",
+      "historical_study_mutated": false,
+      "predecessor_case_id": "case-1eea8df8006808b6",
+      "predecessor_material_sha256": "87aade951f544be3a987cb8657608fd8d537273c07e7d12f467dcacf1e743cb0",
+      "scope": "bounded-snapshot-review",
+      "source_file": "null-outcome.py",
+      "source_sha256": "4e663602c19c83f0ad3a9724ac24b345112f6ffd76bf3326c93154918505d4f6"
+    },
+    {
+      "case_id": "workflow-v2-file-replacement",
+      "contract": "Review the bounded file read on a normal supported filesystem. Return at most limit bytes from a regular file. At the explicit checkpoints, reject symlink/reparse paths and inconsistent path/open-handle metadata. Replacing the path by a DIFFERENT REGULAR FILE after handle close must raise READ_CHANGED; a symlink/reparse replacement must raise LINK_REJECTED, and disappearance may raise UNREADABLE. Error precedence follows these explicit checks. Compare ctime within each API because Windows stat/fstat can differ. No atomic guarantee against every possible filesystem race is required.",
+      "expected_root_causes": [],
+      "expected_status": "pass",
+      "historical_study_mutated": false,
+      "predecessor_case_id": "case-7638033f0c98468c",
+      "predecessor_material_sha256": "2a8d16a013744dff05665a6fd4c4712eb437ca7ce5d797aed130498e02f187cf",
+      "scope": "bounded-snapshot-review",
+      "source_file": "file-replacement.py",
+      "source_sha256": "1212fd967eb41f4ac7aae1be08be8d67767f83a5dbff329a0784eb6d89dd51b6"
+    },
+    {
+      "case_id": "workflow-v2-reserved-aliases",
+      "contract": "Review this pure source-manifest path-list validator. Reject traversal, the listed ASCII Windows device basenames CON/PRN/AUX/NUL/COM1..9/LPT1..9 including extensions, trailing dots/spaces, control characters and the explicit illegal punctuation. Reject duplicate files, file/directory and spelling collisions. In addition, reject every case-insensitive alias of the component .git and every case-insensitive alias of the ROOT filename SOURCE_MANIFEST.json, even if it is the only entry. Valid paths must be sorted. No filesystem or general Unicode normalization guarantee is required.",
+      "expected_root_causes": [
+        "reserved-name-casefold"
+      ],
+      "expected_status": "blocking",
+      "historical_study_mutated": false,
+      "predecessor_case_id": "case-75da648118d72c71",
+      "predecessor_material_sha256": "1b08e85a58935f06060168f029af3470b2bb1267d659a0ec4a1e474affbc55e7",
+      "scope": "bounded-snapshot-review",
+      "source_file": "reserved-aliases.py",
+      "source_sha256": "da9cd0dec994e62b4f38cdbe4cee2c2700d3b2d216d43a58d61821b66c486781"
+    },
+    {
+      "case_id": "workflow-v2-optional-identities",
+      "contract": "Review check_evidence and its listed helpers. Input is a complete, correctly sealed Evidence record. project_id and task_id are OPTIONAL filters: None and empty string omit that filter; each nonempty supplied filter must equal the record. Omission is permitted and is not authorization. A current matching baseline, repo_path supplied for freshness, and status=valid are all required for valid=True. The explicit test repo_snapshot provider returns the trusted current digest and is not a real Git implementation. No write/release permission is granted.",
+      "expected_root_causes": [],
+      "expected_status": "pass",
+      "historical_study_mutated": false,
+      "predecessor_case_id": "case-f3f29a251acf657b",
+      "predecessor_material_sha256": "6d92df328b3b9a997594e5fbdd8170ed2883d50a2172869bab6a58b5509ec951",
+      "scope": "bounded-snapshot-review",
+      "source_file": "optional-identities.py",
+      "source_sha256": "de08c7036da35750675c84caa1f3f24ca9a287c7e0f974e6601518be9c87d4c7"
+    },
+    {
+      "case_id": "workflow-v2-display-names",
+      "contract": "Review display-name validation and title construction. Locale is already zh-CN or en and version is already a numeric semantic version. A name must be trimmed, within the declared length bound, free of Cc/Cf/Cs and have at least one Unicode letter or number (punctuation-only is invalid). Chinese names require Han text, including supplementary-plane ideographs such as U+20000; English names must reject that same Han range. The title constructor is called ONLY with names that already passed _release_name; it must check combined codepoint and UTF-8 byte limits, not revalidate names. This is a display contract, not command escaping.",
+      "expected_root_causes": [
+        "meaningful-name",
+        "supplementary-han"
+      ],
+      "expected_status": "blocking",
+      "historical_study_mutated": false,
+      "predecessor_case_id": "case-2aa35f59daa41211",
+      "predecessor_material_sha256": "a0bde9d2188cd2d0a5a66cf86b5b140a7c06fd11ede2a457490b9a88d7911dde",
+      "scope": "bounded-snapshot-review",
+      "source_file": "display-names.py",
+      "source_sha256": "b3fe37b038718b9e4c5abd27133898be5a6c3cde5e9ecc7e6bd808f370d0ad2e"
+    },
+    {
+      "case_id": "workflow-v2-timezone-overflow",
+      "contract": "Review assert_current_window. Accept timezone-aware instants in [created_at, expires_at), including equivalent offsets. Reject malformed/missing/naive timestamps, invalid ordering and instants outside the window. The input domain includes year 1 and year 9999 ISO timestamps with nonzero offsets. Every parse or UTC-conversion failure, including out-of-range conversion, must be reported as RoutingError(TIME_WINDOW_INVALID), not a raw exception. No guarantee is required beyond Python datetime precision.",
+      "expected_root_causes": [
+        "utc-conversion-overflow"
+      ],
+      "expected_status": "blocking",
+      "historical_study_mutated": false,
+      "predecessor_case_id": "case-88ff4b0cc4227462",
+      "predecessor_material_sha256": "627391adefe08d5de08a3eb65237162833775bee0a2c54ec2776b29415521310",
+      "scope": "bounded-snapshot-review",
+      "source_file": "timezone-overflow.py",
+      "source_sha256": "543c90a8a6b814961448eebf4c22f32ba399c0adecdc54d085ed6f40045123be"
+    }
+  ],
+  "purpose": "local-workflow-acceptance-not-production-qualification",
+  "schema_version": "workflow-cases/2"
+}

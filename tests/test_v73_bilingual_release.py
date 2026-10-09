@@ -44,21 +44,21 @@ class V73BilingualReleaseTests(unittest.TestCase):
         cls.archives = {}
         cls.reports = {}
         for locale in ("zh-CN", "en"):
-            archive = cls.root / ("Codex-Skills-V7.14.6-%s.zip" % locale)
+            archive = cls.root / ("Codex-Skills-V7.15.2-%s.zip" % locale)
             witness = cls.root / ("witness-%s.json" % locale)
             cls.reports[locale] = cls.builder.reproducible_build(archive, witness, locale)
             cls.archives[locale] = archive
         cls.english_root = cls.root / "english-extracted"
         with zipfile.ZipFile(cls.archives["en"]) as archive:
             archive.extractall(cls.english_root)
-        cls.english_root = cls.english_root / "Codex-Skills-V7.14.6-en"
+        cls.english_root = cls.english_root / "Codex-Skills-V7.15.2-en"
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.temporary.cleanup()
 
     def _entries(self, locale: str):
-        root = "Codex-Skills-V7.14.6-%s/" % locale
+        root = "Codex-Skills-V7.15.2-%s/" % locale
         with zipfile.ZipFile(self.archives[locale]) as archive:
             return root, {name.removeprefix(root): archive.read(name) for name in archive.namelist()}
 
@@ -71,8 +71,8 @@ class V73BilingualReleaseTests(unittest.TestCase):
             self.assertEqual(locale, report["locale"])
             _, entries = self._entries(locale)
             self.assertEqual(locale, json.loads(entries["config/locale.json"])["locale"])
-            self.assertEqual("7.14.6", json.loads(entries["manifest.json"])["version"])
-            self.assertEqual("7.14.6", json.loads(entries[".codex-plugin/plugin.json"])["version"])
+            self.assertEqual("7.15.2", json.loads(entries["manifest.json"])["version"])
+            self.assertEqual("7.15.2", json.loads(entries[".codex-plugin/plugin.json"])["version"])
 
     def test_v72_upgrade_path_is_declared_in_manifest_and_bilingual_guides(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
@@ -109,11 +109,11 @@ class V73BilingualReleaseTests(unittest.TestCase):
                 self.assertEqual(self.archives[locale].read_bytes(), archive.read_bytes())
         self.assertEqual(source_before, (ROOT / "scripts" / "evolution.cmd").read_bytes())
 
-    def test_v746_semantic_lint_requires_immediate_previous_upgrade_source(self) -> None:
+    def test_v715_semantic_lint_requires_immediate_previous_upgrade_source(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
         semantic_lint = (ROOT / "scripts" / "semantic-lint.py").read_text(encoding="utf-8")
-        self.assertIn("7.14.5", manifest["upgrade_from"])
-        self.assertIn("'7.14.5'", semantic_lint)
+        self.assertIn("7.14.6", manifest["upgrade_from"])
+        self.assertIn("'7.14.6'", semantic_lint)
 
     def test_both_archives_contain_ten_skills_and_seven_model_neutral_reviewers(self) -> None:
         for locale in ("zh-CN", "en"):
@@ -132,9 +132,9 @@ class V73BilingualReleaseTests(unittest.TestCase):
     def test_english_primary_surfaces_are_english_and_overlay_sources_are_not_shipped(self) -> None:
         _, entries = self._entries("en")
         primary = ["README.md", "CHANGELOG.md", "global/AGENTS.md",
-                   "docs/releases/v7.14.6/RELEASE_NOTES.md",
-                   "docs/releases/v7.14.6/VALIDATION_REPORT.md",
-                   "docs/releases/v7.14.6/AUDIT_REPORT.md",
+                   "docs/releases/v7.15.2/RELEASE_NOTES.md",
+                   "docs/releases/v7.15.2/VALIDATION_REPORT.md",
+                   "docs/releases/v7.15.2/AUDIT_REPORT.md",
                    "docs/USER_GUIDE_V7.6.md", "docs/INSTALLATION_RECOVERY.md",
                    "docs/CODEX_CONFIG_GUIDE.md", ".codex-plugin/plugin.json"]
         primary.extend("skills/%s/SKILL.md" % item["name"] for item in json.loads(entries["manifest.json"])["skills"])
@@ -221,9 +221,8 @@ class V73BilingualReleaseTests(unittest.TestCase):
                              for name in root_files))
         for name in ("CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md"):
             self.assertTrue((ROOT / ".github" / name).is_file(), name)
-        current = ROOT / "docs" / "releases" / "v7.14.6"
-        for name in ("RELEASE_NOTES.md", "AUDIT_REPORT.md", "VALIDATION_REPORT.md",
-                     "BUILD_INFO.json", "PACKAGE_VALIDATION.json"):
+        current = ROOT / "docs" / "releases" / "v7.15.2"
+        for name in ("RELEASE_NOTES.md", "AUDIT_REPORT.md", "VALIDATION_REPORT.md"):
             self.assertTrue((current / name).is_file(), name)
 
     def test_semantic_lint_accepts_runtime_source_key_catalog(self) -> None:

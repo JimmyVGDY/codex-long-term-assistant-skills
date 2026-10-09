@@ -718,7 +718,7 @@ def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None
     gate_posttool_command = _hook_command(gate_path, "PostToolUse")
     fragment = {
         "PreToolUse": [
-            {"matcher": _delegation_hook_matcher("spawn_agent", "followup_task", "send_message", "send_input", "resume_agent"), "hooks": [{"type": "command", "command": pretool_command, "timeout": 5}]},
+            {"matcher": _delegation_hook_matcher("spawn_agent", "followup_task", "send_message", "send_input", "resume_agent"), "hooks": [{"type": "command", "command": pretool_command, "timeout": 30}]},
             {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_pretool_command, "timeout": 5}]},
         ],
         "PostToolUse": [
@@ -1020,6 +1020,33 @@ def payload_report(root: Path) -> Dict[str, Any]:
         return verify_payload(root, payload_manifest(), package=PACKAGE, version=VERSION)
     except (PayloadIntegrityError, OSError) as exc:
         raise InstallError("Plugin payload 校验失败 (%s): %s" % (root, exc)) from exc
+
+
+def g6_install_delivery_report(source_report: Mapping[str, Any],
+                               marketplace_report: Mapping[str, Any],
+                               cache_report: Mapping[str, Any] | None) -> Dict[str, Any] | None:
+    """中文：消费实际三方包内容读回，不要求可选复审证明。
+    
+    English: Consume actual three-way package readback without requiring optional review proof.
+    """
+    if not json.loads(MANIFEST_PATH.read_text(encoding="utf-8")).get("desktop_g6_default_v1"):
+        return None
+    if (not cache_report or source_report["payload_digest"] != marketplace_report["payload_digest"]
+            or source_report["payload_digest"] != cache_report["payload_digest"]):
+        raise InstallError("G6_INSTALL_PAYLOAD_READBACK_MISMATCH")
+    from cp_runtime.g6_delivery_v1 import evaluate_delivery
+    from cp_runtime.routing_contract import ref as g6_ref
+
+    return evaluate_delivery(
+        checks=[{"check_id": "plugin-payload-integrity", "required": True,
+                 "exit_code": 0, "source_ref": g6_ref(source_report),
+                 "baseline_sha256": None}],
+        baseline_sha256=None, post_review=None, repair_review=None,
+        installed=True,
+        installed_readback_ref=g6_ref({"source": source_report["payload_digest"],
+                                       "marketplace": marketplace_report["payload_digest"],
+                                       "cache": cache_report["payload_digest"]}),
+        action="install")
 
 
 def _safe_base_state() -> Tuple[Dict[str, Any], Optional[str]]:
@@ -2241,6 +2268,9 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
                                          "marketplace_digest":marketplace_report["payload_digest"],
                                          "cache_digest":cache_report["payload_digest"] if cache_report else None,
                                          "file_count":source_report["file_count"]}
+            g6_delivery = g6_install_delivery_report(source_report, marketplace_report, cache_report)
+            if g6_delivery is not None:
+                state["g6_delivery"] = g6_delivery
             state["compatibility_status"] = "HOST_COMPATIBLE"
             state["compatibility_snapshot"] = _compatibility_snapshot(
                 post_activation_profile, source_report["payload_digest"], detail,

@@ -653,7 +653,7 @@
         "验证提案、决策与生命周期哈希链": "Validate proposal, decision, and lifecycle hash chains"
       }
     },
-    "scripts/payload_integrity.py": {
+    "runtime/cp_runtime/payload_integrity.py": {
       "plain": {
         "非法 payload 相对路径: %s": "Invalid payload relative path: %s",
         "路径不属于受管 payload 根: %s": "Path is outside the managed payload roots: %s",
@@ -839,7 +839,13 @@
         "缺少 %s -> V7.13.2 升级声明": "Missing %s -> V7.13.2 upgrade declaration",
         "[OK] V7.14.6 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.14.6 semantic validation passed: Desktop scope, AUTO registry, onboarding/1, Operation v2 and frozen historical readers agree",
         "manifest 版本不是 7.14.6": "manifest version is not 7.14.6",
-        "缺少 %s -> V7.14.6 升级声明": "Missing %s -> V7.14.6 upgrade declaration"
+        "缺少 %s -> V7.14.6 升级声明": "Missing %s -> V7.14.6 upgrade declaration",
+        "[OK] V7.15.0 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.15.0 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
+        "manifest 版本不是 7.15.0": "manifest version is not 7.15.0",
+        "缺少 %s -> V7.15.0 升级声明": "missing %s -> V7.15.0 upgrade declaration",
+        "[OK] V7.15.2 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.15.2 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
+        "manifest 版本不是 7.15.2": "manifest version is not 7.15.2",
+        "缺少 %s -> V7.15.2 升级声明": "missing %s -> V7.15.2 upgrade declaration"
       }
     },
     "scripts/verify-release.py": {
@@ -850,7 +856,9 @@
         "派发策略门禁 V3 报告范围或契约无效": "Invalid V3 dispatch-policy scope or contract",
         "V7.13.0 端到端发行验证": "V7.13.0 end-to-end release validation",
         "V7.13.2 端到端发行验证": "V7.13.2 end-to-end release validation",
-        "V7.14.6 端到端发行验证": "V7.14.6 end-to-end release validation"
+        "V7.14.6 端到端发行验证": "V7.14.6 end-to-end release validation",
+        "V7.15.0 端到端发行验证": "V7.15.0 end-to-end release verification",
+        "V7.15.2 端到端发行验证": "V7.15.2 end-to-end release verification"
       },
       "preserve": [
         "V7.12.0 端到端发行验证",
@@ -1834,6 +1842,17 @@
         "通过": "Passed",
         "无阻塞": "No blockers",
         "系统隔离复审": "System-isolated review"
+      }
+    },
+    "runtime/cp_runtime/g6_user_choice_v1.py": {
+      "preserve": [
+        "^\\s*(?:请)?(?:使用|选择|指定|use|choose)\\s+(?P<model>gpt-6-(?:luna|sol|astra))\\s+(?P<effort>low|medium|high)\\s*(?:[。.;；]|$)",
+        "不要.{0,16}(?:改变|切换|使用).{0,16}模型|不要使用|do\\s+not\\s+(?:change|use).{0,16}model|don't\\s+use"
+      ]
+    },
+    "runtime/cp_runtime/routing_hook_v5.py": {
+      "plain": {
+        "中文：未登记任务保持中性；English: enforce canonical identity only for a known V5 root.": "Unregistered tasks remain neutral; enforce canonical identity only for a known V5 root."
       }
     }
   }

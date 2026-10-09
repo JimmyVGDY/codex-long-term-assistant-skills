@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import io
 import json
 import re
@@ -27,6 +28,16 @@ DIRECTIVE = re.compile(r"^(?:#!|#\s*(?:noqa|type:|pragma:|coding[:=]|fmt:|nosec|
 CJK = re.compile(r"[\u4e00-\u9fff]")
 REVIEWED_PATH = ROOT / "locales" / "en" / "HUMAN_REVIEWED.txt"
 EXCLUDED_ROOTS = {"dist"}
+# 中文：此固定哈希夹具保留原字节，仅把指定注释的英文配对存于审计表中。
+# English: Keep this hash-pinned fixture unchanged; its exact comment has a companion translation.
+FROZEN_FIXTURE_COMMENT_PAIRS = {
+    "tests/fixtures/review-workflow-v2/optional-identities.py": {
+        "sha256": "de08c7036da35750675c84caa1f3f24ca9a287c7e0f974e6601518be9c87d4c7",
+        "comments": {
+            9: "English: Explicit test boundary provider for this case; not an implementation of real Git reads."
+        },
+    }
+}
 
 
 def human_reviewed_paths() -> set[str]:
@@ -109,6 +120,10 @@ def natural_language_without_code(text: str) -> str:
 
 def audit_python(path: Path, text: str) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
+    frozen = FROZEN_FIXTURE_COMMENT_PAIRS.get(path.relative_to(ROOT).as_posix())
+    frozen_matches = bool(frozen and hashlib.sha256(path.read_bytes()).hexdigest() == frozen["sha256"])
+    if frozen and not frozen_matches:
+        findings.append(issue("FROZEN_FIXTURE_SOURCE_CHANGED", path))
     try:
         tree = ast.parse(text)
     except SyntaxError as exc:
@@ -132,7 +147,9 @@ def audit_python(path: Path, text: str) -> list[dict[str, Any]]:
     for block in blocks:
         value = "\n".join(token.string for token in block)
         if "中文：" not in value or "English:" not in value:
-            findings.append(issue("COMMENT_BLOCK_NOT_BILINGUAL", path, block[0].start[0], value[:160]))
+            paired = frozen["comments"].get(block[0].start[0], "") if frozen_matches else ""
+            if not (paired.startswith("English:") and paired.strip() != "English:" and not CJK.search(paired)):
+                findings.append(issue("COMMENT_BLOCK_NOT_BILINGUAL", path, block[0].start[0], value[:160]))
     return findings
 
 

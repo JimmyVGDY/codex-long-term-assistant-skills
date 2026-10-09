@@ -293,6 +293,12 @@ def collect_unittest(start_dir: Path, pattern: str = "test_*.py", suite_name: st
     English: Discover and run one suite, returning only bounded outcome metadata.
     """
     start_dir = Path(start_dir).resolve()
+    # 中文：直接运行收集脚本时也能解析项目包和跨测试夹具，不能依赖发现顺序。
+    # English: Direct collection resolves project packages and cross-test fixtures independently of discovery order.
+    project_root = Path(__file__).resolve().parents[1]
+    for import_root in (project_root, project_root / "runtime"):
+        if str(import_root) not in sys.path:
+            sys.path.insert(0, str(import_root))
     loader = unittest.TestLoader()
     suite = loader.discover(str(start_dir), pattern=pattern)
     discovered = [test.id() for test in _flatten(suite)]

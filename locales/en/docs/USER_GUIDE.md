@@ -1,10 +1,10 @@
-# V7.14.6 Operating Guide
+# V7.15.2 Operating Guide
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE/)
 
 ## Quick start
 
-From the extracted V7.14.6 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
+From the extracted V7.15.2 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
 
 Simple local tasks run with the main Agent by default. A Profile, index, full scan, and budget ledger are not prerequisites. Add the optional enhancement through `install-user` only when needed; see [installation and recovery](operations/INSTALLATION_RECOVERY.md). The index, Hook, and budget procedures below apply to that enhancement. Strict budgeting requires a verifiable host binding, ledger, and dispatch permit; otherwise the model ceiling remains a policy constraint.
 
@@ -52,40 +52,38 @@ Benchmark collection accepts `--command-file <JSON-argument-array-file>` to avoi
 5. Refresh changed source and adopted stale candidates only. Register new public capabilities and preserve IDs during migration. Unrelated or unchanged work does not cause repeated scans.
 6. Preserve PARTIAL, BLOCKED, FAILED, and CANCELLED outcomes. Disabling retains the index and receipts. Workflow PASS never replaces semantic and compatibility validation.
 
-The [capability index](CAPABILITY_INDEX.md) links the complete commands. The dispatch budget below is a separate task-scoped opt-in control.
+The [capability index](CAPABILITY_INDEX.md) links the complete commands. The enhanced runtime manages the root budget below; the base Plugin does not establish enforced accounting.
 
 ## 1. Dispatch budget and privacy
 
-Reviewer, Explorer, and Worker share one root budget; the review controller never charges twice. New tasks use Budget V3, Reviewer state V8, and result V5; old tasks pin their original policy. The main agent retains its current selection. Workers/Explorers keep the original four combinations. Registered Reviewers start at Luna Low with one point, add review-budget and valid-evidence points, then select one of ten combinations for one dispatch, capped at Astra High.
+Reviewers, Explorers and Workers share one root budget. New enhanced-runtime tasks use `desktop-g6-deterministic-v1` and the nine GPT-6 profiles, defaulting unknown work to Sol/medium without statistical qualification. Keep the main agent's selection and old roots' original policy and charges.
 
-Proxy units are neither actual prices nor a capability ranking. See [model selection and budget](MODEL_ROUTING_AND_COST_POLICY.md) for combinations, evidence deduplication, quality constraints, extensions, and family limits. Stop when no acceptable combination is affordable.
+Scripts compute facts, selection, reservations, required holds and retries. Models retain semantic judgment and bounded proposals, then execute approved parameters. Planning units are not actual fees or capability rankings; see [model selection and budget](MODEL_ROUTING_AND_COST_POLICY.md). Missing evidence uses default/degraded continuation; budget limits allow queuing, scoped alternatives or local work without invented calls.
 
 ## 2. Workflow
 
-1. Bind an external Project Profile, initialize a Task Envelope with the new scoring policy, and choose LIGHT, STANDARD, or STRICT.
-2. Initialize the external V3 ledger with `--root-envelope` and the genuine host session binding. Old tasks explicitly select `--policy-id four-tier-v1`; an old envelope cannot silently become a new-policy task.
-3. Decide INLINE or DELEGATE first. Reviewer `decide` takes `--selection-input`, `--review-assignment`, and the root envelope. Supply evidence references and paths, never submitted totals. The program scores from Luna and freezes the final combination and permit.
-4. Bind that permit, packet hash, and unique review slot in the V8 controller. Dispatch once using either its named parameters or `native_request_parameters` for the host interface. Native calls without task names must prepend the returned `native_message_prefix` verbatim to `message`. Missing, incorrect, or consumed references reject; roles never select permits implicitly. Reviewer combinations must be explicit.
-5. Launch the host with `CP_DELEGATION_BUDGET_PATH`, `CP_DELEGATION_ENVELOPE_PATH`, and `CP_DELEGATION_BUDGET_REQUIRED=1`. PreToolUse verifies the genuine root identity, current baseline, role, and permit before atomic reservation.
-6. Join the exact PostToolUse tool-call/agent-ID receipt to SubagentStart/Stop, including out-of-order callbacks. V3 start/complete CLI calls cannot replace native receipts. Missing association, timeout, or unknown responses remain incomplete and cannot imply PASS or refunds.
-
-The enhancement does not automatically create task ledgers. Unactivated tasks are policy-only; missing or corrupt required budget configuration denies dispatch. Automatic no-start refunds remain unavailable until a native no-create response contract is verified. Started, failed, or cancelled work is not refunded.
+1. Identify the project, task and bound policy. New tasks use an authorized default template; old roots replay unchanged. Handoff preserves charges and late-event ownership.
+2. Read the default tuple, allowed adjustments, budget, gate states and next action from the enhanced runtime preparation entry. Unknown facts stay UNKNOWN.
+3. Execute exact script parameters. Submit structured reading, splitting, ordering or profile adjustments for recalculation. Missing lengthy rationale or gain cards does not stop default work.
+4. PreToolUse atomically reserves resources. Link actual receipts and child terminal events by identity; generic status, timeout or a cancellation request cannot imply PASS or refunds.
+5. Parent/child tools, pre-review, post-review, repair and installation use consistent missing-evidence rules. Continue reversible work while confirmed violations restrict their affected action. Platform permission and trust controls remain enabled.
+6. A base Plugin that loads Skills alone does not establish the enhanced journal or Hook guarantees; use actual installation readback. Report genuinely unavailable interfaces and continue feasible local work.
 
 ## 3. Retries and transitions
 
-Missing evidence is not an upgrade reason. Same-family effort increases and cross-family switches have separate records. Re-review binds the prior terminal attempt, result references, and new evidence; renaming cannot reuse permits or reset counts. Retries require an explicit new round or slot within the same root budget.
+Classify retries and bound them by the root budget and total time. Resume the same handle while running or uncertain. Do not repeat unchanged material without new information. Necessary downgrades do not consume upward-adjustment slots; policy changes and splitting do not reset the budget. Explicit user model choices take precedence; report real capability or budget conflicts.
 
 ## 4. Cost and calibration
 
-Store only approved combinations, scoring, and cost proxies; never read, infer, or store underlying host model identity. Samples pin project, repository, policy digest, formula, and declared comparison pair. Old units never mix with a new formula. Parent finalization with result and validation references precedes replay; insufficient samples retain NO_CHANGE. Proposals permanently retain `execution_authorization=NONE`.
+Keep approved tuples, planning units and available actual metering separate. Semantic advice is not verified fact. Naturally occurring independent samples may inform a later policy version; insufficient samples retain current parameters without stopping default service or restoring qualification prerequisites. Proposals always retain `execution_authorization=NONE`.
 
-Budget V1 is read-only; V2 preserves original byte-level replay and continuation. V7/V4 reviews keep their old semantics. New tasks use separate V3 ledgers; unknown versions fail closed. Installation, registration, Hook behavior, native dispatch, and underlying identity are distinct evidence layers. Synthetic tests never replace host acceptance.
+Read V1/V2/V3/V4 ledgers and results under their frozen contracts without repricing or regrading. Installation, registration, Hooks, native dispatch, validation and effective state are separate readbacks. Synthetic tests cannot replace native Desktop acceptance.
 
 ## 5. Codex 0.160.1 scope
 
-V7.14.6 freezes an internal component window covering Codex CLI 0.160.1 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. The local Marketplace manifest requires `interface.displayName`, and future, prerelease, or out-of-window hosts are not admitted automatically. Version 0.160.1 backports Windows remote stdio MCP environment preservation so explicitly configured remote environments retain `SYSTEMROOT`, `TEMP`, and `TMP`; this does not alter this package's reviewer qualification, model defaults, or Operation v2 contract. The 0.160.0 workspace, queue-recovery, and Windows-fix evidence remains retained. Hook discovery/schema and apply_patch handler/context contracts did not drift, so active `0.160.x`, `0.159.x`, and 0.158.0 releases reuse `result-v158`; 0.155.0 has left the window and remains fail-closed, while 0.155.1 still uses `result-v155`. Model visibility does not activate production defaults; Workers, Explorers, and registered Reviewers remain subject to existing qualification, evidence, and budget gates.
+V7.14.6 freezes an internal component window covering Codex CLI 0.160.1 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. The local Marketplace manifest requires `interface.displayName`, and future, prerelease, or out-of-window hosts are not admitted automatically. Version 0.160.1 backports Windows remote stdio MCP environment preservation so explicitly configured remote environments retain `SYSTEMROOT`, `TEMP`, and `TMP`; this does not alter this package's reviewer qualification, model defaults, or Operation v2 contract. The 0.160.0 workspace, queue-recovery, and Windows-fix evidence remains retained. Hook discovery/schema and apply_patch handler/context contracts did not drift, so active `0.160.x`, `0.159.x`, and 0.158.0 releases reuse `result-v158`; 0.155.0 has left the window and remains fail-closed, while 0.155.1 still uses `result-v155`. This V7.14.6 component baseline does not define the new model default. New tasks use the GPT-6 policy above; qualification prerequisites belong only to explicit legacy contracts.
 
-Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.14.6`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
+Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.15.2`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
 
 ## Feedback and measured benefits
 

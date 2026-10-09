@@ -176,6 +176,7 @@ def validate_evaluation(value: Mapping[str, Any]) -> dict[str, Any]:
         fail("EVALUATION_PROTOCOL_VERSION")
     identity(value["identity"])
     scenario(value["scenario"]); sha(value["rubric_ref"])
+    if value["scenario"]["role"] not in policy()["reviewer_roles"]:fail("EVALUATION_REVIEWER_ROLE_REQUIRED")
     integer(value["minimum_pass_bp"], "EVALUATION_QUALITY_FLOOR",
             minimum=policy()["thresholds"]["absolute_quality_floor_bp"], maximum=10000)
     integer(value["repetitions"], "EVALUATION_REPETITIONS", minimum=1, maximum=20)
@@ -289,12 +290,17 @@ def _requirement_evidence(state: Mapping[str, Any], request: Mapping[str, Any], 
 
 
 def load_snapshot(state: Mapping[str, Any], request: Mapping[str, Any], now: str, *,
-                  cwd: str, host_session_id: str) -> dict[str, Any]:
+                  cwd: str, host_session_id: str, context_transport: str | None = None,
+                  ordinary_compat: bool = False) -> dict[str, Any]:
     """中文：真实入口只在这里装配已校验快照。
 
     English: Production adapters construct verified snapshots only through here.
     """
     verify_root(state, cwd=cwd, host_session_id=host_session_id)
+    if context_transport not in {None,"desktop-authoritative-context/2"}:
+        fail("V4_CONTEXT_TRANSPORT_UNSUPPORTED")
+    if ordinary_compat and request['scenario']['role'] not in {'worker','explorer'}:
+        fail('ORDINARY_ROLE_NOT_ALLOWED')
     if repo_snapshot(Path(cwd))["sha256"] != request["baseline_sha256"]:
         fail("V4_REVIEW_BASELINE_CHANGED")
     from .budget_v4 import snapshot_budget, validate_sources
@@ -308,17 +314,18 @@ def load_snapshot(state: Mapping[str, Any], request: Mapping[str, Any], now: str
     bundles, publications = [], []
     evaluation = None
     if state["execution_mode"] == "EVALUATION":
-        evaluations = read_evaluations(state)
-        evaluation = choose_evaluation(evaluations, case_ref=request["evaluation_case_ref"])
-        if request["scenario"] != evaluation["scenario"]:
-            fail("EVALUATION_SCENARIO_MISMATCH")
-        case = next((item for item in evaluation["cases"] if item["case_ref"] == request["evaluation_case_ref"]), None)
-        if not case or case["prompt_ref"] != "sha256:" + request["message_sha256"]:
-            fail("EVALUATION_CASE_PROMPT_MISMATCH")
-        expected_profiles = {name for pair in evaluation["comparisons"] for name in pair.values()}
-        allowed = request["constraints"]["allowed_profiles"]
-        if not isinstance(allowed, list) or len(allowed) != 1 or allowed[0] not in expected_profiles:
-            fail("EVALUATION_PROFILE_NOT_IN_PLAN")
+        evaluations = read_evaluations(state) if sources['evaluation_costs'] else []
+        if not ordinary_compat:
+            evaluation = choose_evaluation(evaluations, case_ref=request["evaluation_case_ref"])
+            if request["scenario"] != evaluation["scenario"]:
+                fail("EVALUATION_SCENARIO_MISMATCH")
+            case = next((item for item in evaluation["cases"] if item["case_ref"] == request["evaluation_case_ref"]), None)
+            if not case or case["prompt_ref"] != "sha256:" + request["message_sha256"]:
+                fail("EVALUATION_CASE_PROMPT_MISMATCH")
+            expected_profiles = {name for pair in evaluation["comparisons"] for name in pair.values()}
+            allowed = request["constraints"]["allowed_profiles"]
+            if not isinstance(allowed, list) or len(allowed) != 1 or allowed[0] not in expected_profiles:
+                fail("EVALUATION_PROFILE_NOT_IN_PLAN")
         cards = {"schema_version": "verified-card-set/1", "identity": expected_identity, "origin": "evaluation",
                  "bundle_refs": [sources["evaluation_ref"]], "publication_refs": [],
                  "qualification": [], "gains": [], "costs": list({
@@ -326,6 +333,10 @@ def load_snapshot(state: Mapping[str, Any], request: Mapping[str, Any], now: str
     else:
         for source in sources["card_sets"]:
             bundle, _ = read_document(Path(source["bundle"]))
+            if bundle.get("schema_version") == "routing-card-bundle/2" and context_transport is None:
+                fail("CONTEXT2_QUALIFICATION_REQUIRES_CONTEXT2_HOST")
+            if context_transport is not None and bundle.get("schema_version") != "routing-card-bundle/2":
+                fail("CONTEXT2_NATIVE_QUALIFICATION_REQUIRED")
             experiment, _ = read_document(Path(source["experiment"]),
                                           maximum=policy()["limits"]["max_experiment_bytes"])
             if ref(bundle) != source["bundle_ref"] or ref(experiment) != source["experiment_ref"]:

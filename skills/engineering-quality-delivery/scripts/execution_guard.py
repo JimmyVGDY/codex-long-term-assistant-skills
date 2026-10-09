@@ -225,6 +225,19 @@ def command_init(args: argparse.Namespace) -> None:
         }
         if project_stage == "UNPROFILED":
             project_stage = "ACTIVE"
+    selected_policy=args.reviewer_policy
+    activation_source=None
+    restoration_ref=None
+    if selected_policy is None:
+        selected_policy=CURRENT_POLICY_ID
+        if project["binding_status"]=="BOUND":
+            from cp_runtime.desktop_default_activation import pointer_for,resolve_default
+            from cp_runtime.event_v2 import stable_repo_fingerprint
+            declared={"project_id":project["project_id"],"repo_fingerprint":stable_repo_fingerprint(str(repo))}
+            resolved=resolve_default(pointer_for(declared),expected_identity=declared,task_id=args.task_id,now=utc_now())
+            selected_policy=resolved["policy_id"]
+            activation_source=resolved.get("desktop_default_activation")
+            restoration_ref=resolved.get("explicit_restore_ref")
     state = {
         "schema_version": SCHEMA,
         "task_id": args.task_id,
@@ -241,9 +254,9 @@ def command_init(args: argparse.Namespace) -> None:
             "project_stage": project_stage,
             "execution_profile": args.profile,
             "reviewer_budget": args.reviewer_budget,
-            "reviewer_policy": {"policy_id": args.reviewer_policy, "policy_digest": policy_digest(args.reviewer_policy),
-                                "selection_mode": ("quality-gain-routing-v1" if args.reviewer_policy == "reviewer-matrix-v4" else
-                                                   "luna-first-evidence-score" if args.reviewer_policy != LEGACY_POLICY_ID else "legacy-four-tier")},
+            "reviewer_policy": {"policy_id": selected_policy, "policy_digest": policy_digest(selected_policy),
+                                "selection_mode": ("quality-gain-routing-v1" if selected_policy == "reviewer-matrix-v4" else
+                                                   "luna-first-evidence-score" if selected_policy != LEGACY_POLICY_ID else "legacy-four-tier")},
             "model_profile": args.model_profile,
             "host_surface": args.host_surface,
             "legacy_reviewer_budget": args.reviewer_budget,
@@ -268,6 +281,10 @@ def command_init(args: argparse.Namespace) -> None:
         "repo_fingerprint": fingerprint,
         "history": [{"at": utc_now(), "event": "init", "phase": "IDENTIFY"}],
     }
+    if activation_source is not None:
+        state["routing"]["desktop_default_activation"]=activation_source
+    if restoration_ref is not None:
+        state["routing"]["desktop_default_restore_ref"]=restoration_ref
     save_state(directory, state)
     print("[OK] 已初始化 Task Envelope:", directory / STATE)
 
@@ -521,7 +538,7 @@ def main() -> None:
     init.add_argument("--project-stage", choices=sorted(PROJECT_STAGES), default="UNPROFILED")
     init.add_argument("--reviewer-budget", choices=sorted(REVIEWER_BUDGETS), default="balanced")
     init.add_argument("--model-profile", choices=sorted(MODEL_PROFILES), default="luna-low")
-    init.add_argument("--reviewer-policy", choices=list(POLICY_FILES), default=CURRENT_POLICY_ID)
+    init.add_argument("--reviewer-policy", choices=list(POLICY_FILES), default=None)
     init.add_argument("--delegation-budget", choices=sorted(DELEGATION_BUDGET_CLASSES), default="STANDARD")
     init.add_argument("--default-model-profile", choices=sorted(MODEL_PROFILES), default="luna-low")
     init.add_argument("--delegation-ledger", default="")

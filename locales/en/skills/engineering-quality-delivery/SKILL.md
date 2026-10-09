@@ -5,7 +5,7 @@ description: Use when behavior changes or work includes validation, Git, approva
 
 # Engineering Quality and Delivery
 
-The Luna/Terra guidance here applies only to ordinary Worker/Explorer delegation. Registered Reviewers follow the root task's fixed policy in [independent review](../multi-agent-independent-review/SKILL.md). Keep the main agent's selected model and effort.
+Keep the main agent's selection. For subagents, follow [script decisions and bounded flexibility](../multi-agent-independent-review/references/script-first-routing.md) and execute the returned exact parameters. The default pool contains GPT-6 Luna, Sol and Astra at low/medium/high; unknown work uses Sol/medium without requiring qualification, gain cards or a long justification. Models may propose semantic adjustments, but scripts recalculate them within the existing authorization and root budget. Missing evidence selects a default or degraded path and never becomes a fabricated PASS.
 
 Before adding features, fixing bugs, refactoring, or changing shared implementations, read [Component and Module Reuse](references/component-module-reuse.md) and assess existing capabilities in proportion to the task. Read-only work and changes without behavioral impact do not trigger this rule.
 
@@ -24,4 +24,4 @@ Follow the [shared capability-index workflow](references/capability-index-workfl
 7. Regenerate final status from current evidence; never promote modified to deployed or effective.
 8. When the host provides a complete feedback binding and engineering validation is already required, run it through `scripts/evolution.py validate-task`. Before the final reply, the parent uses `finalize-task` to confirm outcome, failure category, repair rounds and routing. Derive counts from evidence without retaining command/output bodies. Missing binding or evidence remains UNKNOWN; do not add meaningless validation or full evolution analysis to ordinary tasks.
 
-Use Luna for mechanical evidence collection, Terra Medium for ordinary delivery judgment, and Terra High only for production, irreversible migration, complex rollback, or blocking conflicts. Stronger process gates do not automatically increase model effort.
+Scripts collect and count validation evidence. Process strictness, a large diff or a single check failure does not automatically increase model effort; reuse unaffected validation.
