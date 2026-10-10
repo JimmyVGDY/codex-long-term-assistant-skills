@@ -105,7 +105,7 @@ def add_commands(subparsers):
             if action == "prepare":
                 parser.add_argument("--scope", action="append",
                                     help="Legacy explicit scope, or an optional exact cross-check of Operation v2 targets.")
-                parser.add_argument("--term", required=True)
+                parser.add_argument("--term", default="")
                 parser.add_argument("--local-only-reason", help="Source-based reason for a local fix in one existing file. Public API extension or coordinated caller changes need initial scanning; multiple/new files cannot use the cold exception. Not semantic approval.")
             elif action == "finish":
                 parser.add_argument("--decisions", help="Bounded JSON list covering required decisions. Store the task-specific file in authorized external context, outside the repository and runtime-managed files.")

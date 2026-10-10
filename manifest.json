@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.15.3",
-  "release_name": "Codex Desktop 0.162.1 组件兼容",
+  "version": "7.16.0",
+  "release_name": "桌面门禁一致性与原生恢复",
   "generated_for": "Codex Desktop engineering assistance with script-first GPT-6 nine-profile defaults, bounded adjustments, shared budgets, evidence-tolerant gates, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -222,7 +222,7 @@
     "project_memory_to_knowledge_requires_candidate_review": true,
     "finalization_readback_required_for_external_action_claims": true,
     "task_execution_envelope_schema_version": 4,
-    "execution_state_schema_version": 5,
+    "execution_state_schema_version": 6,
     "delegation_budget_schema_version": "3.0",
     "delegation_calibration_schema_version": "3.0",
     "explicit_acceptable_reviewer_profiles_required": true,
@@ -728,7 +728,8 @@
     "7.12.0",
     "7.13.0",
     "7.13.5",
-    "7.13.6"
+    "7.13.6",
+    "7.15.3"
   ],
   "release_validation": {
     "python_syntax": true,

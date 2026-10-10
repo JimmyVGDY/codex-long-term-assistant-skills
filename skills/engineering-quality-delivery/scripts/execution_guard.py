@@ -27,14 +27,20 @@ from cp_runtime.common import (  # noqa: E402
 from cp_runtime.finalization import build_finalization_report  # noqa: E402
 from cp_runtime.project import validate_binding  # noqa: E402
 from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, policy, policy_digest  # noqa: E402
+from cp_runtime.g6_flexible_policy import (  # noqa: E402
+    POLICY_ID as G6_POLICY_ID, POLICY_SHA256 as G6_POLICY_SHA256,
+    PROFILES as G6_PROFILES, policy as g6_policy,
+)
+from cp_runtime.gate_contract import result as gate_result  # noqa: E402
 
 STATE = "execution-state.json"
-SCHEMA = 5
+SCHEMA = 6
 PROFILES = {"LIGHT", "STANDARD", "STRICT"}
 COMPLEXITIES = {"L0", "L1", "L2", "L3", "L4"}
 PROJECT_STAGES = {"UNPROFILED", "ONBOARDING", "ACTIVE", "PAUSED", "ARCHIVED"}
 REVIEWER_BUDGETS = {"economy", "balanced", "deep"}
-MODEL_PROFILES = {"luna-low", "luna-medium", "terra-medium", "terra-high"}
+LEGACY_MODEL_PROFILES = {"luna-low", "luna-medium", "terra-medium", "terra-high"}
+MODEL_PROFILES = LEGACY_MODEL_PROFILES | set(G6_PROFILES)
 DELEGATION_BUDGET_CLASSES = {"LIGHT", "STANDARD", "STRICT"}
 DELEGATION_BUDGET_LIMITS = {
     "LIGHT": {"max_units": 4, "max_dispatches": 2, "max_parallel": 1, "max_depth": 1, "max_terra_high": 0},
@@ -229,15 +235,22 @@ def command_init(args: argparse.Namespace) -> None:
     activation_source=None
     restoration_ref=None
     if selected_policy is None:
-        selected_policy=CURRENT_POLICY_ID
-        if project["binding_status"]=="BOUND":
-            from cp_runtime.desktop_default_activation import pointer_for,resolve_default
-            from cp_runtime.event_v2 import stable_repo_fingerprint
-            declared={"project_id":project["project_id"],"repo_fingerprint":stable_repo_fingerprint(str(repo))}
-            resolved=resolve_default(pointer_for(declared),expected_identity=declared,task_id=args.task_id,now=utc_now())
-            selected_policy=resolved["policy_id"]
-            activation_source=resolved.get("desktop_default_activation")
-            restoration_ref=resolved.get("explicit_restore_ref")
+        selected_policy=G6_POLICY_ID
+    new_policy = selected_policy == G6_POLICY_ID
+    model_profile = args.model_profile or ("g6-sol-medium" if new_policy else "luna-low")
+    budget_profile = args.default_model_profile or model_profile
+    allowed = set(G6_PROFILES) if new_policy else LEGACY_MODEL_PROFILES
+    if model_profile not in allowed or budget_profile not in allowed:
+        die("模型档位与显式策略不一致 / Model profile does not match the selected policy")
+    if new_policy:
+        rules = g6_policy()
+        template = rules["budget_templates"][args.delegation_budget]
+        concurrency = rules["concurrency_defaults"][args.delegation_budget]
+        limits = {"max_units": template["units"], "max_dispatches": template["attempts"],
+                  "max_parallel": concurrency["parallel"], "max_depth": concurrency["depth"],
+                  "max_astra_parallel": 1}
+    else:
+        limits = dict(DELEGATION_BUDGET_LIMITS[args.delegation_budget])
     state = {
         "schema_version": SCHEMA,
         "task_id": args.task_id,
@@ -254,17 +267,19 @@ def command_init(args: argparse.Namespace) -> None:
             "project_stage": project_stage,
             "execution_profile": args.profile,
             "reviewer_budget": args.reviewer_budget,
-            "reviewer_policy": {"policy_id": selected_policy, "policy_digest": policy_digest(selected_policy),
-                                "selection_mode": ("quality-gain-routing-v1" if selected_policy == "reviewer-matrix-v4" else
+            "reviewer_policy": {"policy_id": selected_policy,
+                                "policy_digest": "sha256:" + G6_POLICY_SHA256 if new_policy else policy_digest(selected_policy),
+                                "selection_mode": ("script-first-flexible-v1" if new_policy else
+                                                   "quality-gain-routing-v1" if selected_policy == "reviewer-matrix-v4" else
                                                    "luna-first-evidence-score" if selected_policy != LEGACY_POLICY_ID else "legacy-four-tier")},
-            "model_profile": args.model_profile,
+            "model_profile": model_profile,
             "host_surface": args.host_surface,
             "legacy_reviewer_budget": args.reviewer_budget,
             "delegation_budget": {
                 "schema_version": 1,
                 "budget_class": args.delegation_budget,
-                "default_model_profile": args.default_model_profile,
-                "limits": dict(DELEGATION_BUDGET_LIMITS[args.delegation_budget]),
+                "default_model_profile": budget_profile,
+                "limits": limits,
                 "ledger_path": args.delegation_ledger,
                 "association_mode": "explicit-dispatch-permit",
             },
@@ -300,21 +315,35 @@ def command_transition(args: argparse.Namespace) -> None:
     target = args.to
     if target not in TRANSITIONS.get(current, set()):
         die(f"不允许阶段转换 {current} -> {target}")
+    missing = []
     if target == "IMPLEMENT" and state["profile"] == "STRICT" and "preimplementation_review" not in state["completed_gates"]:
-        die("STRICT 进入 IMPLEMENT 前必须完成实施前审查")
+        missing.append("preimplementation_review")
     if target == "DELIVER":
         missing = [item for item in state["required_gates"] if item not in state["completed_gates"]]
-        if missing:
-            die("DELIVER 前门禁未完成: " + ",".join(missing))
+    decision = gate_result(
+        gate_id="workflow_stage", entrypoint="execution_guard.transition",
+        reason_code="OPTIONAL_STAGE_EVIDENCE_MISSING" if missing else "STAGE_TRANSITION_ALLOWED",
+        decision="CONTINUE_DEGRADED" if missing else "CONTINUE_DEFAULT",
+        affected_action="enter_stage", next_action="deliver_local_unverified" if target == "DELIVER" and missing else "execute_authorized_stage",
+        exact_parameters={"phase": target, "missing_gates": missing})
+    # 中文：转换允许继续，不补造 completed_gates，也不授予外部动作权限。
+    # English: A transition permits continuation without fabricating gate passes
+    # or authorizing external actions.
+    state.setdefault("gate_decisions", {})["workflow_stage"] = decision
     state["phase"] = target
     state["history"].append({"at": utc_now(), "event": "transition", "from": current, "to": target, "note": args.note})
     save_state(directory, state)
+    print(json.dumps(decision, ensure_ascii=True))
     print("[OK]", current, "->", target)
 
 
 def command_set_envelope(args: argparse.Namespace) -> None:
     directory = Path(args.state_dir).resolve()
     state = load_state(directory)
+    if args.model_profile:
+        new_policy = state["routing"].get("reviewer_policy", {}).get("policy_id") == G6_POLICY_ID
+        if args.model_profile not in (set(G6_PROFILES) if new_policy else LEGACY_MODEL_PROFILES):
+            die("模型档位与策略不一致 / Model profile does not match policy")
     if args.primary_skill:
         state["skills"]["primary"] = args.primary_skill
     if args.supporting_skills is not None:
@@ -339,11 +368,23 @@ def command_set_envelope(args: argparse.Namespace) -> None:
     if args.delegation_budget or args.default_model_profile or args.delegation_ledger is not None:
         current = state["routing"].setdefault("delegation_budget", {})
         budget_class = args.delegation_budget or current.get("budget_class") or state.get("profile", "STANDARD")
+        new_policy = state["routing"].get("reviewer_policy", {}).get("policy_id") == G6_POLICY_ID
+        selected = args.default_model_profile or current.get("default_model_profile") or state["routing"].get("model_profile", "g6-sol-medium" if new_policy else "terra-medium")
+        if selected not in (set(G6_PROFILES) if new_policy else LEGACY_MODEL_PROFILES):
+            die("模型档位与策略不一致 / Model profile does not match policy")
+        if new_policy:
+            rule = g6_policy()
+            template, concurrency = rule["budget_templates"][budget_class], rule["concurrency_defaults"][budget_class]
+            limits = {"max_units": template["units"], "max_dispatches": template["attempts"],
+                      "max_parallel": concurrency["parallel"], "max_depth": concurrency["depth"],
+                      "max_astra_parallel": 1}
+        else:
+            limits = dict(DELEGATION_BUDGET_LIMITS[budget_class])
         current.update({
             "schema_version": 1,
             "budget_class": budget_class,
-            "default_model_profile": args.default_model_profile or current.get("default_model_profile") or state["routing"].get("model_profile", "terra-medium"),
-            "limits": dict(DELEGATION_BUDGET_LIMITS[budget_class]),
+            "default_model_profile": selected,
+            "limits": limits,
             "ledger_path": args.delegation_ledger if args.delegation_ledger is not None else current.get("ledger_path", ""),
             "association_mode": "explicit-dispatch-permit",
         })
@@ -537,10 +578,10 @@ def main() -> None:
     init.add_argument("--complexity", choices=sorted(COMPLEXITIES), default="L1")
     init.add_argument("--project-stage", choices=sorted(PROJECT_STAGES), default="UNPROFILED")
     init.add_argument("--reviewer-budget", choices=sorted(REVIEWER_BUDGETS), default="balanced")
-    init.add_argument("--model-profile", choices=sorted(MODEL_PROFILES), default="luna-low")
-    init.add_argument("--reviewer-policy", choices=list(POLICY_FILES), default=None)
+    init.add_argument("--model-profile", choices=sorted(MODEL_PROFILES), default=None)
+    init.add_argument("--reviewer-policy", choices=[*POLICY_FILES, G6_POLICY_ID], default=None)
     init.add_argument("--delegation-budget", choices=sorted(DELEGATION_BUDGET_CLASSES), default="STANDARD")
-    init.add_argument("--default-model-profile", choices=sorted(MODEL_PROFILES), default="luna-low")
+    init.add_argument("--default-model-profile", choices=sorted(MODEL_PROFILES), default=None)
     init.add_argument("--delegation-ledger", default="")
     init.add_argument("--host-surface", choices=sorted(HOST_SURFACES), default="direct-workspace")
     init.add_argument("--environment", choices=sorted(ENVIRONMENTS), default="local")

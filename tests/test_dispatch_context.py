@@ -168,8 +168,10 @@ class DispatchContextTests(unittest.TestCase):
                        "init", "--state-dir", str(directory), "--task-id", "synthetic-task",
                        "--repo-path", str(self.repo), "--project-profile", str(self.project.profile_path),
                        "--project-id", self.project.project_id]
-            if selected == PREVIOUS_POLICY_ID:
-                command += ["--reviewer-policy", selected]
+            # 中文：历史评分合同必须显式选择；新默认由独立 G6 用例覆盖。
+            # English: Select frozen scoring contracts explicitly; separate G6
+            # tests cover the current default.
+            command += ["--reviewer-policy", selected]
             completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8",
                                        env={**os.environ, "PYTHONUTF8": "1"}, timeout=20)
             self.assertEqual(0, completed.returncode, completed.stdout + completed.stderr)

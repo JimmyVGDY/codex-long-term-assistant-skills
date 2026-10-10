@@ -106,7 +106,8 @@ class PatchIntentTests(unittest.TestCase):
         self.assertCode("MALFORMED_MARKER", "*** Begin Patch\n*** Add File: x\n+1")
         self.assertCode("DUPLICATE_TARGET", "*** Begin Patch\n*** Add File: x\n+1\n*** Add File: x\n+2\n*** End Patch")
         self.assertCode("PATH_ESCAPE", "*** Begin Patch\n*** Add File: ../x\n+1\n*** End Patch")
-        self.assertCode("INVALID_PATH", "*** Begin Patch\n*** Add File: C:/x\n+1\n*** End Patch")
+        self.assertCode("PATH_ESCAPE" if os.name == "nt" else "INVALID_PATH",
+                        "*** Begin Patch\n*** Add File: C:/x\n+1\n*** End Patch")
         self.assertCode("COMMAND_TOO_LARGE", "x" * (1024 * 1024 + 1))
 
     def test_utf8_bytes_and_path_bytes_limits(self):

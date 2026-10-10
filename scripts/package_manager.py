@@ -723,7 +723,7 @@ def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None
         ],
         "PostToolUse": [
             {"matcher": "apply_patch|Edit|Write", "hooks": [{"type": "command", "command": gate_posttool_command, "timeout": 5}]},
-            {"matcher": _delegation_hook_matcher("spawn_agent"), "hooks": [{"type": "command", "command": posttool_command, "timeout": 5}]},
+            {"matcher": _delegation_hook_matcher("spawn_agent", "followup_task", "send_input", "resume_agent"), "hooks": [{"type": "command", "command": posttool_command, "timeout": 5}]},
         ],
         "SubagentStart": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
         "SubagentStop": [{"hooks": [{"type": "command", "command": command, "timeout": 5}]}],
@@ -739,6 +739,11 @@ def hook_fragment(script_path: Path, profile: Optional[Mapping[str, Any]] = None
         fragment["UserPromptSubmit"] = [{"hooks": [{
             "type": "command", "command": command, "timeout": 5, "async": True,
         }]}]
+    # 中文：安装器拥有整份产物；改名或包装不能把遗漏入口降为第三方。
+    # English: The installer owns this whole fragment; renamed or wrapped
+    # commands cannot disguise an unmapped entrypoint as a third-party Hook.
+    from cp_runtime.gate_contract import registration_inventory
+    registration_inventory(fragment, source="installer")
     return fragment
 
 

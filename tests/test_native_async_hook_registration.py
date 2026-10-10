@@ -76,7 +76,7 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
                     post = [entry for entry in fragment["PostToolUse"]
                             if "cp_context.py" not in entry["hooks"][0]["command"] and re.fullmatch(entry["matcher"], name)]
                     self.assertEqual(1, len(pre))
-                    self.assertEqual(1 if tool == "spawn_agent" else 0, len(post))
+                    self.assertEqual(0 if tool == "send_message" else 1, len(post))
                     self.assertIn("cp_hook.py", pre[0]["hooks"][0]["command"])
         for event in ("PreToolUse", "PostToolUse"):
             self.assertEqual(1, sum(bool(re.fullmatch(entry["matcher"], "Agent"))
@@ -86,7 +86,7 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
                 self.assertFalse(any(re.fullmatch(entry["matcher"], name)
                                      for entry in fragment[event] if "cp_context.py" not in entry["hooks"][0]["command"]))
 
-    def test_v1_reentry_canonical_names_match_only_pretool(self) -> None:
+    def test_v1_reentry_canonical_names_match_pre_and_post_once(self) -> None:
         fragment = package_manager.hook_fragment(self.script, self.supported)
         for name in ("multi_agent_v1send_input", "multi_agent_v1resume_agent"):
             with self.subTest(name=name):
@@ -95,7 +95,7 @@ class NativeAsyncHookRegistrationTests(unittest.TestCase):
                 post = [group for group in fragment["PostToolUse"]
                         if "cp_context.py" not in group["hooks"][0]["command"] and re.fullmatch(group["matcher"], name)]
                 self.assertEqual(1, len(pre))
-                self.assertEqual([], post)
+                self.assertEqual(1, len(post))
         for name in ("multi_agent_v1send_message", "multi_agent_v1send_input_extra",
                      "mcp__foreign__multi_agent_v1send_input"):
             self.assertFalse(any(re.fullmatch(group["matcher"], name)

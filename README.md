@@ -2,7 +2,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-V7.15.3 源码候选面向 Codex Desktop，为新任务提供 GPT-6 九档脚本决策默认和有界调整；旧根保持原路由与账目语义。独立 CLI 仅用于内部管理与兼容回归，不构成产品支持轨道；安装和发布状态分别以本地及 GitHub 读回为准。
+V7.16.0 源码候选面向 Codex Desktop，修复实际门禁、GPT-6 控制器和原生回执恢复；旧根保持原路由与账目语义。内部脚本仅用于管理与验证，不构成独立 CLI 产品支持轨道；安装和发布状态分别读回。
 
 # Codex 跨项目长期技术助手
 
@@ -23,7 +23,7 @@ V7.15.3 源码候选面向 Codex Desktop，为新任务提供 GPT-6 九档脚本
   <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.15.3 保留消息与 Stop 非阻断、Operation v2、基础 Skill 与可选增强分离等边界。可选文件门禁仍默认关闭；启用后不会因缺少路由收益卡而被临时关闭。能力档位不代表业务语义正确或权限已授予。型号定位与预算口径见[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)。
+V7.16.0 保留消息与 Stop 非阻断、Operation v2、基础 Skill 与可选增强分离等边界。可选文件门禁仍默认关闭；启用后，缺少索引或可选材料按限定范围继续，不临时关闭门禁。能力档位不代表业务语义正确或权限已授予。详见[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)和[桌面门禁与恢复](docs/DESKTOP_GATE_RECOVERY.md)。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [四条日常路径](#四条日常路径与统一入口) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#首次安装与升级) · [文档](#文档与协作)
 

@@ -4,7 +4,7 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-The V7.15.3 source candidate targets Codex Desktop with script-first defaults and bounded adjustments across nine GPT-6 profiles for new tasks. Existing roots keep their original routing and accounting semantics. Standalone CLI execution remains limited to internal management and regression work. Local installation and GitHub publication require separate readback.
+The V7.16.0 source candidate repairs actual Codex Desktop gates, GPT-6 controllers, and native receipt recovery. Existing roots retain their routing and accounting semantics. Internal scripts support management and validation, not a standalone CLI product. Installation and publication require separate readback.
 
 # Codex Cross-Project Engineering Assistant
 
@@ -25,7 +25,7 @@ The V7.15.3 source candidate targets Codex Desktop with script-first defaults an
   <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.15.3 retains non-blocking message/Stop behavior, Operation v2, and separation of base Skills from optional enhancement. The optional file gate remains off by default and is never temporarily disabled for missing routing gain cards. Capability level establishes neither semantic correctness nor authority. See the [model policy](locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md) for model and budget rules.
+V7.16.0 retains non-blocking message/Stop behavior, Operation v2, and separation of base Skills from optional enhancement. The optional file gate remains off by default; when enabled, missing indexes or optional material permit scoped continuation without disabling it. Capability level establishes neither semantic correctness nor authority. See the [model policy](locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md) and [Desktop gates and recovery](docs/DESKTOP_GATE_RECOVERY.en.md).
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Four daily paths](#four-daily-paths-and-the-unified-entry) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 

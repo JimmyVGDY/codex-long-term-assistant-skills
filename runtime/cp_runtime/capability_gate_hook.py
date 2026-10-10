@@ -19,6 +19,7 @@ from .capability_operation import CapabilityOperation, _digest_json
 from .patch_intent import PatchIntentError, parse_apply_patch, revalidate_intent
 from .capability_store import CapabilityError, CapabilityStore, bounded_read, fields, require, safe_path, unique_json_object
 from .common import resolve_codex_home
+from .gate_contract import result as gate_result, write_failure
 
 WRITE_TOOLS = {"apply_patch", "edit", "write"}
 EVENTS = {"UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop", "Interrupt"}
@@ -88,6 +89,9 @@ def runtime_entry(root: Path, name: str = "cp-runtime.py") -> Path:
 def failure_response(event: str, reason: str) -> dict[str, Any]:
     message = "Capability gate: " + reason + ". No current process PASS was verified."
     if event == "PreToolUse":
+        if re.fullmatch(r"[A-Z0-9_]{1,96}", reason):
+            decision = write_failure(reason)
+            message += " next_action=" + decision["next_action"] + "; decision=" + json.dumps(decision, ensure_ascii=True)
         return {"hookSpecificOutput": {"hookEventName": event, "permissionDecision": "deny", "permissionDecisionReason": message}}
     if event == "PostToolUse":
         return _post_block(message)
@@ -119,9 +123,18 @@ def _canonical_patch(data: dict[str, Any]) -> tuple[str, str, str, dict[str, Any
     """
     official = {"hook_event_name", "session_id", "turn_id", "agent_id", "agent_type",
                 "transcript_path", "cwd", "model", "permission_mode", "tool_name",
-                "tool_input", "tool_use_id", "tool_response", "task_id"}
-    if set(data) - official:
-        raise CapabilityError("OP_CANONICAL_INPUT")
+                "tool_input", "tool_use_id", "tool_response", "task_id",
+                "agent_transcript_path", "stop_hook_active"}
+    # 中文：忽略不参与决策的普通扩展；身份、权限和工具字段的别名仍不可覆盖规范字段。
+    # English: Ignore inert extensions. Identity, permission and tool aliases
+    # must never override canonical security fields.
+    security_names = {key.replace("_", "").lower() for key in official} | {
+        "threadid", "rootsessionid", "rootturnid", "workingdirectory", "permissions",
+        "authorization", "scope", "identity"}
+    for key in set(data) - official:
+        normalized = key.replace("_", "").lower()
+        if normalized in security_names or normalized.startswith(("permission", "authorization")):
+            raise CapabilityError("OP_CANONICAL_INPUT")
     if (data.get("tool_name") != "apply_patch"
             or not isinstance(data.get("tool_use_id"), str) or not data["tool_use_id"]):
         raise CapabilityError("OP_CANONICAL_INPUT")
@@ -228,16 +241,25 @@ def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
             origin = operation.create_or_replay_origin(
                 tool_use_id, intent, intent["target_paths"], intent,
             )
+            prepare_args = ["capability-task-prepare", "--profile", str(policy.store.profile_path),
+                            "--repo-path", str(policy.store.repo_path), "--index-root", str(policy.store.root),
+                            "--gate-root", str(policy.root), "--operation-ref", origin["operation_ref"]]
+            continuation = gate_result(
+                gate_id="write_preparation", entrypoint="cp_gate.py", reason_code="NATIVE_ORIGIN_CREATED",
+                decision="REPREPARE", affected_action="write", next_action="prepare_native_operation",
+                exact_parameters={"executable": str(Path(sys.executable).resolve()),
+                                  "script": str(runtime_entry(root)), "arguments": prepare_args,
+                                  "operation_ref": origin["operation_ref"]})
             command = (
                 "cp-runtime.py capability-task-prepare"
                 " --profile \"%s\" --repo-path \"%s\" --index-root \"%s\""
-                " --gate-root \"%s\" --operation-ref %s --term \"<task-term>\""
+                " --gate-root \"%s\" --operation-ref %s"
                 % (policy.store.profile_path, policy.store.repo_path, policy.store.root,
                    policy.root, origin["operation_ref"])
             )
             return failure_response(
-                "PreToolUse", "operation_ref=%s; prepare command: %s"
-                % (origin["operation_ref"], command),
+                "PreToolUse", "operation_ref=%s; prepare command: %s; decision=%s"
+                % (origin["operation_ref"], command, json.dumps(continuation, ensure_ascii=True)),
             )
         if event == "PostToolUse":
             matches = [item for item in operation._scan()
@@ -259,7 +281,7 @@ def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
                 return _post_block("POST_TOOL_POLICY_CHANGED")
             return {}
         return {}
-    except (PatchIntentError, CapabilityError, OSError, ValueError, KeyError):
+    except (PatchIntentError, CapabilityError, OSError, ValueError, KeyError) as exc:
         if event == "PostToolUse":
             try:
                 policy_path = locate_policy(str(data.get("cwd") or ""))
@@ -275,7 +297,12 @@ def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
             except Exception:
                 pass
             return _post_block("POST_TOOL_RECONCILIATION_FAILED")
-        return legacy_write_response()
+        # 中文：保留有限错误码；不把路径/元数据/暂时故障伪装成来源缺失。
+        # English: Preserve bounded codes instead of relabeling every path,
+        # metadata, or transient failure as a missing legacy origin.
+        reason = ("GATE_LOCK_BUSY" if isinstance(exc, TimeoutError) else
+                  "PATH_UNREADABLE" if isinstance(exc, OSError) else str(exc))
+        return failure_response("PreToolUse", write_failure(reason)["reason_code"])
 
 
 def _legacy_write_is_enabled(cwd: str) -> bool:

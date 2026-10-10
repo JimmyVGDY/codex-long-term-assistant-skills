@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import stat
 import sys
 from pathlib import Path
@@ -130,6 +131,38 @@ def _failure(event: str, reason: str) -> dict[str, Any]:
     return {}
 
 
+
+def _runtime_root() -> Path:
+    """中文：账户 Hook 仅加载安装状态绑定的 Plugin 版本。
+
+    English: Account Hooks load only the Plugin version bound by install state.
+    """
+    if os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parent.name != "cp-assistant-hooks":
+        return ROOT
+    home = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex").resolve()
+    if ROOT.resolve() != home or not _plain_path(home):
+        raise ValueError("GATE_RUNTIME_ENTRY_UNAVAILABLE")
+    state_path = home / "cp-assistant-v6-state.json"
+    if not _plain_path(state_path) or state_path.stat().st_size > 256 * 1024:
+        raise ValueError("GATE_RUNTIME_ENTRY_UNAVAILABLE")
+    state = json.loads(state_path.read_text(encoding="utf-8"), object_pairs_hook=_unique)
+    if state.get("mode") == "standalone":
+        return home
+    version = state.get("version")
+    if (state.get("mode") != "plugin" or not isinstance(version, str)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", version)):
+        raise ValueError("GATE_RUNTIME_ENTRY_UNAVAILABLE")
+    root = home / "plugins/cache/cp-assistant-local/codex-cross-project-engineering-assistant" / version
+    manifest_path = root / ".codex-plugin/plugin.json"
+    if not _plain_path(manifest_path) or manifest_path.stat().st_size > 256 * 1024:
+        raise ValueError("GATE_RUNTIME_ENTRY_UNAVAILABLE")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"), object_pairs_hook=_unique)
+    if (manifest.get("name") != "codex-cross-project-engineering-assistant"
+            or manifest.get("version") != version):
+        raise ValueError("GATE_RUNTIME_ENTRY_UNAVAILABLE")
+    return root
+
+
 def main() -> int:
     expected = sys.argv[1] if len(sys.argv) > 1 else "Stop"
     event = expected
@@ -144,9 +177,10 @@ def main() -> int:
         if _fast_neutral(data):
             print("{}", flush=True)
             return 0
-        sys.path.insert(0, str(ROOT / "runtime"))
+        runtime_root = _runtime_root()
+        sys.path.insert(0, str(runtime_root / "runtime"))
         from cp_runtime.capability_gate_hook import WIRE_LIMIT as runtime_wire_limit, handle
-        result = handle(ROOT, data)
+        result = handle(runtime_root, data)
         response = result["response"]
         if result["observe"] and event not in {"PreToolUse", "PostToolUse", "Interrupt"}:
             # 中文：文件工具热路径不加载完整生命周期观察器。
@@ -156,7 +190,7 @@ def main() -> int:
         if runtime_wire_limit != WIRE_LIMIT:
             raise ValueError("GATE_WIRE_CONTRACT")
     except Exception as exc:
-        reason = str(exc) if str(exc) in {"GATE_INPUT_LIMIT", "GATE_HOST_IDENTITY"} else "GATE_WORKER_FAILED"
+        reason = str(exc) if str(exc) in {"GATE_INPUT_LIMIT", "GATE_HOST_IDENTITY", "GATE_RUNTIME_ENTRY_UNAVAILABLE"} else "GATE_WORKER_FAILED"
         response = _failure(event, reason)
     output = json.dumps(response, ensure_ascii=True)
     if len(output.encode("utf-8")) > WIRE_LIMIT:

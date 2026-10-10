@@ -164,14 +164,15 @@ def route(data: dict[str, Any], *, directory: Path | None = None) -> tuple[str, 
         return "new", new_path
     from .dispatch_policy import delegation_tool_name
     event = data.get("hook_event_name")
-    if event == "PostToolUse" and delegation_tool_name(data.get("tool_name")) == "spawn_agent":
+    billable = {"spawn_agent", "followup_task", "send_input", "resume_agent"}
+    if event == "PostToolUse" and delegation_tool_name(data.get("tool_name")) in billable:
         call_ref = ref(data.get("tool_use_id"))
         new_owner = call_ref in g6_budget_v1.read_budget(new_path)["host_calls"]
         old_owner = old_path is not None and call_ref in budget_v5.read_budget(old_path)["host_dispatches"]
         if new_owner == old_owner:
             fail("G6_PARENT_CALL_OWNER_AMBIGUOUS_OR_UNKNOWN")
         return ("new", new_path) if new_owner else ("old", old_path)
-    if event == "PreToolUse" and delegation_tool_name(data.get("tool_name")) == "spawn_agent":
+    if event == "PreToolUse" and delegation_tool_name(data.get("tool_name")) in billable:
         if old_path and ref(data.get("tool_use_id")) in budget_v5.read_budget(old_path)["host_dispatches"]:
             fail("G6_OLD_CALL_CANNOT_REENTER")
     return "new", new_path

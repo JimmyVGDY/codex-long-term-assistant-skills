@@ -4,7 +4,7 @@
 
 [Current location](operations/INSTALLATION_RECOVERY.en.md)
 
-# V7.15.3 Installation, Validation, and Recovery
+# V7.16.0 Installation, Validation, and Recovery
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/INSTALLATION_RECOVERY/)
 
@@ -13,7 +13,7 @@ Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-ass
 - Codex Desktop; management-component contracts and native task-runtime acceptance are separate.
 - The base installation has no package Python-runtime prerequisite; only the enhancement runtime needs Python 3.11 or later.
 - Extract the archive before running commands.
-- Supported managed upgrades: <!-- cp-fact:upgrade-sources -->7.15.2, 7.15.1, 7.15.0, 7.14.6, 7.14.5, 7.14.4, 7.14.3, 7.14.2, 7.14.1, 7.14.0, 7.13.6, 7.13.5, 7.13.4, 7.13.3, 7.13.2, 7.13.1, 7.13.0, 7.12.0, 7.11.2, 7.11.1, 7.11.0, 7.10.0, 7.9.2, 7.9.1, 7.9.0, 7.8.1, 7.8.0, 7.7.1, 7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->.
+- Supported managed upgrades: <!-- cp-fact:upgrade-sources -->7.15.3, 7.15.2, 7.15.1, 7.15.0, 7.14.6, 7.14.5, 7.14.4, 7.14.3, 7.14.2, 7.14.1, 7.14.0, 7.13.6, 7.13.5, 7.13.4, 7.13.3, 7.13.2, 7.13.1, 7.13.0, 7.12.0, 7.11.2, 7.11.1, 7.11.0, 7.10.0, 7.9.2, 7.9.1, 7.9.0, 7.8.1, 7.8.0, 7.7.1, 7.7.0, 7.6.2, 7.6.1, 7.6.0, 7.5.1, 7.5.0, 7.4.6, 7.4.5, 7.4.4, 7.4.3, 7.4.2, 7.4.1, 7.4.0, 7.3.0, 7.2.0, 7.1.0, 7.0.0, 6.6.1, 6.6.0, 6.5.0, 6.4.0, 6.3.0, 6.2.0, 6.1.0, 6.0.0, 5.1.0, 5.0.0, 4.2.0, 4.1.0, 4.0.0<!-- /cp-fact -->.
 - A native Windows process uses a native Windows `CODEX_HOME`; WSL-style drive mappings are normalized before use.
 - Unknown Skills, agents, Hooks, MCP configuration, Plugin files, and `config.toml` content remain outside managed deletion scope.
 

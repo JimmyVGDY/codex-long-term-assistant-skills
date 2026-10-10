@@ -37,8 +37,8 @@ Auxiliary states: `BLOCKED`, `CANCELLED`, `ROLLBACK`, `RECOVER`.
 
 ### Transition Gates
 
-- `PLAN -> IMPLEMENT`: goals, scope, authorization, and stopping conditions are explicit; STRICT preimplementation gates passed.
+- `PLAN -> IMPLEMENT`: goals, scope, authorization, and stopping conditions are explicit. Missing STRICT pre-review material permits scoped reversible work with verification left unknown, never a fabricated pass.
 - `IMPLEMENT -> VALIDATE`: diff is stable and contains no obvious unrelated changes.
 - `VALIDATE -> REVIEW`: minimum validation has real evidence; failures and unverified items are recorded.
-- `REVIEW -> DELIVER`: blocking issues are resolved and affected evidence remains current.
+- `REVIEW -> DELIVER`: explicitly qualified local results can be delivered. Publication and other external actions separately verify authorization, confirmed blockers, and evidence state.
 - Any phase may enter `BLOCKED` or return to an earlier phase when scope expands, permissions are insufficient, production risk appears, or evidence becomes stale.
