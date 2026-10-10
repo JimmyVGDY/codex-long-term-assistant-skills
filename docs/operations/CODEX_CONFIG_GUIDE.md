@@ -75,7 +75,7 @@ model_reasoning_effort = "high"
 
 ## 6. Plugin 与 Hook
 
-V7.14.6 使用冻结注册表适配 Codex CLI 0.160.1 与此前十个稳定发行版的 Plugin、Marketplace 及 PreToolUse/PostToolUse 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.14.6`，且增强安装的 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
+V7.15.3 使用冻结注册表适配 Codex Desktop 内部组件 0.162.1 与此前十个稳定发行版的 Plugin、Marketplace 及 PreToolUse/PostToolUse 接口。只有 `codex plugin list --json` 精确读回 `installed=true`、`enabled=true` 和 `version=7.15.3`，且增强安装的 schema 3 宿主快照为 `HOST_COMPATIBLE`，才能确认 Plugin 注册成功；文件已复制到磁盘不等于已安装或已启用。
 
 基础 Plugin 不注册 Hook。可选增强在账户级 `hooks.json` 登记八类事件、十条注册项；PreToolUse/PostToolUse 均区分派发与写入 matcher。Windows 账户注册固定使用系统 `cmd.exe` 与安装时的 Python 解释器；命令更新后，在正常 `/hooks` 界面审查并信任本包定义。SessionEnd 的宿主预算保持三秒：Hook 只构造有上限且不含正文的净化 Event V3，并以命令参数无等待派发 detached worker；不再扫描或写入事件链，也不再同步写管道。Worker 在 Hook 预算外完成稳定生命周期身份校验、语义去重、终态持久化、签名入队和封印。所有入口都会拒绝缺失稳定生命周期 ID 的事件，带 `seal_required` 的未封印链不得进入 Evolution。
 

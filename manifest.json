@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.15.2",
-  "release_name": "GPT-6脚本决策与弹性门禁",
+  "version": "7.15.3",
+  "release_name": "Codex Desktop 0.162.1 组件兼容",
   "generated_for": "Codex Desktop engineering assistance with script-first GPT-6 nine-profile defaults, bounded adjustments, shared budgets, evidence-tolerant gates, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -669,6 +669,7 @@
     ]
   },
   "upgrade_from": [
+    "7.15.2",
     "7.15.1",
     "7.15.0",
     "7.14.6",
@@ -849,8 +850,11 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "anchor": "0.160.1",
+    "anchor": "0.162.1",
     "verified_versions": [
+      "0.162.1",
+      "0.162.0",
+      "0.161.0",
       "0.160.1",
       "0.160.0",
       "0.159.2",
@@ -858,10 +862,7 @@
       "0.159.0",
       "0.158.0",
       "0.157.1",
-      "0.157.0",
-      "0.156.1",
-      "0.156.0",
-      "0.155.1"
+      "0.157.0"
     ],
     "window_policy": "current-plus-ten-preceding-stable-releases-patch-counts",
     "registry": "config/codex-compatibility-v1.json",

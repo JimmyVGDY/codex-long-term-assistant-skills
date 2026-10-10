@@ -1,10 +1,10 @@
-# V7.15.2 Operating Guide
+# V7.15.3 Operating Guide
 
 Chinese: [Chinese documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/docs/USER_GUIDE/)
 
 ## Quick start
 
-From the extracted V7.15.2 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
+From the extracted V7.15.3 package, run `./scripts/install-base.ps1` on Windows or `./scripts/install-base.sh` on POSIX, then describe your engineering task. The base Plugin loads ten Skills without the package Python runtime or an API key. It does not install account Hooks, Reviewers, global rules, or long-term runtime state.
 
 Simple local tasks run with the main Agent by default. A Profile, index, full scan, and budget ledger are not prerequisites. Add the optional enhancement through `install-user` only when needed; see [installation and recovery](operations/INSTALLATION_RECOVERY.md). The index, Hook, and budget procedures below apply to that enhancement. Strict budgeting requires a verifiable host binding, ledger, and dispatch permit; otherwise the model ceiling remains a policy constraint.
 
@@ -79,11 +79,11 @@ Keep approved tuples, planning units and available actual metering separate. Sem
 
 Read V1/V2/V3/V4 ledgers and results under their frozen contracts without repricing or regrading. Installation, registration, Hooks, native dispatch, validation and effective state are separate readbacks. Synthetic tests cannot replace native Desktop acceptance.
 
-## 5. Codex 0.160.1 scope
+## 5. Codex 0.162.1 scope
 
-V7.14.6 freezes an internal component window covering Codex CLI 0.160.1 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. The local Marketplace manifest requires `interface.displayName`, and future, prerelease, or out-of-window hosts are not admitted automatically. Version 0.160.1 backports Windows remote stdio MCP environment preservation so explicitly configured remote environments retain `SYSTEMROOT`, `TEMP`, and `TMP`; this does not alter this package's reviewer qualification, model defaults, or Operation v2 contract. The 0.160.0 workspace, queue-recovery, and Windows-fix evidence remains retained. Hook discovery/schema and apply_patch handler/context contracts did not drift, so active `0.160.x`, `0.159.x`, and 0.158.0 releases reuse `result-v158`; 0.155.0 has left the window and remains fail-closed, while 0.155.1 still uses `result-v155`. This V7.14.6 component baseline does not define the new model default. New tasks use the GPT-6 policy above; qualification prerequisites belong only to explicit legacy contracts.
+V7.15.3 freezes an internal component window covering Codex CLI 0.162.1 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. Version 0.162.0 adds managed Git worktrees, task pinning, transcript copying, broader link interactions, custom Responses-provider capabilities, and sandbox and Windows file-access fixes. Version 0.162.1 fixes crashes in multiline asynchronous questions and startup failures caused by background-server feature defaults. These upstream changes do not automatically alter this package's reviewer qualification, budgets, or Operation v2 contract, and do not revoke the published GPT-6 script-first defaults described above. The 0.162.x Hook discovery and schema retain the 0.161.0 contracts, while the apply_patch handler changed again, so 0.162.x uses dedicated `result-v162`; context did not drift. Version 0.161.0 retains `result-v161`; older `0.160.x`, `0.159.x`, and 0.158.0 releases continue to reuse `result-v158`. Versions 0.156.1 and 0.156.0 left the window and remain fail-closed.
 
-Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.15.2`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
+Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.14.7`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
 
 ## Feedback and measured benefits
 

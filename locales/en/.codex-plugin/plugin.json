@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.15.2",
-  "description": "Cross-project engineering assistant V7.15.2: Codex Desktop GPT-6 script-first defaults with bounded flexibility.",
+  "version": "7.15.3",
+  "description": "Cross-project engineering assistant V7.15.3: Codex Desktop 0.162.1 component compatibility and frozen evidence.",
   "author": {
     "name": "Project maintainers"
   },
