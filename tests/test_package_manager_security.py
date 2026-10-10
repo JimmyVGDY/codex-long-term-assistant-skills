@@ -506,7 +506,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
     def test_windows_hook_command_reaches_fixed_python_through_cmd_and_powershell(self):
         marker_dir=Path(self.tmp.name)/'hook path with spaces'
         marker_dir.mkdir()
-        marker=marker_dir/'hook marker.py'
+        marker=marker_dir/'cp_hook.py'
         marker.write_text(
             "import hashlib, json, sys\n"
             "raw = sys.stdin.buffer.read()\n"
@@ -578,7 +578,7 @@ print('unsupported fake codex args: '+repr(args),file=sys.stderr); raise SystemE
         system_cmd=str(Path(buffer.value)/'cmd.exe')
         for untrusted in ('relative-system-root',r'\\server\share',r'C:\does-not-exist'):
             with self.subTest(untrusted=untrusted), mock.patch.dict(os.environ,{'SystemRoot':untrusted}):
-                command=package_manager.hook_fragment(Path(self.tmp.name)/'hook.py')['Stop'][0]['hooks'][0]['command']
+                command=package_manager.hook_fragment(Path(self.tmp.name)/'cp_hook.py')['Stop'][0]['hooks'][0]['command']
                 self.assertTrue(command.startswith(system_cmd+' /D /V:OFF /S /C '))
 
     def test_plugin_tools_prefer_versioned_cache_over_stale_standalone_runtime(self):
