@@ -19,7 +19,8 @@ from .capability_store import (
     CapabilityError, bounded_read, fields, hash_field, relative_path, require,
     safe_path, text_field,
 )
-from .common import canonical_json
+from .common import RuntimeContractError, canonical_json
+from .gate_contract import result as gate_result
 from .patch_intent import MAX_FILE_BYTES, revalidate_intent
 
 DECISIONS = {"reuse", "extend", "extract", "independent", "unused"}
@@ -193,10 +194,9 @@ class OperationWorkflow:
         require(seen == set(known), "OP_DECISIONS_INCOMPLETE")
         return sorted(adopted)
 
-    def prepare(self, operation_ref: str, *, term: str,
+    def prepare(self, operation_ref: str, *, term: str = "",
                 scopes: list[str] | None = None) -> dict[str, Any]:
         text_field(term, 256)
-        require(bool(term.strip()), "OP_TERM_REQUIRED")
         state = self.operation.check(operation_ref)
         require(state["state"] == "PREPARING", "OP_NOT_PREPARING")
         intent = state["prestate"]
@@ -207,22 +207,34 @@ class OperationWorkflow:
         revalidate_intent(intent, self.repo)
         start = _scope_snapshot(self.repo, state["targets"])
 
+        term = term.strip() or " ".join(Path(path).stem for path in state["targets"])[:256]
         observed: dict[str, str | None] = {}
-        query_budget = ReadBudget(self.repo)
-        result = query(self.operation.policy.store, term, _budget=query_budget)
-        observed.update(_observed(query_budget))
+        store = self.operation.policy.store
         initial_scan = False
-        if (result.get("reason") == "INDEX_MISSING"
-                or not result.get("coverage", {}).get("complete", False)):
-            scan_budget = ReadBudget(self.repo)
-            scanned = scan(self.operation.policy.store, _scan_scopes(self.repo, state["targets"]),
-                           _budget=scan_budget)
-            observed.update(_observed(scan_budget))
-            require(scanned["coverage"]["complete"], "OP_PARTIAL_COVERAGE")
-            initial_scan = result.get("reason") == "INDEX_MISSING"
+        index_state, index_reason, index_digest = "VERIFIED", "INDEX_CURRENT", None
+        try:
             query_budget = ReadBudget(self.repo)
-            result = query(self.operation.policy.store, term, _budget=query_budget)
+            result = query(store, term, _budget=query_budget)
             observed.update(_observed(query_budget))
+            if (result.get("reason") == "INDEX_MISSING"
+                    or not result.get("coverage", {}).get("complete", False)):
+                scan_budget = ReadBudget(self.repo)
+                scanned = scan(store, _scan_scopes(self.repo, state["targets"]), _budget=scan_budget)
+                observed.update(_observed(scan_budget))
+                initial_scan = bool(scanned["coverage"]["complete"])
+                if not initial_scan:
+                    index_state, index_reason = "UNVERIFIED", "OP_PARTIAL_COVERAGE"
+                query_budget = ReadBudget(self.repo)
+                result = query(store, term, _budget=query_budget)
+                observed.update(_observed(query_budget))
+            index_digest = _index_digest(self.operation)
+        except (RuntimeContractError, OSError, ValueError, KeyError):
+            # 中文：只停用本次索引消费；策略、项目绑定、目标与前态继续独立核验。
+            # English: Stop consuming this index only; independently recheck
+            # policy/project identity, targets, and file prestate.
+            store._guard()
+            result, observed = {"candidates": []}, {}
+            index_state, index_reason = "UNVERIFIED", "INDEX_UNAVAILABLE_USE_SOURCE"
         candidates = self._candidates([
             {key: candidate[key] for key in ("id", "path", "freshness")}
             for candidate in result.get("candidates", [])
@@ -238,14 +250,23 @@ class OperationWorkflow:
             "candidates": candidates,
             "term": term,
             "initial_scan_completed": initial_scan,
-            "index_sha256": _index_digest(self.operation),
+            "index_sha256": index_digest,
+            "index_verification": index_state,
+            "index_reason": index_reason,
         }
         receipt = self._put("prepare", operation_ref, state["identity"], payload)
         ready = self.operation.prepare_ready(
             operation_ref, intent=intent, targets=state["targets"], prestate=intent,
             prepare_sha256=receipt,
         )
-        return {"state": ready, "required_decisions": candidates,
+        decision = gate_result(
+            gate_id="write_preparation", entrypoint="OperationWorkflow.prepare",
+            reason_code=index_reason,
+            decision="CONTINUE_DEFAULT" if index_state == "VERIFIED" else "CONTINUE_DEGRADED",
+            affected_action="write", next_action="retry_original_native_patch",
+            exact_parameters={"operation_ref": operation_ref, "targets": state["targets"]},
+            evidence_state=index_state)
+        return {"state": ready, "required_decisions": candidates, "gate_decision": decision,
                 "semantic_reuse_approved": False}
 
     def finish(self, operation_ref: str, *, tool_use_id: str,
@@ -273,17 +294,28 @@ class OperationWorkflow:
         # 取消若在维护期间胜出，后续复核阻止 finish 回执和 VERIFIED；已完成的索引刷新保留。
         # English: Index maintenance is independent idempotent locator metadata, not permission.
         # A cancellation during maintenance prevents the finish receipt/VERIFIED; completed refreshes remain.
-        if native_path(store.current).exists():
-            record = store.read()
-            invalidate(store, changed, record["revision"])
-            scan_scopes = sorted({path for path in changed + adopted
-                                  if Path(path).suffix.lower() in SOURCE_SUFFIXES})
-            if scan_scopes:
-                scan(store, scan_scopes)
-            refreshed = store.read()
-            for entry in refreshed["entries"]:
-                if entry["path"] in adopted and entry["lifecycle"] != "removed":
-                    require(entry["freshness"] == "matched", "OP_ADOPTED_STALE")
+        index_state = prepared.get("index_verification", "VERIFIED")
+        index_paths = sorted(set(changed) | set(adopted))
+        index_digest = None
+        try:
+            if index_state == "VERIFIED" and native_path(store.current).exists():
+                record = store.read()
+                invalidate(store, changed, record["revision"])
+                scan_scopes = sorted({path for path in changed + adopted
+                                      if Path(path).suffix.lower() in SOURCE_SUFFIXES})
+                if scan_scopes:
+                    scanned = scan(store, scan_scopes)
+                    if not scanned["coverage"]["complete"]:
+                        index_state = "UNVERIFIED"
+                refreshed = store.read()
+                if any(entry["path"] in adopted and entry["lifecycle"] != "removed"
+                       and entry["freshness"] != "matched" for entry in refreshed["entries"]):
+                    index_state = "UNVERIFIED"
+            if index_state == "VERIFIED":
+                index_digest = _index_projection(self.operation, index_paths)
+        except (RuntimeContractError, OSError, ValueError, KeyError):
+            store._guard()
+            index_state = "UNVERIFIED"
         after_index = self.operation.check(operation_ref)
         require(after_index["state"] == "RESULT_PENDING"
                 and after_index["revision"] == state["revision"], "OP_REVISION_CONFLICT")
@@ -294,10 +326,9 @@ class OperationWorkflow:
             "decisions_sha256": hashlib.sha256(canonical_json(decisions).encode("utf-8")).hexdigest(),
             "prepare_sha256": prepare_sha,
             "posttool_sha256": state["posttool"]["response_sha256"],
-            "index_paths": sorted(set(changed) | set(adopted)),
-            "index_sha256": _index_projection(
-                self.operation, sorted(set(changed) | set(adopted)),
-            ),
+            "index_paths": index_paths,
+            "index_sha256": index_digest,
+            "index_verification": index_state,
         }
         def persist_evidence() -> tuple[str, str]:
             receipt = self._put("finish", operation_ref, state["identity"], payload)
@@ -306,7 +337,7 @@ class OperationWorkflow:
         verified = self.operation.finish_with_factory(
             operation_ref, tool_use_id, evidence_factory=persist_evidence,
         )
-        return {"state": verified, "changed_paths": changed,
+        return {"state": verified, "changed_paths": changed, "index_verification": index_state,
                 "semantic_reuse_approved": False}
 
     def check(self, operation_ref: str) -> dict[str, Any]:
@@ -334,12 +365,15 @@ class OperationWorkflow:
             for path in finished["index_paths"]:
                 relative_path(path)
             current = _scope_snapshot(self.repo, state["targets"])
-            require(current == finished["snapshot"]
-                    and _index_projection(self.operation, finished["index_paths"])
-                    == finished["index_sha256"],
-                    "OP_EVIDENCE_STALE")
+            require(current == finished["snapshot"], "OP_EVIDENCE_STALE")
+            index_state = finished.get("index_verification", "VERIFIED")
+            require(index_state in {"VERIFIED", "UNVERIFIED"}, "OP_RECEIPT_INVALID")
+            if index_state == "VERIFIED":
+                require(_index_projection(self.operation, finished["index_paths"])
+                        == finished["index_sha256"], "OP_EVIDENCE_STALE")
             require(self.operation.check(operation_ref) == state, "OP_REVISION_CONFLICT")
-            return {"state": state, "valid": True, "semantic_reuse_approved": False}
+            return {"state": state, "valid": True, "index_verification": index_state,
+                    "semantic_reuse_approved": False}
         except CapabilityError as exc:
             invalid = self.operation.invalidate_completion(operation_ref, str(exc))
             return {"state": invalid, "valid": False, "semantic_reuse_approved": False}

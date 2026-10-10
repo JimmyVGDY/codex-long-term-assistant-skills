@@ -843,9 +843,9 @@
         "[OK] V7.15.0 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.15.0 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
         "manifest 版本不是 7.15.0": "manifest version is not 7.15.0",
         "缺少 %s -> V7.15.0 升级声明": "missing %s -> V7.15.0 upgrade declaration",
-        "[OK] V7.15.3 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.15.3 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
-        "manifest 版本不是 7.15.3": "manifest version is not 7.15.3",
-        "缺少 %s -> V7.15.3 升级声明": "missing %s -> V7.15.3 upgrade declaration"
+        "[OK] V7.16.0 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.16.0 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
+        "manifest 版本不是 7.16.0": "manifest version is not 7.16.0",
+        "缺少 %s -> V7.16.0 升级声明": "missing %s -> V7.16.0 upgrade declaration"
       }
     },
     "scripts/verify-release.py": {
@@ -858,7 +858,7 @@
         "V7.13.2 端到端发行验证": "V7.13.2 end-to-end release validation",
         "V7.14.6 端到端发行验证": "V7.14.6 end-to-end release validation",
         "V7.15.0 端到端发行验证": "V7.15.0 end-to-end release verification",
-        "V7.15.3 端到端发行验证": "V7.15.3 end-to-end release verification"
+        "V7.16.0 端到端发行验证": "V7.16.0 end-to-end release verification"
       },
       "preserve": [
         "V7.12.0 端到端发行验证",
@@ -1778,6 +1778,8 @@
         "Project Profile 已变化，必须重新绑定任务信封": "Project Profile changed; rebind the Task Envelope",
         "执行状态默认必须保存在仓库外；需要时显式使用 --allow-inside-repo": "Execution state must remain outside the repository by default; use explicit --allow-inside-repo when necessary",
         "状态已存在": "State already exists",
+        "模型档位与显式策略不一致 / Model profile does not match the selected policy": "Model profile does not match the selected policy",
+        "模型档位与策略不一致 / Model profile does not match policy": "Model profile does not match policy",
         "STRICT 进入 IMPLEMENT 前必须完成实施前审查": "STRICT must complete pre-implementation review before entering IMPLEMENT",
         "DELIVER 前门禁未完成: ": "Gates are incomplete before DELIVER: ",
         "authorization 使用 key=true|false": "authorization must use key=true|false",

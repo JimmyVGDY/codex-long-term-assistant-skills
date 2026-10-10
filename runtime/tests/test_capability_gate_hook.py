@@ -243,7 +243,8 @@ class CapabilityGateHookTests(unittest.TestCase):
                 for tool_name in ("apply_patch", "Edit", "Write"):
                     denied = self.handle_legacy(task, "PreToolUse", tool_name=tool_name)
                     self.assertEqual("deny", denied["hookSpecificOutput"]["permissionDecision"])
-                    self.assertIn("LEGACY_WRITE_ORIGIN_UNAVAILABLE",
+                    expected = "OP_CANONICAL_INPUT" if tool_name == "apply_patch" else "LEGACY_WRITE_ORIGIN_UNAVAILABLE"
+                    self.assertIn(expected,
                                   denied["hookSpecificOutput"]["permissionDecisionReason"])
                 self.assertEqual(before, self.legacy_snapshot(task))
 

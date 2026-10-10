@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.15.3",
+  "version": "7.16.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 322,
-  "payload_digest": "6c0f55093004d70e1e1b9730cb7dff57d48771cbe36e8f78993830e111ccaf1a",
+  "file_count": 329,
+  "payload_digest": "a60bc67bc74c303c6742247c60227099fcd2b722729ef68d73fc13458356ddf0",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "c1b4833a83f3e3dfd2ca72238ef89f9e920b4d46ba268ed1b4e85838b9919c61",
-      "size": 819
+      "sha256": "fa772cb8543ab1e647e2b34a378ba18167c14dba008d6717a12ca5abbc5af8f9",
+      "size": 830
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -228,8 +228,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/capability-index-workflow.md",
-      "sha256": "171761f6793741c841006d4d8fc2a1f030809c11480284a22cdd21919e4d79fe",
-      "size": 8323
+      "sha256": "add17b486c419c9576e4c22175a8582f87884b55fc997e492ae55dfa48b8f394",
+      "size": 8290
     },
     {
       "path": "skills/engineering-quality-delivery/references/component-module-reuse.md",
@@ -248,8 +248,8 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/execution-profiles-and-phases.md",
-      "sha256": "ea1bbb325a797e3030ee12346a391b31ce278feb72761a48e406cbbb109c98e2",
-      "size": 2793
+      "sha256": "ced1a9a0759c8c38d2654c7e320bfd6c1b4da85651f7c0173ffe7869b2b59cad",
+      "size": 2938
     },
     {
       "path": "skills/engineering-quality-delivery/references/project-binding-approval-finalization.md",
@@ -283,13 +283,13 @@
     },
     {
       "path": "skills/engineering-quality-delivery/references/task-execution-envelope.md",
-      "sha256": "235f0d5fb451306e2fdeefb6aeb6038761ae30f21f97e738a20098abb77bcf2b",
+      "sha256": "b1b573b4db7654c64cce206375229e66960e81248e13fcde5148fd28c4db7c9d",
       "size": 2502
     },
     {
       "path": "skills/engineering-quality-delivery/scripts/execution_guard.py",
-      "sha256": "20def63cde0cbe73a046b840402365e6a9a9323d2763e453e26cd8d3ab4cd20b",
-      "size": 27720
+      "sha256": "3275ae33756c1895f7635fe6ffcf0a22d85cf50697823b890ac6871f3fb8d16d",
+      "size": 30306
     },
     {
       "path": "skills/engineering-quality-delivery/tests/test_execution_guard.py",
@@ -633,8 +633,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/references/review-preimplementation-controller.md",
-      "sha256": "3cb20b592216525eb86aa7934b31edb4cbe2e7408607dc3540e59442ad76af87",
-      "size": 1980
+      "sha256": "8ef6fb6ebe7424f3886b8e04d9e8ee2f021c9bf84292e18474cdd33ba1e65142",
+      "size": 2277
     },
     {
       "path": "skills/multi-agent-independent-review/references/review-stop-output-memory.md",
@@ -673,13 +673,13 @@
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_controller.py",
-      "sha256": "29670a4067b1c49a2ffccdc52b82a0d225001985bedd4920a1dcfc64f7490c45",
-      "size": 82382
+      "sha256": "ca3df7ac32ba9bded0de6a6b756e4ad86755ad724176a0bf914a03df21c27681",
+      "size": 83087
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
-      "sha256": "21766c7eb9e3575d506ab024002e0906e49676ada084618a673d3aaa20316902",
-      "size": 33559
+      "sha256": "8524ea9269aa5a8d7178a32eed66571d5c311e69cfd8bdfad1ecb81c46aea345",
+      "size": 35349
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/routing_v4.py",
@@ -803,8 +803,8 @@
     },
     {
       "path": "hooks/cp_context.py",
-      "sha256": "fd8dfaf73e14ee982a8fd7836baec336bd8b3f8dec976df7ac70f9e7f2b6d67b",
-      "size": 2051
+      "sha256": "74f6844d316916fb838cd2edefdc37f704ed40d2582c60da49af99d188ff799f",
+      "size": 2925
     },
     {
       "path": "hooks/cp_gate.cmd",
@@ -813,8 +813,8 @@
     },
     {
       "path": "hooks/cp_gate.py",
-      "sha256": "a9eaec92863dfd5e0e0548348fd52c66608edaedc8b632f266b77fe787a68810",
-      "size": 7092
+      "sha256": "1f25333e9a22dbceaf14ab809ef409e404b229cbfd4c8012a9bc7f8fe234950e",
+      "size": 8894
     },
     {
       "path": "hooks/cp_hook.cmd",
@@ -888,8 +888,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_gate_cli.py",
-      "sha256": "a748f87bd0d9ed3f5465f51e999efa9d6585dfe4c194c10f076eb040b222323d",
-      "size": 5992
+      "sha256": "0b224df27e370046a67cd8453f3b105f5ba4b053042f9d1272ef6b61cad0fb84",
+      "size": 5989
     },
     {
       "path": "runtime/cp_runtime/capability_gate_evidence.py",
@@ -898,8 +898,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_gate_hook.py",
-      "sha256": "8c0acf5b64eedb8ac886e22aa89f974c936a16be95ac27c10078c2b4f71f013f",
-      "size": 20175
+      "sha256": "45de3f58b21390692486760378fbab821e9e740d7cad4831784a4122c4c5e8ac",
+      "size": 22458
     },
     {
       "path": "runtime/cp_runtime/capability_gate_workflow.py",
@@ -918,8 +918,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_operation_workflow.py",
-      "sha256": "5ebeb6611e1df8311289653cd49719ddd44e55fd07f491face6867e6644d054c",
-      "size": 17408
+      "sha256": "16b41ff67ba5ef65a6bdd722e481210111e00b162029fa7e8c1f3e13c17a993e",
+      "size": 19621
     },
     {
       "path": "runtime/cp_runtime/capability_registry.py",
@@ -1182,9 +1182,19 @@
       "size": 6875
     },
     {
+      "path": "runtime/cp_runtime/g6_agent_identity.py",
+      "sha256": "dc0600b0395b89bc2462495b8274cc93c4bf473f57432e17b1c48ebb8e9bd15a",
+      "size": 5069
+    },
+    {
       "path": "runtime/cp_runtime/g6_budget_v1.py",
-      "sha256": "21795c28fee30c9ec5870ae26203c6aeb542c0f14109606136321586abe98077",
-      "size": 25610
+      "sha256": "dd1adb2da5d73abdd2832fda644daff6b0d19a50817e2f1513ce32761a66d8b0",
+      "size": 27122
+    },
+    {
+      "path": "runtime/cp_runtime/g6_continuation.py",
+      "sha256": "e8b924f9ca71a9caa28cc8145ccdf0688acd64439444086438f5d5a3d4d3261e",
+      "size": 8372
     },
     {
       "path": "runtime/cp_runtime/g6_default_activation.py",
@@ -1208,8 +1218,8 @@
     },
     {
       "path": "runtime/cp_runtime/g6_gate_catalog.py",
-      "sha256": "a1c2c13b4d119bac0b8eefe9f297deba7fa1151c3b8b967dd19d83306c70e360",
-      "size": 9663
+      "sha256": "0467e8876866665ac35f505ae188b4243286c1e61e50ad83251343d67e39e054",
+      "size": 9677
     },
     {
       "path": "runtime/cp_runtime/g6_handoff_provenance.py",
@@ -1218,13 +1228,13 @@
     },
     {
       "path": "runtime/cp_runtime/g6_handoff_v1.py",
-      "sha256": "c83cb466320452931fe085ae34af5e66249d3f6f26d3101d057e6478d83375b2",
-      "size": 8559
+      "sha256": "49575c7b5766b73a29267b1d6c692ba08e48c04077972e6cdba3113195a735ed",
+      "size": 8627
     },
     {
       "path": "runtime/cp_runtime/g6_hook_v1.py",
-      "sha256": "ca9cb388b333ac55fdc5e79ac96e036df3c6eb374d59731e22f99119b2b27eb0",
-      "size": 22877
+      "sha256": "150b2523362e5a991dea7db74a54466172ff52fcb76f136a77f034a4471af1bb",
+      "size": 29623
     },
     {
       "path": "runtime/cp_runtime/g6_observation_v1.py",
@@ -1232,19 +1242,34 @@
       "size": 4464
     },
     {
+      "path": "runtime/cp_runtime/g6_reconciliation.py",
+      "sha256": "8d1c1b799be962c352aeac183163632956b28a75fc2617ccc2a08bd49f3ace53",
+      "size": 7340
+    },
+    {
       "path": "runtime/cp_runtime/g6_retry_v1.py",
       "sha256": "a3d08cdc73f9a43312d717fdfa6ad252dd242b81c4a575e99a414169d5205580",
       "size": 4953
     },
     {
+      "path": "runtime/cp_runtime/g6_review_controller.py",
+      "sha256": "1b030ad903ea700cf3bd42913639fcaa07fd4a8145b08b504149fa7ff33b874a",
+      "size": 14843
+    },
+    {
       "path": "runtime/cp_runtime/g6_review_receipt_v1.py",
-      "sha256": "7e816dfc36bdcae4304f2962c2327f8892c24a73a66439dce2e3a65497309606",
-      "size": 10648
+      "sha256": "3f7fb1458dcdadb58a372b2fe3f04b5b6b497d5b41d006abca8c7df976570217",
+      "size": 11050
     },
     {
       "path": "runtime/cp_runtime/g6_user_choice_v1.py",
       "sha256": "eccc3009480f3c0465d7c15e1461df5e5d3201467bf203c88e3136978e415910",
       "size": 5230
+    },
+    {
+      "path": "runtime/cp_runtime/gate_contract.py",
+      "sha256": "463dfb2879027fec7ae61bad94b62c913b465619d75039c21c271490e9c5eb30",
+      "size": 5415
     },
     {
       "path": "runtime/cp_runtime/integrity.py",
@@ -1255,6 +1280,11 @@
       "path": "runtime/cp_runtime/memory.py",
       "sha256": "30446d9d44ad05cd92dd8a81a9c257324630ff41a17d7488ec4edfdaa5f21f34",
       "size": 8102
+    },
+    {
+      "path": "runtime/cp_runtime/native_transcript.py",
+      "sha256": "b9c4a0896d28056943e759301fa621e1d904bbb81217425f9cbe7b83a92814f0",
+      "size": 2792
     },
     {
       "path": "runtime/cp_runtime/notify_delivery.py",
@@ -1288,8 +1318,8 @@
     },
     {
       "path": "runtime/cp_runtime/patch_intent.py",
-      "sha256": "5fae9e256781e0dbfc972c74556c70a62e42ada7b5525221918b27d324bc7fef",
-      "size": 16123
+      "sha256": "7ee4aa5110aaca9eb30ec13f07e924a169e47253960af3eef5dec4ed5731d550",
+      "size": 16800
     },
     {
       "path": "runtime/cp_runtime/path_identity.py",
@@ -1543,8 +1573,8 @@
     },
     {
       "path": "runtime/tests/test_capability_gate_hook.py",
-      "sha256": "754d31459ea1f19b225bf52600908be65ddb42e5ca18d80b0d06cb513cd56f5d",
-      "size": 22121
+      "sha256": "708f2d38bed4f7b189684f617441040f2085d5214cf2eb5eaee1254d01ce56ae",
+      "size": 22217
     },
     {
       "path": "runtime/tests/test_capability_gate_local_exception.py",
@@ -1602,14 +1632,19 @@
       "size": 8326
     },
     {
+      "path": "runtime/tests/test_desktop_gate_repair.py",
+      "sha256": "50285317a0cc4af3ff88ec6a2b34643aefa00387c63b7dae4ec224368bd6fddb",
+      "size": 6026
+    },
+    {
       "path": "runtime/tests/test_onboarding.py",
       "sha256": "07654efaf718fb905a8c0905a6f5e6303ea8dbc7a1cb2bdb438a1e6a89bfeb32",
       "size": 13298
     },
     {
       "path": "runtime/tests/test_patch_intent.py",
-      "sha256": "cd922398fe9e77d9a74890e54e1ee12940347d3ae60aef81f7b511b5f5d4b42e",
-      "size": 7923
+      "sha256": "b3b7985b79dcc2f0ba7102f47a48a4c44ad95a65b69738ddc3479bdf3caff1bb",
+      "size": 7985
     },
     {
       "path": "runtime/tests/test_resume.py",

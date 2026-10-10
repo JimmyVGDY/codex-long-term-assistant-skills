@@ -2,6 +2,14 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.16.0 - 2026-10-10
+
+- Fix native-write rejection of in-repository absolute paths and inert metadata, preserving scope and identity protection with actionable preparation parameters.
+- Inventory actual registered Hooks and align execution/review controllers with GPT-6 defaults. Missing review or index material permits scoped continuation without manufacturing verification.
+- Isolate child-ledger failures from ordinary parent reads and reconcile long or late native receipts without erasing accounting, refunding unknown calls, or redispatching.
+- Support authorized capacity templates, same-root continuations, and verified Agent ID mappings. Reserve each new turn separately; old receipts cannot settle a new turn.
+- Preserve frozen legacy replay, logical-readonly limitations, and the Desktop-only product boundary. Artifact, installation, runtime, and publication evidence remain distinct.
+
 ## 7.15.3 - 2026-10-10
 
 - Advance the Codex Desktop internal component window to official stable 0.162.1, retain the ten preceding stable releases, and remove 0.156.1 and 0.156.0.

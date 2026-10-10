@@ -234,11 +234,10 @@ class ActivationTests(unittest.TestCase):
             if policy:args.extend(['--reviewer-policy',policy])
             with patch.object(sys,'argv',args):guard['main']()
             state=guard['load_state'](directory)
-            expected='reviewer-matrix-v3' if policy else 'reviewer-matrix-v4'
+            expected='reviewer-matrix-v3' if policy else 'desktop-g6-deterministic-v1'
             self.assertEqual(expected,state['routing']['reviewer_policy']['policy_id'])
-            self.assertEqual('luna-low',state['routing']['delegation_budget']['default_model_profile'])
-            if policy:self.assertNotIn('desktop_default_activation',state['routing'])
-            else:self.assertEqual(source,state['routing']['desktop_default_activation'])
+            self.assertEqual('luna-low' if policy else 'g6-sol-medium',state['routing']['delegation_budget']['default_model_profile'])
+            self.assertNotIn('desktop_default_activation',state['routing'])
 
     def test_explicit_rollback_restores_old_default_without_deleting_history(self):
         source,_=self.activate()

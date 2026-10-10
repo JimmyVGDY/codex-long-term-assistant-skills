@@ -442,10 +442,33 @@ def approve_and_reserve(path: Path, *, permit_id: str, host_call_id: str,
 
 def record_receipt(path: Path, *, host_call_id: str, disposition: str,
                    agent_path: str | None, proof_ref: str) -> dict[str, Any]:
+    return _record_receipt(path, call_ref=ref(host_call_id), disposition=disposition,
+                           agent_path=agent_path, proof_ref=proof_ref)
+
+
+def record_bound_receipt(path: Path, *, host_call_ref: str, session_id: str, cwd: Path,
+                         agent_path: str, proof_ref: str) -> dict[str, Any]:
+    """中文：仅在调用者验证原生子任务头后补记已预占调用的创建事实。
+
+    English: Reconcile creation for a reserved call after the caller verifies
+    its native child header; never creates a reservation or changes capacity.
+    """
+    sha(host_call_ref)
+    return _record_receipt(path, call_ref=host_call_ref, disposition="created",
+                           agent_path=agent_path, proof_ref=proof_ref,
+                           binding=(session_id, cwd))
+
+
+def _record_receipt(path: Path, *, call_ref: str, disposition: str,
+                    agent_path: str | None, proof_ref: str,
+                    binding: tuple[str, Path] | None = None) -> dict[str, Any]:
     with OwnerTokenLock(path, timeout=2):
         events = _read_events(path)
         state = replay(events)
-        permit_id = state["host_calls"].get(ref(host_call_id))
+        if binding is not None and (state["root"]["host_session_ref"] != ref(binding[0])
+                or not same_path(Path(state["root"]["repo_path"]), binding[1])):
+            fail("G6_HOST_IDENTITY_CONFLICT")
+        permit_id = state["host_calls"].get(call_ref)
         if permit_id is None:
             fail("G6_RECEIPT_CALL_UNKNOWN")
         receipt = {"permit_id": permit_id, "disposition": disposition,
@@ -460,13 +483,19 @@ def record_receipt(path: Path, *, host_call_id: str, disposition: str,
 
 
 def record_terminal(path: Path, *, agent_path: str, outcome: str,
-                    proof_ref: str) -> dict[str, Any]:
+                    proof_ref: str, permit_id: str | None = None) -> dict[str, Any]:
     with OwnerTokenLock(path, timeout=2):
         events = _read_events(path)
         state = replay(events)
         agent_ref = ref(agent_path)
         matches = [pid for pid, receipt in state["receipts"].items()
                    if receipt["disposition"] == "created" and receipt["agent_ref"] == agent_ref]
+        if permit_id is not None:
+            matches = [pid for pid in matches if pid == permit_id]
+        else:
+            active = [pid for pid in matches if pid not in state["terminals"]]
+            if active:
+                matches = active
         if len(matches) != 1:
             fail("G6_TERMINAL_AGENT_UNKNOWN")
         terminal = {"permit_id": matches[0], "agent_ref": agent_ref,

@@ -166,8 +166,9 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> di
     if data.get("agent_id"):
         return _deny("G6_NESTED_NATIVE_BINDING_UNAVAILABLE",
                      next_action="continue_local_or_request_parent_dispatch")
-    if root["capacity_class"] != "STANDARD":
-        return _deny("G6_NONDEFAULT_CAPACITY_NEEDS_TRUSTED_CONTROLLER")
+    # 中文：额度来自已绑定且已校验的根账本，不由本次工具参数改变；三档均走同一原子预占。
+    # English: Capacity comes from the verified bound root, never this call's
+    # arguments. All three templates use the same atomic reservation checks.
     if not isinstance(args.get("message"), str) or not args["message"]:
         return _deny("G6_MESSAGE_REQUIRED")
     task_name = args.get("task_name")
@@ -263,6 +264,13 @@ def _posttool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> d
         # 中文：宿主响应含糊时，保持费用和在途状态，等待有证据的恢复。
         # English: Ambiguous host response remains charged and in flight until genuine recovery.
         return {}
+    current = budget.read_budget(path)
+    pid = current["host_calls"].get(ref(data.get("tool_use_id")))
+    if pid in current["receipts"]:
+        receipt = current["receipts"][pid]
+        if receipt["disposition"] != "created" or receipt["agent_ref"] != ref(expected):
+            fail("G6_RECEIPT_CHANGED")
+        return {}
     budget.record_receipt(path, host_call_id=str(data.get("tool_use_id") or ""),
                           disposition="created", agent_path=expected,
                           proof_ref=ref({"source": "native-post-tool", "session_ref": ref(data["session_id"]),
@@ -271,7 +279,63 @@ def _posttool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> d
     return {}
 
 
-def _terminal(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
+def _recover_native_creation(data: Mapping[str, Any]) -> None:
+    """中文：原生子任务事件可补齐迟到创建回执，不猜未创建或退款。
+
+    English: A real child event may reconcile a late creation receipt, never
+    infer not-started or refund a call.
+    """
+    binding = handoff.read(str(data.get("session_id") or ""))
+    if binding is None:
+        return
+    path = Path(binding["new_ledger_path"])
+    task = handoff._child_task_path(dict(data))
+    state = budget.read_budget(path)
+    from .routing_hook_v5 import _transcript_path
+    from .path_identity import same_path
+    with _transcript_path(data).open("rb") as stream:
+        header_raw = stream.readline(131073)
+    if len(header_raw) > 131072:
+        fail("G6_CHILD_HEADER_BOUND")
+    header = json.loads(header_raw, object_pairs_hook=_object, parse_constant=_constant)
+    if not same_path(Path(header["payload"]["cwd"]), Path(state["root"]["repo_path"])):
+        fail("G6_CHILD_REPOSITORY_CONFLICT")
+    old = binding.get("old_stop_evidence")
+    if old is not None:
+        from . import budget_v5
+        previous = budget_v5.read_budget(Path(old["old_ledger_path"]))
+        if any(receipt["agent_ref"] == ref(task) for receipt in previous["host_receipts"].values()):
+            return
+    pending = []
+    for pid, reservation in state["reservations"].items():
+        if pid in state["receipts"]:
+            continue
+        permit = state["permits"][pid]
+        if permit["agent_type"] != data.get("agent_type"):
+            continue
+        proof = None
+        if "/root/" + permit["task_name"] == task:
+            proof = {"source": "native-child-header", "agent_ref": ref(data["agent_id"]),
+                     "task_ref": ref(task), "header_ref": ref(header)}
+        else:
+            from .g6_continuation import read as read_continuation
+            continuation = read_continuation(path, reservation["host_call_ref"])
+            if continuation is not None and continuation["target"] == task:
+                from .routing_hook_v5 import _transcript_path
+                from .native_transcript import turn_evidence
+                proof = turn_evidence(_transcript_path(data), str(data.get("turn_id") or ""),
+                                      continuation["reserved_at"])
+        if proof is not None:
+            pending.append((reservation["host_call_ref"], proof))
+    if len(pending) > 1:
+        fail("G6_NATIVE_CREATION_AMBIGUOUS")
+    if pending:
+        budget.record_bound_receipt(path, host_call_ref=pending[0][0],
+                                    session_id=str(data["session_id"]), cwd=Path(str(data["cwd"])),
+                                    agent_path=task, proof_ref=ref(pending[0][1]))
+
+
+def _terminal(path: Path, data: Mapping[str, Any], *, reconciling: bool = False) -> dict[str, Any]:
     from .g6_handoff_v1 import _child_task_path
     from .routing_hook_v5 import _transcript_path
 
@@ -279,25 +343,55 @@ def _terminal(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
     state = budget.read_budget(path)
     matched = [permit_id for permit_id, receipt in state["receipts"].items()
                if receipt["disposition"] == "created" and receipt["agent_ref"] == ref(task)]
-    if len(matched) == 1 and matched[0] in state["terminals"]:
+    active = [pid for pid in matched if pid not in state["terminals"]]
+    if matched and not active:
         # 中文：同一已创建子任务的原生 Stop 已结算后，转录后续追加不得改写结果或重复计费。
         # English: A later transcript append must not rewrite or double-charge the
         # native Stop already settled for this same created child.
         return {}
-    transcript = _transcript_path(data)
-    with transcript.open("rb") as stream:
-        raw = stream.read(2_000_001)
-    if len(raw) > 2_000_000 or (raw and not raw.endswith(b"\n")):
+    matched = active
+    continuation = None
+    if len(matched) == 1:
+        from .g6_continuation import read as read_continuation
+        continuation = read_continuation(path, state["reservations"][matched[0]]["host_call_ref"])
+    def pending() -> dict[str, Any]:
+        if not reconciling and len(matched) == 1:
+            from .g6_reconciliation import enqueue_stop
+            enqueue_stop(path, dict(data), matched[0])
         return {}
+    transcript = _transcript_path(data)
+    from .native_transcript import complete_tail
+    raw, window = complete_tail(transcript)
+    if not raw:
+        return pending()
     terminal_kind = None
     final_refs = []
+    review_lines = []
+    expected_turn = data.get("turn_id")
+    current_turn = None
+    foreign_turn_seen = False
     try:
         for line in raw.splitlines():
             event = json.loads(line, object_pairs_hook=_object, parse_constant=_constant)
             payload = event.get("payload")
+            if continuation is not None:
+                stamp = event.get("timestamp")
+                if (not isinstance(stamp, str)
+                        or budget.parse_iso(stamp) < budget.parse_iso(continuation["reserved_at"])):
+                    continue
+            if (isinstance(payload, dict) and (event.get("type") == "turn_context"
+                    or event.get("type") == "event_msg" and payload.get("type") == "task_started")):
+                current_turn = payload.get("turn_id")
+                final_refs, terminal_kind = [], None
+                review_lines = []
+                foreign_turn_seen = bool(expected_turn and current_turn and expected_turn != current_turn)
             if event.get("type") == "event_msg" and isinstance(payload, dict):
                 if payload.get("type") in {"turn_aborted", "turn_complete", "task_complete"}:
-                    terminal_kind = payload["type"]
+                    event_turn = payload.get("turn_id") or current_turn
+                    if expected_turn and event_turn and event_turn != expected_turn:
+                        foreign_turn_seen = True
+                    elif expected_turn and event_turn == expected_turn:
+                        terminal_kind = payload["type"]
             if (event.get("type") == "response_item" and isinstance(payload, dict)
                     and payload.get("type") == "message" and payload.get("role") == "assistant"
                     and payload.get("phase") in {"final", "final_answer"}):
@@ -306,28 +400,37 @@ def _terminal(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
                         or not isinstance(content[0], dict)
                         or content[0].get("type") != "output_text"
                         or not isinstance(content[0].get("text"), str)):
-                    return {}
-                final_refs.append(ref(payload))
+                    return pending()
+                if (expected_turn and current_turn == expected_turn
+                        or continuation is None and not current_turn):
+                    final_refs.append(ref(payload))
+                    review_lines.append(line)
     except (ValueError, UnicodeError, RecursionError):
-        return {}
+        return pending()
     if terminal_kind is None:
-        if len(final_refs) != 1:
-            return {}
+        if len(final_refs) != 1 or foreign_turn_seen:
+            return pending()
         terminal_kind = "native_stop_with_final_answer"
     host_outcome = str(data.get("terminal_outcome") or "UNKNOWN").upper()
     outcome = "CANCELLED" if terminal_kind == "turn_aborted" else (
         "UNKNOWN" if terminal_kind == "native_stop_with_final_answer" else
         host_outcome if host_outcome in budget.OUTCOMES else "UNKNOWN")
     budget.record_terminal(path, agent_path=task, outcome=outcome,
+                           permit_id=matched[0] if len(matched) == 1 else None,
                            proof_ref=ref({"source": "native-subagent-stop",
                                           "child_ref": ref(data["agent_id"]),
                                           "task_path_ref": ref(task),
-                                          "transcript_sha256": hashlib.sha256(raw).hexdigest(),
+                                          "transcript_window": window,
                                           "terminal_kind": terminal_kind,
                                           "final_ref": final_refs[-1] if final_refs else None,
                                           "host_outcome": host_outcome}))
     from .g6_review_receipt_v1 import ingest
-    ingest(path, raw_transcript=raw, task_path=task)
+    # 中文：窗口可以证明原生结束，但不冒充完整复审材料。
+    # English: A tail window may prove termination without claiming a complete
+    # review transcript. Missing review evidence remains unverified.
+    if not window["truncated_prefix"]:
+        ingest(path, raw_transcript=b"\n".join(review_lines) + b"\n", task_path=task,
+               permit_id=matched[0] if len(matched) == 1 else None)
     return {}
 
 
@@ -354,15 +457,29 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
             and not data.get("agent_id")):
         if not _ensure_new_session(data):
             return False, None
+    if data.get("agent_id") and hook_name in {"SubagentStart", "SubagentStop"}:
+        _recover_native_creation(data)
     owner = handoff.route(data)
     if owner is None or owner[0] == "old":
         return False, None
     path = owner[1]
+    if data.get("agent_id") and hook_name in {"SubagentStart", "SubagentStop"}:
+        from .g6_agent_identity import remember
+        remember(path, data)
+    if not data.get("agent_id") and hook_name in {"PreToolUse", "Stop"}:
+        from .g6_reconciliation import drain
+        try:
+            drain(path, lambda root, event: _terminal(root, event, reconciling=True))
+        except (OSError, ValueError, TimeoutError, RuntimeContractError, KeyError, TypeError):
+            # 中文：对账故障不扩大成主任务门禁；派发仍单独核验真实账本。
+            # English: Reconciliation failure does not gate the parent task;
+            # dispatch still independently verifies the real budget journal.
+            pass
     if hook_name == "PreToolUse" and tool in {
             "followup_task", "send_input", "resume_agent", "send_message"}:
         if tool != "send_message":
-            return True, _deny("G6_CONTINUATION_HOST_BINDING_UNAVAILABLE",
-                               next_action="spawn_agent_with_new_budget_permit")
+            from .g6_continuation import pretool as continue_agent
+            return True, continue_agent(path, data, tool)
         inputs = data.get("tool_input")
         target = inputs.get("target") if isinstance(inputs, Mapping) else None
         if not isinstance(target, str) or not target:
@@ -381,7 +498,11 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
                 return True, _deny("G6_MESSAGE_SOURCE_NOT_ACTIVE_IN_ROOT")
             if target == "/root":
                 return True, {}
-        path_name = target if target.startswith("/root/") else "/root/" + target
+        from .g6_agent_identity import resolve as resolve_target
+        try:
+            path_name = resolve_target(path, target, session_id=session)
+        except (ValueError, OSError, RuntimeContractError):
+            return True, _deny("G6_AGENT_ID_UNVERIFIED", next_action="use_verified_canonical_task_path")
         state = budget.read_budget(path)
         matching = [pid for pid, receipt in state["receipts"].items()
                     if receipt["disposition"] == "created"
@@ -397,6 +518,9 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
         return True, _pretool(path, data, inputs)
     if hook_name == "PostToolUse" and delegated and not data.get("agent_id"):
         return True, _posttool(path, data, data.get("tool_input") or {})
+    if hook_name == "PostToolUse" and tool in {"followup_task", "send_input", "resume_agent"}:
+        from .g6_continuation import posttool as continue_receipt
+        return True, continue_receipt(path, data)
     if hook_name == "SubagentStart":
         return True, {}
     if hook_name == "SubagentStop":

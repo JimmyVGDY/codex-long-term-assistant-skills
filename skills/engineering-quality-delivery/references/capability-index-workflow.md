@@ -46,8 +46,8 @@
 
 门禁默认未启用；普通对话、未配置项目和 disabled 策略保持中性。启用策略只约束官方已核验的规范 `apply_patch` 路径，不能把 shell、MCP 或未知写入口说成已保护，也不授予提交、推送、部署或业务数据操作权限。
 
-首次真实 `PreToolUse` 调用 A 完整解析 `tool_input.command`，保存不含 Patch 正文的目标、前态和摘要到仓库外 Operation v2，并拒绝 A。随后使用拒绝信息中的 `operation_ref` 调用 `capability-task-prepare --operation-ref ... --term ...`；CLI 只消费已有起点，不能创建宿主 ID。准备完成后必须发起不同 `tool_use_id` 的调用 B；Hook 在策略、项目、工作区、会话、回合、意图、目标与前态仍匹配时原子领取 READY，再返回中性许可响应。
+首次真实 `PreToolUse` 调用 A 解析 `tool_input.command`，保存不含 Patch 正文的目标、前态和摘要到仓库外 Operation v2，并返回准备动作。执行返回的 `exact_parameters`，使用已有 `operation_ref` 准备操作；检索词可省略，由目标文件名生成。内部脚本不能创建宿主 ID。准备完成后以不同 `tool_use_id` 发起 B；Hook 在策略、项目、工作区、会话、回合、意图、目标与前态仍匹配时原子领取 READY。
 
-B 执行后只接受匹配 B 的 `PostToolUse` 回执。完成命令从 Operation 读出 B，不允许调用者填写 dispatch ID；决策 JSON 必须逐项覆盖准备阶段返回的候选 ID，并使用 `reuse/extend/extract/independent/unused` 与非空理由。完成检查必须确认目标范围内确有变化、PostTool 已对账、索引维护和仓库外回执均可重读；缺回执、策略变化、许可后取消或证据失效收敛为 `OUTCOME_UNKNOWN`，不能从文件变化猜成 PASS。
+B 执行后只接受匹配 B 的 `PostToolUse` 回执。完成命令从 Operation 读出 B，不允许调用者填写 dispatch ID；决策 JSON 覆盖准备阶段实际返回的候选。完成检查确认目标变化、PostTool 对账和可重读操作回执。索引缺失、部分覆盖或不可用时独立记录 `index_verification=UNVERIFIED`，不阻止已核验的文件操作，也不消费损坏索引。缺操作回执、策略变化、许可后取消或文件证据失效仍保持 `OUTCOME_UNKNOWN`。
 
 旧 GateTask schema 1 继续只读兼容，永不转换为 Operation v2 许可。UserPromptSubmit 保持异步观察，Stop 中性，Interrupt 由宿主控制。Hook 许可与真实文件写入不是一个跨进程原子事务；许可后外部修改窗口和未覆盖工具入口必须如实保留为限制。

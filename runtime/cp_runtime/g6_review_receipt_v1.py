@@ -78,10 +78,13 @@ def _delivery_path(path: Path) -> Path:
     return path.parent / ("g6-delivery-status-" + ref(str(path.resolve()))[7:31] + ".json")
 
 
-def ingest(path: Path, *, raw_transcript: bytes, task_path: str) -> dict[str, Any] | None:
+def ingest(path: Path, *, raw_transcript: bytes, task_path: str,
+           permit_id: str | None = None) -> dict[str, Any] | None:
     state = budget.read_budget(path)
     matches = [(pid, receipt) for pid, receipt in state["receipts"].items()
                if receipt["disposition"] == "created" and receipt["agent_ref"] == ref(task_path)]
+    if permit_id is not None:
+        matches = [item for item in matches if item[0] == permit_id]
     if len(matches) != 1:
         fail("G6_REVIEW_RECEIPT_OWNER")
     permit_id = matches[0][0]
@@ -108,6 +111,9 @@ def ingest(path: Path, *, raw_transcript: bytes, task_path: str) -> dict[str, An
                "report_status": report["status"] if report else "UNVERIFIED",
                "finding_refs": [ref(item) for item in report["findings"]] if report else [],
                "report_ref": ref(report) if report else None,
+               # 中文：这是本次传入的有界回执记录字节摘要，不宣称整份会话文件摘要。
+               # English: Hash the supplied bounded receipt-record bytes,
+               # not an asserted hash of the entire conversation file.
                "transcript_sha256": hashlib.sha256(raw_transcript).hexdigest(),
                "gate_state": "PASS" if clear and phase != "UNKNOWN" else "MISSING_EVIDENCE",
                "reason_code": (reason if clear else "REVIEW_NOT_CLEAR_OR_PHASE_UNKNOWN"

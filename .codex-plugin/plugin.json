@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.15.3",
-  "description": "跨项目长期技术助手 V7.15.3：Codex Desktop 0.162.1 组件兼容与冻结证据。",
+  "version": "7.16.0",
+  "description": "跨项目长期技术助手 V7.16.0：桌面门禁一致性、GPT-6 控制器与原生调用恢复。",
   "author": {
     "name": "Project maintainers"
   },

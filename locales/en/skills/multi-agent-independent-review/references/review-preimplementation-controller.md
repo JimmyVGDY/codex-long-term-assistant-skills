@@ -16,13 +16,13 @@ Do not ask reviewers to discuss an entire system without design boundaries.
 
 Use one or two complementary reviewers by default. Critical work may need three, but the default controller budget remains two until explicitly relaxed.
 
-- All roles start from Luna Low. Compute budget and evidence points using reviewer-model-routing.md; do not hard-code a model by role. Existing task policies remain pinned.
+- New tasks use the script-selected GPT-6 nine-profile policy; unknown work defaults to Sol/medium without legacy scorecards or historical-gain prerequisites. Existing legacy policies remain explicitly pinned.
 
 Before implementation, review the design, contracts, call chains, and known facts only. Do not present hypothetical defects in code that does not yet exist as confirmed findings.
 
 ## 4. Consolidation Gate
 
-After collecting results, deduplicate and consolidate by root cause. Distinguish design defects, risk assumptions, evidence gaps, and out-of-scope recommendations. Implementation begins only after blocking design issues are resolved.
+After collecting results, deduplicate and consolidate by root cause. Distinguish design defects, risk assumptions, evidence gaps, and out-of-scope recommendations. Confirmed blocking defects restrict the affected action; missing review material permits reversible preparation and scoped implementation with verification left unknown.
 
 Allowed conclusions: passed; passed after revision; blocking issues; incomplete.
 
@@ -36,4 +36,4 @@ init -> isolation -> plan -> dispatch -> result -> merge -> repair(as needed) ->
 
 The controller records functional boundary, risk, isolation, budget, packet hash, model tier, dispatch, results, and stopping state. After context compaction or agent switching, run `status` or `validate` before continuing; do not rely on conversation memory alone.
 
-Preimplementation reviewers count toward the default total budget of six for one functional boundary, so preserve capacity for targeted postimplementation review.
+The new controller references the native root budget without charging again. Bind a real packet with `plan --packet-dir`; `dispatch` returns script preview parameters for the native dispatch tool. `result` separates file claims from native receipts, and `merge` deduplicates without manufacturing semantic adjudication. Missing material is not a qualification wall. Select old policies explicitly with `--policy-id`.

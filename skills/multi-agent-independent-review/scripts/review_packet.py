@@ -6,6 +6,7 @@ English: Create, validate, and reuse a deterministic progressive Review Packet. 
 from __future__ import annotations
 
 import argparse
+import codecs
 import hashlib
 import json
 import os
@@ -24,6 +25,7 @@ from cp_runtime.common import RuntimeContractError, verify_record  # noqa: E402
 from cp_runtime.dispatch_context import read_request_json  # noqa: E402
 from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, DispatchPolicyError, policy_digest  # noqa: E402
 from cp_runtime.review_contract import result_template as matrix_result_template, validate_result as validate_matrix_result  # noqa: E402
+from cp_runtime.g6_flexible_policy import POLICY_ID as G6_POLICY_ID, POLICY_SHA256 as G6_POLICY_SHA256, PROFILES as G6_PROFILES  # noqa: E402
 
 MAX_SNAPSHOT_BYTES = 1024 * 1024
 FULL_HASH_LIMIT = 4 * 1024 * 1024
@@ -121,6 +123,10 @@ def sensitive_path(relative: str) -> bool:
 
 
 def sampled_file_digest(path: Path) -> Tuple[str, str]:
+    """中文：摘要包含模式、大小和内容；snapshot_sha256 只哈希快照字节。
+
+    English: Digest mode, size and content; snapshot_sha256 hashes only copied bytes.
+    """
     info = path.lstat()
     digest = hashlib.sha256()
     digest.update(str(info.st_mode).encode())
@@ -149,11 +155,11 @@ def is_probably_text(path: Path) -> bool:
     if not path.is_file():
         return False
     with path.open("rb") as handle:
-        sample = handle.read(8192)
+        sample = handle.read(8193)
     if b"\0" in sample:
         return False
     try:
-        sample.decode("utf-8")
+        codecs.getincrementaldecoder("utf-8")().decode(sample[:8192], final=len(sample) <= 8192)
         return True
     except UnicodeDecodeError:
         return False
@@ -324,9 +330,9 @@ def command_create(args: argparse.Namespace) -> None:
         "phase": args.phase,
         "profile": args.profile,
         "effort_tier": args.effort_tier,
-        "default_model_profile": "luna-low" if args.policy_id != LEGACY_POLICY_ID else DEFAULT_PROFILE_BY_TIER[args.effort_tier],
+        "default_model_profile": "g6-sol-medium" if args.policy_id == G6_POLICY_ID else "luna-low" if args.policy_id != LEGACY_POLICY_ID else DEFAULT_PROFILE_BY_TIER[args.effort_tier],
         "policy_id": args.policy_id,
-        "policy_digest": policy_digest(args.policy_id),
+        "policy_digest": "sha256:" + G6_POLICY_SHA256 if args.policy_id == G6_POLICY_ID else policy_digest(args.policy_id),
         "base_ref": base,
         "head_commit": head,
         "diff_sha256": sha256_bytes(inputs["diff"]),
@@ -468,6 +474,14 @@ def command_freshness(args: argparse.Namespace) -> None:
 
 
 def command_result_template(args: argparse.Namespace) -> None:
+    manifest = load_manifest(Path(args.packet_dir).resolve())
+    if manifest.get("policy_id") == G6_POLICY_ID:
+        value = {"status": "incomplete", "findings": [],
+                 "checked_scope": ["packet_sha256=" + manifest["packet_sha256"]],
+                 "unverified_items": ["Review has not been completed."], "summary": ""}
+        Path(args.output).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print("[OK] GPT-6 report template; native receipt and packet freshness remain separate")
+        return
     if args.review_dir:
         manifest = load_manifest(Path(args.packet_dir).resolve())
         state = read_request_json(Path(args.review_dir) / "review-state.json")
@@ -554,6 +568,15 @@ def command_validate_result(args: argparse.Namespace) -> None:
     packet_dir = Path(args.packet_dir).resolve()
     manifest = load_manifest(packet_dir)
     result = json.loads(Path(args.result_file).read_text(encoding="utf-8-sig"))
+    if manifest.get("policy_id") == G6_POLICY_ID:
+        from cp_runtime.g6_review_receipt_v1 import _report
+        record = {"type": "response_item", "payload": {"type": "message", "role": "assistant",
+                  "phase": "final_answer", "content": [{"type": "output_text", "text": json.dumps(result)}]}}
+        value, reason = _report((json.dumps(record) + "\n").encode("utf-8"))
+        if value is None or "packet_sha256=" + manifest["packet_sha256"] not in value["checked_scope"]:
+            die("G6_REVIEW_PACKET_OR_SCHEMA: " + reason)
+        print("[SCHEMA_ONLY] GPT-6 report shape and packet reference verified; no native execution claim")
+        return
     if result.get("schema_version") == 5:
         if not args.review_dir:
             die("V5 验证必须提供 --review-dir 绑定真实派发约束")
@@ -703,7 +726,7 @@ def main() -> None:
     create.add_argument("--phase", choices=["pre", "post"], default="post")
     create.add_argument("--profile", choices=["LIGHT", "STANDARD", "STRICT"], default="STANDARD")
     create.add_argument("--effort-tier", choices=["economy", "balanced", "deep"], default="balanced")
-    create.add_argument("--policy-id", choices=list(POLICY_FILES), default=CURRENT_POLICY_ID)
+    create.add_argument("--policy-id", choices=[*POLICY_FILES, G6_POLICY_ID], default=G6_POLICY_ID)
     create.add_argument("--related-files", default="")
     create.add_argument("--constraints-file")
     create.add_argument("--validations-file")
@@ -729,7 +752,7 @@ def main() -> None:
     template.add_argument("--review-round", type=int, default=1)
     template.add_argument("--task-difficulty", choices=["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"], default="UNKNOWN")
     template.add_argument("--approved-profile", "--model-profile", dest="model_profile",
-                          choices=list(MODEL_PROFILES), default="")
+                          choices=[*MODEL_PROFILES, *G6_PROFILES], default="")
     template.add_argument("--minimum-acceptable-profile", choices=list(MODEL_PROFILES), default="")
     template.add_argument("--output", required=True)
     template.set_defaults(func=command_result_template)

@@ -177,7 +177,8 @@ class G6HookIntegrationTests(unittest.TestCase):
                                   input=json.dumps(continuation), text=True, capture_output=True,
                                   cwd=repo, env=env, timeout=30)
             self.assertEqual(proc.returncode, 0, proc.stderr)
-            self.assertIn("G6_CONTINUATION_HOST_BINDING_UNAVAILABLE", proc.stdout)
+            self.assertIn("G6_TARGET_RUNNING_USE_MESSAGE", proc.stdout)
+            self.assertIn("reroute_original_message", proc.stdout)
             self.assertEqual(len(g6_budget_v1.read_budget(root)["reservations"]), 1)
             message_event = {**continuation, "tool_name": "send_message",
                              "tool_use_id": "g6-message-1"}
@@ -194,7 +195,7 @@ class G6HookIntegrationTests(unittest.TestCase):
                       "cwd": str(repo), "source": {"subagent": {"thread_spawn": {
                           "parent_thread_id": session, "depth": 1,
                           "agent_role": "worker", "agent_path": "/root/g6_smoke"}}}}}
-            complete = {"type": "event_msg", "payload": {"type": "task_complete"}}
+            complete = {"type": "event_msg", "payload": {"type": "task_complete", "turn_id": "child-turn"}}
             transcript.write_text(json.dumps(header) + "\n", encoding="utf-8")
             child_message = {"hook_event_name": "PreToolUse", "session_id": session,
                              "agent_id": child_id, "agent_type": "worker", "cwd": str(repo),
@@ -274,6 +275,7 @@ class G6HookIntegrationTests(unittest.TestCase):
             with transcript.open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(complete) + "\n")
             stop = {"hook_event_name": "SubagentStop", "session_id": session,
+                    "turn_id": "child-turn",
                     "agent_id": child_id, "agent_type": "worker", "cwd": str(repo),
                     "agent_transcript_path": str(transcript), "terminal_outcome": "PASS"}
             proc = subprocess.run([sys.executable, "-B", str(hook), "SubagentStop"],

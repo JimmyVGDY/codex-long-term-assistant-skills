@@ -75,12 +75,12 @@ nav:
       - Overview: zh-CN/index.md
       - Documentation hub: zh-CN/docs/README.md
       - Getting started:
-          - V7.15 user guide: zh-CN/docs/USER_GUIDE.md
+          - V7.16 user guide: zh-CN/docs/USER_GUIDE.md
           - Installation and recovery: zh-CN/docs/operations/INSTALLATION_RECOVERY.md
           - Codex configuration: zh-CN/docs/operations/CODEX_CONFIG_GUIDE.md
           - Project context and onboarding: zh-CN/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
       - Architecture and governance:
-          - V7.15 current system architecture: zh-CN/docs/architecture/SYSTEM_ARCHITECTURE.md
+          - V7.16 current system architecture: zh-CN/docs/architecture/SYSTEM_ARCHITECTURE.md
           - Domain Skill architecture: zh-CN/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
           - Model routing and cost: zh-CN/docs/MODEL_ROUTING_AND_COST_POLICY.md
           - Reviewer isolation: zh-CN/docs/REVIEWER_RUNTIME_ISOLATION.md
@@ -90,7 +90,7 @@ nav:
           - Capability index and optional gates: en/docs/CAPABILITY_INDEX.md
           - Component reuse acceptance: en/docs/COMPONENT_REUSE_ACCEPTANCE.md
       - Release and history:
-          - V7.15.3 release notes: zh-CN/docs/releases/v7.15.3/RELEASE_NOTES.md
+          - V7.16.0 release notes: zh-CN/docs/releases/v7.16.0/RELEASE_NOTES.md
           - V7.15.2 release notes: zh-CN/docs/releases/v7.15.2/RELEASE_NOTES.md
           - V7.14.6 release notes: zh-CN/docs/releases/v7.14.6/RELEASE_NOTES.md
           - V7.14.5 release notes: zh-CN/docs/releases/v7.14.5/RELEASE_NOTES.md
@@ -101,7 +101,7 @@ nav:
           - V7.14.0 release notes: zh-CN/docs/releases/v7.14.0/RELEASE_NOTES.md
           - V7.13.6 release notes: zh-CN/docs/releases/v7.13.6/RELEASE_NOTES.md
           - V7.13.5 release notes: zh-CN/docs/releases/v7.13.5/RELEASE_NOTES.md
-          - V7.15.3 validation report: zh-CN/docs/releases/v7.15.3/VALIDATION_REPORT.md
+          - V7.16.0 validation report: zh-CN/docs/releases/v7.16.0/VALIDATION_REPORT.md
           - V7.15.2 validation report: zh-CN/docs/releases/v7.15.2/VALIDATION_REPORT.md
           - V7.14.6 validation report: zh-CN/docs/releases/v7.14.6/VALIDATION_REPORT.md
           - V7.14.5 validation report: zh-CN/docs/releases/v7.14.5/VALIDATION_REPORT.md
@@ -112,7 +112,7 @@ nav:
           - V7.14.0 validation report: zh-CN/docs/releases/v7.14.0/VALIDATION_REPORT.md
           - V7.13.6 validation report: zh-CN/docs/releases/v7.13.6/VALIDATION_REPORT.md
           - V7.13.5 validation report: zh-CN/docs/releases/v7.13.5/VALIDATION_REPORT.md
-          - V7.15.3 audit report: zh-CN/docs/releases/v7.15.3/AUDIT_REPORT.md
+          - V7.16.0 audit report: zh-CN/docs/releases/v7.16.0/AUDIT_REPORT.md
           - V7.15.2 audit report: zh-CN/docs/releases/v7.15.2/AUDIT_REPORT.md
           - V7.14.6 audit report: zh-CN/docs/releases/v7.14.6/AUDIT_REPORT.md
           - V7.14.5 audit report: zh-CN/docs/releases/v7.14.5/AUDIT_REPORT.md
@@ -163,12 +163,12 @@ nav:
       - Overview: en/index.md
       - Documentation hub: en/docs/README.md
       - Getting started:
-          - V7.15 user guide: en/docs/USER_GUIDE.md
+          - V7.16 user guide: en/docs/USER_GUIDE.md
           - Installation and recovery: en/docs/operations/INSTALLATION_RECOVERY.md
           - Codex configuration: en/docs/operations/CODEX_CONFIG_GUIDE.md
           - Project context and onboarding: en/docs/PROJECT_CONTEXT_AND_ONBOARDING.md
       - Architecture and governance:
-          - V7.15 current system architecture: en/docs/architecture/SYSTEM_ARCHITECTURE.md
+          - V7.16 current system architecture: en/docs/architecture/SYSTEM_ARCHITECTURE.md
           - Domain Skill architecture: en/docs/V7_DOMAIN_SKILL_ARCHITECTURE.md
           - Model routing and cost: en/docs/MODEL_ROUTING_AND_COST_POLICY.md
           - Reviewer isolation: en/docs/REVIEWER_RUNTIME_ISOLATION.md
@@ -178,7 +178,7 @@ nav:
           - Capability index and optional gates: en/docs/CAPABILITY_INDEX.md
           - Component reuse acceptance: en/docs/COMPONENT_REUSE_ACCEPTANCE.md
       - Release and history:
-          - V7.15.3 release notes: en/docs/releases/v7.15.3/RELEASE_NOTES.md
+          - V7.16.0 release notes: en/docs/releases/v7.16.0/RELEASE_NOTES.md
           - V7.15.2 release notes: en/docs/releases/v7.15.2/RELEASE_NOTES.md
           - V7.14.6 release notes: en/docs/releases/v7.14.6/RELEASE_NOTES.md
           - V7.14.5 release notes: en/docs/releases/v7.14.5/RELEASE_NOTES.md
@@ -189,7 +189,7 @@ nav:
           - V7.14.0 release notes: en/docs/releases/v7.14.0/RELEASE_NOTES.md
           - V7.13.6 release notes: en/docs/releases/v7.13.6/RELEASE_NOTES.md
           - V7.13.5 release notes: en/docs/releases/v7.13.5/RELEASE_NOTES.md
-          - V7.15.3 validation report: en/docs/releases/v7.15.3/VALIDATION_REPORT.md
+          - V7.16.0 validation report: en/docs/releases/v7.16.0/VALIDATION_REPORT.md
           - V7.15.2 validation report: en/docs/releases/v7.15.2/VALIDATION_REPORT.md
           - V7.14.6 validation report: en/docs/releases/v7.14.6/VALIDATION_REPORT.md
           - V7.14.5 validation report: en/docs/releases/v7.14.5/VALIDATION_REPORT.md
@@ -200,7 +200,7 @@ nav:
           - V7.14.0 validation report: en/docs/releases/v7.14.0/VALIDATION_REPORT.md
           - V7.13.6 validation report: en/docs/releases/v7.13.6/VALIDATION_REPORT.md
           - V7.13.5 validation report: en/docs/releases/v7.13.5/VALIDATION_REPORT.md
-          - V7.15.3 audit report: en/docs/releases/v7.15.3/AUDIT_REPORT.md
+          - V7.16.0 audit report: en/docs/releases/v7.16.0/AUDIT_REPORT.md
           - V7.15.2 audit report: en/docs/releases/v7.15.2/AUDIT_REPORT.md
           - V7.14.6 audit report: en/docs/releases/v7.14.6/AUDIT_REPORT.md
           - V7.14.5 audit report: en/docs/releases/v7.14.5/AUDIT_REPORT.md

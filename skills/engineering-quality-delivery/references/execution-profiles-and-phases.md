@@ -37,8 +37,8 @@ IDENTIFY → PLAN → IMPLEMENT → VALIDATE → REVIEW → DELIVER → CLOSED
 
 ### 转换门禁
 
-- `PLAN → IMPLEMENT`：目标、范围、授权和停止条件明确；STRICT 已完成实施前门禁。
+- `PLAN → IMPLEMENT`：目标、范围、授权和停止条件明确；缺少 STRICT 预审材料时按限定可逆范围继续并记录未验证，不补造门禁通过。
 - `IMPLEMENT → VALIDATE`：差异稳定，无明显无关改动。
 - `VALIDATE → REVIEW`：最低验证有真实证据；失败和未验证项已记录。
-- `REVIEW → DELIVER`：阻塞问题解决，受影响证据未失效。
+- `REVIEW → DELIVER`：可交付明确标注的本地结果；正式发布等外部动作单独核验授权、已确认阻塞问题和证据状态。
 - 任意阶段发现范围扩张、权限不足、生产风险或证据失效，可进入 `BLOCKED` 或退回前一阶段。

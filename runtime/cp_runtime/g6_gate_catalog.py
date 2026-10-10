@@ -1,6 +1,6 @@
-"""中文：新策略门禁清单及缺证据时的继续执行契约。
+"""中文：冻结派发策略的门禁投影；实际入口清单见 gate_contract。
 
-English: Complete new-policy gate inventory and missing-evidence continuation contract.
+English: Frozen dispatch-policy gate projection; gate_contract owns actual entrypoints.
 """
 from __future__ import annotations
 

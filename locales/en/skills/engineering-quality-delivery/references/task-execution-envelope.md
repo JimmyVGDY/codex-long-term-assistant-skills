@@ -26,7 +26,7 @@ The Task Envelope is the minimum deterministic control object for a nontrivial t
 | Object | Current format | Source |
 |---|---|---|
 | Task Envelope template | schema <!-- cp-fact:schema.envelope -->4<!-- /cp-fact --> | `../assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml` and package manifest |
-| execution-state | schema <!-- cp-fact:schema.execution-state -->5<!-- /cp-fact --> | SCHEMA in `../scripts/execution_guard.py` |
+| execution-state | schema <!-- cp-fact:schema.execution-state -->6<!-- /cp-fact --> | SCHEMA in `../scripts/execution_guard.py` |
 | Embedded delegation_budget binding | schema 1 | execution_guard routing declaration |
 | External DelegationBudget ledger | <!-- cp-fact:schema.budget -->3.0<!-- /cp-fact --> | Root-task budget runtime |
 

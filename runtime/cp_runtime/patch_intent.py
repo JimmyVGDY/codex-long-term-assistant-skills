@@ -122,6 +122,19 @@ def _validate_path(value: Any, root: Path) -> tuple[str, Path]:
         _fail("INVALID_PATH")
     if any(part == ".." for part in value.replace("\\", "/").split("/")):
         _fail("PATH_ESCAPE")
+    # 中文：桌面文件工具可以提供绝对路径；先核验真实根，再生成内部相对路径。
+    # English: Desktop file tools may supply absolute paths; verify the real root
+    # before converting to the internal repository-relative representation.
+    supplied = Path(value)
+    if supplied.is_absolute():
+        try:
+            absolute = safe_path(supplied)
+            value = absolute.relative_to(root).as_posix()
+        except CapabilityError as exc:
+            _fail(str(exc) if str(exc) in {"SENSITIVE_PATH", "LINK_REJECTED", "PATH_UNREADABLE"}
+                  else "INVALID_PATH")
+        except ValueError:
+            _fail("PATH_ESCAPE")
     try:
         relative_path(value)
     except CapabilityError as exc:

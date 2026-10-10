@@ -27,7 +27,7 @@ Task Envelope 是非简单任务的最小确定性控制对象，用于在主会
 | 对象 | 当前格式 | 事实来源 |
 |---|---|---|
 | Task Envelope 模板 | schema <!-- cp-fact:schema.envelope -->4<!-- /cp-fact --> | `../assets/templates/TASK_EXECUTION_ENVELOPE.template.yaml` 与包 manifest |
-| execution-state | schema <!-- cp-fact:schema.execution-state -->5<!-- /cp-fact --> | `../scripts/execution_guard.py` 的 SCHEMA |
+| execution-state | schema <!-- cp-fact:schema.execution-state -->6<!-- /cp-fact --> | `../scripts/execution_guard.py` 的 SCHEMA |
 | 嵌入式 delegation_budget 绑定 | schema 1 | execution_guard 的 routing 声明 |
 | 外部 DelegationBudget 账本 | <!-- cp-fact:schema.budget -->3.0<!-- /cp-fact --> | 根任务预算运行时 |
 
