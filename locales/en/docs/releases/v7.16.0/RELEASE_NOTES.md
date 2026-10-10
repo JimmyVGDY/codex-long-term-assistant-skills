@@ -1,4 +1,4 @@
-# V7.16.0 release notes
+# V7.16.0 Release Notes
 
 This release aligns actual Codex Desktop gates with the current policy: valid absolute paths were rejected, index and review gaps halted work, late receipts retained holds, and continuation/message identities were incompatible.
 
