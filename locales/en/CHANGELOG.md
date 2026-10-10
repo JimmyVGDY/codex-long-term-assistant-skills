@@ -2,7 +2,13 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
-## Unreleased
+## 7.15.3 - 2026-10-10
+
+- Advance the Codex Desktop internal component window to official stable 0.162.1, retain the ten preceding stable releases, and remove 0.156.1 and 0.156.0.
+- Freeze official npm, annotated-tag commits, and source-contract evidence; add `result-v162` while retaining historical result profiles still consumed by 0.161.0 and 0.157.x.
+- Preserve V7.15.2's published GPT-6 script-first defaults and bounded flexibility; package, account Plugin, fresh Desktop task, CI, tag, assets, provenance, publication, and anonymous downloads remain separate acceptance layers.
+
+## 7.15.2 - 2026-10-09
 
 Target version: 7.15.2. These are source-candidate feature changes; installation, native acceptance, commit and public-release states are recorded separately in the version validation report.
 

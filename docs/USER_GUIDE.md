@@ -1,8 +1,8 @@
-# Codex 跨项目长期技术助手 V7.15.2 使用说明
+# Codex 跨项目长期技术助手 V7.15.3 使用说明
 
 ## 快速开始
 
-在解压后的 V7.15.2 包中，Windows 运行 `./scripts/install-base.ps1`，POSIX 运行 `./scripts/install-base.sh`，随后直接描述工程任务。基础 Plugin 加载十个 Skill，无需本包 Python runtime 或 API Key，不安装账户 Hook、Reviewer、全局规则或长期运行时状态。
+在解压后的 V7.15.3 包中，Windows 运行 `./scripts/install-base.ps1`，POSIX 运行 `./scripts/install-base.sh`，随后直接描述工程任务。基础 Plugin 加载十个 Skill，无需本包 Python runtime 或 API Key，不安装账户 Hook、Reviewer、全局规则或长期运行时状态。
 
 简单局部任务默认由主 Agent 完成；Profile、索引、全扫和预算台账不是开始任务的前提。需要时再通过 `install-user` 接入增强，详见[安装与恢复](operations/INSTALLATION_RECOVERY.md)。下方索引、Hook 与预算步骤适用于增强能力；严格预算仅在真实宿主绑定、账本和 dispatch permit 均可核验时强制执行，否则模型上限仅为策略约束。
 
@@ -77,11 +77,11 @@ Reviewer、Explorer、Worker共用根任务预算。增强运行时的新默认`
 
 旧V1/V2/V3/V4账本和结果按冻结合同读取，不重新计费或判定。安装、注册、Hook、真实派发、验证通过和已生效分别读回；合成测试不替代Desktop原生验收。
 
-## 5. Codex 0.160.1 边界
+## 5. Codex 0.162.1 边界
 
-V7.14.6 的内部组件窗口是 Codex CLI 0.160.1 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结；这不建立独立 CLI 产品支持。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.160.1 回移 Windows 远程 stdio MCP 环境保留修复，在显式远程环境变量下继续传递 `SYSTEMROOT`、`TEMP` 和 `TMP`；这不改变本包的 Reviewer 资格、模型默认或 Operation v2 合同。0.160.0 的 workspace、队列恢复和 Windows 修复证据继续保留。Hook discovery/schema 与 apply_patch handler/context 合同未漂移，活动窗口内全部 `0.160.x`、`0.159.x` 及 0.158.0 复用 `result-v158`；0.155.0 已退出并继续失败关闭，0.155.1 仍使用 `result-v155`。以上是V7.14.6组件兼容基线，不代表新默认模型策略；新任务采用上文6系列默认，资格门槛仅属于显式旧合同。
+V7.15.3 的内部组件窗口是 Codex CLI 0.162.1 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结；这不建立独立 CLI 产品支持。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.162.0 增加受管 Git worktree、任务固定、转录复制与更多链接交互，并改进自定义 Responses provider、沙箱与 Windows 文件访问；0.162.1 修复多行异步提问崩溃和后台服务 feature 默认不一致导致的启动失败。这些上游变化不自动改变本包的 Reviewer 资格、预算或 Operation v2 合同，也不撤销上文已发布的 GPT-6 脚本决策默认。0.162.x 的 Hook discovery/schema 沿用 0.161.0 合同，但 apply_patch handler 再次漂移，因此使用独立 `result-v162`；context 未漂移。0.161.0 保留 `result-v161`，旧 `0.160.x`、`0.159.x` 及 0.158.0 继续复用 `result-v158`；0.156.1 与 0.156.0 已退出并失败关闭。
 
-基础安装必须读回 `installed=true`、`enabled=true`、`version=7.15.2`、十个 Skill 与空 Plugin Hook 清单；增强安装还须核验 `HOST_COMPATIBLE` schema 3 快照、账户 Hook 和受管运行时资产。磁盘已有文件不等于 Plugin 已注册或已启用。
+基础安装必须读回 `installed=true`、`enabled=true`、`version=7.14.7`、十个 Skill 与空 Plugin Hook 清单；增强安装还须核验 `HOST_COMPATIBLE` schema 3 快照、账户 Hook 和受管运行时资产。磁盘已有文件不等于 Plugin 已注册或已启用。
 
 ## 任务反馈与优化收益
 

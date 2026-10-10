@@ -469,3 +469,6 @@ skills/multi-agent-independent-review/references/script-first-routing.md
 docs/releases/v7.15.2/RELEASE_NOTES.md
 docs/releases/v7.15.2/VALIDATION_REPORT.md
 docs/releases/v7.15.2/AUDIT_REPORT.md
+docs/releases/v7.15.3/RELEASE_NOTES.md
+docs/releases/v7.15.3/VALIDATION_REPORT.md
+docs/releases/v7.15.3/AUDIT_REPORT.md
