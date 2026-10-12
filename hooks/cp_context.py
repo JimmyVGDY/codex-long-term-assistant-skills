@@ -6,17 +6,12 @@ import sys
 from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "runtime"))
-from cp_runtime.routing_contract import _object, _constant
+from cp_runtime.context_hook_input import read_context_input
 from cp_runtime.g6_handoff_v1 import route as g6_route
 from cp_runtime.routing_hook_v5 import registered_path, child_tool
 
 def main():
-    raw = sys.stdin.buffer.read(2_097_153)
-    if len(raw) > 2_097_152:
-        raise ValueError("V5_HOOK_SIZE")
-    data = json.loads(raw, object_pairs_hook=_object, parse_constant=_constant)
-    if not isinstance(data, dict):
-        raise ValueError("V5_HOOK_OBJECT")
+    data = read_context_input(sys.stdin.buffer)
     if not data.get("agent_id"):
         # 中文：本入口只约束子任务；主任务写入和派发由各自门禁核验。
         # English: This entrypoint guards children only. Parent writes and

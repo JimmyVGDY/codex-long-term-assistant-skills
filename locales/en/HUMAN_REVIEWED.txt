@@ -466,6 +466,9 @@ docs/releases/v7.15.1/VALIDATION_REPORT.md
 skills/multi-agent-independent-review/references/script-first-routing.md
 
 # Coordinating-agent bilingual comparison only; not human approval or publication authority.
+docs/releases/v7.16.1/RELEASE_NOTES.md
+docs/releases/v7.16.1/VALIDATION_REPORT.md
+docs/releases/v7.16.1/AUDIT_REPORT.md
 docs/releases/v7.15.2/RELEASE_NOTES.md
 docs/releases/v7.15.2/VALIDATION_REPORT.md
 docs/releases/v7.15.2/AUDIT_REPORT.md
