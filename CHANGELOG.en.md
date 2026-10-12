@@ -4,6 +4,13 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.16.1 - 2026-10-12
+
+- Fix the child-context Hook rejecting parent tool inputs/results above 2 MiB before identifying the caller, or injecting an incorrect incomplete-result instruction.
+- Validate complete large JSON envelopes with bounded streaming and top-level identity only; reject duplicates, invalid escapes/UTF-8, trailing data and conflicting aliases without logging or spooling bodies.
+- Preserve the existing 2 MiB child limit and G6/V5 ownership and permission checks; bound transport, elapsed parsing time, depth, nodes and key memory.
+- Add parent/child, byte-boundary, image-result, late-identity and malformed-payload regressions. Publication, installation and field effectiveness remain separate checks.
+
 ## 7.16.0 - 2026-10-12
 
 Post-release documentation correction (2026-10-12): synchronize current downloads, release/validation status, and landing-page registration counts. Download sections now follow recorded public Release metadata. Published tags and signed artifacts retain their original content.

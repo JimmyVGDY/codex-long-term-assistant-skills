@@ -90,7 +90,7 @@ nav:
           - Capability index and optional gates: en/docs/CAPABILITY_INDEX.md
           - Component reuse acceptance: en/docs/COMPONENT_REUSE_ACCEPTANCE.md
       - Release and history:
-          - V7.16.0 release notes: zh-CN/docs/releases/v7.16.0/RELEASE_NOTES.md
+          - V7.16.1 release notes: zh-CN/docs/releases/v7.16.1/RELEASE_NOTES.md
           - V7.15.2 release notes: zh-CN/docs/releases/v7.15.2/RELEASE_NOTES.md
           - V7.14.6 release notes: zh-CN/docs/releases/v7.14.6/RELEASE_NOTES.md
           - V7.14.5 release notes: zh-CN/docs/releases/v7.14.5/RELEASE_NOTES.md
@@ -101,7 +101,7 @@ nav:
           - V7.14.0 release notes: zh-CN/docs/releases/v7.14.0/RELEASE_NOTES.md
           - V7.13.6 release notes: zh-CN/docs/releases/v7.13.6/RELEASE_NOTES.md
           - V7.13.5 release notes: zh-CN/docs/releases/v7.13.5/RELEASE_NOTES.md
-          - V7.16.0 validation report: zh-CN/docs/releases/v7.16.0/VALIDATION_REPORT.md
+          - V7.16.1 validation report: zh-CN/docs/releases/v7.16.1/VALIDATION_REPORT.md
           - V7.15.2 validation report: zh-CN/docs/releases/v7.15.2/VALIDATION_REPORT.md
           - V7.14.6 validation report: zh-CN/docs/releases/v7.14.6/VALIDATION_REPORT.md
           - V7.14.5 validation report: zh-CN/docs/releases/v7.14.5/VALIDATION_REPORT.md
@@ -112,7 +112,7 @@ nav:
           - V7.14.0 validation report: zh-CN/docs/releases/v7.14.0/VALIDATION_REPORT.md
           - V7.13.6 validation report: zh-CN/docs/releases/v7.13.6/VALIDATION_REPORT.md
           - V7.13.5 validation report: zh-CN/docs/releases/v7.13.5/VALIDATION_REPORT.md
-          - V7.16.0 audit report: zh-CN/docs/releases/v7.16.0/AUDIT_REPORT.md
+          - V7.16.1 audit report: zh-CN/docs/releases/v7.16.1/AUDIT_REPORT.md
           - V7.15.2 audit report: zh-CN/docs/releases/v7.15.2/AUDIT_REPORT.md
           - V7.14.6 audit report: zh-CN/docs/releases/v7.14.6/AUDIT_REPORT.md
           - V7.14.5 audit report: zh-CN/docs/releases/v7.14.5/AUDIT_REPORT.md
@@ -178,7 +178,7 @@ nav:
           - Capability index and optional gates: en/docs/CAPABILITY_INDEX.md
           - Component reuse acceptance: en/docs/COMPONENT_REUSE_ACCEPTANCE.md
       - Release and history:
-          - V7.16.0 release notes: en/docs/releases/v7.16.0/RELEASE_NOTES.md
+          - V7.16.1 release notes: en/docs/releases/v7.16.1/RELEASE_NOTES.md
           - V7.15.2 release notes: en/docs/releases/v7.15.2/RELEASE_NOTES.md
           - V7.14.6 release notes: en/docs/releases/v7.14.6/RELEASE_NOTES.md
           - V7.14.5 release notes: en/docs/releases/v7.14.5/RELEASE_NOTES.md
@@ -189,7 +189,7 @@ nav:
           - V7.14.0 release notes: en/docs/releases/v7.14.0/RELEASE_NOTES.md
           - V7.13.6 release notes: en/docs/releases/v7.13.6/RELEASE_NOTES.md
           - V7.13.5 release notes: en/docs/releases/v7.13.5/RELEASE_NOTES.md
-          - V7.16.0 validation report: en/docs/releases/v7.16.0/VALIDATION_REPORT.md
+          - V7.16.1 validation report: en/docs/releases/v7.16.1/VALIDATION_REPORT.md
           - V7.15.2 validation report: en/docs/releases/v7.15.2/VALIDATION_REPORT.md
           - V7.14.6 validation report: en/docs/releases/v7.14.6/VALIDATION_REPORT.md
           - V7.14.5 validation report: en/docs/releases/v7.14.5/VALIDATION_REPORT.md
@@ -200,7 +200,7 @@ nav:
           - V7.14.0 validation report: en/docs/releases/v7.14.0/VALIDATION_REPORT.md
           - V7.13.6 validation report: en/docs/releases/v7.13.6/VALIDATION_REPORT.md
           - V7.13.5 validation report: en/docs/releases/v7.13.5/VALIDATION_REPORT.md
-          - V7.16.0 audit report: en/docs/releases/v7.16.0/AUDIT_REPORT.md
+          - V7.16.1 audit report: en/docs/releases/v7.16.1/AUDIT_REPORT.md
           - V7.15.2 audit report: en/docs/releases/v7.15.2/AUDIT_REPORT.md
           - V7.14.6 audit report: en/docs/releases/v7.14.6/AUDIT_REPORT.md
           - V7.14.5 audit report: en/docs/releases/v7.14.5/AUDIT_REPORT.md

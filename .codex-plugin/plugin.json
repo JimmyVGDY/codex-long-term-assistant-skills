@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.16.0",
-  "description": "跨项目长期技术助手 V7.16.0：桌面门禁一致性、GPT-6 控制器与原生调用恢复。",
+  "version": "7.16.1",
+  "description": "跨项目长期技术助手 V7.16.1：修复大型工具结果误拦主任务，保留子任务校验。",
   "author": {
     "name": "Project maintainers"
   },

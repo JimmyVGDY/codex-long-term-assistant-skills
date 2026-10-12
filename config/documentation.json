@@ -2,23 +2,38 @@
   "schema_version": 1,
   "documents": [
     {
+      "path": "docs/releases/v7.16.1/RELEASE_NOTES.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.16.1/RELEASE_NOTES.md"
+    },
+    {
+      "path": "docs/releases/v7.16.1/VALIDATION_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.16.1/VALIDATION_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.16.1/AUDIT_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.16.1/AUDIT_REPORT.md"
+    },
+    {
       "path": "docs/DESKTOP_GATE_RECOVERY.md",
       "status": "active",
       "english_source": "locales/en/docs/DESKTOP_GATE_RECOVERY.md"
     },
     {
       "path": "docs/releases/v7.16.0/RELEASE_NOTES.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.16.0/RELEASE_NOTES.md"
     },
     {
       "path": "docs/releases/v7.16.0/VALIDATION_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.16.0/VALIDATION_REPORT.md"
     },
     {
       "path": "docs/releases/v7.16.0/AUDIT_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.16.0/AUDIT_REPORT.md"
     },
     {
@@ -1103,6 +1118,18 @@
     }
   ],
   "english_projections": [
+    {
+      "source": "locales/en/docs/releases/v7.16.1/RELEASE_NOTES.md",
+      "target": "docs/releases/v7.16.1/RELEASE_NOTES.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.16.1/VALIDATION_REPORT.md",
+      "target": "docs/releases/v7.16.1/VALIDATION_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.16.1/AUDIT_REPORT.md",
+      "target": "docs/releases/v7.16.1/AUDIT_REPORT.en.md"
+    },
     {
       "source": "locales/en/docs/DESKTOP_GATE_RECOVERY.md",
       "target": "docs/DESKTOP_GATE_RECOVERY.en.md"

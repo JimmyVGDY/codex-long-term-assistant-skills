@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.16.0",
+  "version": "7.16.1",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 329,
-  "payload_digest": "a60bc67bc74c303c6742247c60227099fcd2b722729ef68d73fc13458356ddf0",
+  "file_count": 330,
+  "payload_digest": "99e6760f4a9b47e0dd9698e7bd7a0c717347886dd2637c286b8a20b6cbca3cc8",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "fa772cb8543ab1e647e2b34a378ba18167c14dba008d6717a12ca5abbc5af8f9",
-      "size": 830
+      "sha256": "45923a3e9afea26b1ef9d8f159a5942d2d287c816cb0366c832bbf1b03f6b77c",
+      "size": 833
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -803,8 +803,8 @@
     },
     {
       "path": "hooks/cp_context.py",
-      "sha256": "74f6844d316916fb838cd2edefdc37f704ed40d2582c60da49af99d188ff799f",
-      "size": 2925
+      "sha256": "0632757211f11db5d0cd2de412e83b5b0964d685efa809134ddffe5c4fdd60db",
+      "size": 2704
     },
     {
       "path": "hooks/cp_gate.cmd",
@@ -950,6 +950,11 @@
       "path": "runtime/cp_runtime/context_final_v2.py",
       "sha256": "0d2ffd670214431400715dde30e913f5cc9c31807c434baf2b0b388aa9d4450c",
       "size": 6761
+    },
+    {
+      "path": "runtime/cp_runtime/context_hook_input.py",
+      "sha256": "e172d1c9f628076d0a6a4832bac4d61e14c32f7cfe2be68b700a61fa917e8aff",
+      "size": 8044
     },
     {
       "path": "runtime/cp_runtime/context_recovery_v2.py",

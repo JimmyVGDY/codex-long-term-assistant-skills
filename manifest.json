@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.16.0",
-  "release_name": "桌面门禁一致性与原生恢复",
+  "version": "7.16.1",
+  "release_name": "大型工具结果的主任务隔离修复",
   "generated_for": "Codex Desktop engineering assistance with script-first GPT-6 nine-profile defaults, bounded adjustments, shared budgets, evidence-tolerant gates, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -729,7 +729,8 @@
     "7.13.0",
     "7.13.5",
     "7.13.6",
-    "7.15.3"
+    "7.15.3",
+    "7.16.0"
   ],
   "release_validation": {
     "python_syntax": true,
