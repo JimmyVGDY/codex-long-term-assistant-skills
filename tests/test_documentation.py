@@ -81,6 +81,74 @@ class DocumentationSourceTests(unittest.TestCase):
         self.assertTrue(audit(self.root, write=True)["ok"])
         self.assertIn("releases/v7.8.1/VALIDATION_REPORT.md", (self.root / "README.md").read_text())
 
+    def published_release_fixture(self, version="7.6.1"):
+        repository = "https://github.com/JimmyVGDY/codex-long-term-assistant-skills"
+        names = [f"Codex-Skills-V{version}-{locale}.zip" for locale in ("zh-CN", "en")]
+        names += ["SHA256SUMS.txt", "witness-zh-CN.json", "witness-en.json", f"Codex-Skills-V{version}-provenance.json"]
+        value = {"schema_version": 1, "tag_name": "v" + version, "draft": False, "prerelease": False,
+                 "published_at": "2026-10-12T01:46:47Z", "html_url": repository + "/releases/tag/v" + version,
+                 "assets": [{"name": name, "browser_download_url": repository + "/releases/download/v" + version + "/" + name,
+                             "digest": "sha256:" + "a" * 64} for name in names]}
+        self.write("config/published-release.json", value)
+        return value
+
+    def test_downloads_follow_publication_without_promoting_source_candidates(self):
+        self.published_release_fixture()
+        self.write("README.md", "<!-- cp-fact:release.downloads.en -->old<!-- /cp-fact -->\n")
+        self.catalog["fact_files"]["README.md"] = ["release.downloads.en"]
+        self.write("config/documentation.json", self.catalog)
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        published = (self.root / "README.md").read_text(encoding="utf-8")
+        self.assertIn("releases/download/v7.6.1/Codex-Skills-V7.6.1-zh-CN.zip", published)
+        self.write("manifest.json", {"version": "7.8.1"})
+        self.assertTrue(audit(self.root)["ok"])
+        self.assertEqual([], audit(self.root, write=True)["updated"])
+        self.assertEqual(published, (self.root / "README.md").read_text(encoding="utf-8"))
+        self.published_release_fixture("7.8.1")
+        self.assertIn("FACT_DRIFT", self.codes())
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        self.assertIn("releases/download/v7.8.1/Codex-Skills-V7.8.1-en.zip",
+                      (self.root / "README.md").read_text(encoding="utf-8"))
+
+    def test_incomplete_draft_or_foreign_release_is_not_a_download_source(self):
+        from documentation import normalize_published_release
+        for change in ("draft", "prerelease", "asset", "missing", "duplicate", "date", "digest"):
+            with self.subTest(change=change):
+                value = self.published_release_fixture()
+                if change in ("draft", "prerelease"): value[change] = True
+                elif change == "asset": value["assets"][0]["browser_download_url"] = "https://example.invalid/package.zip"
+                elif change == "missing": value["assets"].pop()
+                elif change == "duplicate": value["assets"][0] = value["assets"][1]
+                elif change == "date": value["published_at"] = "2026-99-99T00:00:00Z"
+                else: value["assets"][0]["digest"] = ""
+                with self.assertRaises(DocumentationError): normalize_published_release(value)
+
+    def test_invalid_publication_record_preserves_the_previous_snapshot(self):
+        from documentation import record_published_release
+        valid = self.published_release_fixture()
+        source = self.root / "public-api.json"
+        source.write_text(json.dumps(valid), encoding="utf-8-sig")
+        self.assertEqual("v7.6.1", record_published_release(source, self.root)["tag_name"])
+        snapshot = self.root / "config/published-release.json"
+        before = snapshot.read_bytes()
+        valid["draft"] = True
+        source.write_text(json.dumps(valid), encoding="utf-8-sig")
+        with self.assertRaises(DocumentationError):
+            record_published_release(source, self.root)
+        self.assertEqual(before, snapshot.read_bytes())
+
+    def test_registration_count_tracks_handler_contract(self):
+        self.write("README.md", "<!-- cp-fact:hook-registrations.en -->old<!-- /cp-fact -->\n")
+        self.catalog["fact_files"]["README.md"] = ["hook-registrations.en"]
+        self.write("config/documentation.json", self.catalog)
+        self.write("runtime/cp_runtime/gate_contract.py", "HOOK_ENTRYPOINTS = {'cp_hook.py': {'Stop'}, 'cp_gate.py': {'PreToolUse', 'PostToolUse'}}\n")
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        self.assertIn("3 account registrations", (self.root / "README.md").read_text())
+        self.write("runtime/cp_runtime/gate_contract.py", "HOOK_ENTRYPOINTS = {'cp_hook.py': {'Stop', 'Interrupt'}, 'cp_gate.py': {'PreToolUse', 'PostToolUse'}}\n")
+        self.assertIn("FACT_DRIFT", self.codes())
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        self.assertIn("4 account registrations", (self.root / "README.md").read_text())
+
     def test_release_status_must_follow_package_version(self):
         for version, status in [("7.6.0", "active"), ("7.6.1", "reference")]:
             name = f"docs/releases/v{version}/RELEASE_NOTES.md"

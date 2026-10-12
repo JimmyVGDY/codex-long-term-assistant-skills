@@ -1,6 +1,6 @@
 # Documentation Maintenance and Fact Checks
 
-This guide describes editing sources, check coverage, and release handoff. [documentation.json](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/config/documentation.json) owns document classification and language-source relationships.
+This guide describes editing sources, check coverage, and release handoff. [documentation.json](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/config/documentation.json) owns document classification and language-source relationships.
 
 Run the maintenance commands below from the root of a complete source checkout. A single-language release package excludes the `locales/en` and `.github` documentation sources. Packaged documents remain readable; editing bilingual sources or rebuilding the site requires the complete source.
 
@@ -96,3 +96,16 @@ Reuse existing checks and builders. Observe independent manual fact edits, check
 Task state, evidence archives and downloaded tools stay outside the repository. Preserve current Profile, index and gate bindings when archiving historical material. Archive files with hashes and a restoration map before removing originals.
 
 Current package labels and validation report links use manifest-backed fact markers. Release documents for the manifest version must be active; other versioned release documents must be historical. The release archive points to online publication readbacks instead of retaining a manually maintained current-release claim.
+
+## Post-publication synchronization
+
+`config/published-release.json` owns public download facts separately from the source-candidate version in `manifest.json`. Recording accepts only a public, stable Release from this repository with all six expected assets. The command records public metadata; it does not publish or perform online verification.
+
+```text
+gh api https://api.github.com/repos/JimmyVGDY/codex-long-term-assistant-skills/releases/latest > <external-public-metadata-file>
+python scripts/documentation.py record-release --release-json <external-public-metadata-file>
+python scripts/documentation.py sync
+python scripts/documentation.py check
+```
+
+The maintainer first verifies the API readback and assets, then records the snapshot. Download tables, release-note links, and verification commands derive from that one public source. Advancing a source candidate does not promote unpublished tags into download targets. The landing page reads managed-registration counts from the actual handler contract, cross-checked by installer-entry tests. Backfill validation/audit reports and the CHANGELOG date in both language sources, then verify GitHub README rendering and both sites. Historical evidence and signed ZIPs retain their original facts.

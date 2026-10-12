@@ -1,8 +1,10 @@
 <p align="right">
-  <strong>简体中文</strong> · <a href="README.en.md">English</a>
+  <strong>简体中文</strong> · <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/en/">English</a>
 </p>
 
-V7.16.0 源码候选面向 Codex Desktop，修复实际门禁、GPT-6 控制器和原生回执恢复；旧根保持原路由与账目语义。内部脚本仅用于管理与验证，不构成独立 CLI 产品支持轨道；安装和发布状态分别读回。
+面向 Codex Desktop，修复实际门禁、GPT-6 控制器和原生回执恢复；旧根保持原路由与账目语义。内部脚本仅用于管理与验证，不构成独立 CLI 产品支持轨道。
+
+<!-- cp-fact:release.status.zh -->正式版 [V7.16.0](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.0) 已于 2026-10-12（UTC）公开发布。<!-- /cp-fact -->
 
 # Codex 跨项目长期技术助手
 
@@ -23,7 +25,7 @@ V7.16.0 源码候选面向 Codex Desktop，修复实际门禁、GPT-6 控制器�
   <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.16.0 保留消息与 Stop 非阻断、Operation v2、基础 Skill 与可选增强分离等边界。可选文件门禁仍默认关闭；启用后，缺少索引或可选材料按限定范围继续，不临时关闭门禁。能力档位不代表业务语义正确或权限已授予。详见[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)和[桌面门禁与恢复](docs/DESKTOP_GATE_RECOVERY.md)。
+当前实现保留消息与 Stop 非阻断、Operation v2、基础 Skill 与可选增强分离等边界。可选文件门禁仍默认关闭；启用后，缺少索引或可选材料按限定范围继续，不临时关闭门禁。能力档位不代表业务语义正确或权限已授予。详见[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)和[桌面门禁与恢复](docs/DESKTOP_GATE_RECOVERY.md)。
 
 **快速入口：** [双语文档站](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [下载](#下载) · [四条日常路径](#四条日常路径与统一入口) · [使用示例](#可复现使用示例) · [兼容矩阵](#兼容矩阵) · [安装](#首次安装与升级) · [文档](#文档与协作)
 
@@ -56,14 +58,16 @@ POSIX 将上述路径替换为 `./scripts/cp-assistant.sh`。四条路径的完�
 
 ## 下载
 
-以下链接指向 V7.12.0 标签制品；标签发布前可能暂不可用，正式状态以 GitHub Release 读回为准。
+<!-- cp-fact:release.downloads.zh -->
+以下为已公开的 **V7.16.0** 安装包，发布日期为 **2026-10-12（UTC）**。
 
 | 发行包 | 适用界面 | 下载 |
 | --- | --- | --- |
-| `Codex-Skills-V7.12.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.12.0/Codex-Skills-V7.12.0-zh-CN.zip) |
-| `Codex-Skills-V7.12.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.12.0/Codex-Skills-V7.12.0-en.zip) |
+| `Codex-Skills-V7.16.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.0/Codex-Skills-V7.16.0-zh-CN.zip) |
+| `Codex-Skills-V7.16.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.0/Codex-Skills-V7.16.0-en.zip) |
 
-[查看最新 Release、校验和与构建见证](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
+[Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.0) · [SHA256SUMS.txt](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.0/SHA256SUMS.txt)
+<!-- /cp-fact -->
 
 ## 两步开始
 
@@ -140,14 +144,13 @@ flowchart LR
   -> 输出证据、风险和未验证边界
 ```
 
-生命周期可形成 `TURN_OPENED -> SUBAGENT_STARTED -> SUBAGENT_STOPPED -> TASK_COMPLETED` 事件序列；会话结束后由 `SessionEnd` 进入延迟封印流程。V7.6.0 只证明派发前策略符合批准档位与 Terra High 上限，不读取、不推断、不保存或导出宿主实际使用的模型与推理强度。
+生命周期可形成 `TURN_OPENED -> SUBAGENT_STARTED -> SUBAGENT_STOPPED -> TASK_COMPLETED` 事件序列；会话结束后由 `SessionEnd` 进入延迟封印流程。派发记录只证明请求参数符合当前任务的已授权策略；不读取、不推断、不保存或导出宿主实际后台型号与推理强度。
 
 ## 兼容矩阵
 
 | 环境或模式 | 当前定位 | 已有验证层级 | 边界 |
 | --- | --- | --- | --- |
-| Codex Desktop + Plugin | 唯一产品目标 | 本机管理组件及既有插件登记只读探针通过 | 安装、加载、新默认原生派发与旧策略回放需分别验收 |
-
+| Codex Desktop + Plugin | 唯一产品目标 | 本机安装、门禁开启的写入、续跑与回执对账已验收 | 结论绑定 V7.16.0 的发布提交与验收时宿主；其他环境须另行核验 |
 | Windows / Ubuntu Python 矩阵 | 包级发布门禁 | Python 3.11/3.13 测试与构建 | 不代表桌面原生验收；远端结果以 Actions 为准 |
 | 旧安装布局与冻结策略 | 兼容恢复 | 既有状态、账本与解释器继续保留 | 不建立独立 CLI 产品适配或验收轨道 |
 | macOS | 未验证 | 无当前 CI 或宿主验收证据 | 状态保持 `UNVERIFIED` |
@@ -156,7 +159,7 @@ flowchart LR
 
 桌面管理组件可使用内部预发布号。安装核验按组件摘要、命令和登记结构进行；组件版本不等于桌面任务运行版本。旧稳定版注册表仅保留历史读取与恢复语义。
 
-V7.6.0 增加有界外部能力索引与可选流程门禁。V7.6.2 迁移补丁不再把旧 GateTask 回执当作原生写入授权；V7.7.1 把兼容锚点前移到 Codex CLI 0.154.0 并修复停用门禁的 PostTool 对账。该段记录旧版本可选门禁的默认值；新默认对缺证据提供继续路径，不通过临时关门禁放行。流程证据不代表业务语义正确；公开Release仍以授权操作和读回为准。
+当前可选文件门禁使用 Operation v2 的原生来源、目标与前态核验。旧 GateTask 和冻结策略仅用于历史回放；启用的门禁在缺少可选证据时返回可执行的继续路径。流程证据不代表业务语义正确，公开 Release 以授权操作和读回为准。
 
 ## 首次安装与升级
 
@@ -172,7 +175,7 @@ codex plugin list --json
 
 增强安装只有在 Plugin 读回 `installed=true`、`enabled=true`、目标发行版本、兼容宿主快照且旧领域 Skill 不再发现时才成立。`doctor` 与 `status` 默认说明可继续的能力、受影响项、原因与唯一下一步；完整机器记录使用 `--json`。
 
-安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/operations/INSTALLATION_RECOVERY.md) 和 [V7.9 使用指南](docs/USER_GUIDE.md)。
+安装器会识别已有版本、备份并移除受管旧 Skill、拒绝链接与 Reparse Point 风险，并保留未知文件。完整流程见 [安装与恢复](docs/operations/INSTALLATION_RECOVERY.md) 和 [使用指南](docs/USER_GUIDE.md)。
 
 ## 派发策略与模型身份隐私边界
 
@@ -188,7 +191,7 @@ codex plugin list --json
 - [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
 - [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
 - [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · [V7.12.0 发行说明](docs/releases/v7.12.0/RELEASE_NOTES.md)
+- [版本记录](CHANGELOG.md) · <!-- cp-fact:release.notes.zh -->[V7.16.0 发行说明](docs/releases/v7.16.0/RELEASE_NOTES.md)<!-- /cp-fact -->
 
 ## 本地验证
 
@@ -203,9 +206,12 @@ python scripts\validate-package.py
 
 `Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。公开 Release 由受权操作创建并单独读回。
 
-```shell
-gh attestation verify Codex-Skills-V7.12.0-zh-CN.zip --repo OWNER/REPOSITORY
+<!-- cp-fact:release.attestation.zh -->
+```powershell
+$repository = ([uri]"https://github.com/JimmyVGDY/codex-long-term-assistant-skills").AbsolutePath.Trim("/")
+gh attestation verify Codex-Skills-V7.16.0-zh-CN.zip --repo $repository
 ```
+<!-- /cp-fact -->
 
 完整门禁和新版本发布步骤见 [Release 自动化与制品来源证明](docs/releases/RELEASE_AUTOMATION.md)。
 
@@ -221,4 +227,4 @@ Apache-2.0 许可，见 [LICENSE](LICENSE)。
 
 复用入口：[能力索引与可选门禁](docs/CAPABILITY_INDEX.md) · [复用验收规程](docs/COMPONENT_REUSE_ACCEPTANCE.md)。
 
-V7.6.0 发布后读回（核验时间：2026-09-09 04:04:02 UTC）：提交 `26d013fa824fa148a839d30aaedd22f3744e8bbf` 的[发行工作流](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304636222)、[主分支 CI](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304540318)和[文档站部署](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304540320)均通过。此记录绑定该标签及上述核验时间，不替代后续修改的验证，也不证明所有宿主都支持取消。
+<!-- cp-fact:release.validation.zh -->[当前正式版验证与已知边界](docs/releases/v7.16.0/VALIDATION_REPORT.md)<!-- /cp-fact -->

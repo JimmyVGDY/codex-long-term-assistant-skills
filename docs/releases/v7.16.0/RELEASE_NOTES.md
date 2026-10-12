@@ -1,5 +1,7 @@
 # V7.16.0 发行说明
 
+正式发布：2026-10-12 01:46:47 UTC（北京时间 09:46:47）；[公开 Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.0)，来源提交 `3b1c1043172062c19a7e1c6da5e5240e86063447`。
+
 本版本修复 Codex Desktop 实际门禁与新策略不一致的问题：正常绝对路径被误拒、索引和预审材料成为流程阻断、迟到回执持续占用预算，以及续跑和消息标识不兼容。
 
 - 原生写入保留具体原因与可执行准备参数，继续核验身份、目标、前态和操作回执。
@@ -10,4 +12,4 @@
 
 产品仅支持 Codex Desktop。规划单位不是真实费用，逻辑只读不等于系统隔离；旧 V3/V4/V5 保持回放兼容。详见[桌面门禁与恢复](../../DESKTOP_GATE_RECOVERY.md)和[验证报告](VALIDATION_REPORT.md)。
 
-公开标签、最终制品、账户安装与真实桌面读回以 GitHub Release 附加证据为准，不从版本号推断生效。
+发布后的验证结果与保留边界见[验证报告](VALIDATION_REPORT.md)和[审计报告](AUDIT_REPORT.md)。在线文档已补齐收尾事实；公开标签与签名 ZIP 保留构建时的原始内容。

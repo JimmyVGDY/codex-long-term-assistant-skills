@@ -18,7 +18,7 @@ hide:
       </div>
       <ul class="landing-meta" aria-label="Project metadata">
         <li>Apache-2.0</li>
-        <li>Codex CLI 0.154.0</li>
+        <li>Codex Desktop</li>
         <li>Windows</li>
       </ul>
     </div>
@@ -35,7 +35,7 @@ hide:
       <article class="landing-stat">
         <strong><!-- cp-fact:hook-count -->8<!-- /cp-fact --></strong>
         <span>Enhancement Hook events</span>
-        <small>9 account registrations; none in the base Plugin</small>
+        <small><!-- cp-fact:hook-registrations.en -->12 account registrations; none in the base Plugin<!-- /cp-fact --></small>
       </article>
       <article class="landing-stat"><strong>3.0</strong><span>TaskOutcomeEvent</span></article>
     </div>

@@ -26,14 +26,17 @@ English: [RELEASE_AUTOMATION.en.md](RELEASE_AUTOMATION.en.md)
 
 下载 ZIP 后，使用 GitHub CLI 按仓库身份验证实际文件摘要及其来源证明：
 
-```shell
-gh attestation verify Codex-Skills-V7.9.0-zh-CN.zip --repo OWNER/REPOSITORY
-gh attestation verify Codex-Skills-V7.9.0-en.zip --repo OWNER/REPOSITORY
+<!-- cp-fact:release.attestation.all -->
+```powershell
+$repository = ([uri]"https://github.com/JimmyVGDY/codex-long-term-assistant-skills").AbsolutePath.Trim("/")
+gh attestation verify Codex-Skills-V7.16.0-zh-CN.zip --repo $repository
+gh attestation verify Codex-Skills-V7.16.0-en.zip --repo $repository
 ```
+<!-- /cp-fact -->
 
-将 `OWNER/REPOSITORY` 替换为下载页面显示的仓库身份。`SHA256SUMS.txt` 用于摘要核对，`witness-*.json` 证明同一提交的两次干净构建字节一致，GitHub attestation 则把 ZIP 摘要关联到产生它的工作流身份。三者用途不同，不能互相冒充。
+核验命令已绑定本仓库。`SHA256SUMS.txt` 用于摘要核对，`witness-*.json` 证明同一提交的两次干净构建字节一致，GitHub attestation 则把 ZIP 摘要关联到产生它的工作流身份。三者用途不同，不能互相冒充。
 
-V7.7.1 示例标题：`V7.7.1 | Codex CLI 0.154.0 稳定版适配 / Codex CLI 0.154.0 stable compatibility`；实际标题以清单字段读回为准。
+当前标题示例以正式 Release 与清单读回为准。
 
 ## 发布新版本
 
@@ -42,6 +45,8 @@ V7.7.1 示例标题：`V7.7.1 | Codex CLI 0.154.0 稳定版适配 / Codex CLI 0.
 3. 创建并推送与清单一致的版本标签。
 4. 等待来源证明与草稿 Release 创建成功。
 5. 人工检查草稿中的版本、双语 ZIP、见证、校验和与来源证明，再决定是否公开。
+6. 公开后读回 Release 元数据、全部附件和来源证明，将 API JSON 保存到仓库外；运行 `python scripts/documentation.py record-release --release-json <公开元数据文件>` 更新下载事实。
+7. 回填当前版本中英文验证报告、审计报告和实际发布日期；执行 `documentation.py sync`、`check`、链接及双语检查，合并文档提交并核验站点。已公开标签与签名包保留原始内容。
 
 ## 失败处置与回滚边界
 
@@ -56,4 +61,4 @@ V7.7.1 示例标题：`V7.7.1 | Codex CLI 0.154.0 稳定版适配 / Codex CLI 0.
 
 工作流不会上传历史原始 ZIP，不会自动替换既有附件，也不会绕过人工发布确认。
 
-检查清单还需确认标题来源与约束、job output/环境变量传递、Draft-only、既有 Release 不覆盖、双语资产与 provenance、Codex CLI 0.154.0 兼容边界，以及历史标题回填的独立授权和线上读回。
+检查清单还需确认标题来源与约束、job output/环境变量传递、Draft-only、既有 Release 不覆盖、双语资产与 provenance、Codex Desktop 产品边界，以及历史标题回填的独立授权和线上读回。

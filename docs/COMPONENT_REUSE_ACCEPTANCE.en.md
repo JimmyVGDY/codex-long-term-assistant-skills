@@ -2,7 +2,7 @@
 
 # Component and Module Reuse Acceptance
 
-This procedure evaluates the [shared reuse rules](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/locales/en/skills/engineering-quality-delivery/references/component-module-reuse.md). It is for package maintainers, not an automatic step in ordinary application tasks.
+This procedure evaluates the [shared reuse rules](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/locales/en/skills/engineering-quality-delivery/references/component-module-reuse.md). It is for package maintainers, not an automatic step in ordinary application tasks.
 
 ## Prepare and Execute
 
