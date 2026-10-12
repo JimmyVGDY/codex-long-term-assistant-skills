@@ -2,6 +2,8 @@
 
 # V7.16.1 Release Notes
 
+The stable version was [published](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.1) at 2026-10-12 16:26:46 UTC (2026-10-13 00:26:46 Asia/Shanghai), from commit `8a355abbbd68af32145364d1b5a7c65985f0baf1`. Verification and installed readback appear in the reports below; the tag and signed packages remain immutable.
+
 This release fixes the child-context Hook rejecting a Codex Desktop parent task or telling it to return incomplete after a large image or other tool result. Previously, a Hook JSON envelope above 2 MiB failed before caller classification.
 
 - Validate complete large events and classify using top-level identity only, ignoring identity-like body content and field ordering.

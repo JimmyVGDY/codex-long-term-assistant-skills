@@ -6,6 +6,8 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 ## 7.16.1 - 2026-10-12
 
+Post-release status update (2026-10-13 Asia/Shanghai): publication, six attested-workflow assets and anonymous downloads were read back; managed installation and a native large-result call were verified. Refresh bilingual downloads/reports while retaining original-project business-replay and other limits.
+
 - Fix the child-context Hook rejecting parent tool inputs/results above 2 MiB before identifying the caller, or injecting an incorrect incomplete-result instruction.
 - Validate complete large JSON envelopes with bounded streaming and top-level identity only; reject duplicates, invalid escapes/UTF-8, trailing data and conflicting aliases without logging or spooling bodies.
 - Preserve the existing 2 MiB child limit and G6/V5 ownership and permission checks; bound transport, elapsed parsing time, depth, nodes and key memory.
