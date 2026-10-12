@@ -1,5 +1,5 @@
 <p align="right">
-  <strong>简体中文</strong> · <a href="README.en.md">English</a>
+  <strong>简体中文</strong> · <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/en/">English</a>
 </p>
 
 面向 Codex Desktop，修复实际门禁、GPT-6 控制器和原生回执恢复；旧根保持原路由与账目语义。内部脚本仅用于管理与验证，不构成独立 CLI 产品支持轨道。
