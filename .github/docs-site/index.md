@@ -24,7 +24,7 @@ hide:
       </div>
       <ul class="landing-meta" aria-label="项目元数据 / Project metadata">
         <li>Apache-2.0</li>
-        <li>Codex CLI 0.154.0</li>
+        <li>Codex Desktop</li>
         <li>Windows</li>
       </ul>
     </div>
@@ -71,7 +71,7 @@ hide:
       <article class="landing-stat">
         <strong><!-- cp-fact:hook-count -->8<!-- /cp-fact --></strong>
         <span><span lang="zh-CN">增强 Hook 事件</span> <span aria-hidden="true">/</span> <span lang="en">Enhancement Hook events</span></span>
-        <small><span lang="zh-CN">9 条账户注册规则；基础版无 Hook</span> <span aria-hidden="true">/</span> <span lang="en">9 account registrations; none in the base Plugin</span></small>
+        <small><span lang="zh-CN"><!-- cp-fact:hook-registrations.zh -->12 条账户注册规则；基础版无 Hook<!-- /cp-fact --></span> <span aria-hidden="true">/</span> <span lang="en"><!-- cp-fact:hook-registrations.en -->12 account registrations; none in the base Plugin<!-- /cp-fact --></span></small>
       </article>
       <article class="landing-stat"><strong>3.0</strong><span>TaskOutcomeEvent</span></article>
     </div>

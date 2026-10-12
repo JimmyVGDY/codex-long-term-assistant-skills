@@ -2,6 +2,8 @@
 
 # V7.16.0 Release Notes
 
+Published on 2026-10-12 at 01:46:47 UTC (09:46:47 Asia/Shanghai): [public Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.0), source commit `3b1c1043172062c19a7e1c6da5e5240e86063447`.
+
 This release aligns actual Codex Desktop gates with the current policy: valid absolute paths were rejected, index and review gaps halted work, late receipts retained holds, and continuation/message identities were incompatible.
 
 - Native writes retain specific causes and executable preparation arguments while checking identity, targets, prestate, and receipts.
@@ -12,4 +14,4 @@ This release aligns actual Codex Desktop gates with the current policy: valid ab
 
 Codex Desktop is the sole product target. Planning units are not fees; logical-readonly is not system isolation. V3/V4/V5 replay stays compatible. See [Desktop gates and recovery](../../DESKTOP_GATE_RECOVERY.en.md) and the [validation report](VALIDATION_REPORT.en.md).
 
-Public tags, final assets, installation, and native readback use separate GitHub Release evidence. Version numbers do not prove runtime effect.
+Post-release results and retained limits are recorded in the [validation report](VALIDATION_REPORT.en.md) and [audit report](AUDIT_REPORT.en.md). Online documentation includes the final readback; public tags and signed ZIPs retain their original build-time content.

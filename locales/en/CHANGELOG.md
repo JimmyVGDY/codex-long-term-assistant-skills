@@ -2,7 +2,9 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
-## 7.16.0 - 2026-10-10
+## 7.16.0 - 2026-10-12
+
+Post-release documentation correction (2026-10-12): synchronize current downloads, release/validation status, and landing-page registration counts. Download sections now follow recorded public Release metadata. Published tags and signed artifacts retain their original content.
 
 - Fix native-write rejection of in-repository absolute paths and inert metadata, preserving scope and identity protection with actionable preparation parameters.
 - Inventory actual registered Hooks and align execution/review controllers with GPT-6 defaults. Missing review or index material permits scoped continuation without manufacturing verification.

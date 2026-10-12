@@ -26,14 +26,16 @@ The release workflow treats source validation, reproducible building, provenance
 
 After downloading a ZIP, use GitHub CLI to verify the actual file digest and provenance against this repository identity:
 
+<!-- cp-fact:release.attestation.all -->
 ```shell
-gh attestation verify Codex-Skills-V7.9.0-zh-CN.zip --repo OWNER/REPOSITORY
-gh attestation verify Codex-Skills-V7.9.0-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.16.0-zh-CN.zip --repo JimmyVGDY/codex-long-term-assistant-skills
+gh attestation verify Codex-Skills-V7.16.0-en.zip --repo JimmyVGDY/codex-long-term-assistant-skills
 ```
+<!-- /cp-fact -->
 
-Replace `OWNER/REPOSITORY` with the repository identity shown on the download page. `SHA256SUMS.txt` supports digest comparison, `witness-*.json` proves that two clean builds from the same commit were byte-identical, and the GitHub attestation binds ZIP digests to the workflow identity that produced them. These are distinct evidence layers and cannot substitute for one another.
+The verification commands are bound to this repository. `SHA256SUMS.txt` supports digest comparison, `witness-*.json` proves that two clean builds from the same commit were byte-identical, and the GitHub attestation binds ZIP digests to the workflow identity that produced them. These are distinct evidence layers and cannot substitute for one another.
 
-V7.7.1 English title segment: `Codex CLI 0.154.0 stable compatibility`; the complete bilingual title is assembled from the two manifest values.
+Use the published Release and manifest readback for the current title.
 
 ## Publish a new version
 
@@ -42,6 +44,8 @@ V7.7.1 English title segment: `Codex CLI 0.154.0 stable compatibility`; the comp
 3. Create and push a version tag that matches the manifest.
 4. Wait for provenance generation and draft Release creation to succeed.
 5. Manually inspect the version, both language ZIPs, witnesses, checksums, and provenance before deciding whether to publish the draft.
+6. After publication, read back Release metadata, all assets, and provenance. Save the API JSON outside the repository, then run `python scripts/documentation.py record-release --release-json <public-metadata-file>` to update download facts.
+7. Backfill both language validation/audit reports and the actual publication date. Run documentation `sync` and `check`, link and localization checks, merge the documentation commit, and verify the site. Published tags and signed packages keep their original content.
 
 ## Failure handling and rollback boundaries
 
@@ -56,4 +60,4 @@ Historical Release title backfill is an independent online metadata operation an
 
 The workflow does not upload historical original ZIP files, replace existing assets automatically, or bypass maintainer publication approval.
 
-The checklist must also confirm title sources and constraints, job-output/environment-variable transport, Draft-only behavior, existing-Release no-overwrite behavior, bilingual assets and provenance, the Codex CLI 0.154.0 compatibility boundary, and independent authorization/readback for historical title backfill.
+The checklist must also confirm title sources and constraints, job-output/environment-variable transport, Draft-only behavior, existing-Release no-overwrite behavior, bilingual assets and provenance, the Codex Desktop product boundary, and independent authorization/readback for historical title backfill.

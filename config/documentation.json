@@ -1890,16 +1890,29 @@
   ],
   "fact_files": {
     "README.md": [
-      "hooks.zh"
+      "hooks.zh",
+      "release.status.zh",
+      "release.downloads.zh",
+      "release.notes.zh",
+      "release.attestation.zh",
+      "release.validation.zh"
     ],
     "locales/en/README.md": [
-      "hooks.en"
+      "hooks.en",
+      "release.status.en",
+      "release.downloads.en",
+      "release.notes.en",
+      "release.attestation.en",
+      "release.validation.en"
     ],
     ".github/docs-site/index.md": [
-      "hook-count"
+      "hook-count",
+      "hook-registrations.zh",
+      "hook-registrations.en"
     ],
     "locales/en/.github/docs-site/index.md": [
-      "hook-count"
+      "hook-count",
+      "hook-registrations.en"
     ],
     "skills/engineering-quality-delivery/references/task-execution-envelope.md": [
       "schema.envelope",
@@ -1954,6 +1967,12 @@
     ],
     "locales/en/docs/VALIDATION_REPORT.md": [
       "validation-report"
+    ],
+    "docs/releases/RELEASE_AUTOMATION.md": [
+      "release.attestation.all"
+    ],
+    "locales/en/docs/releases/RELEASE_AUTOMATION.md": [
+      "release.attestation.all"
     ]
   },
   "aliases": [

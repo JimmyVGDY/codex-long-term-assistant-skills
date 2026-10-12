@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import datetime
 import json
 import os
 import re
@@ -218,6 +219,108 @@ def project_english(root: Path, item: dict, catalog: dict) -> str:
     return SOURCE_NOTE.format(source=canonical) + rewrite_links(source.read_text(encoding="utf-8"), transform)
 
 
+PUBLISHED_RELEASE = "config/published-release.json"
+RELEASE_REPOSITORY = "https://github.com/JimmyVGDY/codex-long-term-assistant-skills"
+
+
+def normalize_published_release(data: dict) -> dict:
+    """中文：只投影已公开正式版的固定仓库制品；不把候选版本当作发布证明。
+
+    English: Project public stable assets from this repository, never source-candidate claims.
+    """
+    if (not isinstance(data, dict) or data.get("draft") is not False
+            or data.get("prerelease") is not False):
+        raise DocumentationError("published release must be public and stable")
+    tag = data.get("tag_name")
+    if not isinstance(tag, str) or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag):
+        raise DocumentationError("invalid published release tag")
+    stamp = data.get("published_at")
+    if not isinstance(stamp, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", stamp):
+        raise DocumentationError("missing published release timestamp")
+    try:
+        datetime.datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise DocumentationError("invalid published release timestamp") from exc
+    url = RELEASE_REPOSITORY + "/releases/tag/" + tag
+    if data.get("html_url") != url:
+        raise DocumentationError("published release repository mismatch")
+    version = tag[1:]
+    names = {f"Codex-Skills-V{version}-{locale}.zip" for locale in ("zh-CN", "en")}
+    names.update({"SHA256SUMS.txt", "witness-zh-CN.json", "witness-en.json",
+                  f"Codex-Skills-V{version}-provenance.json"})
+    assets = data.get("assets")
+    if not isinstance(assets, list) or len(assets) != len(names):
+        raise DocumentationError("published release assets are incomplete")
+    normalized = []
+    for asset in assets:
+        if not isinstance(asset, dict) or asset.get("name") not in names:
+            raise DocumentationError("unexpected published release asset")
+        name = asset["name"]
+        destination = RELEASE_REPOSITORY + "/releases/download/" + tag + "/" + name
+        if (asset.get("browser_download_url") != destination
+                or not isinstance(asset.get("digest"), str)
+                or not re.fullmatch(r"sha256:[0-9a-f]{64}", asset["digest"])):
+            raise DocumentationError("published release asset identity mismatch")
+        normalized.append({"name": name, "browser_download_url": destination, "digest": asset["digest"]})
+    if {asset["name"] for asset in normalized} != names:
+        raise DocumentationError("duplicate published release assets")
+    return {"schema_version": 1, "tag_name": tag, "draft": False, "prerelease": False,
+            "published_at": stamp, "html_url": url, "assets": sorted(normalized, key=lambda item: item["name"])}
+
+
+def record_published_release(source: Path, root: Path = ROOT) -> dict:
+    """中文：记录维护者读回的公开元数据；此命令不发布、不联网、不更新运行时。
+
+    English: Record maintainer-read public metadata without publication, networking, or runtime changes.
+    """
+    raw = json.loads(source.read_text(encoding="utf-8-sig"), object_pairs_hook=unique_object)
+    record = normalize_published_release(raw)
+    target = safe_file(root, PUBLISHED_RELEASE)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    return {"ok": True, "recorded": PUBLISHED_RELEASE, "tag_name": record["tag_name"]}
+
+
+def published_release_fact(key: str, root: Path) -> str:
+    raw = json.loads(safe_file(root, PUBLISHED_RELEASE).read_text(encoding="utf-8"), object_pairs_hook=unique_object)
+    if (not isinstance(raw, dict) or type(raw.get("schema_version")) is not int
+            or raw["schema_version"] != 1):
+        raise DocumentationError("invalid published release snapshot")
+    release = normalize_published_release(raw)
+    version, date = release["tag_name"][1:], release["published_at"][:10]
+    language = key.rsplit(".", 1)[-1]
+    if language not in {"zh", "en", "all"}:
+        raise DocumentationError("unknown publication fact: " + key)
+    chinese = language == "zh"
+    if key.startswith("release.status."):
+        return (f"正式版 [V{version}]({release['html_url']}) 已于 {date}（UTC）公开发布。"
+                if chinese else f"Stable release [V{version}]({release['html_url']}) was published on {date} (UTC).")
+    if key.startswith("release.notes."):
+        label = f"V{version} 发行说明" if chinese else f"V{version} release notes"
+        return f"[{label}](docs/releases/v{version}/RELEASE_NOTES.md)"
+    if key.startswith("release.validation."):
+        label = "当前正式版验证与已知边界" if chinese else "Published-release validation and known limits"
+        return f"[{label}](docs/releases/v{version}/VALIDATION_REPORT.md)"
+    if key.startswith("release.attestation."):
+        locales = ("zh-CN", "en") if language == "all" else (("zh-CN",) if chinese else ("en",))
+        commands = [f"gh attestation verify Codex-Skills-V{version}-{locale}.zip --repo JimmyVGDY/codex-long-term-assistant-skills" for locale in locales]
+        return "\n```shell\n" + "\n".join(commands) + "\n```\n"
+    if key.startswith("release.downloads."):
+        title = (f"以下为已公开的 **V{version}** 安装包，发布日期为 **{date}（UTC）**。"
+                 if chinese else f"Download the public **V{version}** packages, published on **{date} (UTC)**.")
+        lines = ["", title, "", "| 发行包 | 适用界面 | 下载 |" if chinese else "| Package | Interface | Download |",
+                 "| --- | --- | --- |"]
+        assets = {asset["name"]: asset for asset in release["assets"]}
+        for locale, interface in (("zh-CN", "简体中文" if chinese else "Chinese"), ("en", "English")):
+            name = f"Codex-Skills-V{version}-{locale}.zip"
+            label = "下载中文安装包" if chinese and locale == "zh-CN" else "Download English package" if locale == "en" else "Download zh-CN package"
+            lines.append(f"| `{name}` | {interface} | [{label}]({assets[name]['browser_download_url']}) |")
+        checksum = assets["SHA256SUMS.txt"]["browser_download_url"]
+        lines.extend(["", f"[Release]({release['html_url']}) · [SHA256SUMS.txt]({checksum})", ""])
+        return "\n".join(lines)
+    raise DocumentationError("unknown publication fact: " + key)
+
+
 def fact_value(key: str, root: Path) -> str:
     hooks = json.loads((root / "hooks/enhancement-hooks.json").read_text(encoding="utf-8"))["hooks"]
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -233,6 +336,13 @@ def fact_value(key: str, root: Path) -> str:
         if field is None:
             raise DocumentationError("unknown owner fact: " + key)
         return manifest["authority_registry"][field]
+    if key.startswith("release."):
+        return published_release_fact(key, root)
+    if key in {"hook-registrations.zh", "hook-registrations.en"}:
+        entries = declared_constant(root, "runtime/cp_runtime/gate_contract.py", "HOOK_ENTRYPOINTS")
+        count = sum(len(events) for events in entries.values())
+        return (f"{count} 条账户注册规则；基础版无 Hook" if key.endswith(".zh")
+                else f"{count} account registrations; none in the base Plugin")
     names = "、".join("`" + name + "`" for name in hooks)
     if key == "hook-count":
         return str(len(hooks))
@@ -382,10 +492,14 @@ def audit(root: Path = ROOT, *, write: bool = False) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Check or regenerate documentation projections")
-    parser.add_argument("command", choices=("check", "sync"))
+    parser.add_argument("command", choices=("check", "sync", "record-release"))
+    parser.add_argument("--release-json", type=Path, help="GitHub public Release metadata read back by the maintainer")
     args = parser.parse_args()
+    if args.command == "record-release" and args.release_json is None:
+        parser.error("record-release requires --release-json")
     try:
-        report = audit(write=args.command == "sync")
+        report = (record_published_release(args.release_json) if args.command == "record-release"
+                  else audit(write=args.command == "sync"))
     except (DocumentationError, KeyError, TypeError, OSError, ValueError) as exc:
         report = {"ok": False, "findings": [{"code": "DOCUMENTATION_INPUT_INVALID", "error": str(exc)}]}
     print(json.dumps(report, ensure_ascii=False, indent=2))

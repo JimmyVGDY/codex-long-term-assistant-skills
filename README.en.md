@@ -4,7 +4,9 @@
   <a href="https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/">Chinese</a> · <strong>English</strong>
 </p>
 
-The V7.16.0 source candidate repairs actual Codex Desktop gates, GPT-6 controllers, and native receipt recovery. Existing roots retain their routing and accounting semantics. Internal scripts support management and validation, not a standalone CLI product. Installation and publication require separate readback.
+For Codex Desktop: actual gate consistency, GPT-6 controllers, and native receipt recovery. Existing roots retain their routing and accounting semantics. Internal scripts support management and validation, not a standalone CLI product.
+
+<!-- cp-fact:release.status.en -->Stable release [V7.16.0](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.0) was published on 2026-10-12 (UTC).<!-- /cp-fact -->
 
 # Codex Cross-Project Engineering Assistant
 
@@ -25,7 +27,7 @@ The V7.16.0 source candidate repairs actual Codex Desktop gates, GPT-6 controlle
   <img alt="Codex Desktop" src="https://img.shields.io/badge/Codex-Desktop-111827">
 </p>
 
-V7.16.0 retains non-blocking message/Stop behavior, Operation v2, and separation of base Skills from optional enhancement. The optional file gate remains off by default; when enabled, missing indexes or optional material permit scoped continuation without disabling it. Capability level establishes neither semantic correctness nor authority. See the [model policy](locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md) and [Desktop gates and recovery](docs/DESKTOP_GATE_RECOVERY.en.md).
+The current implementation retains non-blocking message/Stop behavior, Operation v2, and separation of base Skills from optional enhancement. The optional file gate remains off by default; when enabled, missing indexes or optional material permit scoped continuation without disabling it. Capability level establishes neither semantic correctness nor authority. See the [model policy](locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md) and [Desktop gates and recovery](docs/DESKTOP_GATE_RECOVERY.en.md).
 
 **Quick links:** [Bilingual documentation](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/) · [Downloads](#downloads) · [Four daily paths](#four-daily-paths-and-the-unified-entry) · [Start](#start-in-two-steps) · [Compatibility](#compatibility-matrix) · [Upgrade](#first-install-and-upgrade) · [Documentation](#documentation-and-collaboration)
 
@@ -84,14 +86,16 @@ Use the existing enhanced installer only when the task needs recoverable long-ru
 
 ## Downloads
 
-The links below target V7.12.0 tag artifacts. They may be unavailable before the tag workflow completes; read formal status back from GitHub Releases.
+<!-- cp-fact:release.downloads.en -->
+Download the public **V7.16.0** packages, published on **2026-10-12 (UTC)**.
 
-| Distribution | Interface | Download |
+| Package | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V7.12.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.12.0/Codex-Skills-V7.12.0-zh-CN.zip) |
-| `Codex-Skills-V7.12.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.12.0/Codex-Skills-V7.12.0-en.zip) |
+| `Codex-Skills-V7.16.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.0/Codex-Skills-V7.16.0-zh-CN.zip) |
+| `Codex-Skills-V7.16.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.0/Codex-Skills-V7.16.0-en.zip) |
 
-[Open the latest Release, checksums, and build witnesses](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/latest)
+[Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.0) · [SHA256SUMS.txt](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.0/SHA256SUMS.txt)
+<!-- /cp-fact -->
 
 ## Core capabilities
 
@@ -149,14 +153,13 @@ dispatch_policy_status = PASS
 host_model_identity = NOT_COLLECTED
 ```
 
-This historical V7.6.0 example concerns that version's policy ceiling. It neither defines the new default pool nor attests to the model that actually ran.
+Dispatch records establish conformance with the task's authorized policy, not the backend model that actually ran.
 
 ## Compatibility matrix
 
 | Environment or mode | Current role | Existing validation level | Boundary |
 | --- | --- | --- | --- |
-| Codex Desktop + Plugin | Sole product target | Local read-only component and existing registration probes passed | Installation, loading, new default native dispatch and legacy replay need separate acceptance |
-
+| Codex Desktop + Plugin | Sole product target | Local installation, enabled-gate writes, continuation and receipt reconciliation verified | Evidence is bound to the V7.16.0 release commit and observed host; other environments need their own checks |
 | Windows / Ubuntu Python matrix | Package release gate | Python 3.11/3.13 tests and builds | This does not prove native Desktop acceptance; read remote results from Actions |
 | Old layouts and frozen policies | Compatibility recovery | Existing states, ledgers and readers remain | No standalone CLI product adaptation or acceptance track |
 | macOS | Unverified | No current CI or host-acceptance evidence | Status remains `UNVERIFIED` |
@@ -195,7 +198,7 @@ Requested parameters do not attest to the underlying host model, which this pack
 - [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · [V7.12.0 release notes](docs/releases/v7.12.0/RELEASE_NOTES.en.md)
+- [Changelog](CHANGELOG.en.md) · <!-- cp-fact:release.notes.en -->[V7.16.0 release notes](docs/releases/v7.16.0/RELEASE_NOTES.en.md)<!-- /cp-fact -->
 
 ## Local validation
 
@@ -210,9 +213,11 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. An authorized public Release is created and read back separately.
 
+<!-- cp-fact:release.attestation.en -->
 ```shell
-gh attestation verify Codex-Skills-V7.12.0-en.zip --repo OWNER/REPOSITORY
+gh attestation verify Codex-Skills-V7.16.0-en.zip --repo JimmyVGDY/codex-long-term-assistant-skills
 ```
+<!-- /cp-fact -->
 
 See [Release automation and artifact provenance](docs/releases/RELEASE_AUTOMATION.en.md) for the complete gates and new-version procedure.
 
@@ -228,4 +233,4 @@ Licensed under Apache-2.0. See [LICENSE](LICENSE).
 
 Reuse guidance: [Capability index](docs/CAPABILITY_INDEX.en.md) · [Acceptance protocol](docs/COMPONENT_REUSE_ACCEPTANCE.en.md).
 
-V7.6.0 post-release readback (checked at 2026-09-09 04:04:02 UTC): the [release workflow](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304636222), [main-branch CI](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304540318), and [documentation deployment](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/34304540320) passed for commit `26d013fa824fa148a839d30aaedd22f3744e8bbf`. This record belongs to that tag and verification time, not subsequent changes, and does not establish cancellation support on every host.
+<!-- cp-fact:release.validation.en -->[Published-release validation and known limits](docs/releases/v7.16.0/VALIDATION_REPORT.en.md)<!-- /cp-fact -->

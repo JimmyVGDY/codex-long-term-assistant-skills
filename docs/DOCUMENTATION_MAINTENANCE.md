@@ -1,6 +1,6 @@
 # 文档维护与事实校验
 
-本文说明当前文档的修改入口、检查范围和发布交接。目录状态与语言来源由 [documentation.json](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/main/config/documentation.json) 管理。
+本文说明当前文档的修改入口、检查范围和发布交接。目录状态与语言来源由 [documentation.json](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/config/documentation.json) 管理。
 
 以下维护命令在完整源码仓库的根目录运行。单语言发行包不包含 `locales/en` 和 `.github` 文档构建来源；包内文档可用于查阅，维护双语来源或重建站点时需使用完整源码。
 
@@ -96,3 +96,16 @@ python scripts/build-release.py snapshot --output <仓库外的新目录> --requ
 任务状态、证据归档与下载工具放在仓库外。整理历史资料时保留当前 Profile、索引和门禁绑定；先校验归档文件哈希及恢复映射，再清理原件。
 
 当前包版本文字与验收报告链接使用 manifest 驱动的事实标记。与 manifest 版本相同的发行文档必须为 active，其他版本发行文档必须为 historical。发行索引链接到线上发布读回，不再手工保留易过期的“当前已发布版本”断言。
+
+## 发布后的同步闭环
+
+公开下载的事实源是 `config/published-release.json`，与 `manifest.json` 的源码候选版本分离。只有正式公开、非预发布且六项附件完整的本仓库 Release 元数据可写入；该命令只记录公开数据，不执行发布或联网校验。
+
+```text
+gh api repos/JimmyVGDY/codex-long-term-assistant-skills/releases/latest > <仓库外的公开元数据文件>
+python scripts/documentation.py record-release --release-json <仓库外的公开元数据文件>
+python scripts/documentation.py sync
+python scripts/documentation.py check
+```
+
+维护者先确认 API 读回和附件核验成功，再记录快照。下载表、发行说明入口、校验命令从同一份公开事实生成；源码候选升级不会把未发布标签变成下载入口。首页受管注册数量读取实际处理器契约，并由安装器入口测试交叉核对。发布后的验证、审计报告和 CHANGELOG 日期需回填到中文与英文源，再核验 GitHub README 和两种语言站点。历史版本证据及签名 ZIP 保持原始事实。

@@ -12,6 +12,7 @@ on:
       - "docs/**"
       - "locales/en/**"
       - "config/documentation.json"
+      - "config/published-release.json"
       - "scripts/documentation.py"
       - "hooks/hooks.json"
       - ".github/docs-site/**"

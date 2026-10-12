@@ -1822,7 +1822,15 @@
       "preserve": [
         "f\"{len(hooks)} 个注册 Hook 入口：{names}。\"",
         "V7\\.(?:5|6)\\.2 (?:及更早版本|and earlier)",
-        "当前入口"
+        "当前入口",
+        "f\"正式版 [V{version}]({release['html_url']}) 已于 {date}（UTC）公开发布。\"",
+        "f\"V{version} 发行说明\"",
+        "当前正式版验证与已知边界",
+        "f\"以下为已公开的 **V{version}** 安装包，发布日期为 **{date}（UTC）**。\"",
+        "| 发行包 | 适用界面 | 下载 |",
+        "下载中文安装包",
+        "简体中文",
+        "f\"{count} 条账户注册规则；基础版无 Hook\""
       ]
     },
     "scripts/cp-assistant.py": {
