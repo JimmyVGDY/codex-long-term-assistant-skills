@@ -207,8 +207,9 @@ python scripts\validate-package.py
 `Release Candidate and Provenance` 工作流会校验版本标签、在 Windows 与 Ubuntu 上验证源码、构建两个可复现 ZIP，并通过 GitHub Artifact Attestations 为实际 ZIP 摘要生成签名来源证明。公开 Release 由受权操作创建并单独读回。
 
 <!-- cp-fact:release.attestation.zh -->
-```shell
-gh attestation verify Codex-Skills-V7.16.0-zh-CN.zip --repo JimmyVGDY/codex-long-term-assistant-skills
+```powershell
+$repository = ([uri]"https://github.com/JimmyVGDY/codex-long-term-assistant-skills").AbsolutePath.Trim("/")
+gh attestation verify Codex-Skills-V7.16.0-zh-CN.zip --repo $repository
 ```
 <!-- /cp-fact -->
 

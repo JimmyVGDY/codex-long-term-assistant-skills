@@ -212,8 +212,9 @@ Release builds use fixed timestamps, stable ordering, and SHA-256 witnesses. The
 The `Release Candidate and Provenance` workflow validates version tags, checks the source on Windows and Ubuntu, builds both reproducible ZIP files, and uses GitHub Artifact Attestations to generate signed provenance for the actual ZIP digests. An authorized public Release is created and read back separately.
 
 <!-- cp-fact:release.attestation.en -->
-```shell
-gh attestation verify Codex-Skills-V7.16.0-en.zip --repo JimmyVGDY/codex-long-term-assistant-skills
+```powershell
+$repository = ([uri]"https://github.com/JimmyVGDY/codex-long-term-assistant-skills").AbsolutePath.Trim("/")
+gh attestation verify Codex-Skills-V7.16.0-en.zip --repo $repository
 ```
 <!-- /cp-fact -->
 

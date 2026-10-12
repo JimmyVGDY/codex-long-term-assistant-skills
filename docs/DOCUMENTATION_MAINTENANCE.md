@@ -102,7 +102,7 @@ python scripts/build-release.py snapshot --output <仓库外的新目录> --requ
 公开下载的事实源是 `config/published-release.json`，与 `manifest.json` 的源码候选版本分离。只有正式公开、非预发布且六项附件完整的本仓库 Release 元数据可写入；该命令只记录公开数据，不执行发布或联网校验。
 
 ```text
-gh api repos/JimmyVGDY/codex-long-term-assistant-skills/releases/latest > <仓库外的公开元数据文件>
+gh api https://api.github.com/repos/JimmyVGDY/codex-long-term-assistant-skills/releases/latest > <仓库外的公开元数据文件>
 python scripts/documentation.py record-release --release-json <仓库外的公开元数据文件>
 python scripts/documentation.py sync
 python scripts/documentation.py check

@@ -27,9 +27,10 @@ The release workflow treats source validation, reproducible building, provenance
 After downloading a ZIP, use GitHub CLI to verify the actual file digest and provenance against this repository identity:
 
 <!-- cp-fact:release.attestation.all -->
-```shell
-gh attestation verify Codex-Skills-V7.16.0-zh-CN.zip --repo JimmyVGDY/codex-long-term-assistant-skills
-gh attestation verify Codex-Skills-V7.16.0-en.zip --repo JimmyVGDY/codex-long-term-assistant-skills
+```powershell
+$repository = ([uri]"https://github.com/JimmyVGDY/codex-long-term-assistant-skills").AbsolutePath.Trim("/")
+gh attestation verify Codex-Skills-V7.16.0-zh-CN.zip --repo $repository
+gh attestation verify Codex-Skills-V7.16.0-en.zip --repo $repository
 ```
 <!-- /cp-fact -->
 

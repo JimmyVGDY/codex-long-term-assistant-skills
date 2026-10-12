@@ -102,7 +102,7 @@ Current package labels and validation report links use manifest-backed fact mark
 `config/published-release.json` owns public download facts separately from the source-candidate version in `manifest.json`. Recording accepts only a public, stable Release from this repository with all six expected assets. The command records public metadata; it does not publish or perform online verification.
 
 ```text
-gh api repos/JimmyVGDY/codex-long-term-assistant-skills/releases/latest > <external-public-metadata-file>
+gh api https://api.github.com/repos/JimmyVGDY/codex-long-term-assistant-skills/releases/latest > <external-public-metadata-file>
 python scripts/documentation.py record-release --release-json <external-public-metadata-file>
 python scripts/documentation.py sync
 python scripts/documentation.py check

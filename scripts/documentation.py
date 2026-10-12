@@ -303,8 +303,9 @@ def published_release_fact(key: str, root: Path) -> str:
         return f"[{label}](docs/releases/v{version}/VALIDATION_REPORT.md)"
     if key.startswith("release.attestation."):
         locales = ("zh-CN", "en") if language == "all" else (("zh-CN",) if chinese else ("en",))
-        commands = [f"gh attestation verify Codex-Skills-V{version}-{locale}.zip --repo JimmyVGDY/codex-long-term-assistant-skills" for locale in locales]
-        return "\n```shell\n" + "\n".join(commands) + "\n```\n"
+        commands = [f"gh attestation verify Codex-Skills-V{version}-{locale}.zip --repo $repository" for locale in locales]
+        repository = f'$repository = ([uri]"{RELEASE_REPOSITORY}").AbsolutePath.Trim("/")'
+        return "\n```powershell\n" + repository + "\n" + "\n".join(commands) + "\n```\n"
     if key.startswith("release.downloads."):
         title = (f"以下为已公开的 **V{version}** 安装包，发布日期为 **{date}（UTC）**。"
                  if chinese else f"Download the public **V{version}** packages, published on **{date} (UTC)**.")
