@@ -1,40 +1,40 @@
 {
   "schema_version": 1,
-  "tag_name": "v7.16.1",
+  "tag_name": "v7.16.2",
   "draft": false,
   "prerelease": false,
-  "published_at": "2026-10-12T16:26:46Z",
-  "html_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.1",
+  "published_at": "2026-10-15T11:22:13Z",
+  "html_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.2",
   "assets": [
     {
-      "name": "Codex-Skills-V7.16.1-en.zip",
-      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.1/Codex-Skills-V7.16.1-en.zip",
-      "digest": "sha256:59047fafbd0fd079c19a3bf88719f5c6d03b5b43c772b731477e7fd0b86e7f87"
+      "name": "Codex-Skills-V7.16.2-en.zip",
+      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/Codex-Skills-V7.16.2-en.zip",
+      "digest": "sha256:7a7f4ac91911214b2510327a1b3ee768e5e4d99d0e37b26bc69afa5bbe2eed50"
     },
     {
-      "name": "Codex-Skills-V7.16.1-provenance.json",
-      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.1/Codex-Skills-V7.16.1-provenance.json",
-      "digest": "sha256:90f1dbeb949ce2cd3304783d7b48d3e73878bfb7a73db041ffa29dd6678e386b"
+      "name": "Codex-Skills-V7.16.2-provenance.json",
+      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/Codex-Skills-V7.16.2-provenance.json",
+      "digest": "sha256:69f3de38bbfecdc6047d03882e112654f8838664e6fb702b91168cd26208f39a"
     },
     {
-      "name": "Codex-Skills-V7.16.1-zh-CN.zip",
-      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.1/Codex-Skills-V7.16.1-zh-CN.zip",
-      "digest": "sha256:11059be14e5fc2387b0818e3d2eb85e7d2185ac2e2052d13fddfbad0093915af"
+      "name": "Codex-Skills-V7.16.2-zh-CN.zip",
+      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/Codex-Skills-V7.16.2-zh-CN.zip",
+      "digest": "sha256:ba9502d99160e1d0178e83da2f67cfa57587415bce3b65673d998f7cead7cc08"
     },
     {
       "name": "SHA256SUMS.txt",
-      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.1/SHA256SUMS.txt",
-      "digest": "sha256:61351b7d6d849b4bc5d207db3ab4a45c5cb117c7118b93e8d45d17ef0aeb37d7"
+      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/SHA256SUMS.txt",
+      "digest": "sha256:465724455983bf63b2c90468714026cdf5c78b8c75c1d1332fecae956e547f74"
     },
     {
       "name": "witness-en.json",
-      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.1/witness-en.json",
-      "digest": "sha256:09fee5f18a1b45b6ff84ada92f560c90d2fae5d3d505bac283223681c37e5285"
+      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/witness-en.json",
+      "digest": "sha256:e2645c6801b87e788042a42effb77a2a2b6cf5f229216e31baa0001ce55d866f"
     },
     {
       "name": "witness-zh-CN.json",
-      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.1/witness-zh-CN.json",
-      "digest": "sha256:046b808e3d922423036639f58f369dedeeafffae2175a9d218b3dad01f68b839"
+      "browser_download_url": "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/witness-zh-CN.json",
+      "digest": "sha256:919c44affa0b48cb9615c1be8bac1ab0cc84fca1dfa83649cfdc84bed0c10ae9"
     }
   ]
 }

@@ -4,7 +4,7 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 ## 7.16.2 - 2026-10-15
 
-Source and local-deployment candidate. Public-release status remains bound to separately verified public Release metadata.
+Post-release status update (2026-10-15 UTC): publication, all six assets and anonymous downloads were read back. All four release-validation jobs passed, and local native approval, review dispatch and settlement were verified. Refresh bilingual downloads and reports while retaining the UNKNOWN host outcome and missing source-write audit receipts.
 
 - Add scoped review-allowance requests and native approval recovery through append-only events in the existing root, retaining base capacity, historical charges and active calls.
 - Reserve each approved review from its own work/role/profile-bound allocation; other Workers, Explorers and reviews cannot consume it.
