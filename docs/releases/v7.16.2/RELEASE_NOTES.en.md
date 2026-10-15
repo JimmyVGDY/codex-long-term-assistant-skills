@@ -2,7 +2,7 @@
 
 # V7.16.2 Release Notes
 
-This version adds the complete scoped review-allowance and approval-recovery entrypoints. Source candidates, local installation and public Releases are distinct states. Public status remains tied to verified Release metadata.
+This version adds the complete scoped review-allowance and approval-recovery entrypoints and was [published](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.2) on 2026-10-15 at 11:22:13 UTC. Both packages, all six assets and public downloads were verified. The version's validation and audit reports retain the detailed results and limits.
 
 When units or attempts are insufficient, the controller prepares a concrete scoped request. Native user approval appends an allocation to the original root and rebuilds the current dispatch permit without changing the base template or historical charges.
 
