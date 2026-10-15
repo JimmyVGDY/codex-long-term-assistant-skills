@@ -345,7 +345,7 @@ class DocumentationSiteTests(unittest.TestCase):
             ROOT / ".github" / "SECURITY.en.md",
             ROOT / "locales" / "en" / ".github" / "SECURITY.md",
         ):
-            self.assertIn("7.16.1", path.read_text(encoding="utf-8"))
+            self.assertIn("7.16.2", path.read_text(encoding="utf-8"))
 
     def test_social_preview_is_reusable_1280_by_640_and_below_one_megabyte(self) -> None:
         image = (ROOT / "docs" / "assets" / "social-preview.jpg").read_bytes()

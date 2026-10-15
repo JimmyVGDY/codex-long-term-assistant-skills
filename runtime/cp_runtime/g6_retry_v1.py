@@ -60,8 +60,11 @@ def next_action(state: Mapping[str, Any], *, work_item_id: str, failure_kind: st
                       handle=active[0][1]["host_call_ref"])
     if failure_kind in HARD:
         return result("STOP_AFFECTED_ACTION", "VERIFIED_HARD_FAILURE")
-    if attempts and any(state["terminals"].get(pid, {}).get("outcome") == "PASS"
-                        for pid, _, _ in attempts):
+    registered = work_item_id in state.get("review_work", {})
+    changed_registered_input = (registered and attempts and changed_input_ref is not None
+                                and changed_input_ref != ref(attempts[-1][1]["facts"]))
+    if attempts and not changed_registered_input and any(state["terminals"].get(pid, {}).get("outcome") == "PASS"
+                                                         for pid, _, _ in attempts):
         return result("NO_RETRY", "WORK_ITEM_ALREADY_COMPLETED")
     if failure_kind == "quality":
         if changed_input_ref is None or (attempts and changed_input_ref ==
@@ -71,9 +74,13 @@ def next_action(state: Mapping[str, Any], *, work_item_id: str, failure_kind: st
     if failure_kind not in TRANSIENT:
         return result("CONTINUE_LOCAL", "FAILURE_CLASS_UNCONFIRMED")
     maximum = 1 + policy()["retry_policy"]["transient_default_max_additional_attempts"]
-    if len(attempts) >= maximum:
+    funding = budget._select_funding(state, work_item_id, 0)
+    current_attempts = [row for row in attempts if row[1].get("funding_id", "base") == funding]
+    if funding != "base":
+        maximum = budget.allowance.buckets(state)[funding]["attempts"]
+    if len(current_attempts if registered else attempts) >= maximum:
         return result("CONTINUE_LOCAL", "TRANSIENT_RETRY_LIMIT")
-    view = budget.snapshot(state, work_item_id=work_item_id, depth=0)
+    view = budget.snapshot(state, work_item_id=work_item_id, depth=0, funding_id=funding)
     available_units = (view["capacity_units"] - view["completed_charged_units"]
                        - view["inflight_reserved_units"] - view["future_required_hold_units"])
     available_attempts = (view["capacity_attempts"] - view["completed_charged_attempts"]

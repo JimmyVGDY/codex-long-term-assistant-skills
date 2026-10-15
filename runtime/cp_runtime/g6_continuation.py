@@ -47,7 +47,8 @@ def _deny(code: str, action: str, parameters: Mapping[str, Any] | None = None) -
             "permissionDecisionReason": code + "; decision=" + json.dumps(decision, ensure_ascii=True)}}
 
 
-def pretool(ledger: Path, data: Mapping[str, Any], tool: str) -> dict[str, Any]:
+def pretool(ledger: Path, data: Mapping[str, Any], tool: str,
+             authority_error: str | None = None) -> dict[str, Any]:
     if data.get("agent_id"):
         return _deny("G6_PARENT_CONTINUATION_REQUIRED", "request_parent_continuation")
     inputs = data.get("tool_input")
@@ -78,6 +79,21 @@ def pretool(ledger: Path, data: Mapping[str, Any], tool: str) -> dict[str, Any]:
                       "reuse_original_fields": ["message"]})
     origin_id = max(matches, key=lambda pid: state["permits"][pid]["prepared_at"])
     origin = state["permits"][origin_id]
+    if authority_error and budget._select_funding(state, origin["work_item_id"], 0) != "base":
+        return _deny("G6_NATIVE_AUTHORITY_UNVERIFIED", "recover_native_authority_source")
+    scoped_call = None
+    if origin["work_item_id"] in state.get("review_work", {}):
+        from .g6_review_requests import HEADER, _context_body, opaque_transport, resolve_call
+        if opaque_transport(message):
+            # 中文：续跑没有独立任务名可绑定密文；新派发仍沿用原工作与获准额度。
+            # English: Opaque continuation lacks a dispatch key; prepare a fresh spawn in the same approved work.
+            return _deny("G6_REVIEW_OPAQUE_CONTINUATION", "prepare_scoped_review_spawn")
+        match = HEADER.match(message)
+        call = state.get("review_calls", {}).get(match[1]) if match else None
+        if not call or call["work_id"] != origin["work_item_id"]:
+            return _deny("G6_REVIEW_CONTINUATION_NEEDS_BINDING", "prepare_fresh_scoped_review_call")
+        scoped_call = resolve_call(state, {"task_name": call["task_name"], "agent_type": origin["agent_type"], "message": message})
+        _context_body(ledger, scoped_call)
     call_ref = ref(call_id)
     marker = _path(ledger, call_ref)
     marker.parent.mkdir(parents=True, exist_ok=True)
@@ -95,8 +111,11 @@ def pretool(ledger: Path, data: Mapping[str, Any], tool: str) -> dict[str, Any]:
         else:
             from .g6_hook_v1 import _facts
             task_name = "continue_" + call_ref[7:47]
-            facts = _facts(state["root"], {"task_name": task_name, "agent_type": origin["agent_type"],
-                                          "message": message}, persist=True)
+            # 中文：材料仍按原绑定核验；续跑的原生尝试使用独立名称。
+            # English: Verify the bound material, but give each continuation its own attempt name.
+            facts = _facts(state["root"], {"task_name": scoped_call["task_name"] if scoped_call else task_name,
+                                          "agent_type": origin["agent_type"],
+                                          "message": message}, persist=True, state=state)
             facts["work_item_id"] = origin["work_item_id"]
             prepared = budget.prepare(ledger, facts=facts,
                 capability={"schema_version": "g6-desktop-capability/1",

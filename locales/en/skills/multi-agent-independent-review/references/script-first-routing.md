@@ -23,6 +23,8 @@ Keep permission to continue separate from verified success. Missing isolation pr
 
 ## Budget and flexibility
 
+Use [scoped allowance amendments and recovery](review-allowance-amendments.md) when an authorized review lacks capacity. Preserve the base template and derive usable capacity from approved scoped allocations in the same root. Changing a configuration number or saving an approval note is insufficient.
+
 - Scripts compute authorized capacity, completed charges, in-flight reservations and required future holds. Never charge one call twice or reset the root budget through splitting.
 - Planning units are versioned allocation weights, not actual credits or quality scores. Unknown measured cost remains UNKNOWN.
 - Read adjustment limits, concurrency, depth, retries and backoff from the runtime policy. Necessary downgrades do not consume upward-adjustment slots. If only a more expensive GPT-6 profile is available but the existing budget allows it, the script may choose the cheapest available profile and record the capability fallback.

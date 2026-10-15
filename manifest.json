@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.16.1",
-  "release_name": "大型工具结果的主任务隔离修复",
+  "version": "7.16.2",
+  "release_name": "复审额度追加与授权恢复",
   "generated_for": "Codex Desktop engineering assistance with script-first GPT-6 nine-profile defaults, bounded adjustments, shared budgets, evidence-tolerant gates, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -669,6 +669,9 @@
     ]
   },
   "upgrade_from": [
+    "7.16.1",
+    "7.16.0",
+    "7.15.3",
     "7.15.2",
     "7.15.1",
     "7.15.0",
@@ -726,11 +729,7 @@
     "7.5.1",
     "7.6.0",
     "7.12.0",
-    "7.13.0",
-    "7.13.5",
-    "7.13.6",
-    "7.15.3",
-    "7.16.0"
+    "7.13.0"
   ],
   "release_validation": {
     "python_syntax": true,
@@ -930,6 +929,12 @@
     "profile_count_per_role": 9,
     "budget_schema_version": "g6-budget-journal/1",
     "hook_entry": "hooks/cp_hook.py",
-    "historical_ledgers_reinterpreted": false
+    "historical_ledgers_reinterpreted": false,
+    "allowance_protocol": "g6-allowance/1",
+    "allowance_journal_schema_version": "g6-budget-journal/2",
+    "readable_budget_schema_versions": [
+      "g6-budget-journal/1",
+      "g6-budget-journal/2"
+    ]
   }
 }

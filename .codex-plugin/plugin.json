@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.16.1",
-  "description": "跨项目长期技术助手 V7.16.1：修复大型工具结果误拦主任务，保留子任务校验。",
+  "version": "7.16.2",
+  "description": "跨项目长期技术助手 V7.16.2：支持按明确授权追加复审额度，保留原账本并恢复派发。",
   "author": {
     "name": "Project maintainers"
   },

@@ -53,6 +53,9 @@ def _report(raw: bytes) -> tuple[dict[str, Any] | None, str]:
                 or not isinstance(value["summary"], str)
                 or len(value["summary"]) > 5000):
             return None, "REVIEW_BODY_SHAPE"
+        if any(not isinstance(item, str) or len(item) > 4096
+               for key in ("checked_scope", "unverified_items") for item in value[key]):
+            return None, "REVIEW_BODY_SHAPE"
         for finding in value["findings"]:
             if (not isinstance(finding, dict) or not isinstance(finding.get("id"), str)
                     or not finding["id"] or not isinstance(finding.get("summary"), str)):
@@ -98,11 +101,26 @@ def ingest(path: Path, *, raw_transcript: bytes, task_path: str,
                if slot["work_item_id"] == permit["work_item_id"]
                and slot.get("review_phase") in {"pre_review", "post_review", "repair_review"}]
     phase = matched[0]["review_phase"] if len(matched) == 1 else "UNKNOWN"
+    work = state.get("review_work", {}).get(permit["work_item_id"])
+    if work is not None:
+        phase = work["phase"]
     clear = bool(report and report["status"] == "pass" and not report["findings"]
                  and not report["unverified_items"] and permit["facts"]["baseline_sha256"] is not None)
+    if work is not None:
+        calls = [call for call in state.get("review_calls", {}).values()
+                 if call["work_id"] == permit["work_item_id"] and ref(call) == permit["facts"]["scope_ref"]]
+        packet_verified = bool(report and len(calls) == 1
+                               and "packet_sha256=" + calls[0]["packet_sha256"] in report["checked_scope"])
+        from .g6_review_requests import context_delivered
+        delivery_verified = bool(packet_verified
+            and context_delivered(path, permit_id, task_path, calls[0])
+            and "context_sha256=" + calls[0]["body_sha256"] in report["checked_scope"])
+        clear = clear and delivery_verified
+        reason = ("REVIEW_PACKET_VERIFIED" if delivery_verified else
+                  "REVIEW_CONTEXT_UNVERIFIED" if packet_verified else "REVIEW_PACKET_UNVERIFIED")
     receipt = {"schema_version": "g6-review-receipt/1", "permit_id": permit_id,
                "work_item_id": permit["work_item_id"], "review_phase": phase,
-               "phase_source": "root-required-slot" if matched else "UNKNOWN",
+               "phase_source": "registered-review-work" if work else "root-required-slot" if matched else "UNKNOWN",
                "agent_ref": ref(task_path),
                "root_session_ref": state["root"]["host_session_ref"],
                "root_identity_ref": ref(state["root"]["identity"]),
@@ -116,7 +134,7 @@ def ingest(path: Path, *, raw_transcript: bytes, task_path: str,
                # not an asserted hash of the entire conversation file.
                "transcript_sha256": hashlib.sha256(raw_transcript).hexdigest(),
                "gate_state": "PASS" if clear and phase != "UNKNOWN" else "MISSING_EVIDENCE",
-               "reason_code": (reason if clear else "REVIEW_NOT_CLEAR_OR_PHASE_UNKNOWN"
+               "reason_code": (reason if clear or work is not None else "REVIEW_NOT_CLEAR_OR_PHASE_UNKNOWN"
                                if report else reason), "recorded_at": utc_now()}
     target = _receipt_path(path, permit_id)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -156,8 +174,10 @@ def project_delivery(path: Path) -> dict[str, Any]:
                     or value["root_identity_ref"] != ref(state["root"]["identity"])
                     or value["root_ledger_ref"] != ref(str(path.resolve()))):
                 fail("G6_REVIEW_RECEIPT_IDENTITY")
+            packet_verified = (value["work_item_id"] not in state.get("review_work", {})
+                               or value["reason_code"] == "REVIEW_PACKET_VERIFIED")
             value["effective_gate_state"] = (value["gate_state"] if current_baseline is not None
-                and value["baseline_sha256"] == current_baseline else "MISSING_EVIDENCE")
+                and value["baseline_sha256"] == current_baseline and packet_verified else "MISSING_EVIDENCE")
             by_phase.setdefault(value["review_phase"], []).append(value)
     def gate(phase: str) -> dict | None:
         items = by_phase.get(phase, [])

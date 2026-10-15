@@ -4,6 +4,17 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.16.2 - 2026-10-15
+
+Source and local-deployment candidate. Public-release status remains bound to separately verified public Release metadata.
+
+- Add scoped review-allowance requests and native approval recovery through append-only events in the existing root, retaining base capacity, historical charges and active calls.
+- Reserve each approved review from its own work/role/profile-bound allocation; other Workers, Explorers and reviews cannot consume it.
+- Separate stable work identity from short-lived dispatch permits. In-scope packet refresh preserves approval; scope expansion, closed work and unapproved profiles remain restricted.
+- Accept direct and structured user replies, distinguish human input from automatic context, and prevent duplicate grants after replay, concurrency or a post-append interruption. Both locale renderings share one request.
+- Register required review and repair work ahead of spending. Distinguish units, attempts, active calls, native-source and installed-reader failures; recover existing grants and unknown outcomes first.
+- Add installed-reader consistency checks, bilingual operating guidance and isolated subprocess regressions. Package checks, independent review, installation and actual Desktop effectiveness remain separate evidence.
+
 ## 7.16.1 - 2026-10-12
 
 Post-release status update (2026-10-13 Asia/Shanghai): publication, six attested-workflow assets and anonymous downloads were read back; managed installation and a native large-result call were verified. Refresh bilingual downloads/reports while retaining original-project business-replay and other limits.

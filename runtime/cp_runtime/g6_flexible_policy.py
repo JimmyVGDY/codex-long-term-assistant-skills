@@ -87,16 +87,25 @@ def _facts(value: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _budget(value: Mapping[str, Any]) -> dict[str, Any]:
-    result = exact(dict(value), BUDGET_FIELDS, "G6_BUDGET_FIELDS")
-    if result["schema_version"] != "g6-budget-snapshot/1":
+    extension = value.get("schema_version") == "g6-budget-snapshot/2"
+    fields = BUDGET_FIELDS | ({"funding_id", "authorization_ref"} if extension else set())
+    result = exact(dict(value), fields, "G6_BUDGET_FIELDS")
+    if result["schema_version"] not in {"g6-budget-snapshot/1", "g6-budget-snapshot/2"}:
         fail("G6_BUDGET_VERSION")
     hex_digest(result["ledger_head"])
     rule = policy()
     name = result["capacity_class"]
     templates = rule["budget_templates"]
     parallel = rule["concurrency_defaults"]
-    if (name not in templates or result["capacity_units"] != templates[name]["units"]
-            or result["capacity_attempts"] != templates[name]["attempts"]
+    grant = extension and result["funding_id"] != "base"
+    if extension:
+        sha(result["authorization_ref"])
+        if grant and (not isinstance(result["funding_id"], str)
+                      or not re.fullmatch(r"G6F_[0-9a-f]{32}", result["funding_id"])):
+            fail("G6_BUDGET_FUNDING")
+    if (name not in templates or not grant and
+            (result["capacity_units"] != templates[name]["units"]
+             or result["capacity_attempts"] != templates[name]["attempts"])
             or result["parallel_limit"] != parallel[name]["parallel"]
             or result["depth_limit"] != parallel[name]["depth"]):
         fail("G6_BUDGET_TEMPLATE")

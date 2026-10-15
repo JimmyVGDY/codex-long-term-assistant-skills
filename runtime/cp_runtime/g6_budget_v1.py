@@ -17,6 +17,7 @@ from .g6_flexible_policy import (POLICY_ID, POLICY_SHA256, PROFILES, decide,
                                  is_upward_adjustment, policy, profile_spec)
 from .path_identity import same_path
 from .routing_contract import _constant, _object, exact, fail, hex_digest, identity, ref, role_for, sha
+from . import g6_allowance_contract as allowance
 
 SCHEMA = "g6-budget-journal/1"
 ZERO_HASH = "0" * 64
@@ -56,7 +57,9 @@ def _read_events(path: Path) -> list[dict[str, Any]]:
 
 
 def _event(previous: dict[str, Any] | None, kind: str, data: Mapping[str, Any]) -> dict[str, Any]:
-    item = {"schema_version": SCHEMA, "sequence": 1 if previous is None else previous["sequence"] + 1,
+    version = (allowance.JOURNAL_SCHEMA if kind in allowance.EVENT_TYPES or
+               previous is not None and previous["schema_version"] == allowance.JOURNAL_SCHEMA else SCHEMA)
+    item = {"schema_version": version, "sequence": 1 if previous is None else previous["sequence"] + 1,
             "event_id": "G6E_" + secrets.token_hex(16), "event_type": kind,
             "recorded_at": utc_now(), "previous_hash": ZERO_HASH if previous is None else previous["record_hash"],
             "data": dict(data)}
@@ -129,9 +132,12 @@ def replay(events: list[dict[str, Any]]) -> dict[str, Any]:
     state: dict[str, Any] | None = None
     previous = ZERO_HASH
     event_ids = set()
+    extended = False
     for sequence, event in enumerate(events, 1):
         exact(event, EVENT_FIELDS, "G6_LEDGER_EVENT_FIELDS")
-        if (event.get("schema_version") != SCHEMA
+        version = event.get("schema_version")
+        if (version not in {SCHEMA, allowance.JOURNAL_SCHEMA}
+                or extended and version != allowance.JOURNAL_SCHEMA
                 or event.get("sequence") != sequence or event.get("previous_hash") != previous
                 or event.get("record_hash") != ref({k: v for k, v in event.items()
                                                     if k != "record_hash"})[7:]
@@ -144,7 +150,7 @@ def replay(events: list[dict[str, Any]]) -> dict[str, Any]:
         previous = event["record_hash"]
         kind, data = event["event_type"], event["data"]
         if sequence == 1:
-            if kind != "ROOT_INITIALIZED":
+            if kind != "ROOT_INITIALIZED" or version != SCHEMA:
                 fail("G6_LEDGER_FIRST_EVENT")
             root = _root(data)
             state = {"root": root, "permits": {}, "host_calls": {}, "reservations": {},
@@ -152,8 +158,23 @@ def replay(events: list[dict[str, Any]]) -> dict[str, Any]:
                      "head_hash": previous}
             continue
         assert state is not None
-        if kind == "PREPARED":
-            exact(data, PREPARED_FIELDS, "G6_PREPARED_FIELDS")
+        if version == allowance.JOURNAL_SCHEMA and not extended:
+            extended = True
+            state.update(protocol_version=2, review_work={}, allowance_requests={},
+                         allowance_grants={}, allowance_revoked={}, review_calls={}, closed_review_work={})
+        if kind in allowance.EVENT_TYPES:
+            if not extended:
+                fail("G6_EXTENSION_VERSION_REQUIRED")
+            allowance.apply_event(state, kind, data)
+            if kind == "REVIEW_WORK_REGISTERED" and data["base_funded"]:
+                view = snapshot(state, work_item_id="status", depth=0)
+                if (view["completed_charged_units"] + view["inflight_reserved_units"]
+                        + view["future_required_hold_units"] > view["capacity_units"]
+                        or view["completed_charged_attempts"] + view["inflight_reserved_attempts"]
+                        + view["future_required_hold_attempts"] > view["capacity_attempts"]):
+                    fail("G6_REQUIRED_REVIEW_EXCEEDS_BASE")
+        elif kind == "PREPARED":
+            exact(data, PREPARED_FIELDS | ({"funding_id"} if extended else set()), "G6_PREPARED_FIELDS")
             permit_id = data["permit_id"]
             previous_names = [(pid, p) for pid, p in state["permits"].items()
                               if p["task_name"] == data["task_name"]]
@@ -179,12 +200,17 @@ def replay(events: list[dict[str, Any]]) -> dict[str, Any]:
                 fail("G6_PREPARED_CONFLICT")
             state["permits"][permit_id] = data
         elif kind == "RESERVED":
-            exact(data, RESERVED_FIELDS, "G6_RESERVED_FIELDS")
+            exact(data, RESERVED_FIELDS | ({"funding_id"} if extended else set()), "G6_RESERVED_FIELDS")
             permit_id = data["permit_id"]
             call_ref = sha(data["host_call_ref"])
             if (permit_id not in state["permits"] or permit_id in state["reservations"]
                     or call_ref in state["host_calls"]):
                 fail("G6_RESERVATION_CONFLICT")
+            if extended:
+                permit = state["permits"][permit_id]
+                if data["funding_id"] != permit.get("funding_id", "base"):
+                    fail("G6_FUNDING_CHANGED")
+                _check_funding(state, permit, data["funding_id"])
             state["reservations"][permit_id] = data
             state["host_calls"][call_ref] = permit_id
         elif kind == "HOST_RECEIPT":
@@ -232,7 +258,8 @@ def _adjustment_origin(state: Mapping[str, Any], work_item_id: str) -> tuple[str
             if slot is not None else ("root", state["root"]["task_id"]))
 
 
-def _usage(state: Mapping[str, Any], work_item_id: str | None = None) -> dict[str, int]:
+def _usage(state: Mapping[str, Any], work_item_id: str | None = None,
+           funding_id: str | None = None) -> dict[str, int]:
     completed_units = completed_attempts = inflight_units = inflight_attempts = 0
     active = astra_active = upward = 0
     finished_items = set()
@@ -241,16 +268,17 @@ def _usage(state: Mapping[str, Any], work_item_id: str | None = None) -> dict[st
         receipt = state["receipts"].get(permit_id)
         terminal = state["terminals"].get(permit_id)
         units = permit["planning_units"]
+        included = funding_id is None or permit.get("funding_id", "base") == funding_id
         if receipt and receipt["disposition"] == "not_started":
-            completed_attempts += 1
+            completed_attempts += int(included)
         elif terminal:
-            completed_units += units
-            completed_attempts += 1
+            completed_units += units if included else 0
+            completed_attempts += int(included)
             if terminal["outcome"] == "PASS":
                 finished_items.add(permit["work_item_id"])
         else:
-            inflight_units += units
-            inflight_attempts += 1
+            inflight_units += units if included else 0
+            inflight_attempts += int(included)
             active += 1
             if permit["approved_profile"].startswith("g6-astra-"):
                 astra_active += 1
@@ -263,12 +291,22 @@ def _usage(state: Mapping[str, Any], work_item_id: str | None = None) -> dict[st
                             if permit_id not in state["terminals"]
                             and state["receipts"].get(permit_id, {}).get("disposition") != "not_started"}
     hold_units = hold_attempts = 0
-    for slot in state["root"]["required_slots"]:
+    for slot in state["root"]["required_slots"] if funding_id in {None, "base"} else []:
         item = slot["work_item_id"]
         if item in finished_items or item in pending_active_items or item == work_item_id:
             continue
         hold_units += _slot_cost(slot)
         hold_attempts += 1
+    if funding_id in {None, "base"}:
+        attempted = {state["permits"][pid]["work_item_id"] for pid in state["reservations"]
+                     if state["receipts"].get(pid, {}).get("disposition") != "not_started"}
+        attempt_capacity = policy()["budget_templates"][state["root"]["capacity_class"]]["attempts"]
+        for work in state.get("review_work", {}).values():
+            if (work["required"] and work["base_funded"] and work["work_id"] not in attempted
+                    and work["work_id"] not in state.get("closed_review_work", {})
+                    and work["work_id"] != work_item_id):
+                hold_units += profile_spec(work["profile_id"])["planning_units"]
+                hold_attempts += int(completed_attempts + inflight_attempts + hold_attempts < attempt_capacity)
     return {"completed_charged_units": completed_units,
             "completed_charged_attempts": completed_attempts,
             "inflight_reserved_units": inflight_units,
@@ -279,15 +317,203 @@ def _usage(state: Mapping[str, Any], work_item_id: str | None = None) -> dict[st
             "upward_adjustments_used": upward}
 
 
-def snapshot(state: Mapping[str, Any], *, work_item_id: str, depth: int) -> dict[str, Any]:
+def snapshot(state: Mapping[str, Any], *, work_item_id: str, depth: int,
+             funding_id: str = "base") -> dict[str, Any]:
     root = state["root"]
     capacity = policy()["budget_templates"][root["capacity_class"]]
     concurrency = policy()["concurrency_defaults"][root["capacity_class"]]
-    return {"schema_version": "g6-budget-snapshot/1", "ledger_head": state["head_hash"],
+    authority = root["authorization_ref"]
+    if funding_id != "base":
+        bucket = allowance.buckets(state).get(funding_id)
+        if bucket is None or bucket["work_id"] != work_item_id:
+            fail("G6_ALLOWANCE_UNAVAILABLE_FOR_WORK")
+        capacity = {"units": bucket["units"], "attempts": bucket["attempts"]}
+        authority = bucket["authorization_ref"]
+    result = {"schema_version": "g6-budget-snapshot/1", "ledger_head": state["head_hash"],
             "capacity_class": root["capacity_class"], "capacity_units": capacity["units"],
             "capacity_attempts": capacity["attempts"],
-            **_usage(state, work_item_id), "parallel_limit": concurrency["parallel"],
+            **_usage(state, work_item_id, funding_id), "parallel_limit": concurrency["parallel"],
             "depth_limit": concurrency["depth"], "depth": depth}
+    if state.get("protocol_version") == 2:
+        result.update(schema_version="g6-budget-snapshot/2", funding_id=funding_id,
+                      authorization_ref=authority)
+    return result
+
+
+def _check_funding(state: Mapping[str, Any], permit: Mapping[str, Any], funding_id: str) -> None:
+    if permit["work_item_id"] in state.get("closed_review_work", {}):
+        fail("G6_REVIEW_WORK_CLOSED")
+    if any(state["permits"][pid]["work_item_id"] == permit["work_item_id"]
+           and pid not in state["terminals"]
+           and state["receipts"].get(pid, {}).get("disposition") != "not_started"
+           for pid in state["reservations"]):
+        fail("G6_WORK_ITEM_ALREADY_INFLIGHT")
+    work = state.get("review_work", {}).get(permit["work_item_id"])
+    if work and (permit["agent_type"] != work["agent_type"]
+                 or permit["approved_profile"] != work["profile_id"]):
+        fail("G6_ALLOWANCE_WORK_CONSTRAINT")
+    if funding_id != "base":
+        bucket = allowance.buckets(state).get(funding_id)
+        if (not bucket or bucket["work_id"] != permit["work_item_id"]
+                or bucket["agent_type"] != permit["agent_type"]
+                or bucket["profile_id"] != permit["approved_profile"]):
+            fail("G6_ALLOWANCE_SCOPE_CONFLICT")
+    view = snapshot(state, work_item_id=permit["work_item_id"], depth=permit["depth"], funding_id=funding_id)
+    if (view["completed_charged_units"] + view["inflight_reserved_units"]
+            + view["future_required_hold_units"] + permit["planning_units"] > view["capacity_units"]
+            or view["completed_charged_attempts"] + view["inflight_reserved_attempts"]
+            + view["future_required_hold_attempts"] + 1 > view["capacity_attempts"]
+            or view["active_calls"] >= view["parallel_limit"]
+            or view["depth"] >= view["depth_limit"]
+            or permit["approved_profile"].startswith("g6-astra-") and view["astra_active"] >= 1):
+        fail("G6_ALLOWANCE_CAPACITY_EXCEEDED")
+
+
+def _select_funding(state: Mapping[str, Any], work_item_id: str, depth: int) -> str:
+    work = state.get("review_work", {}).get(work_item_id)
+    if not work:
+        return "base"
+    cost = profile_spec(work["profile_id"])["planning_units"]
+    # 中文：预算不足时使用该工作专属追加桶；不同桶不混用，旧支出不会变成退款。
+    # English: Fall back to this work's grant, without pooling buckets or refunding history.
+    choices = [*(key for key, value in allowance.buckets(state).items()
+                 if value["work_id"] == work_item_id), "base"]
+    for key in choices:
+        view = snapshot(state, work_item_id=work_item_id, depth=depth, funding_id=key)
+        if (view["capacity_units"] - view["completed_charged_units"] - view["inflight_reserved_units"]
+                - view["future_required_hold_units"] >= cost
+                and view["capacity_attempts"] - view["completed_charged_attempts"]
+                - view["inflight_reserved_attempts"] - view["future_required_hold_attempts"] >= 1):
+            return key
+    return choices[-1]
+
+
+def decision_for_work(state: Mapping[str, Any], *, facts: Mapping[str, Any],
+                       capability: Mapping[str, Any], gates: list[Mapping[str, Any]],
+                       agent_type: str, task_name: str, message: str, decision_time: str,
+                       adjustment: Mapping[str, Any] | None = None,
+                       explicit_user_profile: str | None = None, depth: int = 0,
+                       funding_id: str = "base") -> dict[str, Any]:
+    """中文：共享派发决策；工作档位约束不能冒充宿主不可用或用户选型。
+
+    English: One decision path; a work constraint is not host capability or user authority.
+    """
+    item = facts["work_item_id"]
+    work = state.get("review_work", {}).get(item)
+    selected_adjustment = adjustment
+    selected_user_profile = explicit_user_profile
+    if work:
+        if item in state.get("closed_review_work", {}) or agent_type != work["agent_type"]:
+            fail("G6_REVIEW_WORK_ROLE_OR_STATE")
+        if funding_id != "base":
+            bucket = allowance.buckets(state).get(funding_id)
+            if not bucket or bucket["work_id"] != item or bucket["agent_type"] != agent_type:
+                fail("G6_ALLOWANCE_SCOPE_CONFLICT")
+            # 中文：只有已入根账本的实际追加批准才能提供显式选型权限。
+            # English: Only an actual root grant may supply this explicit profile authority.
+            selected_user_profile = selected_user_profile or bucket["profile_id"]
+        elif selected_user_profile is None and selected_adjustment is None:
+            selected_adjustment = {"requested_profile": work["profile_id"], "source": "model_semantic",
+                                   "reason": "Registered review requirement", "source_ref": None}
+    result = decide(facts=facts, budget=snapshot(state, work_item_id=item, depth=depth, funding_id=funding_id),
+                    capability=capability, gates=gates, agent_type=agent_type, task_name=task_name,
+                    message=message, decision_time=decision_time, adjustment=selected_adjustment,
+                    explicit_user_profile=selected_user_profile)
+    if work and result["approved_profile"] not in {None, work["profile_id"]}:
+        result = {key: value for key, value in result.items() if key not in {"decision_ref", "exact_tool_parameters"}}
+        result.update(decision="CONTINUE_LOCAL", approved_profile=None, planning_units=0,
+                      allowed_adjustment_profiles=[], tool_parameters_ref=None,
+                      next_action="prepare_scoped_allowance_quote",
+                      reason_codes=sorted(set(result["reason_codes"] + ["REVIEW_PROFILE_REQUIRES_AUTHORIZED_CAPACITY"])))
+        result["decision_ref"] = ref(result)
+        result["exact_tool_parameters"] = None
+    return result
+
+
+def register_review_work(path: Path, *, boundary_id: str, phase: str, agent_type: str,
+                         profile_id: str, scope_paths: list[str], purpose: str,
+                         required: bool = True) -> dict[str, Any]:
+    if not isinstance(scope_paths, list):
+        fail("G6_ALLOWANCE_SCOPE_PATHS")
+    item = {"boundary_id": boundary_id, "phase": phase, "agent_type": agent_type,
+            "profile_id": profile_id, "scope_paths": sorted(set(scope_paths)), "purpose": purpose,
+            "required": required, "base_funded": False}
+    item["work_id"] = allowance.work_identity(item)
+    allowance.validate_work(item)
+    with OwnerTokenLock(path, timeout=2):
+        events = _read_events(path)
+        state = replay(events)
+        if any(slot["work_item_id"] == item["work_id"] for slot in state["root"]["required_slots"]):
+            fail("G6_REVIEW_WORK_LEGACY_SLOT_CONFLICT")
+        existing = state.get("review_work", {}).get(item["work_id"])
+        if existing:
+            if item["work_id"] in state.get("closed_review_work", {}):
+                fail("G6_REVIEW_WORK_CLOSED")
+            if existing["required"] != required:
+                fail("G6_REVIEW_WORK_REQUIRED_CHANGED")
+            return existing
+        view = snapshot(state, work_item_id=item["work_id"], depth=0)
+        item["base_funded"] = (
+            view["capacity_units"] - view["completed_charged_units"] - view["inflight_reserved_units"]
+            - view["future_required_hold_units"] >= profile_spec(profile_id)["planning_units"]
+            and view["capacity_attempts"] - view["completed_charged_attempts"]
+            - view["inflight_reserved_attempts"] - view["future_required_hold_attempts"] >= 1)
+        _append(path, events, "REVIEW_WORK_REGISTERED", item)
+        return item
+
+
+def request_allowance(path: Path, *, work_ids: list[str], dispatches: int | Mapping[str, int] = 1,
+                       retry_limit: int = 2) -> dict[str, Any]:
+    from .routing_contract import integer
+    integer(retry_limit, "G6_ALLOWANCE_RETRY_LIMIT", maximum=2)
+    with OwnerTokenLock(path, timeout=2):
+        events = _read_events(path)
+        state = replay(events)
+        works = state.get("review_work", {})
+        if not isinstance(work_ids, list) or any(item not in works for item in work_ids):
+            fail("G6_ALLOWANCE_WORK_UNKNOWN")
+        if any(item in state.get("closed_review_work", {}) for item in work_ids):
+            fail("G6_REVIEW_WORK_CLOSED")
+        if isinstance(dispatches, Mapping) and set(dispatches) != set(work_ids):
+            fail("G6_ALLOWANCE_DISPATCH_SCOPE")
+        counts = {item: dispatches[item] if isinstance(dispatches, Mapping) else dispatches for item in work_ids}
+        for count in counts.values():
+            integer(count, "G6_ALLOWANCE_DISPATCHES", minimum=1, maximum=8)
+        rows = [{"work_id": item, "dispatches": counts[item],
+                 "attempts": counts[item] * (retry_limit + 1),
+                 "units": counts[item] * profile_spec(works[item]["profile_id"])["planning_units"]}
+                for item in work_ids]
+        for key, previous in state.get("allowance_requests", {}).items():
+            if (previous["allocations"] == rows and key not in state["allowance_grants"]
+                    and key not in state["allowance_revoked"]):
+                return previous
+        request = {"request_id": "G6Q_" + secrets.token_hex(16), "allocations": rows, "question_version": 1,
+                   "requested_at": utc_now(), "scope_ref": ref([works[item] for item in work_ids])}
+        _append(path, events, "ALLOWANCE_REQUESTED", request)
+        return request
+
+
+def allowance_status(state: Mapping[str, Any]) -> dict[str, Any]:
+    base = snapshot(state, work_item_id="status", depth=0)
+    grants = []
+    for key, bucket in allowance.buckets(state, include_revoked=True).items():
+        grants.append({**bucket, "funding_id": key, "usage": _usage(state, bucket["work_id"], key),
+                       "revoked": bucket["request_id"] in state.get("allowance_revoked", {})})
+    return {"schema_version": "g6-allowance-status/1", "ledger_head": state["head_hash"],
+            "base": base, "grants": grants,
+            "pending_requests": [request for key, request in state.get("allowance_requests", {}).items()
+                                 if key not in state.get("allowance_grants", {})
+                                 and key not in state.get("allowance_revoked", {})],
+            "closed_review_work": sorted(state.get("closed_review_work", {})),
+            "total_usage": _usage(state), "actual_credits": None}
+
+
+def close_review_work(path: Path, work_id: str) -> None:
+    with OwnerTokenLock(path, timeout=2):
+        events = _read_events(path)
+        state = replay(events)
+        if work_id not in state.get("closed_review_work", {}):
+            _append(path, events, "REVIEW_WORK_CLOSED", {"work_id": work_id})
 
 
 def initialize(path: Path, *, identity_value: Mapping[str, str], host_session_id: str,
@@ -346,7 +572,14 @@ def prepare(path: Path, *, facts: Mapping[str, Any], capability: Mapping[str, An
             available = capability.get("available_profiles")
             capability = {**capability, "available_profiles":
                           [name for name in allowed if available is None or name in available]}
-        decision = decide(facts=facts, budget=snapshot(state, work_item_id=item, depth=depth),
+        work = state.get("review_work", {}).get(item)
+        if work is not None:
+            if item in state.get("closed_review_work", {}):
+                fail("G6_REVIEW_WORK_CLOSED")
+            if agent_type != work["agent_type"]:
+                fail("G6_REVIEW_WORK_ROLE_CONFLICT")
+        funding_id = _select_funding(state, item, depth)
+        decision = decision_for_work(state, facts=facts, funding_id=funding_id, depth=depth,
                           capability=capability, gates=gates, agent_type=agent_type,
                           task_name=task_name, message=message, decision_time=decision_time,
                           adjustment=adjustment, explicit_user_profile=explicit_user_profile)
@@ -354,8 +587,10 @@ def prepare(path: Path, *, facts: Mapping[str, Any], capability: Mapping[str, An
             return {"decision": decision, "permit_id": None}
         selected = decision["approved_profile"]
         preferred = decision["preferred_profile"]
-        upward = bool(adjustment and adjustment.get("source") == "model_semantic"
-                      and selected == adjustment.get("requested_profile")
+        semantic_upward = (adjustment and adjustment.get("source") == "model_semantic"
+                           and selected == adjustment.get("requested_profile"))
+        registered_upward = work is not None and adjustment is None and explicit_user_profile is None
+        upward = bool(funding_id == "base" and (semantic_upward or registered_upward)
                       and is_upward_adjustment(preferred, selected))
         permit_id = "G6P_" + secrets.token_hex(16)
         permit = {"permit_id": permit_id, "decision_ref": decision["decision_ref"],
@@ -369,6 +604,8 @@ def prepare(path: Path, *, facts: Mapping[str, Any], capability: Mapping[str, An
                   "adjustment": dict(adjustment) if adjustment else None,
                   "explicit_user_profile": explicit_user_profile, "decision_time": decision_time,
                   "approved_profile": selected, "upward_adjustment": upward, "depth": depth}
+        if state.get("protocol_version") == 2:
+            permit["funding_id"] = funding_id
         _append(path, events, "PREPARED", permit)
         return {"decision": decision, "permit_id": permit_id}
 
@@ -412,8 +649,8 @@ def approve_and_reserve(path: Path, *, permit_id: str, host_call_id: str,
         if original_event_index is None or original_event_index < 1:
             fail("G6_PERMIT_ORIGIN_MISSING")
         original_state = replay(events[:original_event_index])
-        original = decide(facts=permit["facts"], budget=snapshot(
-            original_state, work_item_id=permit["work_item_id"], depth=depth),
+        original = decision_for_work(original_state, facts=permit["facts"], depth=depth,
+            funding_id=permit.get("funding_id", "base"),
             capability=permit["capability"], gates=permit["gates"],
             agent_type=permit["agent_type"], task_name=permit["task_name"],
             message=args["message"], decision_time=permit["decision_time"],
@@ -425,8 +662,8 @@ def approve_and_reserve(path: Path, *, permit_id: str, host_call_id: str,
         # 中文：以最新账本重新计算；决策变化需要新许可，Hook 不静默提高或放宽旧许可。
         # English: Recompute from the newest ledger.  A changed decision requires a new
         # permit; the Hook never silently upgrades or relaxes the old one.
-        decision = decide(facts=permit["facts"], budget=snapshot(
-            state, work_item_id=permit["work_item_id"], depth=depth),
+        decision = decision_for_work(state, facts=permit["facts"], depth=depth,
+            funding_id=permit.get("funding_id", "base"),
             capability=permit["capability"], gates=permit["gates"],
             agent_type=permit["agent_type"], task_name=permit["task_name"],
             message=args["message"], decision_time=permit["decision_time"],
@@ -434,8 +671,10 @@ def approve_and_reserve(path: Path, *, permit_id: str, host_call_id: str,
             explicit_user_profile=permit["explicit_user_profile"])
         if decision["approved_profile"] != permit["approved_profile"]:
             fail("G6_PERMIT_STALE_RECOMPUTE_REQUIRED")
-        updated = _append(path, events, "RESERVED", {"permit_id": permit_id,
-                           "host_call_ref": call_ref, "reserved_at": now})
+        reservation = {"permit_id": permit_id, "host_call_ref": call_ref, "reserved_at": now}
+        if state.get("protocol_version") == 2:
+            reservation["funding_id"] = permit.get("funding_id", "base")
+        updated = _append(path, events, "RESERVED", reservation)
         return {"permit_id": permit_id, "host_call_ref": call_ref,
                 "ledger_head": updated["head_hash"], "idempotent": False}
 
