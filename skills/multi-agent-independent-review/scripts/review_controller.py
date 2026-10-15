@@ -1494,6 +1494,10 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--packet-dir", default="")
     plan.add_argument("--allow-same-packet", action="store_true")
     plan.add_argument("--same-packet-reason", default="")
+    plan.add_argument("--review-stage", choices=["pre_review", "post_review", "repair_review"], default=None)
+    plan.add_argument("--model-profile", choices=list(G6_PROFILES), default=None)
+    plan.add_argument("--allowed-path", action="append", default=[])
+    plan.add_argument("--reserve-repair", action="store_true")
     plan.set_defaults(func=command_plan)
 
     dispatch = sub.add_parser("dispatch")
@@ -1596,6 +1600,18 @@ def build_parser() -> argparse.ArgumentParser:
     reconcile.add_argument("--root-envelope", default=os.environ.get("CP_DELEGATION_ENVELOPE_PATH", ""))
     reconcile.add_argument("--host-session-id", default=os.environ.get("CODEX_THREAD_ID", ""))
     reconcile.set_defaults(func=lambda _args: die("旧复审状态不支持 V8 reconciliation"))
+    for name in ("bind-native-source", "allowance-quote", "allowance-status", "allowance-recover"):
+        item = sub.add_parser(name)
+        add_common(item)
+        if name == "bind-native-source":
+            item.add_argument("--transcript-path", required=True)
+        if name == "allowance-quote":
+            item.add_argument("--reviewer", default="")
+            item.add_argument("--additional-reviews", type=int, default=1)
+            item.add_argument("--retry-limit", type=int, default=2)
+            item.add_argument("--future-review", action="store_true")
+            item.add_argument("--locale", choices=["zh-CN", "en"], default="zh-CN")
+        item.set_defaults(func=lambda _args: die("追加额度入口仅支持已绑定的 G6 原生工作流"))
     return parser
 
 

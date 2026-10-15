@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.16.1",
-  "description": "Cross-project engineering assistant V7.16.1: isolate large parent tool results while preserving child guards.",
+  "version": "7.16.2",
+  "description": "Cross-project engineering assistant V7.16.2: scoped review allowances, preserved accounting, and approval recovery.",
   "author": {
     "name": "Project maintainers"
   },

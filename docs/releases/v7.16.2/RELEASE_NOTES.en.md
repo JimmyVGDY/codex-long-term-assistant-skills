@@ -1,0 +1,14 @@
+<!-- Generated from locales/en/docs/releases/v7.16.2/RELEASE_NOTES.md; edit that source and run scripts/documentation.py sync. -->
+
+# V7.16.2 Release Notes
+
+This version adds the complete scoped review-allowance and approval-recovery entrypoints. Source candidates, local installation and public Releases are distinct states. Public status remains tied to verified Release metadata.
+
+When units or attempts are insufficient, the controller prepares a concrete scoped request. Native user approval appends an allocation to the original root and rebuilds the current dispatch permit without changing the base template or historical charges.
+
+- Calculate units and attempts together, reuse unused approvals, and reconcile existing calls when concurrency is full or outcomes are unknown.
+- Bind spending to work, role, profile and paths. Packet refresh neither resets counters nor discards an in-scope approval.
+- Check native provenance, duplicate responses, concurrency, crash recovery, revocation and closure. Screenshots, model assertions and tool output cannot approve.
+- Install matching readers before extension writes, preserve G6 prefixes and frozen historical interpreters, and share request identity across both locale renderings.
+
+See the [amendment and recovery protocol](../../../locales/en/skills/multi-agent-independent-review/references/review-allowance-amendments.md), [validation report](VALIDATION_REPORT.en.md) and [audit report](AUDIT_REPORT.en.md). Codex Desktop is the sole product target.

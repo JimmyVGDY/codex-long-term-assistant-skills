@@ -7,6 +7,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -20,10 +21,11 @@ from .event_v2 import project_identity_for
 from .routing_contract import _constant, _object, fail, ref
 
 
-def _deny(code: str, *, next_action: str = "continue_local") -> dict[str, Any]:
+def _deny(code: str, *, next_action: str = "continue_local", details: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    suffix = "; details=" + json.dumps(dict(details), ensure_ascii=True) if details else ""
     return {"hookSpecificOutput": {"hookEventName": "PreToolUse",
             "permissionDecision": "deny", "permissionDecisionReason":
-            f"{code}; next_action={next_action}"}}
+            f"{code}; next_action={next_action}" + suffix}}
 
 
 def _root_path(session: str) -> Path:
@@ -59,7 +61,10 @@ def _ensure_new_session(data: Mapping[str, Any]) -> bool:
     return True
 
 
-def _facts(root: Mapping[str, Any], args: Mapping[str, Any], *, persist: bool = False) -> dict[str, Any]:
+def _facts(root: Mapping[str, Any], args: Mapping[str, Any], *, persist: bool = False,
+           state: Mapping[str, Any] | None = None, bound_call: dict | None = None) -> dict[str, Any]:
+    from .g6_review_requests import resolve_call
+    bound = bound_call or resolve_call(state or {}, args)
     sources: list[str] = []
     try:
         snapshot = repo_snapshot(Path(root["repo_path"]))
@@ -93,9 +98,12 @@ def _facts(root: Mapping[str, Any], args: Mapping[str, Any], *, persist: bool = 
     scope = {"session_ref": root["host_session_ref"], "task_name": args["task_name"],
              "message_sha256": hashlib.sha256(args["message"].encode("utf-8")).hexdigest()}
     work_item_id = ref({"role": args["agent_type"], "message_sha256": scope["message_sha256"]})
+    if bound:
+        work_item_id = bound["work_id"]
+        baseline = bound["baseline_sha256"]
     return {"schema_version": "g6-task-facts/1", "identity": root["identity"],
             "task_id": root["task_id"], "work_item_id": work_item_id,
-            "baseline_sha256": baseline, "scope_ref": ref(scope),
+            "baseline_sha256": baseline, "scope_ref": ref(bound) if bound else ref(scope),
             "task_kind": "unknown", "task_kind_source": "unknown", "source_refs": sources,
             "missing_evidence": missing}
 
@@ -108,14 +116,16 @@ def preview(*, session_id: str, cwd: Path, agent_type: str, task_name: str,
     English: Read-only Desktop decision preview; the Hook issues the actual permit.
     """
     binding = handoff.read(session_id)
+    state = None
     if binding is not None:
         state = budget.read_budget(Path(binding["new_ledger_path"]))
         root = state["root"]
         if Path(root["repo_path"]).resolve() != cwd.resolve():
             fail("G6_PREVIEW_REPOSITORY_CONFLICT")
         item = _facts(root, {"task_name": task_name, "agent_type": agent_type,
-                             "message": message})
-        view = budget.snapshot(state, work_item_id=item["work_item_id"], depth=0)
+                             "message": message}, state=state)
+        view = budget.snapshot(state, work_item_id=item["work_item_id"], depth=0,
+                               funding_id=budget._select_funding(state, item["work_item_id"], 0))
     else:
         if research_campaign._head(session_id).exists():
             fail("G6_PREVIEW_HANDOFF_REQUIRED")
@@ -153,6 +163,13 @@ def preview(*, session_id: str, cwd: Path, agent_type: str, task_name: str,
                    "reason": "", "source_ref": None}
                   if choice is None and requested_profile is not None
                   and requested_profile != "g6-sol-medium" else None)
+    if state is not None:
+        return budget.decision_for_work(state, facts=item,
+            funding_id=budget._select_funding(state, item["work_item_id"], 0),
+            capability={"schema_version": "g6-desktop-capability/1", "available_profiles": None, "source_ref": None},
+            gates=[], agent_type=agent_type, task_name=task_name, message=message,
+            decision_time=utc_now(), adjustment=adjustment,
+            explicit_user_profile=choice["profile_id"] if choice else None)
     return decide(facts=item, budget=view,
                   capability={"schema_version": "g6-desktop-capability/1",
                               "available_profiles": None, "source_ref": None},
@@ -161,7 +178,33 @@ def preview(*, session_id: str, cwd: Path, agent_type: str, task_name: str,
                   explicit_user_profile=choice["profile_id"] if choice else None)
 
 
-def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> dict[str, Any]:
+def admission_diagnostic(state: Mapping[str, Any], work_item_id: str, profile_id: str,
+                          decision: Mapping[str, Any]) -> dict[str, Any]:
+    funding = budget._select_funding(state, work_item_id, 0)
+    view = budget.snapshot(state, work_item_id=work_item_id, depth=0, funding_id=funding)
+    units = view["capacity_units"] - view["completed_charged_units"] - view["inflight_reserved_units"] - view["future_required_hold_units"]
+    attempts = view["capacity_attempts"] - view["completed_charged_attempts"] - view["inflight_reserved_attempts"] - view["future_required_hold_attempts"]
+    cost = profile_spec(profile_id)["planning_units"]
+    pending = [key for key, request in state.get("allowance_requests", {}).items()
+               if key not in state.get("allowance_grants", {}) and key not in state.get("allowance_revoked", {})
+               and any(row["work_id"] == work_item_id for row in request["allocations"])]
+    if view["active_calls"] >= view["parallel_limit"]:
+        reason, action = "PARALLEL_CAPACITY_FULL", "wait_for_capacity"
+    elif units < cost or attempts < 1:
+        reason = "UNITS_AND_ATTEMPTS_EXHAUSTED" if units < cost and attempts < 1 else "UNITS_EXHAUSTED" if units < cost else "ATTEMPTS_EXHAUSTED"
+        action = "recover_existing_allowance_authorization" if pending else "prepare_scoped_allowance_quote"
+    else:
+        reason, action = "PROFILE_OR_GATE_UNAVAILABLE", decision["next_action"]
+    return {"schema_version": "g6-admission-recovery/1", "reason_code": reason, "next_action": action,
+            "available_units": units, "available_attempts": attempts,
+            "required_units": cost, "missing_units": max(0, cost - units),
+            "missing_attempts": max(0, 1 - attempts), "funding_id": funding,
+            "pending_request_ids": pending, "allowance_protocol": "g6-allowance/1",
+            "original_reason_codes": decision["reason_codes"]}
+
+
+def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any],
+             authority_error: str | None = None) -> dict[str, Any]:
     root = budget.read_budget(path)["root"]
     if data.get("agent_id"):
         return _deny("G6_NESTED_NATIVE_BINDING_UNAVAILABLE",
@@ -175,6 +218,11 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> di
     if not isinstance(task_name, str):
         return _deny("G6_TASK_NAME_REQUIRED")
     state = budget.read_budget(path)
+    from .g6_review_requests import resolve_call
+    bound = resolve_call(state, args, ledger=path, native_transport=True)
+    if bound is not None:
+        from .g6_review_requests import _context_body
+        _context_body(path, bound)
     from .g6_user_choice_v1 import read_choice
     user_choice = read_choice(session_id=str(data["session_id"]),
                               turn_id=str(data.get("turn_id") or ""),
@@ -189,7 +237,7 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> di
         else:
             matches = [latest]
     if not matches:
-        collected = _facts(root, args, persist=True)
+        collected = _facts(root, args, persist=True, state=state, bound_call=bound)
         requested = next((name for name in PROFILES
                           if profile_spec(name)["model"] == args.get("model")
                           and profile_spec(name)["effort"] == args.get("reasoning_effort")), None)
@@ -212,7 +260,10 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> di
                                   depth=1 if data.get("agent_id") else 0)
         if prepared["permit_id"] is None:
             decision = prepared["decision"]
-            return _deny("G6_" + decision["decision"], next_action=decision["next_action"])
+            recovery = admission_diagnostic(state, collected["work_item_id"], requested, decision)
+            if authority_error and recovery["pending_request_ids"]:
+                recovery.update(reason_code="NATIVE_AUTHORITY_UNVERIFIED", next_action="recover_native_authority_source")
+            return _deny("G6_" + recovery["reason_code"], next_action=recovery["next_action"], details=recovery)
         permit_id = prepared["permit_id"]
         expected = prepared["decision"]["exact_tool_parameters"]
     else:
@@ -225,6 +276,9 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> di
                 or prior["capability"]["available_profiles"] is not None
                 or any(gate["state"] != "MISSING_EVIDENCE" for gate in prior["gates"])):
             return _deny("G6_UNTRUSTED_SOURCE_LABEL", next_action="use_default_or_verified_controller")
+        if bound and (prior["facts"]["work_item_id"] != bound["work_id"]
+                      or prior["facts"]["scope_ref"] != ref(bound)):
+            return _deny("G6_REVIEW_BINDING_CHANGED", next_action="reprepare_scoped_review")
         expected = {"task_name": matches[0]["task_name"], "agent_type": matches[0]["agent_type"],
                     "model": matches[0]["model"], "reasoning_effort": matches[0]["reasoning_effort"],
                     "fork_turns": "none"}
@@ -232,6 +286,8 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> di
            if key != "message"):
         return _deny("G6_EXACT_PROFILE_REQUIRED_" + str(expected["model"]) + "_" +
                      str(expected["reasoning_effort"]), next_action="retry_with_exact_parameters")
+    if authority_error and budget.read_budget(path)["permits"][permit_id].get("funding_id", "base") != "base":
+        return _deny("G6_NATIVE_AUTHORITY_UNVERIFIED", next_action="recover_native_authority_source")
     if collected := (matches[0]["facts"] if matches else collected):
         prior = collected["baseline_sha256"]
         if prior is not None:
@@ -450,6 +506,15 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
             # 中文：可选偏好记录不得阻止用户提示提交。
             # English: An optional preference record must never block the user prompt.
             pass
+        binding = handoff.read(session)
+        if binding is not None and not data.get("agent_id"):
+            from .g6_allowance_authority import recover
+            try:
+                recover(Path(binding["new_ledger_path"]), data=data)
+            except (OSError, ValueError, TimeoutError, RuntimeContractError):
+                # 中文：用户提交不阻塞；派发前还会从同一原生记录恢复，绝不把失败当作批准。
+                # English: Never block the user prompt or promote a failed read into approval.
+                pass
         return False, None
     tool = delegation_tool_name(data.get("tool_name"))
     delegated = tool == "spawn_agent"
@@ -463,6 +528,15 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
     if owner is None or owner[0] == "old":
         return False, None
     path = owner[1]
+    authority_error = None
+    if not data.get("agent_id") and hook_name == "PreToolUse":
+        from .g6_allowance_authority import recover
+        try:
+            recovery = recover(path, data=data)
+            if recovery.get("has_more") or recovery["status"] == "NATIVE_SOURCE_UNAVAILABLE":
+                authority_error = "SOURCE_RECOVERY_PENDING"
+        except (OSError, ValueError, TimeoutError, RuntimeContractError) as exc:
+            authority_error = type(exc).__name__
     if data.get("agent_id") and hook_name in {"SubagentStart", "SubagentStop"}:
         from .g6_agent_identity import remember
         remember(path, data)
@@ -479,7 +553,7 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
             "followup_task", "send_input", "resume_agent", "send_message"}:
         if tool != "send_message":
             from .g6_continuation import pretool as continue_agent
-            return True, continue_agent(path, data, tool)
+            return True, continue_agent(path, data, tool, authority_error=authority_error)
         inputs = data.get("tool_input")
         target = inputs.get("target") if isinstance(inputs, Mapping) else None
         if not isinstance(target, str) or not target:
@@ -515,14 +589,19 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
         inputs = data.get("tool_input")
         if not isinstance(inputs, Mapping):
             return True, _deny("G6_TOOL_INPUT_REQUIRED")
-        return True, _pretool(path, data, inputs)
+        try:
+            return True, _pretool(path, data, inputs, authority_error=authority_error)
+        except (OSError, ValueError, TimeoutError, RuntimeContractError) as exc:
+            code = str(exc) if re.fullmatch(r"[A-Z0-9_]{1,96}", str(exc)) else "G6_DISPATCH_STATE_UNAVAILABLE"
+            return True, _deny(code, next_action="reconcile_current_dispatch_state")
     if hook_name == "PostToolUse" and delegated and not data.get("agent_id"):
         return True, _posttool(path, data, data.get("tool_input") or {})
     if hook_name == "PostToolUse" and tool in {"followup_task", "send_input", "resume_agent"}:
         from .g6_continuation import posttool as continue_receipt
         return True, continue_receipt(path, data)
     if hook_name == "SubagentStart":
-        return True, {}
+        from .g6_review_requests import bootstrap_context
+        return True, bootstrap_context(path, data)
     if hook_name == "SubagentStop":
         return True, _terminal(path, data)
     if hook_name == "Stop" and not data.get("agent_id"):

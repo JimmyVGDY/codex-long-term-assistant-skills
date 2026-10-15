@@ -479,3 +479,9 @@ docs/releases/v7.16.0/AUDIT_REPORT.md
 docs/releases/v7.15.3/RELEASE_NOTES.md
 docs/releases/v7.15.3/VALIDATION_REPORT.md
 docs/releases/v7.15.3/AUDIT_REPORT.md
+
+# V7.16.2 pairs reviewed by the implementing agent; not a human-review attestation.
+skills/multi-agent-independent-review/references/review-allowance-amendments.md
+docs/releases/v7.16.2/RELEASE_NOTES.md
+docs/releases/v7.16.2/VALIDATION_REPORT.md
+docs/releases/v7.16.2/AUDIT_REPORT.md
