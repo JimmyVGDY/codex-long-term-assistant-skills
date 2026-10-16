@@ -5,9 +5,12 @@ English: Atomic reserve, future holds, and immutable created-attempt accounting.
 from __future__ import annotations
 
 import copy
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from cp_runtime import g6_budget_v1 as budget
 from cp_runtime.g6_flexible_policy import PROFILES
@@ -162,6 +165,44 @@ class G6BudgetTests(unittest.TestCase):
             stream.write(b'{"bad":true}\n')
         with self.assertRaises(RoutingError):
             budget.read_budget(self.path)
+
+    def test_read_snapshot_allows_writer_during_validation_without_mixing_events(self):
+        # 中文：真实另一进程在校验期间追加，当前读者仍只返回已冻结的完整前缀。
+        # English: A real second process appends during validation; the reader must
+        # still return only its complete frozen prefix, never a mixed journal.
+        self.init()
+        prefix = self.path.read_bytes()
+        prepared = self.prepare()
+        tail = Path(self.temp.name) / "tail.jsonl"
+        tail.write_bytes(self.path.read_bytes()[len(prefix):])
+        self.path.write_bytes(prefix)
+        writer = Path(self.temp.name) / "append.py"
+        writer.write_text(
+            "import sys\nfrom pathlib import Path\n"
+            "sys.path.insert(0, sys.argv[3])\n"
+            "from cp_runtime.event_v2 import OwnerTokenLock\n"
+            "path = Path(sys.argv[1])\n"
+            "with OwnerTokenLock(path, timeout=0.2):\n"
+            "    with path.open('ab') as stream:\n"
+            "        stream.write(Path(sys.argv[2]).read_bytes())\n",
+            encoding="utf-8")
+        original_replay = budget.replay
+
+        def replay_with_concurrent_writer(events):
+            result = subprocess.run(
+                [sys.executable, "-I", "-B", str(writer), str(self.path),
+                 str(tail), str(self.repo / "runtime")],
+                capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return original_replay(events)
+
+        with patch.object(budget, "replay", side_effect=replay_with_concurrent_writer):
+            snapshot = budget.read_budget(self.path)
+        self.assertEqual(snapshot["sequence"], 1)
+        self.assertEqual(snapshot["permits"], {})
+        current = budget.read_budget(self.path)
+        self.assertEqual(current["sequence"], 2)
+        self.assertIn(prepared["permit_id"], current["permits"])
 
     def test_invalid_receipt_does_not_poison_the_existing_journal(self):
         self.init()

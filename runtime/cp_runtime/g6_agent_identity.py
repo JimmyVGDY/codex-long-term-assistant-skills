@@ -54,9 +54,10 @@ def remember(ledger: Path, data: Mapping[str, Any]) -> dict[str, Any]:
             previous = json.loads(bounded_read(path, 32_768), object_pairs_hook=_object, parse_constant=_constant)
             verify_record(previous, "native agent identity")
             previous.pop("integrity")
-            if previous != value:
+            if (any(previous[key] != item for key, item in value.items() if key != "transcript_path")
+                    or not same_path(Path(previous["transcript_path"]), Path(value["transcript_path"]))):
                 raise ValueError("G6_AGENT_LINK_CONFLICT")
-            return value
+            return previous
         atomic_write_json(path, value, seal=True)
     return value
 

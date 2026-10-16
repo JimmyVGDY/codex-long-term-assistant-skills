@@ -196,6 +196,8 @@ def main() -> None:
     add_registry_commands(sub)
     from .onboarding_cli import add_commands as add_onboarding_commands
     add_onboarding_commands(sub)
+    from .g6_task_scope_cli import add_commands as add_task_scope_commands
+    add_task_scope_commands(sub)
 
     item = sub.add_parser("project-onboard")
     item.add_argument("--repo-path", required=True)

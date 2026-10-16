@@ -4,6 +4,17 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.17.0 - Unpublished candidate
+
+- Add six workflows for artifact comparison, independent readers, frontend design, grouped routing evaluation, browser acceptance and MCP contracts, reusing existing tools and templates.
+- Replace chat-wide budget ownership with registered task scopes; repairs, continuations, renamed tasks, subagents and late events retain their original ledger.
+- Add role-bound Worker/Explorer allowances distinct from Reviewer grants, preserving historical charges and bounded storage for authorized attempts and settlement. Registered plans can share one explicit quote.
+- Recover an explicit human correction to a prior allowance refusal within the original request, retaining declined decisions, limits and historical spend. A bounded native rescan can recover corrections missed by an older reader.
+- Fix external task-artifact path rejection, prose-entropy checks on ordinary filenames and broad blocking after missing post-write receipts. Retain actual permissions, credentials, links, identity and budget protections.
+- Shorten the read-only journal lock while retaining full replay and atomic writer validation, fixing contention that blocked parallel tool reads.
+- Give the complete package test suite a separate bounded 90-minute limit while other validation commands retain 60 minutes, accommodating slower Windows runners without removing tests or timeout/failure checks.
+- Complete the planned document, frontend and MCP synthetic executions and eighty frozen routing observations. Preserve failures and UNKNOWNs; trigger descriptions remain unchanged. See candidate reports for final independent review, matrix and release status.
+
 ## 7.16.2 - 2026-10-15
 
 Post-release status update (2026-10-15 UTC): publication, all six assets and anonymous downloads were read back. All four release-validation jobs passed, and local native approval, review dispatch and settlement were verified. Refresh bilingual downloads and reports while retaining the UNKNOWN host outcome and missing source-write audit receipts.

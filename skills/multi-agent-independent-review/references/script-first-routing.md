@@ -4,6 +4,12 @@
 
 ## 执行顺序
 
+委派前按独立目标绑定逻辑任务预算，一个聊天可以有多个 TaskScope。首次接管已有根用 continue 整体继承历史；新目标用 independent，切回已登记任务用 resume。修复、重试、拆分、改名和自动 Goal 续跑都不创建新额度。语义不明确时继续原任务，不反复要求用户说“新任务”。
+
+使用当前安装的 cp-runtime.py task-scope-origins 取得原生来源，再执行 task-scope-select，提供 --session-id、--repo-path、Task Envelope 的稳定 --task-id、--origin-ref 和 --relation。保存返回的 task_scope、new_ledger_path；预览使用 task-scope-preview --task-scope，复审控制器初始化使用 --delegation-ledger 固定原根。执行完整脚本参数，不能自行改写带任务范围的子 Agent 名称。
+
+任务切换后旧调用、追加审批、子 Agent 回调与续跑仍归原任务。缺原生来源时恢复来源并继续可行的原任务工作；来源记录不授予执行权限。记录任务完成用 task-scope-complete，不清空账本或未结调用。
+
 1. 使用已安装的 Desktop 派发准备入口，取得脚本计算的事实、默认档位、允许调整范围、共享预算、门禁状态和下一步。
 2. 执行 `exact_tool_parameters` 和 `next_action`，显式填写 model 与 reasoning_effort。模型可以理解任务、生成内容、发现风险和提出调整，但不能自行改参数后复用原许可。
 3. 需要补读、拆分、调序、升思考档或换型时提交结构化调整建议；由脚本重新核算并返回新决策。缺长篇理由或收益证明本身不阻止默认任务继续。

@@ -17,4 +17,7 @@ For behavior changes, also use the [quality-delivery entry](../engineering-quali
 6. After runtime behavior changes, run the real production build and scope-appropriate type, lint, unit, component, end-to-end, browser, SSR or hydration, mixed-runtime, performance, and interaction checks.
 7. Main-process, native mobile, IPC, file, process, updater, and bridge capabilities need additional security review.
 
+- For new pages or substantial information, visual, or interaction changes, use the [design workflow](references/design-workflow.md) to ground choices in content and inspect rendering. Small logic fixes do not automatically start visual exploration.
+- When actual page or interaction acceptance is needed, use [browser validation](references/browser-validation.md) for service identity, actions, assertions, and owned-resource cleanup with existing project tests and supported host tools.
+
 Use scripts for bounded discovery and evidence collection. Keep state, integration and business interpretation as semantic judgments; submit any profile adjustment through the shared decision path.

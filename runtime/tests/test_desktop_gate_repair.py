@@ -16,6 +16,19 @@ import test_capability_operation_workflow as workflow_tests
 
 
 class DesktopPatchPathTests(unittest.TestCase):
+    def test_normal_long_skill_and_template_paths_are_not_secret_tokens(self):
+        paths = ("skills/technical-document-writing/SKILL.md",
+                 "skills/frontend-engineering/assets/templates/FRONTEND_VALIDATION_MATRIX.template.md",
+                 "reports/Ab3CD4ef56GHij78KLmn90OPqr12STuv34WXyz56.json")
+        with tempfile.TemporaryDirectory() as temporary:
+            for relative in paths:
+                with self.subTest(path=relative):
+                    command = "*** Begin Patch\n*** Add File: " + relative + "\n+text\n*** End Patch\n"
+                    self.assertEqual(parse_apply_patch(command, Path(temporary))["target_paths"], [relative])
+            command = "*** Begin Patch\n*** Add File: reports/sk-" + "a" * 30 + ".txt\n+text\n*** End Patch\n"
+            with self.assertRaisesRegex(PatchIntentError, "SENSITIVE_PATH"):
+                parse_apply_patch(command, Path(temporary))
+
     def test_absolute_path_inside_repository_is_normalized(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -48,6 +61,16 @@ class DesktopPatchPathTests(unittest.TestCase):
 
 
 class DesktopGateContractTests(unittest.TestCase):
+    def test_audit_gap_is_neutral_but_confirmed_post_identity_conflict_is_scoped(self):
+        missing = gate.failure_response("PostToolUse", "POST_TOOL_RECONCILIATION_FAILED")
+        self.assertNotIn("decision", missing)
+        self.assertIn("without_replaying_write", missing["hookSpecificOutput"]["additionalContext"])
+        gate.validate_response("PostToolUse", missing)
+        conflict = gate.failure_response("PostToolUse", "OP_IDENTITY_MISMATCH")
+        self.assertEqual(conflict["decision"], "block")
+        self.assertIn("verify_write_result", conflict["reason"])
+        gate.validate_response("PostToolUse", conflict)
+
     def test_supported_optional_host_metadata_does_not_reject_patch(self):
         event = {"hook_event_name": "PreToolUse", "tool_name": "apply_patch",
                  "tool_use_id": "call", "session_id": "session", "turn_id": "turn",

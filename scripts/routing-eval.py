@@ -529,7 +529,7 @@ def command_host_template(args: argparse.Namespace) -> None:
                 "activated": [],
                 "task_id": "",
                 "observed_at": "",
-                "evidence_source": "codex_cli_jsonl",
+                "evidence_source": "codex_desktop_task",
                 "report_file": case_id + ".txt",
                 "report_sha256": "",
                 "fresh_session": True,
@@ -642,6 +642,12 @@ def build_parser() -> argparse.ArgumentParser:
     host_evaluate.add_argument("--evidence-dir", required=True)
     host_evaluate.add_argument("--output")
     host_evaluate.set_defaults(func=command_host_evaluate)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from types import SimpleNamespace
+    from routing_study import add_commands
+    add_commands(sub, SimpleNamespace(validate_cases=validate_cases,
+        validate_host_profile=validate_host_profile, evaluate_host_acceptance=evaluate_host_acceptance,
+        _marker=_marker, _evidence_bytes=_evidence_bytes))
     return parser
 
 

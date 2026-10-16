@@ -17,6 +17,8 @@ from .atomic_io import native_path
 from .capability_gate import POLICY_LIMIT, GatePolicy, _read, worktree_key
 from .capability_operation import CapabilityOperation, _digest_json
 from .patch_intent import PatchIntentError, parse_apply_patch, revalidate_intent
+from .patch_scope import classify_patch
+from . import capability_artifacts as artifacts
 from .capability_store import CapabilityError, CapabilityStore, bounded_read, fields, require, safe_path, unique_json_object
 from .common import resolve_codex_home
 from .gate_contract import result as gate_result, write_failure
@@ -87,14 +89,14 @@ def runtime_entry(root: Path, name: str = "cp-runtime.py") -> Path:
 
 
 def failure_response(event: str, reason: str) -> dict[str, Any]:
-    message = "Capability gate: " + reason + ". No current process PASS was verified."
+    message = "Capability gate: " + reason + ". The requested write has not executed."
     if event == "PreToolUse":
         if re.fullmatch(r"[A-Z0-9_]{1,96}", reason):
             decision = write_failure(reason)
             message += " next_action=" + decision["next_action"] + "; decision=" + json.dumps(decision, ensure_ascii=True)
         return {"hookSpecificOutput": {"hookEventName": event, "permissionDecision": "deny", "permissionDecisionReason": message}}
     if event == "PostToolUse":
-        return _post_block(message)
+        return _post_block(reason)
     if event == "Interrupt":
         return {"systemMessage": message + " Host interruption remains in control."}
     # 中文：R1 将提示提交和 Stop 留给宿主控制；门禁失败不得合成续跑或控制上下文响应。
@@ -111,9 +113,24 @@ def legacy_write_response() -> dict[str, Any]:
 
 
 def _post_block(reason: str) -> dict[str, Any]:
-    return {"decision": "block", "reason": reason,
-            "hookSpecificOutput": {"hookEventName": "PostToolUse",
-                                    "additionalContext": "副作用已可能发生；operation 已收敛为 OUTCOME_UNKNOWN。"}}
+    """中文：审计缺口不是文件失败；已发生的写入不能靠重放来补回执。
+    English: An audit gap is not a failed write; do not replay a write to obtain a receipt.
+    """
+    failure = write_failure(reason)
+    conflict = failure["evidence_state"] == "CONFIRMED_CONFLICT"
+    decision = gate_result(
+        gate_id="write_result", entrypoint="cp_gate.py", reason_code=failure["reason_code"],
+        decision="STOP_AFFECTED_ACTION" if conflict else "WAIT_RECONCILE",
+        affected_action="verify_write_result",
+        next_action="resolve_confirmed_conflict" if conflict else "read_operation_and_target_files_without_replaying_write",
+        evidence_state=failure["evidence_state"])
+    text = ("Write audit is unverified; files may already have changed. "
+            "Read the operation and target files. Do not repeat the write merely to obtain a receipt. "
+            "Continue unrelated authorized work. decision=" + json.dumps(decision, ensure_ascii=True))
+    result = {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": text}}
+    if conflict:
+        result.update(decision="block", reason=text)
+    return result
 
 
 def _canonical_patch(data: dict[str, Any]) -> tuple[str, str, str, dict[str, Any]]:
@@ -210,25 +227,73 @@ def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
 
     English: Route canonical apply_patch through Operation v2.
     """
+    binding = None
     try:
-        policy_path = locate_policy(str(data.get("cwd") or ""))
+        if event == "PostToolUse":
+            call_id, session, turn, _ = _post_recovery_binding(data)
+            binding = artifacts.call_binding(session, turn, call_id)
+        policy_path = (Path(binding["policy_path"]) if binding is not None
+                       else locate_policy(str(data.get("cwd") or "")))
         if policy_path is None:
             return {}
         policy = load_policy(policy_path)
         policy_record = policy.read()
         if event == "PreToolUse" and not policy_record["enabled"]:
             return {}
-        if event == "PostToolUse" and not policy_record["enabled"]:
+        if event == "PostToolUse" and not policy_record["enabled"] and binding is None:
             try:
                 if not _disabled_post_has_inflight_operation(policy, data):
                     return {}
             except (CapabilityError, OSError, ValueError, KeyError):
                 return {}
         tool_use_id, session_id, turn_id, tool_input = _canonical_patch(data)
-        repo = _trusted_repo(policy, str(data["cwd"]))
+        origin_cwd = binding["cwd"] if binding is not None else str(data["cwd"])
+        repo = _trusted_repo(policy, origin_cwd)
+        cwd = safe_path(Path(origin_cwd))
+        if binding is not None:
+            require(binding["identity"] == policy.store.identity, "OP_IDENTITY_MISMATCH")
+            require(safe_path(Path(data["cwd"])) == cwd, "OP_CWD_MISMATCH")
+            require(binding["command_sha256"] == hashlib.sha256(
+                tool_input["command"].encode("utf-8")).hexdigest(), "OP_INTENT_MISMATCH")
+            if binding["kind"] == "artifact":
+                kind, targets, budget = classify_patch(tool_input["command"], repo, cwd)
+                require(kind == "artifact", "OP_INTENT_MISMATCH")
+                artifacts.validate_targets(policy, root, session_id, targets, budget)
+                return {}
+        if event == "PreToolUse":
+            artifacts.observe_native_session(policy, session_id)
+            kind, targets, budget = classify_patch(tool_input["command"], repo, cwd)
+            if kind == "artifact":
+                try:
+                    artifacts.validate_targets(policy, root, session_id, targets, budget)
+                except CapabilityError as exc:
+                    if str(exc) not in {"ARTIFACT_SCOPE_UNREGISTERED", "ARTIFACT_SCOPE_EXPIRED",
+                                        "ARTIFACT_SCOPE_CHANGED"}:
+                        raise
+                    request = artifacts.create_native_request(
+                        policy, root, session_id, turn_id, tool_use_id,
+                        tool_input["command"], targets, budget)
+                    args = ["capability-task-artifact-register", "--profile", str(policy.store.profile_path),
+                            "--repo-path", str(repo), "--index-root", str(policy.store.root),
+                            "--gate-root", str(policy.root), "--request-ref", request["request_ref"]]
+                    continuation = gate_result(
+                        gate_id="artifact_scope", entrypoint="cp_gate.py", reason_code=str(exc),
+                        decision="REPREPARE", affected_action="write", next_action="register_native_artifact_request",
+                        exact_parameters={"executable": str(Path(sys.executable).resolve()),
+                                          "script": str(runtime_entry(root)), "arguments": args,
+                                          "request_ref": request["request_ref"]})
+                    return {"hookSpecificOutput": {"hookEventName": "PreToolUse",
+                        "permissionDecision": "deny", "permissionDecisionReason":
+                        "Capability gate: " + str(exc) + ". The requested patch has not executed. "
+                        "Complete the frozen artifact scope registration, then retry. "
+                        "Desktop filesystem permissions are unchanged. artifact_request_ref="
+                        + request["request_ref"] + "; decision=" + json.dumps(continuation, ensure_ascii=True)}}
+                artifacts.bind_call(policy, session_id, turn_id, tool_use_id, cwd,
+                                    tool_input["command"], kind, None)
+                return {}
         operation = CapabilityOperation(policy, session_id, turn_id)
         if event == "PreToolUse":
-            intent = parse_apply_patch(tool_input["command"], repo)
+            intent = parse_apply_patch(tool_input["command"], repo, cwd=cwd)
             # 中文：解析结果不含正文，是 A/B 共同使用的精确冻结意图和前态。
             # English: The content-free parser result is the exact frozen intent/prestate for A and B.
             revalidate_intent(intent, repo)
@@ -237,6 +302,12 @@ def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
                 targets=intent["target_paths"], prestate=intent,
             )
             if claimed is not None:
+                try:
+                    artifacts.bind_call(policy, session_id, turn_id, tool_use_id, cwd,
+                                        tool_input["command"], "repository", claimed["operation_ref"])
+                except (CapabilityError, OSError, ValueError):
+                    operation.stop(claimed["operation_ref"], "POST_TOOL_RECONCILIATION_FAILED")
+                    raise
                 return {}
             origin = operation.create_or_replay_origin(
                 tool_use_id, intent, intent["target_paths"], intent,
@@ -266,6 +337,8 @@ def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
                        if item["dispatch_tool_use_id"] == tool_use_id]
             require(len(matches) == 1, "POST_TOOL_UNKNOWN_OPERATION")
             item = matches[0]
+            if binding is not None:
+                require(item["operation_ref"] == binding["operation_ref"], "OP_INTENT_MISMATCH")
             command = tool_input["command"].encode("utf-8", errors="strict")
             require(len(command) <= 1024 * 1024, "COMMAND_TOO_LARGE")
             require(item["prestate"].get("command_sha256") ==
@@ -277,18 +350,19 @@ def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
             recorded = operation.record_posttool(
                 ref, tool_use_id, response, summary_code="APPLY_PATCH_SUCCEEDED",
             )
-            if recorded["state"] != "RESULT_PENDING":
-                return _post_block("POST_TOOL_POLICY_CHANGED")
+            if recorded["state"] not in {"RESULT_PENDING", "VERIFIED"}:
+                return _post_block(recorded.get("reason") or "POST_TOOL_RECONCILIATION_FAILED")
             return {}
         return {}
     except (PatchIntentError, CapabilityError, OSError, ValueError, KeyError) as exc:
         if event == "PostToolUse":
             try:
-                policy_path = locate_policy(str(data.get("cwd") or ""))
+                policy_path = (Path(binding["policy_path"]) if binding is not None
+                               else locate_policy(str(data.get("cwd") or "")))
                 if policy_path is not None:
                     policy = load_policy(policy_path)
                     tool_use_id, session_id, turn_id, cwd = _post_recovery_binding(data)
-                    _trusted_repo(policy, cwd)
+                    _trusted_repo(policy, binding["cwd"] if binding is not None else cwd)
                     operation = CapabilityOperation(policy, session_id, turn_id)
                     for item in operation._scan():
                         if item["dispatch_tool_use_id"] == tool_use_id and item["state"] not in {"VERIFIED", "DENIED", "CANCELLED", "EXPIRED", "OUTCOME_UNKNOWN"}:
@@ -296,7 +370,8 @@ def _v2_patch(root: Path, data: dict[str, Any], event: str) -> dict[str, Any]:
                             break
             except Exception:
                 pass
-            return _post_block("POST_TOOL_RECONCILIATION_FAILED")
+            reason = "GATE_LOCK_BUSY" if isinstance(exc, TimeoutError) else str(exc)
+            return _post_block(write_failure(reason)["reason_code"])
         # 中文：保留有限错误码；不把路径/元数据/暂时故障伪装成来源缺失。
         # English: Preserve bounded codes instead of relabeling every path,
         # metadata, or transient failure as a missing legacy origin.
@@ -363,11 +438,13 @@ def validate_response(event: str, output: dict[str, Any]) -> None:
         fields(output, {"systemMessage"})
         require(isinstance(output["systemMessage"], str), "GATE_WORKER_FAILED")
     elif event == "PostToolUse":
-        fields(output, {"decision", "reason", "hookSpecificOutput"})
+        require(set(output) in ({"hookSpecificOutput"}, {"decision", "reason", "hookSpecificOutput"}),
+                "GATE_WORKER_FAILED")
         specific = output["hookSpecificOutput"]
         fields(specific, {"hookEventName", "additionalContext"})
-        require(output["decision"] == "block" and isinstance(output["reason"], str)
-                and specific["hookEventName"] == event and isinstance(specific["additionalContext"], str),
+        if "decision" in output:
+            require(output["decision"] == "block" and isinstance(output["reason"], str), "GATE_WORKER_FAILED")
+        require(specific["hookEventName"] == event and isinstance(specific["additionalContext"], str),
                 "GATE_WORKER_FAILED")
     else:
         # 中文：R1 中 UserPromptSubmit/Stop 只观察；拒绝旧 decision/block/continue 或 additionalContext 注入。

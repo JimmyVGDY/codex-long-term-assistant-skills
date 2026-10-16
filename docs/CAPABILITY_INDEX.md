@@ -1,5 +1,7 @@
 # 项目能力索引
 
+任务级预算与门禁恢复：[任务预算](operations/task-budget-scope.md)、[门禁审计与恢复](operations/gate-recovery-policy.md)。
+
 能力索引保存项目中可复用入口的定位与核验线索。源码、配置和测试仍是技术事实；索引不授予执行权限，也不自动晋升为稳定项目记忆。
 
 ## 当前实现范围
@@ -73,6 +75,8 @@ Python使用AST识别顶层公开定义，以及静态`__all__`声明的入口�
 重新构建损坏且无有效上一快照的索引时，显式指定新的仓库外目录，从授权范围重新扫描并核验；保留原目录，将新位置写入本任务外部交接。不得删除旧索引或修改Profile来暗中切换绑定。
 
 ## 验证入口
+
+仓库外评测样例与报告使用[任务产物目录登记](operations/artifact-scope.md)。登记不授予写权限；仓库内源码仍执行原有门禁，原生相对路径按实际工作目录绑定。
 
 项目可使用`capability-gate-enable/status/disable`管理显式项目策略。门禁默认关闭，不改变普通对话和未启用项目。V7.14.6 的规范 `apply_patch` 路径采用仓库外 Operation v2：A 创建起点并拒绝，`capability-task-prepare --operation-ref ... --term ...`只消费该起点，新的 B 在写前原子领取 READY，实际 PostToolUse 回执后才能 `finish/check`。CLI 不创建起点或 dispatch ID；旧 GateTask、PREPARED/PASS 和旧回执永不转换为新许可。缺回执、策略变化、许可后取消或证据失效保持 `OUTCOME_UNKNOWN`。Edit/Write 只是 matcher 别名，shell/MCP 等未覆盖写入口不得冒称受保护；源码实现、包验证、安装加载和真实新任务验收须分别确认。
 

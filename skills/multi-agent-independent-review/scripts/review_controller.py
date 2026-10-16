@@ -1487,14 +1487,14 @@ def build_parser() -> argparse.ArgumentParser:
     add_common(plan)
     plan.add_argument("--phase", choices=sorted(VALID_PHASES), required=True)
     plan.add_argument("--depth", type=int, default=1)
-    plan.add_argument("--reviewers", default="cp_review_functional_business")
+    plan.add_argument("--reviewers", "--agents", dest="reviewers", default="cp_review_functional_business")
     plan.add_argument("--purpose", default="")
     plan.add_argument("--effort-tier", choices=sorted(VALID_EFFORT_TIERS), default="balanced")
     plan.add_argument("--packet-sha256", default="")
     plan.add_argument("--packet-dir", default="")
     plan.add_argument("--allow-same-packet", action="store_true")
     plan.add_argument("--same-packet-reason", default="")
-    plan.add_argument("--review-stage", choices=["pre_review", "post_review", "repair_review"], default=None)
+    plan.add_argument("--review-stage", choices=["pre_review", "post_review", "repair_review", "task_execution"], default=None)
     plan.add_argument("--model-profile", choices=list(G6_PROFILES), default=None)
     plan.add_argument("--allowed-path", action="append", default=[])
     plan.add_argument("--reserve-repair", action="store_true")
@@ -1504,7 +1504,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_common(dispatch)
     dispatch.add_argument("--phase", choices=sorted(VALID_PHASES), required=True)
     dispatch.add_argument("--round", type=int, required=True)
-    dispatch.add_argument("--reviewer", required=True)
+    dispatch.add_argument("--reviewer", "--agent", dest="reviewer", required=True)
     dispatch.add_argument("--scope", default="")
     dispatch.add_argument("--approved-profile", "--model-profile", dest="model_profile",
                           choices=[*profile_weights(), *G6_PROFILES], default="")
@@ -1599,15 +1599,21 @@ def build_parser() -> argparse.ArgumentParser:
     add_common(reconcile)
     reconcile.add_argument("--root-envelope", default=os.environ.get("CP_DELEGATION_ENVELOPE_PATH", ""))
     reconcile.add_argument("--host-session-id", default=os.environ.get("CODEX_THREAD_ID", ""))
+    reconcile.add_argument("--child-transcript", action="append", default=[])
     reconcile.set_defaults(func=lambda _args: die("旧复审状态不支持 V8 reconciliation"))
     for name in ("bind-native-source", "allowance-quote", "allowance-status", "allowance-recover"):
         item = sub.add_parser(name)
         add_common(item)
         if name == "bind-native-source":
             item.add_argument("--transcript-path", required=True)
+        if name == "allowance-recover":
+            item.add_argument("--reconsider-request", default=None,
+                              help="Rescan verified native decisions for an existing request; this grants no authority.")
         if name == "allowance-quote":
             item.add_argument("--reviewer", default="")
-            item.add_argument("--additional-reviews", type=int, default=1)
+            item.add_argument("--additional-reviews", "--additional-dispatches", dest="additional_reviews", type=int, default=1)
+            item.add_argument("--work-count", action="append", default=[],
+                              help="For task_execution only: registered work_id=count; repeat for at most three allocations.")
             item.add_argument("--retry-limit", type=int, default=2)
             item.add_argument("--future-review", action="store_true")
             item.add_argument("--locale", choices=["zh-CN", "en"], default="zh-CN")

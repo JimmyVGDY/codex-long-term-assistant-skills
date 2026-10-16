@@ -15,6 +15,7 @@ description: >-
 5. 技术细节组合 Java、Python、`frontend-engineering`、数据基础设施或可观测性 Skill。
 6. 文档与代码修改、测试、CHANGELOG、提交或发布绑定时组合 `$engineering-quality-delivery`；内部任务状态组合 `$long-running-task-memory`，不得混入正式文档。
 7. 完成后检查准确性、完整性、一致性、可执行性、可维护性、安全性和读者可读性。
+8. 实质手册、跨团队方案或明确要求验证可执行性时，按[陌生读者测试](references/reader-testing.md)检查文档自身是否足够；局部文字修改不自动增加独立读者。
 
 ## 模型与委派成本
 

@@ -14,6 +14,10 @@ from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
 COMMAND_TIMEOUT_SECONDS = 3600
+# 中文：完整包包含大量隔离安装与子进程测试，单独保留有界的慢速 Runner 余量。
+# English: The full package includes isolated installs and subprocess tests;
+# retain a separate bounded allowance for slower runners.
+PACKAGE_TEST_TIMEOUT_SECONDS = 5400
 MINIMUM_PYTHON = (3, 11)
 if sys.version_info < MINIMUM_PYTHON:
     raise RuntimeError("V7.4 完整验证需要 Python 3.11+，当前为 %s" % platform.python_version())
@@ -40,8 +44,8 @@ def run(stage: str, command: list[str], environment: Mapping[str, str] | None = 
         raise RuntimeError("validation stage %s failed with exit code %d: %s" % (stage, result.returncode, executable))
 
 
-def _interrupted_report(suite_name: str) -> dict[str, Any]:
-    report = timeout_report(suite_name, COMMAND_TIMEOUT_SECONDS)
+def _interrupted_report(suite_name: str, timeout_seconds: int) -> dict[str, Any]:
+    report = timeout_report(suite_name, timeout_seconds)
     report["execution_status"] = "INTERRUPTED"
     digest_input = dict(report)
     digest_input.pop("report_sha256", None)
@@ -51,20 +55,21 @@ def _interrupted_report(suite_name: str) -> dict[str, Any]:
 
 
 def _collect_suite(suite_name: str, start_dir: Path, environment: Mapping[str, str], temporary: Path) -> dict[str, Any]:
+    timeout_seconds = PACKAGE_TEST_TIMEOUT_SECONDS if suite_name == "package" else COMMAND_TIMEOUT_SECONDS
     report_path = temporary / (suite_name + ".json")
     command = [sys.executable, "-B", str(ROOT / "scripts" / "validation_evidence.py"), "collect",
                "--start-dir", str(start_dir), "--suite", suite_name, "--output", str(report_path)]
     try:
         result = subprocess.run(command, cwd=ROOT, text=True, encoding="utf-8", errors="replace",
-                                capture_output=True, timeout=COMMAND_TIMEOUT_SECONDS, env=environment)
+                                capture_output=True, timeout=timeout_seconds, env=environment)
     except subprocess.TimeoutExpired:
-        return timeout_report(suite_name, COMMAND_TIMEOUT_SECONDS)
+        return timeout_report(suite_name, timeout_seconds)
     if result.returncode or not report_path.is_file():
-        return _interrupted_report(suite_name)
+        return _interrupted_report(suite_name, timeout_seconds)
     try:
         return load_evidence_report(report_path)
     except EvidenceError:
-        return _interrupted_report(suite_name)
+        return _interrupted_report(suite_name, timeout_seconds)
 
 
 def _capability_projection(row: Mapping[str, Any]) -> str:

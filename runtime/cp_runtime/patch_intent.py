@@ -117,11 +117,17 @@ def _parent_chain(path: Path, root: Path) -> list[dict[str, Any]]:
     return [anchor, *chain]
 
 
-def _validate_path(value: Any, root: Path) -> tuple[str, Path]:
+def _validate_path(value: Any, root: Path, cwd: Path | None = None) -> tuple[str, Path]:
     if not isinstance(value, str):
         _fail("INVALID_PATH")
     if any(part == ".." for part in value.replace("\\", "/").split("/")):
         _fail("PATH_ESCAPE")
+    if cwd is not None and not Path(value).is_absolute():
+        try:
+            relative_path(value)
+        except CapabilityError:
+            _fail("INVALID_PATH")
+        value = str(cwd / value)
     # 中文：桌面文件工具可以提供绝对路径；先核验真实根，再生成内部相对路径。
     # English: Desktop file tools may supply absolute paths; verify the real root
     # before converting to the internal repository-relative representation.
@@ -235,7 +241,8 @@ def _parse_header(line: str) -> tuple[str, str] | None:
     return None
 
 
-def parse_apply_patch(command: str, repo_root: str | os.PathLike[str]) -> dict[str, Any]:
+def patch_entries(command: str) -> tuple[bytes, list[tuple[str, str, str | None]]]:
+    """中文：共同解析所有文件标记；不保留正文。 English: Parse every file marker without retaining hunks."""
     if not isinstance(command, str):
         _fail("COMMAND_NOT_STRING")
     try:
@@ -244,22 +251,17 @@ def parse_apply_patch(command: str, repo_root: str | os.PathLike[str]) -> dict[s
         _fail("COMMAND_INVALID_UTF8")
     if len(raw) > MAX_COMMAND_BYTES:
         _fail("COMMAND_TOO_LARGE")
-    root = safe_path(Path(repo_root))
-    if not root.is_dir():
-        _fail("REPO_ROOT_INVALID")
     lines = command.splitlines()
     if not lines or lines[0] != "*** Begin Patch" or lines[-1] != "*** End Patch":
         _fail("MALFORMED_MARKER")
-    records: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    keys: set[str] = set()
+    entries: list[tuple[str, str, str | None]] = []
+    target_count = 0
     i = 1
     while i < len(lines) - 1:
         parsed = _parse_header(lines[i])
         if parsed is None:
             _fail("MALFORMED_MARKER")
         action, source_text = parsed
-        source_text, source = _validate_path(source_text, root)
         i += 1
         body: list[str] = []
         move_text: str | None = None
@@ -268,7 +270,9 @@ def parse_apply_patch(command: str, repo_root: str | os.PathLike[str]) -> dict[s
             if action == "UPDATE" and line.startswith("*** Move to: "):
                 if move_text is not None:
                     _fail("MALFORMED_MARKER")
-                move_text, _ = _validate_path(line[len("*** Move to: "):], root)
+                move_text = line[len("*** Move to: "):]
+                if not move_text or move_text.endswith(" "):
+                    _fail("MALFORMED_MARKER")
             elif line.startswith("*** "):
                 _fail("MALFORMED_MARKER")
             else:
@@ -283,7 +287,31 @@ def parse_apply_patch(command: str, repo_root: str | os.PathLike[str]) -> dict[s
         if action == "UPDATE" and move_text is not None:
             if body and not any(line.startswith("@@") for line in body):
                 _fail("MALFORMED_PATCH")
-            _, destination = _validate_path(move_text, root)
+        entries.append((action, source_text, move_text))
+        target_count += 2 if move_text is not None else 1
+        if target_count > MAX_TARGETS:
+            _fail("TOO_MANY_TARGETS")
+    if not entries:
+        _fail("EMPTY_PATCH")
+    return raw, entries
+
+
+def parse_apply_patch(command: str, repo_root: str | os.PathLike[str],
+                      *, cwd: str | os.PathLike[str] | None = None) -> dict[str, Any]:
+    raw, entries = patch_entries(command)
+    root = safe_path(Path(repo_root))
+    if not root.is_dir():
+        _fail("REPO_ROOT_INVALID")
+    current = safe_path(Path(cwd)) if cwd is not None else None
+    if current is not None and (not current.is_dir() or not current.is_relative_to(root)):
+        _fail("PATH_ESCAPE")
+    records: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    keys: set[str] = set()
+    for action, source_text, move_text in entries:
+        source_text, source = _validate_path(source_text, root, current)
+        if move_text is not None:
+            move_text, destination = _validate_path(move_text, root, current)
             _add_target(records, _move_record(source_text, source, move_text, destination, root), seen, keys)
         else:
             _, target = _validate_path(source_text, root)
@@ -293,8 +321,6 @@ def parse_apply_patch(command: str, repo_root: str | os.PathLike[str]) -> dict[s
             if action in {"DELETE", "UPDATE"} and not state["exists"]:
                 _fail("TARGET_MISSING")
             _add_target(records, _record(action.title(), source_text, target, root), seen, keys)
-    if not records:
-        _fail("EMPTY_PATCH")
     target_paths = sorted(seen)
     scope_digest = _digest(target_paths)
     intent = {

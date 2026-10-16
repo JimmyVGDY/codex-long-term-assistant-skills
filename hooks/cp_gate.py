@@ -120,14 +120,15 @@ def _fast_neutral(data: dict[str, Any]) -> bool:
 
 
 def _failure(event: str, reason: str) -> dict[str, Any]:
-    message = "Capability gate: " + reason + ". No current process PASS was verified."
+    message = "Capability gate: " + reason + ". The requested write has not executed."
     if event == "PreToolUse":
         return {"hookSpecificOutput": {"hookEventName": event, "permissionDecision": "deny",
                                         "permissionDecisionReason": message}}
     if event == "PostToolUse":
-        return {"decision": "block", "reason": message,
-                "hookSpecificOutput": {"hookEventName": event,
-                                        "additionalContext": "Operation outcome is unknown."}}
+        return {"hookSpecificOutput": {"hookEventName": event,
+            "additionalContext": "Write audit unavailable: " + reason
+            + ". Files may already have changed. Read the operation and target files; "
+              "do not replay the write to obtain a receipt. Continue unrelated authorized work."}}
     return {}
 
 

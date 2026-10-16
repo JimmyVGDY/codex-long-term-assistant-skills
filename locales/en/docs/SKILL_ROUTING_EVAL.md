@@ -58,6 +58,39 @@ The routing set adds:
 - strict read-only review: must load `multi-agent-independent-review` and inspect parent permissions first;
 - logically read-only review under a writable parent: must state `logical-readonly` and not treat TOML as system isolation.
 
-Also sample: Luna for mechanical work, Terra for business judgment, Terra High automatic ceiling, and no reasoning escalation merely because multiple Skills are active.
+New defaults use script-selected GPT-6 Luna, Sol and Astra at low/medium/high: Luna/low for mechanical work and Sol/medium for ordinary or unknown work. Multiple Skills do not automatically increase effort. Historical combinations remain only for old-record replay.
 
-Routing tests validate Skill and plan selection only. They do not prove the actual subagent model or sandbox; use task evidence, structured results, and isolation records for runtime facts.
+Routing tests validate Skill, approved dispatch profile and plan selection. They do not prove sandbox isolation. Actual host model identity is not an Agent input, evidence item or acceptance target.
+
+## Separate development and final sets
+
+tests/skill-routing-study-cases.json and scripts/routing_study.py add a separate study while preserving the original 52 cases, observation formats and scoring rules. Four groups cover documents, design, browsers and MCP, with three positives and three nearby negatives each. Sixteen development cases and eight final cases keep intent families within one split. Critical cases repeat three times: this suite prepares 40 trials per version, 80 overall; read the actual count from preparation.
+
+Run preparation in the Plugin source repository; cases still execute through Codex Desktop. These are internal management and validation tools, not a standalone CLI product track.
+
+~~~text
+python scripts/routing-eval.py prepare-study --baseline v7.16.2 --environment <environment.json> --output <new-external-directory>
+~~~
+
+environment.json fixes six fields: platform, runtime, requested_model, requested_effort, permissions_digest and cache_condition. Record the environment and requested parameters actually used. permissions_digest is the canonical SHA-256 of the explicitly authorized boundary, not evidence of system isolation. Use --locale en for English cases and English Skill entry snapshots. Preparation neither invokes models nor grants dispatch, file or production authority. Check task budgets and permissions before execution.
+
+study.json freezes the suite, both versions' Skill entry digests, environment, repeats and each input. Requests under prompts contain only opaque trial IDs and original questions, without expected Skills. Executors must not read suite.json, study.json, the other version's artifacts or answer fields. Directory separation is logical isolation, not a sandbox. The candidate defaults to the working tree; --candidate pins a commit.
+
+Record one existing schema 2 host report per trial. New studies accept only codex_desktop_task; the old CLI source remains readable solely for historical records. Original reports additionally need unique TRIAL_ID and INPUT_SHA256 markers. Host readback needs RULE_DIGEST and ENVIRONMENT_DIGEST matching the frozen inputs, rules and environment. Record real task IDs and do not count one task's replay as an independent sample.
+
+To compare routing plans for frozen rules on one installed host, add `rule_context` with `kind=frozen_snapshot_plan` and the frozen rules' `plugin_version` and `rule_digest`. Host readback also includes `RULE_CONTEXT=frozen_snapshot_plan` and `RULE_PLUGIN_VERSION=<frozen-version>`; `host.plugin_version` always records the actual installation. Existing reports without this explicit mode still require the installed version to match the rules. This mode proves a routing-plan self-report for frozen inputs in real Desktop, not historical-package installation or automatic-loader behavior.
+
+Use a separate index for each split:
+
+~~~json
+{"schema":"routing-study-results/1","study_digest":"<study.json record_digest>","runs":[{"trial_id":"<opaque trial ID>","results_file":"runs/example/result.json","evidence_dir":"runs/example/evidence"}]}
+~~~
+
+~~~text
+python scripts/routing-eval.py evaluate-study --study <study.json> --results <development-index.json> --split development --output <new-report.json>
+python scripts/routing-eval.py evaluate-study --study <study.json> --results <final-index.json> --split final --output <another-new-report.json>
+~~~
+
+Scoring reuses the old host contract and reports missed triggers, false activation, overload and phase errors by version and group. Missing observations produce PARTIAL; actual errors produce FAILED. The command preserves its report and exits nonzero in both cases. Evidence reads have file, total-byte, path and link bounds.
+
+Do not repeatedly tune against final cases. Rebuild a leaked final set or one used to select descriptions, preserving earlier results. The tool never edits descriptions or promotes small-sample counts into benefit claims. Unknown traces, actual fees and UNKNOWN benefit remain explicit. Host final self-reports are not independently signed router traces.

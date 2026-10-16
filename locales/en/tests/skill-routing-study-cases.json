@@ -1,0 +1,478 @@
+{
+  "schema": "routing-study-cases/1",
+  "suite_id": "skill-quality-24-en",
+  "data_classification": "public-synthetic",
+  "cases": [
+    {
+      "id": "document-handover",
+      "group": "documents",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "document-handover",
+      "repeats": 3,
+      "prompt": "New teammates keep getting stuck on this installation guide. Rewrite it as an actionable handover document and identify missing prerequisites. Do not run its commands.",
+      "required": [
+        "technical-document-writing"
+      ],
+      "optional": [],
+      "forbidden": [
+        "multi-agent-independent-review",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "document-architecture",
+      "group": "documents",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "document-architecture",
+      "repeats": 1,
+      "prompt": "Turn these service-boundary discussions into a formal architecture decision record with choices, tradeoffs and open questions. Do not change code.",
+      "required": [
+        "technical-document-writing"
+      ],
+      "optional": [
+        "backend-engineering"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "document-rollback",
+      "group": "documents",
+      "polarity": "positive",
+      "split": "final",
+      "intent_family": "document-rollback",
+      "repeats": 3,
+      "prompt": "Write a database upgrade and failure-recovery runbook from the available records so a reader outside the team can check prerequisites. Write only; do not run migrations.",
+      "required": [
+        "technical-document-writing"
+      ],
+      "optional": [
+        "data-middleware-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "document-changelog-word",
+      "group": "documents",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "document-changelog-word",
+      "repeats": 1,
+      "prompt": "Only correct 'fixd' to 'fixed' in CHANGELOG. Do not expand the prose.",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "technical-document-writing",
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 0
+    },
+    {
+      "id": "document-backend-concept",
+      "group": "documents",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "document-backend-concept",
+      "repeats": 1,
+      "prompt": "Explain Java thread-pool rejection policies. No document artifact or code changes are needed.",
+      "required": [
+        "backend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "technical-document-writing",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "document-greeting",
+      "group": "documents",
+      "polarity": "negative",
+      "split": "final",
+      "intent_family": "document-greeting",
+      "repeats": 1,
+      "prompt": "Translate 'Bonjour, a demain' into natural English. Return only the translation.",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "technical-document-writing",
+        "controlled-evolution-governance",
+        "long-running-task-memory"
+      ],
+      "max_active": 0
+    },
+    {
+      "id": "design-new-landing",
+      "group": "design",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "design-new-landing",
+      "repeats": 1,
+      "prompt": "Build a working introduction page for this software. Use the supplied real benefits and copy, establish content hierarchy, then implement it and check narrow screens.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "data-middleware-infrastructure",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "design-existing-dashboard",
+      "group": "design",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "design-existing-dashboard",
+      "repeats": 3,
+      "prompt": "This admin form is crowded. Improve it using the project's existing components and colors without replacing its theme. Check error states and keyboard use.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "ai-engineering",
+        "technical-document-writing"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "design-phased-player",
+      "group": "design",
+      "polarity": "positive",
+      "split": "final",
+      "intent_family": "design-phased-player",
+      "repeats": 3,
+      "prompt": "First discuss progress controls and keyboard interaction for a React audio player, then implement the design and run relevant checks. Load only the capabilities needed in each phase.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "data-middleware-infrastructure",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 2,
+      "phases": [
+        {
+          "id": "design",
+          "required": [
+            "frontend-engineering"
+          ],
+          "optional": [],
+          "forbidden": [
+            "engineering-quality-delivery",
+            "data-middleware-infrastructure"
+          ],
+          "max_active": 1,
+          "exception_above": 3
+        },
+        {
+          "id": "implement",
+          "required": [
+            "frontend-engineering",
+            "engineering-quality-delivery"
+          ],
+          "optional": [],
+          "forbidden": [
+            "data-middleware-infrastructure"
+          ],
+          "max_active": 2,
+          "exception_above": 3
+        }
+      ]
+    },
+    {
+      "id": "design-native-android",
+      "group": "design",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "design-native-android",
+      "repeats": 1,
+      "prompt": "Fix back-button behavior in a native Kotlin Android screen and run existing tests. No WebView is involved.",
+      "required": [
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "ai-engineering"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "design-server-mail",
+      "group": "design",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "design-server-mail",
+      "repeats": 1,
+      "prompt": "Fix escaping in a Go backend that generates HTML emails and run targeted validation. There is no browser page to change.",
+      "required": [
+        "backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "design-basic-math",
+      "group": "design",
+      "polarity": "negative",
+      "split": "final",
+      "intent_family": "design-basic-math",
+      "repeats": 1,
+      "prompt": "Calculate 18 times 24. Return only the result.",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "technical-document-writing",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 0
+    },
+    {
+      "id": "browser-existing-service",
+      "group": "browser",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "browser-existing-service",
+      "repeats": 3,
+      "prompt": "The page service is already running. Use the browser to verify login and logout, and leave my existing service running afterward.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "data-middleware-infrastructure",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "browser-failure-states",
+      "group": "browser",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "browser-failure-states",
+      "repeats": 1,
+      "prompt": "Check request failures and empty-list interactions on this Vue page. Keep operations, assertions, screenshots and console-error evidence.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "log-observability-analysis"
+      ],
+      "forbidden": [
+        "ai-engineering"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "browser-repeated-cancel",
+      "group": "browser",
+      "polarity": "positive",
+      "split": "final",
+      "intent_family": "browser-repeated-cancel",
+      "repeats": 3,
+      "prompt": "Use a browser to verify repeated submission and cancellation. Clean up only helper services started for this test, leaving existing user processes alone.",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "controlled-evolution-governance",
+        "ai-engineering"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "browser-backend-contract",
+      "group": "browser",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "browser-backend-contract",
+      "repeats": 1,
+      "prompt": "Add contract tests for a Python pagination API by calling the local HTTP endpoint directly. Do not run a browser.",
+      "required": [
+        "backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "browser-network-analysis",
+      "group": "browser",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "browser-network-analysis",
+      "repeats": 1,
+      "prompt": "Read logs to investigate intermittent container-to-container connection timeouts. There is no web page or browser interaction.",
+      "required": [
+        "data-middleware-infrastructure",
+        "log-observability-analysis"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "browser-plain-copy",
+      "group": "browser",
+      "polarity": "negative",
+      "split": "final",
+      "intent_family": "browser-plain-copy",
+      "repeats": 1,
+      "prompt": "Copy the timestamp from this single log line verbatim. Do not inspect pages or investigate a fault.",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "log-observability-analysis",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 0
+    },
+    {
+      "id": "mcp-paginated-contract",
+      "group": "mcp",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "mcp-paginated-contract",
+      "repeats": 3,
+      "prompt": "Design an MCP search-tool contract for an Agent, with concrete pagination, access-denied and empty-result inputs and outputs. Do not implement it yet.",
+      "required": [
+        "ai-engineering",
+        "technical-document-writing"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "mcp-multistep-tool",
+      "group": "mcp",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "mcp-multistep-tool",
+      "repeats": 1,
+      "prompt": "The model's tool workflow keeps missing later pages. Fix the Agent's two-step query flow and validate it with fixed synthetic data.",
+      "required": [
+        "ai-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "data-middleware-infrastructure"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "mcp-tenant-timeout",
+      "group": "mcp",
+      "polarity": "positive",
+      "split": "final",
+      "intent_family": "mcp-tenant-timeout",
+      "repeats": 3,
+      "prompt": "Add tenant-isolation, timeout and partial-failure acceptance cases for an MCP tool using local synthetic data. Do not create external records.",
+      "required": [
+        "ai-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "mcp-rest-contract",
+      "group": "mcp",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "mcp-rest-contract",
+      "repeats": 1,
+      "prompt": "Write a contract document for an ordinary REST inventory API. This system has no model, Agent or MCP.",
+      "required": [
+        "backend-engineering",
+        "technical-document-writing"
+      ],
+      "optional": [],
+      "forbidden": [
+        "ai-engineering",
+        "frontend-engineering"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "mcp-database-index",
+      "group": "mcp",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "mcp-database-index",
+      "repeats": 1,
+      "prompt": "Read-only analysis: check whether the PostgreSQL orders-table indexes fit this SQL query. No model tools or retrieval semantics are involved.",
+      "required": [
+        "data-middleware-infrastructure"
+      ],
+      "optional": [],
+      "forbidden": [
+        "ai-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "mcp-short-format",
+      "group": "mcp",
+      "polarity": "negative",
+      "split": "final",
+      "intent_family": "mcp-short-format",
+      "repeats": 1,
+      "prompt": "Convert 'MCP' to lowercase. Return only the result.",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "ai-engineering",
+        "technical-document-writing",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 0
+    }
+  ]
+}

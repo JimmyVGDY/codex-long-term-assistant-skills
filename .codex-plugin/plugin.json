@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.16.2",
-  "description": "跨项目长期技术助手 V7.16.2：支持按明确授权追加复审额度，保留原账本并恢复派发。",
+  "version": "7.17.0",
+  "description": "跨项目长期技术助手 V7.17.0：提供六项 Skill 质量流程、逻辑任务预算与任务产物门禁恢复。",
   "author": {
     "name": "Project maintainers"
   },

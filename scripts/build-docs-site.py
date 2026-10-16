@@ -19,7 +19,7 @@ from typing import Callable
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(ROOT / "scripts"))
-from documentation import audit as audit_documentation, current_documents, load_catalog, rewrite_links
+from documentation import audit as audit_documentation, current_documents, load_catalog, rewrite_links, read_published_release
 DEFAULT_OUTPUT = ROOT / "dist" / "docs-source"
 SITE_TEMPLATE = ROOT / ".github" / "docs-site"
 REPOSITORY_BLOB = "https://github.com/JimmyVGDY/codex-long-term-assistant-skills/blob/master/"
@@ -36,9 +36,9 @@ class DocumentationBuildError(RuntimeError):
 
 
 def validate_version_bound_sources() -> None:
-    """中文：确保当前站点入口与 manifest 版本一致，版本漂移时失败关闭。
+    """中文：文档入口匹配源码版本；公开版本标识只匹配已读回发行记录。
 
-    English: Fail closed when a current site entry point drifts from the manifest version.
+    English: Bind documentation to source, but public release labels to recorded publication.
     """
     expected = {
         ROOT / ".github" / "mkdocs.yml": (
@@ -60,7 +60,7 @@ def validate_version_bound_sources() -> None:
             "docs/USER_GUIDE/",
         ),
         SITE_TEMPLATE / "javascripts" / "repository-facts.js": (
-            f'const RELEASE_VERSION = "v{PACKAGE_VERSION}";',
+            'const RELEASE_VERSION = ' + json.dumps(read_published_release(ROOT)["tag_name"]) + ';',
         ),
     }
     missing: list[str] = []

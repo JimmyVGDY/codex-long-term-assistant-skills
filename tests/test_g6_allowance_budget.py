@@ -16,6 +16,23 @@ from tests.test_g6_budget_v1 import facts, capability
 
 
 class AllowanceBudgetTests(unittest.TestCase):
+    def test_scope_matches_whole_case_sensitive_components(self):
+        self.assertTrue(contract.within_scope(["docs/a.md", "src/app/deep/file.py"], ["docs/a.md", "src/app"]))
+        for path in ("docs/a.md/../b.md", "src//app/file.py", "src/.git/config"):
+            with self.subTest(path=path), self.assertRaises(RoutingError):
+                contract.within_scope([path], ["src"])
+        for path in ("docs/b.md", "src/application/file.py", "src/App/file.py", "src"):
+            with self.subTest(path=path):
+                self.assertFalse(contract.within_scope([path], ["docs/a.md", "src/app"]))
+
+    def test_maximum_scope_preserves_exact_and_nested_boundaries(self):
+        allowed = [f"src/module-{index:03d}" for index in range(256)]
+        self.assertTrue(contract.within_scope(allowed, allowed))
+        nested = [path + "/nested/file.py" for path in allowed]
+        self.assertTrue(contract.within_scope(nested, allowed))
+        nested[-1] = "src/module-255-extra/file.py"
+        self.assertFalse(contract.within_scope(nested, allowed))
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
@@ -231,6 +248,30 @@ class AllowanceBudgetTests(unittest.TestCase):
     def test_scope_refresh_does_not_include_sibling_or_parent_paths(self):
         self.assertTrue(contract.within_scope(["src/app.py"], ["src"]))
         self.assertFalse(contract.within_scope(["src-other/app.py"], ["src"]))
+
+    def test_reinstatement_preserves_spend_and_rejects_stale_decision(self):
+        self.exhaust()
+        work = self.work()
+        quote = self.quote(work, dispatches=2)
+        self.grant_fixture(quote)
+        self.finish(self.prepare(work["work_id"], "before_revoke", work["agent_type"]), "before_revoke")
+        revoke = {"request_id": quote["request_id"], "authorization": self.fixture_authority("decline")}
+        revoke["authorization"].update(start=200, end=300)
+        with budget.OwnerTokenLock(self.path, timeout=2):
+            budget._append(self.path, budget._read_events(self.path), "ALLOWANCE_REVOKED", revoke)
+        proof = self.fixture_authority("restore")
+        stale = {"request_id": quote["request_id"], "authorization": proof, "previous_decision_ref": ref(revoke)}
+        with self.assertRaisesRegex(RoutingError, "DECISION_NOT_LATER"):
+            budget._append(self.path, budget._read_events(self.path), "ALLOWANCE_REINSTATED", stale)
+        proof.update(start=300, end=400)
+        with budget.OwnerTokenLock(self.path, timeout=2):
+            budget._append(self.path, budget._read_events(self.path), "ALLOWANCE_REINSTATED", stale)
+        state = budget.read_budget(self.path)
+        status = budget.allowance_status(state)
+        self.assertEqual(len(status["grants"]), 1)
+        self.assertEqual(status["grants"][0]["usage"]["completed_charged_units"], 4)
+        self.finish(self.prepare(work["work_id"], "after_restore", work["agent_type"]), "after_restore")
+        self.assertIsNone(self.prepare(work["work_id"], "no_refund", work["agent_type"])["permit_id"])
         self.assertFalse(contract.within_scope(["src"], ["src/app.py"]))
         for path in ["../secret", "/absolute", "C:/absolute", "src/../secret", ".git/config"]:
             with self.subTest(path=path), self.assertRaises(RoutingError):

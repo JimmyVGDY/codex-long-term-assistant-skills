@@ -7,6 +7,7 @@ import math
 import os
 import re
 import stat
+import subprocess
 from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
@@ -76,7 +77,11 @@ def relative_path(value: Any) -> str:
     lower = [p.lower() for p in parts]
     require(not any(p in DENIED_PARTS or p.startswith(".env") for p in lower), "SENSITIVE_PATH")
     require(lower[-1] not in DENIED_NAMES and Path(lower[-1]).suffix not in {".pem", ".key", ".p12", ".pfx"}, "SENSITIVE_PATH")
-    text_field(value, 1024)
+    # 中文：路径具有独立语法；长目录与模板名不是密钥证据。正文仍保留熵启发式。
+    # English: Paths have their own grammar; long directory/template names are not key evidence.
+    # The entropy heuristic remains in free-text metadata checks.
+    require(not scan_sensitive_text(parts), "SENSITIVE_PATH")
+    require(not re.search(r"-----BEGIN .*PRIVATE KEY|(?i:bearer)\s+\S{16,}", value), "SENSITIVE_PATH")
     return value
 
 
@@ -249,6 +254,15 @@ class CapabilityStore:
         try:
             binding = validate_binding(self.profile_path, self.repo_path)
         except (RuntimeContractError, OSError, ValueError, KeyError, TypeError):
+            # 中文：Git 所有权保护导致的不可读不是已确认的绑定损坏；仍不授予写入许可。
+            # English: Git ownership protection is an unavailable read, not confirmed binding corruption; no write is authorized.
+            try:
+                probe = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=self.repo_path,
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=2)
+            except (OSError, subprocess.TimeoutExpired):
+                probe = None
+            if probe is not None and probe.returncode and b"detected dubious ownership" in probe.stderr.lower():
+                raise CapabilityError("PROFILE_HOST_CONTEXT_REQUIRED") from None
             raise CapabilityError("PROFILE_BINDING_INVALID") from None
         require(profile_raw == bounded_read(self.profile_path) and state_raw == bounded_read(state_path), "IDENTITY_CHANGED")
         return {"project_id": binding.project_id,

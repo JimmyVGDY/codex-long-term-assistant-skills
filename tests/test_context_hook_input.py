@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import importlib.util
 import io
 import os
 from pathlib import Path
@@ -17,8 +18,31 @@ LIMIT = 2 * 1024 * 1024
 sys.path.insert(0, str(ROOT / 'runtime'))
 from cp_runtime import context_hook_input as reader
 
+hook_spec = importlib.util.spec_from_file_location("context_owner_retry_fixture", ROOT / "hooks/cp_context.py")
+owner_hook = importlib.util.module_from_spec(hook_spec)
+hook_spec.loader.exec_module(owner_hook)
+
 
 class ContextHookInputTests(unittest.TestCase):
+    def test_one_transient_owner_lock_timeout_recovers_same_call(self):
+        data = {"agent_id": "fixture-child"}
+        owner = ("new", Path("fixture-ledger"))
+        with patch.object(owner_hook, "g6_route", side_effect=[TimeoutError("busy"), owner]) as route:
+            self.assertEqual(owner_hook._g6_owner(data), owner)
+            self.assertEqual(route.call_count, 2)
+            self.assertTrue(all(call.args == (data,) for call in route.call_args_list))
+
+    def test_owner_retry_is_bounded_and_does_not_hide_identity_or_permission_errors(self):
+        with patch.object(owner_hook, "g6_route", side_effect=TimeoutError("busy")) as route:
+            with self.assertRaisesRegex(TimeoutError, "G6_CONTEXT_LOCK_BUSY"):
+                owner_hook._g6_owner({"agent_id": "fixture-child"})
+            self.assertEqual(route.call_count, 2)
+        for error in (ValueError("TASK_IDENTITY_CONFLICT"), PermissionError("fixture denial")):
+            with patch.object(owner_hook, "g6_route", side_effect=error) as route:
+                with self.assertRaises(type(error)):
+                    owner_hook._g6_owner({"agent_id": "fixture-child"})
+                self.assertEqual(route.call_count, 1)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -60,7 +84,9 @@ class ContextHookInputTests(unittest.TestCase):
                 self.assertEqual(response['hookSpecificOutput']['permissionDecision'], 'deny')
                 self.assertIn('V5_HOOK_SIZE', response['hookSpecificOutput']['permissionDecisionReason'])
             else:
-                self.assertIn('Return incomplete', response['hookSpecificOutput']['additionalContext'])
+                self.assertNotIn('decision', response)
+                self.assertIn('Context audit was not verified', response['hookSpecificOutput']['additionalContext'])
+                self.assertIn('continue unaffected work', response['hookSpecificOutput']['additionalContext'])
 
     def test_alias_after_large_body_cannot_hide_a_child(self):
         for metadata in ({'agentId': 'hidden-child'}, {'agent_id': '', 'agentId': 'child'},

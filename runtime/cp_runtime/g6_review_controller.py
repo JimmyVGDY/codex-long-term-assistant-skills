@@ -79,7 +79,7 @@ def _refresh_reports(value: dict[str, Any]) -> None:
 def _reports_current(value: dict[str, Any]) -> bool:
     plans = value.get("plans", {})
     plan = plans.get(value.get("active_plan_key"))
-    if not plan:
+    if not plan or plan.get("review_stage") == "task_execution":
         return False
     expected = set(plan["reviewers"])
     if not expected or not expected.issubset(value["results"]):
@@ -97,9 +97,16 @@ def _reports_current(value: dict[str, Any]) -> bool:
 
 
 def _native_root(value: dict[str, Any], *, required: bool = False) -> Path | None:
-    from .g6_handoff_v1 import read
+    from .g6_task_scope import read, registry
     session = value.get("host_session_id")
-    binding = read(session) if session else None
+    selectors = {}
+    if value.get("ledger_path"):
+        selectors["ledger_path"] = Path(value["ledger_path"])
+    if value.get("task_scope"):
+        selectors["task_scope"] = value["task_scope"]
+    if session and not selectors and registry(session) is not None:
+        selectors["task_id"] = value.get("task_id")
+    binding = read(session, **selectors) if session else None
     if binding is None:
         if required:
             raise ValueError("G6_NATIVE_ROOT_NOT_BOUND")
@@ -111,6 +118,8 @@ def _native_root(value: dict[str, Any], *, required: bool = False) -> Path | Non
         raise ValueError("G6_REVIEW_NATIVE_ROOT_CONFLICT")
     value["ledger_path"] = str(ledger)
     value["root_task_id"] = root["task_id"]
+    if binding.get("task_scope"):
+        value["task_scope"] = binding["task_scope"]
     return ledger
 
 
@@ -172,7 +181,7 @@ def _allowance_command(value: dict[str, Any], args: Any) -> None:
         value["allowance_status"] = {"status": "NATIVE_SOURCE_BOUND", "allowance_protocol": "g6-allowance/1"}
         return
     ledger = _native_root(value, required=True)
-    recovery = authority.recover(ledger)
+    recovery = authority.recover(ledger, reconsider_request_id=getattr(args, "reconsider_request", None))
     value["allowance_recovery"] = recovery
     if args.command == "allowance-quote":
         value.pop("allowance_request", None)
@@ -201,7 +210,24 @@ def _allowance_command(value: dict[str, Any], args: Any) -> None:
             raise ValueError("G6_ALLOWANCE_REGISTERED_WORK_REQUIRED")
         state = budget.read_budget(ledger)
         from .routing_contract import integer
-        integer(args.additional_reviews, "G6_ALLOWANCE_DISPATCHES", minimum=1, maximum=8)
+        wanted = {key: args.additional_reviews for key in work_ids}
+        explicit_counts = getattr(args, "work_count", None) or []
+        if explicit_counts:
+            if role or getattr(args, "future_review", False) or plan["review_stage"] != "task_execution":
+                raise ValueError("G6_TASK_ALLOCATION_SELECTOR_CONFLICT")
+            registered = {key for entry in value["plans"].values()
+                          if entry.get("review_stage") == "task_execution"
+                          for key in entry.get("work_ids", {}).values()}
+            wanted = {}
+            for text in explicit_counts:
+                key, separator, count = text.partition("=")
+                if not separator or not count.isdecimal() or key in wanted or key not in registered:
+                    raise ValueError("G6_TASK_ALLOCATION_SCOPE")
+                wanted[key] = int(count)
+            work_ids = list(wanted)
+        for count in wanted.values():
+            integer(count, "G6_ALLOWANCE_DISPATCHES", minimum=1,
+                    maximum=128 if plan["review_stage"] == "task_execution" else 8)
         active = [pid for pid in state["reservations"] if state["permits"][pid]["work_item_id"] in work_ids
                   and pid not in state["terminals"] and state["receipts"].get(pid, {}).get("disposition") != "not_started"]
         if active:
@@ -223,8 +249,8 @@ def _allowance_command(value: dict[str, Any], args: Any) -> None:
                 remaining_units = bucket["units"] - usage["completed_charged_units"] - usage["inflight_reserved_units"]
                 remaining_attempts = bucket["attempts"] - usage["completed_charged_attempts"] - usage["inflight_reserved_attempts"]
                 available += min(remaining_units // budget.profile_spec(bucket["profile_id"])["planning_units"], remaining_attempts)
-            if available < args.additional_reviews:
-                needed[key] = args.additional_reviews - available
+            if available < wanted[key]:
+                needed[key] = wanted[key] - available
         if not needed:
             value["allowance_status"] = {"status": "ALREADY_AUTHORIZED", "work_ids": work_ids}
             value["next_action"] = "dispatch_with_existing_allowance"
@@ -235,12 +261,42 @@ def _allowance_command(value: dict[str, Any], args: Any) -> None:
             "question": contract.quote_question(request, state["review_work"], getattr(args, "locale", "zh-CN")),
             "options": contract.quote_options(getattr(args, "locale", "zh-CN")), "supported": True,
             "authority_status": "PENDING_NATIVE_USER_RESPONSE", "actual_credits": None}
+        if state.get("protocol_version", 1) >= 3:
+            from .g6_journal_capacity import projection
+            value["allowance_request"]["journal_capacity"] = projection(state, ledger.stat().st_size)
         source = authority._read_source(authority.source_path(ledger))
         value["next_action"] = ("await_existing_allowance_authorization" if request["request_id"] in source["presented_requests"]
                                 else "ask_exact_allowance_question_once_then_recover")
     else:
-        value["allowance_status"] = budget.allowance_status(budget.read_budget(ledger))
-        value["next_action"] = recovery["next_action"]
+        state = budget.read_budget(ledger)
+        status = budget.allowance_status(state)
+        value["allowance_status"] = status
+        request = value.get("allowance_request", {})
+        request_id = request.get("request_id")
+        resolved = request_id in state.get("allowance_grants", {}) or request_id in state.get("allowance_revoked", {})
+        if resolved:
+            # 中文：移除已处理问题的陈旧视图；原问题与批准仍完整留在账本和原生来源。
+            # English: Drop the stale question view; retain the original request and approval in the journal and native source.
+            value.pop("allowance_request", None)
+        value["next_action"] = "continue_native_authority_recovery" if recovery.get("has_more") else recovery["next_action"]
+        plan = value.get("plans", {}).get(value.get("active_plan_key"), {})
+        work_ids = set(plan.get("work_ids", {}).values())
+        grants = [row for row in status["grants"] if not row["revoked"] and row["work_id"] in work_ids]
+        if (resolved or grants) and not recovery.get("has_more") and recovery["status"] != "NATIVE_SOURCE_UNAVAILABLE":
+            # 中文：并发计数属于整个根；恢复当前计划时按许可的额度归属定位在途调用。
+            # English: Concurrency counts cover the root; locate current-plan calls by their reserved funding owner.
+            funding_ids = {row["funding_id"] for row in grants}
+            active = any(pid not in state["terminals"]
+                         and row.get("funding_id", "base") in funding_ids
+                         and state["receipts"].get(pid, {}).get("disposition") != "not_started"
+                         for pid, row in state["reservations"].items())
+            available = any(row["work_id"] not in state.get("closed_review_work", {})
+                and row["units"] - row["usage"]["completed_charged_units"] - row["usage"]["inflight_reserved_units"]
+                    >= budget.profile_spec(row["profile_id"])["planning_units"]
+                and row["attempts"] > row["usage"]["completed_charged_attempts"] + row["usage"]["inflight_reserved_attempts"]
+                for row in grants)
+            value["next_action"] = ("resume_existing_review" if active else "dispatch_with_existing_allowance"
+                if available else "continue_unaffected_work_or_quote_required_work")
 
 
 def run(args: Any) -> dict[str, Any]:
@@ -266,6 +322,7 @@ def run(args: Any) -> dict[str, Any]:
                      "isolation_level": "logical-readonly", "status": "OPEN",
                      "plans": {}, "results": {}, "history": [],
                      "verification_state": "UNVERIFIED", "next_action": "prepare_scoped_packet"}
+            _native_root(value)
         else:
             value = read_json(path, verify=True, label="G6 review controller")
             value.pop("integrity")
@@ -275,9 +332,23 @@ def run(args: Any) -> dict[str, Any]:
                 raise ValueError("G6_REVIEW_CLOSED")
             _native_root(value)
             if args.command in {"status", "validate", "reconcile"}:
+                if args.command == "reconcile" and value["ledger_path"]:
+                    if os.environ.get("CODEX_THREAD_ID") != value.get("host_session_id"):
+                        raise ValueError("G6_CURRENT_NATIVE_SESSION_REQUIRED")
+                    from .g6_runtime_support import installed_allowance_support
+                    support = installed_allowance_support()
+                    if not support["supported"]:
+                        value["native_reconciliation"] = support
+                        value["next_action"] = "install_matching_allowance_reader_before_reconciliation"
+                        return value
+                    from .g6_reconciliation import recover_bound_terminals
+                    value["native_reconciliation"] = recover_bound_terminals(Path(value["ledger_path"]),
+                        child_transcripts=[Path(item) for item in getattr(args, "child_transcript", [])])
                 _refresh_reports(value)
                 if value["ledger_path"]:
                     state = budget.read_budget(Path(value["ledger_path"]))
+                    from .g6_delivery_v1 import native_execution_view
+                    value["native_execution"] = native_execution_view(state)
                     value["root_usage"] = budget.snapshot(state, work_item_id="review-status", depth=0)
                     value["allowance_status"] = budget.allowance_status(state)
                 return value
@@ -299,6 +370,9 @@ def run(args: Any) -> dict[str, Any]:
                         raise ValueError("G6_REVIEW_PACKET_CONFLICT")
                     packet = manifest["packet_sha256"]
                 key = ref([args.phase, packet, reviewers])[7:]
+                if getattr(args, "review_stage", None) == "task_execution":
+                    key = ref([args.phase, packet, reviewers, "task_execution",
+                               args.model_profile or "g6-sol-medium", args.purpose])[7:]
                 value["plans"].setdefault(key, {"phase": args.phase, "packet_sha256": packet,
                     "reviewers": reviewers, "purpose": args.purpose or "Review the scoped changes.",
                     "status": "PLANNED", "packet_dir": packet_dir})
@@ -360,14 +434,17 @@ def run(args: Any) -> dict[str, Any]:
                             atomic_write_json(path, value, seal=True)
                             return value
                         call = bind_call(Path(value["ledger_path"]), work_id=plan["work_ids"][role],
-                                         packet_dir=Path(plan["packet_dir"]), instructions=args.scope or "")
+                                         packet_dir=Path(plan["packet_dir"]), instructions=args.scope or "",
+                                         session_id=value["host_session_id"])
                         task_name, message = call["task_name"], call["message"]
                     decision = preview(session_id=value["host_session_id"], cwd=cwd,
                                        agent_type=role, task_name=task_name, message=message,
-                                       requested_profile=args.model_profile or None)
+                                       requested_profile=args.model_profile or None,
+                                       ledger_path=Path(value["ledger_path"]) if value["ledger_path"] else None,
+                                       task_scope=value.get("task_scope"))
                     value["dispatch_decision"] = decision
                     value.setdefault("assignments", {})[args.reviewer] = {
-                        "task_name": task_name, "phase": args.phase,
+                        "task_name": (decision.get("exact_tool_parameters") or {}).get("task_name", task_name), "phase": args.phase,
                         "packet_sha256": plan["packet_sha256"], "packet_dir": plan.get("packet_dir", ""),
                         "decision_ref": decision["decision_ref"]}
                     value["verification_state"] = "UNVERIFIED"
@@ -389,7 +466,7 @@ def run(args: Any) -> dict[str, Any]:
                 # of native review or a second charge against the budget.
                 if args.result_file:
                     raw = bounded_read(Path(args.result_file), 65_536)
-                    from .g6_review_receipt_v1 import _report
+                    from .g6_review_receipt_v1 import _report, scope_markers
                     record = {"type": "response_item", "payload": {"type": "message", "role": "assistant",
                               "phase": "final_answer", "content": [{"type": "output_text", "text": raw.decode("utf-8")} ]}}
                     report, reason = _report((json.dumps(record) + "\n").encode("utf-8"))
@@ -412,7 +489,7 @@ def run(args: Any) -> dict[str, Any]:
                                         and receipt["root_ledger_ref"] == ref(str(Path(value["ledger_path"]).resolve()))
                                         and receipt["root_session_ref"] == state["root"]["host_session_ref"]
                                         and receipt["permit_id"] == matches[0]
-                                        and "packet_sha256=" + assignment["packet_sha256"] in report.get("checked_scope", [])):
+                                        and "packet_sha256=" + assignment["packet_sha256"] in scope_markers(report["checked_scope"])):
                                     row.update(verification_state="NATIVE_REPORT_VERIFIED",
                                                finding_refs=receipt["finding_refs"], permit_id=matches[0])
                         row["packet_current"] = _packet_current(assignment.get("packet_dir", ""), value["repo_path"])

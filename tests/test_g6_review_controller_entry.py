@@ -27,7 +27,9 @@ class G6ReviewControllerEntryTests(unittest.TestCase):
         self.base = Path(self.temp.name)
         self.repo = self.base / "repo"
         self.repo.mkdir()
-        self.env = dict(os.environ, PYTHONUTF8="1")
+        self.env = dict(os.environ, PYTHONUTF8="1", CODEX_HOME=str(self.base / "home"),
+                        CODEX_THREAD_ID="controller-entry-fixture")
+        self.env.pop("CP_DELEGATION_BUDGET_PATH", None)
         for command in [["init", "-q"], ["config", "user.name", "Test"],
                         ["config", "user.email", "test@example.invalid"]]:
             subprocess.run(["git", *command], cwd=self.repo, check=True, capture_output=True)

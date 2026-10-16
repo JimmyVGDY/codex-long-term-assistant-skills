@@ -126,7 +126,7 @@ class AllowanceWorkflowTests(unittest.TestCase):
             "role": "user", "content": [{"type": "input_text", "text": text}]})
         self.hook("UserPromptSubmit", {"prompt": text})
 
-    def child_result(self, args, call, report, *, acknowledge_context=True):
+    def child_result(self, args, call, report, *, acknowledge_context=True, complete=True, stop=True):
         self.hook("PostToolUse", {"tool_name": "spawn_agent", "tool_use_id": call,
             "tool_input": args, "tool_response": {"task_name": "/root/" + args["task_name"]}})
         child = "child-" + call
@@ -140,12 +140,352 @@ class AllowanceWorkflowTests(unittest.TestCase):
         context = self.last_bootstrap.get("hookSpecificOutput", {}).get("additionalContext", "")
         marker = re.search(r"context_sha256=[0-9a-f]{64}", context)
         if marker and acknowledge_context:
-            report["checked_scope"] = [*report["checked_scope"], marker[0]]
+            if isinstance(report["checked_scope"], dict):
+                report["checked_scope"]["context_sha256"] = marker[0].split("=", 1)[1]
+            else:
+                report["checked_scope"] = [*report["checked_scope"], marker[0]]
         self.emit(transcript, "response_item", {"type": "message", "role": "assistant", "phase": "final_answer",
             "content": [{"type": "output_text", "text": json.dumps(report)}]})
+        if complete:
+            self.emit(transcript, "event_msg", {"type": "task_complete", "turn_id": "child-turn"})
+        if stop:
+            self.hook("SubagentStop", {"agent_id": child, "agent_type": ROLE, "turn_id": "child-turn",
+                "agent_transcript_path": str(transcript), "transcript_path": str(transcript), "terminal_outcome": "PASS"})
+        return transcript
+
+    def unsettled_review(self, *, complete=True):
+        self.exhaust()
+        self.plan()
+        self.approve(self.control("allowance-quote")["allowance_request"])
+        value = self.dispatch()
+        args = value["dispatch_decision"]["exact_tool_parameters"]
+        self.assertEqual(self.hook("PreToolUse", {"tool_name": "spawn_agent", "tool_use_id": "missing-stop",
+                                                "tool_input": args}), {})
+        report = {"status": "pass", "findings": [], "checked_scope": {
+            "files": ["src/app.py"], "packet_sha256": value["assignments"][ROLE]["packet_sha256"],
+            "isolation": "logical-readonly"}, "unverified_items": [], "summary": "Fixture review"}
+        path = self.child_result(args, "missing-stop", report, complete=complete, stop=False)
+        return path, report
+
+    @unittest.skipUnless(os.name == "nt", "Windows namespace aliases")
+    def test_native_namespace_alias_uses_existing_allowance_without_rebinding(self):
+        from cp_runtime import g6_allowance_authority as authority
+        from cp_runtime.path_identity import _alternate_windows_spelling
+        self.exhaust()
+        self.plan()
+        self.approve(self.control("allowance-quote")["allowance_request"])
+        args = self.dispatch()["dispatch_decision"]["exact_tool_parameters"]
+        before = budget.read_budget(self.ledger)
+        source = json.loads(authority.source_path(self.ledger).read_text(encoding="utf-8"))
+        alias = _alternate_windows_spelling(str(self.transcript.resolve()))
+        self.assertNotEqual(str(Path(alias).resolve()), str(self.transcript.resolve()))
+        result = self.hook("PreToolUse", {"tool_name": "spawn_agent", "tool_use_id": "alias-dispatch",
+                                        "tool_input": args, "transcript_path": alias})
+        self.assertEqual(result, {})
+        after = budget.read_budget(self.ledger)
+        self.assertEqual(before["allowance_grants"], after["allowance_grants"])
+        current = json.loads(authority.source_path(self.ledger).read_text(encoding="utf-8"))
+        for key in ("transcript_path", "transcript_file_ref", "transcript_path_ref", "header_ref"):
+            self.assertEqual(current[key], source[key])
+        usage = budget.allowance_status(after)["total_usage"]
+        self.assertEqual((usage["completed_charged_units"], usage["inflight_reserved_units"], usage["active_calls"]), (16, 4, 1))
+
+    def test_reconcile_bound_completion_without_stop_retains_charge_and_is_idempotent(self):
+        path, report = self.unsettled_review()
+        before = budget.read_budget(self.ledger)
+        pid = before["host_calls"][ref("missing-stop")]
+        self.assertNotIn(pid, before["terminals"])
+        value = self.control("reconcile")
+        self.assertEqual(value["native_reconciliation"]["items"][0]["status"], "COMPLETE")
+        after = budget.read_budget(self.ledger)
+        self.assertEqual(after["terminals"][pid]["outcome"], "UNKNOWN")
+        usage = budget.allowance_status(after)["total_usage"]
+        self.assertEqual((usage["completed_charged_units"], usage["completed_charged_attempts"], usage["active_calls"]), (20, 5, 0))
+        original = self.ledger.read_bytes()
+        self.control("reconcile")
+        self.hook("SubagentStop", {"agent_id": "child-missing-stop", "agent_type": ROLE, "turn_id": "child-turn",
+            "agent_transcript_path": str(path), "transcript_path": str(path), "terminal_outcome": "PASS"})
+        self.assertEqual(self.ledger.read_bytes(), original)
+        result = self.base / "report.json"
+        result.write_text(json.dumps(report), encoding="utf-8")
+        recorded = self.control("result", "--phase", "post", "--round", 1, "--reviewer", ROLE,
+                                "--status", "pass", "--summary", "Fixture", "--result-file", result)
+        self.assertEqual(recorded["results"][ROLE]["verification_state"], "NATIVE_REPORT_VERIFIED")
+
+    def test_reconcile_final_without_native_terminal_does_not_settle(self):
+        path, _ = self.unsettled_review(complete=False)
+        before = self.ledger.read_bytes()
+        self.control("reconcile")
+        self.assertEqual(self.ledger.read_bytes(), before)
+        self.emit(path, "event_msg", {"type": "task_complete", "turn_id": "foreign-turn"})
+        self.control("reconcile")
+        self.assertEqual(self.ledger.read_bytes(), before)
+        self.emit(path, "event_msg", {"type": "turn_aborted", "turn_id": "child-turn"})
+        self.control("reconcile")
+        state = budget.read_budget(self.ledger)
+        pid = state["host_calls"][ref("missing-stop")]
+        self.assertEqual(state["terminals"][pid]["outcome"], "CANCELLED")
+        from cp_runtime.g6_review_receipt_v1 import _receipt_path
+        receipt = json.loads(_receipt_path(self.ledger, pid).read_text(encoding="utf-8"))
+        self.assertEqual(receipt["report_status"], "pass")
+        self.assertEqual(receipt["gate_state"], "MISSING_EVIDENCE")
+        self.assertEqual(receipt["reason_code"], "REVIEW_NATIVE_TERMINAL_UNSUCCESSFUL")
+        call = next(row for row in state["review_calls"].values()
+                    if row["task_name"] == state["permits"][pid]["task_name"])
+        self.assertFalse(requests._same_packet_completed(self.ledger, state,
+                         state["permits"][pid]["work_item_id"], call["packet_sha256"]))
+
+    def test_receipt_publish_failure_recovers_frozen_metadata_without_new_charge(self):
+        from unittest import mock
+        from cp_runtime import g6_reconciliation as reconciliation, g6_review_receipt_v1 as receipts
+        path, report = self.unsettled_review()
+        pid = budget.read_budget(self.ledger)["host_calls"][ref("missing-stop")]
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(receipts, "_publish_receipt", side_effect=OSError("fixture publish failure")):
+            reconciliation.recover_bound_terminals(self.ledger)
+        settled = self.ledger.read_bytes()
+        self.assertIn(pid, budget.read_budget(self.ledger)["terminals"])
+        self.assertFalse(receipts._receipt_path(self.ledger, pid).exists())
+        self.assertNotIn(report["summary"], receipts._pending_path(self.ledger, pid).read_text(encoding="utf-8"))
+        changed = {**report, "summary": "Later answer must not replace the frozen report."}
+        self.emit(path, "response_item", {"type": "message", "role": "assistant", "phase": "final_answer",
+                  "content": [{"type": "output_text", "text": json.dumps(changed)}]})
+        value = self.control("reconcile")
+        self.assertEqual(value["native_reconciliation"]["items"][0]["status"], "RECEIPT_PUBLISHED")
+        saved = json.loads(receipts._receipt_path(self.ledger, pid).read_text(encoding="utf-8"))
+        self.assertEqual(saved["report_ref"], ref(report))
+        self.assertEqual(self.ledger.read_bytes(), settled)
+        self.control("reconcile")
+        self.assertEqual(self.ledger.read_bytes(), settled)
+
+    def missing_creation_child(self):
+        self.exhaust()
+        self.plan()
+        self.approve(self.control("allowance-quote")["allowance_request"])
+        args = self.dispatch()["dispatch_decision"]["exact_tool_parameters"]
+        self.assertEqual(self.hook("PreToolUse", {"tool_name": "spawn_agent", "tool_use_id": "missing-create",
+                                                "tool_input": args}), {})
+        child = "child-missing-creation"
+        transcript = self.home / "sessions" / ("rollout-" + child + ".jsonl")
+        self.emit(transcript, "session_meta", {"id": child, "cwd": str(self.repo), "source": {
+            "subagent": {"thread_spawn": {"parent_thread_id": self.session, "depth": 1,
+                "agent_role": ROLE, "agent_path": "/root/" + args["task_name"]}}}})
+        self.emit(transcript, "event_msg", {"type": "task_started", "turn_id": "child-turn"})
+        self.emit(transcript, "response_item", {"type": "message", "role": "assistant", "phase": "final_answer",
+            "content": [{"type": "output_text", "text": json.dumps({"status": "incomplete", "findings": [],
+                "checked_scope": [], "unverified_items": ["No native context receipt."], "summary": "Fixture"})}]})
         self.emit(transcript, "event_msg", {"type": "task_complete", "turn_id": "child-turn"})
-        self.hook("SubagentStop", {"agent_id": child, "agent_type": ROLE, "turn_id": "child-turn",
-            "agent_transcript_path": str(transcript), "transcript_path": str(transcript), "terminal_outcome": "PASS"})
+        return transcript
+
+    def test_explicit_native_child_recovers_missing_creation_and_terminal_without_context_claim(self):
+        from cp_runtime.path_identity import _alternate_windows_spelling
+        transcript = self.missing_creation_child()
+        pid = budget.read_budget(self.ledger)["host_calls"][ref("missing-create")]
+        self.assertNotIn(pid, budget.read_budget(self.ledger)["receipts"])
+        value = self.control("reconcile", "--child-transcript", transcript)
+        self.assertEqual(value["native_reconciliation"]["creations"][0]["status"], "CREATION_RECOVERED")
+        state = budget.read_budget(self.ledger)
+        self.assertEqual(state["receipts"][pid]["disposition"], "created")
+        self.assertEqual(state["terminals"][pid]["outcome"], "UNKNOWN")
+        from cp_runtime.g6_review_receipt_v1 import _receipt_path
+        receipt = json.loads(_receipt_path(self.ledger, pid).read_text(encoding="utf-8"))
+        self.assertEqual(receipt["gate_state"], "MISSING_EVIDENCE")
+        before = self.ledger.read_bytes()
+        self.control("reconcile", "--child-transcript", transcript)
+        alias = _alternate_windows_spelling(str(transcript.resolve())) if os.name == "nt" else str(transcript)
+        self.hook("SubagentStop", {"agent_id": "child-missing-creation", "agent_type": ROLE,
+            "turn_id": "child-turn", "agent_transcript_path": alias, "transcript_path": alias,
+            "terminal_outcome": "PASS"})
+        self.assertEqual(self.ledger.read_bytes(), before)
+
+    def test_explicit_child_source_rejects_foreign_unreserved_and_predating_headers(self):
+        transcript = self.missing_creation_child()
+        original = transcript.read_bytes()
+        lines = original.splitlines(keepends=True)
+        before = self.ledger.read_bytes()
+        for change in ("parent", "task", "time"):
+            header = json.loads(lines[0])
+            spawn = header["payload"]["source"]["subagent"]["thread_spawn"]
+            if change == "parent":
+                spawn["parent_thread_id"] = "other-parent"
+            elif change == "task":
+                spawn["agent_path"] = "/root/unreserved_fixture"
+            else:
+                header["timestamp"] = "2020-01-01T00:00:00Z"
+            transcript.write_bytes((json.dumps(header) + "\n").encode() + b"".join(lines[1:]))
+            value = self.control("reconcile", "--child-transcript", transcript)
+            self.assertTrue(value["native_reconciliation"]["errors"], change)
+            self.assertEqual(self.ledger.read_bytes(), before)
+        transcript.write_bytes(original)
+
+    def test_completed_execution_recovers_interrupted_admission_once_with_native_proof(self):
+        from unittest import mock
+        from cp_runtime import g6_hook_v1 as hook
+        self.exhaust()
+        self.control("plan", "--phase", "post", "--packet-dir", self.packet,
+                     "--agents", "worker", "--review-stage", "task_execution",
+                     "--purpose", "Execute a bounded fixture.")
+        self.approve(self.control("allowance-quote") ["allowance_request"])
+        args = self.control("dispatch", "--phase", "post", "--round", 1, "--agent", "worker",
+                            "--scope", "Read the assigned fixture only.")["dispatch_decision"]["exact_tool_parameters"]
+        call = {"type": "function_call", "name": "spawn_agent", "call_id": "interrupted-admission",
+                "arguments": json.dumps(args)}
+        self.emit(self.transcript, "response_item", call)
+        data = {"session_id": self.session, "turn_id": "turn-one", "cwd": str(self.repo),
+                "transcript_path": str(self.transcript), "hook_event_name": "PreToolUse",
+                "tool_name": "spawn_agent", "tool_use_id": call["call_id"], "tool_input": args}
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(hook.handoff, "approve_and_reserve",
+                                                                     side_effect=TimeoutError("fixture timeout")):
+            self.assertEqual(hook.handle(data, "PreToolUse")[1]["hookSpecificOutput"]["permissionDecision"], "deny")
+        prepared = budget.read_budget(self.ledger)
+        pid = next(pid for pid, item in prepared["permits"].items() if item["task_name"] == args["task_name"])
+        self.assertNotIn(pid, prepared["reservations"])
+        child = self.home / "sessions/rollout-interrupted-child.jsonl"
+        self.emit(child, "session_meta", {"id": "interrupted-child", "cwd": str(self.repo), "source": {
+            "subagent": {"thread_spawn": {"parent_thread_id": self.session, "depth": 1,
+                "agent_role": "worker", "agent_path": "/root/" + args["task_name"]}}}})
+        self.emit(child, "event_msg", {"type": "task_started", "turn_id": "child-turn"})
+        self.emit(child, "response_item", {"type": "message", "role": "assistant", "phase": "final_answer",
+            "content": [{"type": "output_text", "text": "Blocked before reading the fixture."}]})
+        before = self.ledger.read_bytes()
+        self.assertTrue(self.control("reconcile", "--child-transcript", child)["native_reconciliation"]["errors"])
+        self.assertEqual(self.ledger.read_bytes(), before)
+        self.emit(child, "event_msg", {"type": "task_complete", "turn_id": "child-turn",
+                                      "last_agent_message": "Blocked before reading the fixture."})
+        original = self.transcript.read_bytes()
+        changed = original.replace(args["model"].encode(), b"gpt-6-astra")
+        self.transcript.write_bytes(changed)
+        self.assertTrue(self.control("reconcile", "--child-transcript", child)["native_reconciliation"]["errors"])
+        self.assertEqual(self.ledger.read_bytes(), before)
+        self.transcript.write_bytes(original)
+        value = self.control("reconcile", "--child-transcript", child)
+        self.assertEqual(value["native_reconciliation"]["creations"][0]["status"], "COMPLETED_CALL_ACCOUNTED")
+        state = budget.read_budget(self.ledger)
+        self.assertFalse(state["reservations"][pid]["admission_verified"])
+        self.assertEqual(state["terminals"][pid]["outcome"], "UNKNOWN")
+        self.assertEqual(budget.allowance_status(state)["total_usage"]["completed_charged_units"], 20)
+        self.assertEqual(value["native_execution"]["recovered_without_admission"], 1)
+        self.assertTrue(self.ledger.read_bytes().startswith(before))
+        settled = self.ledger.read_bytes()
+        self.control("reconcile", "--child-transcript", child)
+        self.assertEqual(self.ledger.read_bytes(), settled)
+
+    def test_staged_receipt_is_not_published_before_terminal_and_survives_append(self):
+        from unittest import mock
+        from cp_runtime import g6_reconciliation as reconciliation, g6_review_receipt_v1 as receipts
+        path, report = self.unsettled_review()
+        pid = budget.read_budget(self.ledger)["host_calls"][ref("missing-stop")]
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(budget, "record_terminal", side_effect=OSError("fixture terminal write failure")):
+            reconciliation.recover_bound_terminals(self.ledger)
+        self.assertNotIn(pid, budget.read_budget(self.ledger)["terminals"])
+        self.assertFalse(receipts._receipt_path(self.ledger, pid).exists())
+        self.assertIsNone(receipts.publish_pending(self.ledger, pid))
+        frozen = receipts._read_pending(receipts._pending_path(self.ledger, pid))
+        self.emit(path, "event_msg", {"type": "task_complete", "turn_id": "child-turn"})
+        self.control("reconcile")
+        self.assertEqual(budget.read_budget(self.ledger)["terminals"][pid], frozen["terminal"])
+        saved = json.loads(receipts._receipt_path(self.ledger, pid).read_text(encoding="utf-8"))
+        self.assertEqual(saved["report_ref"], ref(report))
+
+    def test_pending_receipt_with_changed_terminal_proof_cannot_publish(self):
+        from unittest import mock
+        from cp_runtime import g6_reconciliation as reconciliation, g6_review_receipt_v1 as receipts
+        from cp_runtime.common import atomic_write_json
+        self.unsettled_review()
+        pid = budget.read_budget(self.ledger)["host_calls"][ref("missing-stop")]
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(receipts, "_publish_receipt", side_effect=OSError("fixture publish failure")):
+            reconciliation.recover_bound_terminals(self.ledger)
+        before = self.ledger.read_bytes()
+        target = receipts._pending_path(self.ledger, pid)
+        value = receipts._read_pending(target)
+        value["terminal"]["proof_ref"] = ref("different fixture proof")
+        atomic_write_json(target, value, seal=True)
+        with self.assertRaisesRegex(ValueError, "G6_REVIEW_PENDING_TERMINAL_CHANGED"):
+            receipts.publish_pending(self.ledger, pid)
+        self.assertEqual(self.ledger.read_bytes(), before)
+        self.assertFalse(receipts._receipt_path(self.ledger, pid).exists())
+
+    def test_reconcile_rejects_replaced_header_and_ambiguous_turns(self):
+        path, _ = self.unsettled_review()
+        before = self.ledger.read_bytes()
+        self.env["CODEX_THREAD_ID"] = "foreign-parent"
+        self.assertIn("G6_CURRENT_NATIVE_SESSION_REQUIRED", self.control("reconcile", ok=False))
+        self.assertEqual(self.ledger.read_bytes(), before)
+        self.env["CODEX_THREAD_ID"] = self.session
+        original = path.read_bytes()
+        lines = original.splitlines()
+        header = json.loads(lines[0])
+        header["payload"]["cwd"] = str(self.base / "unrelated")
+        path.write_bytes(json.dumps(header).encode() + b"\n" + b"\n".join(lines[1:]) + b"\n")
+        before = self.ledger.read_bytes()
+        value = self.control("reconcile")
+        self.assertTrue(value["native_reconciliation"]["errors"])
+        self.assertEqual(self.ledger.read_bytes(), before)
+        path.write_bytes(original)
+        self.emit(path, "event_msg", {"type": "task_started", "turn_id": "different-turn"})
+        self.control("reconcile")
+        self.assertEqual(self.ledger.read_bytes(), before)
+
+    def test_execution_native_quote_context_and_settlement_are_not_review(self):
+        self.exhaust()
+        self.control("plan", "--phase", "post", "--packet-dir", self.packet,
+                     "--agents", "explorer", "--allowed-path", "src", "--review-stage", "task_execution",
+                     "--purpose", "Read public fixture inputs.")
+        quoted = self.control("allowance-quote", "--additional-dispatches", 2)["allowance_request"]
+        self.assertEqual(quoted["question_version"], 2)
+        self.assertGreater(quoted["journal_capacity"]["reserved_future_records"], 0)
+        self.approve(quoted)
+        ready = self.control("dispatch", "--phase", "post", "--round", 1, "--agent", "explorer",
+                             "--scope", 'Return only {"answer":"fixture"}. No file reads are needed.')
+        args = ready["dispatch_decision"]["exact_tool_parameters"]
+        self.assertNotIn(str(self.packet), args["message"])
+        self.assertNotIn("checked_scope", args["message"])
+        self.assertNotIn("Review only", args["message"])
+        self.assertEqual(args["agent_type"], "explorer")
+        self.assertEqual(self.hook("PreToolUse", {"tool_name": "spawn_agent", "tool_use_id": "execution",
+                         "tool_input": args}), {})
+        self.hook("PostToolUse", {"tool_name": "spawn_agent", "tool_use_id": "execution", "tool_input": args,
+                                  "tool_response": {"task_name": "/root/" + args["task_name"]}})
+        child, turn = "execution-child", "execution-turn"
+        transcript = self.home / "sessions/rollout-execution-child.jsonl"
+        self.emit(transcript, "session_meta", {"id": child, "cwd": str(self.repo), "source": {
+            "subagent": {"thread_spawn": {"parent_thread_id": self.session, "depth": 1,
+                "agent_role": "explorer", "agent_path": "/root/" + args["task_name"]}}}})
+        data = {"agent_id": child, "agent_type": "explorer", "turn_id": turn,
+                "agent_transcript_path": str(transcript), "transcript_path": str(transcript)}
+        context = self.hook("SubagentStart", data)["hookSpecificOutput"]["additionalContext"]
+        self.assertNotIn(str(self.packet), context)
+        self.assertNotIn("in checked_scope", context)
+        self.emit(transcript, "event_msg", {"type": "task_started", "turn_id": turn})
+        self.emit(transcript, "response_item", {"type": "message", "role": "assistant", "phase": "final_answer",
+            "content": [{"type": "output_text", "text": '{"answer":"fixture"}'}]})
+        self.emit(transcript, "event_msg", {"type": "task_complete", "turn_id": turn})
+        self.hook("SubagentStop", data)
+        state = budget.read_budget(self.ledger)
+        from cp_runtime.g6_review_receipt_v1 import _receipt_path
+        pid = state["host_calls"][ref("execution")]
+        self.assertEqual(state["terminals"][pid]["outcome"], "UNKNOWN")
+        self.assertFalse(_receipt_path(self.ledger, pid).exists())
+        status = self.control("allowance-status")
+        self.assertEqual(status["allowance_status"]["grants"][0]["usage"]["completed_charged_units"], 4)
+        self.assertEqual(status["verification_state"], "UNVERIFIED")
+
+    def test_one_execution_quote_can_cover_exact_counts_across_registered_profiles(self):
+        work_ids = []
+        for role, profile, count in (("worker", "g6-sol-medium", 22),
+                                     ("explorer", "g6-sol-medium", 10),
+                                     ("explorer", "g6-luna-low", 80)):
+            value = self.control("plan", "--phase", "post", "--packet-dir", self.packet,
+                "--agents", role, "--allowed-path", "src", "--review-stage", "task_execution",
+                "--model-profile", profile, "--purpose", "Execute fixed public acceptance cases.")
+            work_ids.append((value["plans"][value["active_plan_key"]]["work_ids"][role], count))
+        args = [part for key, count in work_ids for part in ("--work-count", key + "=" + str(count))]
+        request = self.control("allowance-quote", *args)["allowance_request"]
+        self.assertEqual(sum(row["dispatches"] for row in request["allocations"]), 112)
+        self.assertEqual(sum(row["units"] for row in request["allocations"]), 208)
+        self.assertEqual(len(request["allocations"]), 3)
+        before = self.ledger.read_bytes()
+        self.control("allowance-quote", "--work-count", "G6W_" + "0" * 32 + "=1", ok=False)
+        self.assertEqual(self.ledger.read_bytes(), before)
 
     def test_exhaustion_quote_native_approval_dispatch_and_receipt(self):
         self.exhaust()
@@ -174,6 +514,33 @@ class AllowanceWorkflowTests(unittest.TestCase):
             "--status", "pass", "--summary", "Fixture", "--result-file", report_file)
         self.assertEqual(result["results"][ROLE]["verification_state"], "NATIVE_REPORT_VERIFIED")
         self.assertIn("G6_REVIEW_UNCHANGED_ALREADY_COMPLETE", self.dispatch(ok=False))
+
+    def test_structured_pass_with_outside_scope_unknown_does_not_repeat_same_review(self):
+        from cp_runtime.common import read_json
+        from cp_runtime.g6_review_receipt_v1 import _receipt_path
+        plan = self.plan()
+        args = self.dispatch()["dispatch_decision"]["exact_tool_parameters"]
+        self.assertEqual(self.hook("PreToolUse", {"tool_name": "spawn_agent",
+                         "tool_use_id": "limited-pass", "tool_input": args}), {})
+        packet = plan["plans"][plan["active_plan_key"]]["packet_sha256"]
+        report = {"status": "pass", "findings": [],
+                  "checked_scope": {"paths": ["app.py"], "packet_sha256": packet},
+                  "unverified_items": ["Native installation was not part of this code review."],
+                  "summary": "Scoped review passed; keep the installation evidence separate."}
+        self.child_result(args, "limited-pass", report)
+        state = budget.read_budget(self.ledger)
+        pid = state["host_calls"][ref("limited-pass")]
+        receipt = read_json(_receipt_path(self.ledger, pid), verify=True)
+        self.assertEqual(receipt["report_status"], "pass")
+        self.assertEqual(receipt["gate_state"], "MISSING_EVIDENCE")
+        self.assertEqual(receipt["reason_code"], "REVIEW_PACKET_VERIFIED")
+        report_file = self.base / "structured-report.json"
+        report_file.write_text(json.dumps(report), encoding="utf-8")
+        result = self.control("result", "--phase", "post", "--round", 1, "--reviewer", ROLE,
+                              "--status", "pass", "--summary", "Fixture", "--result-file", report_file)
+        self.assertEqual(result["results"][ROLE]["verification_state"], "NATIVE_REPORT_VERIFIED")
+        self.assertIn("G6_REVIEW_UNCHANGED_ALREADY_COMPLETE", self.dispatch(ok=False))
+        self.assertEqual(len(budget.read_budget(self.ledger)["reservations"]), 1)
 
     def test_grant_survives_refreshed_packet_without_second_approval(self):
         self.exhaust()
@@ -340,6 +707,34 @@ class AllowanceWorkflowTests(unittest.TestCase):
         self.assertEqual(value["allowance_status"]["status"], "ALREADY_AUTHORIZED")
         self.assertNotIn("allowance_request", value)
         self.assertEqual(len(budget.read_budget(self.ledger)["allowance_requests"]), 1)
+
+    def test_repeated_recovery_uses_grant_already_recorded_by_native_hook(self):
+        self.exhaust()
+        self.plan()
+        self.approve(self.control("allowance-quote")["allowance_request"])
+        before = self.ledger.read_bytes()
+        for command in ("allowance-recover", "allowance-status", "allowance-recover"):
+            value = self.control(command)
+            self.assertNotIn("allowance_request", value)
+            self.assertEqual(value["next_action"], "dispatch_with_existing_allowance")
+        self.assertEqual(self.ledger.read_bytes(), before)
+
+    def test_recovery_does_not_resume_an_unrelated_work_reservation(self):
+        self.unsettled_review(complete=False)
+        self.control("plan", "--phase", "post", "--packet-dir", self.packet,
+                     "--reviewers", "cp_review_state_concurrency", "--allowed-path", "src",
+                     "--purpose", "A separate review work item within the same task.")
+        before = self.ledger.read_bytes()
+        value = self.control("allowance-status")
+        self.assertEqual(value["next_action"], "continue_unaffected_work_or_quote_required_work")
+        self.assertEqual(self.ledger.read_bytes(), before)
+        self.approve(self.control("allowance-quote")["allowance_request"])
+        before = self.ledger.read_bytes()
+        for command in ("allowance-recover", "allowance-status"):
+            value = self.control(command)
+            self.assertEqual(value["next_action"], "dispatch_with_existing_allowance")
+            self.assertEqual(value["allowance_status"]["total_usage"]["active_calls"], 1)
+        self.assertEqual(self.ledger.read_bytes(), before)
 
     def test_locale_change_preserves_request_and_accepts_english_approval(self):
         self.exhaust()

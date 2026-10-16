@@ -16,6 +16,7 @@ Use this Skill for language- and provider-independent AI application and inferen
    - Model calls, streaming, and structured output: `references/model-integration-structured-output.md`
    - RAG, embeddings, retrieval access, and evaluation: `references/rag-retrieval-evaluation.md`
    - Agents, tools, and workflows: `references/agent-tool-workflows.md`
+   - MCP contracts, discoverability, composed tasks, and protocol-related acceptance: `references/mcp-tool-design.md`
    - Inference Workers, GPU, multimodal, and generation jobs: `references/inference-gpu-multimodal.md`
    - AI quality, safety, cost, and observability: `references/ai-quality-security-observability.md`
 3. Establish provider, model version, SDK, sync or async mode, streaming protocol, input/output contract, task state, and deployment from dependencies, configuration, code, and runtime evidence.

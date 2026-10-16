@@ -9,15 +9,15 @@ sys.path.insert(0,str(ROOT/'runtime'))
 from cp_runtime.capability_registry import load_registry as load_capability_registry
 errors=[]
 manifest=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))
-if manifest.get('version')!='7.16.2': errors.append('manifest 版本不是 7.16.2')
+if manifest.get('version')!='7.17.0': errors.append('manifest 版本不是 7.17.0')
 if manifest.get('user_skills_target')!='$HOME/.agents/skills': errors.append('账户 Skill 目标不是 $HOME/.agents/skills')
 plugin=json.loads((ROOT/'.codex-plugin'/'plugin.json').read_text(encoding='utf-8'))
-if plugin.get('version')!='7.16.2': errors.append('Plugin 版本不一致')
+if plugin.get('version')!='7.17.0': errors.append('Plugin 版本不一致')
 if manifest.get('default_locale')!='zh-CN' or manifest.get('supported_locales')!=['zh-CN','en']:
     errors.append('双语发行声明无效')
-for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','7.0.0','7.1.0','7.2.0','7.3.0','7.4.0','7.4.1','7.4.2','7.4.3','7.4.4','7.4.5','7.4.6','7.5.0','7.5.1','7.6.0','7.6.1','7.6.2','7.7.0','7.7.1','7.9.2','7.10.0','7.13.0','7.14.5','7.14.6','7.15.2'):
-    if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V7.16.2 升级声明' % previous)
-registry=load_registry(ROOT/'config'/'codex-compatibility-v1.json','7.16.2')
+for previous in ('6.1.0','6.2.0','6.3.0','6.4.0','6.5.0','6.6.0','7.0.0','7.1.0','7.2.0','7.3.0','7.4.0','7.4.1','7.4.2','7.4.3','7.4.4','7.4.5','7.4.6','7.5.0','7.5.1','7.6.0','7.6.1','7.6.2','7.7.0','7.7.1','7.9.2','7.10.0','7.13.0','7.14.5','7.14.6','7.15.2','7.16.0','7.16.1','7.16.2'):
+    if previous not in manifest.get('upgrade_from',[]): errors.append('缺少 %s -> V7.17.0 升级声明' % previous)
+registry=load_registry(ROOT/'config'/'codex-compatibility-v1.json','7.17.0')
 registered=[item['version'] for item in registry['versions']]
 if manifest.get('codex_compatibility',{}).get('verified_versions')!=registered:
     errors.append('Manifest Codex 兼容窗口与注册表不一致')
@@ -64,7 +64,7 @@ for phrase in ('user_skills_home','plugin_marketplace_root','reject_link_ancesto
 for release_script in ('build-release.py','lifecycle-acceptance.py','dispatch-policy-acceptance.py','privacy-boundary-lint.py','seal-worker.py','event-archive.py','release-attestation.py','verify-release.py','payload-integrity.py','validate-v74.py','delegation-budget.py','delegation-calibration.py'):
     if not (ROOT/'scripts'/release_script).is_file(): errors.append('缺少 V7.4 发布证明脚本: '+release_script)
 payload=json.loads((ROOT/'PLUGIN_PAYLOAD_MANIFEST.json').read_text(encoding='utf-8'))
-if payload.get('version')!='7.16.2' or payload.get('file_count',0)<1: errors.append('Plugin payload manifest 无效')
+if payload.get('version')!='7.17.0' or payload.get('file_count',0)<1: errors.append('Plugin payload manifest 无效')
 english_reviewers=ROOT/'locales'/'en'/'custom-agents'
 for reviewer in manifest.get('custom_agents',[]):
     candidate=english_reviewers/Path(reviewer['file']).name
@@ -77,9 +77,9 @@ for primary in ('README.md','CHANGELOG.md','global/AGENTS.md','docs/USER_GUIDE_V
                 'docs/INSTALLATION_RECOVERY.md','docs/CODEX_CONFIG_GUIDE.md',
                 ):
     if not (ROOT/'locales'/'en'/primary).is_file(): errors.append('英文主界面缺失: '+primary)
-for primary in ('docs/releases/v7.16.2/RELEASE_NOTES',
-                'docs/releases/v7.16.2/VALIDATION_REPORT',
-                'docs/releases/v7.16.2/AUDIT_REPORT'):
+for primary in ('docs/releases/v7.17.0/RELEASE_NOTES',
+                'docs/releases/v7.17.0/VALIDATION_REPORT',
+                'docs/releases/v7.17.0/AUDIT_REPORT'):
     if not (ROOT/(primary + '.en.md')).is_file(): errors.append('英文发行记录缺失: %s' % primary)
 text_extensions={'.md','.json','.toml','.yaml','.py','.ps1','.sh','.cmd'}
 banned_natural_language={
@@ -91,6 +91,9 @@ banned_natural_language={
 }
 excluded_brand='clau'+'de'
 neutral_language_exclusions={Path('locales/en/runtime-strings.json')}
+# 中文：固定的公开路由样例可包含口语人称；身份、路径与品牌检查不豁免。
+# English: Fixed public routing prompts may use conversational pronouns; identity, path and brand checks still apply.
+spoken_fixture_paths={Path('tests/skill-routing-study-cases.json')}
 url_pattern=re.compile(r'https?://[^\s\)\]\}>"\']+',re.IGNORECASE)
 for path in ROOT.rglob('*'):
     if not path.is_file() or path.suffix not in text_extensions:
@@ -103,7 +106,12 @@ for path in ROOT.rglob('*'):
         errors.append('Codex 发行命中无关品牌: '+str(path.relative_to(ROOT)))
     if relative not in neutral_language_exclusions:
         neutral_text=url_pattern.sub('',text)
+        fixture_data=json.loads(text) if relative in spoken_fixture_paths else {}
+        spoken_fixture=(isinstance(fixture_data,dict) and fixture_data.get('schema')=='routing-study-cases/1'
+                        and fixture_data.get('data_classification')=='public-synthetic')
         for phrase in banned_natural_language:
+            if spoken_fixture and phrase in {chr(0x4f60),chr(0x6211)+chr(0x4eec)}:
+                continue
             if phrase in neutral_text:
                 errors.append('中性语言门禁命中 %s: %s' % (phrase.encode('unicode_escape').decode('ascii'),relative))
 documentation = audit_documentation(ROOT)
@@ -111,4 +119,4 @@ errors.extend('Documentation drift: ' + str(item) for item in documentation['fin
 if errors:
     for e in errors: print('[FAIL]',e)
     raise SystemExit(1)
-print('[OK] V7.16.2 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致')
+print('[OK] V7.17.0 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致')

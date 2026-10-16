@@ -14,7 +14,7 @@ from .routing_contract import exact, fail, integer, ref, role_for, sha
 
 JOURNAL_SCHEMA = "g6-budget-journal/2"
 EVENT_TYPES = {"REVIEW_WORK_REGISTERED", "ALLOWANCE_REQUESTED", "ALLOWANCE_GRANTED",
-               "ALLOWANCE_REVOKED", "REVIEW_CALL_BOUND", "REVIEW_WORK_CLOSED"}
+               "ALLOWANCE_REVOKED", "ALLOWANCE_REINSTATED", "REVIEW_CALL_BOUND", "REVIEW_WORK_CLOSED"}
 CALL_FIELDS = {"call_id", "work_id", "packet_dir", "packet_sha256", "baseline_sha256",
                "body_sha256", "task_name", "scope_paths"}
 WORK_FIELDS = {"work_id", "boundary_id", "phase", "agent_type", "profile_id",
@@ -25,6 +25,7 @@ AUTH_FIELDS = {"source", "session_ref", "turn_ref", "message_ref", "record_ref",
                "transcript_path", "transcript_path_ref", "transcript_file_ref",
                "header_ref", "start", "end", "authorized_at"}
 PHASES = {"pre_review", "post_review", "repair_review"}
+TASK_PHASE = "task_execution"
 MAX_WORK = 64
 MAX_REQUESTS = 64
 
@@ -45,9 +46,14 @@ def scope_paths(values: Any) -> list[str]:
 def within_scope(paths: list[str], allowed: list[str]) -> bool:
     scope_paths(allowed)
     scope_paths(paths)
-    return all(any(PurePosixPath(path) == PurePosixPath(base)
-                   or PurePosixPath(base) in PurePosixPath(path).parents
-                   for base in allowed) for path in paths)
+    # 中文：在账本锁内按目录层级查集合，避免每次重放做路径列表的笛卡尔积。
+    # English: Match ancestor sets under the journal lock, avoiding a Cartesian path scan on every replay.
+    roots = {PurePosixPath(base) for base in allowed}
+    for value in paths:
+        path = PurePosixPath(value)
+        if path not in roots and not any(parent in roots for parent in path.parents):
+            return False
+    return True
 
 
 def work_identity(value: Mapping[str, Any]) -> str:
@@ -59,7 +65,9 @@ def validate_work(value: Mapping[str, Any]) -> dict[str, Any]:
     item = exact(dict(value), WORK_FIELDS, "G6_REVIEW_WORK_FIELDS")
     if (not isinstance(item["boundary_id"], str)
             or not re.fullmatch(r"[A-Za-z0-9_.-]{1,160}", item["boundary_id"])
-            or item["phase"] not in PHASES or role_for(item["agent_type"]) != "reviewer"
+            or (item["phase"] == TASK_PHASE and item["agent_type"] not in {"worker", "explorer"})
+            or (item["phase"] != TASK_PHASE and
+                (item["phase"] not in PHASES or role_for(item["agent_type"]) != "reviewer"))
             or item["profile_id"] not in PROFILES
             or not isinstance(item["purpose"], str) or not 1 <= len(item["purpose"]) <= 1000
             or any(ord(char) < 32 for char in item["purpose"])
@@ -73,7 +81,7 @@ def validate_work(value: Mapping[str, Any]) -> dict[str, Any]:
 
 def validate_request(value: Mapping[str, Any], works: Mapping[str, Any]) -> dict[str, Any]:
     item = exact(dict(value), REQUEST_FIELDS, "G6_ALLOWANCE_REQUEST_FIELDS")
-    if type(item["question_version"]) is not int or item["question_version"] != 1:
+    if type(item["question_version"]) is not int or item["question_version"] not in {1, 2}:
         fail("G6_ALLOWANCE_QUESTION_VERSION")
     if not isinstance(item["request_id"], str) or not re.fullmatch(r"G6Q_[0-9a-f]{32}", item["request_id"]):
         fail("G6_ALLOWANCE_REQUEST_ID")
@@ -88,10 +96,14 @@ def validate_request(value: Mapping[str, Any], works: Mapping[str, Any]) -> dict
         if work_id not in works or work_id in seen:
             fail("G6_ALLOWANCE_WORK_UNKNOWN_OR_DUPLICATE")
         seen.add(work_id)
-        integer(row["dispatches"], "G6_ALLOWANCE_DISPATCHES", minimum=1, maximum=8)
+        execution = works[work_id]["phase"] == TASK_PHASE
+        if execution != (item["question_version"] == 2):
+            fail("G6_ALLOWANCE_ROLE_PHASE_MIXED")
+        integer(row["dispatches"], "G6_ALLOWANCE_DISPATCHES", minimum=1, maximum=128 if execution else 8)
         integer(row["attempts"], "G6_ALLOWANCE_ATTEMPTS", minimum=row["dispatches"],
                 maximum=row["dispatches"] * 3)
-        integer(row["units"], "G6_ALLOWANCE_UNITS", minimum=1, maximum=128)
+        integer(row["units"], "G6_ALLOWANCE_UNITS", minimum=1,
+                maximum=128 * profile_spec(works[work_id]["profile_id"])["planning_units"] if execution else 128)
         if row["units"] != profile_spec(works[work_id]["profile_id"])["planning_units"] * row["dispatches"]:
             fail("G6_ALLOWANCE_UNITS")
     if item["scope_ref"] != ref([works[row["work_id"]] for row in rows]):
@@ -121,6 +133,25 @@ def funding_id(request_id: str, work_id: str) -> str:
     return "G6F_" + ref([request_id, work_id])[7:39]
 
 
+def later_authorization(current: Mapping[str, Any], previous: Mapping[str, Any]) -> bool:
+    """中文：同一原生来源中更晚的真人决策才能覆盖旧决策。
+    English: Only a later human decision in the same native source may supersede one.
+    """
+    return (all(current[key] == previous[key] for key in
+                ("session_ref", "transcript_path_ref", "transcript_file_ref", "header_ref"))
+            and current["start"] >= previous["end"]
+            and parse_iso(current["authorized_at"]) >= parse_iso(previous["authorized_at"])
+            and current["message_ref"] != previous["message_ref"])
+
+
+def decision_history(state: Mapping[str, Any], request_id: str) -> list[dict[str, Any]]:
+    history = state.get("allowance_decisions", {}).get(request_id)
+    if history is not None:
+        return list(history)
+    return [dict(row) for name in ("allowance_grants", "allowance_revoked")
+            if (row := state.get(name, {}).get(request_id)) is not None]
+
+
 def apply_event(state: dict[str, Any], kind: str, data: Mapping[str, Any]) -> None:
     """中文：在根流水重放中验证新事件；用户来源的实际读回由原生适配器负责。
 
@@ -129,6 +160,8 @@ def apply_event(state: dict[str, Any], kind: str, data: Mapping[str, Any]) -> No
     works, requests = state["review_work"], state["allowance_requests"]
     if kind == "REVIEW_WORK_REGISTERED":
         work = validate_work(data)
+        if work["phase"] == TASK_PHASE and state.get("protocol_version", 1) < 3:
+            fail("G6_TASK_EXECUTION_VERSION_REQUIRED")
         if work["work_id"] in works or len(works) >= MAX_WORK:
             fail("G6_REVIEW_WORK_CONFLICT")
         works[work["work_id"]] = work
@@ -146,7 +179,8 @@ def apply_event(state: dict[str, Any], kind: str, data: Mapping[str, Any]) -> No
             fail("G6_ALLOWANCE_WORK_CLOSED")
         validate_authorization(data["authorization"], state["root"], request)
         source = data["authorization"]["message_ref"]
-        if any(grant["authorization"]["message_ref"] == source for grant in state["allowance_grants"].values()):
+        if any(row["authorization"]["message_ref"] == source
+               for other in requests for row in decision_history(state, other)):
             fail("G6_ALLOWANCE_AUTH_REUSED")
         state["allowance_grants"][data["request_id"]] = dict(data)
     elif kind == "ALLOWANCE_REVOKED":
@@ -155,7 +189,33 @@ def apply_event(state: dict[str, Any], kind: str, data: Mapping[str, Any]) -> No
         if request is None or data["request_id"] in state["allowance_revoked"]:
             fail("G6_ALLOWANCE_REVOKE_CONFLICT")
         validate_authorization(data["authorization"], state["root"], request)
+        history = state.get("allowance_decisions", {}).get(data["request_id"])
+        if history is not None:
+            if not later_authorization(data["authorization"], history[-1]["authorization"]):
+                fail("G6_ALLOWANCE_DECISION_NOT_LATER")
+            history.append(dict(data))
         state["allowance_revoked"][data["request_id"]] = dict(data)
+    elif kind == "ALLOWANCE_REINSTATED":
+        exact(dict(data), {"request_id", "authorization", "previous_decision_ref"}, "G6_ALLOWANCE_REINSTATE_FIELDS")
+        key = data["request_id"]
+        request, previous = requests.get(key), state["allowance_revoked"].get(key)
+        if request is None or previous is None or data["previous_decision_ref"] != ref(previous):
+            fail("G6_ALLOWANCE_REINSTATE_CONFLICT")
+        if any(row["work_id"] in state["closed_review_work"] for row in request["allocations"]):
+            fail("G6_ALLOWANCE_WORK_CLOSED")
+        validate_authorization(data["authorization"], state["root"], request)
+        if not later_authorization(data["authorization"], previous["authorization"]):
+            fail("G6_ALLOWANCE_DECISION_NOT_LATER")
+        if any(row["authorization"]["message_ref"] == data["authorization"]["message_ref"]
+               for other in requests for row in decision_history(state, other)):
+            fail("G6_ALLOWANCE_AUTH_REUSED")
+        history = decision_history(state, key)
+        history.append(dict(data))
+        state.setdefault("allowance_decisions", {})[key] = history
+        # 中文：有效状态恢复同一额度桶，旧决策保留在历史中；从不退款或重建预算。
+        # English: Restore the same funding bucket, retaining every decision and all prior spend.
+        state["allowance_grants"][key] = {"request_id": key, "authorization": dict(data["authorization"])}
+        del state["allowance_revoked"][key]
     elif kind == "REVIEW_CALL_BOUND":
         exact(dict(data), CALL_FIELDS, "G6_REVIEW_CALL_FIELDS")
         work = works.get(data["work_id"])
@@ -200,9 +260,25 @@ def buckets(state: Mapping[str, Any], *, include_revoked: bool = False) -> dict[
 
 
 def quote_question(request: Mapping[str, Any], works: Mapping[str, Any], locale: str = "zh-CN") -> str:
-    if locale not in {"zh-CN", "en"} or request["question_version"] != 1:
+    if locale not in {"zh-CN", "en"} or request["question_version"] not in {1, 2}:
         fail("G6_ALLOWANCE_QUESTION_VERSION_OR_LOCALE")
     rows = request["allocations"]
+    if request["question_version"] == 2:
+        validate_request(request, works)
+        labels = "; ".join(f"{works[row['work_id']]['agent_type']} / {works[row['work_id']]['profile_id']}: "
+                           f"{row['dispatches']} runs, {row['attempts']} attempts" for row in rows)
+        if locale == "en":
+            return (f"Approve {sum(row['dispatches'] for row in rows)} additional task-execution runs, "
+                    f"up to {sum(row['units'] for row in rows)} planning units and "
+                    f"{sum(row['attempts'] for row in rows)} dispatch attempts including no-start retries. "
+                    f"Only {labels}, within the registered task scope. This is not a Reviewer allowance. "
+                    f"Request {request['request_id']}.")
+        labels = "; ".join(f"{works[row['work_id']]['agent_type']} / {works[row['work_id']]['profile_id']}："
+                           f"{row['dispatches']} 次调用、{row['attempts']} 次尝试" for row in rows)
+        return (f"批准本次任务执行追加：{sum(row['dispatches'] for row in rows)} 次调用，"
+                f"最多 {sum(row['units'] for row in rows)} 个规划单位、"
+                f"{sum(row['attempts'] for row in rows)} 次含未启动重试的派发尝试；"
+                f"仅限 {labels}，范围保持已登记任务。本次不授予 Reviewer 额度。申请 {request['request_id']}。")
     labels = "; ".join(f"{works[row['work_id']]['agent_type']} / {works[row['work_id']]['profile_id']}"
                        for row in rows)
     if locale == "en":
