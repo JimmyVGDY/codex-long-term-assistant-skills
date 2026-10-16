@@ -10,6 +10,7 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 - Recover an explicit human correction to a prior allowance refusal within the original request, retaining declined decisions, limits and historical spend. A bounded native rescan can recover corrections missed by an older reader.
 - Fix external task-artifact path rejection, prose-entropy checks on ordinary filenames and broad blocking after missing post-write receipts. Retain actual permissions, credentials, links, identity and budget protections.
 - Shorten the read-only journal lock while retaining full replay and atomic writer validation, fixing contention that blocked parallel tool reads.
+- Give the complete package test suite a separate bounded 90-minute limit while other validation commands retain 60 minutes, accommodating slower Windows runners without removing tests or timeout/failure checks.
 - Complete the planned document, frontend and MCP synthetic executions and eighty frozen routing observations. Preserve failures and UNKNOWNs; trigger descriptions remain unchanged. See candidate reports for final independent review, matrix and release status.
 
 ## 7.16.2 - 2026-10-15

@@ -237,6 +237,9 @@ class V73BilingualReleaseTests(unittest.TestCase):
         match = re.search(r"COMMAND_TIMEOUT_SECONDS\s*=\s*(\d+)", source)
         self.assertIsNotNone(match)
         self.assertEqual(3600, int(match.group(1)))
+        package = re.search(r"PACKAGE_TEST_TIMEOUT_SECONDS\s*=\s*(\d+)", source)
+        self.assertIsNotNone(package)
+        self.assertEqual(5400, int(package.group(1)))
 
     def test_python_minimum_and_ci_matrix_are_explicit(self) -> None:
         manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
