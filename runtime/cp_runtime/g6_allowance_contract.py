@@ -46,9 +46,14 @@ def scope_paths(values: Any) -> list[str]:
 def within_scope(paths: list[str], allowed: list[str]) -> bool:
     scope_paths(allowed)
     scope_paths(paths)
-    return all(any(PurePosixPath(path) == PurePosixPath(base)
-                   or PurePosixPath(base) in PurePosixPath(path).parents
-                   for base in allowed) for path in paths)
+    # 中文：在账本锁内按目录层级查集合，避免每次重放做路径列表的笛卡尔积。
+    # English: Match ancestor sets under the journal lock, avoiding a Cartesian path scan on every replay.
+    roots = {PurePosixPath(base) for base in allowed}
+    for value in paths:
+        path = PurePosixPath(value)
+        if path not in roots and not any(parent in roots for parent in path.parents):
+            return False
+    return True
 
 
 def work_identity(value: Mapping[str, Any]) -> str:

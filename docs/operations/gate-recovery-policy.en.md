@@ -54,6 +54,13 @@ When the creation receipt is also missing, the coordinator can provide up to two
 
 Review receipts freeze minimal metadata before terminal settlement and are published only when the actual journal terminal exactly matches the frozen proof. Staging contains report digests and source references, not answer bodies. The same reconciliation entrypoint can retry publication after settlement without new charges or replacing the original report with later appended answers. Conflicting proof still rejects that receipt.
 
+
+## Interrupted dispatch admission
+
+Scope validation matches verified sets by ancestor components instead of repeatedly comparing every pair of paths while holding the journal lock. Path validity, case and complete directory boundaries are still checked on each replay; timeouts and gates are not relaxed.
+
+If the host created and completed an execution child but the journal contains only PREPARED, the original reconcile entrypoint can verify one exact dispatch in the bound parent transcript, the same-project child, an unexpired permit, one turn, its final answer and an explicit completion. Only matching evidence appends NATIVE_COMPLETED_RECOVERED and charges units and an attempt to the original work and profile, preserving the historical prefix. The execution view counts these separately as recovered_without_admission and keeps the business verdict UNKNOWN. It does not claim successful pre-dispatch reservation, context delivery or host enforcement. Missing parent calls, completion, valid permits or capacity cannot be replaced with invented success; this entrypoint never admits a still-running unreserved child.
+
 ## Write receipt boundaries
 
 A pre-write denial means that invocation has not executed. A post-write audit failure does not prove the files are unchanged. Read back the files, original call and subsequent validation, then report file results separately from audit completeness. A real identity or command conflict still restricts confirmation of that result. Never synthesize native callbacks, loosen the filesystem sandbox or reuse admission for a different patch.

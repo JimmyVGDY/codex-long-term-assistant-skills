@@ -5,6 +5,7 @@ English: Bounded reconciliation of the same native call; never spawn or refund.
 from __future__ import annotations
 
 import json
+import hashlib
 import time
 from datetime import timedelta
 from itertools import islice
@@ -141,6 +142,76 @@ def drain(path: Path, callback: Callable[[Path, dict[str, Any]], Any], *, limit:
     return {"status": "READBACK_PERFORMED" if rows else "WAIT_RECONCILE", "items": rows, "errors": errors}
 
 
+def _recover_prepared_completion(path: Path, transcript: Path, header: dict, state: dict) -> dict[str, Any]:
+    # 中文：只补记有真实父调用、未过期许可和完整终态的执行消耗；不恢复未完成子任务的工具权限。
+    # English: Charge only a real parent call with an unexpired prepared permit and complete terminal evidence; do not admit a running child.
+    from .g6_allowance_authority import _read_source, source_path, _native_header
+    from .context_final_v2 import read_bound_transcript, extract_final
+    from .native_transcript import complete_tail
+    from .dispatch_policy import delegation_tool_name
+    from .path_identity import same_path
+    meta = header["payload"]
+    spawn = meta["source"]["subagent"]["thread_spawn"]
+    task, session = spawn["agent_path"], spawn["parent_thread_id"]
+    permits = [(pid, permit) for pid, permit in state["permits"].items()
+               if pid not in state["reservations"] and "/root/" + permit["task_name"] == task
+               and permit["agent_type"] == spawn["agent_role"]]
+    if len(permits) != 1:
+        raise ValueError("G6_NATIVE_CREATION_UNVERIFIED")
+    pid, permit = permits[0]
+    if not parse_iso(permit["prepared_at"]) <= parse_iso(header["timestamp"]) < parse_iso(permit["expires_at"]):
+        raise ValueError("G6_NATIVE_CREATION_UNVERIFIED")
+    raw, child_binding = read_bound_transcript(transcript)
+    _, final = extract_final(raw, child_id=meta["id"], root_id=session, task_path=task,
+                             role=spawn["agent_role"], repo_path=state["root"]["repo_path"])
+    events = [json.loads(line, object_pairs_hook=_object, parse_constant=_constant) for line in raw.splitlines()]
+    complete = [event for event in events if event.get("type") == "event_msg"
+                and event.get("payload", {}).get("type") == "task_complete"]
+    if (len(complete) != 1 or final["header_ref"] != ref(header)
+            or parse_iso(complete[0]["timestamp"]) < parse_iso(header["timestamp"])):
+        raise ValueError("G6_NATIVE_COMPLETION_REQUIRED")
+    source = _read_source(source_path(path))
+    parent = Path(source["transcript_path"])
+    parent_header, binding = _native_header(parent, session_id=session, cwd=Path(state["root"]["repo_path"]))
+    if (source["session_ref"] != state["root"]["host_session_ref"]
+            or not same_path(Path(source["repo_path"]), Path(state["root"]["repo_path"]))
+            or source["header_ref"] != ref(parent_header)
+            or any(source[key] != value for key, value in binding.items())):
+        raise ValueError("G6_ALLOWANCE_SOURCE_REPLACED")
+    parent_raw, _ = complete_tail(parent)
+    calls = []
+    for line in parent_raw.splitlines():
+        if len(line) > 131_072:
+            continue
+        event = json.loads(line, object_pairs_hook=_object, parse_constant=_constant)
+        payload = event.get("payload", {})
+        if (event.get("type") != "response_item" or payload.get("type") != "function_call"
+                or delegation_tool_name(payload.get("name")) != "spawn_agent"):
+            continue
+        args = json.loads(payload["arguments"], object_pairs_hook=_object, parse_constant=_constant)
+        if args.get("task_name") != permit["task_name"]:
+            continue
+        exact(args, {"task_name", "agent_type", "model", "reasoning_effort", "fork_turns", "message"},
+              "G6_TOOL_FIELDS")
+        if (any(args[key] != permit[key] for key in ("agent_type", "model", "reasoning_effort"))
+                or args["fork_turns"] != "none" or not isinstance(args["message"], str)
+                or hashlib.sha256(args["message"].encode("utf-8")).hexdigest() != permit["message_sha256"]
+                or not isinstance(payload.get("call_id"), str) or not payload["call_id"]
+                or parse_iso(event["timestamp"]) > parse_iso(permit["prepared_at"])):
+            raise ValueError("G6_NATIVE_CALL_PARAMETERS_CHANGED")
+        calls.append(event)
+    if len(calls) != 1:
+        raise ValueError("G6_NATIVE_PARENT_CALL_UNVERIFIED")
+    proof = {"source": "native-completed-without-admission", "parent": binding,
+             "parent_header_ref": ref(parent_header), "call_ref": ref(calls[0]),
+             "child": child_binding, "final": final, "completion_ref": ref(complete[0])}
+    budget.record_native_completed(path, {"permit_id": pid,
+        "host_call_ref": ref(calls[0]["payload"]["call_id"]), "agent_ref": ref(task),
+        "created_at": header["timestamp"], "proof_ref": ref(proof)})
+    return {"permit_id": pid, "status": "COMPLETED_CALL_ACCOUNTED", "admission_verified": False,
+            "evidence_source": "native-parent-and-completed-child-readback"}
+
+
 def _recover_child_creation(path: Path, transcript: Path) -> dict[str, Any]:
     # 中文：显式来源只定位候选；真实原生头、原预占与项目归属共同证明创建。
     # English: An explicit path only locates a candidate; its native header, reservation and project ownership prove creation.
@@ -172,6 +243,8 @@ def _recover_child_creation(path: Path, transcript: Path) -> dict[str, Any]:
     matches = [pid for pid in state["reservations"]
                if "/root/" + state["permits"][pid]["task_name"] == task
                and state["permits"][pid]["agent_type"] == event["agent_type"]]
+    if not matches:
+        return _recover_prepared_completion(path, transcript, header, state)
     if len(matches) != 1 or parse_iso(header["timestamp"]) < parse_iso(state["reservations"][matches[0]]["reserved_at"]):
         raise ValueError("G6_NATIVE_CREATION_UNVERIFIED")
     owner = child_owner(event)

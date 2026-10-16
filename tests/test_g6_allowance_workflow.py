@@ -317,6 +317,58 @@ class AllowanceWorkflowTests(unittest.TestCase):
             self.assertEqual(self.ledger.read_bytes(), before)
         transcript.write_bytes(original)
 
+    def test_completed_execution_recovers_interrupted_admission_once_with_native_proof(self):
+        from unittest import mock
+        from cp_runtime import g6_hook_v1 as hook
+        self.exhaust()
+        self.control("plan", "--phase", "post", "--packet-dir", self.packet,
+                     "--agents", "worker", "--review-stage", "task_execution",
+                     "--purpose", "Execute a bounded fixture.")
+        self.approve(self.control("allowance-quote") ["allowance_request"])
+        args = self.control("dispatch", "--phase", "post", "--round", 1, "--agent", "worker",
+                            "--scope", "Read the assigned fixture only.")["dispatch_decision"]["exact_tool_parameters"]
+        call = {"type": "function_call", "name": "spawn_agent", "call_id": "interrupted-admission",
+                "arguments": json.dumps(args)}
+        self.emit(self.transcript, "response_item", call)
+        data = {"session_id": self.session, "turn_id": "turn-one", "cwd": str(self.repo),
+                "transcript_path": str(self.transcript), "hook_event_name": "PreToolUse",
+                "tool_name": "spawn_agent", "tool_use_id": call["call_id"], "tool_input": args}
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(hook.handoff, "approve_and_reserve",
+                                                                     side_effect=TimeoutError("fixture timeout")):
+            self.assertEqual(hook.handle(data, "PreToolUse")[1]["hookSpecificOutput"]["permissionDecision"], "deny")
+        prepared = budget.read_budget(self.ledger)
+        pid = next(pid for pid, item in prepared["permits"].items() if item["task_name"] == args["task_name"])
+        self.assertNotIn(pid, prepared["reservations"])
+        child = self.home / "sessions/rollout-interrupted-child.jsonl"
+        self.emit(child, "session_meta", {"id": "interrupted-child", "cwd": str(self.repo), "source": {
+            "subagent": {"thread_spawn": {"parent_thread_id": self.session, "depth": 1,
+                "agent_role": "worker", "agent_path": "/root/" + args["task_name"]}}}})
+        self.emit(child, "event_msg", {"type": "task_started", "turn_id": "child-turn"})
+        self.emit(child, "response_item", {"type": "message", "role": "assistant", "phase": "final_answer",
+            "content": [{"type": "output_text", "text": "Blocked before reading the fixture."}]})
+        before = self.ledger.read_bytes()
+        self.assertTrue(self.control("reconcile", "--child-transcript", child)["native_reconciliation"]["errors"])
+        self.assertEqual(self.ledger.read_bytes(), before)
+        self.emit(child, "event_msg", {"type": "task_complete", "turn_id": "child-turn",
+                                      "last_agent_message": "Blocked before reading the fixture."})
+        original = self.transcript.read_bytes()
+        changed = original.replace(args["model"].encode(), b"gpt-6-astra")
+        self.transcript.write_bytes(changed)
+        self.assertTrue(self.control("reconcile", "--child-transcript", child)["native_reconciliation"]["errors"])
+        self.assertEqual(self.ledger.read_bytes(), before)
+        self.transcript.write_bytes(original)
+        value = self.control("reconcile", "--child-transcript", child)
+        self.assertEqual(value["native_reconciliation"]["creations"][0]["status"], "COMPLETED_CALL_ACCOUNTED")
+        state = budget.read_budget(self.ledger)
+        self.assertFalse(state["reservations"][pid]["admission_verified"])
+        self.assertEqual(state["terminals"][pid]["outcome"], "UNKNOWN")
+        self.assertEqual(budget.allowance_status(state)["total_usage"]["completed_charged_units"], 20)
+        self.assertEqual(value["native_execution"]["recovered_without_admission"], 1)
+        self.assertTrue(self.ledger.read_bytes().startswith(before))
+        settled = self.ledger.read_bytes()
+        self.control("reconcile", "--child-transcript", child)
+        self.assertEqual(self.ledger.read_bytes(), settled)
+
     def test_staged_receipt_is_not_published_before_terminal_and_survives_append(self):
         from unittest import mock
         from cp_runtime import g6_reconciliation as reconciliation, g6_review_receipt_v1 as receipts

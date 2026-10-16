@@ -25,6 +25,8 @@ def native_execution_view(state: Mapping[str, Any]) -> dict[str, Any]:
                                "SETTLED" if reserved == settled else "PENDING_RECONCILIATION",
             "reserved_calls": len(reserved), "settled_calls": len(settled),
             "pending_calls": len(reserved - settled), "host_verdict_unknown_count": len(unknown),
+            "recovered_without_admission": sum(state["reservations"][pid].get("admission_verified") is False
+                                               for pid in reserved),
             "task_verdict_inferred": False, "restart_required": False}
 
 

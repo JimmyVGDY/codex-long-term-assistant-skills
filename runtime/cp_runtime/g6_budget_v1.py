@@ -257,6 +257,29 @@ def replay(events: list[dict[str, Any]]) -> dict[str, Any]:
             elif data["agent_ref"] is not None:
                 fail("G6_NO_START_AGENT")
             state["receipts"][permit_id] = data
+        elif kind == "NATIVE_COMPLETED_RECOVERED":
+            # 中文：单独记录已经发生的完整调用，不伪造当时成功预占或业务通过。
+            # English: Account for a completed native call without inventing admission or a passing task verdict.
+            exact(data, {"permit_id", "host_call_ref", "agent_ref", "created_at", "proof_ref"},
+                  "G6_RECOVERED_COMPLETION_FIELDS")
+            pid, call_ref = data["permit_id"], sha(data["host_call_ref"])
+            permit = state["permits"].get(pid)
+            if (number != 3 or permit is None or pid in state["reservations"]
+                    or call_ref in state["host_calls"]
+                    or state["review_work"].get(permit["work_item_id"], {}).get("phase") != allowance.TASK_PHASE
+                    or data["agent_ref"] != ref("/root/" + permit["task_name"])
+                    or not parse_iso(permit["prepared_at"]) <= parse_iso(data["created_at"]) < parse_iso(permit["expires_at"])):
+                fail("G6_RECOVERED_COMPLETION_IDENTITY")
+            sha(data["proof_ref"])
+            _check_funding(state, permit, permit.get("funding_id", "base"))
+            state["reservations"][pid] = {"permit_id": pid, "host_call_ref": call_ref,
+                "reserved_at": data["created_at"], "funding_id": permit.get("funding_id", "base"),
+                "admission_verified": False}
+            state["host_calls"][call_ref] = pid
+            state["receipts"][pid] = {"permit_id": pid, "disposition": "created",
+                "agent_ref": data["agent_ref"], "proof_ref": data["proof_ref"]}
+            state["terminals"][pid] = {"permit_id": pid, "agent_ref": data["agent_ref"],
+                "outcome": "UNKNOWN", "proof_ref": data["proof_ref"]}
         elif kind == "TERMINAL":
             exact(data, TERMINAL_FIELDS, "G6_TERMINAL_FIELDS")
             permit_id = data["permit_id"]
@@ -710,6 +733,22 @@ def approve_and_reserve(path: Path, *, permit_id: str, host_call_id: str,
         updated = _append(path, events, "RESERVED", reservation)
         return {"permit_id": permit_id, "host_call_ref": call_ref,
                 "ledger_head": updated["head_hash"], "idempotent": False}
+
+
+def record_native_completed(path: Path, data: Mapping[str, Any]) -> dict[str, Any]:
+    """中文：仅由已核验父调用与完整子转录的恢复入口使用。
+    English: Called only after the recovery adapter verifies the parent call and complete child transcript.
+    """
+    with OwnerTokenLock(path, timeout=2):
+        events = _read_events(path)
+        state = replay(events)
+        for event in events:
+            if event["event_type"] == "NATIVE_COMPLETED_RECOVERED" and event["data"]["permit_id"] == data["permit_id"]:
+                if event["data"] != data:
+                    fail("G6_RECOVERED_COMPLETION_CHANGED")
+                return {"permit_id": data["permit_id"], "idempotent": True}
+        _append(path, events, "NATIVE_COMPLETED_RECOVERED", data)
+        return {"permit_id": data["permit_id"], "idempotent": False}
 
 
 def record_receipt(path: Path, *, host_call_id: str, disposition: str,

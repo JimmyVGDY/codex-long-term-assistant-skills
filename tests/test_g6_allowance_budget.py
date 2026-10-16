@@ -16,6 +16,23 @@ from tests.test_g6_budget_v1 import facts, capability
 
 
 class AllowanceBudgetTests(unittest.TestCase):
+    def test_scope_matches_whole_case_sensitive_components(self):
+        self.assertTrue(contract.within_scope(["docs/a.md", "src/app/deep/file.py"], ["docs/a.md", "src/app"]))
+        for path in ("docs/a.md/../b.md", "src//app/file.py", "src/.git/config"):
+            with self.subTest(path=path), self.assertRaises(RoutingError):
+                contract.within_scope([path], ["src"])
+        for path in ("docs/b.md", "src/application/file.py", "src/App/file.py", "src"):
+            with self.subTest(path=path):
+                self.assertFalse(contract.within_scope([path], ["docs/a.md", "src/app"]))
+
+    def test_maximum_scope_preserves_exact_and_nested_boundaries(self):
+        allowed = [f"src/module-{index:03d}" for index in range(256)]
+        self.assertTrue(contract.within_scope(allowed, allowed))
+        nested = [path + "/nested/file.py" for path in allowed]
+        self.assertTrue(contract.within_scope(nested, allowed))
+        nested[-1] = "src/module-255-extra/file.py"
+        self.assertFalse(contract.within_scope(nested, allowed))
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)

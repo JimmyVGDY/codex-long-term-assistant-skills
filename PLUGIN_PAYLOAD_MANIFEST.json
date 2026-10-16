@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 350,
-  "payload_digest": "3778a537ea6704e86ca4916eb9a58d7ea8586fe6bb30efb374ca0141183c4fca",
+  "payload_digest": "5a2e7c0fdf4318bf871bf941d3b50c2b995194cebea3f58f3ace12e25e0cdace",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -1248,13 +1248,13 @@
     },
     {
       "path": "runtime/cp_runtime/g6_allowance_contract.py",
-      "sha256": "cd2c419023385b82d0d3a16856a9021c20491fe05ed7631f1a867d8d3d372bb2",
-      "size": 14317
+      "sha256": "771999446017b21eefb643ea721d07272e2a8047b345b6cfc63a45717705d214",
+      "size": 14580
     },
     {
       "path": "runtime/cp_runtime/g6_budget_v1.py",
-      "sha256": "caab0c663a1231c2a0c9121f549dd4a680ab595fdf1338edbcdf82c2b34643b0",
-      "size": 43754
+      "sha256": "483dab730f65e86be05cf49b50b119c255ba897b9a2ea3e9f66ba7fe9dc228fd",
+      "size": 46378
     },
     {
       "path": "runtime/cp_runtime/g6_continuation.py",
@@ -1268,8 +1268,8 @@
     },
     {
       "path": "runtime/cp_runtime/g6_delivery_v1.py",
-      "sha256": "20e6ab31ae4e48c53f3dd297cc6fcda5418ea638c9343ee6658af365d304ce2f",
-      "size": 6491
+      "sha256": "5924efe55badb503cec5c4fd711c4f3c3b985ef3075f3e9f17d2594d9a363422",
+      "size": 6669
     },
     {
       "path": "runtime/cp_runtime/g6_fact_collector.py",
@@ -1313,8 +1313,8 @@
     },
     {
       "path": "runtime/cp_runtime/g6_reconciliation.py",
-      "sha256": "9bdb16bdf8a17a1c2b814b6f8933a637707a11696008c0c6022df20a9aa47273",
-      "size": 16450
+      "sha256": "c76d59106c0d78629a84a63d8e93db918fdf2453a2d6ea18656d3fc18b2151f1",
+      "size": 21255
     },
     {
       "path": "runtime/cp_runtime/g6_retry_v1.py",
