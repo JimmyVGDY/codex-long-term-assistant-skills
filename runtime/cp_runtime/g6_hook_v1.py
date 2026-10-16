@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from typing import Any, Mapping
 
-from . import g6_budget_v1 as budget, g6_handoff_v1 as handoff, research_campaign
+from . import g6_budget_v1 as budget, g6_task_scope as handoff, research_campaign
 from .g6_flexible_policy import PROFILES, decide, policy, profile_spec
 from .g6_fact_collector import (ALL_REPO_SCOPE, MetricReceiptIntegrityError,
                                 collect as collect_scope_facts, store_metric_receipt)
@@ -110,12 +110,14 @@ def _facts(root: Mapping[str, Any], args: Mapping[str, Any], *, persist: bool = 
 
 def preview(*, session_id: str, cwd: Path, agent_type: str, task_name: str,
             message: str, requested_profile: str | None = None,
-            turn_id: str | None = None) -> dict[str, Any]:
+            turn_id: str | None = None, task_scope: str | None = None,
+            ledger_path: Path | None = None) -> dict[str, Any]:
     """中文：只读预览 Desktop 决策，实际许可由 Hook 签发。
 
     English: Read-only Desktop decision preview; the Hook issues the actual permit.
     """
-    binding = handoff.read(session_id)
+    binding = handoff.preview_binding(session_id, task_scope=task_scope, ledger_path=ledger_path)
+    task_name = handoff.namespace(task_name, binding.get("task_scope") if binding else None)
     state = None
     if binding is not None:
         state = budget.read_budget(Path(binding["new_ledger_path"]))
@@ -287,7 +289,8 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any],
         return _deny("G6_EXACT_PROFILE_REQUIRED_" + str(expected["model"]) + "_" +
                      str(expected["reasoning_effort"]), next_action="retry_with_exact_parameters")
     if authority_error and budget.read_budget(path)["permits"][permit_id].get("funding_id", "base") != "base":
-        return _deny("G6_NATIVE_AUTHORITY_UNVERIFIED", next_action="recover_native_authority_source")
+        return _deny("G6_NATIVE_AUTHORITY_UNVERIFIED", next_action="recover_native_authority_source",
+                     details={"authority_reason": authority_error})
     if collected := (matches[0]["facts"] if matches else collected):
         prior = collected["baseline_sha256"]
         if prior is not None:
@@ -299,7 +302,7 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any],
                 # English: A missing optional snapshot never turns into a fake mismatch.
                 pass
     try:
-        budget.approve_and_reserve(path, permit_id=permit_id,
+        handoff.approve_and_reserve(path, permit_id=permit_id,
                                    host_call_id=str(data.get("tool_use_id") or ""),
                                    session_id=str(data["session_id"]), cwd=Path(str(data["cwd"])),
                                    args=args, now=utc_now(), depth=1 if data.get("agent_id") else 0)
@@ -335,16 +338,17 @@ def _posttool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any]) -> d
     return {}
 
 
-def _recover_native_creation(data: Mapping[str, Any]) -> None:
+def _recover_native_creation(data: Mapping[str, Any], *, native_readback: bool = False) -> None:
     """中文：原生子任务事件可补齐迟到创建回执，不猜未创建或退款。
 
     English: A real child event may reconcile a late creation receipt, never
     infer not-started or refund a call.
     """
-    binding = handoff.read(str(data.get("session_id") or ""))
-    if binding is None:
+    owner = handoff.child_owner(data)
+    if owner is None or owner[0] == "old":
         return
-    path = Path(binding["new_ledger_path"])
+    path = owner[1]
+    binding = handoff.read(str(data.get("session_id") or ""), ledger_path=path)
     task = handoff._child_task_path(dict(data))
     state = budget.read_budget(path)
     from .routing_hook_v5 import _transcript_path
@@ -371,7 +375,7 @@ def _recover_native_creation(data: Mapping[str, Any]) -> None:
             continue
         proof = None
         if "/root/" + permit["task_name"] == task:
-            proof = {"source": "native-child-header", "agent_ref": ref(data["agent_id"]),
+            proof = {"source": "native-child-header-readback" if native_readback else "native-child-header", "agent_ref": ref(data["agent_id"]),
                      "task_ref": ref(task), "header_ref": ref(header)}
         else:
             from .g6_continuation import read as read_continuation
@@ -391,7 +395,8 @@ def _recover_native_creation(data: Mapping[str, Any]) -> None:
                                     agent_path=task, proof_ref=ref(pending[0][1]))
 
 
-def _terminal(path: Path, data: Mapping[str, Any], *, reconciling: bool = False) -> dict[str, Any]:
+def _terminal(path: Path, data: Mapping[str, Any], *, reconciling: bool = False,
+              native_readback: bool = False) -> dict[str, Any]:
     from .g6_handoff_v1 import _child_task_path
     from .routing_hook_v5 import _transcript_path
 
@@ -401,11 +406,16 @@ def _terminal(path: Path, data: Mapping[str, Any], *, reconciling: bool = False)
                if receipt["disposition"] == "created" and receipt["agent_ref"] == ref(task)]
     active = [pid for pid in matched if pid not in state["terminals"]]
     if matched and not active:
+        from .g6_review_receipt_v1 import publish_pending
+        for pid in matched[-2:]:
+            publish_pending(path, pid)
         # 中文：同一已创建子任务的原生 Stop 已结算后，转录后续追加不得改写结果或重复计费。
         # English: A later transcript append must not rewrite or double-charge the
         # native Stop already settled for this same created child.
         return {}
     matched = active
+    if native_readback and len(matched) != 1:
+        return {}
     continuation = None
     if len(matched) == 1:
         from .g6_continuation import read as read_continuation
@@ -430,10 +440,11 @@ def _terminal(path: Path, data: Mapping[str, Any], *, reconciling: bool = False)
         for line in raw.splitlines():
             event = json.loads(line, object_pairs_hook=_object, parse_constant=_constant)
             payload = event.get("payload")
-            if continuation is not None:
+            if continuation is not None or native_readback:
                 stamp = event.get("timestamp")
+                cutoff = continuation["reserved_at"] if continuation is not None else state["reservations"][matched[0]]["reserved_at"]
                 if (not isinstance(stamp, str)
-                        or budget.parse_iso(stamp) < budget.parse_iso(continuation["reserved_at"])):
+                        or budget.parse_iso(stamp) < budget.parse_iso(cutoff)):
                     continue
             if (isinstance(payload, dict) and (event.get("type") == "turn_context"
                     or event.get("type") == "event_msg" and payload.get("type") == "task_started")):
@@ -464,29 +475,37 @@ def _terminal(path: Path, data: Mapping[str, Any], *, reconciling: bool = False)
     except (ValueError, UnicodeError, RecursionError):
         return pending()
     if terminal_kind is None:
+        if native_readback:
+            return pending()
         if len(final_refs) != 1 or foreign_turn_seen:
             return pending()
         terminal_kind = "native_stop_with_final_answer"
-    host_outcome = str(data.get("terminal_outcome") or "UNKNOWN").upper()
+    host_outcome = "UNKNOWN" if native_readback else str(data.get("terminal_outcome") or "UNKNOWN").upper()
     outcome = "CANCELLED" if terminal_kind == "turn_aborted" else (
         "UNKNOWN" if terminal_kind == "native_stop_with_final_answer" else
         host_outcome if host_outcome in budget.OUTCOMES else "UNKNOWN")
-    budget.record_terminal(path, agent_path=task, outcome=outcome,
-                           permit_id=matched[0] if len(matched) == 1 else None,
-                           proof_ref=ref({"source": "native-subagent-stop",
+    proof_ref = ref({"source": "native-transcript-readback" if native_readback else "native-subagent-stop",
                                           "child_ref": ref(data["agent_id"]),
                                           "task_path_ref": ref(task),
                                           "transcript_window": window,
                                           "terminal_kind": terminal_kind,
                                           "final_ref": final_refs[-1] if final_refs else None,
-                                          "host_outcome": host_outcome}))
-    from .g6_review_receipt_v1 import ingest
+                                          "host_outcome": host_outcome})
+    from .g6_review_receipt_v1 import ingest, publish_pending
     # 中文：窗口可以证明原生结束，但不冒充完整复审材料。
     # English: A tail window may prove termination without claiming a complete
     # review transcript. Missing review evidence remains unverified.
     if not window["truncated_prefix"]:
-        ingest(path, raw_transcript=b"\n".join(review_lines) + b"\n", task_path=task,
-               permit_id=matched[0] if len(matched) == 1 else None)
+        staged = ingest(path, raw_transcript=b"\n".join(review_lines) + b"\n", task_path=task,
+               permit_id=matched[0] if len(matched) == 1 else None,
+               pending_terminal={"permit_id": matched[0], "agent_ref": ref(task),
+                                 "outcome": outcome, "proof_ref": proof_ref} if len(matched) == 1 else None)
+        if staged is not None and len(matched) == 1:
+            proof_ref = staged["terminal"]["proof_ref"]
+    budget.record_terminal(path, agent_path=task, outcome=outcome,
+                           permit_id=matched[0] if len(matched) == 1 else None, proof_ref=proof_ref)
+    if len(matched) == 1:
+        publish_pending(path, matched[0])
     return {}
 
 
@@ -498,6 +517,14 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
     session = data.get("session_id")
     if not isinstance(session, str) or not session:
         return False, None
+    if not data.get("agent_id") and hook_name in {"UserPromptSubmit", "PreToolUse"}:
+        from .g6_task_origin import observe
+        try:
+            observe(data)
+        except (OSError, ValueError, TimeoutError, RuntimeContractError):
+            # 中文：来源不可用只限制新任务初始化，不阻塞其他已授权工作。
+            # English: Missing task provenance limits new roots, not unrelated authorized work.
+            pass
     if hook_name == "UserPromptSubmit":
         from .g6_user_choice_v1 import observe_native_prompt
         try:
@@ -518,13 +545,22 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
         return False, None
     tool = delegation_tool_name(data.get("tool_name"))
     delegated = tool == "spawn_agent"
-    if (handoff.read(session) is None and hook_name == "PreToolUse" and delegated
-            and not data.get("agent_id")):
+    if (not data.get("agent_id") and hook_name in {"PreToolUse", "PostToolUse"}
+            and tool not in handoff.BILLABLE | {"send_message"}):
+        return False, None
+    if (hook_name == "PreToolUse" and delegated and not data.get("agent_id")
+            and handoff.read(session) is None):
         if not _ensure_new_session(data):
             return False, None
     if data.get("agent_id") and hook_name in {"SubagentStart", "SubagentStop"}:
         _recover_native_creation(data)
-    owner = handoff.route(data)
+    try:
+        owner = handoff.route(data)
+    except (OSError, ValueError, TimeoutError, RuntimeContractError) as exc:
+        if hook_name == "PreToolUse":
+            code = str(exc) if re.fullmatch(r"[A-Z0-9_]{1,96}", str(exc)) else "TASK_ROUTE_UNAVAILABLE"
+            return True, _deny(code, next_action="read_task_scope_and_repreview_original_task")
+        raise
     if owner is None or owner[0] == "old":
         return False, None
     path = owner[1]
@@ -536,7 +572,10 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
             if recovery.get("has_more") or recovery["status"] == "NATIVE_SOURCE_UNAVAILABLE":
                 authority_error = "SOURCE_RECOVERY_PENDING"
         except (OSError, ValueError, TimeoutError, RuntimeContractError) as exc:
-            authority_error = type(exc).__name__
+            # 中文：只返回固定格式契约码或异常类别，不记录路径、正文或凭据。
+            # English: Return only bounded contract codes or exception types, never paths, bodies or credentials.
+            code = str(exc)
+            authority_error = code if re.fullmatch(r"(?:G6|V5|TASK|NATIVE)_[A-Z0-9_]{1,88}", code) else type(exc).__name__
     if data.get("agent_id") and hook_name in {"SubagentStart", "SubagentStop"}:
         from .g6_agent_identity import remember
         remember(path, data)
@@ -549,6 +588,12 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
             # English: Reconciliation failure does not gate the parent task;
             # dispatch still independently verifies the real budget journal.
             pass
+        if hook_name == "PreToolUse":
+            from .g6_reconciliation import recover_bound_terminals
+            try:
+                recover_bound_terminals(path, limit=1)
+            except (OSError, ValueError, TimeoutError, RuntimeContractError, KeyError, TypeError):
+                pass
     if hook_name == "PreToolUse" and tool in {
             "followup_task", "send_input", "resume_agent", "send_message"}:
         if tool != "send_message":

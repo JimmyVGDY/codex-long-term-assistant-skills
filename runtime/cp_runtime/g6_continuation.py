@@ -131,7 +131,8 @@ def pretool(ledger: Path, data: Mapping[str, Any], tool: str,
                      "target": target, "message_sha256": message_hash, "tool": tool,
                      "reserved_at": utc_now()}
             atomic_write_json(marker, value, seal=True)
-        budget.approve_and_reserve(ledger, permit_id=permit_id, host_call_id=call_id,
+        from .g6_task_scope import approve_and_reserve
+        approve_and_reserve(ledger, permit_id=permit_id, host_call_id=call_id,
                                   session_id=session, cwd=Path(cwd), args=params, now=utc_now())
     return {}
 

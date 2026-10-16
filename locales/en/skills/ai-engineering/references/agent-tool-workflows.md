@@ -2,6 +2,8 @@
 
 Each tool needs minimal input and output schemas, access, idempotency, timeout, cost, rate, error classes, and audit fields. A tool description explains capability; it never grants permission or expands task scope.
 
+For MCP contracts or actual tool-use quality, use [MCP design and acceptance](mcp-tool-design.md) for naming, pagination, actionable errors, access, and composed tasks. Ordinary tool calls do not automatically load protocol guidance.
+
 Separate reads from writes, reversible from irreversible actions, local from external targets, and test from production. Commit, push, deployment, restart, data writes, messages, paid calls, and publication require authorization immediately before execution. A model plan, historical authorization, or tool availability is not authorization.
 
 Construct high-risk parameters deterministically or through allowlists. Do not execute model-composed Shell, SQL, paths, URLs, or access objects without validation. Validate tool results and handle partial success through explicit compensation or human review.

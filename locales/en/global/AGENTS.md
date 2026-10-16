@@ -30,6 +30,7 @@ Skill activation does not expand file, Git, environment, production, or data aut
 ## 4. Script decisions and subagent budget
 
 - Keep the main agent's selected model and effort.
+- Bind root budgets to logical tasks, not whole chats. The coordinator identifies independent objectives; ambiguity, continuation, repairs, retries, renaming and subagents retain the original root. Register TaskScope through the script-routing reference before switching; calls, controllers and late callbacks keep their original ownership, without resetting charges.
 - Scripts own measurable facts, selection, budgets, holds, concurrency, retries and result checks. Models retain semantic judgment and adjustment proposals, then execute the exact returned model, reasoning_effort and tool parameters; inherited parent settings do not establish a child ceiling.
 - Simple local work may remain serial. When delegation is needed, missing rationale, gain evidence, historical samples or optional material does not prevent dispatch. New defaults cover GPT-6 Luna/Sol/Astra at low/medium/high for Reviewers, Workers and Explorers; unknown work uses Sol/medium. Automatic xhigh/max/ultra remain forbidden.
 - Scripts recalculate profile, effort, scope or ordering adjustments within the existing authorization, shared budget and allowed adjustment range. Scope is not difficulty proof, a single failed check does not force escalation, and planning units are not actual fees.

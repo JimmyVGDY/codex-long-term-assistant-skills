@@ -7,7 +7,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "runtime"))
 from cp_runtime.context_hook_input import read_context_input
-from cp_runtime.g6_handoff_v1 import route as g6_route
+from cp_runtime.g6_task_scope import route as g6_route
 from cp_runtime.routing_hook_v5 import registered_path, child_tool
 
 def main():
@@ -37,7 +37,7 @@ if __name__ == "__main__":
         main()
     except Exception as exc:
         event = sys.argv[1] if len(sys.argv) == 2 else "PreToolUse"
-        code = str(exc) if re.fullmatch(r"(?:G6_|V5_|CONTEXT_V2_)[A-Z0-9_]{1,80}", str(exc)) else "V5_CONTEXT_GUARD_FAILED"
+        code = str(exc) if re.fullmatch(r"(?:G6_|V5_|TASK_|CONTEXT_V2_)[A-Z0-9_]{1,80}", str(exc)) else "V5_CONTEXT_GUARD_FAILED"
         if event == "PreToolUse":
             from cp_runtime.gate_contract import result as gate_result
             decision = gate_result(
@@ -49,5 +49,7 @@ if __name__ == "__main__":
                       "permissionDecisionReason": code + "; decision=" + json.dumps(decision, ensure_ascii=True)}}
         else:
             result = {"hookSpecificOutput": {"hookEventName": "PostToolUse",
-                      "additionalContext": "Context delivery was not verified. Return incomplete."}}
+                      "additionalContext": "Context audit was not verified. Preserve this evidence gap, "
+                                           "reconcile the same child, and continue unaffected work. "
+                                           "Do not infer the task result from this callback failure."}}
         print(json.dumps(result, ensure_ascii=True))

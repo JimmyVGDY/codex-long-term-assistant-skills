@@ -1118,18 +1118,58 @@
     },
     {
       "path": "docs/releases/v7.16.2/RELEASE_NOTES.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.16.2/RELEASE_NOTES.md"
     },
     {
       "path": "docs/releases/v7.16.2/VALIDATION_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.16.2/VALIDATION_REPORT.md"
     },
     {
       "path": "docs/releases/v7.16.2/AUDIT_REPORT.md",
-      "status": "active",
+      "status": "historical",
       "english_source": "locales/en/docs/releases/v7.16.2/AUDIT_REPORT.md"
+    },
+    {
+      "path": "docs/skill-quality-plan.md",
+      "status": "active",
+      "english_source": "locales/en/docs/skill-quality-plan.md"
+    },
+    {
+      "path": "docs/operations/artifact-scope.md",
+      "status": "active",
+      "english_source": "locales/en/docs/operations/artifact-scope.md"
+    },
+    {
+      "path": "docs/operations/task-budget-scope.md",
+      "status": "active",
+      "english_source": "locales/en/docs/operations/task-budget-scope.md"
+    },
+    {
+      "path": "docs/operations/gate-recovery-policy.md",
+      "status": "active",
+      "english_source": "locales/en/docs/operations/gate-recovery-policy.md"
+    },
+    {
+      "path": "docs/SKILL_ARTIFACT_EVAL.md",
+      "status": "active",
+      "english_source": "locales/en/docs/SKILL_ARTIFACT_EVAL.md"
+    },
+    {
+      "path": "docs/releases/v7.17.0/RELEASE_NOTES.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.17.0/RELEASE_NOTES.md"
+    },
+    {
+      "path": "docs/releases/v7.17.0/VALIDATION_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.17.0/VALIDATION_REPORT.md"
+    },
+    {
+      "path": "docs/releases/v7.17.0/AUDIT_REPORT.md",
+      "status": "active",
+      "english_source": "locales/en/docs/releases/v7.17.0/AUDIT_REPORT.md"
     }
   ],
   "english_projections": [
@@ -1940,6 +1980,38 @@
     {
       "source": "locales/en/docs/releases/v7.16.2/AUDIT_REPORT.md",
       "target": "docs/releases/v7.16.2/AUDIT_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/skill-quality-plan.md",
+      "target": "docs/skill-quality-plan.en.md"
+    },
+    {
+      "source": "locales/en/docs/operations/artifact-scope.md",
+      "target": "docs/operations/artifact-scope.en.md"
+    },
+    {
+      "source": "locales/en/docs/operations/task-budget-scope.md",
+      "target": "docs/operations/task-budget-scope.en.md"
+    },
+    {
+      "source": "locales/en/docs/operations/gate-recovery-policy.md",
+      "target": "docs/operations/gate-recovery-policy.en.md"
+    },
+    {
+      "source": "locales/en/docs/SKILL_ARTIFACT_EVAL.md",
+      "target": "docs/SKILL_ARTIFACT_EVAL.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.17.0/RELEASE_NOTES.md",
+      "target": "docs/releases/v7.17.0/RELEASE_NOTES.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.17.0/VALIDATION_REPORT.md",
+      "target": "docs/releases/v7.17.0/VALIDATION_REPORT.en.md"
+    },
+    {
+      "source": "locales/en/docs/releases/v7.17.0/AUDIT_REPORT.md",
+      "target": "docs/releases/v7.17.0/AUDIT_REPORT.en.md"
     }
   ],
   "fact_files": {

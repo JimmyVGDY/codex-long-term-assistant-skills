@@ -12,6 +12,22 @@ from .routing_contract import exact, fail, hex_digest, ref, sha
 CHECK_FIELDS = {"check_id", "required", "exit_code", "source_ref", "baseline_sha256"}
 
 
+def native_execution_view(state: Mapping[str, Any]) -> dict[str, Any]:
+    """中文：运行结束与业务结论分开；UNKNOWN 不代表仍在运行。
+    English: Separate execution settlement from task verdict; UNKNOWN does not mean still running.
+    """
+    reserved = set(state["reservations"])
+    settled = {pid for pid in reserved if pid in state["terminals"]
+               or state["receipts"].get(pid, {}).get("disposition") == "not_started"}
+    unknown = [pid for pid in settled if state["terminals"].get(pid, {}).get("outcome") == "UNKNOWN"]
+    return {"schema_version": "g6-native-execution-view/1",
+            "execution_state": "NO_CALLS" if not reserved else
+                               "SETTLED" if reserved == settled else "PENDING_RECONCILIATION",
+            "reserved_calls": len(reserved), "settled_calls": len(settled),
+            "pending_calls": len(reserved - settled), "host_verdict_unknown_count": len(unknown),
+            "task_verdict_inferred": False, "restart_required": False}
+
+
 def evaluate_delivery(*, checks: list[Mapping[str, Any]], baseline_sha256: str | None,
                       post_review: Mapping[str, Any] | None = None,
                       repair_review: Mapping[str, Any] | None = None,

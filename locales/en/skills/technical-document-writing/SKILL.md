@@ -13,5 +13,6 @@ Keep the main agent's selection. For subagents, follow [script decisions and bou
 4. Route technical conclusions through the relevant domain Skill; this Skill structures and clarifies the result.
 5. When documentation is tied to code, tests, CHANGELOG, commit, or release, combine engineering delivery.
 6. Check accuracy, completeness, consistency, executability, maintainability, security, and readability.
+7. For substantial runbooks, cross-team plans, or explicit usability validation, use [reader testing](references/reader-testing.md) to check the document's sufficiency. Narrow wording changes do not automatically add an independent reader.
 
 Do not invent versions, validation, performance, estimates, budget, production state, or generated artifacts. Documentation work does not grant code, configuration, database, Git, or environment modification authority.

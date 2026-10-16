@@ -262,12 +262,13 @@ class DocumentationSiteTests(unittest.TestCase):
         self.assertIn("12 account registrations", root)
         self.assertIn("3.0</strong><span>TaskOutcomeEvent", root)
         self.assertIn("social-preview.jpg", root)
-        self.assertIn("V7.16.2", root)
+        version = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"]
+        self.assertIn("V" + version, root)
         self.assertNotIn("V6.6.1", root)
         self.assertIn("docs/USER_GUIDE/", root)
         self.assertIn("/codex-long-term-assistant-skills/zh-CN/", root)
         self.assertIn("/codex-long-term-assistant-skills/en/", root)
-        self.assertIn("V7.16.2", english_pair)
+        self.assertIn("V" + version, english_pair)
         self.assertIn("12 account registrations", english_pair)
         self.assertNotIn("V6.6.1", english_pair)
         self.assertIn("docs/USER_GUIDE/", english_pair)
@@ -280,8 +281,8 @@ class DocumentationSiteTests(unittest.TestCase):
         script = (
             ROOT / ".github" / "docs-site" / "javascripts" / "repository-facts.js"
         ).read_text(encoding="utf-8")
-        manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
-        expected = f'const RELEASE_VERSION = "v{manifest["version"]}";'
+        published = json.loads((ROOT / "config/published-release.json").read_text(encoding="utf-8"))
+        expected = 'const RELEASE_VERSION = ' + json.dumps(published["tag_name"]) + ';'
         self.assertIn(expected, script)
         self.assertIn('const SOURCE_CACHE_MARKER = "__source";', script)
         self.assertIn('const VERSION_SELECTOR = ".md-source__fact--version";', script)
@@ -345,7 +346,8 @@ class DocumentationSiteTests(unittest.TestCase):
             ROOT / ".github" / "SECURITY.en.md",
             ROOT / "locales" / "en" / ".github" / "SECURITY.md",
         ):
-            self.assertIn("7.16.2", path.read_text(encoding="utf-8"))
+            version = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"]
+            self.assertIn(version, path.read_text(encoding="utf-8"))
 
     def test_social_preview_is_reusable_1280_by_640_and_below_one_megabyte(self) -> None:
         image = (ROOT / "docs" / "assets" / "social-preview.jpg").read_bytes()

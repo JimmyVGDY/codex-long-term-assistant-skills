@@ -123,6 +123,22 @@ class DocumentationSourceTests(unittest.TestCase):
                 else: value["assets"][0]["digest"] = ""
                 with self.assertRaises(DocumentationError): normalize_published_release(value)
 
+    def test_candidate_version_does_not_relabel_public_release_script(self):
+        self.published_release_fixture("7.6.1")
+        script = ".github/docs-site/javascripts/repository-facts.js"
+        self.write(script, 'const RELEASE_VERSION = "v7.6.1";\n')
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        self.write("manifest.json", {"version": "7.7.0"})
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        self.assertIn('"v7.6.1"', (self.root / script).read_text())
+        self.write(script, 'const RELEASE_VERSION = "v0.0.0";\n')
+        self.assertIn("PUBLISHED_SCRIPT_DRIFT", self.codes())
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        self.assertIn('"v7.6.1"', (self.root / script).read_text())
+        self.published_release_fixture("7.8.1")
+        self.assertTrue(audit(self.root, write=True)["ok"])
+        self.assertIn('"v7.8.1"', (self.root / script).read_text())
+
     def test_invalid_publication_record_preserves_the_previous_snapshot(self):
         from documentation import record_published_release
         valid = self.published_release_fixture()

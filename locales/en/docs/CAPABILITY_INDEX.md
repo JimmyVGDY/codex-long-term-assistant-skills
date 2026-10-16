@@ -1,5 +1,9 @@
 # Project capability index
 
+Task budgets and gate recovery: [Task budgets](operations/task-budget-scope.md), [Gate audit and recovery](operations/gate-recovery-policy.md).
+
+External fixtures and reports use [task artifact directory registration](operations/artifact-scope.md). Registration grants no write permission. Repository source retains the existing gate, and native relative paths bind to the actual working directory.
+
 The capability index stores locations and verification clues for reusable project entry points. Source, configuration, and tests remain authoritative. Index records grant no execution permissions and are never automatically promoted to stable project memory.
 
 ## Implemented scope

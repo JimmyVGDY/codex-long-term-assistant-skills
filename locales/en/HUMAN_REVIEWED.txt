@@ -485,3 +485,24 @@ skills/multi-agent-independent-review/references/review-allowance-amendments.md
 docs/releases/v7.16.2/RELEASE_NOTES.md
 docs/releases/v7.16.2/VALIDATION_REPORT.md
 docs/releases/v7.16.2/AUDIT_REPORT.md
+
+# Six-track source pairs checked by the implementing agent; not a human identity attestation.
+skills/technical-document-writing/references/reader-testing.md
+skills/technical-document-writing/assets/templates/reader-test.md
+skills/frontend-engineering/references/design-workflow.md
+skills/frontend-engineering/assets/templates/design-brief.md
+skills/frontend-engineering/references/browser-validation.md
+skills/frontend-engineering/assets/templates/browser-evidence.md
+skills/ai-engineering/references/mcp-tool-design.md
+skills/ai-engineering/assets/templates/tool-contract.md
+docs/skill-quality-plan.md
+docs/operations/artifact-scope.md
+docs/operations/task-budget-scope.md
+docs/operations/gate-recovery-policy.md
+docs/SKILL_ARTIFACT_EVAL.md
+tests/skill-routing-study-cases.json
+
+# V7.17.0 candidate pairs checked by the implementing agent; no human-review claim.
+docs/releases/v7.17.0/RELEASE_NOTES.md
+docs/releases/v7.17.0/VALIDATION_REPORT.md
+docs/releases/v7.17.0/AUDIT_REPORT.md

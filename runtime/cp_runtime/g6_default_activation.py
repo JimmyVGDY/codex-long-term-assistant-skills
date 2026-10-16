@@ -7,7 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from . import g6_handoff_v1, research_campaign
+from . import g6_task_scope, research_campaign
 from .g6_flexible_policy import POLICY_ID, POLICY_SHA256, policy
 from .routing_contract import ref
 
@@ -18,7 +18,7 @@ def resolve(*, session_id: str, cwd: Path) -> dict[str, Any]:
     English: Read the effective route for this session without changing any root.
     """
     policy()
-    binding = g6_handoff_v1.read(session_id)
+    binding = g6_task_scope.read(session_id)
     if binding is not None:
         return {"policy_id": POLICY_ID, "policy_digest": "sha256:" + POLICY_SHA256,
                 "selection_mode": "script-first-flexible-v1", "status": "NEW_ROOT_BOUND",

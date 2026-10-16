@@ -6,12 +6,22 @@ from __future__ import annotations
 
 import unittest
 
-from cp_runtime.g6_delivery_v1 import evaluate_delivery
+from cp_runtime.g6_delivery_v1 import evaluate_delivery, native_execution_view
 from cp_runtime.g6_gate_catalog import CATALOG, complete_gates, stage_decision
 from cp_runtime.routing_contract import ref
 
 
 class G6AllGatesTests(unittest.TestCase):
+    def test_native_unknown_verdict_is_not_an_inflight_call_or_restart_requirement(self):
+        view = native_execution_view({"reservations": {"p": {}},
+                                     "receipts": {"p": {"disposition": "created"}},
+                                     "terminals": {"p": {"outcome": "UNKNOWN"}}})
+        self.assertEqual(view["execution_state"], "SETTLED")
+        self.assertEqual(view["pending_calls"], 0)
+        self.assertEqual(view["host_verdict_unknown_count"], 1)
+        self.assertFalse(view["task_verdict_inferred"])
+        self.assertFalse(view["restart_required"])
+
     def test_catalog_has_complete_operational_entries_and_missing_path(self):
         for name, entry in CATALOG.items():
             with self.subTest(name=name):

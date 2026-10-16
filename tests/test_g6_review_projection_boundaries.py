@@ -12,7 +12,7 @@ from unittest import mock
 
 from cp_runtime import g6_budget_v1 as budget
 from cp_runtime.common import repo_snapshot
-from cp_runtime.g6_review_receipt_v1 import _delivery_path, _receipt_dir, _report, ingest, project_delivery
+from cp_runtime.g6_review_receipt_v1 import _delivery_path, _receipt_dir, _report, ingest, project_delivery, scope_markers
 from cp_runtime.routing_contract import ref
 from tests.test_g6_budget_v1 import capability, facts
 
@@ -21,6 +21,45 @@ ROLE = "cp_review_functional_business"
 
 
 class G6ReviewProjectionBoundaryTests(unittest.TestCase):
+    def test_explicit_structured_scope_retains_raw_report_and_known_markers(self):
+        scope = {"paths": ["runtime/cp_runtime"], "focus": "Task scope",
+                 "packet_sha256": "a" * 64, "context_sha256": "b" * 64,
+                 "isolation_level": "logical-readonly", "score_ref": None}
+        report = {"status": "pass", "findings": [], "checked_scope": scope,
+                  "unverified_items": ["Native installation remains outside this review."], "summary": "Scoped result"}
+        event = {"type": "response_item", "payload": {"type": "message", "role": "assistant",
+                 "phase": "final_answer", "content": [{"type": "output_text", "text": json.dumps(report)}]}}
+        parsed, reason = _report((json.dumps(event) + "\n").encode())
+        self.assertEqual(parsed, report)
+        self.assertEqual(reason, "REPORT_STRUCTURE_VERIFIED")
+        self.assertIn("packet_sha256=" + "a" * 64, scope_markers(parsed["checked_scope"]))
+        self.assertNotIn("context_sha256=" + "c" * 64, scope_markers(parsed["checked_scope"]))
+        self.assertEqual(scope_markers({"all_pass": True}), [])
+        for invalid in ({"packet_sha256": "unverified"},
+                        {"paths": [{"invented": "scope"}]}, {"context_sha256": None}):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                scope_markers(invalid)
+
+    def test_descriptive_scope_extensions_preserve_report_without_inventing_markers(self):
+        scope = {"files": ["runtime/cp_runtime/patch_scope.py"], "isolation": "logical-readonly",
+                 "approved_grant": "1-review/4-unit/1-attempt", "routing_profile": "g6-sol-medium",
+                 "routing_score": None, "packet_sha256": "a" * 64, "context_sha256": "b" * 64,
+                 "extra": {"packet_sha256": "c" * 64, "items": ["context_sha256=" + "d" * 64]}}
+        report = {"status": "pass", "findings": [], "checked_scope": scope,
+                  "unverified_items": ["Native installation is separate."], "summary": "Scoped review"}
+        event = {"type": "response_item", "payload": {"type": "message", "role": "assistant",
+                 "phase": "final_answer", "content": [{"type": "output_text", "text": json.dumps(report)}]}}
+        parsed, reason = _report((json.dumps(event) + "\n").encode())
+        self.assertEqual((parsed, reason), (report, "REPORT_STRUCTURE_VERIFIED"))
+        self.assertEqual(scope_markers(scope), ["packet_sha256=" + "a" * 64, "context_sha256=" + "b" * 64])
+        deep = {}
+        for _ in range(10):
+            deep = {"extra": deep}
+        for invalid in ({"extra": "x" * 4097}, {"extra": [0] * 129}, deep,
+                        {str(i): 0 for i in range(33)}, {"packet_sha256": {"value": "a" * 64}}):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                scope_markers(invalid)
+
     def test_native_final_answer_phase_is_structurally_readable(self):
         report = {"status": "pass", "findings": [], "checked_scope": ["bounded"],
                   "unverified_items": [], "summary": "Scoped result"}
@@ -30,6 +69,9 @@ class G6ReviewProjectionBoundaryTests(unittest.TestCase):
         parsed, reason = _report((json.dumps(event) + "\n").encode())
         self.assertEqual(reason, "REPORT_STRUCTURE_VERIFIED")
         self.assertEqual(parsed["status"], "pass")
+        report["checked_scope"] = ["legacy-scope-" + str(i) for i in range(256)]
+        event["payload"]["content"][0]["text"] = json.dumps(report)
+        self.assertEqual(_report((json.dumps(event) + "\n").encode())[0], report)
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

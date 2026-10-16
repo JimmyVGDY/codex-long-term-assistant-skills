@@ -17,6 +17,7 @@ description: >-
    - 模型调用、流式响应和结构化输出：`references/model-integration-structured-output.md`
    - RAG、Embedding、检索权限与评测：`references/rag-retrieval-evaluation.md`
    - Agent、工具调用和工作流：`references/agent-tool-workflows.md`
+   - MCP 工具合同、可发现性、组合任务与协议相关验收：`references/mcp-tool-design.md`
    - 推理 Worker、GPU、多模态和生成任务：`references/inference-gpu-multimodal.md`
    - AI 质量、安全、成本和可观测性：`references/ai-quality-security-observability.md`
 3. 从依赖、配置、调用代码、请求响应契约、任务状态和实际运行证据确认模型提供方、模型版本、SDK、同步/异步、流式方式、输入输出和部署形态；不得只凭项目名称或文件名推断。

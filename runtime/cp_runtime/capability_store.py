@@ -76,7 +76,11 @@ def relative_path(value: Any) -> str:
     lower = [p.lower() for p in parts]
     require(not any(p in DENIED_PARTS or p.startswith(".env") for p in lower), "SENSITIVE_PATH")
     require(lower[-1] not in DENIED_NAMES and Path(lower[-1]).suffix not in {".pem", ".key", ".p12", ".pfx"}, "SENSITIVE_PATH")
-    text_field(value, 1024)
+    # 中文：路径具有独立语法；长目录与模板名不是密钥证据。正文仍保留熵启发式。
+    # English: Paths have their own grammar; long directory/template names are not key evidence.
+    # The entropy heuristic remains in free-text metadata checks.
+    require(not scan_sensitive_text(parts), "SENSITIVE_PATH")
+    require(not re.search(r"-----BEGIN .*PRIVATE KEY|(?i:bearer)\s+\S{16,}", value), "SENSITIVE_PATH")
     return value
 
 

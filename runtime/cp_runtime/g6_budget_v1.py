@@ -18,6 +18,7 @@ from .g6_flexible_policy import (POLICY_ID, POLICY_SHA256, PROFILES, decide,
 from .path_identity import same_path
 from .routing_contract import _constant, _object, exact, fail, hex_digest, identity, ref, role_for, sha
 from . import g6_allowance_contract as allowance
+from . import g6_journal_capacity as capacity
 
 SCHEMA = "g6-budget-journal/1"
 ZERO_HASH = "0" * 64
@@ -44,14 +45,24 @@ def _read_events(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     with path.open("rb") as stream:
-        raw = stream.read(MAX_BYTES + 1)
-    if len(raw) > MAX_BYTES or (raw and not raw.endswith(b"\n")):
+        raw = stream.read(capacity.MAX_BYTES + 1)
+    if len(raw) > capacity.MAX_BYTES or (raw and not raw.endswith(b"\n")):
         fail("G6_LEDGER_BOUND_OR_PARTIAL")
-    lines = raw.splitlines()
-    if len(lines) > MAX_RECORDS:
+    lines = raw.splitlines(keepends=True)
+    if len(lines) > capacity.MAX_RECORDS:
         fail("G6_LEDGER_RECORD_LIMIT")
     try:
-        return [json.loads(line, object_pairs_hook=_object, parse_constant=_constant) for line in lines]
+        events, size = [], 0
+        for line in lines:
+            event = json.loads(line, object_pairs_hook=_object, parse_constant=_constant)
+            events.append(event)
+            size += len(line)
+            if isinstance(event, dict) and event.get("schema_version") == capacity.SCHEMA:
+                if len(line) > capacity.MAX_EVENT_BYTES:
+                    fail("G6_LEDGER_EVENT_SIZE_LIMIT")
+            elif len(events) > MAX_RECORDS or size > MAX_BYTES:
+                fail("G6_LEDGER_LEGACY_CAPACITY")
+        return events
     except (ValueError, UnicodeError, RecursionError) as exc:
         raise ValueError("G6_LEDGER_INVALID_JSON") from exc
 
@@ -59,6 +70,9 @@ def _read_events(path: Path) -> list[dict[str, Any]]:
 def _event(previous: dict[str, Any] | None, kind: str, data: Mapping[str, Any]) -> dict[str, Any]:
     version = (allowance.JOURNAL_SCHEMA if kind in allowance.EVENT_TYPES or
                previous is not None and previous["schema_version"] == allowance.JOURNAL_SCHEMA else SCHEMA)
+    if (previous is not None and previous["schema_version"] == capacity.SCHEMA
+            or kind == "REVIEW_WORK_REGISTERED" and data.get("phase") == allowance.TASK_PHASE):
+        version = capacity.SCHEMA
     item = {"schema_version": version, "sequence": 1 if previous is None else previous["sequence"] + 1,
             "event_id": "G6E_" + secrets.token_hex(16), "event_type": kind,
             "recorded_at": utc_now(), "previous_hash": ZERO_HASH if previous is None else previous["record_hash"],
@@ -70,11 +84,20 @@ def _event(previous: dict[str, Any] | None, kind: str, data: Mapping[str, Any]) 
 def _append(path: Path, events: list[dict[str, Any]], kind: str,
             data: Mapping[str, Any]) -> dict[str, Any]:
     event = _event(events[-1] if events else None, kind, data)
-    if len(events) >= MAX_RECORDS:
+    extended_capacity = event["schema_version"] == capacity.SCHEMA
+    max_records, max_bytes = ((capacity.MAX_RECORDS, capacity.MAX_BYTES) if extended_capacity
+                              else (MAX_RECORDS, MAX_BYTES))
+    event_bytes = len(canonical_json(event).encode("utf-8")) + 1
+    if extended_capacity and event_bytes > capacity.MAX_EVENT_BYTES:
+        fail("G6_LEDGER_EVENT_SIZE_LIMIT")
+    if len(events) >= max_records:
         fail("G6_LEDGER_RECORD_LIMIT")
-    if path.exists() and path.stat().st_size + len(canonical_json(event).encode("utf-8")) + 1 > MAX_BYTES:
+    stored_bytes = (path.stat().st_size if path.exists() else 0) + event_bytes
+    if stored_bytes > max_bytes:
         fail("G6_LEDGER_SIZE_LIMIT")
     updated = replay([*events, event])
+    if extended_capacity:
+        capacity.require_room(updated, stored_bytes)
     append_jsonl(path, event)
     return updated
 
@@ -133,11 +156,12 @@ def replay(events: list[dict[str, Any]]) -> dict[str, Any]:
     previous = ZERO_HASH
     event_ids = set()
     extended = False
+    protocol_version = 1
     for sequence, event in enumerate(events, 1):
         exact(event, EVENT_FIELDS, "G6_LEDGER_EVENT_FIELDS")
         version = event.get("schema_version")
-        if (version not in {SCHEMA, allowance.JOURNAL_SCHEMA}
-                or extended and version != allowance.JOURNAL_SCHEMA
+        number = {SCHEMA: 1, allowance.JOURNAL_SCHEMA: 2, capacity.SCHEMA: 3}.get(version, 0)
+        if (number < protocol_version
                 or event.get("sequence") != sequence or event.get("previous_hash") != previous
                 or event.get("record_hash") != ref({k: v for k, v in event.items()
                                                     if k != "record_hash"})[7:]
@@ -145,6 +169,11 @@ def replay(events: list[dict[str, Any]]) -> dict[str, Any]:
                 or not re.fullmatch(r"G6E_[0-9a-f]{32}", event["event_id"])
                 or event["event_id"] in event_ids):
             fail("G6_LEDGER_CHAIN")
+        if number == 3 and protocol_version < 3 and not (
+                event["event_type"] == "REVIEW_WORK_REGISTERED"
+                and event["data"].get("phase") == allowance.TASK_PHASE):
+            fail("G6_TASK_EXECUTION_UPGRADE_REQUIRED")
+        protocol_version = number
         event_ids.add(event["event_id"])
         parse_iso(event["recorded_at"])
         previous = event["record_hash"]
@@ -158,10 +187,12 @@ def replay(events: list[dict[str, Any]]) -> dict[str, Any]:
                      "head_hash": previous}
             continue
         assert state is not None
-        if version == allowance.JOURNAL_SCHEMA and not extended:
+        if number >= 2 and not extended:
             extended = True
             state.update(protocol_version=2, review_work={}, allowance_requests={},
                          allowance_grants={}, allowance_revoked={}, review_calls={}, closed_review_work={})
+        if number >= 2:
+            state["protocol_version"] = number
         if kind in allowance.EVENT_TYPES:
             if not extended:
                 fail("G6_EXTENSION_VERSION_REQUIRED")
@@ -334,7 +365,7 @@ def snapshot(state: Mapping[str, Any], *, work_item_id: str, depth: int,
             "capacity_attempts": capacity["attempts"],
             **_usage(state, work_item_id, funding_id), "parallel_limit": concurrency["parallel"],
             "depth_limit": concurrency["depth"], "depth": depth}
-    if state.get("protocol_version") == 2:
+    if state.get("protocol_version", 1) >= 2:
         result.update(schema_version="g6-budget-snapshot/2", funding_id=funding_id,
                       authorization_ref=authority)
     return result
@@ -477,8 +508,9 @@ def request_allowance(path: Path, *, work_ids: list[str], dispatches: int | Mapp
         if isinstance(dispatches, Mapping) and set(dispatches) != set(work_ids):
             fail("G6_ALLOWANCE_DISPATCH_SCOPE")
         counts = {item: dispatches[item] if isinstance(dispatches, Mapping) else dispatches for item in work_ids}
+        execution = any(works[key]["phase"] == allowance.TASK_PHASE for key in work_ids)
         for count in counts.values():
-            integer(count, "G6_ALLOWANCE_DISPATCHES", minimum=1, maximum=8)
+            integer(count, "G6_ALLOWANCE_DISPATCHES", minimum=1, maximum=128 if execution else 8)
         rows = [{"work_id": item, "dispatches": counts[item],
                  "attempts": counts[item] * (retry_limit + 1),
                  "units": counts[item] * profile_spec(works[item]["profile_id"])["planning_units"]}
@@ -487,7 +519,8 @@ def request_allowance(path: Path, *, work_ids: list[str], dispatches: int | Mapp
             if (previous["allocations"] == rows and key not in state["allowance_grants"]
                     and key not in state["allowance_revoked"]):
                 return previous
-        request = {"request_id": "G6Q_" + secrets.token_hex(16), "allocations": rows, "question_version": 1,
+        request = {"request_id": "G6Q_" + secrets.token_hex(16), "allocations": rows,
+                   "question_version": 2 if execution else 1,
                    "requested_at": utc_now(), "scope_ref": ref([works[item] for item in work_ids])}
         _append(path, events, "ALLOWANCE_REQUESTED", request)
         return request
@@ -604,7 +637,7 @@ def prepare(path: Path, *, facts: Mapping[str, Any], capability: Mapping[str, An
                   "adjustment": dict(adjustment) if adjustment else None,
                   "explicit_user_profile": explicit_user_profile, "decision_time": decision_time,
                   "approved_profile": selected, "upward_adjustment": upward, "depth": depth}
-        if state.get("protocol_version") == 2:
+        if state.get("protocol_version", 1) >= 2:
             permit["funding_id"] = funding_id
         _append(path, events, "PREPARED", permit)
         return {"decision": decision, "permit_id": permit_id}
@@ -672,7 +705,7 @@ def approve_and_reserve(path: Path, *, permit_id: str, host_call_id: str,
         if decision["approved_profile"] != permit["approved_profile"]:
             fail("G6_PERMIT_STALE_RECOMPUTE_REQUIRED")
         reservation = {"permit_id": permit_id, "host_call_ref": call_ref, "reserved_at": now}
-        if state.get("protocol_version") == 2:
+        if state.get("protocol_version", 1) >= 2:
             reservation["funding_id"] = permit.get("funding_id", "base")
         updated = _append(path, events, "RESERVED", reservation)
         return {"permit_id": permit_id, "host_call_ref": call_ref,

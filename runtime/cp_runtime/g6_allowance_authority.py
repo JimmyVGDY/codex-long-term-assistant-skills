@@ -92,7 +92,10 @@ def bind_source(ledger: Path, data: Mapping[str, Any]) -> dict:
     with OwnerTokenLock(path, timeout=2):
         if path.exists():
             previous = _read_source(path)
-            if any(previous[key] != value for key, value in fixed.items()):
+            # 中文：已核验的 Windows 命名空间别名不代表来源替换；保留原始路径与历史证明。
+            # English: Proven Windows namespace aliases are not source replacement; keep stored paths and proofs.
+            if (any(previous[key] != value for key, value in fixed.items() if key != "transcript_path")
+                    or not same_path(Path(previous["transcript_path"]), Path(fixed["transcript_path"]))):
                 fail("G6_ALLOWANCE_SOURCE_REPLACED")
             return previous
         # 中文：报价前先绑定当前位置；只消费此后真实提交的用户消息。

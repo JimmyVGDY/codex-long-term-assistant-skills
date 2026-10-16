@@ -4,6 +4,12 @@ For new Codex Desktop roots using `desktop-g6-deterministic-v1`, keep the main a
 
 ## Execution
 
+Bind a logical task budget before delegation. One chat may contain several TaskScopes. Use continue to adopt an existing root with all history, independent for a separate objective, and resume to return to a registered task. Repairs, retries, splits, renaming and automatic Goal continuations do not create capacity. Ambiguity continues the original task without repeatedly asking the user to say “new task.”
+
+Use installed cp-runtime.py task-scope-origins to obtain native provenance, then task-scope-select with --session-id, --repo-path, the Task Envelope's stable --task-id, --origin-ref and --relation. Save task_scope and new_ledger_path. Preview with task-scope-preview --task-scope and initialize review controllers with --delegation-ledger to fix the original root. Execute the complete returned parameters without rewriting the scoped subagent name.
+
+After switching, old calls, allowance approvals, child callbacks and continuations retain their original task. Recover missing native provenance while continuing feasible existing work; a source record grants no execution authority. Use task-scope-complete to record completion without clearing the ledger or unresolved calls.
+
 1. Use the installed Desktop dispatch-preparation entry to obtain script-collected facts, default profile, allowed adjustments, shared budget, gate states and next action.
 2. Execute `exact_tool_parameters` and `next_action`, explicitly specifying model and reasoning_effort. Models may interpret tasks, generate content, discover risk and propose adjustments, but cannot change parameters while reusing an old permit.
 3. Submit structured proposals for additional reading, scope splitting, ordering, effort or model changes. Scripts recalculate and issue a new decision. Missing lengthy rationale or gain evidence does not stop the default task.

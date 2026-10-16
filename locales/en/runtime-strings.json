@@ -843,9 +843,9 @@
         "[OK] V7.15.0 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.15.0 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
         "manifest 版本不是 7.15.0": "manifest version is not 7.15.0",
         "缺少 %s -> V7.15.0 升级声明": "missing %s -> V7.15.0 upgrade declaration",
-        "[OK] V7.16.2 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.16.2 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
-        "manifest 版本不是 7.16.2": "manifest version is not 7.16.2",
-        "缺少 %s -> V7.16.2 升级声明": "missing %s -> V7.16.2 upgrade declaration"
+        "[OK] V7.17.0 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.17.0 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
+        "manifest 版本不是 7.17.0": "manifest version is not 7.17.0",
+        "缺少 %s -> V7.17.0 升级声明": "missing %s -> V7.17.0 upgrade declaration"
       }
     },
     "scripts/verify-release.py": {
@@ -858,7 +858,7 @@
         "V7.13.2 端到端发行验证": "V7.13.2 end-to-end release validation",
         "V7.14.6 端到端发行验证": "V7.14.6 end-to-end release validation",
         "V7.15.0 端到端发行验证": "V7.15.0 end-to-end release verification",
-        "V7.16.2 端到端发行验证": "V7.16.2 end-to-end release verification"
+        "V7.17.0 端到端发行验证": "V7.17.0 end-to-end release verification"
       },
       "preserve": [
         "V7.12.0 端到端发行验证",
@@ -1889,8 +1889,13 @@
         "确认"
       ]
     },
+    "runtime/cp_runtime/g6_task_origin.py": {
+      "preserve": ["继续", "继续执行", "好的", "好", "确认", "同意", "批准"]
+    },
     "runtime/cp_runtime/g6_allowance_contract.py": {
       "preserve": [
+        "f\"批准本次任务执行追加：{sum(row['dispatches'] for row in rows)} 次调用，\"\n                f\"最多 {sum(row['units'] for row in rows)} 个规划单位、\"\n                f\"{sum(row['attempts'] for row in rows)} 次含未启动重试的派发尝试；\"\n                f\"仅限 {labels}，范围保持已登记任务。本次不授予 Reviewer 额度。申请 {request['request_id']}。\"",
+        "f\"{works[row['work_id']]['agent_type']} / {works[row['work_id']]['profile_id']}：\"\n                           f\"{row['dispatches']} 次调用、{row['attempts']} 次尝试\"",
         "f\"批准本次复审追加：{sum(row['dispatches'] for row in rows)} 次 Reviewer，\"\n            f\"最多 {sum(row['units'] for row in rows)} 个规划单位、\"\n            f\"{sum(row['attempts'] for row in rows)} 次含未启动重试的派发尝试；\"\n            f\"仅限 {labels}，范围保持当前申请。申请 {request['request_id']}。\"",
         "不追加",
         "批准本次追加"

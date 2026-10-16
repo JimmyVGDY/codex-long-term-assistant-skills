@@ -173,7 +173,7 @@ class CapabilityGateHookTests(unittest.TestCase):
         operation = CapabilityOperation.open(self.policy, ref)
         self.assertNotIn(marker.encode(), operation._path(ref).read_bytes())
 
-    def test_t32_bad_posttool_is_blocked_and_marks_outcome_unknown(self):
+    def test_t32_bad_posttool_preserves_unknown_without_blocking_unrelated_work(self):
         self.policy.set_enabled(True, None)
         with patch.dict(os.environ, {"CP_CAPABILITY_GATE_ROOT": str(self.gate_root)}):
             first = hook.handle(ROOT, self.canonical_patch())["response"]
@@ -184,7 +184,8 @@ class CapabilityGateHookTests(unittest.TestCase):
             bad = hook.handle(ROOT, self.canonical_patch(
                 "attempt-b", "PostToolUse", tool_response={"error": "failed"},
             ))["response"]
-            self.assertEqual("block", bad["decision"])
+            self.assertNotIn("decision", bad)
+            self.assertIn("without_replaying_write", bad["hookSpecificOutput"]["additionalContext"])
             self.assertEqual("OUTCOME_UNKNOWN", operation.check(ref)["state"])
 
     def test_posttool_after_disable_uses_full_path_and_marks_unknown(self):
@@ -200,7 +201,7 @@ class CapabilityGateHookTests(unittest.TestCase):
         self.policy.set_enabled(False, 0)
         post = self.invoke_gate("PostToolUse", tool_name="apply_patch", tool_use_id="attempt-b",
                                 tool_input={"command": command}, tool_response="Done!")
-        self.assertEqual("block", post["decision"])
+        self.assertNotIn("decision", post)
         self.assertEqual("OUTCOME_UNKNOWN", operation.check(ref)["state"])
 
     def test_missing_posttool_response_still_converges_dispatched_operation(self):
@@ -213,7 +214,7 @@ class CapabilityGateHookTests(unittest.TestCase):
             self.assertEqual({}, hook.handle(ROOT, self.canonical_patch("attempt-b"))["response"])
             payload = self.canonical_patch("attempt-b", "PostToolUse")
             response = hook.handle(ROOT, payload)["response"]
-        self.assertEqual("block", response["decision"])
+        self.assertNotIn("decision", response)
         self.assertEqual("OUTCOME_UNKNOWN", operation.check(ref)["state"])
 
     def test_canonical_adapter_rejects_aliases_and_unknown_fields(self):
@@ -302,7 +303,7 @@ class CapabilityGateHookTests(unittest.TestCase):
                     self.assertEqual({"systemMessage"}, set(response))
                     self.assertIn("GATE_HOST_DEADLINE", json.dumps(response))
                 elif event == "PostToolUse":
-                    self.assertEqual("block", response["decision"])
+                    self.assertNotIn("decision", response)
                     self.assertIn("GATE_HOST_DEADLINE", json.dumps(response))
                 else:
                     self.assertEqual({}, response)

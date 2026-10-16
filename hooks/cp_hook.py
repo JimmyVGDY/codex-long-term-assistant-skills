@@ -602,7 +602,7 @@ def _optional_gate(data: Mapping[str, Any], hook_name: str) -> Dict[str, Any] | 
             if not _legacy_write_is_enabled(cwd):
                 return None
             response = legacy_write_response()
-            from cp_runtime.g6_handoff_v1 import read as g6_read
+            from cp_runtime.g6_task_scope import read as g6_read
 
             session = str(_lookup_strict(data, *HOOK_ALIASES["session_id"]) or "")
             if session and g6_read(session) is not None:
@@ -647,7 +647,7 @@ def main() -> int:
             print(json.dumps(g6_response or {}, ensure_ascii=False))
         return 0
     if hook_name in {"PreToolUse", "PostToolUse"} and data.get("agent_id"):
-        from cp_runtime.g6_handoff_v1 import route as g6_route
+        from cp_runtime.g6_task_scope import route as g6_route
 
         owner = g6_route(data)
         if owner is not None and owner[0] == "new":

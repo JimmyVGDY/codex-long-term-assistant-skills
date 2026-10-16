@@ -25,6 +25,7 @@ AUTH_FIELDS = {"source", "session_ref", "turn_ref", "message_ref", "record_ref",
                "transcript_path", "transcript_path_ref", "transcript_file_ref",
                "header_ref", "start", "end", "authorized_at"}
 PHASES = {"pre_review", "post_review", "repair_review"}
+TASK_PHASE = "task_execution"
 MAX_WORK = 64
 MAX_REQUESTS = 64
 
@@ -59,7 +60,9 @@ def validate_work(value: Mapping[str, Any]) -> dict[str, Any]:
     item = exact(dict(value), WORK_FIELDS, "G6_REVIEW_WORK_FIELDS")
     if (not isinstance(item["boundary_id"], str)
             or not re.fullmatch(r"[A-Za-z0-9_.-]{1,160}", item["boundary_id"])
-            or item["phase"] not in PHASES or role_for(item["agent_type"]) != "reviewer"
+            or (item["phase"] == TASK_PHASE and item["agent_type"] not in {"worker", "explorer"})
+            or (item["phase"] != TASK_PHASE and
+                (item["phase"] not in PHASES or role_for(item["agent_type"]) != "reviewer"))
             or item["profile_id"] not in PROFILES
             or not isinstance(item["purpose"], str) or not 1 <= len(item["purpose"]) <= 1000
             or any(ord(char) < 32 for char in item["purpose"])
@@ -73,7 +76,7 @@ def validate_work(value: Mapping[str, Any]) -> dict[str, Any]:
 
 def validate_request(value: Mapping[str, Any], works: Mapping[str, Any]) -> dict[str, Any]:
     item = exact(dict(value), REQUEST_FIELDS, "G6_ALLOWANCE_REQUEST_FIELDS")
-    if type(item["question_version"]) is not int or item["question_version"] != 1:
+    if type(item["question_version"]) is not int or item["question_version"] not in {1, 2}:
         fail("G6_ALLOWANCE_QUESTION_VERSION")
     if not isinstance(item["request_id"], str) or not re.fullmatch(r"G6Q_[0-9a-f]{32}", item["request_id"]):
         fail("G6_ALLOWANCE_REQUEST_ID")
@@ -88,10 +91,14 @@ def validate_request(value: Mapping[str, Any], works: Mapping[str, Any]) -> dict
         if work_id not in works or work_id in seen:
             fail("G6_ALLOWANCE_WORK_UNKNOWN_OR_DUPLICATE")
         seen.add(work_id)
-        integer(row["dispatches"], "G6_ALLOWANCE_DISPATCHES", minimum=1, maximum=8)
+        execution = works[work_id]["phase"] == TASK_PHASE
+        if execution != (item["question_version"] == 2):
+            fail("G6_ALLOWANCE_ROLE_PHASE_MIXED")
+        integer(row["dispatches"], "G6_ALLOWANCE_DISPATCHES", minimum=1, maximum=128 if execution else 8)
         integer(row["attempts"], "G6_ALLOWANCE_ATTEMPTS", minimum=row["dispatches"],
                 maximum=row["dispatches"] * 3)
-        integer(row["units"], "G6_ALLOWANCE_UNITS", minimum=1, maximum=128)
+        integer(row["units"], "G6_ALLOWANCE_UNITS", minimum=1,
+                maximum=128 * profile_spec(works[work_id]["profile_id"])["planning_units"] if execution else 128)
         if row["units"] != profile_spec(works[work_id]["profile_id"])["planning_units"] * row["dispatches"]:
             fail("G6_ALLOWANCE_UNITS")
     if item["scope_ref"] != ref([works[row["work_id"]] for row in rows]):
@@ -129,6 +136,8 @@ def apply_event(state: dict[str, Any], kind: str, data: Mapping[str, Any]) -> No
     works, requests = state["review_work"], state["allowance_requests"]
     if kind == "REVIEW_WORK_REGISTERED":
         work = validate_work(data)
+        if work["phase"] == TASK_PHASE and state.get("protocol_version", 1) < 3:
+            fail("G6_TASK_EXECUTION_VERSION_REQUIRED")
         if work["work_id"] in works or len(works) >= MAX_WORK:
             fail("G6_REVIEW_WORK_CONFLICT")
         works[work["work_id"]] = work
@@ -200,9 +209,25 @@ def buckets(state: Mapping[str, Any], *, include_revoked: bool = False) -> dict[
 
 
 def quote_question(request: Mapping[str, Any], works: Mapping[str, Any], locale: str = "zh-CN") -> str:
-    if locale not in {"zh-CN", "en"} or request["question_version"] != 1:
+    if locale not in {"zh-CN", "en"} or request["question_version"] not in {1, 2}:
         fail("G6_ALLOWANCE_QUESTION_VERSION_OR_LOCALE")
     rows = request["allocations"]
+    if request["question_version"] == 2:
+        validate_request(request, works)
+        labels = "; ".join(f"{works[row['work_id']]['agent_type']} / {works[row['work_id']]['profile_id']}: "
+                           f"{row['dispatches']} runs, {row['attempts']} attempts" for row in rows)
+        if locale == "en":
+            return (f"Approve {sum(row['dispatches'] for row in rows)} additional task-execution runs, "
+                    f"up to {sum(row['units'] for row in rows)} planning units and "
+                    f"{sum(row['attempts'] for row in rows)} dispatch attempts including no-start retries. "
+                    f"Only {labels}, within the registered task scope. This is not a Reviewer allowance. "
+                    f"Request {request['request_id']}.")
+        labels = "; ".join(f"{works[row['work_id']]['agent_type']} / {works[row['work_id']]['profile_id']}："
+                           f"{row['dispatches']} 次调用、{row['attempts']} 次尝试" for row in rows)
+        return (f"批准本次任务执行追加：{sum(row['dispatches'] for row in rows)} 次调用，"
+                f"最多 {sum(row['units'] for row in rows)} 个规划单位、"
+                f"{sum(row['attempts'] for row in rows)} 次含未启动重试的派发尝试；"
+                f"仅限 {labels}，范围保持已登记任务。本次不授予 Reviewer 额度。申请 {request['request_id']}。")
     labels = "; ".join(f"{works[row['work_id']]['agent_type']} / {works[row['work_id']]['profile_id']}"
                        for row in rows)
     if locale == "en":

@@ -37,6 +37,10 @@ def run(args):
         value = policy.read()
         return {"configured": value is not None, "enabled": bool(value and value["enabled"]),
                 "policy": value, "execution_authorization": "NONE"}
+    if args.gate_action in {"artifact-register", "artifact-revoke"}:
+        from .capability_artifacts import register_request
+        return register_request(policy, Path(__file__).resolve().parents[2], args.request_ref,
+                                revoke=args.gate_action == "artifact-revoke")
     operation_ref = getattr(args, "operation_ref", None)
     session_id, turn_id = getattr(args, "session_id", None), getattr(args, "turn_id", None)
     if bool(operation_ref) == bool(session_id or turn_id):
@@ -87,7 +91,8 @@ def _emit(args):
 
 
 def add_commands(subparsers):
-    for action in ("enable", "disable", "status", "prepare", "finish", "check", "cancel"):
+    for action in ("enable", "disable", "status", "prepare", "finish", "check", "cancel",
+                   "artifact-register", "artifact-revoke"):
         namespace = "capability-gate-" if action in {"enable", "disable", "status"} else "capability-task-"
         parser = subparsers.add_parser(namespace + action)
         parser.add_argument("--profile", required=True)
@@ -95,7 +100,10 @@ def add_commands(subparsers):
         parser.add_argument("--index-root")
         parser.add_argument("--gate-root", help="External opt-in policy directory; normally omit for account default.")
         parser.set_defaults(gate_action=action, func=_emit)
-        if action in {"enable", "disable"}:
+        if action in {"artifact-register", "artifact-revoke"}:
+            parser.add_argument("--request-ref", required=True,
+                                help="Existing artifact request frozen by the native Hook; no caller-selected directory or session.")
+        elif action in {"enable", "disable"}:
             parser.add_argument("--expected-revision", type=int, required=action == "disable")
         elif action not in {"status"}:
             parser.add_argument("--operation-ref",

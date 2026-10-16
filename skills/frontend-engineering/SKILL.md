@@ -34,6 +34,9 @@ description: >-
 6. 涉及 Workspace、Monorepo、Module Federation、single-spa、qiankun 或多子应用发布时，再读取 `references/microfrontend-monorepo-rules.md`。
 7. 不能确认框架时，只使用通用规则并明确假设；不得把 Vue、React、Angular、Svelte、Preact 或其他框架的生命周期、响应式、状态和路由语义互相套用。
 
+- 新建页面或重塑信息、视觉和交互时，按[设计流程](references/design-workflow.md)从内容形成方向并复核渲染；逻辑小修复不自动展开视觉探索。
+- 需要实际页面或交互验收时，按[浏览器验收](references/browser-validation.md)核对服务、操作、断言与本次资源回收；复用项目测试和宿主支持的工具。
+
 ## 强制边界
 
 - 前端按钮、菜单、路由守卫、字段校验和防重复只改善体验，不能替代后端认证、数据权限、业务规则、幂等和唯一约束。

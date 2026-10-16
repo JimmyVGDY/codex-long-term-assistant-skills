@@ -62,9 +62,12 @@ def write_failure(reason: str) -> dict[str, Any]:
         "OP_SCOPE_CHANGED", "OP_REVISION_CONFLICT", "OP_POLICY_CHANGED", "OP_NOT_PREPARING"}
     conflict = any(part in code for part in (
         "IDENTITY_MISMATCH", "IDENTITY_CONFLICT", "PATH_ESCAPE", "SENSITIVE_PATH",
-        "LINK_REJECTED", "HASH", "OP_INTENT_MISMATCH", "OP_POSTTOOL_CONFLICT"))
+        "LINK_REJECTED", "HASH", "OP_INTENT_MISMATCH", "OP_POSTTOOL_CONFLICT",
+        "PATH_SCOPE", "PATH_CONFLICT", "CWD_MISMATCH", "PATH_ALIAS", "CALL_BINDING"))
     action = "retry_same_operation" if retryable else "prepare_current_intent" if refresh else (
         "resolve_confirmed_conflict" if conflict else "adapt_supported_native_input")
+    if code == "ARTIFACT_SCOPE_UNREGISTERED":
+        action = "register_native_artifact_request"
     return result(gate_id="write_safety", entrypoint="cp_gate.py", reason_code=code,
                   decision="STOP_AFFECTED_ACTION" if conflict else
                            "RETRY_BOUNDED" if retryable else "REPREPARE",

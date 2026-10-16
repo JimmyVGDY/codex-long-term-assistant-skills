@@ -281,12 +281,19 @@ def record_published_release(source: Path, root: Path = ROOT) -> dict:
     return {"ok": True, "recorded": PUBLISHED_RELEASE, "tag_name": record["tag_name"]}
 
 
-def published_release_fact(key: str, root: Path) -> str:
+def read_published_release(root: Path = ROOT) -> dict:
+    """中文：只读取已核验形状的公开发行记录，不从候选源码版本推断已发布。
+    English: Read validated public-release metadata without inferring publication from source versions.
+    """
     raw = json.loads(safe_file(root, PUBLISHED_RELEASE).read_text(encoding="utf-8"), object_pairs_hook=unique_object)
     if (not isinstance(raw, dict) or type(raw.get("schema_version")) is not int
             or raw["schema_version"] != 1):
         raise DocumentationError("invalid published release snapshot")
-    release = normalize_published_release(raw)
+    return normalize_published_release(raw)
+
+
+def published_release_fact(key: str, root: Path) -> str:
+    release = read_published_release(root)
     version, date = release["tag_name"][1:], release["published_at"][:10]
     language = key.rsplit(".", 1)[-1]
     if language not in {"zh", "en", "all"}:
@@ -425,6 +432,24 @@ def audit(root: Path = ROOT, *, write: bool = False) -> dict:
     problems = []
     updated = []
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+    script_name = ".github/docs-site/javascripts/repository-facts.js"
+    script = safe_file(root, script_name)
+    if script.exists():
+        try:
+            release = read_published_release(root)
+            original = script.read_text(encoding="utf-8")
+            expected, count = re.subn(r'const RELEASE_VERSION = "v[0-9]+\.[0-9]+\.[0-9]+";',
+                                     "const RELEASE_VERSION = " + json.dumps(release["tag_name"]) + ";", original)
+            if count != 1:
+                problems.append({"code": "PUBLISHED_SCRIPT_MARKER_MISSING", "path": script_name})
+            elif original != expected:
+                if write:
+                    script.write_text(expected, encoding="utf-8", newline="\n")
+                    updated.append(script_name)
+                else:
+                    problems.append({"code": "PUBLISHED_SCRIPT_DRIFT", "path": script_name})
+        except DocumentationError as exc:
+            problems.append({"code": "PUBLISHED_SCRIPT_SOURCE_INVALID", "path": script_name, "error": str(exc)})
     if "quality_limits" in manifest:
         values, disagreements = schema_contracts(root, manifest)
         problems.extend({"code": "SCHEMA_DECLARATION_DRIFT", "path": "manifest.json", "field": name} for name in disagreements)

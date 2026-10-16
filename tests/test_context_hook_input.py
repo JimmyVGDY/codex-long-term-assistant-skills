@@ -60,7 +60,9 @@ class ContextHookInputTests(unittest.TestCase):
                 self.assertEqual(response['hookSpecificOutput']['permissionDecision'], 'deny')
                 self.assertIn('V5_HOOK_SIZE', response['hookSpecificOutput']['permissionDecisionReason'])
             else:
-                self.assertIn('Return incomplete', response['hookSpecificOutput']['additionalContext'])
+                self.assertNotIn('decision', response)
+                self.assertIn('Context audit was not verified', response['hookSpecificOutput']['additionalContext'])
+                self.assertIn('continue unaffected work', response['hookSpecificOutput']['additionalContext'])
 
     def test_alias_after_large_body_cannot_hide_a_child(self):
         for metadata in ({'agentId': 'hidden-child'}, {'agent_id': '', 'agentId': 'child'},

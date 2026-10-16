@@ -1,0 +1,478 @@
+{
+  "schema": "routing-study-cases/1",
+  "suite_id": "skill-quality-24",
+  "data_classification": "public-synthetic",
+  "cases": [
+    {
+      "id": "document-handover",
+      "group": "documents",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "document-handover",
+      "repeats": 3,
+      "prompt": "这份安装说明新同事总看不懂，帮我重写成能照着操作的交接文档，缺的前提标出来。先不要运行里面的命令。",
+      "required": [
+        "technical-document-writing"
+      ],
+      "optional": [],
+      "forbidden": [
+        "multi-agent-independent-review",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "document-architecture",
+      "group": "documents",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "document-architecture",
+      "repeats": 1,
+      "prompt": "把这些服务拆分讨论整理成正式架构决策记录，说明选择、代价和未决问题，不改代码。",
+      "required": [
+        "technical-document-writing"
+      ],
+      "optional": [
+        "backend-engineering"
+      ],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "document-rollback",
+      "group": "documents",
+      "polarity": "positive",
+      "split": "final",
+      "intent_family": "document-rollback",
+      "repeats": 3,
+      "prompt": "根据已有记录写一份数据库升级和失败恢复手册，让没参与开发的人能核对前置条件；只写手册，不执行迁移。",
+      "required": [
+        "technical-document-writing"
+      ],
+      "optional": [
+        "data-middleware-infrastructure"
+      ],
+      "forbidden": [
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "document-changelog-word",
+      "group": "documents",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "document-changelog-word",
+      "repeats": 1,
+      "prompt": "只把 CHANGELOG 里“修覆”这个错字改成“修复”，不要扩写正文。",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "technical-document-writing",
+        "engineering-quality-delivery",
+        "multi-agent-independent-review"
+      ],
+      "max_active": 0
+    },
+    {
+      "id": "document-backend-concept",
+      "group": "documents",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "document-backend-concept",
+      "repeats": 1,
+      "prompt": "解释一下 Java 的线程池拒绝策略，不需要文档文件，也不改程序。",
+      "required": [
+        "backend-engineering"
+      ],
+      "optional": [],
+      "forbidden": [
+        "technical-document-writing",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "document-greeting",
+      "group": "documents",
+      "polarity": "negative",
+      "split": "final",
+      "intent_family": "document-greeting",
+      "repeats": 1,
+      "prompt": "把“你好，明天见”翻译成自然的英文，只回复译文。",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "technical-document-writing",
+        "controlled-evolution-governance",
+        "long-running-task-memory"
+      ],
+      "max_active": 0
+    },
+    {
+      "id": "design-new-landing",
+      "group": "design",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "design-new-landing",
+      "repeats": 1,
+      "prompt": "给这个软件做个能运行的介绍页。真实卖点和文案都在附件里，先确定内容层级，再实现并检查窄屏。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "data-middleware-infrastructure",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "design-existing-dashboard",
+      "group": "design",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "design-existing-dashboard",
+      "repeats": 3,
+      "prompt": "这个后台表单太挤了，用项目现有组件和配色改一下，别重做主题；错误态、键盘操作也一起检查。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "ai-engineering",
+        "technical-document-writing"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "design-phased-player",
+      "group": "design",
+      "polarity": "positive",
+      "split": "final",
+      "intent_family": "design-phased-player",
+      "repeats": 3,
+      "prompt": "先讨论 React 音频播放器的进度和键盘交互，再实现方案并跑相关检查；每个阶段只加载当期需要的能力。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "data-middleware-infrastructure",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 2,
+      "phases": [
+        {
+          "id": "design",
+          "required": [
+            "frontend-engineering"
+          ],
+          "optional": [],
+          "forbidden": [
+            "engineering-quality-delivery",
+            "data-middleware-infrastructure"
+          ],
+          "max_active": 1,
+          "exception_above": 3
+        },
+        {
+          "id": "implement",
+          "required": [
+            "frontend-engineering",
+            "engineering-quality-delivery"
+          ],
+          "optional": [],
+          "forbidden": [
+            "data-middleware-infrastructure"
+          ],
+          "max_active": 2,
+          "exception_above": 3
+        }
+      ]
+    },
+    {
+      "id": "design-native-android",
+      "group": "design",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "design-native-android",
+      "repeats": 1,
+      "prompt": "修复 Kotlin 原生 Android 页面的返回键行为，跑项目已有测试，不涉及 WebView。",
+      "required": [
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "ai-engineering"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "design-server-mail",
+      "group": "design",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "design-server-mail",
+      "repeats": 1,
+      "prompt": "修复 Go 后端生成邮件 HTML 时的转义漏洞，增加针对性验证；没有浏览器页面需要调整。",
+      "required": [
+        "backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "design-basic-math",
+      "group": "design",
+      "polarity": "negative",
+      "split": "final",
+      "intent_family": "design-basic-math",
+      "repeats": 1,
+      "prompt": "帮我算一下 18 乘 24，只给结果。",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "technical-document-writing",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 0
+    },
+    {
+      "id": "browser-existing-service",
+      "group": "browser",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "browser-existing-service",
+      "repeats": 3,
+      "prompt": "页面服务我已经开好了，帮我用浏览器验一下登录和退出，结束后别把我的服务关掉。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "data-middleware-infrastructure",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "browser-failure-states",
+      "group": "browser",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "browser-failure-states",
+      "repeats": 1,
+      "prompt": "检查这个 Vue 页面请求失败和空列表时的交互，保留操作、断言、截图和控制台错误证据。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [
+        "log-observability-analysis"
+      ],
+      "forbidden": [
+        "ai-engineering"
+      ],
+      "max_active": 3
+    },
+    {
+      "id": "browser-repeated-cancel",
+      "group": "browser",
+      "polarity": "positive",
+      "split": "final",
+      "intent_family": "browser-repeated-cancel",
+      "repeats": 3,
+      "prompt": "在浏览器里验证重复提交和取消操作会不会乱，辅助服务只清理本次启动的；这次测试不要动用户已有进程。",
+      "required": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "controlled-evolution-governance",
+        "ai-engineering"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "browser-backend-contract",
+      "group": "browser",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "browser-backend-contract",
+      "repeats": 1,
+      "prompt": "给 Python API 的分页接口补契约测试，直接调用本地 HTTP 接口即可，不运行浏览器。",
+      "required": [
+        "backend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "browser-network-analysis",
+      "group": "browser",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "browser-network-analysis",
+      "repeats": 1,
+      "prompt": "只读分析容器之间偶发连接超时的日志，没有网页或浏览器交互。",
+      "required": [
+        "data-middleware-infrastructure",
+        "log-observability-analysis"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "browser-plain-copy",
+      "group": "browser",
+      "polarity": "negative",
+      "split": "final",
+      "intent_family": "browser-plain-copy",
+      "repeats": 1,
+      "prompt": "把这一行日志中的时间戳原样抄给我，不查页面、不排障。",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "log-observability-analysis",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 0
+    },
+    {
+      "id": "mcp-paginated-contract",
+      "group": "mcp",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "mcp-paginated-contract",
+      "repeats": 3,
+      "prompt": "设计一个给 Agent 使用的 MCP 搜索工具合同，写出分页、权限拒绝和空结果的具体输入输出例子，暂不实现。",
+      "required": [
+        "ai-engineering",
+        "technical-document-writing"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "mcp-multistep-tool",
+      "group": "mcp",
+      "polarity": "positive",
+      "split": "development",
+      "intent_family": "mcp-multistep-tool",
+      "repeats": 1,
+      "prompt": "这个模型的工具调用总漏翻下一页，修复 Agent 两步查询流程并用固定合成数据验证。",
+      "required": [
+        "ai-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "data-middleware-infrastructure"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "mcp-tenant-timeout",
+      "group": "mcp",
+      "polarity": "positive",
+      "split": "final",
+      "intent_family": "mcp-tenant-timeout",
+      "repeats": 3,
+      "prompt": "为 MCP 工具加入租户隔离、超时和部分失败的任务验收，用本地合成数据，不创建真实外部记录。",
+      "required": [
+        "ai-engineering",
+        "engineering-quality-delivery"
+      ],
+      "optional": [],
+      "forbidden": [
+        "frontend-engineering",
+        "controlled-evolution-governance"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "mcp-rest-contract",
+      "group": "mcp",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "mcp-rest-contract",
+      "repeats": 1,
+      "prompt": "写一个普通 REST 库存接口的合同说明，这个系统没有模型、Agent 或 MCP。",
+      "required": [
+        "backend-engineering",
+        "technical-document-writing"
+      ],
+      "optional": [],
+      "forbidden": [
+        "ai-engineering",
+        "frontend-engineering"
+      ],
+      "max_active": 2
+    },
+    {
+      "id": "mcp-database-index",
+      "group": "mcp",
+      "polarity": "negative",
+      "split": "development",
+      "intent_family": "mcp-database-index",
+      "repeats": 1,
+      "prompt": "只读检查 PostgreSQL 订单表索引是否适合这条 SQL，不涉及模型工具或检索语义。",
+      "required": [
+        "data-middleware-infrastructure"
+      ],
+      "optional": [],
+      "forbidden": [
+        "ai-engineering",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 1
+    },
+    {
+      "id": "mcp-short-format",
+      "group": "mcp",
+      "polarity": "negative",
+      "split": "final",
+      "intent_family": "mcp-short-format",
+      "repeats": 1,
+      "prompt": "把“MCP”三个字母转成小写，只返回结果。",
+      "required": [],
+      "optional": [],
+      "forbidden": [
+        "ai-engineering",
+        "technical-document-writing",
+        "engineering-quality-delivery"
+      ],
+      "max_active": 0
+    }
+  ]
+}
