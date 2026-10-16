@@ -299,8 +299,12 @@ def replay(events: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def read_budget(path: Path) -> dict[str, Any]:
+    # 中文：锁内取得完整事件快照，锁外校验回放；写入方仍在自己的锁内重验。
+    # English: Snapshot complete events under the lock, then validate/replay outside it;
+    # writers still revalidate their own current state while holding the lock.
     with OwnerTokenLock(path, timeout=2):
-        return replay(_read_events(path))
+        events = _read_events(path)
+    return replay(events)
 
 
 def _adjustment_origin(state: Mapping[str, Any], work_item_id: str) -> tuple[str, str]:

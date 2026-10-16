@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 350,
-  "payload_digest": "978a82bc5e5a60d760acd5945019979f923999570c28d399181502a7dcb7b3b2",
+  "payload_digest": "485da8f8b2b479686818a02ab05cf9dcdddd44079be4a5ac2c06eb6803c29796",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -1253,8 +1253,8 @@
     },
     {
       "path": "runtime/cp_runtime/g6_budget_v1.py",
-      "sha256": "483dab730f65e86be05cf49b50b119c255ba897b9a2ea3e9f66ba7fe9dc228fd",
-      "size": 46378
+      "sha256": "9d746fbd9030237bedab8667c53f6371613c1c7671c7195237e526b5baf98b15",
+      "size": 46675
     },
     {
       "path": "runtime/cp_runtime/g6_continuation.py",
