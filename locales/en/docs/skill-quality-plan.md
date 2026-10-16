@@ -2,7 +2,7 @@
 
 - Initiative: `SKILL-QUALITY-20261015`.
 - Date: 2026-10-15, Asia/Shanghai.
-- Status: all six tracks are authorized through commit, push and public release. Main tools, references and synthetic cases are implemented; real Desktop comparisons and publication remain pending.
+- Status: all six tracks are implemented, with evidence from the planned independent synthetic executions and eighty routing observations. Final independent review and release closeout remain in progress; candidate reports preserve failures and unknowns.
 - Implementation baseline: official v7.16.2 at `2604e8bea96294c696106935186ebeab1df9a0e4`, explicitly selected by the user; use this initiative's independent implementation branch.
 - Repository: [codex-long-term-assistant-skills](https://github.com/JimmyVGDY/codex-long-term-assistant-skills).
 - Product: Codex Desktop. Internal management and evaluation scripts do not create a standalone CLI product or acceptance track.

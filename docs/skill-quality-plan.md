@@ -4,7 +4,7 @@ English: [Implementation plan](skill-quality-plan.en.md)
 
 - 立项编号：`SKILL-QUALITY-20261015`
 - 日期：2026-10-15，Asia/Shanghai。
-- 状态：六项范围已获实施至提交、推送、公开发布的授权；主要工具、参考流程与合成案例已形成，真实 Desktop 对照验收和发布仍待完成。
+- 状态：六项工具与流程已实现，规定的独立合成执行及 80 次路由观察已形成证据；最终独立复审与发行收尾中，失败及未验证项见候选验证报告。
 - 实施基线：按用户后续指示固定为官方 v7.16.2，提交 `2604e8bea96294c696106935186ebeab1df9a0e4`；使用本轮独立实施分支。
 - 项目：[codex-long-term-assistant-skills](https://github.com/JimmyVGDY/codex-long-term-assistant-skills)。
 - 产品范围：Codex Desktop；内部管理与评测脚本不形成独立 CLI 产品或验收轨道。

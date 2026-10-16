@@ -9,7 +9,8 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 - Add role-bound Worker/Explorer allowances distinct from Reviewer grants, preserving historical charges and bounded storage for authorized attempts and settlement. Registered plans can share one explicit quote.
 - Recover an explicit human correction to a prior allowance refusal within the original request, retaining declined decisions, limits and historical spend. A bounded native rescan can recover corrections missed by an older reader.
 - Fix external task-artifact path rejection, prose-entropy checks on ordinary filenames and broad blocking after missing post-write receipts. Retain actual permissions, credentials, links, identity and budget protections.
-- Add public fixtures, bilingual guidance and regressions. Implementation checks and browser fixtures have run; see candidate reports for pending independent behavior, final-package and installation evidence.
+- Shorten the read-only journal lock while retaining full replay and atomic writer validation, fixing contention that blocked parallel tool reads.
+- Complete the planned document, frontend and MCP synthetic executions and eighty frozen routing observations. Preserve failures and UNKNOWNs; trigger descriptions remain unchanged. See candidate reports for final independent review, matrix and release status.
 
 ## 7.16.2 - 2026-10-15
 
