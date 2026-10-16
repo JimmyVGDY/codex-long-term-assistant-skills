@@ -1606,6 +1606,9 @@ def build_parser() -> argparse.ArgumentParser:
         add_common(item)
         if name == "bind-native-source":
             item.add_argument("--transcript-path", required=True)
+        if name == "allowance-recover":
+            item.add_argument("--reconsider-request", default=None,
+                              help="Rescan verified native decisions for an existing request; this grants no authority.")
         if name == "allowance-quote":
             item.add_argument("--reviewer", default="")
             item.add_argument("--additional-reviews", "--additional-dispatches", dest="additional_reviews", type=int, default=1)

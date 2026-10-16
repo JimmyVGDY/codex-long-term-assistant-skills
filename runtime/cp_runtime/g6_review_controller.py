@@ -181,7 +181,7 @@ def _allowance_command(value: dict[str, Any], args: Any) -> None:
         value["allowance_status"] = {"status": "NATIVE_SOURCE_BOUND", "allowance_protocol": "g6-allowance/1"}
         return
     ledger = _native_root(value, required=True)
-    recovery = authority.recover(ledger)
+    recovery = authority.recover(ledger, reconsider_request_id=getattr(args, "reconsider_request", None))
     value["allowance_recovery"] = recovery
     if args.command == "allowance-quote":
         value.pop("allowance_request", None)

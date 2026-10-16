@@ -14,7 +14,7 @@ from .routing_contract import exact, fail, integer, ref, role_for, sha
 
 JOURNAL_SCHEMA = "g6-budget-journal/2"
 EVENT_TYPES = {"REVIEW_WORK_REGISTERED", "ALLOWANCE_REQUESTED", "ALLOWANCE_GRANTED",
-               "ALLOWANCE_REVOKED", "REVIEW_CALL_BOUND", "REVIEW_WORK_CLOSED"}
+               "ALLOWANCE_REVOKED", "ALLOWANCE_REINSTATED", "REVIEW_CALL_BOUND", "REVIEW_WORK_CLOSED"}
 CALL_FIELDS = {"call_id", "work_id", "packet_dir", "packet_sha256", "baseline_sha256",
                "body_sha256", "task_name", "scope_paths"}
 WORK_FIELDS = {"work_id", "boundary_id", "phase", "agent_type", "profile_id",
@@ -133,6 +133,25 @@ def funding_id(request_id: str, work_id: str) -> str:
     return "G6F_" + ref([request_id, work_id])[7:39]
 
 
+def later_authorization(current: Mapping[str, Any], previous: Mapping[str, Any]) -> bool:
+    """中文：同一原生来源中更晚的真人决策才能覆盖旧决策。
+    English: Only a later human decision in the same native source may supersede one.
+    """
+    return (all(current[key] == previous[key] for key in
+                ("session_ref", "transcript_path_ref", "transcript_file_ref", "header_ref"))
+            and current["start"] >= previous["end"]
+            and parse_iso(current["authorized_at"]) > parse_iso(previous["authorized_at"])
+            and current["message_ref"] != previous["message_ref"])
+
+
+def decision_history(state: Mapping[str, Any], request_id: str) -> list[dict[str, Any]]:
+    history = state.get("allowance_decisions", {}).get(request_id)
+    if history is not None:
+        return list(history)
+    return [dict(row) for name in ("allowance_grants", "allowance_revoked")
+            if (row := state.get(name, {}).get(request_id)) is not None]
+
+
 def apply_event(state: dict[str, Any], kind: str, data: Mapping[str, Any]) -> None:
     """中文：在根流水重放中验证新事件；用户来源的实际读回由原生适配器负责。
 
@@ -160,7 +179,8 @@ def apply_event(state: dict[str, Any], kind: str, data: Mapping[str, Any]) -> No
             fail("G6_ALLOWANCE_WORK_CLOSED")
         validate_authorization(data["authorization"], state["root"], request)
         source = data["authorization"]["message_ref"]
-        if any(grant["authorization"]["message_ref"] == source for grant in state["allowance_grants"].values()):
+        if any(row["authorization"]["message_ref"] == source
+               for other in requests for row in decision_history(state, other)):
             fail("G6_ALLOWANCE_AUTH_REUSED")
         state["allowance_grants"][data["request_id"]] = dict(data)
     elif kind == "ALLOWANCE_REVOKED":
@@ -169,7 +189,33 @@ def apply_event(state: dict[str, Any], kind: str, data: Mapping[str, Any]) -> No
         if request is None or data["request_id"] in state["allowance_revoked"]:
             fail("G6_ALLOWANCE_REVOKE_CONFLICT")
         validate_authorization(data["authorization"], state["root"], request)
+        history = state.get("allowance_decisions", {}).get(data["request_id"])
+        if history is not None:
+            if not later_authorization(data["authorization"], history[-1]["authorization"]):
+                fail("G6_ALLOWANCE_DECISION_NOT_LATER")
+            history.append(dict(data))
         state["allowance_revoked"][data["request_id"]] = dict(data)
+    elif kind == "ALLOWANCE_REINSTATED":
+        exact(dict(data), {"request_id", "authorization", "previous_decision_ref"}, "G6_ALLOWANCE_REINSTATE_FIELDS")
+        key = data["request_id"]
+        request, previous = requests.get(key), state["allowance_revoked"].get(key)
+        if request is None or previous is None or data["previous_decision_ref"] != ref(previous):
+            fail("G6_ALLOWANCE_REINSTATE_CONFLICT")
+        if any(row["work_id"] in state["closed_review_work"] for row in request["allocations"]):
+            fail("G6_ALLOWANCE_WORK_CLOSED")
+        validate_authorization(data["authorization"], state["root"], request)
+        if not later_authorization(data["authorization"], previous["authorization"]):
+            fail("G6_ALLOWANCE_DECISION_NOT_LATER")
+        if any(row["authorization"]["message_ref"] == data["authorization"]["message_ref"]
+               for other in requests for row in decision_history(state, other)):
+            fail("G6_ALLOWANCE_AUTH_REUSED")
+        history = decision_history(state, key)
+        history.append(dict(data))
+        state.setdefault("allowance_decisions", {})[key] = history
+        # 中文：有效状态恢复同一额度桶，旧决策保留在历史中；从不退款或重建预算。
+        # English: Restore the same funding bucket, retaining every decision and all prior spend.
+        state["allowance_grants"][key] = {"request_id": key, "authorization": dict(data["authorization"])}
+        del state["allowance_revoked"][key]
     elif kind == "REVIEW_CALL_BOUND":
         exact(dict(data), CALL_FIELDS, "G6_REVIEW_CALL_FIELDS")
         work = works.get(data["work_id"])

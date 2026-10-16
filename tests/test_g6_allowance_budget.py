@@ -248,6 +248,30 @@ class AllowanceBudgetTests(unittest.TestCase):
     def test_scope_refresh_does_not_include_sibling_or_parent_paths(self):
         self.assertTrue(contract.within_scope(["src/app.py"], ["src"]))
         self.assertFalse(contract.within_scope(["src-other/app.py"], ["src"]))
+
+    def test_reinstatement_preserves_spend_and_rejects_stale_decision(self):
+        self.exhaust()
+        work = self.work()
+        quote = self.quote(work, dispatches=2)
+        self.grant_fixture(quote)
+        self.finish(self.prepare(work["work_id"], "before_revoke", work["agent_type"]), "before_revoke")
+        revoke = {"request_id": quote["request_id"], "authorization": self.fixture_authority("decline")}
+        revoke["authorization"].update(start=200, end=300)
+        with budget.OwnerTokenLock(self.path, timeout=2):
+            budget._append(self.path, budget._read_events(self.path), "ALLOWANCE_REVOKED", revoke)
+        proof = self.fixture_authority("restore")
+        stale = {"request_id": quote["request_id"], "authorization": proof, "previous_decision_ref": ref(revoke)}
+        with self.assertRaisesRegex(RoutingError, "DECISION_NOT_LATER"):
+            budget._append(self.path, budget._read_events(self.path), "ALLOWANCE_REINSTATED", stale)
+        proof.update(start=300, end=400)
+        with budget.OwnerTokenLock(self.path, timeout=2):
+            budget._append(self.path, budget._read_events(self.path), "ALLOWANCE_REINSTATED", stale)
+        state = budget.read_budget(self.path)
+        status = budget.allowance_status(state)
+        self.assertEqual(len(status["grants"]), 1)
+        self.assertEqual(status["grants"][0]["usage"]["completed_charged_units"], 4)
+        self.finish(self.prepare(work["work_id"], "after_restore", work["agent_type"]), "after_restore")
+        self.assertIsNone(self.prepare(work["work_id"], "no_refund", work["agent_type"])["permit_id"])
         self.assertFalse(contract.within_scope(["src"], ["src/app.py"]))
         for path in ["../secret", "/absolute", "C:/absolute", "src/../secret", ".git/config"]:
             with self.subTest(path=path), self.assertRaises(RoutingError):

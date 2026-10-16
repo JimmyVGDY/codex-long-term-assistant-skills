@@ -85,7 +85,7 @@ def bind_source(ledger: Path, data: Mapping[str, Any]) -> dict:
     fixed = {"schema_version": "g6-allowance-native-source/1", "session_ref": ref(session),
              "repo_path": root["repo_path"], "transcript_path": str(Path(transcript).resolve()),
              **binding, "header_ref": ref(header)}
-    for grant in [*state.get("allowance_grants", {}).values(), *state.get("allowance_revoked", {}).values()]:
+    for grant in [row for key in state.get("allowance_requests", {}) for row in contract.decision_history(state, key)]:
         proof = grant["authorization"]
         if any(proof[key] != fixed[key] for key in ("transcript_path_ref", "transcript_file_ref", "header_ref")):
             fail("G6_ALLOWANCE_SOURCE_REPLACED")
@@ -210,6 +210,9 @@ def _apply_record(ledger: Path, source: Mapping[str, Any], record: dict, raw: by
         if result is None:
             return None
         request_id, action = result
+        if (action == "grant" and request_id in state.get("allowance_revoked", {})
+                and text.strip().lower().rstrip("。.!") in AFFIRMATIVE):
+            return None
         if any(row["work_id"] in state.get("closed_review_work", {})
                for row in state["allowance_requests"][request_id]["allocations"]):
             return {"request_id": request_id, "action": "work_closed", "idempotent": True}
@@ -225,17 +228,24 @@ def _apply_record(ledger: Path, source: Mapping[str, Any], record: dict, raw: by
                  "transcript_path": source["transcript_path"],
                  **{key: source[key] for key in ("transcript_path_ref", "transcript_file_ref", "header_ref")},
                  "start": start, "end": end, "authorized_at": stamp}
-        existing = state.get("allowance_grants" if action == "grant" else "allowance_revoked", {}).get(request_id)
-        if existing:
+        history = contract.decision_history(state, request_id)
+        if any(row["authorization"]["message_ref"] == proof["message_ref"] for row in history):
             return {"request_id": request_id, "action": action, "idempotent": True}
-        if request_id in state.get("allowance_revoked", {}):
-            return {"request_id": request_id, "action": "revoked", "idempotent": True}
-        budget._append(ledger, events, "ALLOWANCE_GRANTED" if action == "grant" else "ALLOWANCE_REVOKED",
-                       {"request_id": request_id, "authorization": proof})
+        if history and not contract.later_authorization(proof, history[-1]["authorization"]):
+            return None
+        existing = state.get("allowance_grants" if action == "grant" else "allowance_revoked", {}).get(request_id)
+        revoked = state.get("allowance_revoked", {}).get(request_id)
+        if existing and not (action == "grant" and revoked):
+            return {"request_id": request_id, "action": action, "idempotent": True}
+        event, detail = ("ALLOWANCE_GRANTED" if action == "grant" else "ALLOWANCE_REVOKED"), {}
+        if action == "grant" and revoked:
+            event, detail = "ALLOWANCE_REINSTATED", {"previous_decision_ref": ref(revoked)}
+        budget._append(ledger, events, event, {"request_id": request_id, "authorization": proof, **detail})
         return {"request_id": request_id, "action": action, "idempotent": False}
 
 
-def recover(ledger: Path, *, data: Mapping[str, Any] | None = None) -> dict[str, Any]:
+def recover(ledger: Path, *, data: Mapping[str, Any] | None = None,
+            reconsider_request_id: str | None = None) -> dict[str, Any]:
     """中文：增量核验真实回复；批准入账后崩溃时重放同一消息不会重复扩额。
 
     English: Incremental source recovery; replay after grant append never adds quota twice.
@@ -264,6 +274,23 @@ def recover(ledger: Path, *, data: Mapping[str, Any] | None = None) -> dict[str,
         verified_header, binding = _native_header(transcript, session_id=session, cwd=Path(source["repo_path"]))
         if ref(verified_header) != source["header_ref"] or any(source[key] != value for key, value in binding.items()):
             fail("G6_ALLOWANCE_SOURCE_REPLACED")
+        if reconsider_request_id is not None:
+            request = state.get("allowance_requests", {}).get(reconsider_request_id)
+            history = contract.decision_history(state, reconsider_request_id)
+            if request is None or not history:
+                fail("G6_ALLOWANCE_RECONSIDER_REQUEST_UNKNOWN")
+            proof = history[0]["authorization"]
+            if any(proof[key] != source[key] for key in
+                   ("session_ref", "transcript_path_ref", "transcript_file_ref", "header_ref")):
+                fail("G6_ALLOWANCE_SOURCE_REPLACED")
+            with transcript.open("rb") as anchor:
+                anchor.seek(proof["start"])
+                raw = anchor.read(proof["end"] - proof["start"])
+            if "sha256:" + hashlib.sha256(raw).hexdigest() != proof["record_ref"]:
+                fail("G6_ALLOWANCE_RECONSIDER_SOURCE_CHANGED")
+            # 中文：参数只定位原生历史；重新扫描仍须读取实际真人消息，不能授予额度。
+            # English: This parameter locates native history only; the scan still needs a real human reply.
+            source.update(offset=min(source["offset"], proof["start"]), skipping=False, presented_requests=[])
         applied = []
         read_bytes = 0
         with transcript.open("rb") as stream:
@@ -300,9 +327,10 @@ def recover(ledger: Path, *, data: Mapping[str, Any] | None = None) -> dict[str,
                     applied.append(result)
                     state = budget.read_budget(ledger)
                 if _user_text(record) is not None:
-                    # 中文：下一条真人回复消费问题上下文；后续无关的肯定不能追加额度。
-                    # English: The next human reply consumes context, even when unrelated.
-                    source["presented_requests"] = []
+                    # 中文：明确额度答复保留唯一议题供紧邻改口；无关回复仍清除上下文。
+                    # English: An explicit allowance answer anchors an immediate correction; unrelated replies clear it.
+                    source["presented_requests"] = ([result["request_id"]] if result and
+                        result["action"] in {"grant", "revoke"} else [])
                 source["offset"] = stream.tell()
             final = os.fstat(stream.fileno())
             if (final.st_dev, final.st_ino) != (opened.st_dev, opened.st_ino) or final.st_size < opened.st_size:

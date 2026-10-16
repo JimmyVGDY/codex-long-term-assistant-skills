@@ -218,13 +218,99 @@ class AllowanceAuthorityTests(unittest.TestCase):
         events = budget._read_events(self.ledger)
         self.assertEqual(sum(row["event_type"] == "ALLOWANCE_GRANTED" for row in events), 1)
 
-    def test_decline_or_revoke_preserves_history_and_blocks_later_grant(self):
+    def test_decline_then_explicit_grant_reinstates_original_request_once(self):
         self.user(self.async_reply("不追加"))
         authority.recover(self.ledger)
         self.assertIn(self.request["request_id"], budget.read_budget(self.ledger)["allowance_revoked"])
+        prefix = self.ledger.read_bytes()
         self.user("批准追加额度 " + self.request["request_id"])
         authority.recover(self.ledger)
+        self.assertEqual(len(self.grants()), 1)
+        self.assertTrue(self.ledger.read_bytes().startswith(prefix))
+        state = budget.read_budget(self.ledger)
+        self.assertEqual(len(contract.decision_history(state, self.request["request_id"])), 2)
+        self.assertNotIn(self.request["request_id"], state["allowance_revoked"])
+        before = self.ledger.read_bytes()
+        authority.recover(self.ledger, reconsider_request_id=self.request["request_id"])
+        self.assertEqual(self.ledger.read_bytes(), before)
+
+    def test_immediate_explicit_correction_survives_automatic_page_context(self):
+        self.user(self.async_reply("不追加"))
+        self.emit("response_item", {"type": "message", "role": "user",
+            "content": [{"type": "input_text", "text": '<external_codex_apps_open_page>{"page_id":null}</external_codex_apps_open_page>'}]})
+        self.user("授权追加。")
+        authority.recover(self.ledger)
+        self.assertEqual(len(self.grants()), 1)
+
+    def test_generic_yes_does_not_reverse_a_decline(self):
+        self.user(self.async_reply("不追加"))
+        self.user("好")
+        authority.recover(self.ledger)
         self.assertEqual(len(self.grants()), 0)
+
+    def test_unrelated_message_clears_correction_context(self):
+        self.user(self.async_reply("不追加"))
+        self.user("Show another task.")
+        self.user("授权追加。")
+        authority.recover(self.ledger)
+        self.assertEqual(len(self.grants()), 0)
+
+    def test_rescan_recovers_reply_previously_consumed_by_old_reader(self):
+        self.user(self.async_reply("不追加"))
+        authority.recover(self.ledger)
+        self.user("授权追加。")
+        original = authority.parse_response
+        with mock.patch.object(authority, "parse_response", side_effect=lambda text, *args:
+                               None if text.strip() == "授权追加。" else original(text, *args)):
+            authority.recover(self.ledger)
+        self.assertEqual(len(self.grants()), 0)
+        recovered = authority.recover(self.ledger, reconsider_request_id=self.request["request_id"])
+        self.assertFalse(recovered["has_more"])
+        self.assertEqual(len(self.grants()), 1)
+
+    def test_rescan_parameter_alone_does_not_authorize(self):
+        self.user(self.async_reply("不追加"))
+        authority.recover(self.ledger)
+        authority.recover(self.ledger, reconsider_request_id=self.request["request_id"])
+        self.assertEqual(len(self.grants()), 0)
+        with self.assertRaisesRegex(RoutingError, "RECONSIDER_REQUEST_UNKNOWN"):
+            authority.recover(self.ledger, reconsider_request_id="G6Q_" + "0" * 32)
+
+    def test_reinstatement_never_reopens_closed_work(self):
+        self.user(self.async_reply("不追加"))
+        authority.recover(self.ledger)
+        budget.close_review_work(self.ledger, self.work["work_id"])
+        self.user(self.async_reply())
+        authority.recover(self.ledger)
+        self.assertEqual(len(self.grants()), 0)
+
+    def test_repeated_revoke_and_reinstate_keep_one_bucket(self):
+        for answer in ("批准本次追加", "不追加", "批准本次追加", "不追加", "批准本次追加"):
+            self.user(self.async_reply(answer))
+            authority.recover(self.ledger)
+        state = budget.read_budget(self.ledger)
+        self.assertEqual(len(contract.buckets(state)), 1)
+        self.assertEqual(len(contract.decision_history(state, self.request["request_id"])), 5)
+        self.assertEqual(state["allowance_requests"][self.request["request_id"]], self.request)
+
+    def test_old_or_quoted_approval_cannot_reverse_latest_decline(self):
+        old = self.user(self.async_reply())
+        self.user(self.async_reply("不追加"))
+        authority.recover(self.ledger)
+        self.emit(old["type"], old["payload"], old["timestamp"])
+        self.user("> 授权追加。")
+        authority.recover(self.ledger)
+        self.assertIn(self.request["request_id"], budget.read_budget(self.ledger)["allowance_revoked"])
+
+    def test_rescan_rejects_changed_native_decision_bytes(self):
+        self.user(self.async_reply("不追加"))
+        authority.recover(self.ledger)
+        proof = budget.read_budget(self.ledger)["allowance_revoked"][self.request["request_id"]]["authorization"]
+        with self.transcript.open("r+b") as stream:
+            stream.seek(proof["start"] + 1)
+            stream.write(b" ")
+        with self.assertRaisesRegex(RoutingError, "RECONSIDER_SOURCE_CHANGED"):
+            authority.recover(self.ledger, reconsider_request_id=self.request["request_id"])
 
     def test_replaced_native_file_is_rejected_even_with_identical_bytes(self):
         raw = self.transcript.read_bytes()
