@@ -2,7 +2,9 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
-## 7.17.0 - Unpublished candidate
+## 7.17.0 - 2026-10-16
+
+Post-release status update: the public Release was published at 2026-10-16 20:23:25 UTC. All four release-validation combinations, provenance, six anonymous asset downloads and official payload/installation checks passed. Bilingual downloads and reports reflect the actual release; historical failures, review protocol limits and uncovered host activation remain explicit.
 
 - Add six workflows for artifact comparison, independent readers, frontend design, grouped routing evaluation, browser acceptance and MCP contracts, reusing existing tools and templates.
 - Replace chat-wide budget ownership with registered task scopes; repairs, continuations, renamed tasks, subagents and late events retain their original ledger.

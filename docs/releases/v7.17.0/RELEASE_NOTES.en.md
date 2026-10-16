@@ -2,7 +2,7 @@
 
 # V7.17.0 Release Notes
 
-This candidate uses official v7.16.2 as its functional baseline. It adds six Skill quality workflows and addresses unnecessary blocking in task budgets, artifact paths and audit recovery. Publication, installation and effective behavior remain separate checks; this document does not claim that the candidate is already public.
+This release uses official v7.16.2 as its functional baseline. It adds six Skill quality workflows and addresses unnecessary blocking in task budgets, artifact paths and audit recovery. The [public release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.17.0), six anonymous downloads and official payload/installation checks were verified. Effective-behavior claims remain limited to recorded native calls.
 
 - Artifact evaluation freezes rules and synthetic inputs, checks protected files, assertions and comparability, and provides escaped HTML, bounded PNG previews and traceable feedback.
 - Documentation and frontend guidance add independent reader tests, design briefs, rendered checks and browser acceptance while reusing existing templates and design systems.

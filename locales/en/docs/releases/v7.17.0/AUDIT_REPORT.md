@@ -1,4 +1,4 @@
-# V7.17.0 Candidate Audit Report
+# V7.17.0 Audit Report
 
 The user authorized all six Skill improvements and added gate fixes through commit, push and public release. The functional baseline is official v7.16.2. Plans, test results and optimization proposals do not create new operational authority.
 
@@ -22,4 +22,4 @@ Candidate 12 installation state and account/cache digests were read back and ver
 
 All eighty frozen routing trials were executed, with both invalid reports and failed routing judgments. Existing descriptions remain and benefit is UNKNOWN. An independent agent inspected all twenty original frontend images across five pairs, and security/state reviews found no actionable issues. The delivery report's unsupported `PARTIAL` status remains machine-UNVERIFIED. Its form-header finding was rejected against the hash-matched original seed; neither frozen outputs nor the raw report were rewritten. Passing MCP answers do not erase client errors or owned-process cleanup. See the [validation report](VALIDATION_REPORT.md) for counts and CI baselines.
 
-Independent review has been executed with its protocol limits retained. These materials support release closeout; they do not claim publication has already occurred. Commits, pushes, matrix validation, artifacts, installation, native calls, restarts and public release are read back separately. Actual charges and generalizable benefit remain unknown; planning units are not paid amounts.
+[V7.17.0](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.17.0) became public at 2026-10-16 20:23:25 UTC. All four release-validation combinations, reproducible builds and provenance checks passed for tagged commit `bddff85`. Six anonymous downloads matched the CI candidate byte for byte; the official payload matches the existing managed installation and verification passed. Published tags and signed assets retain their original contents; later documentation status updates are committed separately. Native-call claims cover recorded calls only, and Desktop was not restarted. Publication does not promote full new-chat activation, actual charges or generalizable benefit to PASS.

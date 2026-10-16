@@ -29,8 +29,8 @@ After downloading a ZIP, use GitHub CLI to verify the actual file digest and pro
 <!-- cp-fact:release.attestation.all -->
 ```powershell
 $repository = ([uri]"https://github.com/JimmyVGDY/codex-long-term-assistant-skills").AbsolutePath.Trim("/")
-gh attestation verify Codex-Skills-V7.16.2-zh-CN.zip --repo $repository
-gh attestation verify Codex-Skills-V7.16.2-en.zip --repo $repository
+gh attestation verify Codex-Skills-V7.17.0-zh-CN.zip --repo $repository
+gh attestation verify Codex-Skills-V7.17.0-en.zip --repo $repository
 ```
 <!-- /cp-fact -->
 

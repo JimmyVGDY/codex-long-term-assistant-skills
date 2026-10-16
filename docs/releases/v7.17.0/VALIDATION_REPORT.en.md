@@ -1,8 +1,23 @@
 <!-- Generated from locales/en/docs/releases/v7.17.0/VALIDATION_REPORT.md; edit that source and run scripts/documentation.py sync. -->
 
-# V7.17.0 Candidate Validation Report
+# V7.17.0 Validation Report
 
-The functional baseline is official v7.16.2 (`2604e8b`). This report covers core commit `812e408` and earlier evidence from the same task, separating implementation, synthetic behavior, installation and release. Final independent review was executed on 2026-10-17, with the protocol limits and adjudication below; publication remains pending. See the implementation [commit CI](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/38929498020) and [PR #26](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/pull/26) for later delivery readback.
+The functional baseline is official v7.16.2 (`2604e8b`); the release tag points to `bddff85`. [V7.17.0](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.17.0) became public at 2026-10-16 20:23:25 UTC. The [release workflow](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/38949645896), pre-merge CI and post-merge CI passed, and [PR #26](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/pull/26) merged. This report separates publication readback, bounded synthetic acceptance, historical failures and unknowns.
+
+## Publication readback
+
+| Platform / Python | Package cases | Runtime cases |
+|---|---|---|
+| Windows / 3.11 | 1357 passed, 2 skipped | 265 passed |
+| Windows / 3.13 | 1358 passed, 1 skipped | 265 passed |
+| Linux / 3.11 | 1315 passed, 44 skipped | 259 passed, 6 skipped |
+| Linux / 3.13 | 1315 passed, 44 skipped | 259 passed, 6 skipped |
+
+Each combination discovered 1359 package cases and 265 runtime cases. Skip reasons are retained separately and are not counted as passes. All four reports bind to the tagged commit; build, attestation and draft re-verification succeeded.
+
+All six public assets were downloaded anonymously and matched the immutable CI candidate byte for byte. Checksums, reproducibility witnesses and both archive checks passed; each archive contains 943 entries. The Chinese archive SHA-256 is `a30a318908a75912b94caf9536b80dbe3bc43d81a64082930f896c093abd6166`; the English archive is `b182454869baeeb603e8f1ff658b5d7525165f1ab69e547192ccb669eac8d32a`. The release workflow signed the provenance and verified both archives with `gh attestation verify` before creating the draft. Local downloads are bound to that candidate digest.
+
+The official Chinese package's 350-file payload matches the existing managed installation source, and installation verification passed. Native subtask calls after installation were recorded; the claim covers those calls only. Desktop was not restarted, and this does not establish complete activation in a new chat or across every capability.
 
 ## Six-track acceptance
 
@@ -23,7 +38,7 @@ W04 used Luna/low and frozen rule snapshots. Its evidence level is `host_final_r
 - Continue registration retained the original task ledger. A later human correction can restore the same allowance request while preserving the refusal, limits and all usage. Equal timestamps are ordered by native-record byte positions.
 - A real batch of eleven parallel reads hit `G6_CONTEXT_LOCK_BUSY`. The same 626-event journal snapshot reproduced nine successes and two timeouts. Moving complete snapshot replay outside the read lock gave eleven first-attempt successes; thirteen budget and sixty-six related regressions passed. Writers still revalidate under lock; complete hash-chain, identity and budget checks remain.
 - All four Windows/Linux and Python 3.11/3.13 CI jobs for `ca62f3f` succeeded after one bounded retry. The first Windows 3.13 package run timed out at 3600 seconds and remains preserved with unknown root cause. CI tested merge snapshot `898d808`, with no file differences from `ca62f3f`; this does not substitute for the later `812e408` matrix.
-- Both Windows package jobs for `812e408` timed out at 3600 seconds; each runtime suite passed 265 tests. Original failures remain, with the specific root cause unconfirmed. Both Linux jobs for `9d8e5d3` passed; Windows jobs were still running when this record was prepared. Per-test timing diagnostics in an isolated copy do not replace the declared-version CI.
+- Both Windows package jobs for `812e408` timed out at 3600 seconds; each runtime suite passed 265 tests. For `9d8e5d3`, Windows 3.13 completed successfully, Windows 3.11 package tests timed out, and Linux passed. Original failures remain. The package-only limit was then set to 5400 seconds while other commands/runtime retain 3600; thirteen affected regressions and nine boundary probes passed, followed by the complete release matrix. An extra local timing diagnostic was stopped because its wrapper lacked a Windows multiprocessing entry guard; it is not correctness or reliable timing evidence.
 - Candidate 13 came from clean `9d8e5d3`, with reproducible, verified bilingual ZIPs containing 943 entries each; only documentation differs from candidate 12. Candidate 12 also produced reproducible, verified bilingual ZIPs with 943 entries each. The 350-file Chinese payload digest is `485da8f8b2b479686818a02ab05cf9dcdddd44079be4a5ac2c06eb6803c29796`. Install-output capture failed decoding, so that command's exit status remains UNKNOWN. Subsequent installation verification passed and account/cache reader digests matched; no blind reinstall was attempted.
 - Desktop was not restarted. Installation readback, specific native calls and complete current-chat activation are separate evidence levels. Missing comprehensive host proof is not relabeled PASS.
 

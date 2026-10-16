@@ -4,7 +4,7 @@
 
 面向 Codex Desktop，修复实际门禁、GPT-6 控制器和原生回执恢复；旧根保持原路由与账目语义。内部脚本仅用于管理与验证，不构成独立 CLI 产品支持轨道。
 
-<!-- cp-fact:release.status.zh -->正式版 [V7.16.2](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.2) 已于 2026-10-15（UTC）公开发布。<!-- /cp-fact -->
+<!-- cp-fact:release.status.zh -->正式版 [V7.17.0](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.17.0) 已于 2026-10-16（UTC）公开发布。<!-- /cp-fact -->
 
 # Codex 跨项目长期技术助手
 
@@ -59,14 +59,14 @@ POSIX 将上述路径替换为 `./scripts/cp-assistant.sh`。四条路径的完�
 ## 下载
 
 <!-- cp-fact:release.downloads.zh -->
-以下为已公开的 **V7.16.2** 安装包，发布日期为 **2026-10-15（UTC）**。
+以下为已公开的 **V7.17.0** 安装包，发布日期为 **2026-10-16（UTC）**。
 
 | 发行包 | 适用界面 | 下载 |
 | --- | --- | --- |
-| `Codex-Skills-V7.16.2-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/Codex-Skills-V7.16.2-zh-CN.zip) |
-| `Codex-Skills-V7.16.2-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/Codex-Skills-V7.16.2-en.zip) |
+| `Codex-Skills-V7.17.0-zh-CN.zip` | 简体中文 | [下载中文安装包](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.17.0/Codex-Skills-V7.17.0-zh-CN.zip) |
+| `Codex-Skills-V7.17.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.17.0/Codex-Skills-V7.17.0-en.zip) |
 
-[Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.2) · [SHA256SUMS.txt](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/SHA256SUMS.txt)
+[Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.17.0) · [SHA256SUMS.txt](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.17.0/SHA256SUMS.txt)
 <!-- /cp-fact -->
 
 ## 两步开始
@@ -191,7 +191,7 @@ codex plugin list --json
 - [贡献指南](.github/CONTRIBUTING.md)：分支、提交、双语覆盖与验证方式。
 - [安全策略](.github/SECURITY.md)：漏洞报告边界与敏感信息处理。
 - [行为准则](.github/CODE_OF_CONDUCT.md)：公共协作的基本边界。
-- [版本记录](CHANGELOG.md) · <!-- cp-fact:release.notes.zh -->[V7.16.2 发行说明](docs/releases/v7.16.2/RELEASE_NOTES.md)<!-- /cp-fact -->
+- [版本记录](CHANGELOG.md) · <!-- cp-fact:release.notes.zh -->[V7.17.0 发行说明](docs/releases/v7.17.0/RELEASE_NOTES.md)<!-- /cp-fact -->
 
 ## 本地验证
 
@@ -209,7 +209,7 @@ python scripts\validate-package.py
 <!-- cp-fact:release.attestation.zh -->
 ```powershell
 $repository = ([uri]"https://github.com/JimmyVGDY/codex-long-term-assistant-skills").AbsolutePath.Trim("/")
-gh attestation verify Codex-Skills-V7.16.2-zh-CN.zip --repo $repository
+gh attestation verify Codex-Skills-V7.17.0-zh-CN.zip --repo $repository
 ```
 <!-- /cp-fact -->
 
@@ -227,4 +227,4 @@ Apache-2.0 许可，见 [LICENSE](LICENSE)。
 
 复用入口：[能力索引与可选门禁](docs/CAPABILITY_INDEX.md) · [复用验收规程](docs/COMPONENT_REUSE_ACCEPTANCE.md)。
 
-<!-- cp-fact:release.validation.zh -->[当前正式版验证与已知边界](docs/releases/v7.16.2/VALIDATION_REPORT.md)<!-- /cp-fact -->
+<!-- cp-fact:release.validation.zh -->[当前正式版验证与已知边界](docs/releases/v7.17.0/VALIDATION_REPORT.md)<!-- /cp-fact -->

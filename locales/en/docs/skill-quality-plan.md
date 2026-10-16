@@ -2,7 +2,7 @@
 
 - Initiative: `SKILL-QUALITY-20261015`.
 - Date: 2026-10-15, Asia/Shanghai.
-- Status: all six tracks are implemented, with evidence from the planned independent synthetic executions and eighty routing observations. Final independent review has been executed and release closeout remains in progress; candidate reports preserve failures, review protocol limits and unknowns.
+- Status: all six tools/workflows and added gate repairs are delivered in v7.17.0, with evidence for the planned independent synthetic executions, eighty routing observations, independent review and public release. See the validation report for failures, protocol limits and unknowns.
 - Implementation baseline: official v7.16.2 at `2604e8bea96294c696106935186ebeab1df9a0e4`, explicitly selected by the user; use this initiative's independent implementation branch.
 - Repository: [codex-long-term-assistant-skills](https://github.com/JimmyVGDY/codex-long-term-assistant-skills).
 - Product: Codex Desktop. Internal management and evaluation scripts do not create a standalone CLI product or acceptance track.
@@ -240,9 +240,9 @@ The implementation branch uses the user-agreed prefix and was created from the c
 - [x] Each track has deliverables, dependencies, acceptance criteria, stopping conditions, and rollback.
 - [x] Implement tools, Skill guidance, and bilingual assets.
 - [x] Execute comparative experiments, behavior acceptance, and necessary independent review; retained failures and protocol limits do not mean all checks passed.
-- [ ] Complete Git, installation, release, and fresh Desktop-task acceptance within actual authorization.
+- [x] Complete authorized Git delivery, official-artifact and installation readback, publication and bounded native Desktop subtask acceptance; no claim of complete new-chat or post-restart activation.
 
-Implementation update: #24 merged, and this initiative's independent branch fast-forwarded to the official v7.16.2 tag while preserving the plans and W01 candidate. Tests from the previous 7.16.1 baseline are not delivery evidence; rerun on 7.16.2, then continue W01–W06 and later phases. Detailed execution evidence remains in external task records.
+Implementation closeout: all six tracks and added gate fixes were implemented against official v7.16.2. [PR #26](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/pull/26) merged; [v7.17.0](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.17.0) points to `bddff85` and is public. The release matrix, six anonymous asset downloads and managed-payload verification passed. Bounded native-call evidence, failures and UNKNOWNs retain their meaning; see the [validation report](releases/v7.17.0/VALIDATION_REPORT.md).
 
 This is formal project planning documentation, not Agent external memory or runtime authorization. Keep subsequent control records and experiment artifacts in an available external directory under existing rules, not in this file or source repository.
 

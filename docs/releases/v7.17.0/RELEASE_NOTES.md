@@ -1,6 +1,6 @@
 # V7.17.0 发行说明
 
-本版本候选以官方 v7.16.2 为功能基线，增加六项 Skill 质量流程，并修复任务预算、产物路径和审计恢复中的不合理阻断。公开发行、安装与实际生效分别核验；当前文件不声明候选已经发布。
+本版本以官方 v7.16.2 为功能基线，增加六项 Skill 质量流程，并修复任务预算、产物路径和审计恢复中的不合理阻断。[正式发行](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.17.0) 已公开，六附件匿名下载及官方载荷/安装校验通过；实际生效仍按已记录的原生调用范围报告。
 
 - 产物评测：冻结新旧规则及合成输入，核验受保护文件、断言与可比条件，提供转义 HTML、受限 PNG 预览和可追溯反馈。
 - 技术文档与前端：增加陌生读者测试、设计说明、实际渲染与浏览器验收流程，复用既有模板和设计系统。
@@ -11,4 +11,4 @@
 
 保留实际权限、身份、凭据、链接、路径、账本完整性和预算上限。语义任务识别属于协调者策略；逻辑只读不冒充系统隔离，规划单位不是真实费用。
 
-操作见[任务预算](../../operations/task-budget-scope.md)、[产物范围](../../operations/artifact-scope.md)、[门禁恢复](../../operations/gate-recovery-policy.md)和[产物评测](../../SKILL_ARTIFACT_EVAL.md)。候选验收状态见[验证报告](VALIDATION_REPORT.md)和[审计报告](AUDIT_REPORT.md)。产品仅支持 Codex Desktop。
+操作见[任务预算](../../operations/task-budget-scope.md)、[产物范围](../../operations/artifact-scope.md)、[门禁恢复](../../operations/gate-recovery-policy.md)和[产物评测](../../SKILL_ARTIFACT_EVAL.md)。验收状态与保留项见[验证报告](VALIDATION_REPORT.md)和[审计报告](AUDIT_REPORT.md)。产品仅支持 Codex Desktop。

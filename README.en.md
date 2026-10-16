@@ -6,7 +6,7 @@
 
 For Codex Desktop: actual gate consistency, GPT-6 controllers, and native receipt recovery. Existing roots retain their routing and accounting semantics. Internal scripts support management and validation, not a standalone CLI product.
 
-<!-- cp-fact:release.status.en -->Stable release [V7.16.2](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.2) was published on 2026-10-15 (UTC).<!-- /cp-fact -->
+<!-- cp-fact:release.status.en -->Stable release [V7.17.0](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.17.0) was published on 2026-10-16 (UTC).<!-- /cp-fact -->
 
 # Codex Cross-Project Engineering Assistant
 
@@ -87,14 +87,14 @@ Use the existing enhanced installer only when the task needs recoverable long-ru
 ## Downloads
 
 <!-- cp-fact:release.downloads.en -->
-Download the public **V7.16.2** packages, published on **2026-10-15 (UTC)**.
+Download the public **V7.17.0** packages, published on **2026-10-16 (UTC)**.
 
 | Package | Interface | Download |
 | --- | --- | --- |
-| `Codex-Skills-V7.16.2-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/Codex-Skills-V7.16.2-zh-CN.zip) |
-| `Codex-Skills-V7.16.2-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/Codex-Skills-V7.16.2-en.zip) |
+| `Codex-Skills-V7.17.0-zh-CN.zip` | Chinese | [Download zh-CN package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.17.0/Codex-Skills-V7.17.0-zh-CN.zip) |
+| `Codex-Skills-V7.17.0-en.zip` | English | [Download English package](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.17.0/Codex-Skills-V7.17.0-en.zip) |
 
-[Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.16.2) · [SHA256SUMS.txt](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.16.2/SHA256SUMS.txt)
+[Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.17.0) · [SHA256SUMS.txt](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/download/v7.17.0/SHA256SUMS.txt)
 <!-- /cp-fact -->
 
 ## Core capabilities
@@ -198,7 +198,7 @@ Requested parameters do not attest to the underlying host model, which this pack
 - [Contributing guide](.github/CONTRIBUTING.en.md): branches, commits, bilingual coverage, and validation.
 - [Security policy](.github/SECURITY.en.md): vulnerability reporting and sensitive-information handling.
 - [Code of conduct](.github/CODE_OF_CONDUCT.en.md): baseline boundaries for public collaboration.
-- [Changelog](CHANGELOG.en.md) · <!-- cp-fact:release.notes.en -->[V7.16.2 release notes](docs/releases/v7.16.2/RELEASE_NOTES.en.md)<!-- /cp-fact -->
+- [Changelog](CHANGELOG.en.md) · <!-- cp-fact:release.notes.en -->[V7.17.0 release notes](docs/releases/v7.17.0/RELEASE_NOTES.en.md)<!-- /cp-fact -->
 
 ## Local validation
 
@@ -216,7 +216,7 @@ The `Release Candidate and Provenance` workflow validates version tags, checks t
 <!-- cp-fact:release.attestation.en -->
 ```powershell
 $repository = ([uri]"https://github.com/JimmyVGDY/codex-long-term-assistant-skills").AbsolutePath.Trim("/")
-gh attestation verify Codex-Skills-V7.16.2-en.zip --repo $repository
+gh attestation verify Codex-Skills-V7.17.0-en.zip --repo $repository
 ```
 <!-- /cp-fact -->
 
@@ -234,4 +234,4 @@ Licensed under Apache-2.0. See [LICENSE](LICENSE).
 
 Reuse guidance: [Capability index](docs/CAPABILITY_INDEX.en.md) · [Acceptance protocol](docs/COMPONENT_REUSE_ACCEPTANCE.en.md).
 
-<!-- cp-fact:release.validation.en -->[Published-release validation and known limits](docs/releases/v7.16.2/VALIDATION_REPORT.en.md)<!-- /cp-fact -->
+<!-- cp-fact:release.validation.en -->[Published-release validation and known limits](docs/releases/v7.17.0/VALIDATION_REPORT.en.md)<!-- /cp-fact -->
