@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 350,
-  "payload_digest": "5a2e7c0fdf4318bf871bf941d3b50c2b995194cebea3f58f3ace12e25e0cdace",
+  "payload_digest": "833c24147d6cf76dd1ab42fda3eae0aa4c708d8942627900a9c2032882df9017",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -653,8 +653,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/references/review-allowance-amendments.md",
-      "sha256": "d9d21bc6eaf8d849417f06186a63a7ea049d4b48cb5176d031c5e725a8bdc1d7",
-      "size": 5882
+      "sha256": "64d8ea8b2d1841e0e9c3a25c800abcc1859d58f77106d8eb7c841c426a2e105c",
+      "size": 6691
     },
     {
       "path": "skills/multi-agent-independent-review/references/review-goals-limits-isolation.md",
@@ -708,8 +708,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_controller.py",
-      "sha256": "42efc9bef615db09f750c704f241feedebda1d4d2e25cc1ccd233c41caf8f6be",
-      "size": 84592
+      "sha256": "227115474d47a4281f75e6b45b7cbc74d5f6de83afee281b3b5e4b478ad8ff54",
+      "size": 84822
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_packet.py",
@@ -1243,13 +1243,13 @@
     },
     {
       "path": "runtime/cp_runtime/g6_allowance_authority.py",
-      "sha256": "c1b9864a70365503157fb311c54a584e5ac4094fb4a7666ae8d8495fddbb25bb",
-      "size": 17880
+      "sha256": "c4e1d163d0d2b122fe88be7f04c24c88819f49410f40a7bd4f3f8ee8e94b66cc",
+      "size": 19960
     },
     {
       "path": "runtime/cp_runtime/g6_allowance_contract.py",
-      "sha256": "771999446017b21eefb643ea721d07272e2a8047b345b6cfc63a45717705d214",
-      "size": 14580
+      "sha256": "19f92e2e43eacd64fdcadeae93bb556df85d8b1f5d7e570928115f1251e9bbeb",
+      "size": 17438
     },
     {
       "path": "runtime/cp_runtime/g6_budget_v1.py",
@@ -1323,8 +1323,8 @@
     },
     {
       "path": "runtime/cp_runtime/g6_review_controller.py",
-      "sha256": "558d70da7302532be997d2e8296245292b458d5e6ee63f549d4bd4d2de36d438",
-      "size": 34984
+      "sha256": "11182064a3a1fe7ebbab38b052a02b2595dd86eab449b44a3bcb99cc7fb24fd5",
+      "size": 35049
     },
     {
       "path": "runtime/cp_runtime/g6_review_receipt_v1.py",
