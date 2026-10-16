@@ -20,6 +20,10 @@ The command only consumes a native request record. It accepts no session ID, arb
 
 Registration reads the bound repository and writes account gate state. When the ordinary sandbox cannot read the repository because Git rejects its ownership context, the command returns `PROFILE_HOST_CONTEXT_REQUIRED` rather than claiming confirmed Profile corruption. Within existing task authorization, run the same exact registration command through host approval and read back its result. Do not edit the Profile, disable Git ownership protection or loosen the filesystem sandbox.
 
+An isolated child context may lack the human authorization held in the parent chat. The coordinator can verify the native parent-child relationship, child turn, approved work, exact directory and frozen deadlines, then execute the original registration command within that existing human authorization. The child stays in its current turn and retries its original patch only after actual `REGISTERED` readback. After automatic approval rejects an action, establish the missing authorization and scope evidence first. Changing the executor must never bypass a real scope violation, rewrite the request or enlarge the directory boundary.
+
+Registration recovery does not undo model calls that already occurred. Preserve the original charges of a finished failed child. A replacement run still uses the same work and valid allowance; a fresh chat, renamed job or new task must not reset accounting.
+
 4. Retry the native patch. Every target must belong to one registered directory. Existing host permissions still decide whether the write is permitted. A neutral Hook response means the repository reuse workflow does not apply; it proves neither artifact quality nor completed execution.
 5. Revoke the exact directory when work finishes or scope changes, and read back the result. Revocation does not delete artifacts.
 

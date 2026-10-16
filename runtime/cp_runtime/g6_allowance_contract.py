@@ -140,7 +140,7 @@ def later_authorization(current: Mapping[str, Any], previous: Mapping[str, Any])
     return (all(current[key] == previous[key] for key in
                 ("session_ref", "transcript_path_ref", "transcript_file_ref", "header_ref"))
             and current["start"] >= previous["end"]
-            and parse_iso(current["authorized_at"]) > parse_iso(previous["authorized_at"])
+            and parse_iso(current["authorized_at"]) >= parse_iso(previous["authorized_at"])
             and current["message_ref"] != previous["message_ref"])
 
 

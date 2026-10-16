@@ -248,6 +248,27 @@ class AllowanceAuthorityTests(unittest.TestCase):
         authority.recover(self.ledger)
         self.assertEqual(len(self.grants()), 0)
 
+    def test_equal_timestamp_correction_uses_strict_native_record_order(self):
+        stamp = utc_now()
+        self.user(self.async_reply("不追加"), stamp=stamp)
+        self.user("授权追加。", stamp=stamp)
+        authority.recover(self.ledger)
+        state = budget.read_budget(self.ledger)
+        self.assertIn(self.request["request_id"], state["allowance_grants"])
+        history = contract.decision_history(state, self.request["request_id"])
+        self.assertEqual(history[0]["authorization"]["authorized_at"], history[1]["authorization"]["authorized_at"])
+        self.assertGreaterEqual(history[1]["authorization"]["start"], history[0]["authorization"]["end"])
+
+    def test_equal_timestamp_revocation_still_blocks_replayed_old_approval(self):
+        stamp = utc_now()
+        old = self.user(self.async_reply(), stamp=stamp)
+        self.user(self.async_reply("不追加"), stamp=stamp)
+        authority.recover(self.ledger)
+        self.assertIn(self.request["request_id"], budget.read_budget(self.ledger)["allowance_revoked"])
+        self.emit(old["type"], old["payload"], old["timestamp"])
+        authority.recover(self.ledger)
+        self.assertIn(self.request["request_id"], budget.read_budget(self.ledger)["allowance_revoked"])
+
     def test_unrelated_message_clears_correction_context(self):
         self.user(self.async_reply("不追加"))
         self.user("Show another task.")
