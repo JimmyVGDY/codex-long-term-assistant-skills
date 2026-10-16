@@ -139,6 +139,41 @@ class RoutingStudyTests(unittest.TestCase):
         self.assertEqual(report["status"], "PARTIAL")
         self.assertEqual(len(report["missing_trials"]), 48)
 
+    def test_frozen_rule_plan_keeps_actual_install_version_and_legacy_contract(self):
+        trial = next(row for row in self.manifest["trials"] if row["variant"] == "baseline")
+        result, directory, evidence = self.make_run(trial)
+        result["host"]["plugin_version"] = "7.17.0"
+        body = (evidence / "host.txt").read_text().replace("PLUGIN_VERSION=7.16.2", "PLUGIN_VERSION=7.17.0")
+        result["host"]["readback_sha256"] = self.put(evidence / "host.txt", body)
+        self.put(directory / "result.json", json.dumps(result))
+        with self.assertRaisesRegex(ValueError, "STUDY_HOST_VERSION"):
+            self.evaluate()
+        rule = self.manifest["rules"]["baseline"]
+        result["rule_context"] = {"kind": "frozen_snapshot_plan", "plugin_version": rule["plugin_version"],
+                                  "rule_digest": rule["rule_digest"]}
+        self.put(directory / "result.json", json.dumps(result))
+        with self.assertRaises(ValueError):
+            self.evaluate()
+        body += "RULE_CONTEXT=frozen_snapshot_plan\nRULE_PLUGIN_VERSION=7.16.2\n"
+        result["host"]["readback_sha256"] = self.put(evidence / "host.txt", body)
+        self.put(directory / "result.json", json.dumps(result))
+        evaluated = self.evaluate()
+        row = evaluated["trials"][0]
+        self.assertEqual((row["status"], row["evidence_mode"], row["rule_plugin_version"], row["installed_plugin_version"]),
+                         ("PASS", "frozen_snapshot_plan", "7.16.2", "7.17.0"))
+        self.assertEqual(evaluated["status"], "PARTIAL")
+        self.assertFalse(evaluated["router_trace_observed"])
+        changed = deepcopy(result)
+        changed["rule_context"]["rule_digest"] = "0" * 64
+        self.put(directory / "result.json", json.dumps(changed))
+        with self.assertRaisesRegex(ValueError, "STUDY_RULE_CONTEXT"):
+            self.evaluate()
+        changed = deepcopy(result)
+        changed["host"]["installed"] = False
+        self.put(directory / "result.json", json.dumps(changed))
+        with self.assertRaises(ValueError):
+            self.evaluate()
+
     def test_miss_false_activation_overload_and_phase_errors_are_separate(self):
         self.fill("development")
         for name, active in (("document-handover", []), ("document-changelog-word", ["technical-document-writing"])):

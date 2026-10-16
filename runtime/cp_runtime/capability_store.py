@@ -7,6 +7,7 @@ import math
 import os
 import re
 import stat
+import subprocess
 from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
@@ -253,6 +254,15 @@ class CapabilityStore:
         try:
             binding = validate_binding(self.profile_path, self.repo_path)
         except (RuntimeContractError, OSError, ValueError, KeyError, TypeError):
+            # 中文：Git 所有权保护导致的不可读不是已确认的绑定损坏；仍不授予写入许可。
+            # English: Git ownership protection is an unavailable read, not confirmed binding corruption; no write is authorized.
+            try:
+                probe = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=self.repo_path,
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=2)
+            except (OSError, subprocess.TimeoutExpired):
+                probe = None
+            if probe is not None and probe.returncode and b"detected dubious ownership" in probe.stderr.lower():
+                raise CapabilityError("PROFILE_HOST_CONTEXT_REQUIRED") from None
             raise CapabilityError("PROFILE_BINDING_INVALID") from None
         require(profile_raw == bounded_read(self.profile_path) and state_raw == bounded_read(state_path), "IDENTITY_CHANGED")
         return {"project_id": binding.project_id,

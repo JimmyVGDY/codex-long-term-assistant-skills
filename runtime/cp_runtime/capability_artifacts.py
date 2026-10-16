@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import stat
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -121,7 +122,11 @@ def _artifact_path(path: Path, budget: PathBudget) -> None:
         parts = path.relative_to(home).parts
         require(len(parts) >= 2 and parts[0] == "visualizations", "CONTROL_PATH_CONFLICT")
     require(path != Path.home() and path != Path(path.anchor), "ARTIFACT_ROOT_TOO_BROAD")
-    for ancestor in (path, *path.parents):
+    # 中文：已有普通文件不是目录；POSIX 的 file/.git 会抛出 ENOTDIR。
+    # English: An existing regular file is not a directory; file/.git raises ENOTDIR on POSIX.
+    node = budget.stat(path)
+    ancestors = path.parents if node is not None and stat.S_ISREG(node.st_mode) else (path, *path.parents)
+    for ancestor in ancestors:
         # 中文：产物目录不是另一个源码仓库；已有Git边界也不能被登记。
         # English: An artifact root cannot enter another source repository, even without an opt-in policy.
         require(budget.stat(ancestor / ".git") is None, "CROSS_REPO_PATH_CONFLICT")

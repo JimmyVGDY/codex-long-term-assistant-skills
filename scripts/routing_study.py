@@ -170,8 +170,20 @@ def evaluate(study_file, index_file, split, legacy):
         result_file = directory / EVAL.relative(run["results_file"])
         evidence = safe_path(directory / EVAL.relative(run["evidence_dir"]))
         result = EVAL.read_json(result_file)
-        EVAL.require(result.get("host", {}).get("plugin_version") == manifest["rules"][trial["variant"]]["plugin_version"],
-                     "STUDY_HOST_VERSION")
+        rule = manifest["rules"][trial["variant"]]
+        context = result.get("rule_context")
+        if context is None:
+            EVAL.require(result.get("host", {}).get("plugin_version") == rule["plugin_version"],
+                         "STUDY_HOST_VERSION")
+            evidence_mode = "installed_version_report"
+        else:
+            # 中文：冻结输入版本和真实安装版本分开记录，不能把读取旧规则说成安装旧包。
+            # English: Keep frozen input and actual installed versions separate; reading old rules is not an old-package installation.
+            EVAL.require(isinstance(context, dict) and set(context) == {"kind", "plugin_version", "rule_digest"}
+                         and context["kind"] == "frozen_snapshot_plan"
+                         and context["plugin_version"] == rule["plugin_version"]
+                         and context["rule_digest"] == rule["rule_digest"], "STUDY_RULE_CONTEXT")
+            evidence_mode = context["kind"]
         EVAL.require(result["host"].get("platform") == manifest["environment"]["platform"], "STUDY_HOST_PLATFORM")
         EVAL.require(result["host"].get("codex_version") == manifest["environment"]["runtime"], "STUDY_HOST_RUNTIME")
         EVAL.require(len(result.get("observations", [])) == 1
@@ -198,6 +210,10 @@ def evaluate(study_file, index_file, split, legacy):
                      manifest["rules"][trial["variant"]]["rule_digest"], "STUDY_HOST_RULES")
         EVAL.require(legacy._marker(readback, "ENVIRONMENT_DIGEST", "study host") ==
                      EVAL.digest(EVAL.canonical(manifest["environment"])), "STUDY_HOST_ENVIRONMENT")
+        if context is not None:
+            EVAL.require(legacy._marker(readback, "RULE_CONTEXT", "study host") == evidence_mode
+                         and legacy._marker(readback, "RULE_PLUGIN_VERSION", "study host") == rule["plugin_version"],
+                         "STUDY_RULE_CONTEXT_BINDING")
         profile = {"schema_version": 1, "profile_id": trial["trial_id"], "required_case_ids": [trial["case_id"]],
                    "minimum_pass_rate": 1.0, "minimum_independent_tasks": 1,
                    "required_evidence_level": "host_final_report"}
@@ -212,7 +228,9 @@ def evaluate(study_file, index_file, split, legacy):
                 cases, legacy.validate_host_profile(profile, cases), result, Path(temporary))
         row = report["cases"][0]
         case = next(case for case in cases if case["id"] == trial["case_id"])
-        rows.append({**trial, **row, "group": case["group"], "polarity": case["polarity"]})
+        rows.append({**trial, **row, "group": case["group"], "polarity": case["polarity"],
+                     "evidence_mode": evidence_mode, "rule_plugin_version": rule["plugin_version"],
+                     "installed_plugin_version": result["host"]["plugin_version"]})
     groups = {}
     for variant in ("baseline", "candidate"):
         groups[variant] = {}
@@ -234,6 +252,7 @@ def evaluate(study_file, index_file, split, legacy):
             "missing_trials": sorted(set(trials) - seen), "benefit": "UNKNOWN",
             "description_changes": False, "router_trace_observed": False,
             "limitations": ["Host final reports, not independently signed router traces.",
+                            "Frozen-snapshot plans do not establish historical package installation or automatic loader behavior.",
                             "Counts are descriptive; repeats are not new intent families.",
                             "Logical holdout only; do not tune against exposed final cases."]}
 

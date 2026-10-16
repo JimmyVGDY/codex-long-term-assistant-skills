@@ -78,6 +78,8 @@ study.json freezes the suite, both versions' Skill entry digests, environment, r
 
 Record one existing schema 2 host report per trial. New studies accept only codex_desktop_task; the old CLI source remains readable solely for historical records. Original reports additionally need unique TRIAL_ID and INPUT_SHA256 markers. Host readback needs RULE_DIGEST and ENVIRONMENT_DIGEST matching the frozen inputs, rules and environment. Record real task IDs and do not count one task's replay as an independent sample.
 
+To compare routing plans for frozen rules on one installed host, add `rule_context` with `kind=frozen_snapshot_plan` and the frozen rules' `plugin_version` and `rule_digest`. Host readback also includes `RULE_CONTEXT=frozen_snapshot_plan` and `RULE_PLUGIN_VERSION=<frozen-version>`; `host.plugin_version` always records the actual installation. Existing reports without this explicit mode still require the installed version to match the rules. This mode proves a routing-plan self-report for frozen inputs in real Desktop, not historical-package installation or automatic-loader behavior.
+
 Use a separate index for each split:
 
 ~~~json

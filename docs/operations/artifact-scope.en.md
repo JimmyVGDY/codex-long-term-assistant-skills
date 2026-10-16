@@ -18,6 +18,8 @@ python scripts/cp-runtime.py capability-task-artifact-register --profile <projec
 
 The command only consumes a native request record. It accepts no session ID, arbitrary output directory, or lifetime argument, and does not use environment variables to assert session ownership. The request freezes the session, project, directory identity, and deadlines; the command cannot expand that scope. Do not edit state JSON, supply prompt allowlists, or switch writers to evade missing registration.
 
+Registration reads the bound repository and writes account gate state. When the ordinary sandbox cannot read the repository because Git rejects its ownership context, the command returns `PROFILE_HOST_CONTEXT_REQUIRED` rather than claiming confirmed Profile corruption. Within existing task authorization, run the same exact registration command through host approval and read back its result. Do not edit the Profile, disable Git ownership protection or loosen the filesystem sandbox.
+
 4. Retry the native patch. Every target must belong to one registered directory. Existing host permissions still decide whether the write is permitted. A neutral Hook response means the repository reuse workflow does not apply; it proves neither artifact quality nor completed execution.
 5. Revoke the exact directory when work finishes or scope changes, and read back the result. Revocation does not delete artifacts.
 

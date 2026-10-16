@@ -24,6 +24,8 @@ from cp_runtime.capability_gate import GatePolicy
 from cp_runtime.patch_intent import parse_apply_patch, PatchIntentError
 from cp_runtime.patch_scope import classify_patch
 from cp_runtime import patch_scope
+from cp_runtime import capability_store as store_module
+from cp_runtime.common import RuntimeContractError
 
 ROOT = fixtures.ROOT
 
@@ -95,6 +97,19 @@ class ArtifactScopeTests(unittest.TestCase):
             self.assertEqual("UNCHANGED", value["host_permissions"])
             self.assertEqual(1 if action == "register" else 0, len(value["roots"]))
         self.assertIn("ARTIFACT_SCOPE_UNREGISTERED", json.dumps(self.call(command, "after-revoke")))
+
+    def test_git_ownership_read_failure_reports_host_context_without_weakening_identity(self):
+        before = self.policy.read()
+        with patch.object(store_module, "validate_binding", side_effect=RuntimeContractError("fixture binding read failed")):
+            probe = subprocess.CompletedProcess(["git"], 128, b"", b"fatal: detected dubious ownership in repository")
+            with patch.object(store_module.subprocess, "run", return_value=probe):
+                with self.assertRaisesRegex(CapabilityError, "PROFILE_HOST_CONTEXT_REQUIRED"):
+                    self.store._guard()
+            probe = subprocess.CompletedProcess(["git"], 0, b"fixture-root", b"")
+            with patch.object(store_module.subprocess, "run", return_value=probe):
+                with self.assertRaisesRegex(CapabilityError, "PROFILE_BINDING_INVALID"):
+                    self.store._guard()
+        self.assertEqual(self.policy.read(), before)
 
     def test_request_replay_cannot_renew_or_redirect_and_revocation_is_terminal(self):
         initial = self.register()

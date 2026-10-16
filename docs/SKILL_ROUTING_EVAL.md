@@ -78,6 +78,8 @@ study.json 冻结集合、两个版本的 Skill 入口摘要、环境、重复�
 
 每次记录一份既有 schema 2 宿主报告。新研究只接受 codex_desktop_task；旧格式中的 CLI 来源仅为历史读取保留。原始报告还须含唯一 TRIAL_ID 和 INPUT_SHA256 标记，宿主读回须含 RULE_DIGEST、ENVIRONMENT_DIGEST，分别匹配冻结输入、规则和环境。记录真实 task_id，不把同一任务的重放算成独立样本。
 
+在同一已安装宿主中仅比较冻结规则的路由计划时，报告增加 `rule_context`：`kind=frozen_snapshot_plan`，并填写冻结规则的 `plugin_version` 与 `rule_digest`。宿主读回另含 `RULE_CONTEXT=frozen_snapshot_plan` 和 `RULE_PLUGIN_VERSION=<冻结版本>`；`host.plugin_version` 始终是实际安装版本。既有报告未提供此显式模式时继续要求安装版本匹配规则版本。此模式仅证明真实 Desktop 中对冻结输入的路由计划自报，不证明历史包已安装或自动加载器行为。
+
 每个集合单独保存索引：
 
 ~~~json

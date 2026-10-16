@@ -9,7 +9,7 @@
     "runtime"
   ],
   "file_count": 350,
-  "payload_digest": "7f572e6643ef8c47103ed6c4b3f9e009560edbb03d6ada603d2c10159b0adcc5",
+  "payload_digest": "3778a537ea6704e86ca4916eb9a58d7ea8586fe6bb30efb374ca0141183c4fca",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
@@ -848,8 +848,8 @@
     },
     {
       "path": "hooks/cp_context.py",
-      "sha256": "bf07e756c842d766092d27c4604a7c9503582c25fcc9412509b8270269b7740c",
-      "size": 2921
+      "sha256": "7e55e629d93f2b2ab5bb390a195bfec31265d0c612d400c3b944e1f5dddcc853",
+      "size": 3446
     },
     {
       "path": "hooks/cp_gate.cmd",
@@ -923,8 +923,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_artifacts.py",
-      "sha256": "8ab2c5525724ceee6f4f6ef8244cda54924da4dd06aef9a6b0cc3ae974e56aad",
-      "size": 18173
+      "sha256": "4c3dd3f3204ea4b72fc9e1e0982eb4cb8991263fbefcc99a63b9dc9de566b77d",
+      "size": 18493
     },
     {
       "path": "runtime/cp_runtime/capability_cli.py",
@@ -983,8 +983,8 @@
     },
     {
       "path": "runtime/cp_runtime/capability_store.py",
-      "sha256": "bf4960602fbb6889e440c9b18980a41ff171d38315dade6c2bd28a4ff1cc3cf5",
-      "size": 21359
+      "sha256": "806e90345aafb2d73512bbad893d1d5a2440f9077a407ef22f738eb8210087ec",
+      "size": 22123
     },
     {
       "path": "runtime/cp_runtime/cli.py",
@@ -1648,8 +1648,8 @@
     },
     {
       "path": "runtime/tests/test_artifact_scope.py",
-      "sha256": "692d00b8d9aad1033604584667b64c1f661601b2c93c3b832bacdc0923de633c",
-      "size": 22590
+      "sha256": "13c1737e3d813dc9c4562bf0535f61f0a3cf93470e1ef63c3094e18d517f63ae",
+      "size": 23639
     },
     {
       "path": "runtime/tests/test_capability_budget_paths.py",

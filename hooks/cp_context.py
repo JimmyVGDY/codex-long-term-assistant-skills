@@ -10,6 +10,18 @@ from cp_runtime.context_hook_input import read_context_input
 from cp_runtime.g6_task_scope import route as g6_route
 from cp_runtime.routing_hook_v5 import registered_path, child_tool
 
+
+def _g6_owner(data):
+    # 中文：在同一次工具调用内恢复一次短暂锁竞争；身份冲突和权限错误仍直接拒绝。
+    # English: Retry one transient lock timeout within this tool call; identity and permission errors still fail directly.
+    for attempt in range(2):
+        try:
+            return g6_route(data)
+        except TimeoutError:
+            if attempt:
+                raise TimeoutError("G6_CONTEXT_LOCK_BUSY") from None
+
+
 def main():
     data = read_context_input(sys.stdin.buffer)
     if not data.get("agent_id"):
@@ -18,7 +30,7 @@ def main():
         # dispatches retain their dedicated guards and host permissions.
         print("{}")
         return
-    owner = g6_route(data)
+    owner = _g6_owner(data)
     if owner is not None and owner[0] == "new":
         # 中文：G6 子任务绑定自身账本，没有 V5 上下文读取许可；旧归属和未绑定调用仍使用原 V5 门禁。
         # English: The G6 child is bound to its own ledger and has no V5 context-reader
@@ -46,7 +58,8 @@ if __name__ == "__main__":
                 affected_action="child_tool", next_action="reconcile_same_child_context",
                 retry_budget=1 if isinstance(exc, (TimeoutError, OSError)) else 0)
             result = {"hookSpecificOutput": {"hookEventName": event, "permissionDecision": "deny",
-                      "permissionDecisionReason": code + "; decision=" + json.dumps(decision, ensure_ascii=True)}}
+                      "permissionDecisionReason": code + "; error_kind=" + type(exc).__name__
+                      + "; decision=" + json.dumps(decision, ensure_ascii=True)}}
         else:
             result = {"hookSpecificOutput": {"hookEventName": "PostToolUse",
                       "additionalContext": "Context audit was not verified. Preserve this evidence gap, "
