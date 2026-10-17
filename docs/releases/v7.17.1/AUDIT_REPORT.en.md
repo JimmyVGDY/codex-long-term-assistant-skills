@@ -20,6 +20,6 @@ No upstream protocol drift requiring changes to V7.17.0 runtime behavior has bee
 ## Post-implementation independent review
 
 - The first logical-readonly review returned one blocking finding: the bilingual `release_name` and Plugin descriptions still used the V7.17.0 theme. It also recorded unclear target-commit metadata in the review packet.
-- After repair, the public title reads `V7.17.1 | Codex 0.163.0 内部组件兼容 / Codex 0.163.0 internal component compatibility`; the bilingual Plugin descriptions agree, and the 350-file payload digest is `56b99b738c55c77b5d0fd7465c622b64e1f6c6330b11912b095144a5e20879e7`.
+- After repair, release metadata resolves V7.17.1 to matching Chinese and English Codex 0.163.0 internal-component compatibility names. The English name is `Codex 0.163.0 internal component compatibility`; the bilingual Plugin descriptions agree, and the 350-file payload digest is `56b99b738c55c77b5d0fd7465c622b64e1f6c6330b11912b095144a5e20879e7`.
 - The refreshed packet binds commit `d9ef9af06d0ba4de75fa774e01e4eba817cccb9d` and has SHA-256 `67944f091220f1324e222b92c38bb434b968e60bf8e409d0d722adb7ec637229`. The second targeted review concluded `pass` with no remaining findings.
 - The reviewer did not run tests, install, commit, push, tag, or publish. Remote CI, account Plugin, actual Desktop, Release, and public assets remain later independent gates.
