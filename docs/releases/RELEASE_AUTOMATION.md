@@ -29,8 +29,8 @@ English: [RELEASE_AUTOMATION.en.md](RELEASE_AUTOMATION.en.md)
 <!-- cp-fact:release.attestation.all -->
 ```powershell
 $repository = ([uri]"https://github.com/JimmyVGDY/codex-long-term-assistant-skills").AbsolutePath.Trim("/")
-gh attestation verify Codex-Skills-V7.17.0-zh-CN.zip --repo $repository
-gh attestation verify Codex-Skills-V7.17.0-en.zip --repo $repository
+gh attestation verify Codex-Skills-V7.17.1-zh-CN.zip --repo $repository
+gh attestation verify Codex-Skills-V7.17.1-en.zip --repo $repository
 ```
 <!-- /cp-fact -->
 
