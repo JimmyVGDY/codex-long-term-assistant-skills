@@ -1,6 +1,6 @@
 <!-- Generated from locales/en/docs/USER_GUIDE.md; edit that source and run scripts/documentation.py sync. -->
 
-# V7.17.0 Operating Guide
+# V7.17.1 Operating Guide
 
 See [Desktop gates and recovery](DESKTOP_GATE_RECOVERY.en.md) for default/degraded decisions, native receipt recovery, and continuation rules.
 
@@ -83,9 +83,9 @@ Keep approved tuples, planning units and available actual metering separate. Sem
 
 Read V1/V2/V3/V4 ledgers and results under their frozen contracts without repricing or regrading. Installation, registration, Hooks, native dispatch, validation and effective state are separate readbacks. Synthetic tests cannot replace native Desktop acceptance.
 
-## 5. Codex 0.162.1 scope
+## 5. Codex 0.163.0 scope
 
-V7.15.3 freezes an internal component window covering Codex CLI 0.162.1 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. Version 0.162.0 adds managed Git worktrees, task pinning, transcript copying, broader link interactions, custom Responses-provider capabilities, and sandbox and Windows file-access fixes. Version 0.162.1 fixes crashes in multiline asynchronous questions and startup failures caused by background-server feature defaults. These upstream changes do not automatically alter this package's reviewer qualification, budgets, or Operation v2 contract, and do not revoke the published GPT-6 script-first defaults described above. The 0.162.x Hook discovery and schema retain the 0.161.0 contracts, while the apply_patch handler changed again, so 0.162.x uses dedicated `result-v162`; context did not drift. Version 0.161.0 retains `result-v161`; older `0.160.x`, `0.159.x`, and 0.158.0 releases continue to reuse `result-v158`. Versions 0.156.1 and 0.156.0 left the window and remain fail-closed.
+V7.17.1 freezes an internal-component window covering Codex CLI 0.163.0 and the ten preceding stable releases in `config/codex-compatibility-v1.json`; this does not establish standalone CLI product support. The local Marketplace manifest must include `interface.displayName`; future, prerelease, and other out-of-window versions are not accepted automatically. Version 0.163.0 adds searchable `/config`, immediate steering and interruption, a leader key, managed background-server restart, parallel read-only tools, and default Daybreak enablement for eligible accounts. It also fixes restored permissions, network-proxy inspection, side conversations, Windows paste behavior, and local/remote command completion. These upstream changes do not automatically alter this package's reviewer eligibility, budgets, TaskScope, or Operation v2 contracts. The 0.163.0 Hook discovery/schema, apply_patch handler, and context digests are unchanged from 0.162.x, so it continues to use `result-v162`; 0.161.0 retains `result-v161`, while 0.160.x, 0.159.x, and 0.158.0 continue to reuse `result-v158`. The window now ends at 0.157.1; 0.157.0 has left the window and fails closed.
 
 Base installation requires Plugin readback of `installed=true`, `enabled=true`, and `version=7.14.7`, ten Skills, and no Plugin Hooks. Enhancement installation additionally requires a `HOST_COMPATIBLE` schema-3 snapshot and verification of account Hooks and managed runtime assets.
 

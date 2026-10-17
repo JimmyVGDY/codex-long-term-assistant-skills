@@ -12,6 +12,7 @@ See [Release automation and artifact provenance](RELEASE_AUTOMATION.md) for vers
 
 | Version | Release notes | Audit | Validation | Real observation | Build metadata | Package validation |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.17.1 | [Notes](v7.17.1/RELEASE_NOTES.md) | [Audit](v7.17.1/AUDIT_REPORT.md) | [Validation](v7.17.1/VALIDATION_REPORT.md) | Codex Desktop 0.163.0 internal-component compatibility; preserves V7.17.0 quality workflows | Not generated | Not generated |
 | 7.15.3 | [Notes](v7.15.3/RELEASE_NOTES.md) | [Audit](v7.15.3/AUDIT_REPORT.md) | [Validation](v7.15.3/VALIDATION_REPORT.md) | Codex Desktop 0.162.1 internal component compatibility; preserves V7.15.2 GPT-6 defaults | [JSON](v7.15.3/BUILD_INFO.json) | [JSON](v7.15.3/PACKAGE_VALIDATION.json) |
 | 7.15.2 | [Notes](v7.15.2/RELEASE_NOTES.md) | [Audit](v7.15.2/AUDIT_REPORT.md) | [Validation](v7.15.2/VALIDATION_REPORT.md) | GPT-6 script-first defaults with bounded flexibility; publicly released | Not generated | Not generated |
 | 7.15.1 | [Notes](v7.15.1/RELEASE_NOTES.md) | [Audit](v7.15.1/AUDIT_REPORT.md) | [Validation](v7.15.1/VALIDATION_REPORT.md) | GPT-6 new-default source candidate; installation, Desktop, and publication need separate readback | Not generated | Not generated |

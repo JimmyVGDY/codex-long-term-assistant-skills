@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.17.0",
-  "release_name": "Skill 质量评测与任务门禁恢复",
+  "version": "7.17.1",
+  "release_name": "Codex 0.163.0 内部组件兼容",
   "generated_for": "Codex Desktop engineering assistance with script-first GPT-6 nine-profile defaults, bounded adjustments, shared budgets, evidence-tolerant gates, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -730,7 +730,8 @@
     "7.5.1",
     "7.6.0",
     "7.12.0",
-    "7.13.0"
+    "7.13.0",
+    "7.17.0"
   ],
   "release_validation": {
     "python_syntax": true,
@@ -852,8 +853,9 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "anchor": "0.162.1",
+    "anchor": "0.163.0",
     "verified_versions": [
+      "0.163.0",
       "0.162.1",
       "0.162.0",
       "0.161.0",
@@ -863,8 +865,7 @@
       "0.159.1",
       "0.159.0",
       "0.158.0",
-      "0.157.1",
-      "0.157.0"
+      "0.157.1"
     ],
     "window_policy": "current-plus-ten-preceding-stable-releases-patch-counts",
     "registry": "config/codex-compatibility-v1.json",

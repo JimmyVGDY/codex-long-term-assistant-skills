@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.17.0",
-  "description": "跨项目长期技术助手 V7.17.0：提供六项 Skill 质量流程、逻辑任务预算与任务产物门禁恢复。",
+  "version": "7.17.1",
+  "description": "跨项目长期技术助手 V7.17.1：适配 Codex Desktop 内部组件 0.163.0，并保留 V7.17.0 的六项质量流程与任务门禁恢复。",
   "author": {
     "name": "Project maintainers"
   },

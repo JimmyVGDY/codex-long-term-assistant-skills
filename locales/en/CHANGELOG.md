@@ -2,6 +2,12 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## 7.17.1 - 2026-10-17
+
+- Advance the Codex Desktop internal-component window to official stable 0.163.0, retain the ten preceding stable releases, and remove 0.157.0 without creating a standalone CLI support track.
+- Freeze the official npm artifact, annotated-tag commit, and Hook/apply_patch source digests. Version 0.163.0 has no contract drift from 0.162.x and continues to reuse `result-v162`.
+- Preserve the six Skill-quality workflows, task allowances, and gate-recovery behavior published in V7.17.0. Package, account Plugin, actual Desktop, CI, tag, assets, provenance, and public downloads remain separate acceptance layers.
+
 ## 7.17.0 - 2026-10-16
 
 Post-release status update: the public Release was published at 2026-10-16 20:23:25 UTC. All four release-validation combinations, provenance, six anonymous asset downloads and official payload/installation checks passed. Bilingual downloads and reports reflect the actual release; historical failures, review protocol limits and uncovered host activation remain explicit.

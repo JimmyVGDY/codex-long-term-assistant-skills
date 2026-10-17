@@ -12,6 +12,7 @@ English: [README.en.md](README.en.md)
 
 | 版本 | 发行说明 | 审计报告 | 验证报告 | 真实观察 | 构建信息 | 包验证 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 7.17.1 | [说明](v7.17.1/RELEASE_NOTES.md) | [审计](v7.17.1/AUDIT_REPORT.md) | [验证](v7.17.1/VALIDATION_REPORT.md) | Codex Desktop 0.163.0 内部组件兼容；保留 V7.17.0 六项质量流程 | 尚未生成 | 尚未生成 |
 | 7.15.3 | [说明](v7.15.3/RELEASE_NOTES.md) | [复审](v7.15.3/AUDIT_REPORT.md) | [验证](v7.15.3/VALIDATION_REPORT.md) | Codex Desktop 0.162.1 内部组件兼容；保留 V7.15.2 GPT-6 默认 | [JSON](v7.15.3/BUILD_INFO.json) | [JSON](v7.15.3/PACKAGE_VALIDATION.json) |
 | 7.15.2 | [说明](v7.15.2/RELEASE_NOTES.md) | [复审](v7.15.2/AUDIT_REPORT.md) | [验证](v7.15.2/VALIDATION_REPORT.md) | GPT-6 脚本决策默认与有界弹性，已公开发布 | 尚未生成 | 尚未生成 |
 | 7.15.1 | [说明](v7.15.1/RELEASE_NOTES.md) | [复审](v7.15.1/AUDIT_REPORT.md) | [验证](v7.15.1/VALIDATION_REPORT.md) | GPT-6 新默认源码候选；安装、Desktop 与公开发行待分别读回 | 尚未生成 | 尚未生成 |

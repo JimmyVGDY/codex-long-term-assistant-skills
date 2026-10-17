@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.17.0",
-  "description": "Cross-project engineering assistant V7.17.0: Skill quality workflows, task-scoped budgets and artifact gate recovery.",
+  "version": "7.17.1",
+  "description": "Cross-project engineering assistant V7.17.1: Codex Desktop internal component 0.163.0 compatibility while preserving V7.17.0 quality workflows and task gate recovery.",
   "author": {
     "name": "Project maintainers"
   },

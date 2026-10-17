@@ -1,4 +1,4 @@
-# Codex 跨项目长期技术助手 V7.17.0 使用说明
+# Codex 跨项目长期技术助手 V7.17.1 使用说明
 
 本版的默认/降级门禁、原生回执恢复和续跑规则见[桌面门禁与恢复](DESKTOP_GATE_RECOVERY.md)。
 
@@ -79,9 +79,9 @@ Reviewer、Explorer、Worker共用根任务预算。增强运行时的新默认`
 
 旧V1/V2/V3/V4账本和结果按冻结合同读取，不重新计费或判定。安装、注册、Hook、真实派发、验证通过和已生效分别读回；合成测试不替代Desktop原生验收。
 
-## 5. Codex 0.162.1 边界
+## 5. Codex 0.163.0 边界
 
-V7.15.3 的内部组件窗口是 Codex CLI 0.162.1 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结；这不建立独立 CLI 产品支持。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.162.0 增加受管 Git worktree、任务固定、转录复制与更多链接交互，并改进自定义 Responses provider、沙箱与 Windows 文件访问；0.162.1 修复多行异步提问崩溃和后台服务 feature 默认不一致导致的启动失败。这些上游变化不自动改变本包的 Reviewer 资格、预算或 Operation v2 合同，也不撤销上文已发布的 GPT-6 脚本决策默认。0.162.x 的 Hook discovery/schema 沿用 0.161.0 合同，但 apply_patch handler 再次漂移，因此使用独立 `result-v162`；context 未漂移。0.161.0 保留 `result-v161`，旧 `0.160.x`、`0.159.x` 及 0.158.0 继续复用 `result-v158`；0.156.1 与 0.156.0 已退出并失败关闭。
+V7.17.1 的内部组件窗口是 Codex CLI 0.163.0 与此前十个稳定发行版，精确列表由 `config/codex-compatibility-v1.json` 冻结；这不建立独立 CLI 产品支持。本地 Marketplace manifest 必须包含 `interface.displayName`；未来版、预发布版和其他窗口外版本不会自动接纳。0.163.0 增加可搜索的 `/config`、即时跟随与中断、leader key、后台服务重启、只读工具并行和符合资格账户的 Daybreak 默认启用，并修复恢复权限、网络代理检查、侧会话、Windows 粘贴及本地/远程命令收尾问题。这些上游变化不自动改变本包的 Reviewer 资格、预算、TaskScope 或 Operation v2 合同。0.163.0 的 Hook discovery/schema、apply_patch handler 与 context 摘要均与 0.162.x 一致，因此继续使用 `result-v162`；0.161.0 保留 `result-v161`，旧 `0.160.x`、`0.159.x` 及 0.158.0 继续复用 `result-v158`。窗口现在止于 0.157.1，0.157.0 已退出并失败关闭。
 
 基础安装必须读回 `installed=true`、`enabled=true`、`version=7.14.7`、十个 Skill 与空 Plugin Hook 清单；增强安装还须核验 `HOST_COMPATIBLE` schema 3 快照、账户 Hook 和受管运行时资产。磁盘已有文件不等于 Plugin 已注册或已启用。
 
