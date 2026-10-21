@@ -65,3 +65,22 @@ cp-runtime.py task-scope-complete --session-id <native-session> --repo-path <rep
 - [门禁恢复原则](gate-recovery-policy.md)
 
 隔离格式测试证明脚本合同；安装读回和真实 Desktop 多任务验收必须单独记录。
+
+## 原生来源缺失的恢复
+
+`task-scope-origins` 失败时返回结构化原因和下一步。不要要求用户反复发送“继续”修复内部登记。已有授权继续有效，来源恢复不授予新权限。
+
+原生父 PreToolUse 通过既有上下文 Hook 登记宿主提供的转录定位，不保存提示正文。`task-scope-origins` 可据此自动恢复缺失来源；显式恢复也只消费已登记的宿主定位，调用方提供的文件不能建立来源资格。没有宿主定位时先修复 Hook 登记与信任，再执行普通工具调用，不要求用户重复输入。使用已安装且匹配的运行时：
+
+```text
+cp-runtime.py task-scope-recover-source --session-id <native-session> --repo-path <repo>
+cp-runtime.py task-scope-origins --session-id <native-session> --repo-path <repo>
+```
+
+恢复共享原有文件身份、仓库、消息和摘要验证，记录为 `native_hook_locator_readback`，不伪造 Hook 事件、不清账、不替换损坏或冲突来源。重复恢复保持已有来源字节不变。长会话返回 `next_before_byte` 时，用 `task-scope-origins --before-byte <cursor>` 分段回读同一转录，每次最多 2 MB；没有受支持的真人消息仍保持未验证。控制回复不能创建独立预算，自动注入不能冒充真人消息。
+
+`hooks_registration=MISSING/NOT_REGISTERED/UNREADABLE` 时同时按安装诊断修复 Hook 登记；`REGISTERED_UNVERIFIED` 只证明配置存在，不能声称真实执行或强制预算已生效。保留宿主信任要求，登记变化后按宿主提示审核，不手改信任记录。来源、预算、独立复审、安装和真实宿主验收分别报告。
+
+迁移账户通过 Junction 指向实际目录时，内部安装器可显式使用实际 `CODEX_HOME` 与 `CP_ASSISTANT_AGENTS_HOME`。后者必须是当前账户既有 `.agents` 的同一物理目录；相对路径、其他目录、所选路径中的链接及受管子目录链接仍拒绝。不要改写用户身份环境变量，不要删除旧来源或账本消除冲突。
+
+宿主提供的账户根联接路径仅在核实与当前 Codex Home 为同一物理目录后转换到规范位置；sessions 内部链接仍拒绝。观察失败只记录固定原因码与字段存在性，不保存命令、提示或路径正文。

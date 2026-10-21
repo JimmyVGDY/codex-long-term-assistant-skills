@@ -31,7 +31,7 @@ class RoutingStudyTests(unittest.TestCase):
                             "permissions_digest": "a" * 64, "cache_condition": "fresh"}
         with mock.patch.object(study, "resolve_commit", return_value="a" * 40), \
              mock.patch.object(study, "_rule_entries", side_effect=lambda commit, locale="zh-CN": (
-                 "7.16.2" if commit else "7.17.1",
+                 "7.16.2" if commit else "7.17.2",
                  {"skills/frontend-engineering/SKILL.md": b"baseline" if commit else b"candidate"})):
             self.prepared = study.prepare(self.suite, self.output, self.environment, "v7.16.2", legacy)
         self.manifest = study.EVAL.read_json(self.output / "study.json")
@@ -142,8 +142,8 @@ class RoutingStudyTests(unittest.TestCase):
     def test_frozen_rule_plan_keeps_actual_install_version_and_legacy_contract(self):
         trial = next(row for row in self.manifest["trials"] if row["variant"] == "baseline")
         result, directory, evidence = self.make_run(trial)
-        result["host"]["plugin_version"] = "7.17.1"
-        body = (evidence / "host.txt").read_text().replace("PLUGIN_VERSION=7.16.2", "PLUGIN_VERSION=7.17.1")
+        result["host"]["plugin_version"] = "7.17.2"
+        body = (evidence / "host.txt").read_text().replace("PLUGIN_VERSION=7.16.2", "PLUGIN_VERSION=7.17.2")
         result["host"]["readback_sha256"] = self.put(evidence / "host.txt", body)
         self.put(directory / "result.json", json.dumps(result))
         with self.assertRaisesRegex(ValueError, "STUDY_HOST_VERSION"):
@@ -160,7 +160,7 @@ class RoutingStudyTests(unittest.TestCase):
         evaluated = self.evaluate()
         row = evaluated["trials"][0]
         self.assertEqual((row["status"], row["evidence_mode"], row["rule_plugin_version"], row["installed_plugin_version"]),
-                         ("PASS", "frozen_snapshot_plan", "7.16.2", "7.17.1"))
+                         ("PASS", "frozen_snapshot_plan", "7.16.2", "7.17.2"))
         self.assertEqual(evaluated["status"], "PARTIAL")
         self.assertFalse(evaluated["router_trace_observed"])
         changed = deepcopy(result)

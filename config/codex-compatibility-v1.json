@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "package_version": "7.17.1",
+  "package_version": "7.17.2",
   "window_policy": {
     "anchor": "0.163.0",
     "preceding_stable_releases": 10,

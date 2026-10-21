@@ -36,7 +36,7 @@ from payload_integrity import (MANIFEST_NAME as PAYLOAD_MANIFEST_NAME,
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime"))
-from cp_runtime.integrity import init_keyring, verify_keyring  # noqa: E402
+from cp_runtime.integrity import default_keyring_path, init_keyring, verify_keyring  # noqa: E402
 import desktop_host  # noqa: E402
 MANIFEST_PATH = ROOT / "manifest.json"
 PACKAGE = "codex-cross-project-engineering-assistant"
@@ -384,10 +384,30 @@ def codex_home() -> Path:
     return _normalize_host_path(raw) if raw else (Path.home() / ".codex").expanduser().absolute()
 
 
+def agents_home() -> Path:
+    """中文：显式规范路径必须是当前账户 .agents 的同一实体；不放宽子路径检查。
+    English: An explicit canonical path must identify this account's .agents; descendant checks remain strict.
+    """
+    original = (Path.home() / ".agents").expanduser().absolute()
+    configured = os.environ.get("CP_ASSISTANT_AGENTS_HOME")
+    if not configured:
+        return original
+    selected = Path(configured).expanduser()
+    if not selected.is_absolute() or ".." in selected.parts:
+        raise InstallError("ACCOUNT_AGENTS_ABSOLUTE_PATH_REQUIRED")
+    reject_link_ancestors(selected)
+    try:
+        if not selected.is_dir() or not selected.samefile(original):
+            raise InstallError("ACCOUNT_AGENTS_IDENTITY_MISMATCH")
+    except OSError as exc:
+        raise InstallError("ACCOUNT_AGENTS_IDENTITY_UNAVAILABLE") from exc
+    return selected.absolute()
+
+
 def user_skills_home() -> Path:
     # 中文：Codex 当前账户级 Skills 规范目录不随 CODEX_HOME 改写。
     # English: The account-level Skills directory is independent of CODEX_HOME.
-    return (Path.home() / ".agents" / "skills").expanduser().absolute()
+    return agents_home() / "skills"
 
 
 def _is_reparse(path: Path) -> bool:
@@ -974,11 +994,11 @@ def backup_root(scope: str, repo: Optional[Path] = None) -> Path:
 
 
 def plugin_marketplace_root() -> Path:
-    return (Path.home() / ".agents" / "plugins" / "cp-assistant-marketplace").absolute()
+    return agents_home() / "plugins" / "cp-assistant-marketplace"
 
 
 def base_marketplace_root() -> Path:
-    return (Path.home() / ".agents" / "plugins" / "cp-assistant-base-marketplace").absolute()
+    return agents_home() / "plugins" / "cp-assistant-base-marketplace"
 
 
 def base_state_path() -> Path:
@@ -1649,6 +1669,31 @@ def _verify_restored_plugin(previous: Mapping[str, Any]) -> None:
             raise InstallError("旧 Plugin cache 恢复后 digest 不匹配: %s" % cache)
 
 
+def _restore_previous_cache(previous: Mapping[str, Any], backup: Optional[str]) -> None:
+    """中文：显式恢复源必须逐字节匹配事务已有摘要；不接受新摘要覆盖旧证据。
+    English: Explicit recovery bytes must match the transaction's existing digest; never replace old evidence.
+    """
+    if backup is None:
+        return
+    version = str(previous.get("version") or "")
+    expected = str(previous.get("cache_tree_sha256") or "")
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version) or not re.fullmatch(r"[0-9a-f]{64}", expected):
+        raise InstallError("PREVIOUS_CACHE_PROOF_REQUIRED")
+    source, target = Path(backup).absolute(), plugin_cache_root(version)
+    reject_link_ancestors(source)
+    if (str(target) != previous.get("cache_path") or source == target
+            or not source.is_dir() or tree_sha256(source) != expected):
+        raise InstallError("PREVIOUS_CACHE_BACKUP_MISMATCH")
+    _recheck_target(target, "user")
+    # 中文：接收原缓存、宿主重建缓存或中断后缺失的已绑定目标，保留未知改动。
+    # English: Accept original/rebuilt bytes or a missing bound target after interruption; preserve unknown drift.
+    if tree_sha256(target) not in {expected, tree_sha256(plugin_marketplace_payload()), "missing"}:
+        raise InstallError("PREVIOUS_CACHE_CURRENT_DRIFT")
+    copy_atomic(source, target)
+    if tree_sha256(target) != expected:
+        raise InstallError("PREVIOUS_CACHE_RESTORE_MISMATCH")
+
+
 def _probe_plugin_host(timeout: Optional[int] = None) -> Dict[str, Any]:
     """中文：读取已验证 Codex CLI 版本的 Plugin 宿主能力，不修改状态。
 
@@ -2035,7 +2080,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     current_skills = skill_names()
     deprecated_skills = deprecated_skill_names()
     old_base_state = _base_state() if mode == "plugin" else {}
-    reject_link_ancestors(ch); reject_link_ancestors(home / ".agents")
+    reject_link_ancestors(ch); reject_link_ancestors(agents_home())
     targets: List[Tuple[str, Path]] = [
         ("global", ch / "AGENTS.md"),
         ("install-state", state_path("user")),
@@ -2088,6 +2133,10 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     if mode == "plugin":
         capability_profile = _require_plugin_host()
         payload_report(ROOT)
+        # 中文：旧主机密钥不可用时，在任何受管文件改动前失败；不自动轮换密钥。
+        # English: Reject an unusable old-host key before managed-file mutation; never rotate keys automatically.
+        if default_keyring_path().exists():
+            verify_keyring()
     journal = _new_journal("user", mode, None, targets)
     _journal_write(journal, "PREPARED")
     backup = backup_root("user"); _io_path(backup).mkdir(parents=True, exist_ok=False)
@@ -2674,7 +2723,8 @@ def _load_live_journal(scope: str, repo: Optional[Path] = None) -> Optional[Dict
     return data
 
 
-def recover_transaction(scope: str, repo_path: Optional[str] = None) -> None:
+def recover_transaction(scope: str, repo_path: Optional[str] = None,
+                        previous_cache_backup: Optional[str] = None) -> None:
     repo = git_root(Path(repo_path or ".")) if scope == "repo" else None
     journal = _load_live_journal(scope, repo)
     if not journal:
@@ -2692,7 +2742,11 @@ def recover_transaction(scope: str, repo_path: Optional[str] = None) -> None:
     if journal["stage"] == "PREPARED" and not journal.get("backup"):
         _journal_write(journal, "ROLLED_BACK"); _finish_journal(journal)
         print("[OK] PREPARED 事务尚未写入受管目标，已安全清理"); return
-    journal["rollback_errors"] = list(journal.get("rollback_errors") or [])
+    # 中文：保留旧失败为历史；本轮是否恢复成功由本轮读回决定。
+    # English: Preserve old failures as history; only current readback determines this recovery attempt.
+    journal.setdefault("recovery_attempts", []).append({"previous_stage": journal["stage"],
+        "previous_errors": list(journal.get("rollback_errors") or []), "started_at": time.time()})
+    journal["rollback_errors"] = []
     _journal_write(journal, "ROLLBACK_STARTED")
     backup_value = journal.get("backup")
     backup = Path(str(backup_value)) if backup_value else None
@@ -2731,6 +2785,7 @@ def recover_transaction(scope: str, repo_path: Optional[str] = None) -> None:
                 _remove_marketplace(check=False)
             if previous_plugin.get("active") and _io_path(plugin_marketplace_root()).exists():
                 _activate_plugin(plugin_marketplace_root())
+                _restore_previous_cache(previous_plugin, previous_cache_backup)
                 _verify_restored_plugin(previous_plugin)
             if not previous_plugin.get("marketplace_exists"):
                 _remove_empty_marketplace_dirs()
@@ -2889,6 +2944,7 @@ def _diagnostic_facts_once(scope: str, mode: Optional[str], repo_path: Optional[
             state_error = "INSTALLATION_VERSION_CONFLICT"
         for path in [
             codex_home() / "tools" / "cp-runtime.py", codex_home() / "tools" / "evolution.py",
+            codex_home() / "hooks.json",
             codex_home() / "tools" / "routing-v5.py",
             codex_home() / "cp-assistant-hooks" / "cp_hook.py",
             codex_home() / "cp-assistant-hooks" / "cp_gate.py",
@@ -2900,7 +2956,8 @@ def _diagnostic_facts_once(scope: str, mode: Optional[str], repo_path: Optional[
             try:
                 reject_link_ancestors(path)
                 if not _io_path(path).is_file():
-                    component_errors["enhancement"].append("ENHANCEMENT_FILE_MISSING")
+                    component_errors["enhancement"].append(
+                        "ENHANCEMENT_HOOK_REGISTRATION_MISSING" if path.name == "hooks.json" else "ENHANCEMENT_FILE_MISSING")
                 elif path.name in {"seal_worker.py", "cp_context.py", "review_context_reader.py", "routing-v5.py"} and tree_sha256(path) != managed_hashes.get(str(path)):
                     component_errors["enhancement"].append("ENHANCEMENT_FILE_DRIFT")
             except (OSError, InstallError):
@@ -3426,6 +3483,7 @@ def main() -> None:
     recover_parser=sub.add_parser("recover")
     recover_parser.add_argument("--scope",choices=["user","repo"],default="user")
     recover_parser.add_argument("--repo-path")
+    recover_parser.add_argument("--previous-cache-backup", help="Exact original cache bytes; must match the existing transaction digest.")
     inventory_parser=sub.add_parser("inventory")
     inventory_parser.add_argument("--scope",choices=["user","repo"],default="user")
     inventory_parser.add_argument("--mode",choices=["plugin","standalone"],default="plugin")
@@ -3447,7 +3505,7 @@ def main() -> None:
         print(json.dumps(inventory(args.scope,args.mode,args.repo_path),ensure_ascii=False,indent=2)); return
     if args.command=="recover":
         repo = git_root(Path(args.repo_path or ".")) if args.scope == "repo" else None
-        with scope_lock(args.scope, repo): recover_transaction(args.scope, str(repo) if repo else None)
+        with scope_lock(args.scope, repo): recover_transaction(args.scope, str(repo) if repo else None, args.previous_cache_backup)
         return
     repo = git_root(Path(args.repo_path or ".")) if args.scope == "repo" else None
     if args.command == "install" and args.scope == "user":

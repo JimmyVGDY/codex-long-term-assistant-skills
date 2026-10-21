@@ -25,6 +25,24 @@ def _g6_owner(data):
 def main():
     data = read_context_input(sys.stdin.buffer)
     if not data.get("agent_id"):
+        # 中文：真实父工具事件补充来源定位，不依赖用户再发一次提示；观察失败不阻塞普通工作。
+        # English: Native parent tools capture provenance without another user prompt; observation failure stays nonblocking.
+        from cp_runtime.g6_task_origin import observe_native_locator, record_locator_failure
+        native = dict(data)
+        if not native.get("hook_event_name") and len(sys.argv) == 2 and sys.argv[1] in {"PreToolUse", "PostToolUse"}:
+            native["hook_event_name"] = sys.argv[1]
+        if native.get("hook_event_name") == "PreToolUse":
+            failure = None
+            try:
+                if observe_native_locator(native) is None:
+                    failure = ValueError("TASK_NATIVE_LOCATOR_FIELDS_MISSING")
+            except (OSError, ValueError, RuntimeError) as exc:
+                failure = exc
+            if failure is not None:
+                try:
+                    record_locator_failure(native, failure)
+                except (OSError, ValueError, RuntimeError):
+                    pass
         # 中文：本入口只约束子任务；主任务写入和派发由各自门禁核验。
         # English: This entrypoint guards children only. Parent writes and
         # dispatches retain their dedicated guards and host permissions.

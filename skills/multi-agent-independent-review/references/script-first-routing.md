@@ -49,3 +49,5 @@ Stop 从既有账本生成单根观察：按批准档位和角色统计尝试、
 ## 兼容与回放
 
 先读取根任务绑定的策略版本。旧V3/V4账本继续按[历史模型路由](reviewer-model-routing.md)及各自冻结合同解释；新默认不要求取得其统计资格，也不把缺少旧资格卡视为违规。同一聊天换策略通过可验证交接保留旧账目、未结项和迟到事件归属。
+
+来源缺失时先读取 `task-scope-origins` 的结构化诊断。真实父工具 Hook 会登记宿主定位，origins 可从该定位自动恢复；显式 `task-scope-recover-source --session-id <native-session> --repo-path <repo>` 也必须有宿主定位。调用方文件不能建立来源资格，不要求用户重复口令。有 `next_before_byte` 时以 `--before-byte` 有界回读。身份或完整性失败不覆盖旧记录；缺 Hook 时修复安装与信任，普通工具调用即可触发定位。来源定位不冒充预算强制生效。

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.17.1",
+  "version": "7.17.2",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,12 +9,12 @@
     "runtime"
   ],
   "file_count": 350,
-  "payload_digest": "56b99b738c55c77b5d0fd7465c622b64e1f6c6330b11912b095144a5e20879e7",
+  "payload_digest": "c3deda48edeae330c824ddf7dffa09eab3f385a896811165672e9c1c2039dae3",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "d116dab4cddcf5cc5169ceec41b37b704f63290f87960a42f36a55e5bcd16d7a",
-      "size": 874
+      "sha256": "4f596c6df68e4a368dcd44038301f42362bfe12a3f67901345d14fc2f860b08e",
+      "size": 860
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -703,8 +703,8 @@
     },
     {
       "path": "skills/multi-agent-independent-review/references/script-first-routing.md",
-      "sha256": "602684c971f6f79d00c77dc6d27c3ae189ab5a8a5c6bc4ce94e715d4510671e6",
-      "size": 6149
+      "sha256": "c2966e5f3fe41fe766ff9283d07a3f26257ece89245621fb7e63651dd03249fb",
+      "size": 6707
     },
     {
       "path": "skills/multi-agent-independent-review/scripts/review_controller.py",
@@ -848,8 +848,8 @@
     },
     {
       "path": "hooks/cp_context.py",
-      "sha256": "7e55e629d93f2b2ab5bb390a195bfec31265d0c612d400c3b944e1f5dddcc853",
-      "size": 3446
+      "sha256": "6008d3bce511acec50e023a7046be2beb51589493be3a19f1b4d9d12abdb2a88",
+      "size": 4532
     },
     {
       "path": "hooks/cp_gate.cmd",
@@ -1343,8 +1343,8 @@
     },
     {
       "path": "runtime/cp_runtime/g6_task_origin.py",
-      "sha256": "27f601c6ea4285363637b7ce171055239d71400ab1914c02d02f7d20de13a676",
-      "size": 12585
+      "sha256": "3e46038a2a69258f9db84535eba2c5f97c40e435ebc182ed5a4475e4b8ce8238",
+      "size": 24960
     },
     {
       "path": "runtime/cp_runtime/g6_task_scope.py",
@@ -1353,8 +1353,8 @@
     },
     {
       "path": "runtime/cp_runtime/g6_task_scope_cli.py",
-      "sha256": "72fb56aaa54789727c5832b2047dd337c829868efef56012554f7df3330f0a94",
-      "size": 2886
+      "sha256": "0cb83ed50d8747227e6253c2b056133688e39d3d3faccf16b65ee4f5b8b71ecc",
+      "size": 3712
     },
     {
       "path": "runtime/cp_runtime/g6_user_choice_v1.py",

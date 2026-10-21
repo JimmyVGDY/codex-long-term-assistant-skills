@@ -11,11 +11,11 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .capability_store import bounded_read, safe_path
-from .common import atomic_write_json, parse_iso, read_json, resolve_codex_home, utc_now, verify_record
+from .common import RuntimeContractError, atomic_write_json, parse_iso, read_json, resolve_codex_home, utc_now, verify_record
 from .event_v2 import OwnerTokenLock, project_identity_for
 from .g6_allowance_authority import _native_header
 from .path_identity import same_path
-from .routing_contract import _constant, _object, exact, fail, ref
+from .routing_contract import RoutingError, _constant, _object, exact, fail, ref
 
 MAX_WINDOW = 2_000_000
 MAX_RECORD = 1_048_576
@@ -27,6 +27,13 @@ ORIGIN_FIELDS = {"schema_version", "origin_ref", "source", "session_ref", "repo_
                  "message_ref", "turn_ref", "native_turn_id", "text_ref", "record_ref",
                  "start", "end", "submitted_at", "kind"}
 CONTROL = {"继续", "继续执行", "好的", "好", "确认", "同意", "批准", "yes", "ok", "continue"}
+OBSERVATION_CODES = {"LINK_REJECTED", "PATH_UNREADABLE", "TASK_NATIVE_HOME_IDENTITY",
+    "TASK_NATIVE_LOCATOR_FIELDS_MISSING", "TASK_SOURCE_CHANGED", "TASK_SOURCE_REPLACED",
+    "TASK_SOURCE_IDENTITY", "TASK_SOURCE_FIELDS", "TASK_NATIVE_LOCATOR_IDENTITY",
+    "G6_ALLOWANCE_NATIVE_SOURCE_PATH", "G6_ALLOWANCE_NATIVE_SOURCE_IDENTITY",
+    "V5_ABSOLUTE_PATH_REQUIRED", "V5_REPARSE_PATH_DENIED", "V5_FILE_REQUIRED",
+    "V5_ALTERNATE_STREAM_DENIED", "CONTEXT_V2_TRANSCRIPT_FILE_IDENTITY", "V5_CHILD_HEADER_BOUND",
+    "TASK_NATIVE_LOCATOR_OBSERVATION_FAILED"}
 
 
 def _directory(session: str) -> Path:
@@ -40,6 +47,28 @@ def _identity(cwd: Path) -> dict:
     return {"project_id": project_id, "repo_fingerprint": fingerprint}
 
 
+def _native_transcript_path(value: str) -> Path:
+    """中文：仅展开已核验账户根别名；sessions 内部链接仍被拒绝。
+    English: Expand only a verified account-root alias; links inside sessions remain rejected.
+    """
+    path = Path(value).expanduser().absolute()
+    home = resolve_codex_home()
+    roots = (Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex").expanduser().absolute(),
+             (Path.home() / ".codex").absolute())
+    for root in roots:
+        try:
+            relative = path.relative_to(root)
+        except ValueError:
+            continue
+        if not relative.parts or relative.parts[0] != "sessions" or not root.samefile(home):
+            fail("TASK_NATIVE_HOME_IDENTITY")
+        canonical = safe_path(home / relative)
+        if not path.samefile(canonical):
+            fail("TASK_NATIVE_HOME_IDENTITY")
+        return canonical
+    return safe_path(path)
+
+
 def observe(data: Mapping[str, Any]) -> dict | None:
     """中文：原生父Hook只绑定来源位置；不创建任务或预算。
     English: A native parent Hook binds the source locator, never a task or budget.
@@ -49,41 +78,190 @@ def observe(data: Mapping[str, Any]) -> dict | None:
     session, cwd, transcript = (data.get(key) for key in ("session_id", "cwd", "transcript_path"))
     if not all(isinstance(value, str) and value for value in (session, cwd, transcript)):
         return None
-    cwd = safe_path(Path(cwd))
-    source = safe_path(Path(transcript))
-    header, binding = _native_header(source, session_id=session, cwd=cwd)
-    fixed = {"schema_version": "g6-task-native-source/1", "session_ref": ref(session),
-             "repo_path": str(cwd), "identity": _identity(cwd), "transcript_path": str(source),
-             **binding, "header_ref": ref(header)}
-    path = _directory(session) / "source.json"
+    value, _ = _bind_source(session, Path(cwd), _native_transcript_path(transcript),
+                            refresh_anchor=data["hook_event_name"] == "UserPromptSubmit")
+    return value
+
+
+def observe_native_locator(data: Mapping[str, Any]) -> dict | None:
+    """中文：只由原生父 PreToolUse 保存宿主定位；管理入口不能创建此证明。
+    English: Only native parent PreToolUse captures the host locator; management commands cannot create this proof.
+    """
+    if data.get("agent_id") or data.get("agentId") or data.get("hook_event_name") != "PreToolUse":
+        return None
+    keys = ("session_id", "cwd", "transcript_path", "turn_id", "tool_use_id")
+    if not all(isinstance(data.get(key), str) and data[key] for key in keys):
+        return None
+    value, _ = _bind_source(data["session_id"], Path(data["cwd"]), _native_transcript_path(data["transcript_path"]),
+                           refresh_anchor=True, locator=True,
+                           native_call_ref=ref([data["session_id"], data["turn_id"], data["tool_use_id"]]))
+    return value
+
+
+def record_locator_failure(data: Mapping[str, Any], error: Exception) -> None:
+    """中文：仅保存观察失败码和字段存在性；诊断不能作为来源或授权。
+    English: Retain only observation failure codes and field presence; diagnostics never establish provenance or authority.
+    """
+    session = data.get("session_id")
+    if data.get("agent_id") or data.get("agentId") or not isinstance(session, str) or not session:
+        return
+    code = str(error)
+    if code not in OBSERVATION_CODES:
+        code = "TASK_NATIVE_LOCATOR_OBSERVATION_FAILED"
+    fields = ("session_id", "cwd", "transcript_path", "turn_id", "tool_use_id")
+    value = {"schema_version": "g6-native-locator-diagnostic/1", "session_ref": ref(session),
+             "reason_code": code, "observed_at": utc_now(),
+             "fields_present": {key: isinstance(data.get(key), str) and bool(data[key]) for key in fields}}
+    path = _directory(session) / "observation-diagnostic.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_json(path, value, seal=True)
+
+
+def _bind_source(session: str, cwd: Path, transcript: Path, *, refresh_anchor: bool,
+                 locator: bool = False, native_call_ref: str | None = None) -> tuple[dict, bool]:
+    """中文：Hook 与显式读回共用同一身份检查；恢复不冒充 Hook 事件。
+    English: Hooks and explicit readback share identity checks; recovery never fabricates a Hook event.
+    """
+    cwd, source = safe_path(cwd), safe_path(transcript)
+    # 中文：无效来源不得创建持久化状态目录。
+    # English: Invalid sources must not create persistent state directories.
+    _native_header(source, session_id=session, cwd=cwd)
+    path = _directory(session) / ("native-locator.json" if locator else "source.json")
     path.parent.mkdir(parents=True, exist_ok=True)
     with OwnerTokenLock(path, timeout=2):
+        header, binding = _native_header(source, session_id=session, cwd=cwd)
+        with source.open("rb") as stream:
+            opened = os.fstat(stream.fileno())
+        if ref({"device": opened.st_dev, "inode": opened.st_ino}) != binding["transcript_file_ref"]:
+            fail("TASK_SOURCE_CHANGED")
+        fixed = {"schema_version": "g6-task-native-locator/1" if locator else "g6-task-native-source/1", "session_ref": ref(session),
+                 "repo_path": str(cwd), "identity": _identity(cwd), "transcript_path": str(source),
+                 **binding, "header_ref": ref(header)}
+        if locator:
+            fixed["native_call_ref"] = native_call_ref
+        created = not path.exists()
         if path.exists():
-            previous = _read_source(session, cwd)
+            previous = _read_binding(session, cwd, locator=locator)
             fixed["identity"] = _identity(Path(previous["repo_path"]))
             # 中文：路径别名必须指向同一实体，其他身份和内容指纹仍需完全一致。
             # English: Path aliases must name the same entity; every other identity and content digest stays exact.
             locations = ("repo_path", "transcript_path")
-            if (any(previous[key] != value for key, value in fixed.items() if key not in locations)
+            if (any(previous[key] != value for key, value in fixed.items() if key not in (*locations, "native_call_ref"))
                     or any(not same_path(Path(previous[key]), Path(fixed[key])) for key in locations)):
                 fail("TASK_SOURCE_REPLACED")
-            if data["hook_event_name"] != "UserPromptSubmit":
-                return previous
+            if not refresh_anchor:
+                return previous, False
             fixed.update({key: previous[key] for key in locations})
-        value = {**fixed, "anchor": source.stat().st_size, "observed_at": utc_now()}
+        current = safe_path(source).stat()
+        if (current.st_dev, current.st_ino) != (opened.st_dev, opened.st_ino) or current.st_size < opened.st_size:
+            fail("TASK_SOURCE_CHANGED")
+        value = {**fixed, "anchor": opened.st_size, "observed_at": utc_now()}
         atomic_write_json(path, value, seal=True)
-    return value
+    return value, created
+
+
+def recover_source(session: str, cwd: Path, transcript: Path | None = None) -> dict:
+    """中文：只消费宿主 Hook 已登记的定位；调用方路径只能交叉核验，不能授予来源资格。
+    English: Consume a host-observed locator; a caller path can cross-check it but cannot establish provenance.
+    """
+    from .g6_runtime_support import installed_task_scope_support
+    if not installed_task_scope_support()["supported"]:
+        fail("TASK_MATCHING_INSTALLED_READER_REQUIRED")
+    locator = _read_binding(session, safe_path(cwd), locator=True)
+    trusted_path = Path(locator["transcript_path"])
+    if transcript is not None and not same_path(safe_path(transcript), trusted_path):
+        fail("TASK_SOURCE_REPLACED")
+    value, created = _bind_source(session, cwd, trusted_path, refresh_anchor=False)
+    return {"schema_version": "g6-task-source-recovery/1",
+            "status": "RECOVERED" if created else "ALREADY_BOUND",
+            "provenance": "native_hook_locator_readback", "session_ref": value["session_ref"],
+            "native_call_ref": locator["native_call_ref"],
+            "source_ref": value["transcript_file_ref"], "next_action": "task_scope_origins",
+            "host_enforcement": "UNVERIFIED", "execution_authorization": "NONE"}
+
+
+def diagnose(session: str, cwd: Path, *, error: Exception | None = None) -> dict:
+    """中文：返回只读且不含正文的恢复指引；登记存在不能证明宿主已执行。
+    English: Return read-only, body-free recovery guidance; registration does not prove host execution.
+    """
+    present = False
+    try:
+        present = (_directory(session) / "source.json").exists()
+        _read_source(session, safe_path(cwd))
+    except (OSError, ValueError, RuntimeContractError) as exc:
+        error = error or exc
+    reason = "TASK_NATIVE_SOURCE_AVAILABLE" if error is None else str(error)
+    if not re.fullmatch(r"[A-Z][A-Z0-9_]{1,95}", reason):
+        reason = "TASK_SOURCE_READ_FAILED"
+    locator_available = False
+    try:
+        _read_binding(session, safe_path(cwd), locator=True)
+        locator_available = True
+    except (OSError, ValueError, RuntimeContractError):
+        pass
+    hooks = resolve_codex_home() / "hooks.json"
+    registration = "MISSING"
+    try:
+        if hooks.exists():
+            value = json.loads(bounded_read(hooks, 262_144), object_pairs_hook=_object, parse_constant=_constant)
+            events = value.get("hooks", {})
+            commands = [item.get("command", "") for name in ("UserPromptSubmit", "PreToolUse")
+                        for group in events.get(name, []) for item in group.get("hooks", [])]
+            registration = "REGISTERED_UNVERIFIED" if any("cp_hook.py" in item or "cp_context.py" in item for item in commands) else "NOT_REGISTERED"
+    except (OSError, ValueError, RuntimeContractError, AttributeError, TypeError):
+        registration = "UNREADABLE"
+    observation = None
+    try:
+        diagnostic = _directory(session) / "observation-diagnostic.json"
+        if not locator_available and diagnostic.exists():
+            record = json.loads(bounded_read(diagnostic, 4096), object_pairs_hook=_object, parse_constant=_constant)
+            verify_record(record, "native observation diagnostic")
+            presence = record.get("fields_present")
+            stamp = record.get("observed_at")
+            if (record.get("schema_version") == "g6-native-locator-diagnostic/1" and record.get("session_ref") == ref(session)
+                    and record.get("reason_code") in OBSERVATION_CODES and isinstance(presence, dict)
+                    and set(presence) == {"session_id", "cwd", "transcript_path", "turn_id", "tool_use_id"}
+                    and all(type(item) is bool for item in presence.values()) and isinstance(stamp, str) and len(stamp) <= 64):
+                parse_iso(stamp)
+                observation = {key: record.get(key) for key in ("reason_code", "fields_present", "observed_at")}
+    except (OSError, ValueError, RuntimeContractError):
+        pass
+    action = ("continue_existing_task" if error is None else
+              "repair_matching_installation" if reason == "TASK_MATCHING_INSTALLED_READER_REQUIRED" else
+              "recover_existing_native_source" if reason == "TASK_NATIVE_SOURCE_UNAVAILABLE" and locator_available else
+              ("inspect_native_hook_metadata" if observation else "verify_hook_execution") if registration == "REGISTERED_UNVERIFIED"
+              and reason in {"TASK_NATIVE_SOURCE_UNAVAILABLE", "TASK_NATIVE_LOCATOR_UNAVAILABLE"} else "repair_hook_registration"
+              if reason in {"TASK_NATIVE_SOURCE_UNAVAILABLE", "TASK_NATIVE_LOCATOR_UNAVAILABLE"} else
+              "inspect_existing_source_integrity" if present else
+              "inspect_native_source_identity")
+    return {"schema_version": "g6-task-source-diagnostic/1",
+            "status": "AVAILABLE" if error is None else "UNAVAILABLE" if reason in {"TASK_NATIVE_SOURCE_UNAVAILABLE", "TASK_NATIVE_LOCATOR_UNAVAILABLE"} else "BLOCKED",
+            "reason_code": reason, "hooks_registration": registration,
+            "next_action": action, "recovery_command": "task-scope-recover-source" if locator_available and not present else None,
+            "native_locator_available": locator_available,
+            "last_native_observation": observation,
+            "recovery_requires": ["matching_installed_reader", "registered_native_parent_locator"],
+            "installation_action": "verify_hook_execution" if registration == "REGISTERED_UNVERIFIED" else "repair_hook_registration",
+            "repeat_user_input_required": False, "host_enforcement": "UNVERIFIED",
+            "execution_authorization": "NONE"}
 
 
 def _read_source(session: str, cwd: Path) -> dict:
-    path = _directory(session) / "source.json"
+    return _read_binding(session, cwd)
+
+
+def _read_binding(session: str, cwd: Path, *, locator: bool = False) -> dict:
+    path = _directory(session) / ("native-locator.json" if locator else "source.json")
     if not path.exists():
-        fail("TASK_NATIVE_SOURCE_UNAVAILABLE")
+        fail("TASK_NATIVE_LOCATOR_UNAVAILABLE" if locator else "TASK_NATIVE_SOURCE_UNAVAILABLE")
     value = json.loads(bounded_read(path, 16_384), object_pairs_hook=_object, parse_constant=_constant)
     verify_record(value, "native task source")
     value.pop("integrity")
-    exact(value, SOURCE_FIELDS, "TASK_SOURCE_FIELDS")
-    if (value["schema_version"] != "g6-task-native-source/1" or value["session_ref"] != ref(session)
+    exact(value, SOURCE_FIELDS | ({"native_call_ref"} if locator else set()), "TASK_SOURCE_FIELDS")
+    expected_schema = "g6-task-native-locator/1" if locator else "g6-task-native-source/1"
+    if locator and (not isinstance(value["native_call_ref"], str) or re.fullmatch(r"sha256:[0-9a-f]{64}", value["native_call_ref"]) is None):
+        fail("TASK_NATIVE_LOCATOR_IDENTITY")
+    if (value["schema_version"] != expected_schema or value["session_ref"] != ref(session)
             or not same_path(Path(value["repo_path"]), cwd)
             or value["identity"] != _identity(Path(value["repo_path"]))
             or type(value["anchor"]) is not int or value["anchor"] < 0):
@@ -130,20 +308,35 @@ def _kind(text: str) -> str:
     return "goal_candidate"
 
 
-def prepare(session: str, cwd: Path) -> dict:
+def prepare(session: str, cwd: Path, *, before_byte: int | None = None) -> dict:
     """中文：读取提交位置附近的有界完整行，冻结引用供主Agent作语义判断。
     English: Freeze bounded complete records near submission for the coordinator's semantic decision.
     """
     cwd = safe_path(cwd)
-    source = _read_source(session, cwd)
+    try:
+        source = _read_source(session, cwd)
+    except RoutingError as exc:
+        if str(exc) != "TASK_NATIVE_SOURCE_UNAVAILABLE" or not (_directory(session) / "native-locator.json").exists():
+            raise
+        recover_source(session, cwd)
+        source = _read_source(session, cwd)
+    anchor = source["anchor"]
+    if (_directory(session) / "native-locator.json").exists():
+        locator = _read_binding(session, cwd, locator=True)
+        if any(locator[key] != source[key] for key in ("header_ref", "transcript_file_ref", "transcript_path_ref")):
+            fail("TASK_SOURCE_REPLACED")
+        anchor = max(anchor, locator["anchor"])
     path = Path(source["transcript_path"])
     origins = []
     with path.open("rb") as stream:
         opened = os.fstat(stream.fileno())
-        if opened.st_size < source["anchor"]:
+        if opened.st_size < anchor:
             fail("TASK_SOURCE_TRUNCATED")
-        end = min(opened.st_size, source["anchor"] + 262_144)
+        if before_byte is not None and (type(before_byte) is not int or not 0 < before_byte <= opened.st_size):
+            fail("TASK_SOURCE_SCAN_CURSOR")
+        end = min(opened.st_size, anchor + 262_144) if before_byte is None else before_byte
         start = max(0, end - MAX_WINDOW)
+        window_start = start
         stream.seek(start)
         raw = stream.read(end - start)
         after = os.fstat(stream.fileno())
@@ -191,10 +384,14 @@ def prepare(session: str, cwd: Path) -> dict:
                 atomic_write_json(target, value, seal=True)
         origins.append({"origin_ref": origin_ref, "turn_ref": value["turn_ref"],
                         "submitted_at": stamp, "kind": value["kind"], "text_ref": value["text_ref"]})
+    next_before = (start if start < end else window_start) if window_start else None
     return {"schema_version": "g6-task-origin-view/1", "origins": origins[-16:],
             "latest_goal_candidate": next((item for item in reversed(origins)
                                            if item["kind"] == "goal_candidate"), None),
-            "bytes_read": len(raw), "execution_authorization": "NONE"}
+            "bytes_read": len(raw), "next_before_byte": next_before,
+            "next_action": "select_existing_origin" if origins else
+                           "scan_previous_native_records" if next_before else "native_human_source_not_found",
+            "repeat_user_input_required": False, "execution_authorization": "NONE"}
 
 
 def read_origin(session: str, cwd: Path, origin_ref: str) -> dict:

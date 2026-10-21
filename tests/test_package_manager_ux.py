@@ -60,6 +60,8 @@ class PackageManagerUxTests(unittest.TestCase):
         runtime = home / "runtime" / "cp_runtime"
         runtime.mkdir(parents=True)
         (runtime / "cli.py").write_text("fixture", encoding="utf-8")
+        (home / "hooks.json").write_text(json.dumps({"hooks": package_manager.hook_fragment(
+            home / "cp-assistant-hooks/cp_hook.py", package_manager._host_profile(package_manager.TARGET_CODEX_VERSION))}), encoding="utf-8")
         payload = write_manifest(cache, package_manager.PACKAGE, package_manager.VERSION)
         state = {"schema_version": 3, "package": package_manager.PACKAGE,
                  "version": package_manager.VERSION, "mode": mode,
@@ -107,6 +109,13 @@ class PackageManagerUxTests(unittest.TestCase):
         git(path, "add", ".")
         git(path, "commit", "-qm", "fixture")
         return path
+
+    def test_missing_hooks_degrades_enhancement_without_removing_base_skills(self):
+        with self.installed_fixture() as state_file:
+            (state_file.parent / "hooks.json").unlink()
+            value = package_manager._diagnostic_facts("user", "plugin", None)
+            self.assertTrue(value["base_activation"]["active"])
+            self.assertIn("ENHANCEMENT_HOOK_REGISTRATION_MISSING", value["component_errors"]["enhancement"])
 
     def test_python_preflight_precedes_local_imports_and_version_comes_from_manifest(self):
         text = MANAGER.read_text(encoding="utf-8")
