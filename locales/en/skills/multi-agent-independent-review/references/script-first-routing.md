@@ -49,3 +49,5 @@ Stop derives single-root observations from the existing journal: attempts, charg
 ## Compatibility and replay
 
 Read the root's bound policy first. Existing V3/V4 ledgers retain the [historical routing rules](reviewer-model-routing.md) and frozen contracts. New defaults neither require their statistical qualification nor classify missing legacy cards as violations. A verified same-chat handoff preserves historical charges, unresolved records and late-event ownership.
+
+Read structured task-scope-origins diagnostics first. Native parent tool Hooks record the host locator, allowing origins to recover automatically. Explicit task-scope-recover-source --session-id <native-session> --repo-path <repo> also requires that locator. Caller-selected files cannot establish provenance. Do not request repeated phrases. Use --before-byte for returned backward cursors; identity or integrity failures never overwrite records. Repair missing Hooks and preserve trust review, then use an ordinary tool call. A source locator does not prove enforced budgets.

@@ -512,3 +512,6 @@ docs/releases/v7.17.1/RELEASE_NOTES.md
 docs/releases/v7.17.1/VALIDATION_REPORT.md
 docs/releases/v7.17.1/AUDIT_REPORT.md
 docs/releases/v7.17.1/AUDIT_REPORT.en.md
+docs/releases/v7.17.2/RELEASE_NOTES.md
+docs/releases/v7.17.2/VALIDATION_REPORT.md
+docs/releases/v7.17.2/AUDIT_REPORT.md

@@ -65,3 +65,22 @@ A new source selection is persisted only after task ownership is checked. If ano
 - [Gate recovery policy](gate-recovery-policy.en.md)
 
 Isolated native-format tests establish script contracts. Installed readback and real Desktop multi-task acceptance require separate evidence.
+
+## Recovering missing native provenance
+
+Use the structured reason and next action when `task-scope-origins` fails. Do not ask users to repeat “continue” to repair internal registration. Existing authorization remains valid; source recovery grants no additional authority.
+
+Native parent PreToolUse records the host-provided transcript locator through the existing context Hook without retaining prompt bodies. task-scope-origins can then recover a missing source automatically. Explicit recovery also consumes only this host-observed locator: caller-selected files cannot establish provenance. If the locator is absent, repair Hook registration and trust, then use an ordinary tool call without another user prompt. Run the matching installed runtime:
+
+```text
+cp-runtime.py task-scope-recover-source --session-id <native-session> --repo-path <repo>
+cp-runtime.py task-scope-origins --session-id <native-session> --repo-path <repo>
+```
+
+Recovery reuses file identity, repository, message and digest checks. It reports `native_hook_locator_readback` without fabricating a Hook event, resetting accounting or replacing damaged/conflicting sources. Repeated recovery preserves existing source bytes. For long chats, pass `next_before_byte` to `task-scope-origins --before-byte <cursor>` to read the same transcript in windows of at most 2 MB. Missing supported human messages remain unverified. Control replies cannot create independent budgets, and automatic injections cannot become human messages.
+
+If `hooks_registration` is `MISSING`, `NOT_REGISTERED` or `UNREADABLE`, also repair registration using installation diagnostics. `REGISTERED_UNVERIFIED` proves only that configuration exists, not execution or enforced budgeting. Preserve host trust review after registration changes; never edit trust records to bypass it. Report provenance, budgets, review, installation and actual host acceptance separately.
+
+For migrated accounts using junctions, the internal installer accepts the actual `CODEX_HOME` and an explicit `CP_ASSISTANT_AGENTS_HOME`. The latter must identify the same physical directory as the current account's existing `.agents`. Relative paths, other destinations, links in the selected path and links inside managed directories remain rejected. Do not change user-identity environment variables or delete old provenance or ledgers to erase conflicts.
+
+A host-provided account-root alias is canonicalized only after verifying the same physical Codex Home; links inside sessions remain rejected. Observation diagnostics retain fixed reason codes and field presence, never commands, prompts or raw paths.

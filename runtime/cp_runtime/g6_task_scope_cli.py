@@ -8,12 +8,18 @@ from pathlib import Path
 
 from . import g6_task_origin as origin, g6_task_scope as scope
 from .capability_store import bounded_read
+from .common import RuntimeContractError
 
 
 def run(args):
     cwd = Path(args.repo_path).resolve()
-    if args.command == "task-scope-origins":
-        value = origin.prepare(args.session_id, cwd)
+    if args.command in {"task-scope-origins", "task-scope-recover-source"}:
+        try:
+            value = (origin.prepare(args.session_id, cwd, before_byte=args.before_byte) if args.command == "task-scope-origins"
+                     else origin.recover_source(args.session_id, cwd, Path(args.transcript_path) if args.transcript_path else None))
+        except (OSError, ValueError, RuntimeContractError) as exc:
+            print(json.dumps(origin.diagnose(args.session_id, cwd, error=exc), ensure_ascii=False, indent=2))
+            raise SystemExit(1) from None
     elif args.command == "task-scope-select":
         value = scope.select(session=args.session_id, cwd=cwd, task_id=args.task_id,
                              origin_ref=args.origin_ref, relation=args.relation, task_scope=args.task_scope)
@@ -36,11 +42,15 @@ def run(args):
 
 
 def add_commands(sub):
-    for command in ("task-scope-origins", "task-scope-show", "task-scope-select",
+    for command in ("task-scope-origins", "task-scope-recover-source", "task-scope-show", "task-scope-select",
                     "task-scope-complete", "task-scope-preview"):
         item = sub.add_parser(command)
         item.add_argument("--session-id", required=True)
         item.add_argument("--repo-path", required=True)
+        if command == "task-scope-recover-source":
+            item.add_argument("--transcript-path", help="Optional cross-check of the host-observed path; cannot register a source.")
+        if command == "task-scope-origins":
+            item.add_argument("--before-byte", type=int)
         if command == "task-scope-select":
             item.add_argument("--task-id", required=True)
             item.add_argument("--origin-ref", required=True)

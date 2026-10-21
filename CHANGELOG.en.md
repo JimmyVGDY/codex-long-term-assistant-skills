@@ -4,6 +4,11 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## V7.17.2
+
+- Fix repeated-confirmation dead ends with host-observed provenance recovery, bounded scanning and migration diagnostics.
+- Preserve project, file identity, authorization, budget and host trust boundaries with targeted regressions.
+
 ## 7.17.1 - 2026-10-17
 
 - Advance the Codex Desktop internal-component window to official stable 0.163.0, retain the ten preceding stable releases, and remove 0.157.0 without creating a standalone CLI support track.
