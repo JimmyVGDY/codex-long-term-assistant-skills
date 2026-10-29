@@ -169,8 +169,8 @@ def _allowance_command(value: dict[str, Any], args: Any) -> None:
             raise ValueError("G6_CURRENT_NATIVE_SESSION_REQUIRED")
         repo = Path(value["repo_path"])
         transcript = Path(args.transcript_path).resolve()
-        authority._native_header(transcript, session_id=session, cwd=repo)
         if _native_root(value) is None:
+            authority._native_header(transcript, session_id=session, cwd=repo)
             from .g6_hook_v1 import _ensure_new_session
             if not _ensure_new_session({"session_id": session, "cwd": str(repo)}):
                 raise ValueError("G6_LEGACY_POLICY_AMENDMENT_UNSUPPORTED")

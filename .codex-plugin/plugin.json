@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.17.2",
-  "description": "跨项目长期技术助手 V7.17.2：恢复真实会话来源，提供可执行迁移诊断，保留任务预算与授权边界。",
+  "version": "7.17.3",
+  "description": "跨项目长期技术助手 V7.17.3：适配桌面客户端更新与项目来源切换，修复账户目录联接，保留历史预算与授权边界。",
   "author": {
     "name": "Project maintainers"
   },

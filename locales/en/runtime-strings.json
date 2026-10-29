@@ -843,9 +843,9 @@
         "[OK] V7.15.0 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.15.0 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
         "manifest 版本不是 7.15.0": "manifest version is not 7.15.0",
         "缺少 %s -> V7.15.0 升级声明": "missing %s -> V7.15.0 upgrade declaration",
-        "[OK] V7.17.2 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.17.2 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
-        "manifest 版本不是 7.17.2": "manifest version is not 7.17.2",
-        "缺少 %s -> V7.17.2 升级声明": "missing %s -> V7.17.2 upgrade declaration"
+        "[OK] V7.17.3 语义校验通过：Desktop 范围、AUTO 注册、onboarding/1、Operation v2 与历史解释器边界一致": "[OK] V7.17.3 semantic checks passed: Desktop scope, AUTO registration, onboarding/1, Operation v2 and historical reader boundaries are consistent.",
+        "manifest 版本不是 7.17.3": "manifest version is not 7.17.3",
+        "缺少 %s -> V7.17.3 升级声明": "missing %s -> V7.17.3 upgrade declaration"
       }
     },
     "scripts/verify-release.py": {
@@ -858,7 +858,7 @@
         "V7.13.2 端到端发行验证": "V7.13.2 end-to-end release validation",
         "V7.14.6 端到端发行验证": "V7.14.6 end-to-end release validation",
         "V7.15.0 端到端发行验证": "V7.15.0 end-to-end release verification",
-        "V7.17.2 端到端发行验证": "V7.17.2 end-to-end release verification"
+        "V7.17.3 端到端发行验证": "V7.17.3 end-to-end release verification"
       },
       "preserve": [
         "V7.12.0 端到端发行验证",
@@ -1047,6 +1047,8 @@
     },
     "scripts/package_manager.py": {
       "plain": {
+        "客户端已更新，管理接口已核验，增强运行证据待核验。": "The client was updated and its management contract was checked; enhanced runtime acceptance remains unverified.",
+        "在当前客户端核对 Hook 信任和所需增强功能，保存与当前内核绑定的验收报告。": "Check Hook trust and the required enhanced workflows in the current client, then retain an acceptance report bound to its component version.",
         "无法分配唯一的程序载荷暂存目录": "Unable to allocate a unique program-payload staging directory",
         "增强 hooks.json 无法解析: %s": "Enhanced hooks.json could not be parsed: %s",
         "增强 hooks.json 的 hooks 不是对象": "Enhanced hooks.json has a non-object hooks field",

@@ -19,6 +19,7 @@ RUNTIME_FILES = (
     "g6_review_controller.py", "g6_review_receipt_v1.py", "g6_review_requests.py", "g6_runtime_support.py",
     "g6_task_origin.py", "g6_task_scope.py", "g6_task_scope_cli.py", "g6_journal_capacity.py",
     "g6_default_activation.py", "g6_reconciliation.py",
+    "native_transcript.py", "native_workspace.py", "routing_hook_v5.py",
 )
 
 

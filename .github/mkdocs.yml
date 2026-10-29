@@ -90,6 +90,7 @@ nav:
           - 能力索引与可选门禁: zh-CN/docs/CAPABILITY_INDEX.md
           - 组件复用验收: zh-CN/docs/COMPONENT_REUSE_ACCEPTANCE.md
       - 发行与历史:
+          - V7.17.3 发行说明: zh-CN/docs/releases/v7.17.3/RELEASE_NOTES.md
           - V7.17.2 发行说明: zh-CN/docs/releases/v7.17.2/RELEASE_NOTES.md
           - V7.16.2 发行说明: zh-CN/docs/releases/v7.16.2/RELEASE_NOTES.md
           - V7.16.1 发行说明: zh-CN/docs/releases/v7.16.1/RELEASE_NOTES.md
@@ -103,6 +104,7 @@ nav:
           - V7.14.0 发行说明: zh-CN/docs/releases/v7.14.0/RELEASE_NOTES.md
           - V7.13.6 发行说明: zh-CN/docs/releases/v7.13.6/RELEASE_NOTES.md
           - V7.13.5 发行说明: zh-CN/docs/releases/v7.13.5/RELEASE_NOTES.md
+          - V7.17.3 验证报告: zh-CN/docs/releases/v7.17.3/VALIDATION_REPORT.md
           - V7.17.2 验证报告: zh-CN/docs/releases/v7.17.2/VALIDATION_REPORT.md
           - V7.16.2 验证报告: zh-CN/docs/releases/v7.16.2/VALIDATION_REPORT.md
           - V7.16.1 验证报告: zh-CN/docs/releases/v7.16.1/VALIDATION_REPORT.md
@@ -116,6 +118,7 @@ nav:
           - V7.14.0 验证报告: zh-CN/docs/releases/v7.14.0/VALIDATION_REPORT.md
           - V7.13.6 验证报告: zh-CN/docs/releases/v7.13.6/VALIDATION_REPORT.md
           - V7.13.5 验证报告: zh-CN/docs/releases/v7.13.5/VALIDATION_REPORT.md
+          - V7.17.3 审计报告: zh-CN/docs/releases/v7.17.3/AUDIT_REPORT.md
           - V7.17.2 审计报告: zh-CN/docs/releases/v7.17.2/AUDIT_REPORT.md
           - V7.16.2 审计报告: zh-CN/docs/releases/v7.16.2/AUDIT_REPORT.md
           - V7.16.1 审计报告: zh-CN/docs/releases/v7.16.1/AUDIT_REPORT.md
@@ -184,6 +187,7 @@ nav:
           - Capability index and optional gates: en/docs/CAPABILITY_INDEX.md
           - Component reuse acceptance: en/docs/COMPONENT_REUSE_ACCEPTANCE.md
       - Release and history:
+          - V7.17.3 release notes: en/docs/releases/v7.17.3/RELEASE_NOTES.md
           - V7.17.2 release notes: en/docs/releases/v7.17.2/RELEASE_NOTES.md
           - V7.16.2 release notes: en/docs/releases/v7.16.2/RELEASE_NOTES.md
           - V7.16.1 release notes: en/docs/releases/v7.16.1/RELEASE_NOTES.md
@@ -197,6 +201,7 @@ nav:
           - V7.14.0 release notes: en/docs/releases/v7.14.0/RELEASE_NOTES.md
           - V7.13.6 release notes: en/docs/releases/v7.13.6/RELEASE_NOTES.md
           - V7.13.5 release notes: en/docs/releases/v7.13.5/RELEASE_NOTES.md
+          - V7.17.3 validation report: en/docs/releases/v7.17.3/VALIDATION_REPORT.md
           - V7.17.2 validation report: en/docs/releases/v7.17.2/VALIDATION_REPORT.md
           - V7.16.2 validation report: en/docs/releases/v7.16.2/VALIDATION_REPORT.md
           - V7.16.1 validation report: en/docs/releases/v7.16.1/VALIDATION_REPORT.md
@@ -210,6 +215,7 @@ nav:
           - V7.14.0 validation report: en/docs/releases/v7.14.0/VALIDATION_REPORT.md
           - V7.13.6 validation report: en/docs/releases/v7.13.6/VALIDATION_REPORT.md
           - V7.13.5 validation report: en/docs/releases/v7.13.5/VALIDATION_REPORT.md
+          - V7.17.3 audit report: en/docs/releases/v7.17.3/AUDIT_REPORT.md
           - V7.17.2 audit report: en/docs/releases/v7.17.2/AUDIT_REPORT.md
           - V7.16.2 audit report: en/docs/releases/v7.16.2/AUDIT_REPORT.md
           - V7.16.1 audit report: en/docs/releases/v7.16.1/AUDIT_REPORT.md

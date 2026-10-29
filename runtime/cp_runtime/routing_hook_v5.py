@@ -63,7 +63,8 @@ def _transcript_path(data):
         else data.get("transcript_path")
     if not child or not isinstance(source, str):
         fail("V5_CHILD_HEADER_REQUIRED")
-    path = safe_file(Path(source))
+    from .native_transcript import transcript_path
+    path = transcript_path(Path(source))
     home = (resolve_codex_home() / "sessions").resolve(strict=True)
     if not path_is_within(path, home) or not path.name.endswith(child + ".jsonl"):
         fail("V5_CHILD_HEADER_PATH")

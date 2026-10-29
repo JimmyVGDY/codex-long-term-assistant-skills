@@ -21,7 +21,7 @@ from runtime_localization import RuntimeLocalizationError, load_mapping, localiz
 from release_source import MANIFEST_NAME as SOURCE_MANIFEST, SourceError, capture, relative_path
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "7.17.2"
+VERSION = "7.17.3"
 PACKAGE = "codex-cross-project-engineering-assistant"
 SUPPORTED_LOCALES = ("zh-CN", "en")
 FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)

@@ -12,6 +12,22 @@ This package supports Codex Desktop only. Gates distinguish permission to contin
 
 Every installer-owned registration must map to the entrypoint inventory. Unknown managed commands cannot be classified as third-party to avoid checking them. Actual third-party account Hooks are explicitly outside package coverage.
 
+## Client updates and project selection
+
+A component update and an incompatible management contract are evaluated separately. Matching management commands and plugin-list schemas with an older installation snapshot produce `HOST_UPDATED_REVALIDATION_REQUIRED`: base skills remain usable, while enhanced runtime evidence remains unverified. Confirmed contract changes produce `HOST_CONTRACT_INCOMPATIBLE`; probe failures remain unknown. Readonly diagnostics never refresh snapshots, trust Hooks, or prove budget/file enforcement.
+
+For the first project selection from a projectless chat, source v2 uses the exact native turn's `turn_context.cwd`. The session header still identifies the initial directory; paths in message text cannot establish provenance. New records use a separate workspace partition without overwriting old sources. Registration creates no budget and cannot move an existing root to another repository. Initial registration requires a non-Git starting directory, no existing budget ownership, and matching installed/calling readers.
+
+Source v2 verifies each human input against its exact native turn workspace context, including bounded historical recovery from the same host-located file. Automatic continuations, tool output and messages lacking matching context are not authorization sources. Context discovery reads at most eight complete-line windows of 2,000,000 bytes each. Historical discovery performs at most four extra turn lookups per request and reports missing contexts instead of scanning indefinitely. Old tasks keep frozen origin references.
+
+Workspace-transition allowance cursors use a separate v2 format requiring the existing TaskScope, budget root and original human-origin reference to agree. Every approval must also match that message turn's project directory; a reply from another project cannot increase quota. Missing context preserves the cursor until native observation permits recovery of the same request without another reply. Frozen v1 cursors and budget-journal semantics remain unchanged. Mismatched readers cannot publish new authority formats. Bounded shared source locks prevent Windows read handles from racing atomic replacement.
+
+Parent provenance, child identity and late callbacks share account-root alias validation. A root alias must identify the configured account directory and the same native file; links inside sessions, foreign accounts, relative child paths and alternate data streams remain rejected.
+
+The candidate internal stable-component window is anchored at 0.164.0 with ten preceding stable releases; it is not a Desktop admission threshold. Official npm artifacts, tag commits and Hook/result source digests are frozen separately from observations of Desktop 0.165.0-alpha.1.2. Passing Windows management contracts does not prove other-platform or actual Desktop runtime acceptance.
+
+Compressed/restored history may change native file identity. Without continuity evidence, preserve journals and restrict the affected action instead of copying transcripts or deleting bindings. Record actual Desktop Hook trust, continuation, controlled writes and compressed-history acceptance separately.
+
 ## File writes
 
 In-repository absolute paths are normalized before escape, sensitive-path, and reparse-point checks. Original command digests, targets, and prestate remain bound to the native tool-call, session, and turn identities. Aliases cannot override security fields. Inert extension metadata does not independently deny an operation.

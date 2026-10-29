@@ -24,6 +24,7 @@ from .routing_contract import _constant, _object, exact, fail, ref
 SOURCE_FIELDS = {"schema_version", "session_ref", "repo_path", "transcript_path",
                  "transcript_path_ref", "transcript_file_ref", "header_ref",
                  "offset", "turn_id", "skipping", "presented_requests"}
+WORKSPACE_SOURCE_FIELDS = SOURCE_FIELDS | {"workspace_origin_ref", "workspace_context"}
 MAX_LINE = 131_072
 MAX_SCAN = 2_000_000
 DIRECT = re.compile(r"(?:批准|同意|允许)(?:本次|这次)?追加(?:额度|复审)?\s+(G6Q_[0-9a-f]{32})[。.!]?\Z")
@@ -41,16 +42,10 @@ def source_path(ledger: Path) -> Path:
 
 
 def _native_header(path: Path, *, session_id: str, cwd: Path) -> tuple[dict, dict]:
-    path = safe_file(path)
-    if (not path_is_within(path, resolve_codex_home() / "sessions")
-            or not path.name.endswith(session_id + ".jsonl")):
-        fail("G6_ALLOWANCE_NATIVE_SOURCE_PATH")
-    raw, binding = read_bound_transcript(path, header_only=True)
-    header = json.loads(raw, object_pairs_hook=_object, parse_constant=_constant)
+    from .native_transcript import session_header
+    header, binding = session_header(path, session_id=session_id)
     meta = header.get("payload", {})
-    if (header.get("type") != "session_meta" or meta.get("id") != session_id
-            or not isinstance(meta.get("cwd"), str) or not same_path(Path(meta["cwd"]), cwd)
-            or isinstance(meta.get("source"), dict) and "subagent" in meta["source"]):
+    if not same_path(Path(meta["cwd"]), cwd):
         fail("G6_ALLOWANCE_NATIVE_SOURCE_IDENTITY")
     return header, binding
 
@@ -58,15 +53,57 @@ def _native_header(path: Path, *, session_id: str, cwd: Path) -> tuple[dict, dic
 def _read_source(path: Path) -> dict:
     value = read_json(path, verify=True, label="native allowance source")
     value.pop("integrity")
-    exact(value, SOURCE_FIELDS, "G6_ALLOWANCE_SOURCE_FIELDS")
-    if value["schema_version"] != "g6-allowance-native-source/1":
+    workspace = value.get("schema_version") == "g6-allowance-native-source/2"
+    exact(value, WORKSPACE_SOURCE_FIELDS if workspace else SOURCE_FIELDS, "G6_ALLOWANCE_SOURCE_FIELDS")
+    if value["schema_version"] not in {"g6-allowance-native-source/1", "g6-allowance-native-source/2"}:
         fail("G6_ALLOWANCE_SOURCE_VERSION")
+    if workspace and (not isinstance(value["workspace_origin_ref"], str)
+                      or not re.fullmatch(r"TO1-[0-9a-f]{32}", value["workspace_origin_ref"])
+                      or value["workspace_context"] is not None and not isinstance(value["workspace_context"], dict)):
+        fail("G6_ALLOWANCE_WORKSPACE_SOURCE")
     if (type(value["offset"]) is not int or value["offset"] < 0
             or type(value["skipping"]) is not bool or not isinstance(value["turn_id"], str)
             or not isinstance(value["presented_requests"], list)
             or len(value["presented_requests"]) > contract.MAX_REQUESTS):
         fail("G6_ALLOWANCE_SOURCE_CURSOR")
     return value
+
+
+def _workspace_origin(ledger: Path, session: str, cwd: Path, root: Mapping[str, Any], origin_ref: str | None = None) -> dict:
+    """中文：新目录授权来源必须属于已登记的同一预算根。
+    English: Workspace authority must belong to the same registered budget root.
+    """
+    from . import g6_task_origin as origin, g6_task_scope as scope
+    from .g6_runtime_support import installed_task_scope_support
+    if not installed_task_scope_support()["supported"]:
+        fail("TASK_MATCHING_INSTALLED_READER_REQUIRED")
+    registry = scope.registry(session)
+    if registry is None:
+        fail("G6_ALLOWANCE_WORKSPACE_ROOT_REQUIRED")
+    rows = [row for row in registry["scopes"].values()
+            if same_path(Path(row["ledger_path"]), ledger)]
+    if len(rows) != 1:
+        fail("G6_ALLOWANCE_WORKSPACE_ROOT_REQUIRED")
+    row = rows[0]
+    if (row["identity"] != root["identity"] or row["ledger_task_id"] != root["task_id"]
+            or not same_path(Path(row["repo_path"]), cwd)
+            or root["host_session_ref"] != ref(session)
+            or origin_ref is not None and origin_ref != row["origin_ref"]
+            or root["authorization_ref"] != ref(["native-task-origin", row["origin_ref"]])):
+        fail("G6_ALLOWANCE_WORKSPACE_ROOT_CONFLICT")
+    value = origin.read_origin(session, cwd, row["origin_ref"])
+    if value["schema_version"] != "g6-native-task-origin/2":
+        fail("G6_ALLOWANCE_WORKSPACE_ORIGIN_REQUIRED")
+    return value
+
+
+def _source_header(ledger: Path, source: Mapping[str, Any], session: str, root: Mapping[str, Any]) -> tuple[dict, dict]:
+    cwd, transcript = Path(source["repo_path"]), Path(source["transcript_path"])
+    if source["schema_version"] == "g6-allowance-native-source/2":
+        from .native_workspace import verify
+        origin = _workspace_origin(ledger, session, cwd, root, source["workspace_origin_ref"])
+        return verify(transcript, origin["workspace_proof"], session_id=session, cwd=cwd)
+    return _native_header(transcript, session_id=session, cwd=cwd)
 
 
 def bind_source(ledger: Path, data: Mapping[str, Any]) -> dict:
@@ -80,11 +117,23 @@ def bind_source(ledger: Path, data: Mapping[str, Any]) -> dict:
     if (data.get("agent_id") or not all(isinstance(x, str) and x for x in (session, cwd, transcript))
             or ref(session) != root["host_session_ref"] or not same_path(Path(cwd), Path(root["repo_path"]))):
         fail("G6_ALLOWANCE_SOURCE_HOST_IDENTITY")
+    from .native_transcript import transcript_path
+    transcript = str(transcript_path(Path(transcript)))
     path = source_path(ledger)
-    header, binding = _native_header(Path(transcript), session_id=session, cwd=Path(cwd))
+    workspace_origin = None
+    try:
+        header, binding = _native_header(Path(transcript), session_id=session, cwd=Path(cwd))
+    except ValueError as exc:
+        if str(exc) != "G6_ALLOWANCE_NATIVE_SOURCE_IDENTITY":
+            raise
+        from .native_workspace import verify
+        workspace_origin = _workspace_origin(ledger, session, Path(cwd), root)
+        header, binding = verify(Path(transcript), workspace_origin["workspace_proof"], session_id=session, cwd=Path(cwd))
     fixed = {"schema_version": "g6-allowance-native-source/1", "session_ref": ref(session),
              "repo_path": root["repo_path"], "transcript_path": str(Path(transcript).resolve()),
              **binding, "header_ref": ref(header)}
+    if workspace_origin is not None:
+        fixed.update(schema_version="g6-allowance-native-source/2", workspace_origin_ref=workspace_origin["origin_ref"])
     for grant in [row for key in state.get("allowance_requests", {}) for row in contract.decision_history(state, key)]:
         proof = grant["authorization"]
         if any(proof[key] != fixed[key] for key in ("transcript_path_ref", "transcript_file_ref", "header_ref")):
@@ -103,6 +152,8 @@ def bind_source(ledger: Path, data: Mapping[str, Any]) -> dict:
         value = {**fixed, "offset": Path(transcript).stat().st_size,
                  "turn_id": str(data.get("turn_id") or ""), "skipping": False,
                  "presented_requests": []}
+        if workspace_origin is not None:
+            value["workspace_context"] = workspace_origin["workspace_proof"]
         atomic_write_json(path, value, seal=True)
         return value
 
@@ -197,8 +248,8 @@ def _presentation(record: Mapping[str, Any], state: Mapping[str, Any]) -> list[s
     return matches
 
 
-def _apply_record(ledger: Path, source: Mapping[str, Any], record: dict, raw: bytes,
-                  start: int, end: int) -> dict | None:
+def _apply_record(ledger: Path, source: dict[str, Any], record: dict, raw: bytes,
+                  start: int, end: int, *, session: str | None = None) -> dict | None:
     text = _user_text(record)
     if text is None:
         return None
@@ -221,6 +272,37 @@ def _apply_record(ledger: Path, source: Mapping[str, Any], record: dict, raw: by
             return None
         if source["session_ref"] != state["root"]["host_session_ref"]:
             fail("G6_ALLOWANCE_AUTH_ROOT_CONFLICT")
+        if source["schema_version"] == "g6-allowance-native-source/2":
+            from .native_workspace import verify, observe
+            context = source.get("workspace_context")
+            native_turn = record["payload"]["internal_chat_message_metadata_passthrough"]["turn_id"]
+            if not session or ref(session) != source["session_ref"]:
+                fail("G6_ALLOWANCE_SOURCE_SESSION")
+            if not context or context["turn_id"] != native_turn:
+                from .g6_task_origin import _read_binding
+                try:
+                    locator = _read_binding(session, Path(source["repo_path"]), locator=True)
+                    context = locator.get("workspace_proof")
+                except ValueError as exc:
+                    if str(exc) != "TASK_NATIVE_LOCATOR_UNAVAILABLE":
+                        raise
+                    context = None
+                if not context or context["turn_id"] != native_turn:
+                    try:
+                        context = observe(Path(source["transcript_path"]), session_id=session,
+                                          turn_id=native_turn, cwd=Path(source["repo_path"]))
+                    except ValueError as exc:
+                        if str(exc) == "WORKSPACE_CONTEXT_IDENTITY":
+                            return {"request_id": request_id, "action": "foreign_workspace", "idempotent": True}
+                        if str(exc) != "WORKSPACE_CONTEXT_UNAVAILABLE":
+                            raise
+                        fail("G6_ALLOWANCE_WORKSPACE_CONTEXT_PENDING")
+            if not same_path(Path(context["repo_path"]), Path(source["repo_path"])):
+                return {"request_id": request_id, "action": "foreign_workspace", "idempotent": True}
+            verify(Path(source["transcript_path"]), context, session_id=session, cwd=Path(source["repo_path"]))
+            if any(context[key] != source[key] for key in ("header_ref", "transcript_path_ref", "transcript_file_ref")):
+                fail("G6_ALLOWANCE_SOURCE_REPLACED")
+            source["workspace_context"] = context
         proof = {"source": "native-user-response", "session_ref": source["session_ref"],
                  "turn_ref": ref(record["payload"]["internal_chat_message_metadata_passthrough"]["turn_id"]),
                  "message_ref": ref([source["session_ref"], record["payload"]["id"]]),
@@ -271,7 +353,7 @@ def recover(ledger: Path, *, data: Mapping[str, Any] | None = None,
         session = header.get("payload", {}).get("id")
         if not isinstance(session, str) or ref(session) != source["session_ref"]:
             fail("G6_ALLOWANCE_SOURCE_SESSION")
-        verified_header, binding = _native_header(transcript, session_id=session, cwd=Path(source["repo_path"]))
+        verified_header, binding = _source_header(ledger, source, session, state["root"])
         if ref(verified_header) != source["header_ref"] or any(source[key] != value for key, value in binding.items()):
             fail("G6_ALLOWANCE_SOURCE_REPLACED")
         if reconsider_request_id is not None:
@@ -319,10 +401,25 @@ def recover(ledger: Path, *, data: Mapping[str, Any] | None = None,
                 if record.get("type") == "turn_context" or (record.get("type") == "event_msg" and payload.get("type") == "task_started"):
                     if isinstance(payload.get("turn_id"), str):
                         source["turn_id"] = payload["turn_id"]
+                if (source["schema_version"] == "g6-allowance-native-source/2" and record.get("type") == "turn_context"
+                        and isinstance(payload.get("turn_id"), str) and isinstance(payload.get("cwd"), str)):
+                    from .native_workspace import from_record
+                    context = from_record(transcript, raw, start, session_id=session,
+                                          turn_id=payload["turn_id"], cwd=Path(payload["cwd"]))
+                    if any(context[key] != source[key] for key in ("header_ref", "transcript_path_ref", "transcript_file_ref")):
+                        fail("G6_ALLOWANCE_SOURCE_REPLACED")
+                    source["workspace_context"] = context
                 presented = _presentation(record, state)
                 if presented is not None:
                     source["presented_requests"] = presented
-                result = _apply_record(ledger, source, record, raw, start, stream.tell())
+                try:
+                    result = _apply_record(ledger, source, record, raw, start, stream.tell(), session=session)
+                except ValueError as exc:
+                    if str(exc) != "G6_ALLOWANCE_WORKSPACE_CONTEXT_PENDING":
+                        raise
+                    atomic_write_json(path, source, seal=True)
+                    return {"status": "WORKSPACE_CONTEXT_PENDING", "applied": applied, "bytes_read": read_bytes,
+                            "has_more": True, "next_action": "observe_native_workspace_then_recover_same_request"}
                 if result:
                     applied.append(result)
                     state = budget.read_budget(ledger)
