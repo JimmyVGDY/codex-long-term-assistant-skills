@@ -1197,6 +1197,9 @@ def _ux_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
         elif host.get("compatible") is False:
             add("enhancement", "BLOCKED", [str(host.get("status") or "HOST_INCOMPATIBLE")],
                 "HOST_CHECK", "DEGRADED")
+        elif host and host.get("compatible") is None:
+            add("enhancement", "UNKNOWN", [str(host.get("status") or "HOST_PROBE_UNAVAILABLE")],
+                "HOST_CHECK", "DEGRADED")
         elif not isinstance(enhancement, Mapping) or enhancement.get("status") not in {"MANAGED", "INSTALLED", "PLUGIN_MANAGED"}:
             add("enhancement", "UNKNOWN", ["ENHANCEMENT_STATE_UNKNOWN"], "NOT_CHECKED", "DEGRADED")
         else:
@@ -1225,6 +1228,11 @@ def _ux_summary(data: Mapping[str, Any]) -> Dict[str, Any]:
     elif any(data.get(key) for key in ("state_error", "base_state_error", "transaction_error", "mode_error")):
         action = _action_detail("INSPECT_MANAGED_STATE", "MANUAL", [],
                                 "受管状态无法可靠读取。", "核对受管状态与已知备份，保留未知文件。", scope)
+    elif (host.get("status") == "HOST_UPDATED_REVALIDATION_REQUIRED" and not issues.get("enhancement")
+          and base_active and checked and not base_errors and not data.get("duplicate_registration")):
+        action = _action_detail("VERIFY_DESKTOP_RUNTIME", "MANUAL", [],
+                                "客户端已更新，管理接口已核验，增强运行证据待核验。",
+                                "在当前客户端核对 Hook 信任和所需增强功能，保存与当前内核绑定的验收报告。", scope)
     elif affected:
         action = _verify_action(scope, mode, data.get("repo_path"))
         if scope == "user" and (not checked or not base_active):
@@ -1805,6 +1813,7 @@ def _probe_plugin_host(timeout: Optional[int] = None) -> Dict[str, Any]:
         "version_output_sha256": version_output_digest,
         "plugin_list_json": list_ok,
         "plugin_list_error": list_error[-2000:],
+        "plugin_list_returncode": result.returncode,
         "command_contract_errors": command_contract_errors,
         "normalized_target": normalized_target,
         "registrations": registrations,
@@ -1954,22 +1963,34 @@ def _host_compatibility_status(state: Mapping[str, Any], observed: Optional[Mapp
     try:
         current = observed if observed is not None else _probe_plugin_host()
     except Exception as exc:
-        return {"status": "HOST_PROBE_FAILED", "compatible": False, "detail": str(exc)}
+        return {"status": "HOST_PROBE_FAILED", "compatible": None,
+                "management_compatible": None, "runtime_acceptance": "UNVERIFIED", "detail": str(exc)}
     if not current.get("ok"):
+        # 中文：传输失败不能证明管理接口合同发生变化。
+        # English: A failed transport is not evidence that the management schema changed.
+        commands = current.get("commands") or {}
+        incompatible = bool(current.get("version_error") or any(
+            commands.get(name, {}).get("ok") is True for name in current.get("command_contract_errors", []))
+            or current.get("plugin_list_returncode") == 0 and current.get("plugin_list_contract") is False)
         return {
-            "status": "HOST_DRIFT_REINSTALL_REQUIRED", "compatible": False,
+            "status": "HOST_CONTRACT_INCOMPATIBLE" if incompatible else "HOST_PROBE_UNAVAILABLE",
+            "compatible": False if incompatible else None,
+            "management_compatible": False if incompatible else None,
+            "runtime_acceptance": "UNVERIFIED",
             "detail": current.get("version_error") or current.get("plugin_list_error") or "capability probe failed",
         }
     current_binding = _host_binding(current)
     current_digest = canonical_digest(current_binding)
     if current_digest != snapshot["host_binding_digest"]:
         return {
-            "status": "HOST_DRIFT_REINSTALL_REQUIRED", "compatible": False,
+            "status": "HOST_UPDATED_REVALIDATION_REQUIRED", "compatible": None,
+            "management_compatible": True, "runtime_acceptance": "UNVERIFIED",
             "stored_host_binding_digest": snapshot["host_binding_digest"],
             "current_host_binding_digest": current_digest,
         }
     return {
         "status": "HOST_COMPATIBLE", "compatible": True,
+        "management_compatible": True, "runtime_acceptance": "UNVERIFIED",
         "host_binding_digest": current_digest,
     }
 
@@ -3000,7 +3021,8 @@ def _diagnostic_facts_once(scope: str, mode: Optional[str], repo_path: Optional[
         if capability is not None:
             host = _host_compatibility_status(state, observed=capability)
         else:
-            host = {"compatible": False, "status": "HOST_PROBE_UNAVAILABLE"}
+            host = {"compatible": None, "status": "HOST_PROBE_UNAVAILABLE",
+                    "management_compatible": None, "runtime_acceptance": "UNVERIFIED"}
     return {
         "package": PACKAGE, "version": VERSION, "scope": scope, "mode": selected_mode,
         "repo_path": str(repo) if repo else str(Path(repo_path or ".").absolute()) if scope == "repo" else None,
@@ -3063,12 +3085,15 @@ def _diagnostic_facts(scope: str, mode: Optional[str], repo_path: Optional[str],
                 raise InstallError("PROJECT_PROFILE_UNREADABLE")
             store = CapabilityStore(Path(profile_path), Path(repo_path or "."))
             policy = GatePolicy(store).read()
-            ready = bool(data.get("enhancement_selected")) and not data["component_errors"]["enhancement"]
-            ready = ready and (data.get("mode") != "plugin" or (data.get("host_compatibility") or {}).get("compatible") is True)
+            intact = bool(data.get("enhancement_selected")) and not data["component_errors"]["enhancement"]
+            host_compatible = (data.get("host_compatibility") or {}).get("compatible") if data.get("mode") == "plugin" else True
+            unavailable = not intact or host_compatible is False
             controls["controlled-write"] = {
-                "availability": "NOT_ENABLED" if not policy or not policy["enabled"] else "UNKNOWN" if ready else "BLOCKED",
+                "availability": "NOT_ENABLED" if not policy or not policy["enabled"] else "BLOCKED" if unavailable else "UNKNOWN",
                 "reason": "CONTROL_NOT_ENABLED" if not policy or not policy["enabled"] else
-                          "OPERATION_AUTHORIZATION_NOT_EVALUATED" if ready else "CONTROL_RUNTIME_UNAVAILABLE",
+                          "CONTROL_RUNTIME_UNAVAILABLE" if unavailable else
+                          "CONTROL_RUNTIME_REVALIDATION_REQUIRED" if host_compatible is None else
+                          "OPERATION_AUTHORIZATION_NOT_EVALUATED",
             }
         except (OSError, ValueError, InstallError, RuntimeContractError):
             controls["controlled-write"] = {"availability": "BLOCKED", "reason": "CONTROL_PROFILE_UNVERIFIED"}

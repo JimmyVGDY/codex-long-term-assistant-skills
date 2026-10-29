@@ -515,3 +515,8 @@ docs/releases/v7.17.1/AUDIT_REPORT.en.md
 docs/releases/v7.17.2/RELEASE_NOTES.md
 docs/releases/v7.17.2/VALIDATION_REPORT.md
 docs/releases/v7.17.2/AUDIT_REPORT.md
+
+# V7.17.3 release pairs compared by the implementing agent; no human-review claim.
+docs/releases/v7.17.3/RELEASE_NOTES.md
+docs/releases/v7.17.3/VALIDATION_REPORT.md
+docs/releases/v7.17.3/AUDIT_REPORT.md

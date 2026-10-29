@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.17.2",
+  "version": "7.17.3",
   "payload_roots": [
     ".codex-plugin",
     "skills",
     "hooks",
     "runtime"
   ],
-  "file_count": 350,
-  "payload_digest": "c3deda48edeae330c824ddf7dffa09eab3f385a896811165672e9c1c2039dae3",
+  "file_count": 351,
+  "payload_digest": "a95bdcb681055273d199120c77b36d3d1f2078a9ccfda706cc8966aa7a082efc",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "4f596c6df68e4a368dcd44038301f42362bfe12a3f67901345d14fc2f860b08e",
-      "size": 860
+      "sha256": "9b1bd62b579630c111ea509b72336032379f5dad3e5f72dfd6a3101f25c4dfcd",
+      "size": 881
     },
     {
       "path": "skills/ai-engineering/SKILL.md",
@@ -1243,8 +1243,8 @@
     },
     {
       "path": "runtime/cp_runtime/g6_allowance_authority.py",
-      "sha256": "c4e1d163d0d2b122fe88be7f04c24c88819f49410f40a7bd4f3f8ee8e94b66cc",
-      "size": 19960
+      "sha256": "5689a6c80b488563cae777be8d3e51500f0284c4b5c1794c533daf1d10624831",
+      "size": 26225
     },
     {
       "path": "runtime/cp_runtime/g6_allowance_contract.py",
@@ -1323,8 +1323,8 @@
     },
     {
       "path": "runtime/cp_runtime/g6_review_controller.py",
-      "sha256": "11182064a3a1fe7ebbab38b052a02b2595dd86eab449b44a3bcb99cc7fb24fd5",
-      "size": 35049
+      "sha256": "f68c758d8c23ccf6641d2bd601306373ece9acc6095b7bc4b9f92058f6b28ed0",
+      "size": 35053
     },
     {
       "path": "runtime/cp_runtime/g6_review_receipt_v1.py",
@@ -1338,13 +1338,13 @@
     },
     {
       "path": "runtime/cp_runtime/g6_runtime_support.py",
-      "sha256": "70081b0a84192a5a3dc2030d8c60fc66c36982cced054366341a15a241ad8a10",
-      "size": 4601
+      "sha256": "391de7bbe389854bc7d58b8d195ec2e0c2ae021c69af6b49b6b8b5d54de1c0aa",
+      "size": 4674
     },
     {
       "path": "runtime/cp_runtime/g6_task_origin.py",
-      "sha256": "3e46038a2a69258f9db84535eba2c5f97c40e435ebc182ed5a4475e4b8ce8238",
-      "size": 24960
+      "sha256": "c516e9556f7d56fbc864abe3e5f483371920d795a092fdda921ceebe9e3872a8",
+      "size": 33987
     },
     {
       "path": "runtime/cp_runtime/g6_task_scope.py",
@@ -1378,8 +1378,13 @@
     },
     {
       "path": "runtime/cp_runtime/native_transcript.py",
-      "sha256": "b9c4a0896d28056943e759301fa621e1d904bbb81217425f9cbe7b83a92814f0",
-      "size": 2792
+      "sha256": "b120eeb7407b06145334498dbda152e81b409f2909940d183fc10cf272175422",
+      "size": 5957
+    },
+    {
+      "path": "runtime/cp_runtime/native_workspace.py",
+      "sha256": "e2078a7774852e42482fd5233b83bf76504d6bcebd0cee100de0f5fd9fbc835c",
+      "size": 6008
     },
     {
       "path": "runtime/cp_runtime/notify_delivery.py",
@@ -1598,8 +1603,8 @@
     },
     {
       "path": "runtime/cp_runtime/routing_hook_v5.py",
-      "sha256": "0718510c69176f13bd89dfeaf4c05c30ab3dd6bb9271a08d90c04bb5d27918ed",
-      "size": 19047
+      "sha256": "de4870e5669a72035125d3de4924a9710909ec531f58e09ff9cfcac83d5cd66b",
+      "size": 19104
     },
     {
       "path": "runtime/cp_runtime/routing_phase_plan.py",

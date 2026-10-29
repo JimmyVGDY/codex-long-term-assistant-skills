@@ -4,6 +4,14 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## V7.17.3
+
+- Diagnose component updates, confirmed management-contract changes and unavailable probes separately; enhanced runtime evidence remains unverified instead of demanding reinstall for every update.
+- Add native-turn workspace provenance and allowance cursor v2 for the first unbudgeted project selection, preserving old sources and root ownership. Historical recovery excludes automatic continuations and foreign-project input.
+- Share source read/write locks to fix Windows atomic-replacement races; advance the internal stable-component window to 0.164.0 with frozen official artifact/source evidence.
+- Share verified account-root alias resolution across parent provenance, child identity and late callbacks, preserving inner-link, file-identity, project and budget-ownership checks.
+- Complete the listed native reading, approval recovery, cancellation and account-installation acceptance, with an independent source supplement passed. Record current-version full CI, public publication and artifact verification separately in the release reports.
+
 ## V7.17.2
 
 - Fix repeated-confirmation dead ends with host-observed provenance recovery, bounded scanning and migration diagnostics.

@@ -1,7 +1,7 @@
 {
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.17.2",
-  "release_name": "原生来源恢复与迁移诊断",
+  "version": "7.17.3",
+  "release_name": "桌面客户端适配与账户路径修复",
   "generated_for": "Codex Desktop engineering assistance with script-first GPT-6 nine-profile defaults, bounded adjustments, shared budgets, evidence-tolerant gates, and frozen legacy recovery",
   "default_locale": "zh-CN",
   "supported_locales": [
@@ -732,7 +732,8 @@
     "7.12.0",
     "7.13.0",
     "7.17.0",
-    "7.17.1"
+    "7.17.1",
+    "7.17.2"
   ],
   "release_validation": {
     "python_syntax": true,
@@ -854,8 +855,9 @@
   "plugin_marketplace_install_root": "$HOME/.agents/plugins/cp-assistant-marketplace",
   "standalone_hooks_target": "${CODEX_HOME:-$HOME/.codex}/hooks.json",
   "codex_compatibility": {
-    "anchor": "0.163.0",
+    "anchor": "0.164.0",
     "verified_versions": [
+      "0.164.0",
       "0.163.0",
       "0.162.1",
       "0.162.0",
@@ -865,8 +867,7 @@
       "0.159.2",
       "0.159.1",
       "0.159.0",
-      "0.158.0",
-      "0.157.1"
+      "0.158.0"
     ],
     "window_policy": "current-plus-ten-preceding-stable-releases-patch-counts",
     "registry": "config/codex-compatibility-v1.json",

@@ -90,6 +90,69 @@ class DesktopHostTests(unittest.TestCase):
                 manager._codex_executable()
             self.assertFalse(manager._codex_available())
 
+    def installed_state(self, observed):
+        return {"schema_version": 3, "payload_identity": {"manifest_digest": "a" * 64},
+                "compatibility_snapshot": manager._compatibility_snapshot(observed, "a" * 64, "{}")}
+
+    def test_component_upgrade_requires_runtime_revalidation_without_reinstall(self):
+        with patch.object(manager, "_run_codex", side_effect=self.run_component):
+            old = manager._probe_plugin_host()
+            state = self.installed_state(old)
+            before = copy.deepcopy(state)
+            self.version = "codex-cli 0.165.0-alpha.1.2"
+            self.component.write_bytes(b"updated Desktop component")
+            current = manager._probe_plugin_host()
+        result = manager._host_compatibility_status(state, observed=current)
+        self.assertEqual("HOST_UPDATED_REVALIDATION_REQUIRED", result["status"])
+        self.assertIsNone(result["compatible"])
+        self.assertTrue(result["management_compatible"])
+        self.assertEqual("UNVERIFIED", result["runtime_acceptance"])
+        self.assertEqual(before, state)
+        ux = manager._ux_summary({"scope": "user", "mode": "plugin", "state": {
+            "components": {"enhancement": {"status": "MANAGED"}}},
+            "base_activation": {"active": True, "checked": True}, "host_compatibility": result})
+        enhancement = next(item for item in ux["capabilities"] if item["id"] == "enhancement")
+        self.assertEqual("UNKNOWN", enhancement["availability"])
+        self.assertEqual("VERIFY_DESKTOP_RUNTIME", ux["next_action_detail"]["code"])
+        self.assertEqual("MANUAL", ux["next_action_detail"]["action_kind"])
+        self.assertEqual([], ux["next_action_detail"]["argv"])
+
+    def test_actual_changed_contract_still_blocks_enhancement(self):
+        with patch.object(manager, "_run_codex", side_effect=self.run_component):
+            state = self.installed_state(manager._probe_plugin_host())
+            self.changed_help = True
+            current = manager._probe_plugin_host()
+        result = manager._host_compatibility_status(state, observed=current)
+        self.assertFalse(result["compatible"])
+        self.assertEqual("HOST_CONTRACT_INCOMPATIBLE", result["status"])
+        self.assertFalse(result["management_compatible"])
+
+    def test_probe_failure_does_not_assert_incompatibility(self):
+        with patch.object(manager, "_run_codex", side_effect=self.run_component):
+            state = self.installed_state(manager._probe_plugin_host())
+        with patch.object(manager, "_probe_plugin_host", side_effect=subprocess.TimeoutExpired("probe", 5)):
+            result = manager._host_compatibility_status(state)
+        self.assertEqual("HOST_PROBE_FAILED", result["status"])
+        self.assertIsNone(result["compatible"])
+
+    def test_probe_transport_error_and_invalid_json_contract_are_distinct(self):
+        with patch.object(manager, "_run_codex", side_effect=self.run_component):
+            current = manager._probe_plugin_host()
+        state = self.installed_state(current)
+        unavailable = {**current, "ok": False, "plugin_list_returncode": 1,
+                       "plugin_list_contract": False, "plugin_list_error": "connection unavailable"}
+        self.assertIsNone(manager._host_compatibility_status(state, observed=unavailable)["compatible"])
+        malformed = {**unavailable, "plugin_list_returncode": 0}
+        self.assertEqual("HOST_CONTRACT_INCOMPATIBLE", manager._host_compatibility_status(state, observed=malformed)["status"])
+
+    def test_update_guidance_does_not_hide_a_disabled_plugin(self):
+        result = manager._ux_summary({"scope": "user", "mode": "plugin",
+            "state": {"components": {"enhancement": {"status": "MANAGED"}}},
+            "base_activation": {"active": False, "checked": True},
+            "registrations": {"enhancement": {"installed": True, "enabled": False, "plugin_id": "fixture"}},
+            "host_compatibility": {"status": "HOST_UPDATED_REVALIDATION_REQUIRED", "compatible": None}})
+        self.assertEqual("ENABLE_INSTALLED_PLUGIN", result["next_action_detail"]["code"])
+
 
 if __name__ == "__main__":
     unittest.main()
