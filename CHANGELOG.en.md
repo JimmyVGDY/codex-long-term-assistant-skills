@@ -6,6 +6,8 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 ## V7.17.3
 
+Post-release update: the stable version was published at 2026-10-29 13:37:22 UTC. All six anonymous downloads, four release-validation combinations and signed provenance passed verification. Downloads and bilingual reports reflect actual publication; account installation, Desktop restart and activation remain separate facts.
+
 - Diagnose component updates, confirmed management-contract changes and unavailable probes separately; enhanced runtime evidence remains unverified instead of demanding reinstall for every update.
 - Add native-turn workspace provenance and allowance cursor v2 for the first unbudgeted project selection, preserving old sources and root ownership. Historical recovery excludes automatic continuations and foreign-project input.
 - Share source read/write locks to fix Windows atomic-replacement races; advance the internal stable-component window to 0.164.0 with frozen official artifact/source evidence.
