@@ -18,11 +18,12 @@ The release workflow treats source validation, reproducible building, provenance
 
 ## Triggers and gates
 
-- A manual `Release Candidate and Provenance` run builds and attests the current manifest version without creating a Release page.
+- A manual branch run builds a candidate. Preflight checks remote version occupancy before full validation. If the tag points to a different commit, choose a new unused version. Tag runs inspect draft and published release attachments.
 - A pushed `vX.Y.Z` tag must exactly match both `manifest.json` and the Plugin manifest version or the workflow fails closed.
-- Windows and Ubuntu run bilingual coverage, repository-wide link, and complete-package validation. Windows performs two byte-identical builds of each distribution.
+- Windows and Ubuntu run the validation matrix. Preflight selects one exact Python patch version for both builds. Each platform builds both locales twice from the same commit. Signing requires matching ZIP digests, sizes and build witnesses per locale. Both sets of artifacts are retained for 14 days.
 - GitHub generates signed provenance for the Chinese and English ZIP files and preserves build witnesses, checksums, and the attestation bundle.
-- A tag run can create only a **Draft Release**. An existing Release is not overwritten, and automation never publishes the draft.
+- A tag run creates a **Draft Release**. Downloaded bilingual notes must exactly match the UTF-8 notes generated from tagged source. After creation the workflow reads back the remote commit and all six attachments.
+- A rerun verifies the original provenance against the commit, tag, signer workflow and both rebuilt ZIPs. It compares the two archives, both witnesses, original bundle and corresponding checksums with the remote attachments. Legacy assets without API digests are downloaded and hashed. Missing files, conflicts and lookup errors fail the run and preserve the release.
 
 ## Verify downloaded artifacts
 
