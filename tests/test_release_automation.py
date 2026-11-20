@@ -398,6 +398,21 @@ class ReleaseAutomationTests(unittest.TestCase):
                     self.assertTrue(all(s == "skipped" for s in list(states.values())[list(states).index(failed)+1:]))
                 self.assertTrue(all(s == "skipped" for s in run_graph(path, "tag", cancelled=True).values()))
 
+    def test_release_python_is_pinned_before_tagging_on_both_platforms(self):
+        pin = (ROOT / "config/release-python-version.txt").read_text(encoding="ascii").strip()
+        self.assertRegex(pin, r"^3\.13\.[0-9]+$")
+        for prefix in ("", "locales/en/"):
+            for file in ("ci.yml", "release.yml"):
+                workflow = (ROOT / prefix / ".github/workflows" / file).read_text(encoding="utf-8")
+                validate = workflow.split("  validate:\n", 1)[1]
+                validate = re.split(r"^  [\w-]+:\s*$", validate, maxsplit=1, flags=re.M)[0]
+                self.assertRegex(validate, r"(?s)if: matrix\.python == '3\.13'.*?python-version-file: config/release-python-version\.txt")
+                self.assertIn("os: [windows-latest, ubuntu-latest]", validate)
+                self.assertNotIn('python-version: "3.13"', workflow)
+            release = (ROOT / prefix / ".github/workflows/release.yml").read_text(encoding="utf-8")
+            self.assertIn("python-version-file: config/release-python-version.txt", release.split("  tag-inventory:")[0])
+            self.assertIn("python-version-file: source/config/release-python-version.txt", release.split("  draft-release:")[1])
+
     def test_workflow_attests_artifacts_and_only_creates_a_draft(self) -> None:
         workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
         uses = re.findall(r"^\s*uses:\s*([^\s#]+)", workflow, re.MULTILINE)
