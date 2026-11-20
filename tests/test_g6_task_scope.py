@@ -24,7 +24,7 @@ class TaskScopeTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.base = Path(self.temp.name)
-        self.repo, self.home = self.base / "workspace", self.base / "home"
+        self.repo, self.home = self.base / "workspace", self.base / ".codex"
         self.repo.mkdir()
         self.session, self.turn, self.count = "parent-fixture", "same-active-turn", 0
         patch = mock.patch.dict(os.environ, CODEX_HOME=str(self.home), CP_DELEGATION_BUDGET_PATH="")
@@ -91,6 +91,57 @@ class TaskScopeTests(unittest.TestCase):
         ledger = Path(selected["new_ledger_path"])
         budget.record_terminal(ledger, agent_path="/root/" + data["tool_input"]["task_name"],
                                outcome="UNKNOWN", proof_ref=ref("synthetic-native-stop"))
+
+    def move_account(self):
+        root = self.base.resolve(strict=True)
+        original = self.home.resolve(strict=True)
+        moved = root / "physical-account"
+        self.assertEqual(original.parent, root)
+        self.assertEqual(moved.resolve().parent, root)
+        self.assertFalse(moved.exists())
+        original.rename(moved)
+        if os.name == "nt":
+            subprocess.run(["cmd.exe", "/d", "/c", "mklink", "/J", str(original), str(moved)],
+                           check=True, capture_output=True)
+        else:
+            original.symlink_to(moved, target_is_directory=True)
+        os.environ["CODEX_HOME"] = str(moved)
+        self.home = moved
+        self.transcript = moved / "sessions" / self.transcript.name
+        return moved
+
+    def test_existing_scope_and_late_receipt_after_account_directory_migration(self):
+        from cp_runtime import g6_route_settings as settings
+
+        task = self.select("original")
+        pending = self.reserve(task, "before_move")
+        ledger = Path(task["new_ledger_path"])
+        before = ledger.read_bytes()
+        original_origin = next(iter(scope.registry(self.session)["origins"]))
+        frozen_origin = (origin._directory(self.session) / (original_origin + ".json")).read_bytes()
+        moved = self.move_account()
+        settings.check_replacement(moved, settings.reader_contract(Path(__file__).resolve().parents[1] / "manifest.json"))
+        recovered = scope.read(self.session, task_scope=task["task_scope"])
+        actual = Path(recovered["new_ledger_path"])
+        self.assertTrue(ledger.samefile(actual))
+        self.assertTrue(actual.is_relative_to(moved))
+        self.assertEqual(actual.read_bytes(), before)
+        self.finish(recovered, pending)
+        self.post(pending)
+        state = budget.read_budget(actual)
+        self.assertEqual((len(state["reservations"]), len(state["terminals"])), (1, 1))
+        self.assertEqual(scope.complete(self.session, self.repo, task["task_scope"])["status"], "COMPLETE")
+        self.turn = "resumed-native-turn"
+        resumed = self.select("original", "Resume the migrated task", relation="resume", task_scope=task["task_scope"])
+        self.assertEqual(resumed["new_ledger_path"], str(actual))
+        self.assertEqual((origin._directory(self.session) / (original_origin + ".json")).read_bytes(), frozen_origin)
+        self.assertEqual(origin.read_origin(self.session, self.repo, original_origin)["origin_ref"], original_origin)
+        self.assertEqual(len(budget.read_budget(actual)["terminals"]), 1)
+        replacement = self.transcript.with_suffix(".replacement")
+        replacement.write_bytes(self.transcript.read_bytes())
+        os.replace(replacement, self.transcript)
+        with self.assertRaisesRegex(ValueError, "TASK_SOURCE_REPLACED"):
+            origin.read_origin(self.session, self.repo, original_origin)
 
     def test_independent_b_has_budget_after_a_exhausted_and_resume_preserves_a(self):
         a = self.select("a")

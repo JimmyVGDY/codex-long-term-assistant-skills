@@ -1553,17 +1553,18 @@ def _remove_base_marketplace(check: bool = True) -> None:
             raise InstallError("基础 Marketplace 注销失败: %s" % detail[-2000:])
 
 
-def _base_plugin_active() -> bool:
+def _base_plugin_active(expected_version: Optional[str] = None) -> bool:
     result = _list_plugins()
     if result.returncode != 0:
         return False
     try:
         payload = json.loads(result.stdout or "{}")
-        rows = list(payload.get("installed") or []) + list(payload.get("available") or [])
-    except (TypeError, ValueError):
+        profile = DESKTOP_CONTRACT["wire_profiles"]["plugin_json"]["plugin-list-v1"]
+        target = normalize_plugin_list(payload, PACKAGE, BASE_MARKETPLACE, expected_version, profile,
+                                       other_marketplaces=(MARKETPLACE,))
+    except (TypeError, ValueError, CompatibilityError):
         return False
-    return any(isinstance(item, dict) and item.get("pluginId") == "%s@%s" % (PACKAGE, BASE_MARKETPLACE)
-               and item.get("installed") is True and item.get("enabled") is True for item in rows)
+    return target is not None
 
 
 def _normalized_mode(value: Any) -> str:
@@ -2095,6 +2096,14 @@ def validate_user_install_target() -> None:
         pass
 
 
+def _require_compatible_readers(target: Optional[dict]) -> None:
+    from cp_runtime.g6_route_settings import check_replacement
+    try:
+        check_replacement(codex_home(), target)
+    except (ValueError, RuntimeError, OSError, KeyError) as exc:
+        raise InstallError("Reader rollback cannot be verified. Keep the current reader and switch the new-task default: " + str(exc)) from exc
+
+
 def install_user(mode: str, dry_run: bool, force: bool) -> None:
     validate_user_install_target()
     ch = codex_home(); sh = user_skills_home(); home = Path.home().absolute()
@@ -2137,6 +2146,10 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
     for _label, target in targets:
         reject_link_ancestors(target.parent)
     old_state = load_json(state_path("user"), {}) or {}
+    from cp_runtime.g6_route_settings import reader_contract
+    next_reader = reader_contract(MANIFEST_PATH)
+    if old_state and not dry_run:
+        _require_compatible_readers(next_reader)
     migrated_old_state = migrate_state_to_v3(old_state, "user", mode)
     preference_migration = capability_preference_migration(old_state)
     if dry_run:
@@ -2324,6 +2337,7 @@ def install_user(mode: str, dry_run: bool, force: bool) -> None:
             raise InstallError("全局 AGENTS 受管区块无法唯一核验，拒绝提交安装状态")
         managed[str(gp)] = global_hash
         state = dict(migrated_old_state)
+        state["catalog_reader_contract"] = next_reader
         state.update({"schema_version":3,"package":PACKAGE,"version":VERSION,"scope":"user","mode":mode,
                       "installed_at":time.time(),"backup":str(backup),"managed_hashes":managed,
                       "previous_backup":old_state.get("backup"),
@@ -2621,6 +2635,8 @@ def uninstall(scope: str, mode: str, repo_path: Optional[str], force: bool, dry_
     previous_state = {}
     if previous_state_record and previous_state_record.get("existed") and previous_state_record.get("backup_relative"):
         previous_state = load_json(backup / previous_state_record["backup_relative"], {}) or {}
+    if scope == "user" and not dry_run:
+        _require_compatible_readers(previous_state.get("catalog_reader_contract"))
     if dry_run:
         print(json.dumps({"restore_backup":str(backup),"records":records,"installed_mode":installed_mode},ensure_ascii=False,indent=2)); return
     _require_no_live_transaction(scope, repo)
@@ -2763,6 +2779,17 @@ def recover_transaction(scope: str, repo_path: Optional[str] = None,
     if journal["stage"] == "PREPARED" and not journal.get("backup"):
         _journal_write(journal, "ROLLED_BACK"); _finish_journal(journal)
         print("[OK] PREPARED 事务尚未写入受管目标，已安全清理"); return
+    if scope == "user" and any(r.get("label") == "install-state" for r in journal.get("records", [])):
+        prior = next(r for r in journal["records"] if r.get("label") == "install-state")
+        target_readers = None
+        if prior.get("existed") and prior.get("backup_relative") and journal.get("backup"):
+            folder = Path(journal["backup"]).resolve()
+            saved = (folder / prior["backup_relative"]).resolve()
+            ensure_inside(saved, folder)
+            if not saved.is_file() or tree_sha256(saved) != prior.get("sha256"):
+                raise InstallError("Previous reader backup failed its integrity check.")
+            target_readers = (load_json(saved) or {}).get("catalog_reader_contract")
+        _require_compatible_readers(target_readers)
     # 中文：保留旧失败为历史；本轮是否恢复成功由本轮读回决定。
     # English: Preserve old failures as history; only current readback determines this recovery attempt.
     journal.setdefault("recovery_attempts", []).append({"previous_stage": journal["stage"],
@@ -2951,7 +2978,9 @@ def _diagnostic_facts_once(scope: str, mode: Optional[str], repo_path: Optional[
         record = enhanced_record if enhanced_registered else base_record
         market = MARKETPLACE if enhanced_registered else BASE_MARKETPLACE
         version = str(record.get("version") or "")
-        if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        if market == BASE_MARKETPLACE and version != VERSION:
+            component_errors["base"] = ["BASE_REGISTRATION_VERSION_MISMATCH"]
+        elif not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
             component_errors["base"] = ["BASE_VERSION_UNVERIFIED"]
         else:
             cache = codex_home() / "plugins" / "cache" / market / PACKAGE / version

@@ -9,10 +9,10 @@ from pathlib import PurePosixPath
 from typing import Any, Mapping
 
 from .common import parse_iso
-from .g6_flexible_policy import PROFILES, profile_spec
+from .g6_flexible_policy import profiles_for, profile_spec
 from .routing_contract import exact, fail, integer, ref, role_for, sha
 
-JOURNAL_SCHEMA = "g6-budget-journal/2"
+from .g6_journal_versions import ALLOWANCE as JOURNAL_SCHEMA
 EVENT_TYPES = {"REVIEW_WORK_REGISTERED", "ALLOWANCE_REQUESTED", "ALLOWANCE_GRANTED",
                "ALLOWANCE_REVOKED", "ALLOWANCE_REINSTATED", "REVIEW_CALL_BOUND", "REVIEW_WORK_CLOSED"}
 CALL_FIELDS = {"call_id", "work_id", "packet_dir", "packet_sha256", "baseline_sha256",
@@ -61,14 +61,14 @@ def work_identity(value: Mapping[str, Any]) -> str:
                         ("boundary_id", "phase", "agent_type", "profile_id", "scope_paths", "purpose")})[7:39]
 
 
-def validate_work(value: Mapping[str, Any]) -> dict[str, Any]:
+def validate_work(value: Mapping[str, Any], digest: str | None = None) -> dict[str, Any]:
     item = exact(dict(value), WORK_FIELDS, "G6_REVIEW_WORK_FIELDS")
     if (not isinstance(item["boundary_id"], str)
             or not re.fullmatch(r"[A-Za-z0-9_.-]{1,160}", item["boundary_id"])
             or (item["phase"] == TASK_PHASE and item["agent_type"] not in {"worker", "explorer"})
             or (item["phase"] != TASK_PHASE and
                 (item["phase"] not in PHASES or role_for(item["agent_type"]) != "reviewer"))
-            or item["profile_id"] not in PROFILES
+            or item["profile_id"] not in profiles_for(digest)
             or not isinstance(item["purpose"], str) or not 1 <= len(item["purpose"]) <= 1000
             or any(ord(char) < 32 for char in item["purpose"])
             or type(item["required"]) is not bool or type(item["base_funded"]) is not bool):
@@ -79,7 +79,7 @@ def validate_work(value: Mapping[str, Any]) -> dict[str, Any]:
     return item
 
 
-def validate_request(value: Mapping[str, Any], works: Mapping[str, Any]) -> dict[str, Any]:
+def validate_request(value: Mapping[str, Any], works: Mapping[str, Any], digest: str | None = None) -> dict[str, Any]:
     item = exact(dict(value), REQUEST_FIELDS, "G6_ALLOWANCE_REQUEST_FIELDS")
     if type(item["question_version"]) is not int or item["question_version"] not in {1, 2}:
         fail("G6_ALLOWANCE_QUESTION_VERSION")
@@ -103,8 +103,8 @@ def validate_request(value: Mapping[str, Any], works: Mapping[str, Any]) -> dict
         integer(row["attempts"], "G6_ALLOWANCE_ATTEMPTS", minimum=row["dispatches"],
                 maximum=row["dispatches"] * 3)
         integer(row["units"], "G6_ALLOWANCE_UNITS", minimum=1,
-                maximum=128 * profile_spec(works[work_id]["profile_id"])["planning_units"] if execution else 128)
-        if row["units"] != profile_spec(works[work_id]["profile_id"])["planning_units"] * row["dispatches"]:
+                maximum=128 * profile_spec(works[work_id]["profile_id"], digest)["planning_units"] if execution else 128)
+        if row["units"] != profile_spec(works[work_id]["profile_id"], digest)["planning_units"] * row["dispatches"]:
             fail("G6_ALLOWANCE_UNITS")
     if item["scope_ref"] != ref([works[row["work_id"]] for row in rows]):
         fail("G6_ALLOWANCE_SCOPE_CHANGED")
@@ -159,14 +159,14 @@ def apply_event(state: dict[str, Any], kind: str, data: Mapping[str, Any]) -> No
     """
     works, requests = state["review_work"], state["allowance_requests"]
     if kind == "REVIEW_WORK_REGISTERED":
-        work = validate_work(data)
+        work = validate_work(data, state["root"]["policy_digest"])
         if work["phase"] == TASK_PHASE and state.get("protocol_version", 1) < 3:
             fail("G6_TASK_EXECUTION_VERSION_REQUIRED")
         if work["work_id"] in works or len(works) >= MAX_WORK:
             fail("G6_REVIEW_WORK_CONFLICT")
         works[work["work_id"]] = work
     elif kind == "ALLOWANCE_REQUESTED":
-        request = validate_request(data, works)
+        request = validate_request(data, works, state["root"]["policy_digest"])
         if request["request_id"] in requests or len(requests) >= MAX_REQUESTS:
             fail("G6_ALLOWANCE_REQUEST_CONFLICT")
         requests[request["request_id"]] = request
@@ -259,12 +259,12 @@ def buckets(state: Mapping[str, Any], *, include_revoked: bool = False) -> dict[
     return result
 
 
-def quote_question(request: Mapping[str, Any], works: Mapping[str, Any], locale: str = "zh-CN") -> str:
+def quote_question(request: Mapping[str, Any], works: Mapping[str, Any], locale: str = "zh-CN", digest: str | None = None) -> str:
     if locale not in {"zh-CN", "en"} or request["question_version"] not in {1, 2}:
         fail("G6_ALLOWANCE_QUESTION_VERSION_OR_LOCALE")
     rows = request["allocations"]
     if request["question_version"] == 2:
-        validate_request(request, works)
+        validate_request(request, works, digest)
         labels = "; ".join(f"{works[row['work_id']]['agent_type']} / {works[row['work_id']]['profile_id']}: "
                            f"{row['dispatches']} runs, {row['attempts']} attempts" for row in rows)
         if locale == "en":
@@ -294,8 +294,8 @@ def quote_question(request: Mapping[str, Any], works: Mapping[str, Any], locale:
             f"仅限 {labels}，范围保持当前申请。申请 {request['request_id']}。")
 
 
-def question_variants(request: Mapping[str, Any], works: Mapping[str, Any]) -> tuple[str, str]:
-    return quote_question(request, works), quote_question(request, works, "en")
+def question_variants(request: Mapping[str, Any], works: Mapping[str, Any], digest: str | None = None) -> tuple[str, str]:
+    return quote_question(request, works, digest=digest), quote_question(request, works, "en", digest)
 
 
 def quote_options(locale: str = "zh-CN") -> list[str]:

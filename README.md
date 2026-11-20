@@ -56,6 +56,8 @@
 
 POSIX 将上述路径替换为 `./scripts/cp-assistant.sh`。四条路径的完整说明见 [使用说明](docs/USER_GUIDE.md)。
 
+源码开发版新增 `gate-settings` 和 `routing-policy`，可预览限时恢复偏好、试用模型目录并检查旧账本是否可读。操作示例见[门禁恢复](docs/DESKTOP_GATE_RECOVERY.md)和[模型策略](docs/MODEL_ROUTING_AND_COST_POLICY.md)。
+
 ## 下载
 
 <!-- cp-fact:release.downloads.zh -->

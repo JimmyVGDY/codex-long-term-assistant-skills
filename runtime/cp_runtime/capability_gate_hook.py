@@ -109,7 +109,11 @@ def legacy_write_response() -> dict[str, Any]:
 
     English: Deny legacy native writes without consulting prior gate-task state.
     """
-    return failure_response("PreToolUse", "LEGACY_WRITE_ORIGIN_UNAVAILABLE")
+    response = failure_response("PreToolUse", "LEGACY_WRITE_ORIGIN_UNAVAILABLE")
+    response["hookSpecificOutput"]["permissionDecisionReason"] += (
+        " Prepare the same edit with the registered Desktop apply_patch operation. "
+        "Its project, target and prestate will be checked before the write.")
+    return response
 
 
 def _post_block(reason: str) -> dict[str, Any]:
@@ -124,6 +128,7 @@ def _post_block(reason: str) -> dict[str, Any]:
         affected_action="verify_write_result",
         next_action="resolve_confirmed_conflict" if conflict else "read_operation_and_target_files_without_replaying_write",
         evidence_state=failure["evidence_state"])
+    decision.update(effect_state="MAY_HAVE_EXECUTED", execution_authorization="NONE")
     text = ("Write audit is unverified; files may already have changed. "
             "Read the operation and target files. Do not repeat the write merely to obtain a receipt. "
             "Continue unrelated authorized work. decision=" + json.dumps(decision, ensure_ascii=True))

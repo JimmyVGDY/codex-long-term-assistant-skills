@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,7 +20,8 @@ sys.path.insert(0, str(ROOT / "runtime"))
 from cp_runtime.event_v3 import append_event, make_event, project_id_for, stable_repo_fingerprint
 
 
-def run_script(script: Path, arguments: list[str], environment: dict[str, str] | None = None, expected: int = 0):
+def run_script(script: Path, arguments: list[str], environment: dict[str, str] | None = None, expected: int = 0,
+               *, timeout: int = 120):
     effective_environment = dict(environment or os.environ)
     if "CP_ASSISTANT_KEYRING_PATH" not in effective_environment:
         effective_environment["CODEX_HOME"] = str(ROOT / ".isolated-test-codex-home")
@@ -30,7 +32,7 @@ def run_script(script: Path, arguments: list[str], environment: dict[str, str] |
         errors="replace",
         capture_output=True,
         env=effective_environment,
-        timeout=120,
+        timeout=timeout,
     )
     if result.returncode != expected:
         raise AssertionError(
@@ -105,10 +107,14 @@ class V64ReleaseDeliveryTests(unittest.TestCase):
         artifact = self.root / ("Codex-Skills-V%s-zh-CN.zip" % VERSION)
         witness = self.root / "deterministic-build.json"
         result = run_script(BUILD, ["reproducible", "--locale", "zh-CN",
-                                    "--output", str(artifact), "--witness", str(witness)])
+                                    "--output", str(artifact), "--witness", str(witness)], timeout=360)
         report = json.loads(result.stdout)
         self.assertTrue(report["reproducible"])
         self.assertEqual(report["first_sha256"], report["second_sha256"])
+        with zipfile.ZipFile(artifact) as candidate:
+            entry = next(n for n in candidate.namelist() if n.endswith("/config/locale.json"))
+            expected = (json.dumps({"schema_version": 1, "locale": "zh-CN"}, indent=2) + "\n").encode()
+            self.assertEqual(candidate.read(entry), expected)
         verify = run_script(BUILD, ["verify", "--locale", "zh-CN", "--archive", str(artifact)])
         self.assertTrue(json.loads(verify.stdout)["metadata_normalized"])
 

@@ -25,7 +25,8 @@ from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLI
 from cp_runtime.common import RuntimeContractError  # noqa: E402
 from cp_runtime.review_matrix import run as run_matrix_review  # noqa: E402
 from cp_runtime.review_contract import derive_isolation as derive_review_isolation  # noqa: E402
-from cp_runtime.g6_flexible_policy import POLICY_ID as G6_POLICY_ID, PROFILES as G6_PROFILES  # noqa: E402
+from cp_runtime import g6_catalog
+from cp_runtime.g6_flexible_policy import PROFILES as G6_PROFILES  # noqa: E402
 
 STATE_FILE = "review-state.json"
 CALIBRATION_LEDGER_FILE = "review-results.jsonl"
@@ -1439,7 +1440,7 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--review-dir", required=True)
     init.add_argument("--boundary-id", required=True)
     init.add_argument("--task-id", default="")
-    init.add_argument("--policy-id", choices=[*POLICY_FILES, G6_POLICY_ID], default=G6_POLICY_ID)
+    init.add_argument("--policy-id", choices=[*POLICY_FILES, *g6_catalog.reader_ids()], default=None)
     init.add_argument("--repo-path", default="")
     init.add_argument("--project-profile", default="")
     init.add_argument("--project-id", default="")
@@ -1495,7 +1496,7 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--allow-same-packet", action="store_true")
     plan.add_argument("--same-packet-reason", default="")
     plan.add_argument("--review-stage", choices=["pre_review", "post_review", "repair_review", "task_execution"], default=None)
-    plan.add_argument("--model-profile", choices=list(G6_PROFILES), default=None)
+    plan.add_argument("--model-profile", choices=g6_catalog.reader_profiles(G6_PROFILES), default=None)
     plan.add_argument("--allowed-path", action="append", default=[])
     plan.add_argument("--reserve-repair", action="store_true")
     plan.set_defaults(func=command_plan)
@@ -1507,7 +1508,7 @@ def build_parser() -> argparse.ArgumentParser:
     dispatch.add_argument("--reviewer", "--agent", dest="reviewer", required=True)
     dispatch.add_argument("--scope", default="")
     dispatch.add_argument("--approved-profile", "--model-profile", dest="model_profile",
-                          choices=[*profile_weights(), *G6_PROFILES], default="")
+                          choices=[*profile_weights(), *g6_catalog.reader_profiles(G6_PROFILES)], default="")
     dispatch.add_argument("--agent-type", default="")
     dispatch.add_argument("--selection-input", default="")
     dispatch.add_argument("--root-envelope", default=os.environ.get("CP_DELEGATION_ENVELOPE_PATH", ""))
@@ -1624,7 +1625,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = build_parser().parse_args()
     try:
-        g6 = args.command == "init" and args.policy_id == G6_POLICY_ID
+        g6 = args.command == "init" and (args.policy_id is None or args.policy_id in g6_catalog.reader_ids())
         candidate = Path(args.review_dir).expanduser().resolve() / STATE_FILE
         if args.command != "init" and candidate.is_file():
             g6 = json.loads(candidate.read_text(encoding="utf-8-sig")).get("schema_version") == "g6-review-state/1"

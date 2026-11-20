@@ -79,9 +79,10 @@ def load_mapping(path: Path = DEFAULT_MAP) -> dict[str, Any]:
     return data
 
 
-def mapping_findings(root: Path, mapping: dict[str, Any]) -> list[dict[str, Any]]:
+def mapping_findings(root: Path, mapping: dict[str, Any], paths: Iterable[Path] | None = None) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
-    for path in sorted(root.rglob("*.py")):
+    candidates = root.rglob("*.py") if paths is None else (p for p in paths if p.suffix == ".py" and p.is_file())
+    for path in sorted(candidates):
         relative = path.relative_to(root).as_posix()
         if any(part in {".git", "dist", "locales", "__pycache__", "tests", "project-context"} for part in path.parts) \
                 or path.name.startswith("test_"):

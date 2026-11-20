@@ -615,6 +615,25 @@ class AllowanceWorkflowTests(unittest.TestCase):
         self.assertEqual(receipt["gate_state"], "MISSING_EVIDENCE")
         self.assertEqual(receipt["reason_code"], "REVIEW_CONTEXT_UNVERIFIED")
 
+    def test_registered_partial_review_uses_the_advertised_status_contract(self):
+        from cp_runtime.common import read_json
+        from cp_runtime.g6_review_receipt_v1 import REPORT_STATUSES, _receipt_path
+
+        plan = self.plan()
+        args = self.dispatch()["dispatch_decision"]["exact_tool_parameters"]
+        self.assertIn(", ".join(REPORT_STATUSES), args["message"])
+        self.assertIn("Use incomplete for partial coverage", args["message"])
+        self.assertEqual(self.hook("PreToolUse", {"tool_name": "spawn_agent", "tool_use_id": "partial-report",
+                                                  "tool_input": args}), {})
+        packet = plan["plans"][plan["active_plan_key"]]["packet_sha256"]
+        self.child_result(args, "partial-report", {"status": "incomplete", "findings": [],
+            "checked_scope": ["packet_sha256=" + packet], "unverified_items": ["One path left."], "summary": "Partial."})
+        state = budget.read_budget(self.ledger)
+        receipt = read_json(_receipt_path(self.ledger, state["host_calls"][ref("partial-report")]), verify=True)
+        self.assertEqual(receipt["report_status"], "incomplete")
+        self.assertEqual(receipt["gate_state"], "MISSING_EVIDENCE")
+        self.assertEqual(receipt["reason_code"], "REVIEW_PACKET_VERIFIED")
+
     def test_opaque_registered_continuation_prepares_fresh_spawn_without_spending(self):
         self.plan()
         args = self.dispatch()["dispatch_decision"]["exact_tool_parameters"]

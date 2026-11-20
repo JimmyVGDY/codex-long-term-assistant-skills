@@ -13,7 +13,7 @@ from typing import Any
 from . import g6_budget_v1 as budget
 from .common import parse_iso
 from .event_v2 import OwnerTokenLock
-from .g6_flexible_policy import POLICY_ID
+from .g6_catalog import policy_id
 from .routing_contract import ref, role_for
 
 
@@ -70,7 +70,7 @@ def collect(path: Path, *, expected_head: str) -> dict[str, Any]:
             "p95": durations[math.ceil(len(durations) * .95) - 1] if durations else None}
         output.append(row)
     return {"schema_version": "g6-observation/1", "status": "OBSERVED",
-            "policy_id": POLICY_ID, "policy_digest": state["root"]["policy_digest"],
+            "policy_id": policy_id(state["root"]["policy_digest"]), "policy_digest": state["root"]["policy_digest"],
             "identity": dict(state["root"]["identity"]),
             "root_session_ref": state["root"]["host_session_ref"],
             "ledger_head": expected_head, "source_ref": ref(events),

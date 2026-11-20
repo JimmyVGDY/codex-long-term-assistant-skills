@@ -30,7 +30,7 @@ def run(args):
         value = preview(session_id=args.session_id, cwd=cwd, task_scope=args.task_scope,
                         agent_type=args.agent_type, task_name=args.task_name,
                         message=bounded_read(Path(args.message_file), 262_144).decode("utf-8"),
-                        requested_profile=args.model_profile)
+                        requested_profile=args.model_profile, turn_id=args.turn_id)
     else:
         value = scope.registry(args.session_id)
         if value is None:
@@ -63,4 +63,5 @@ def add_commands(sub):
             item.add_argument("--task-name", required=True)
             item.add_argument("--message-file", required=True)
             item.add_argument("--model-profile")
+            item.add_argument("--turn-id", help="Current native turn, for an exact user-specified choice or task kind.")
         item.set_defaults(func=run)

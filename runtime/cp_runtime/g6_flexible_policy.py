@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+from . import g6_catalog
 from .common import parse_iso
 from .g6_gate_catalog import complete_gates
 from .routing_contract import exact, fail, hex_digest, identity, integer, ref, role_for, sha
@@ -52,7 +53,17 @@ def policy() -> dict[str, Any]:
     return value
 
 
-def profile_spec(profile_id: str) -> dict[str, Any]:
+def profiles_for(policy_digest: str | None = None) -> tuple[str, ...]:
+    catalog = g6_catalog.for_digest(policy_digest)
+    return tuple(catalog.profiles) if catalog else PROFILES
+
+
+def profile_spec(profile_id: str, policy_digest: str | None = None) -> dict[str, Any]:
+    catalog = g6_catalog.for_digest(policy_digest)
+    if catalog is not None:
+        if profile_id not in catalog.profiles:
+            fail("G6_PROFILE_UNKNOWN")
+        return dict(catalog.profiles[profile_id])
     if profile_id not in PROFILES:
         fail("G6_PROFILE_UNKNOWN")
     _, family, effort = profile_id.split("-")
@@ -86,11 +97,14 @@ def _facts(value: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-def _budget(value: Mapping[str, Any]) -> dict[str, Any]:
-    extension = value.get("schema_version") == "g6-budget-snapshot/2"
+def _budget(value: Mapping[str, Any], catalog: g6_catalog.Catalog | None = None) -> dict[str, Any]:
+    extension = value.get("schema_version") in {"g6-budget-snapshot/2", "g6-budget-snapshot/3"}
+    grouped = value.get("schema_version") == "g6-budget-snapshot/3"
     fields = BUDGET_FIELDS | ({"funding_id", "authorization_ref"} if extension else set())
+    if grouped:
+        fields |= {"active_groups"}
     result = exact(dict(value), fields, "G6_BUDGET_FIELDS")
-    if result["schema_version"] not in {"g6-budget-snapshot/1", "g6-budget-snapshot/2"}:
+    if result["schema_version"] not in {"g6-budget-snapshot/1", "g6-budget-snapshot/2", "g6-budget-snapshot/3"} or grouped and catalog is None:
         fail("G6_BUDGET_VERSION")
     hex_digest(result["ledger_head"])
     rule = policy()
@@ -111,6 +125,10 @@ def _budget(value: Mapping[str, Any]) -> dict[str, Any]:
         fail("G6_BUDGET_TEMPLATE")
     for key in BUDGET_FIELDS - {"schema_version", "ledger_head", "capacity_class"}:
         integer(result[key], "G6_BUDGET_VALUE", maximum=1_000_000)
+    if grouped:
+        groups = exact(result["active_groups"], set(catalog.limits), "G6_GROUP_COUNTS")
+        for group, count in groups.items():
+            integer(count, "G6_GROUP_CAPACITY", maximum=min(catalog.limits[group], result["active_calls"]))
     if (result["active_calls"] > result["parallel_limit"]
             or result["astra_active"] > parallel["astra_parallel"]
             or result["depth"] > result["depth_limit"]
@@ -122,7 +140,32 @@ def _budget(value: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-def _capability(value: Mapping[str, Any]) -> dict[str, Any]:
+def _capability(value: Mapping[str, Any], catalog: g6_catalog.Catalog | None = None) -> dict[str, Any]:
+    if catalog is not None:
+        second = value.get("schema_version") == "g6-desktop-capability/2"
+        fields = CAPABILITY_FIELDS | ({"coverage", "latency_ms"} if second else set())
+        if second and "pilot_ref" in value:
+            fields = fields | {"pilot_ref"}
+            sha(value["pilot_ref"])
+        result = exact(dict(value), fields, "G6_CAPABILITY_FIELDS")
+        if not second and result["schema_version"] != "g6-desktop-capability/1":
+            fail("G6_CAPABILITY_VERSION")
+        if result["source_ref"] is not None:
+            sha(result["source_ref"])
+        available = result["available_profiles"]
+        if available is not None:
+            if (not isinstance(available, list) or len(available) > 256 or
+                    any(not isinstance(p, str) or len(p) > 128 for p in available) or len(set(available)) != len(available)):
+                fail("G6_CAPABILITY_LIST")
+            result["available_profiles"] = [p for p in available if p in catalog.profiles]
+        if second:
+            if (result["coverage"] not in {"COMPLETE","PARTIAL","UNKNOWN"} or
+                    not isinstance(result["latency_ms"], dict) or len(result["latency_ms"]) > len(catalog.profiles)):
+                fail("G6_CAPABILITY_COVERAGE")
+            for p, duration in result["latency_ms"].items():
+                if p not in catalog.profiles: fail("G6_CAPABILITY_LATENCY")
+                integer(duration, "G6_CAPABILITY_LATENCY", maximum=86_400_000)
+        return result
     result = exact(dict(value), CAPABILITY_FIELDS, "G6_CAPABILITY_FIELDS")
     if result["schema_version"] != "g6-desktop-capability/1":
         fail("G6_CAPABILITY_VERSION")
@@ -159,48 +202,66 @@ def _fallback_key(name: str, preferred: str) -> tuple:
             other["planning_units"], name)
 
 
-def is_upward_adjustment(current: str, requested: str) -> bool:
+def is_upward_adjustment(current: str, requested: str, policy_digest: str | None = None) -> bool:
     """中文：更便宜或降级型号的回退不消耗升档次数。
     
     English: A cheaper/lower-family fallback never consumes an upward adjustment.
     """
-    before, after = profile_spec(current), profile_spec(requested)
+    before, after = profile_spec(current, policy_digest), profile_spec(requested, policy_digest)
+    catalog = g6_catalog.for_digest(policy_digest)
+    if catalog:
+        return (after["planning_units"] > before["planning_units"] or
+                catalog.family_rank[after["family"]] > catalog.family_rank[before["family"]])
     return (after["planning_units"] > before["planning_units"]
             or FAMILIES.index(after["family"]) > FAMILIES.index(before["family"]))
+
+
+def bounded_profile(name: str, catalog: g6_catalog.Catalog) -> bool:
+    """中文：缺少能力材料时仅尝试原来已准的精确组合。 English: Only approved exact tuples permit bounded attempts."""
+    if name not in PROFILES:
+        return False
+    old = profile_spec(name)
+    row = catalog.profiles[name]
+    return row["stage"] == "approved" and (row["model"], row["effort"]) == (old["model"], old["effort"])
 
 
 def decide(*, facts: Mapping[str, Any], budget: Mapping[str, Any],
            capability: Mapping[str, Any], gates: list[Mapping[str, Any]],
            agent_type: str, task_name: str, message: str, decision_time: str,
            adjustment: Mapping[str, Any] | None = None,
-           explicit_user_profile: str | None = None) -> dict[str, Any]:
+           explicit_user_profile: str | None = None,
+           policy_digest: str | None = None) -> dict[str, Any]:
     """中文：本函数只计算决策；账本与 Hook 仍须预占并再次核验。
     
     English: Pure decision; the journal and Hook must still reserve and recheck it.
     """
     rule = policy()
+    catalog = g6_catalog.for_digest(policy_digest)
+    profiles = profiles_for(policy_digest)
+    spec = catalog.profiles.__getitem__ if catalog else profile_spec
     facts = _facts(facts)
-    budget = _budget(budget)
-    capability = _capability(capability)
+    budget = _budget(budget, catalog)
+    capability = _capability(capability, catalog)
     gates = _gates(gates)
-    role_for(agent_type)
+    role = role_for(agent_type)
     if not TASK_NAME.fullmatch(task_name) or not isinstance(message, str) or not message:
         fail("G6_DISPATCH_INPUT")
     when = parse_iso(decision_time)
     if when.tzinfo is None:
         fail("G6_DECISION_TIME")
-    if explicit_user_profile is not None and explicit_user_profile not in PROFILES:
+    if explicit_user_profile is not None and explicit_user_profile not in profiles:
         fail("G6_EXPLICIT_PROFILE")
     if adjustment is not None:
         adjustment = exact(dict(adjustment), ADJUSTMENT_FIELDS, "G6_ADJUSTMENT_FIELDS")
-        if (adjustment["requested_profile"] not in PROFILES
+        if (adjustment["requested_profile"] not in profiles
                 or adjustment["source"] not in {"model_semantic", "user_direct"}
                 or not isinstance(adjustment["reason"], str)
                 or len(adjustment["reason"]) > 500):
             fail("G6_ADJUSTMENT_INPUT")
         if adjustment["source_ref"] is not None:
             sha(adjustment["source_ref"])
-    preferred = explicit_user_profile or _preferred(facts)
+    kind = facts["task_kind"] if facts["source_refs"] and facts["task_kind_source"] in {"user_direct","script_verified"} else "unknown"
+    preferred = explicit_user_profile or (catalog.defaults[kind] if catalog else _preferred(facts))
     remaining_units = (budget["capacity_units"] - budget["completed_charged_units"]
                        - budget["inflight_reserved_units"] - budget["future_required_hold_units"])
     remaining_attempts = (budget["capacity_attempts"] - budget["completed_charged_attempts"]
@@ -212,12 +273,17 @@ def decide(*, facts: Mapping[str, Any], budget: Mapping[str, Any],
     if facts["baseline_sha256"] is None:
         missing.append("baseline_sha256")
     reasons = ["MISSING_EVIDENCE_CONTINUE"] if missing else []
+    if catalog and capability.get("pilot_ref"):
+        reasons.append("USER_AUTHORIZED_ONE_TIME_PILOT")
     decision = "CONTINUE_DEFAULT"
     chosen = None
     candidates: list[str] = []
     available = capability["available_profiles"]
     if available is None:
-        available = list(PROFILES)
+        available = [p for p in profiles if bounded_profile(p, catalog)] if catalog else list(profiles)
+        missing.append("available_profiles")
+        reasons.append("CAPABILITY_UNVERIFIED_BOUNDED_ATTEMPT")
+    if catalog and capability.get("coverage") in {"PARTIAL", "UNKNOWN"} and "available_profiles" not in missing:
         missing.append("available_profiles")
         reasons.append("CAPABILITY_UNVERIFIED_BOUNDED_ATTEMPT")
     if hard:
@@ -233,9 +299,15 @@ def decide(*, facts: Mapping[str, Any], budget: Mapping[str, Any],
         decision = "CONTINUE_LOCAL"
         reasons.append("BUDGET_EXHAUSTED")
     else:
-        candidates = sorted((name for name in available
-                             if profile_spec(name)["planning_units"] <= remaining_units
-                             and (not name.startswith("g6-astra-") or not budget["astra_active"])))
+        if catalog:
+            counts = budget.get("active_groups", {"astra": budget["astra_active"]})
+            candidates = sorted(name for name in available if spec(name)["stage"] != "shadow"
+                                and spec(name)["planning_units"] <= remaining_units
+                                and (spec(name)["group"] not in catalog.limits or
+                                     counts.get(spec(name)["group"], 0) < catalog.limits[spec(name)["group"]]))
+        else:
+            candidates = sorted(name for name in available if spec(name)["planning_units"] <= remaining_units
+                                and (not name.startswith("g6-astra-") or not budget["astra_active"]))
         if explicit_user_profile is not None:
             if explicit_user_profile in candidates:
                 chosen = explicit_user_profile
@@ -244,15 +316,20 @@ def decide(*, facts: Mapping[str, Any], budget: Mapping[str, Any],
                 reasons.append("EXPLICIT_USER_PROFILE_UNAVAILABLE_OR_UNAFFORDABLE")
         elif preferred in candidates:
             chosen = preferred
+        elif catalog and candidates:
+            chosen = catalog.choose(candidates, preferred, role, capability.get("latency_ms", {}))
+            decision = "CONTINUE_DEGRADED"
+            reasons.append("CAPABILITY_OR_BUDGET_FALLBACK" if spec(chosen)["planning_units"] <= spec(preferred)["planning_units"]
+                           else "CAPABILITY_FALLBACK_HIGHER_WEIGHT")
         else:
             at_most = [name for name in candidates
-                       if profile_spec(name)["planning_units"] <= profile_spec(preferred)["planning_units"]]
+                       if spec(name)["planning_units"] <= spec(preferred)["planning_units"]]
             if at_most:
                 chosen = min(at_most, key=lambda name: _fallback_key(name, preferred))
                 decision = "CONTINUE_DEGRADED"
                 reasons.append("CAPABILITY_OR_BUDGET_FALLBACK")
             elif candidates:
-                chosen = min(candidates, key=lambda name: (profile_spec(name)["planning_units"], name))
+                chosen = min(candidates, key=lambda name: (spec(name)["planning_units"], name))
                 decision = "CONTINUE_DEGRADED"
                 reasons.append("CAPABILITY_FALLBACK_HIGHER_WEIGHT")
             else:
@@ -261,10 +338,10 @@ def decide(*, facts: Mapping[str, Any], budget: Mapping[str, Any],
         if (chosen is not None and adjustment is not None and explicit_user_profile is None
                 and adjustment["source"] != "user_direct"):
             requested = adjustment["requested_profile"]
-            base_units = profile_spec(chosen)["planning_units"]
-            request_units = profile_spec(requested)["planning_units"]
+            base_units = spec(chosen)["planning_units"]
+            request_units = spec(requested)["planning_units"]
             maximum_ratio = rule["elasticity"]["max_weight_ratio_per_ordinary_adjustment"]
-            upward = is_upward_adjustment(chosen, requested)
+            upward = is_upward_adjustment(chosen, requested, policy_digest)
             within_ratio = request_units * maximum_ratio[1] <= base_units * maximum_ratio[0]
             within_count = (not upward or budget["upward_adjustments_used"] <
                             rule["elasticity"]["max_automatic_upward_adjustments_per_work_item"])
@@ -290,23 +367,23 @@ def decide(*, facts: Mapping[str, Any], budget: Mapping[str, Any],
     missing = sorted(set(missing))
     if missing and "MISSING_EVIDENCE_CONTINUE" not in reasons:
         reasons.append("MISSING_EVIDENCE_CONTINUE")
-    selected = profile_spec(chosen) if chosen else None
+    selected = spec(chosen) if chosen else None
     allowed_adjustments = []
     if selected:
         max_ratio = rule["elasticity"]["max_weight_ratio_per_ordinary_adjustment"]
         allowed_adjustments = [name for name in candidates
-                               if profile_spec(name)["planning_units"] * max_ratio[1]
+                               if spec(name)["planning_units"] * max_ratio[1]
                                <= selected["planning_units"] * max_ratio[0]
                                and (budget["upward_adjustments_used"] <
                                     rule["elasticity"]["max_automatic_upward_adjustments_per_work_item"]
-                                    or not is_upward_adjustment(chosen, name))]
+                                    or not is_upward_adjustment(chosen, name, policy_digest))]
     expiry = (when.astimezone(timezone.utc) +
               timedelta(seconds=rule["decision_ttl_seconds"])).isoformat().replace("+00:00", "Z")
     params = ({"task_name": task_name, "agent_type": agent_type, "model": selected["model"],
                "reasoning_effort": selected["effort"], "fork_turns": "none", "message": message}
               if selected else None)
-    result = {"schema_version": "g6-dispatch-decision/1", "policy_id": POLICY_ID,
-              "policy_digest": "sha256:" + POLICY_SHA256, "facts_ref": ref(facts),
+    result = {"schema_version": "g6-dispatch-decision/1", "policy_id": catalog.policy_id if catalog else POLICY_ID,
+              "policy_digest": catalog.digest if catalog else "sha256:" + POLICY_SHA256, "facts_ref": ref(facts),
               "ledger_head": budget["ledger_head"], "capability_ref": ref(capability),
               "gate_results": gates, "decision": decision, "preferred_profile": preferred,
               "approved_profile": chosen, "allowed_adjustment_profiles": allowed_adjustments,

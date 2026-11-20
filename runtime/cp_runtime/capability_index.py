@@ -440,7 +440,8 @@ def query(store: CapabilityStore, term: str, limit: int = 5, *, include_inactive
         candidates.append(entry)
     budget.verify()
     require(git_baseline(store.repo_path) == baseline, "CHANGED")
-    return {"status": "OK", "revision": record["revision"], "candidates": candidates,
+    return {"status": "OK", "revision": record["revision"], "snapshot_sha256": record["integrity"]["sha256"],
+            "candidates": candidates,
             "coverage": coverage_summary(record["coverage"]), "source_search_required": not candidates or not record["coverage"]["complete"] or any(c["current_check"]["reasons"] or c["freshness"] != "matched" for c in candidates),
             "cost": {"context_probes": budget.context_probe_count, "source_reads": budget.reads, "source_bytes": budget.bytes_read,
                      "duration_ms": round((time.monotonic() - started) * 1000)}}

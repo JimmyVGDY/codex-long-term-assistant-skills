@@ -172,6 +172,7 @@ def audit_line_comments(path: Path, text: str) -> list[dict[str, Any]]:
 
 
 def audit(files: Iterable[Path]) -> dict[str, Any]:
+    files = list(files)
     findings: list[dict[str, Any]] = []
     reviewed = human_reviewed_paths()
     counts = {"tracked": 0, "text": 0, "documents": 0, "code": 0, "structured": 0}
@@ -209,7 +210,7 @@ def audit(files: Iterable[Path]) -> dict[str, Any]:
             counts["code"] += 1
             findings.extend(audit_python(path, text) if path.suffix.lower() == ".py"
                             else audit_line_comments(path, text))
-    findings.extend(mapping_findings(ROOT, load_mapping()))
+    findings.extend(mapping_findings(ROOT, load_mapping(), files))
     by_code: dict[str, int] = {}
     for row in findings:
         by_code[row["code"]] = by_code.get(row["code"], 0) + 1

@@ -41,3 +41,23 @@ Stop 从既有账本生成单根观察：按批准档位和角色统计尝试、
 ## 兼容与回放
 
 先读取根任务绑定的策略版本。旧V3/V4账本继续按[历史模型路由](../skills/multi-agent-independent-review/references/reviewer-model-routing.md)及各自冻结合同解释；新默认不要求取得其统计资格，也不把缺少旧资格卡视为违规。同一聊天换策略通过可验证交接保留旧账目、未结项和迟到事件归属。
+
+## 按项目试用版本化目录
+
+`desktop-catalog-v2` 只在明确选择试点的项目中用于新根。未选择的项目沿用既有策略。管理员通过当前包的统一管理入口预览和应用默认选择。审查包可传 --delegation-ledger 来绑定已存在的根。已派发调用的型号、强度、费用归属和迟到回执继续使用原根摘要。
+
+```text
+cp-assistant routing-policy show --repo-path <repo>
+cp-assistant routing-policy preview --repo-path <repo> --policy-id desktop-catalog-v2 --revision <n>
+cp-assistant routing-policy apply --repo-path <repo> --policy-id desktop-catalog-v2 --revision <n> --confirm <request_ref>
+cp-assistant routing-policy refresh-capabilities --repo-path <repo> --session-id <native-session>
+cp-assistant routing-policy rollback-check --repo-path <repo> --target-manifest <bundle/manifest.json>
+```
+
+切回时预览并应用 `desktop-g6-deterministic-v1`。新默认只作用于以后创建的根。替换读取器前检查未结调用、仍活动的任务、策略摘要及账本格式。机器清单和当前读取器支持 /1、/2、/3。
+
+目录逐型号登记精确宿主名称、强度、规划单位、并发组、角色偏好与优先级。规划单位仍按原有的 1、2、4 权重组合。排序先筛授权、容量、并发、必需步骤和可用组合，再按任务适配、规划单位、可比耗时与显式优先级选取。新增条目可以先处于 shadow 或只在试点使用。改费用或精确映射时创建新快照并保留旧文件，将新摘要加入读取器索引。每个根按其摘要重放。
+
+支持 native 的直接分类行 `task_kind=mechanical`、`task_kind=lookup`、`task_kind=cross_domain_adjudication` 等。单独的“定位符号 名称”按直接定位处理。指定型号可写 `model=gpt-6.2-sol reasoning_effort=medium`。未知明确选型会返回具体原因。在已选择试点的项目中，可另加独立一行“试用所选精确档位一次”，明确受原生回合、项目和根预算约束的一次试选。该组合必须出现在当前可用来源中，并尊重宿主的明确排除。一次许可不代表支持已验证。实际创建回执与账户目录分别提供证据。
+
+同项目使用 `routing-policy compare --repo-path <repo> --policy-id desktop-catalog-v2` 离线对照，可用 --ledger 限定实际根。需要纳入质量判定时，通过 --project-profile 和重复的 --evidence 提供项目证据台账中已登记的父协调者 validation 记录，subject 为 routing-quality/1，source 为 parent-coordinator。引用绑定 permit、terminal、policy、root、repository、initial_baseline 及对应角色的指标。复审记录 findings、accepted、false_positive，执行记录 accepted、rework，定位记录 hit。--save-timing 仅保存同策略、同角色和任务类别下有足够独立根的耗时，用于同价打平。实际 credits 缺计量时保持未知，学习报告不会自动改权重。

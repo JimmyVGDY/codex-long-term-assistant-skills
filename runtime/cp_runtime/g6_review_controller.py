@@ -20,6 +20,7 @@ from .common import atomic_write_json, read_json, require_external_state, resolv
 from .path_identity import same_path
 from .event_v2 import OwnerTokenLock
 from .g6_flexible_policy import POLICY_ID
+from . import g6_catalog
 from .g6_hook_v1 import preview
 from .routing_contract import ref, role_for
 from .capability_store import bounded_read
@@ -113,10 +114,12 @@ def _native_root(value: dict[str, Any], *, required: bool = False) -> Path | Non
         return None
     ledger = Path(binding["new_ledger_path"])
     root = budget.read_budget(ledger)["root"]
-    if (root["host_session_ref"] != ref(session) or not same_path(Path(root["repo_path"]), Path(value["repo_path"]))
+    pinned_policy = g6_catalog.policy_id(root["policy_digest"])
+    if (value.get("policy_id", pinned_policy) != pinned_policy or root["host_session_ref"] != ref(session) or not same_path(Path(root["repo_path"]), Path(value["repo_path"]))
             or value.get("ledger_path") and not same_path(Path(value["ledger_path"]), ledger)):
         raise ValueError("G6_REVIEW_NATIVE_ROOT_CONFLICT")
     value["ledger_path"] = str(ledger)
+    value["policy_id"] = pinned_policy
     value["root_task_id"] = root["task_id"]
     if binding.get("task_scope"):
         value["task_scope"] = binding["task_scope"]
@@ -248,7 +251,7 @@ def _allowance_command(value: dict[str, Any], args: Any) -> None:
                 usage = budget._usage(state, key, funding)
                 remaining_units = bucket["units"] - usage["completed_charged_units"] - usage["inflight_reserved_units"]
                 remaining_attempts = bucket["attempts"] - usage["completed_charged_attempts"] - usage["inflight_reserved_attempts"]
-                available += min(remaining_units // budget.profile_spec(bucket["profile_id"])["planning_units"], remaining_attempts)
+                available += min(remaining_units // budget.profile_spec(bucket["profile_id"], state["root"]["policy_digest"])["planning_units"], remaining_attempts)
             if available < wanted[key]:
                 needed[key] = wanted[key] - available
         if not needed:
@@ -258,7 +261,7 @@ def _allowance_command(value: dict[str, Any], args: Any) -> None:
         request = budget.request_allowance(ledger, work_ids=list(needed), dispatches=needed, retry_limit=args.retry_limit)
         state = budget.read_budget(ledger)
         value["allowance_request"] = {**request,
-            "question": contract.quote_question(request, state["review_work"], getattr(args, "locale", "zh-CN")),
+            "question": contract.quote_question(request, state["review_work"], getattr(args, "locale", "zh-CN"), state["root"]["policy_digest"]),
             "options": contract.quote_options(getattr(args, "locale", "zh-CN")), "supported": True,
             "authority_status": "PENDING_NATIVE_USER_RESPONSE", "actual_credits": None}
         if state.get("protocol_version", 1) >= 3:
@@ -292,7 +295,7 @@ def _allowance_command(value: dict[str, Any], args: Any) -> None:
                          for pid, row in state["reservations"].items())
             available = any(row["work_id"] not in state.get("closed_review_work", {})
                 and row["units"] - row["usage"]["completed_charged_units"] - row["usage"]["inflight_reserved_units"]
-                    >= budget.profile_spec(row["profile_id"])["planning_units"]
+                    >= budget.profile_spec(row["profile_id"], state["root"]["policy_digest"])["planning_units"]
                 and row["attempts"] > row["usage"]["completed_charged_attempts"] + row["usage"]["inflight_reserved_attempts"]
                 for row in grants)
             value["next_action"] = ("resume_existing_review" if active else "dispatch_with_existing_allowance"
@@ -313,7 +316,11 @@ def run(args: Any) -> dict[str, Any]:
             root = budget.read_budget(Path(ledger))["root"] if ledger else None
             if root and args.host_session_id and root["host_session_ref"] != ref(args.host_session_id):
                 raise ValueError("G6_REVIEW_ROOT_SESSION")
-            value = {"schema_version": SCHEMA, "policy_id": POLICY_ID,
+            from .g6_route_settings import selected_digest
+            digest = root["policy_digest"] if root else selected_digest(repo)
+            if getattr(args,"policy_id",None) not in {None,g6_catalog.policy_id(digest)}:
+                raise ValueError("G6_REVIEW_POLICY_BINDING")
+            value = {"schema_version": SCHEMA, "policy_id": g6_catalog.policy_id(digest),
                      "boundary_id": args.boundary_id,
                      "task_id": args.task_id or (root["task_id"] if root else args.boundary_id),
                      "repo_path": str(repo), "ledger_path": ledger,
@@ -326,7 +333,7 @@ def run(args: Any) -> dict[str, Any]:
         else:
             value = read_json(path, verify=True, label="G6 review controller")
             value.pop("integrity")
-            if value["schema_version"] != SCHEMA or value["policy_id"] != POLICY_ID:
+            if value["schema_version"] != SCHEMA or value["policy_id"] not in g6_catalog.reader_ids():
                 raise ValueError("G6_REVIEW_STATE_SCHEMA")
             if value["status"] == "CLOSED" and args.command not in {"status", "validate", "reconcile", "allowance-status"}:
                 raise ValueError("G6_REVIEW_CLOSED")
@@ -395,9 +402,8 @@ def run(args: Any) -> dict[str, Any]:
                     task_name = "review_" + ref([value["boundary_id"], args.phase,
                                                  plan["packet_sha256"], role])[7:39]
                     message = (args.scope or "Read the available scoped material and report unknowns.")
-                    message += ("\nReturn a raw JSON object with status, findings, checked_scope, "
-                                "unverified_items, summary. Include packet_sha256=" + plan["packet_sha256"]
-                                + " in checked_scope. Logical-readonly only; do not edit or publish.")
+                    from .g6_review_receipt_v1 import report_instructions
+                    message += report_instructions(plan["packet_sha256"])
                     cwd = Path(value["repo_path"])
                     if value["ledger_path"]:
                         cwd = Path(budget.read_budget(Path(value["ledger_path"]))["root"]["repo_path"])

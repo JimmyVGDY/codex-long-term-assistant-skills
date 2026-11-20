@@ -8,6 +8,7 @@ import copy
 import hashlib
 import os
 import stat
+import time
 from pathlib import Path
 from typing import Any
 
@@ -21,19 +22,20 @@ from .capability_store import (
 )
 from .common import RuntimeContractError, canonical_json
 from .gate_contract import result as gate_result
+from . import gate_preferences
 from .patch_intent import MAX_FILE_BYTES, revalidate_intent
 
 DECISIONS = {"reuse", "extend", "extract", "independent", "unused"}
 MAX_RECEIPTS = 32
 
 
-def _index_digest(operation: CapabilityOperation) -> str | None:
+def _current_index(operation: CapabilityOperation) -> dict | None:
     store = operation.policy.store
     if not native_path(store.current).exists():
         require(not native_path(store.previous).exists(), "RECOVERY_REQUIRED")
         store._guard()
         return None
-    return _digest(store.read())
+    return store.read()
 
 
 def _index_projection(operation: CapabilityOperation, paths: list[str]) -> str | None:
@@ -205,7 +207,23 @@ class OperationWorkflow:
         if scopes is not None:
             require(sorted(scopes) == state["targets"], "OP_TARGETS_MISMATCH")
         revalidate_intent(intent, self.repo)
-        start = _scope_snapshot(self.repo, state["targets"])
+        preferences = gate_preferences.effective(
+            self.repo, self.operation.policy.store.identity,
+            gate_preferences.write_task(self.operation.policy, self.operation.session_id, self.operation.turn_id), "write")
+        # 中文：只重试读取前态，许可、写入和对账各执行一次。
+        # English: Only read-only prestate acquisition is retried. Claim, write and reconciliation stay single operations.
+        deadline = time.monotonic() + preferences.get("wait_ms", 2000) / 1000
+        retries = preferences.get("retry_limit", 0)
+        for attempt in range(retries + 1):
+            try:
+                start = _scope_snapshot(self.repo, state["targets"])
+                break
+            except (CapabilityError, TimeoutError) as exc:
+                delay = preferences.get("backoff_ms", 100) / 1000
+                if (not isinstance(exc, TimeoutError) and str(exc) != "OP_SCOPE_UNREADABLE"
+                        or attempt == retries or time.monotonic() + delay >= deadline):
+                    raise
+                time.sleep(delay)
 
         term = term.strip() or " ".join(Path(path).stem for path in state["targets"])[:256]
         observed: dict[str, str | None] = {}
@@ -227,7 +245,13 @@ class OperationWorkflow:
                 query_budget = ReadBudget(self.repo)
                 result = query(store, term, _budget=query_budget)
                 observed.update(_observed(query_budget))
-            index_digest = _index_digest(self.operation)
+            current = _current_index(self.operation)
+            index_digest = _digest(current) if current is not None else None
+            if preferences.get("verify_optional_index") and (
+                current is None or result.get("snapshot_sha256") != current["integrity"]["sha256"]
+            ):
+                result, observed, index_digest = {"candidates": []}, {}, None
+                index_state, index_reason = "UNVERIFIED", "INDEX_CHANGED_DURING_READBACK"
         except (RuntimeContractError, OSError, ValueError, KeyError):
             # 中文：只停用本次索引消费；策略、项目绑定、目标与前态继续独立核验。
             # English: Stop consuming this index only; independently recheck

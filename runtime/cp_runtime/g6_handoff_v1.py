@@ -9,9 +9,10 @@ import re
 from pathlib import Path
 from typing import Any
 
-from . import budget_v5, g6_budget_v1, research_campaign
+from . import budget_v5, g6_budget_v1, g6_catalog, research_campaign
 from .common import atomic_write_json, read_json, require_external_state, resolve_codex_home
 from .event_v2 import OwnerTokenLock
+from .g6_route_settings import registered_ledger_path
 from .g6_handoff_provenance import verify_stop_checkpoint
 from .path_identity import same_path
 from .routing_contract import _constant, _object, exact, fail, ref, sha
@@ -45,8 +46,7 @@ def bind(*, session_id: str, repo_path: Path, new_ledger_path: Path,
     new_state = g6_budget_v1.read_budget(new_ledger_path)
     root = new_state["root"]
     if (root["host_session_ref"] != ref(session_id)
-            or not same_path(Path(root["repo_path"]), repo_path)
-            or root["policy_digest"] != "sha256:" + g6_budget_v1.POLICY_SHA256):
+            or not same_path(Path(root["repo_path"]), repo_path)):
         fail("G6_HANDOFF_NEW_ROOT")
     old_head = old_head_path or research_campaign._head(session_id)
     evidence = None
@@ -65,8 +65,8 @@ def bind(*, session_id: str, repo_path: Path, new_ledger_path: Path,
     value = {"schema_version": SCHEMA, "session_ref": ref(session_id),
              "repo_path": str(repo_path.resolve()), "project_identity": root["identity"],
              "new_ledger_path": str(new_ledger_path.resolve()),
-             "new_policy_id": g6_budget_v1.POLICY_ID,
-             "new_policy_digest": "sha256:" + g6_budget_v1.POLICY_SHA256,
+             "new_policy_id": g6_catalog.policy_id(root["policy_digest"]),
+             "new_policy_digest": root["policy_digest"],
              "old_stop_evidence": evidence, "user_change_ref": user_change_ref}
     pointer.parent.mkdir(parents=True, exist_ok=True)
     with OwnerTokenLock(pointer, timeout=2):
@@ -89,12 +89,13 @@ def read(session_id: str, *, directory: Path | None = None) -> dict[str, Any] | 
     value.pop("integrity")
     exact(value, FIELDS, "G6_HANDOFF_FIELDS")
     if (value["schema_version"] != SCHEMA or value["session_ref"] != ref(session_id)
-            or value["new_policy_id"] != g6_budget_v1.POLICY_ID
-            or value["new_policy_digest"] != "sha256:" + g6_budget_v1.POLICY_SHA256):
+            or value["new_policy_id"] != g6_catalog.policy_id(value["new_policy_digest"])):
         fail("G6_HANDOFF_POLICY_OR_SESSION")
     sha(value["user_change_ref"])
-    new = g6_budget_v1.read_budget(Path(value["new_ledger_path"]))
-    if (new["root"]["host_session_ref"] != ref(session_id)
+    ledger = registered_ledger_path(Path(value["new_ledger_path"]))
+    new = g6_budget_v1.read_budget(ledger)
+    if (new["root"]["policy_digest"] != value["new_policy_digest"]
+            or new["root"]["host_session_ref"] != ref(session_id)
             or new["root"]["identity"] != value["project_identity"]
             or not same_path(Path(new["root"]["repo_path"]), Path(value["repo_path"]))):
         fail("G6_HANDOFF_NEW_ROOT_CHANGED")
@@ -105,7 +106,7 @@ def read(session_id: str, *, directory: Path | None = None) -> dict[str, Any] | 
                        for key in ("project_id", "repo_fingerprint"))):
             fail("G6_HANDOFF_OLD_ROOT_CHANGED")
         _old_anchor(evidence)
-    return value
+    return {**value, "new_ledger_path": str(ledger)}
 
 
 def _child_task_path(data: dict[str, Any]) -> str:

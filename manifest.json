@@ -921,6 +921,11 @@
     "legacy_tasks_automatically_migrated": false,
     "installed_entry": "skills/multi-agent-independent-review/scripts/routing_v4.py"
   },
+  "desktop_catalog_reader": {
+    "algorithm": "role-cost-v2",
+    "index": "runtime/cp_runtime/data/desktop-policy-readers.json",
+    "activation": "project-opt-in-for-new-roots"
+  },
   "desktop_g6_default_v1": {
     "policy_id": "desktop-g6-deterministic-v1",
     "policy_source": "runtime/cp_runtime/data/desktop-g6-flexible-policy-v1.json",
@@ -938,7 +943,8 @@
     "allowance_journal_schema_version": "g6-budget-journal/2",
     "readable_budget_schema_versions": [
       "g6-budget-journal/1",
-      "g6-budget-journal/2"
+      "g6-budget-journal/2",
+      "g6-budget-journal/3"
     ]
   }
 }

@@ -84,6 +84,8 @@ The base Plugin loads the ten Skills once and does not start Hooks, workers, Pro
 
 Use the existing enhanced installer only when the task needs recoverable long-running state, Hooks, indexing, an independent Reviewer, an enforced budget, or controlled writes. It performs the existing backup, transaction, verification, and recovery steps; a managed enhancement installation is never downgraded by the base launcher.
 
+The development source includes `gate-settings` and `routing-policy` for scoped recovery preferences, catalog pilots and checking reader compatibility. See [gate recovery](docs/DESKTOP_GATE_RECOVERY.en.md) and [model routing](locales/en/docs/MODEL_ROUTING_AND_COST_POLICY.md).
+
 ## Downloads
 
 <!-- cp-fact:release.downloads.en -->

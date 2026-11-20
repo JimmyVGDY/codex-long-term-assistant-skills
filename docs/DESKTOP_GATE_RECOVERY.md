@@ -53,3 +53,19 @@
 测试必须从安装器产物和实际注册入口验证行为，不能仅遍历策略目录自证覆盖。真实桌面验收需保持被测门禁开启；静态测试、安装文件一致或 Hook 返回空对象均不单独证明整个流程已生效。
 
 原生事件契约以 [OpenAI Hook 文档](https://learn.chatgpt.com/docs/hooks)为参考；会话记录格式不是稳定接口，因此采用有界适配并保留未知状态。
+
+## 基础安装、恢复与门禁偏好
+
+基础入口核对唯一插件身份、包版本和启用状态。同版本健康复跑只读返回。显示禁用、版本冲突或待核验时，先查看 Desktop 中这一个插件的登记。Windows 的状态采用 UTF-8，POSIX 使用 Perl 的 JSON::PP 核对名单和路径，不依赖 Python。恢复只处理受管事务的内容。如果未知文件位于目标载荷内，保留文件和恢复状态，用户核对、移出冲突文件后可再次执行原入口。
+
+`gate-settings` 管理当前仓库的限时恢复偏好。先 show 读取当前修订号，用 preview 查看影响和 request_ref，再以相同参数调用 apply 并传入 --confirm。省略 --task 表示项目级，指定 --task 则仅覆盖那个逻辑任务。文件操作没有已绑定的逻辑任务时，可用 `turn:<原生回合标识>` 作为范围。到期或撤销只影响后续操作。
+
+```text
+cp-assistant gate-settings show --repo-path <repo> --action write
+cp-assistant gate-settings preview --repo-path <repo> --action write --revision <n> --expires-at <UTC> --retry-limit 1 --backoff-ms 150 --wait-ms 1200 --verify-optional-index yes
+cp-assistant gate-settings apply --repo-path <repo> --action write --revision <n> --expires-at <UTC> --retry-limit 1 --backoff-ms 150 --wait-ms 1200 --verify-optional-index yes --confirm <request_ref>
+```
+
+按同样步骤使用 --revoke 撤销所选作用域。有效期最长 31 天，重试上限为 0 至 2。文件准备只重试短暂失败的前态读取。可选索引复核增加一次一致性读取，目标、权限和前态仍由原门禁逐项检查。派发使用 --action dispatch，退避服从宿主等待提示、剩余额度与总截止时间。写后回执缺失时先读原操作和文件，无需再次提交写入。
+
+全新账户的 Hook 须在 Desktop 的设置或消息框审阅入口确认。注册状态、当前哈希的信任状态和实际发生的拦截分别核验。

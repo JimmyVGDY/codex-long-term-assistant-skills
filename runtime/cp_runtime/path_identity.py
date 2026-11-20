@@ -22,23 +22,20 @@ def _alternate_windows_spelling(value: str) -> str | None:
     return None
 
 
-def path_aliases(path: Path) -> tuple[Path, ...]:
-    """中文：至多返回原路径及一个经文件系统核对的命名空间别名。
-
-    English: Return at most one proven alias; do not normalize historical hashes.
+def path_aliases(path: Path, *, preserve_spelling: bool = False) -> tuple[Path, ...]:
+    """中文：返回同一实体的命名空间拼写。校验历史指纹时保留已核实的旧路径。
+    English: Keep the proven historical spelling when checking a recorded path fingerprint.
     """
-    resolved = path.expanduser().resolve()
+    primary = path if preserve_spelling else path.expanduser().resolve()
     if os.name != "nt":
-        return (resolved,)
-    alternate = _alternate_windows_spelling(str(resolved))
+        return (primary,)
+    alternate = _alternate_windows_spelling(str(primary))
     if alternate is None:
-        return (resolved,)
-    candidate = Path(alternate).resolve()
-    # 中文：核验不可用不等于没有登记，不能吞掉异常后退回无预算模式。
-    # English: Unavailable identity proof must not look like an unbound task.
-    if candidate != resolved and os.path.samefile(resolved, candidate):
-        return resolved, candidate
-    return (resolved,)
+        return (primary,)
+    candidate = Path(alternate) if preserve_spelling else Path(alternate).resolve()
+    if candidate != primary and os.path.samefile(primary, candidate):
+        return primary, candidate
+    return (primary,)
 
 
 def same_path(left: Path, right: Path) -> bool:

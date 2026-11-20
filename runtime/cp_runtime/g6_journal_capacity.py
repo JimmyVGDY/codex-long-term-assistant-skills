@@ -9,7 +9,7 @@ from .g6_allowance_contract import funding_id
 from .g6_flexible_policy import policy
 from .routing_contract import fail
 
-SCHEMA = "g6-budget-journal/3"
+from .g6_journal_versions import TASK_EXECUTION as SCHEMA
 MAX_RECORDS = 8192
 MAX_BYTES = 64 * 1024 * 1024
 MAX_EVENT_BYTES = 16_384

@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from . import g6_budget_v1 as budget, g6_task_scope as handoff, research_campaign
-from .g6_flexible_policy import PROFILES, decide, policy, profile_spec
+from .g6_flexible_policy import decide, policy, profile_spec, profiles_for
+from . import g6_catalog as catalogs, g6_capability_source as capabilities, g6_user_intent as user_intent
 from .g6_fact_collector import (ALL_REPO_SCOPE, MetricReceiptIntegrityError,
                                 collect as collect_scope_facts, store_metric_receipt)
 from .common import RuntimeContractError, repo_snapshot, resolve_codex_home, utc_now
@@ -108,6 +109,33 @@ def _facts(root: Mapping[str, Any], args: Mapping[str, Any], *, persist: bool = 
             "missing_evidence": missing}
 
 
+def _trusted_inputs(root, session, turn, facts, state, agent_type, bound=None, *, warm=False):
+    digest = root.get("policy_digest", catalogs.LEGACY)
+    cwd = Path(root["repo_path"])
+    catalog = catalogs.for_digest(digest)
+    if not catalog:
+        from .g6_user_choice_v1 import read_choice
+        return read_choice(session_id=session, turn_id=turn or "", cwd=cwd), capabilities.observe(cwd, session, digest)
+    intent = user_intent.read(session, turn, cwd, root["task_id"])
+    choice = user_intent.selected(intent, catalog)
+    if intent:
+        facts["source_refs"] = sorted(set([*facts["source_refs"], intent["source_ref"]]))
+        if intent["kind"]:
+            facts.update(task_kind=intent["kind"], task_kind_source="user_direct")
+            facts["missing_evidence"] = [k for k in facts["missing_evidence"] if k != "task_classification"]
+    if facts["task_kind_source"] == "unknown" and bound and state and bound["work_id"] in state.get("review_work", {}):
+        work = state["review_work"][bound["work_id"]]
+        # 中文：已登记工作项不能充当语义难度证明。
+        # English: A native controller proves a registered work item, not its semantic difficulty.
+        facts.update(task_kind="ordinary", task_kind_source="script_verified")
+        facts["source_refs"] = sorted(set([*facts["source_refs"], ref(work)]))
+        facts["missing_evidence"] = [k for k in facts["missing_evidence"] if k != "task_classification"]
+    from .routing_contract import role_for
+    capability = capabilities.observe(cwd, session, digest, state=state, warm=warm, intent=intent,
+                                      role=role_for(agent_type),kind=facts["task_kind"])
+    return choice, capability
+
+
 def preview(*, session_id: str, cwd: Path, agent_type: str, task_name: str,
             message: str, requested_profile: str | None = None,
             turn_id: str | None = None, task_scope: str | None = None,
@@ -140,6 +168,8 @@ def preview(*, session_id: str, cwd: Path, agent_type: str, task_name: str,
         root = {"identity": {"project_id": project_id, "repo_fingerprint": fingerprint},
                 "task_id": session_id, "host_session_ref": ref(session_id),
                 "repo_path": str(cwd.resolve())}
+        from .g6_route_settings import selected_digest
+        root["policy_digest"] = selected_digest(cwd, root["identity"])
         item = _facts(root, {"task_name": task_name, "agent_type": agent_type,
                              "message": message})
         config = policy()
@@ -153,10 +183,12 @@ def preview(*, session_id: str, cwd: Path, agent_type: str, task_name: str,
                 "parallel_limit": config["concurrency_defaults"]["STANDARD"]["parallel"],
                 "active_calls": 0, "depth_limit": config["concurrency_defaults"]["STANDARD"]["depth"],
                 "depth": 0, "astra_active": 0, "upward_adjustments_used": 0}
-    if requested_profile is not None and requested_profile not in PROFILES:
+    digest = root.get("policy_digest", catalogs.LEGACY)
+    if requested_profile is not None and requested_profile not in profiles_for(digest):
         fail("G6_PREVIEW_PROFILE")
-    from .g6_user_choice_v1 import read_choice
-    choice = read_choice(session_id=session_id, turn_id=turn_id or "", cwd=cwd)
+    from .g6_review_requests import resolve_call
+    bound = resolve_call(state or {}, {"task_name":task_name,"agent_type":agent_type,"message":message})
+    choice, capability = _trusted_inputs(root, session_id, turn_id, item, state, agent_type, bound, warm=True)
     if choice is not None:
         if requested_profile is not None and requested_profile != choice["profile_id"]:
             fail("G6_PREVIEW_USER_PROFILE_CONFLICT")
@@ -168,13 +200,12 @@ def preview(*, session_id: str, cwd: Path, agent_type: str, task_name: str,
     if state is not None:
         return budget.decision_for_work(state, facts=item,
             funding_id=budget._select_funding(state, item["work_item_id"], 0),
-            capability={"schema_version": "g6-desktop-capability/1", "available_profiles": None, "source_ref": None},
+            capability=capability,
             gates=[], agent_type=agent_type, task_name=task_name, message=message,
             decision_time=utc_now(), adjustment=adjustment,
             explicit_user_profile=choice["profile_id"] if choice else None)
     return decide(facts=item, budget=view,
-                  capability={"schema_version": "g6-desktop-capability/1",
-                              "available_profiles": None, "source_ref": None},
+                  capability=capability, policy_digest=digest,
                   gates=[], agent_type=agent_type, task_name=task_name,
                   message=message, decision_time=utc_now(), adjustment=adjustment,
                   explicit_user_profile=choice["profile_id"] if choice else None)
@@ -186,7 +217,7 @@ def admission_diagnostic(state: Mapping[str, Any], work_item_id: str, profile_id
     view = budget.snapshot(state, work_item_id=work_item_id, depth=0, funding_id=funding)
     units = view["capacity_units"] - view["completed_charged_units"] - view["inflight_reserved_units"] - view["future_required_hold_units"]
     attempts = view["capacity_attempts"] - view["completed_charged_attempts"] - view["inflight_reserved_attempts"] - view["future_required_hold_attempts"]
-    cost = profile_spec(profile_id)["planning_units"]
+    cost = profile_spec(profile_id, state["root"]["policy_digest"])["planning_units"]
     pending = [key for key, request in state.get("allowance_requests", {}).items()
                if key not in state.get("allowance_grants", {}) and key not in state.get("allowance_revoked", {})
                and any(row["work_id"] == work_item_id for row in request["allocations"])]
@@ -195,6 +226,8 @@ def admission_diagnostic(state: Mapping[str, Any], work_item_id: str, profile_id
     elif units < cost or attempts < 1:
         reason = "UNITS_AND_ATTEMPTS_EXHAUSTED" if units < cost and attempts < 1 else "UNITS_EXHAUSTED" if units < cost else "ATTEMPTS_EXHAUSTED"
         action = "recover_existing_allowance_authorization" if pending else "prepare_scoped_allowance_quote"
+    elif "EXPLICIT_USER_PROFILE_UNAVAILABLE_OR_UNAFFORDABLE" in decision["reason_codes"]:
+        reason, action = "EXPLICIT_PROFILE_UNAVAILABLE", "refresh_bound_capabilities_or_continue_local"
     else:
         reason, action = "PROFILE_OR_GATE_UNAVAILABLE", decision["next_action"]
     return {"schema_version": "g6-admission-recovery/1", "reason_code": reason, "next_action": action,
@@ -225,10 +258,9 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any],
     if bound is not None:
         from .g6_review_requests import _context_body
         _context_body(path, bound)
-    from .g6_user_choice_v1 import read_choice
-    user_choice = read_choice(session_id=str(data["session_id"]),
-                              turn_id=str(data.get("turn_id") or ""),
-                              cwd=Path(str(data["cwd"])))
+    digest = root["policy_digest"]
+    catalog = catalogs.for_digest(digest)
+    session, turn = str(data["session_id"]), str(data.get("turn_id") or "")
     matches = [p for p in state["permits"].values() if p["task_name"] == task_name]
     if matches:
         matches.sort(key=lambda item: item["prepared_at"])
@@ -238,23 +270,23 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any],
             matches = []
         else:
             matches = [latest]
+    collected = _facts(root, args, persist=not matches, state=state, bound_call=bound) if (catalog or not matches) else {}
+    user_choice, capability = _trusted_inputs(root, session, turn, collected, state, args["agent_type"], bound)
     if not matches:
-        collected = _facts(root, args, persist=True, state=state, bound_call=bound)
-        requested = next((name for name in PROFILES
-                          if profile_spec(name)["model"] == args.get("model")
-                          and profile_spec(name)["effort"] == args.get("reasoning_effort")), None)
+        requested = next((name for name in profiles_for(digest)
+                          if profile_spec(name, digest)["model"] == args.get("model")
+                          and profile_spec(name, digest)["effort"] == args.get("reasoning_effort")), None)
         if requested is None:
             return _deny("G6_GPT6_PROFILE_REQUIRED", next_action="use_available_gpt6_tuple")
         if user_choice is not None and requested != user_choice["profile_id"]:
-            selected = profile_spec(user_choice["profile_id"])
+            selected = profile_spec(user_choice["profile_id"], digest)
             return _deny("G6_USER_PROFILE_REQUIRED_" + selected["model"] + "_" + selected["effort"],
                          next_action="retry_with_user_selected_tuple")
         adjustment = ({"requested_profile": requested, "source": "model_semantic",
                        "reason": "", "source_ref": None}
                       if user_choice is None and requested != "g6-sol-medium" else None)
         prepared = budget.prepare(path, facts=collected,
-                                  capability={"schema_version": "g6-desktop-capability/1",
-                                              "available_profiles": None, "source_ref": None},
+                                  capability=capability,
                                   gates=[], agent_type=args.get("agent_type"),
                                   task_name=task_name, message=args["message"],
                                   decision_time=utc_now(), adjustment=adjustment,
@@ -271,11 +303,18 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any],
     else:
         permit_id = matches[0]["permit_id"]
         prior = matches[0]
-        if (prior["facts"]["task_kind_source"] not in {"unknown", "semantic_proposal"}
+        if catalog:
+            expected_capability = budget.work_capability(state, collected["work_item_id"], capability)
+            if (prior["explicit_user_profile"] != (user_choice["profile_id"] if user_choice else None)
+                    or prior["capability"] != expected_capability or prior["facts"]["task_kind"] != collected["task_kind"]
+                    or prior["facts"]["task_kind_source"] != collected["task_kind_source"]
+                    or not set(collected["source_refs"]).issubset(prior["facts"]["source_refs"])):
+                return _deny("G6_ROUTING_EVIDENCE_CHANGED", next_action="preview_new_decision_or_continue_local")
+        if (not catalog and prior["facts"]["task_kind_source"] not in {"unknown", "semantic_proposal"}
                 or (prior["explicit_user_profile"] is not None and
                     (user_choice is None or user_choice["profile_id"] != prior["explicit_user_profile"]))
                 or prior["adjustment"] is not None and prior["adjustment"]["source"] != "model_semantic"
-                or prior["capability"]["available_profiles"] is not None
+                or not catalog and prior["capability"]["available_profiles"] is not None
                 or any(gate["state"] != "MISSING_EVIDENCE" for gate in prior["gates"])):
             return _deny("G6_UNTRUSTED_SOURCE_LABEL", next_action="use_default_or_verified_controller")
         if bound and (prior["facts"]["work_item_id"] != bound["work_id"]
@@ -284,6 +323,11 @@ def _pretool(path: Path, data: Mapping[str, Any], args: Mapping[str, Any],
         expected = {"task_name": matches[0]["task_name"], "agent_type": matches[0]["agent_type"],
                     "model": matches[0]["model"], "reasoning_effort": matches[0]["reasoning_effort"],
                     "fork_turns": "none"}
+    if catalog and not matches:
+        latest = budget.read_budget(path)
+        _, fresh = _trusted_inputs(root, session, turn, dict(collected), latest, args["agent_type"], bound)
+        if budget.work_capability(latest,collected["work_item_id"],fresh) != budget.work_capability(state,collected["work_item_id"],capability):
+            return _deny("G6_ROUTING_EVIDENCE_CHANGED", next_action="preview_new_decision_or_continue_local")
     if any(args.get(key) != value for key, value in expected.items()
            if key != "message"):
         return _deny("G6_EXACT_PROFILE_REQUIRED_" + str(expected["model"]) + "_" +
@@ -529,7 +573,8 @@ def handle(data: dict[str, Any], hook_name: str) -> tuple[bool, dict[str, Any] |
         from .g6_user_choice_v1 import observe_native_prompt
         try:
             observe_native_prompt(data)
-        except (OSError, ValueError, TimeoutError):
+            user_intent.observe(data)
+        except (OSError, ValueError, TimeoutError, RuntimeContractError):
             # 中文：可选偏好记录不得阻止用户提示提交。
             # English: An optional preference record must never block the user prompt.
             pass

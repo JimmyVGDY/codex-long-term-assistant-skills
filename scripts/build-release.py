@@ -104,7 +104,7 @@ def _normalize_cmd_newlines(staging: Path) -> None:
 def _apply_overlay(staging: Path, locale: str, source_root: Path) -> None:
     locale_path = staging / "config" / "locale.json"
     locale_path.parent.mkdir(parents=True, exist_ok=True)
-    locale_path.write_text(json.dumps({"schema_version": 1, "locale": locale}, indent=2) + "\n", encoding="utf-8")
+    locale_path.write_text(json.dumps({"schema_version": 1, "locale": locale}, indent=2) + "\n", encoding="utf-8", newline="\n")
     if locale == "zh-CN":
         return
     localized_history = source_root / "docs" / "history" / "RECONSTRUCTED_HISTORY.en.md"
@@ -147,7 +147,7 @@ def _apply_overlay(staging: Path, locale: str, source_root: Path) -> None:
         agent["scope"] = scope
     manifest["review_isolation_levels"] = localization["review_isolation_levels"]
     manifest["breaking_changes"] = localization["breaking_changes"]
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     try:
         mapping = load_mapping(overlay / "runtime-strings.json")
         for name in mapping["files"]:

@@ -69,6 +69,25 @@ def safe_path(path: Path) -> Path:
     return path.resolve()
 
 
+def registered_account_file(path: Path, account: Path) -> Path:
+    """中文：只展开已证实的账户根别名，继续核验其下路径。 English: Resolve a proven account-root alias and check descendants."""
+    require(path.is_absolute() and ".." not in path.parts, "INVALID_PATH")
+    try:
+        return safe_path(path)
+    except CapabilityError as exc:
+        if str(exc) != "LINK_REJECTED":
+            raise
+        physical = safe_path(account)
+        for ancestor in path.parents:
+            if ancestor.name.casefold() != ".codex" or not ancestor.samefile(physical):
+                continue
+            canonical = safe_path(physical / path.relative_to(ancestor))
+            if canonical.is_file() and path.samefile(canonical):
+                return canonical
+            break
+        raise
+
+
 def relative_path(value: Any) -> str:
     require(isinstance(value, str) and 0 < len(value) <= 1024, "INVALID_PATH")
     require("\\" not in value and ":" not in value and not any(ord(c) < 32 for c in value), "INVALID_PATH")

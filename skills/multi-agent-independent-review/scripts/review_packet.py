@@ -25,7 +25,8 @@ from cp_runtime.common import RuntimeContractError, verify_record  # noqa: E402
 from cp_runtime.dispatch_context import read_request_json  # noqa: E402
 from cp_runtime.dispatch_policy import CURRENT_POLICY_ID, LEGACY_POLICY_ID, POLICY_FILES, DispatchPolicyError, policy_digest  # noqa: E402
 from cp_runtime.review_contract import result_template as matrix_result_template, validate_result as validate_matrix_result  # noqa: E402
-from cp_runtime.g6_flexible_policy import POLICY_ID as G6_POLICY_ID, POLICY_SHA256 as G6_POLICY_SHA256, PROFILES as G6_PROFILES  # noqa: E402
+from cp_runtime import g6_catalog
+from cp_runtime.g6_flexible_policy import PROFILES as G6_PROFILES  # noqa: E402
 
 MAX_SNAPSHOT_BYTES = 1024 * 1024
 FULL_HASH_LIMIT = 4 * 1024 * 1024
@@ -289,6 +290,18 @@ def packet_summary(manifest: Dict[str, Any]) -> str:
 def command_create(args: argparse.Namespace) -> None:
     repo = Path(args.repo_path).expanduser().resolve()
     output = Path(args.output_dir).expanduser().resolve()
+    ledger = getattr(args, "delegation_ledger", None)
+    if ledger:
+        from cp_runtime.g6_budget_v1 import read_budget
+        from cp_runtime.path_identity import same_path
+        root = read_budget(Path(ledger))["root"]
+        if not same_path(Path(root["repo_path"]), repo): die("G6_REVIEW_ROOT_REPOSITORY")
+        pid = g6_catalog.policy_id(root["policy_digest"])
+        if args.policy_id not in (None,pid): die("G6_REVIEW_POLICY_BINDING")
+        args.policy_id = pid
+    elif not args.policy_id:
+        from cp_runtime.g6_route_settings import selected_digest
+        args.policy_id = g6_catalog.policy_id(selected_digest(repo))
     if not (repo / ".git").exists():
         # 中文：工作树可能使用 .git 文件，最终以 rev-parse 结果为准。
         # English: Worktrees may use a .git file; rev-parse is the final authority.
@@ -330,9 +343,9 @@ def command_create(args: argparse.Namespace) -> None:
         "phase": args.phase,
         "profile": args.profile,
         "effort_tier": args.effort_tier,
-        "default_model_profile": "g6-sol-medium" if args.policy_id == G6_POLICY_ID else "luna-low" if args.policy_id != LEGACY_POLICY_ID else DEFAULT_PROFILE_BY_TIER[args.effort_tier],
+        "default_model_profile": "g6-sol-medium" if args.policy_id in g6_catalog.reader_ids() else "luna-low" if args.policy_id != LEGACY_POLICY_ID else DEFAULT_PROFILE_BY_TIER[args.effort_tier],
         "policy_id": args.policy_id,
-        "policy_digest": "sha256:" + G6_POLICY_SHA256 if args.policy_id == G6_POLICY_ID else policy_digest(args.policy_id),
+        "policy_digest": g6_catalog.digest_for(args.policy_id) if args.policy_id in g6_catalog.reader_ids() else policy_digest(args.policy_id),
         "base_ref": base,
         "head_commit": head,
         "diff_sha256": sha256_bytes(inputs["diff"]),
@@ -475,7 +488,7 @@ def command_freshness(args: argparse.Namespace) -> None:
 
 def command_result_template(args: argparse.Namespace) -> None:
     manifest = load_manifest(Path(args.packet_dir).resolve())
-    if manifest.get("policy_id") == G6_POLICY_ID:
+    if manifest.get("policy_id") in g6_catalog.reader_ids():
         value = {"status": "incomplete", "findings": [],
                  "checked_scope": ["packet_sha256=" + manifest["packet_sha256"]],
                  "unverified_items": ["Review has not been completed."], "summary": ""}
@@ -568,7 +581,7 @@ def command_validate_result(args: argparse.Namespace) -> None:
     packet_dir = Path(args.packet_dir).resolve()
     manifest = load_manifest(packet_dir)
     result = json.loads(Path(args.result_file).read_text(encoding="utf-8-sig"))
-    if manifest.get("policy_id") == G6_POLICY_ID:
+    if manifest.get("policy_id") in g6_catalog.reader_ids():
         from cp_runtime.g6_review_receipt_v1 import _report
         record = {"type": "response_item", "payload": {"type": "message", "role": "assistant",
                   "phase": "final_answer", "content": [{"type": "output_text", "text": json.dumps(result)}]}}
@@ -726,7 +739,8 @@ def main() -> None:
     create.add_argument("--phase", choices=["pre", "post"], default="post")
     create.add_argument("--profile", choices=["LIGHT", "STANDARD", "STRICT"], default="STANDARD")
     create.add_argument("--effort-tier", choices=["economy", "balanced", "deep"], default="balanced")
-    create.add_argument("--policy-id", choices=[*POLICY_FILES, G6_POLICY_ID], default=G6_POLICY_ID)
+    create.add_argument("--policy-id", choices=[*POLICY_FILES, *g6_catalog.reader_ids()], default=None)
+    create.add_argument("--delegation-ledger", help="Use the policy pinned to an existing G6 root.")
     create.add_argument("--related-files", default="")
     create.add_argument("--constraints-file")
     create.add_argument("--validations-file")
@@ -752,7 +766,7 @@ def main() -> None:
     template.add_argument("--review-round", type=int, default=1)
     template.add_argument("--task-difficulty", choices=["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"], default="UNKNOWN")
     template.add_argument("--approved-profile", "--model-profile", dest="model_profile",
-                          choices=[*MODEL_PROFILES, *G6_PROFILES], default="")
+                          choices=[*MODEL_PROFILES, *g6_catalog.reader_profiles(G6_PROFILES)], default="")
     template.add_argument("--minimum-acceptable-profile", choices=list(MODEL_PROFILES), default="")
     template.add_argument("--output", required=True)
     template.set_defaults(func=command_result_template)

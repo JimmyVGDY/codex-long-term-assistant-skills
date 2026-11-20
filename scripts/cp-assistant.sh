@@ -9,7 +9,7 @@ case "$command" in
   help|--help|-h)
     printf '%s\n' 'Codex 跨项目助手日常入口' \
       'Usage: cp-assistant.sh <command> [options]' \
-      'Commands: help, install-base, status, doctor, verify, inventory, install-enhancement, recover, resume (status supports --quick)' \
+      'Commands: help, install-base, status, doctor, verify, inventory, install-enhancement, recover, resume, gate-settings, routing-policy (status supports --quick)' \
       'help 与 install-base 无需 Python；管理命令需要 Python 3.11+。'
     exit 0
     ;;
@@ -24,7 +24,7 @@ case "$command" in
     fi
     exec sh "$root/scripts/install-base.sh" "$@"
     ;;
-  status|doctor|verify|inventory|install-enhancement|recover|resume) ;;
+  status|doctor|verify|inventory|install-enhancement|recover|resume|gate-settings|routing-policy) ;;
   *) printf '%s\n' '[ERROR] unknown cp-assistant command' >&2; exit 2 ;;
 esac
 
