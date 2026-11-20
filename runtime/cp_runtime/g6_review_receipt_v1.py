@@ -16,12 +16,23 @@ from .event_v2 import OwnerTokenLock
 from .g6_delivery_v1 import evaluate_delivery
 from .routing_contract import _constant, _object, exact, fail, ref, role_for
 
+REPORT_STATUSES = ("pass", "nonblocking", "blocking", "incomplete")
 REPORT_FIELDS = {"status", "findings", "checked_scope", "unverified_items", "summary"}
 RECEIPT_FIELDS = {"schema_version", "permit_id", "work_item_id", "review_phase",
                   "phase_source", "agent_ref", "baseline_sha256", "report_status",
                   "finding_refs", "report_ref", "transcript_sha256", "gate_state",
                   "reason_code", "recorded_at", "root_session_ref", "root_identity_ref",
                   "root_ledger_ref"}
+
+
+def report_instructions(packet_sha256: str) -> str:
+    return (
+        "\nReturn a raw JSON object with status, findings (each with id and summary), "
+        "checked_scope, unverified_items, summary. Use exactly one lowercase status: "
+        + ", ".join(REPORT_STATUSES)
+        + ". Use incomplete for partial coverage and list the unverified items. Include packet_sha256="
+        + packet_sha256 + " in checked_scope. Logical-readonly only; do not edit, publish, or dispatch subagents."
+    )
 
 
 def scope_markers(scope: Any) -> list[str]:
@@ -96,7 +107,7 @@ def _report(raw: bytes) -> tuple[dict[str, Any] | None, str]:
     try:
         value = json.loads(final_texts[0], object_pairs_hook=_object, parse_constant=_constant)
         exact(value, REPORT_FIELDS, "G6_REVIEW_REPORT_FIELDS")
-        if value["status"] not in {"pass", "nonblocking", "blocking", "incomplete"}:
+        if value["status"] not in REPORT_STATUSES:
             return None, "REVIEW_STATUS"
         if (not isinstance(value["findings"], list) or len(value["findings"]) > 50
                 or not isinstance(value["unverified_items"], list)

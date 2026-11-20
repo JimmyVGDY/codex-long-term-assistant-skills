@@ -10,11 +10,11 @@ import re
 from pathlib import Path
 from typing import Any, Mapping
 
-from .capability_store import bounded_read, safe_path
+from .capability_store import bounded_read, registered_account_file, safe_path
 from .common import RuntimeContractError, atomic_write_json, parse_iso, read_json, resolve_codex_home, utc_now, verify_record
 from .event_v2 import OwnerTokenLock, project_identity_for
 from .g6_allowance_authority import _native_header
-from .path_identity import same_path
+from .path_identity import path_aliases, same_path
 from .routing_contract import RoutingError, _constant, _object, exact, fail, ref
 
 MAX_WINDOW = 2_000_000
@@ -102,6 +102,34 @@ def observe_native_locator(data: Mapping[str, Any]) -> dict | None:
             raise
         value = _bind_workspace_locator(session, cwd, transcript, data["turn_id"], call_ref)
     return value
+
+
+def _current_source_location(value: dict, session: str) -> dict:
+    """中文：迁移后重新核验已登记的位置与会话文件。 English: Verify the sealed location against the same session file after a move."""
+    from .native_transcript import session_header
+    from .routing_context_contract import safe_file
+
+    recorded = Path(value["transcript_path"])
+    try:
+        safe_file(recorded)
+        return value
+    except RoutingError as exc:
+        if str(exc) != "V5_REPARSE_PATH_DENIED":
+            raise
+    current = registered_account_file(recorded, resolve_codex_home())
+    header, binding = session_header(current, session_id=session)
+    original = min(map(str, path_aliases(recorded, preserve_spelling=True)), key=lambda name: (len(name), name))
+    if (value["transcript_path_ref"] != ref(os.path.normcase(original))
+            or value["transcript_file_ref"] != binding["transcript_file_ref"]
+            or value["header_ref"] != ref(header)):
+        fail("TASK_SOURCE_REPLACED")
+    projected = {**value, "transcript_path": str(current), **binding}
+    if "workspace_proof" in value:
+        proof = value["workspace_proof"]
+        if proof["transcript_path_ref"] != value["transcript_path_ref"]:
+            fail("WORKSPACE_SOURCE_REPLACED")
+        projected["workspace_proof"] = {**proof, "transcript_path_ref": binding["transcript_path_ref"]}
+    return projected
 
 
 def _binding_header(value: Mapping[str, Any], session: str, cwd: Path) -> tuple[dict, dict]:
@@ -374,6 +402,7 @@ def _read_binding_at(path: Path, session: str, cwd: Path, *, locator: bool = Fal
             or value["identity"] != _identity(Path(value["repo_path"]))
             or type(value["anchor"]) is not int or value["anchor"] < 0):
         fail("TASK_SOURCE_IDENTITY")
+    value = _current_source_location(value, session)
     header, binding = _binding_header(value, session, cwd)
     if ref(header) != value["header_ref"] or any(value[key] != item for key, item in binding.items()):
         fail("TASK_SOURCE_REPLACED")
@@ -514,6 +543,8 @@ def prepare(session: str, cwd: Path, *, before_byte: int | None = None) -> dict:
                 old = json.loads(bounded_read(target, 16_384), object_pairs_hook=_object, parse_constant=_constant)
                 verify_record(old, "native task origin")
                 old.pop("integrity")
+                if old["transcript_path"] != value["transcript_path"]:
+                    old = _current_source_location(old, session)
                 if old != value:
                     fail("TASK_ORIGIN_CONFLICT")
             else:
@@ -558,6 +589,7 @@ def read_origin(session: str, cwd: Path, origin_ref: str) -> dict:
     if version == 2 and (not isinstance(value["workspace_proof"], dict)
                          or value["workspace_proof"].get("turn_id") != value["native_turn_id"]):
         fail("TASK_ORIGIN_IDENTITY")
+    value = _current_source_location(value, session)
     header, binding = _binding_header(value, session, cwd)
     if ref(header) != value["header_ref"] or any(value[key] != item for key, item in binding.items()):
         fail("TASK_SOURCE_REPLACED")

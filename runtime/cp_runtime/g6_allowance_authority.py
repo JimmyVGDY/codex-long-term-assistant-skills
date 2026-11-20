@@ -159,7 +159,7 @@ def bind_source(ledger: Path, data: Mapping[str, Any]) -> dict:
 
 
 def parse_response(text: str, requests: Mapping[str, Any], works: Mapping[str, Any],
-                   presented: list[str]) -> tuple[str, str] | None:
+                   presented: list[str], digest: str | None = None) -> tuple[str, str] | None:
     if not isinstance(text, str) or len(text.encode("utf-8")) > MAX_LINE:
         return None
     text = text.strip()
@@ -192,7 +192,7 @@ def parse_response(text: str, requests: Mapping[str, Any], works: Mapping[str, A
                 or not isinstance(reply["question"], str) or not isinstance(reply["answer"], str)):
             return None
         for key, request in requests.items():
-            if reply["question"] in contract.question_variants(request, works):
+            if reply["question"] in contract.question_variants(request, works, digest):
                 answer = reply["answer"].strip()
                 if answer in ACCEPT:
                     matched.append((key, "grant"))
@@ -242,7 +242,7 @@ def _presentation(record: Mapping[str, Any], state: Mapping[str, Any]) -> list[s
         return None
     matches = [key for key, request in state.get("allowance_requests", {}).items()
             if key not in state.get("allowance_grants", {}) and key not in state.get("allowance_revoked", {})
-            and text.strip() in contract.question_variants(request, state["review_work"])]
+            and text.strip() in contract.question_variants(request, state["review_work"], state["root"]["policy_digest"])]
     # 中文：简短回复只回答最后一个明确问题；其他助手消息使旧问题失效。
     # English: A short answer belongs only to the last exact question.
     return matches
@@ -257,7 +257,7 @@ def _apply_record(ledger: Path, source: dict[str, Any], record: dict, raw: bytes
         events = budget._read_events(ledger)
         state = budget.replay(events)
         result = parse_response(text, state.get("allowance_requests", {}),
-                                state.get("review_work", {}), source["presented_requests"])
+                                state.get("review_work", {}), source["presented_requests"], state["root"]["policy_digest"])
         if result is None:
             return None
         request_id, action = result

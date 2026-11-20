@@ -451,6 +451,16 @@ def audit(root: Path = ROOT, *, write: bool = False) -> dict:
         except DocumentationError as exc:
             problems.append({"code": "PUBLISHED_SCRIPT_SOURCE_INVALID", "path": script_name, "error": str(exc)})
     if "quality_limits" in manifest:
+        if "desktop_g6_default_v1" in manifest:
+            readable = list(declared_constant(root, "runtime/cp_runtime/g6_journal_versions.py", "READABLE"))
+            if manifest["desktop_g6_default_v1"].get("readable_budget_schema_versions") != readable:
+                if write:
+                    manifest["desktop_g6_default_v1"]["readable_budget_schema_versions"] = readable
+                    (root / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                    updated.append("manifest.json")
+                else:
+                    problems.append({"code": "SCHEMA_DECLARATION_DRIFT", "path": "manifest.json",
+                                     "field": "desktop_g6_default_v1.readable_budget_schema_versions"})
         values, disagreements = schema_contracts(root, manifest)
         problems.extend({"code": "SCHEMA_DECLARATION_DRIFT", "path": "manifest.json", "field": name} for name in disagreements)
         problems.extend({"code": "AUTHORITY_DRIFT", "path": "manifest.json", "field": name} for name in authority_findings(manifest, values))

@@ -139,6 +139,28 @@ class OperationWorkflowTests(unittest.TestCase):
         scan(self.store, ["other.py"])
         self.assertTrue(workflow.check(origin["operation_ref"])["valid"])
 
+    def test_optional_index_check_rejects_refresh_after_query(self):
+        source = self.repo / "auxiliary.py"
+        source.write_text("def lookup_old():\n    return 1\n", encoding="utf-8")
+        scan(self.store, ["app.py", "auxiliary.py"])
+        _, _, workflow, _, origin = self.operation()
+        query = workflow_module.query
+
+        def refresh_after_query(store, term, **kwargs):
+            result = query(store, term, **kwargs)
+            self.assertTrue(result["candidates"])
+            source.write_text("def replacement():\n    return 2\n", encoding="utf-8")
+            scan(store, ["auxiliary.py"])
+            return result
+
+        with patch.object(workflow_module, "query", side_effect=refresh_after_query), patch.object(
+            workflow_module.gate_preferences, "effective", return_value={"verify_optional_index": True}
+        ):
+            prepared = workflow.prepare(origin["operation_ref"], term="lookup_old")
+        self.assertEqual(prepared["required_decisions"], [])
+        self.assertEqual(prepared["gate_decision"]["evidence_state"], "UNVERIFIED")
+        self.assertEqual(prepared["gate_decision"]["reason_code"], "INDEX_CHANGED_DURING_READBACK")
+
     def test_cancel_during_independent_index_maintenance_never_writes_finish_receipt(self):
         _, operation, workflow, intent, origin = self.operation()
         prepared = workflow.prepare(origin["operation_ref"], term="public")

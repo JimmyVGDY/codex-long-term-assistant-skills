@@ -24,6 +24,8 @@ COMMANDS = {
     "install-enhancement": ("scripts/package_manager.py", "install", "--scope", "user", "--mode", "plugin"),
     "recover": ("scripts/package_manager.py", "recover"),
     "resume": ("scripts/cp-runtime.py", "project-resume"),
+    "gate-settings": ("scripts/cp-runtime.py", "gate-settings"),
+    "routing-policy": ("scripts/cp-runtime.py", "routing-policy"),
 }
 
 
@@ -31,7 +33,7 @@ def print_help() -> None:
     print("Codex 跨项目助手日常入口")
     print("Usage: cp-assistant <command> [options]")
     print("Commands: help, install-base, status, doctor, verify, inventory,")
-    print("          install-enhancement, recover, resume")
+    print("          install-enhancement, recover, resume, gate-settings, routing-policy")
     print("help and install-base do not require the enhancement runtime.")
     print("status, doctor, inventory and resume support --json; status also supports --quick.")
     print("recover and install commands write managed installation state.")

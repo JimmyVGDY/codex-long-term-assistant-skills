@@ -91,6 +91,9 @@ def register_work(ledger: Path, *, boundary_id: str, phase: str, role: str,
                   allowed_paths: list[str] | None = None) -> dict:
     state = budget.read_budget(ledger)
     manifest, paths, _ = packet_material(packet_dir, Path(state["root"]["repo_path"]))
+    from .g6_catalog import reader_ids
+    if manifest.get("policy_id") in reader_ids() and manifest.get("policy_digest") != state["root"]["policy_digest"]:
+        fail("G6_REVIEW_PACKET_POLICY_CONFLICT")
     if manifest["boundary_id"] != boundary_id:
         fail("G6_REVIEW_PACKET_BOUNDARY")
     allowed = sorted(set(allowed_paths)) if allowed_paths else paths
@@ -151,12 +154,11 @@ def bind_call(ledger: Path, *, work_id: str, packet_dir: Path, instructions: str
         body = (work["purpose"] + "\n" + boundary + "\nNo nested delegation, Git mutations, installation, "
                 "network access, or production operations are authorized by this assignment.\n" + instructions)
     else:
+        from .g6_review_receipt_v1 import report_instructions
         body = (work["purpose"] + "\nReview only the approved paths: " + ", ".join(work["scope_paths"])
                 + "\nRead the current review packet at " + str(packet_dir.resolve())
                 + ("\n" + instructions if instructions else "")
-                + "\nReturn a raw JSON object with status, findings (each with id and summary), "
-                  "checked_scope, unverified_items, summary. Include packet_sha256=" + manifest["packet_sha256"]
-                + " in checked_scope. Logical-readonly only; do not edit, publish, or dispatch subagents.")
+                + report_instructions(manifest["packet_sha256"]))
     body_sha = hashlib.sha256(body.encode("utf-8")).hexdigest()
     from .g6_task_scope import read as read_scope, namespace
     binding = read_scope(session_id, ledger_path=ledger) if session_id else None

@@ -79,6 +79,15 @@ def pretool(ledger: Path, data: Mapping[str, Any], tool: str,
                       "reuse_original_fields": ["message"]})
     origin_id = max(matches, key=lambda pid: state["permits"][pid]["prepared_at"])
     origin = state["permits"][origin_id]
+    from . import g6_catalog, g6_capability_source
+    digest = state["root"]["policy_digest"]
+    if g6_catalog.for_digest(digest):
+        cap = g6_capability_source.observe(Path(cwd), session, digest, state=state)
+        if origin["approved_profile"] not in cap["available_profiles"]:
+            return _deny("G6_CONTINUATION_PROFILE_UNAVAILABLE", "refresh_bound_capabilities_or_continue_local")
+    else:
+        cap = {"schema_version": "g6-desktop-capability/1", "source_ref": ref({"registered_dispatch":origin_id})}
+    cap["available_profiles"] = [origin["approved_profile"]]
     if authority_error and budget._select_funding(state, origin["work_item_id"], 0) != "base":
         return _deny("G6_NATIVE_AUTHORITY_UNVERIFIED", "recover_native_authority_source")
     scoped_call = None
@@ -118,9 +127,7 @@ def pretool(ledger: Path, data: Mapping[str, Any], tool: str,
                                           "message": message}, persist=True, state=state)
             facts["work_item_id"] = origin["work_item_id"]
             prepared = budget.prepare(ledger, facts=facts,
-                capability={"schema_version": "g6-desktop-capability/1",
-                            "available_profiles": [origin["approved_profile"]],
-                            "source_ref": ref({"registered_dispatch": origin_id})},
+                capability=cap,
                 gates=[], agent_type=origin["agent_type"], task_name=task_name,
                 message=message, decision_time=utc_now())
             if prepared["permit_id"] is None:

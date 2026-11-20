@@ -1,0 +1,11 @@
+{
+  "schema_version": "desktop-policy-readers/1",
+  "policies": [
+    {
+      "policy_id": "desktop-catalog-v2",
+      "algorithm": "role-cost-v2",
+      "file": "desktop-model-catalog-v2.json",
+      "sha256": "ef82104789cfa9324a4fcdcf7f7fe9b248b5f5b8218887209cf83b2460625e35"
+    }
+  ]
+}

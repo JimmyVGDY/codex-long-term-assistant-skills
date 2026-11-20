@@ -192,6 +192,10 @@ def main() -> None:
     add_commands(sub)
     from .capability_gate_cli import add_commands as add_gate_commands
     add_gate_commands(sub)
+    from .gate_preferences import add_commands as add_preference_commands
+    add_preference_commands(sub)
+    from .g6_route_settings import add_commands as add_routing_policy_commands
+    add_routing_policy_commands(sub)
     from .capability_registry_cli import add_commands as add_registry_commands
     add_registry_commands(sub)
     from .onboarding_cli import add_commands as add_onboarding_commands
@@ -340,7 +344,7 @@ def main() -> None:
     args = parser.parse_args()
     try:
         args.func(args)
-    except RuntimeContractError as exc:
+    except (RuntimeContractError, ValueError, TimeoutError) as exc:
         print("[FAIL] " + str(exc), file=sys.stderr)
         raise SystemExit(1)
 

@@ -55,3 +55,19 @@ V3/V4/V5 roots replay their frozen policies. Explicit legacy selectors preserve 
 Test installer output and actual registered entrypoints rather than enumerating only the policy catalog. Keep tested gates enabled during Desktop acceptance. Static checks, installed-file equality, and empty Hook output do not independently establish complete runtime operation.
 
 Use the [official OpenAI Hook documentation](https://learn.chatgpt.com/docs/hooks) as the event-contract reference. Transcript formats are not a stable interface, so adapters remain bounded and preserve unknowns.
+
+## Base installation, recovery and scoped preferences
+
+A base installation checks one exact plugin identity, its package version, and both registration flags. Re-running a healthy installation only reads its registration. For disabled, mismatched or unverified records, inspect the specific plugin in Desktop. Windows reads UTF-8 state, while POSIX uses Perl with JSON::PP for JSON and path handling without Python. Recovery preserves unrelated content. An unknown file occupying the plugin payload keeps the recovery state until the user resolves the conflict and retries.
+
+Use `gate-settings` in the package's native daily launcher. Read the revision with show, get the proposed effect and request_ref with preview, then pass the same parameters and --confirm to apply. An omitted --task selects the project. A task-specific preference overrides the project value. A write without a logical task binding can use `turn:<native-turn-id>`. Expiration and revocation affect subsequent operations.
+
+```text
+cp-assistant gate-settings show --repo-path <repo> --action write
+cp-assistant gate-settings preview --repo-path <repo> --action write --revision <n> --expires-at <UTC> --retry-limit 1 --backoff-ms 150 --wait-ms 1200 --verify-optional-index yes
+cp-assistant gate-settings apply --repo-path <repo> --action write --revision <n> --expires-at <UTC> --retry-limit 1 --backoff-ms 150 --wait-ms 1200 --verify-optional-index yes --confirm <request_ref>
+```
+
+Use the same preview and apply flow with --revoke to clear the selected scope. Preferences last up to 31 days and allow zero to two retries. Write preparation retries only transient prestate reads. Optional index verification adds a consistency read. Target, authority and prestate checks still run. For delegation select --action dispatch. Host retry hints, funding and the deadline bound backoff. Reconcile an uncertain post-write receipt against the original operation and files.
+
+New accounts review configured hooks using Desktop settings or the composer. Registration, trust for the current definition and an observed interception are distinct acceptance checks.

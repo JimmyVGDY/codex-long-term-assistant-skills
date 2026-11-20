@@ -12,14 +12,19 @@ from pathlib import Path
 from .capability_store import bounded_read
 from .common import resolve_codex_home
 from .payload_integrity import load_manifest
+from .g6_journal_versions import READABLE
 
 RUNTIME_FILES = (
     "g6_allowance_authority.py", "g6_allowance_contract.py", "g6_budget_v1.py",
     "g6_continuation.py", "g6_flexible_policy.py", "g6_hook_v1.py", "g6_retry_v1.py",
     "g6_review_controller.py", "g6_review_receipt_v1.py", "g6_review_requests.py", "g6_runtime_support.py",
     "g6_task_origin.py", "g6_task_scope.py", "g6_task_scope_cli.py", "g6_journal_capacity.py",
-    "g6_default_activation.py", "g6_reconciliation.py",
+    "g6_default_activation.py", "g6_handoff_v1.py", "g6_reconciliation.py",
     "native_transcript.py", "native_workspace.py", "routing_hook_v5.py",
+    "capability_store.py", "path_identity.py",
+    "g6_catalog.py", "g6_journal_versions.py", "g6_route_settings.py", "g6_capability_source.py",
+    "g6_user_intent.py", "gate_preferences.py", "revision_pages.py",
+    "data/desktop-policy-readers.json", "g6_routing_study.py",
 )
 
 
@@ -43,7 +48,8 @@ def installed_allowance_support() -> dict:
             return {**result, "reason_code": "INSTALLED_PAYLOAD_IDENTITY_MISMATCH"}
         entries = {row["path"]: row for row in manifest["files"]}
         caller = Path(__file__).resolve().parent
-        for name in RUNTIME_FILES:
+        from .g6_catalog import entries as catalog_entries
+        for name in (*RUNTIME_FILES, *("data/" + row["file"] for row in catalog_entries())):
             relative = "runtime/cp_runtime/" + name
             expected = entries.get(relative, {}).get("sha256")
             for source in (cache / relative, home / relative, caller / name):
@@ -55,7 +61,7 @@ def installed_allowance_support() -> dict:
         return {**result, "supported": True, "reason_code": "MATCHING_INSTALLED_READERS",
                 "version": version, "payload_digest": manifest["payload_digest"],
                 "task_execution_protocol": "g6-task-execution/1",
-                "journal_versions": ["g6-budget-journal/1", "g6-budget-journal/2", "g6-budget-journal/3"]}
+                "journal_versions": list(READABLE)}
     except (OSError, ValueError, RuntimeError, KeyError, TypeError):
         return result
 

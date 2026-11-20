@@ -1,0 +1,141 @@
+{
+  "schema_version": "desktop-model-catalog/1",
+  "policy_id": "desktop-catalog-v2",
+  "algorithm": "role-cost-v2",
+  "budget_policy_digest": "sha256:1593b5136a133b62b6a8973f1c5a29b798189a3ef2fe424a5aaed0fc87cdf70f",
+  "efforts": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "concurrency_limits": {
+    "astra": 1
+  },
+  "defaults": {
+    "lookup": "g6-luna-low",
+    "extraction": "g6-luna-low",
+    "mechanical": "g6-luna-low",
+    "ordinary": "g6-sol-medium",
+    "unknown": "g6-sol-medium",
+    "cross_domain_adjudication": "g6-astra-medium"
+  },
+  "role_order": {
+    "worker": [
+      "sol",
+      "luna",
+      "astra",
+      "terra"
+    ],
+    "explorer": [
+      "luna",
+      "sol",
+      "terra",
+      "astra"
+    ],
+    "reviewer": [
+      "astra",
+      "sol",
+      "terra",
+      "luna"
+    ]
+  },
+  "family_rank": {
+    "luna": 0,
+    "sol": 1,
+    "terra": 1,
+    "astra": 2
+  },
+  "models": [
+    {
+      "id": "g6-luna",
+      "model": "gpt-6-luna",
+      "family": "luna",
+      "concurrency_group": "shared",
+      "stage": "approved",
+      "priority": 0,
+      "units": {
+        "low": 1,
+        "medium": 2,
+        "high": 4
+      }
+    },
+    {
+      "id": "g6-sol",
+      "model": "gpt-6-sol",
+      "family": "sol",
+      "concurrency_group": "shared",
+      "stage": "approved",
+      "priority": 1,
+      "units": {
+        "low": 2,
+        "medium": 4,
+        "high": 8
+      }
+    },
+    {
+      "id": "g6-astra",
+      "model": "gpt-6-astra",
+      "family": "astra",
+      "concurrency_group": "astra",
+      "stage": "approved",
+      "priority": 2,
+      "units": {
+        "low": 4,
+        "medium": 8,
+        "high": 16
+      }
+    },
+    {
+      "id": "g62-sol",
+      "model": "gpt-6.2-sol",
+      "family": "sol",
+      "concurrency_group": "shared",
+      "stage": "pilot",
+      "priority": 3,
+      "units": {
+        "low": 2,
+        "medium": 4,
+        "high": 8
+      }
+    },
+    {
+      "id": "g62-astra",
+      "model": "gpt-6.2-astra",
+      "family": "astra",
+      "concurrency_group": "astra",
+      "stage": "pilot",
+      "priority": 4,
+      "units": {
+        "low": 4,
+        "medium": 8,
+        "high": 16
+      }
+    },
+    {
+      "id": "g61-sol",
+      "model": "gpt-6.1-sol",
+      "family": "sol",
+      "concurrency_group": "shared",
+      "stage": "pilot",
+      "priority": 5,
+      "units": {
+        "low": 2,
+        "medium": 4,
+        "high": 8
+      }
+    },
+    {
+      "id": "g61-terra",
+      "model": "gpt-6.1-terra",
+      "family": "terra",
+      "concurrency_group": "shared",
+      "stage": "pilot",
+      "priority": 6,
+      "units": {
+        "low": 2,
+        "medium": 4,
+        "high": 8
+      }
+    }
+  ]
+}

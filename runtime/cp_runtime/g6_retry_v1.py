@@ -5,11 +5,13 @@ English: Bounded retry advice from one verified budget journal, never a new gran
 from __future__ import annotations
 
 from datetime import timedelta
+from pathlib import Path
 from typing import Any, Mapping
 
 from . import g6_budget_v1 as budget
 from .common import parse_iso
 from .g6_flexible_policy import policy
+from .g6_catalog import policy_id
 from .routing_contract import fail, ref, sha
 
 TRANSIENT = {"host_capacity", "rate_limit", "transport_interruption", "verified_transient_read"}
@@ -39,7 +41,7 @@ def next_action(state: Mapping[str, Any], *, work_item_id: str, failure_kind: st
     active = [(pid, reservation) for pid, _, reservation in attempts
               if pid not in state["terminals"]
               and state["receipts"].get(pid, {}).get("disposition") != "not_started"]
-    source = {"schema_version": "g6-retry-decision/1", "policy_id": policy()["policy_id"],
+    source = {"schema_version": "g6-retry-decision/1", "policy_id": policy_id(state["root"]["policy_digest"]),
               "ledger_head": state["head_hash"], "work_item_id": work_item_id,
               "failure_kind": failure_kind, "prior_attempts": len(attempts),
               "prior_created_attempts": sum(state["receipts"].get(pid, {}).get("disposition") == "created"
@@ -73,11 +75,19 @@ def next_action(state: Mapping[str, Any], *, work_item_id: str, failure_kind: st
         return result("REPREPARE_WITH_CHANGED_INPUT", "CHANGED_INPUT_REQUIRES_NEW_DECISION")
     if failure_kind not in TRANSIENT:
         return result("CONTINUE_LOCAL", "FAILURE_CLASS_UNCONFIRMED")
+    from .gate_preferences import effective
+    try:
+        preferences = effective(Path(state["root"]["repo_path"]), state["root"]["identity"],
+                                state["root"]["task_id"], "dispatch", at=now)
+    except (OSError, RuntimeError, ValueError):
+        return result("CONTINUE_LOCAL", "RETRY_PREFERENCE_UNVERIFIED")
     maximum = 1 + policy()["retry_policy"]["transient_default_max_additional_attempts"]
     funding = budget._select_funding(state, work_item_id, 0)
     current_attempts = [row for row in attempts if row[1].get("funding_id", "base") == funding]
     if funding != "base":
         maximum = budget.allowance.buckets(state)[funding]["attempts"]
+    if "retry_limit" in preferences:
+        maximum = min(maximum, 1 + preferences["retry_limit"])
     if len(current_attempts if registered else attempts) >= maximum:
         return result("CONTINUE_LOCAL", "TRANSIENT_RETRY_LIMIT")
     view = budget.snapshot(state, work_item_id=work_item_id, depth=0, funding_id=funding)
@@ -90,6 +100,10 @@ def next_action(state: Mapping[str, Any], *, work_item_id: str, failure_kind: st
         return result("CONTINUE_LOCAL", "BUDGET_EXHAUSTED_FOR_RETRY")
     backoff = host_retry_after_ms if host_retry_after_ms is not None else min(
         8_000, 1_000 * (2 ** max(0, len(attempts) - 1)))
+    if "backoff_ms" in preferences:
+        backoff = max(host_retry_after_ms or 0, preferences["backoff_ms"])
+    if "wait_ms" in preferences and backoff > preferences["wait_ms"]:
+        return result("CONTINUE_LOCAL", "RETRY_WAIT_LIMIT")
     if moment + timedelta(milliseconds=backoff) >= deadline:
         return result("CONTINUE_LOCAL", "RETRY_DEADLINE_EXHAUSTED")
     return result("RETRY_NEW_PERMIT", "VERIFIED_TRANSIENT_WITHIN_BOUNDS", wait_ms=backoff)

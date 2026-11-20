@@ -115,6 +115,28 @@ class WorkspaceSourceRecoveryTests(unittest.TestCase):
         self.turn = "selected-project-turn"
         self.emit("turn_context", {"turn_id": self.turn, "cwd": str(self.repo)})
 
+    def test_migrated_workspace_proof_can_resume_only_the_original_project(self):
+        self.change_workspace()
+        self.native_user()
+        first = origin.prepare(self.session, self.repo)["origins"][0]["origin_ref"]
+        task = scope.select(session=self.session, cwd=self.repo, task_id="migrated-v2",
+                            origin_ref=first, relation="independent")
+        scope.complete(self.session, self.repo, task["task_scope"])
+        frozen = (origin._directory(self.session, self.repo) / (first + ".json")).read_bytes()
+        fixtures.TaskScopeTests.move_account(self)
+        self.turn = "later-turn"
+        self.emit("turn_context", {"turn_id": self.turn, "cwd": str(self.repo)})
+        self.emit("response_item", {"type": "message", "role": "user", "id": "later-user",
+                  "internal_chat_message_metadata_passthrough": {"turn_id": self.turn, "content_item_kinds": ["user.text"]},
+                  "content": [{"type": "input_text", "text": "Resume the previous project task"}]})
+        self.observe_parent()
+        last = origin.prepare(self.session, self.repo)["origins"][-1]["origin_ref"]
+        resumed = scope.select(session=self.session, cwd=self.repo, task_id="migrated-v2",
+                               origin_ref=last, relation="resume", task_scope=task["task_scope"])
+        self.assertEqual(resumed["task_scope"], task["task_scope"])
+        self.assertEqual(origin.read_origin(self.session, self.repo, first)["workspace_proof"]["turn_id"], "selected-project-turn")
+        self.assertEqual((origin._directory(self.session, self.repo) / (first + ".json")).read_bytes(), frozen)
+
     def test_first_project_selection_preserves_old_source_and_creates_no_implicit_budget(self):
         origin.observe({"session_id": self.session, "cwd": str(self.repo),
                         "transcript_path": str(self.transcript), "hook_event_name": "UserPromptSubmit"})

@@ -7,8 +7,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from . import g6_task_scope, research_campaign
-from .g6_flexible_policy import POLICY_ID, POLICY_SHA256, policy
+from . import g6_budget_v1, g6_catalog, g6_task_scope, research_campaign
+from .g6_route_settings import selected_digest
+from .g6_flexible_policy import policy
 from .routing_contract import ref
 
 
@@ -20,8 +21,9 @@ def resolve(*, session_id: str, cwd: Path) -> dict[str, Any]:
     policy()
     binding = g6_task_scope.read(session_id)
     if binding is not None:
-        return {"policy_id": POLICY_ID, "policy_digest": "sha256:" + POLICY_SHA256,
-                "selection_mode": "script-first-flexible-v1", "status": "NEW_ROOT_BOUND",
+        digest = g6_budget_v1.read_budget(Path(binding["new_ledger_path"]))["root"]["policy_digest"]
+        return {"policy_id": g6_catalog.policy_id(digest), "policy_digest": digest,
+                "selection_mode": "script-first-flexible-v1" if digest == g6_catalog.LEGACY else "role-cost-v2", "status": "NEW_ROOT_BOUND",
                 "session_ref": ref(session_id), "root_path": binding["new_ledger_path"]}
     if research_campaign._head(session_id).exists():
         return {"policy_id": None, "policy_digest": None,
@@ -34,6 +36,7 @@ def resolve(*, session_id: str, cwd: Path) -> dict[str, Any]:
         return {"policy_id": None, "policy_digest": None,
                 "selection_mode": "historical-root-owned", "status": "LEGACY_ROOT_BOUND",
                 "session_ref": ref(session_id), "root_path": None}
-    return {"policy_id": POLICY_ID, "policy_digest": "sha256:" + POLICY_SHA256,
-            "selection_mode": "script-first-flexible-v1", "status": "NEW_TASK_DEFAULT",
+    digest = selected_digest(cwd)
+    return {"policy_id": g6_catalog.policy_id(digest), "policy_digest": digest,
+            "selection_mode": "script-first-flexible-v1" if digest == g6_catalog.LEGACY else "role-cost-v2", "status": "NEW_TASK_DEFAULT",
             "session_ref": ref(session_id), "root_path": None}

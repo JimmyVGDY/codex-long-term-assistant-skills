@@ -30,6 +30,20 @@ COMMAND_ENTRYPOINTS = {
 }
 DECISIONS = {"CONTINUE_DEFAULT", "CONTINUE_DEGRADED", "REPREPARE", "RETRY_BOUNDED",
              "WAIT_RECONCILE", "STOP_AFFECTED_ACTION"}
+WRITE_CONFLICTS = {
+    "ARTIFACT_IDENTITY_MISMATCH", "ARTIFACT_REQUEST_CONFLICT", "ARTIFACT_SCOPE_CONFLICT",
+    "BUDGET_IDENTITY_MISMATCH", "CONTROL_PATH_CONFLICT", "CROSS_REPO_PATH_CONFLICT",
+    "GATE_IDENTITY_MISMATCH", "GATE_RECEIPT_HASH", "GATE_TASK_IDENTITY_MISMATCH",
+    "HARDLINK_REJECTED", "IDENTITY_CHANGED", "IDENTITY_MISMATCH", "LINK_REJECTED",
+    "MIXED_PATH_SCOPE", "OP_CALL_BINDING_CONFLICT", "OP_CALL_BINDING_INVALID",
+    "OP_CWD_MISMATCH", "OP_IDENTITY_MISMATCH", "OP_INTENT_MISMATCH", "OP_POSTTOOL_CONFLICT",
+    "OP_RECEIPT_HASH", "OP_RECEIPT_IDENTITY", "OP_TARGETS_MISMATCH", "PATH_ALIAS_REJECTED",
+    "PATH_ESCAPE", "SENSITIVE_PATH",
+}
+WRITE_RETRY = {"GATE_HOST_DEADLINE", "GATE_WORKER_FAILED", "GATE_LOCK_BUSY",
+               "PATH_UNREADABLE", "OP_SCOPE_UNREADABLE", "GATE_INPUT_UNAVAILABLE"}
+WRITE_REFRESH = {"INTENT_STALE_FILE", "INTENT_STALE_PARENT", "OP_SCOPE_CHANGED",
+                 "OP_REVISION_CONFLICT", "OP_POLICY_CHANGED", "OP_NOT_PREPARING"}
 
 
 def result(*, gate_id: str, entrypoint: str, reason_code: str, decision: str,
@@ -56,24 +70,26 @@ def result(*, gate_id: str, entrypoint: str, reason_code: str, decision: str,
 
 def write_failure(reason: str) -> dict[str, Any]:
     code = reason if re.fullmatch(r"[A-Z0-9_]{1,96}", reason) else "GATE_INPUT_UNAVAILABLE"
-    retryable = code in {"GATE_HOST_DEADLINE", "GATE_WORKER_FAILED", "GATE_LOCK_BUSY",
-                         "PATH_UNREADABLE", "OP_SCOPE_UNREADABLE", "GATE_INPUT_UNAVAILABLE"}
-    refresh = code.startswith("INTENT_STALE_") or code in {
-        "OP_SCOPE_CHANGED", "OP_REVISION_CONFLICT", "OP_POLICY_CHANGED", "OP_NOT_PREPARING"}
-    conflict = any(part in code for part in (
-        "IDENTITY_MISMATCH", "IDENTITY_CONFLICT", "PATH_ESCAPE", "SENSITIVE_PATH",
-        "LINK_REJECTED", "HASH", "OP_INTENT_MISMATCH", "OP_POSTTOOL_CONFLICT",
-        "PATH_SCOPE", "PATH_CONFLICT", "CWD_MISMATCH", "PATH_ALIAS", "CALL_BINDING"))
-    action = "retry_same_operation" if retryable else "prepare_current_intent" if refresh else (
-        "resolve_confirmed_conflict" if conflict else "adapt_supported_native_input")
+    retryable = code in WRITE_RETRY
+    conflict = code in WRITE_CONFLICTS
+    action = "inspect_affected_operation_and_targets"
+    if retryable:
+        action = "retry_same_operation"
+    elif code in WRITE_REFRESH:
+        action = "prepare_current_intent"
+    elif conflict:
+        action = "resolve_confirmed_conflict"
+    elif code == "LEGACY_WRITE_ORIGIN_UNAVAILABLE":
+        action = "prepare_supported_native_patch_in_the_same_project"
     if code == "ARTIFACT_SCOPE_UNREGISTERED":
         action = "register_native_artifact_request"
-    return result(gate_id="write_safety", entrypoint="cp_gate.py", reason_code=code,
+    decision = result(gate_id="write_safety", entrypoint="cp_gate.py", reason_code=code,
                   decision="STOP_AFFECTED_ACTION" if conflict else
                            "RETRY_BOUNDED" if retryable else "REPREPARE",
                   affected_action="write", next_action=action,
                   evidence_state="CONFIRMED_CONFLICT" if conflict else "UNVERIFIED",
                   retry_budget=1 if retryable else 0)
+    return {**decision, "effect_state": "NOT_EXECUTED", "execution_authorization": "NONE"}
 
 
 def registration_inventory(hooks: Mapping[str, Any], *, source: str = "installer") -> list[dict[str, Any]]:

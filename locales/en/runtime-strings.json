@@ -1,6 +1,19 @@
 {
   "schema_version": 1,
   "files": {
+    "runtime/cp_runtime/g6_user_intent.py": {
+      "preserve": [
+        "(?:任务类别|task_kind)\\s*=\\s*([a-z_]+|定位|提取|机械|普通|跨域裁决)",
+        "(?:定位符号|查找符号|locate symbol|find symbol)\\s+\\x60?[A-Za-z_][A-Za-z0-9_.:]{0,100}\\x60?[。.]?",
+        "(?:请)?(?:使用|选择|指定|use|choose)\\s+([a-z0-9][a-z0-9._-]{0,80})\\s+([a-z]+)[。.]?",
+        "定位",
+        "提取",
+        "普通",
+        "机械",
+        "试用所选精确档位一次",
+        "跨域裁决"
+      ]
+    },
     "scripts/check-links.py": {
       "plain": {
         "全仓库 Markdown 链接检查 / Repository-wide Markdown link check": "Repository-wide Markdown link check"

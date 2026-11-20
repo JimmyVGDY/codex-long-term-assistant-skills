@@ -128,6 +128,7 @@ class G6ReviewControllerEntryTests(unittest.TestCase):
             value = controller.run(args)
         self.assertEqual(value["assignments"][reviewer]["packet_sha256"], "a" * 64)
         self.assertIn("packet_sha256=" + "a" * 64, preview.call_args.kwargs["message"])
+        self.assertIn("Use incomplete for partial coverage", preview.call_args.kwargs["message"])
 
     def test_utf8_boundary_does_not_exclude_untracked_text_snapshot(self):
         source = self.repo / "untracked.py"

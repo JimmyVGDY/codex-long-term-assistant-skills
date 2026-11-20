@@ -14,6 +14,7 @@ from .capability_store import bounded_read, safe_path
 from .common import atomic_write_bytes, atomic_write_json, resolve_codex_home, verify_record
 from .dispatch_policy import delegation_tool_name
 from .event_v2 import OwnerTokenLock
+from .g6_route_settings import registered_ledger_path
 from .g6_task_origin import _identity, read_origin
 from .path_identity import same_path
 from .routing_contract import _constant, _object, exact, fail, ref
@@ -85,8 +86,13 @@ def _legacy_directory(session: str) -> Path:
     return _home() / "legacy-pointers" / ref(session)[7:]
 
 
-def _check_row(row: Mapping[str, Any], session: str, cwd: Path | None = None) -> dict:
-    state = budget.read_budget(safe_path(Path(row["ledger_path"])))
+def _row_ledger(row: Mapping[str, Any]) -> Path:
+    return registered_ledger_path(Path(row["ledger_path"]))
+
+
+def _check_row(row: Mapping[str, Any], session: str, cwd: Path | None = None) -> tuple[Path, dict]:
+    ledger = _row_ledger(row)
+    state = budget.read_budget(ledger)
     root = state["root"]
     if (row["session_ref"] != ref(session) or root["host_session_ref"] != ref(session)
             or root["identity"] != row["identity"] or root["task_id"] != row["ledger_task_id"]
@@ -94,12 +100,12 @@ def _check_row(row: Mapping[str, Any], session: str, cwd: Path | None = None) ->
             or cwd is not None and (not same_path(Path(row["repo_path"]), cwd)
                                     or row["identity"] != _identity(cwd))):
         fail("TASK_BOUND_ROOT_CHANGED")
-    return state
+    return ledger, state
 
 
 def _binding(row: Mapping[str, Any], session: str) -> dict:
-    _check_row(row, session)
-    return {"new_ledger_path": row["ledger_path"], "repo_path": row["repo_path"],
+    ledger, _ = _check_row(row, session)
+    return {"new_ledger_path": str(ledger), "repo_path": row["repo_path"],
             "project_identity": row["identity"], "task_scope": row["scope_ref"],
             "task_id": row["task_id"], "old_stop_evidence": None}
 
@@ -350,8 +356,7 @@ def _named_row(value: dict, task: str) -> dict | None:
     return value["scopes"].get("TS1-" + match[1]) if match else None
 
 
-def _owns(row: dict, task: str, *, pending: bool = False) -> bool:
-    state = budget.read_budget(Path(row["ledger_path"]))
+def _owns(state: dict, task: str, *, pending: bool = False) -> bool:
     if any(item["disposition"] == "created" and item["agent_ref"] == ref(task)
            for item in state["receipts"].values()):
         return True
@@ -368,14 +373,15 @@ def child_owner(data: Mapping[str, Any]) -> tuple[str, Path] | None:
     task = legacy._child_task_path(dict(data))
     row = _named_row(value, task)
     if row is not None:
-        _check_row(row, session)
-        if not _owns(row, task, pending=True):
+        ledger, state = _check_row(row, session)
+        if not _owns(state, task, pending=True):
             fail("TASK_CHILD_NOT_RESERVED")
-        return "new", Path(row["ledger_path"])
+        return "new", ledger
     for row in value["scopes"].values():
-        if row["kind"] == "legacy" and _owns(row, task, pending=True):
-            _check_row(row, session)
-            return "new", Path(row["ledger_path"])
+        if row["kind"] == "legacy":
+            ledger, state = _check_row(row, session)
+            if _owns(state, task, pending=True):
+                return "new", ledger
     if value["legacy_digest"] is not None:
         return legacy.route(dict(data), directory=_legacy_directory(session))
     fail("TASK_CHILD_OWNER_UNKNOWN")
@@ -390,11 +396,12 @@ def _target_row(value: dict, session: str, target: str) -> dict:
     candidates = [row] if row is not None else [
         item for item in value["scopes"].values()
         if item["kind"] == "legacy" and re.fullmatch(r"/root/[a-z0-9_]{1,64}", canonical)
-        or _path(Path(item["ledger_path"]), target).exists()]
+        or _path(_row_ledger(item), target).exists()]
     owned = []
     for item in candidates:
-        task = resolve(Path(item["ledger_path"]), target, session_id=session)
-        if _owns(item, task):
+        ledger, state = _check_row(item, session)
+        task = resolve(ledger, target, session_id=session)
+        if _owns(state, task):
             owned.append(item)
     if len(owned) != 1:
         fail("TASK_TARGET_OWNER_UNKNOWN_OR_AMBIGUOUS")
@@ -420,8 +427,8 @@ def route(data: dict[str, Any]) -> tuple[str, Path] | None:
         # 中文：维护可以选择当前任务；计费调用永不使用此分支。
         # English: Maintenance may select the current task; billable calls never use this branch.
         row = value["scopes"][value["active_scope"]]
-        _check_row(row, session)
-        return "new", Path(row["ledger_path"])
+        ledger, _ = _check_row(row, session)
+        return "new", ledger
     tool, event = delegation_tool_name(data.get("tool_name")), data.get("hook_event_name")
     if tool not in BILLABLE | {"send_message"} or event not in {"PreToolUse", "PostToolUse"}:
         return None
@@ -461,8 +468,8 @@ def route(data: dict[str, Any]) -> tuple[str, Path] | None:
             atomic_write_json(call_path, call, seal=True)
         if row is None:
             fail("TASK_CALL_OWNER_UNKNOWN")
-        _check_row(row, session, Path(str(data.get("cwd") or "")))
-        return "new", Path(row["ledger_path"])
+        ledger, _ = _check_row(row, session, Path(str(data.get("cwd") or "")))
+        return "new", ledger
 
 
 def approve_and_reserve(ledger: Path, **parameters: Any) -> dict:
@@ -478,7 +485,7 @@ def approve_and_reserve(ledger: Path, **parameters: Any) -> dict:
             if len(rows) != 1:
                 fail("TASK_LEDGER_NOT_REGISTERED")
             row = rows[0]
-            _check_row(row, session, parameters["cwd"])
+            ledger, _ = _check_row(row, session, parameters["cwd"])
             if row["status"] != "ACTIVE":
                 fail("TASK_SCOPE_COMPLETE_RESUME_REQUIRED")
         return budget.approve_and_reserve(ledger, **parameters)
@@ -491,7 +498,7 @@ def complete(session: str, cwd: Path, task_scope: str) -> dict:
         if value is None or task_scope not in value["scopes"]:
             fail("TASK_SCOPE_NOT_REGISTERED")
         row = value["scopes"][task_scope]
-        state = _check_row(row, session, cwd)
+        _, state = _check_row(row, session, cwd)
         if any(pid not in state["terminals"] and state["receipts"].get(pid, {}).get("disposition") != "not_started"
                for pid in state["reservations"]):
             fail("TASK_NATIVE_OUTCOME_PENDING")
