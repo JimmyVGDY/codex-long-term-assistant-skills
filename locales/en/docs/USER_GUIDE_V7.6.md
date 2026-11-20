@@ -2,7 +2,7 @@
 
 [Current location](USER_GUIDE.md)
 
-# V7.17.1 Operating Guide
+# V7.18.0 Operating Guide
 
 See [Desktop gates and recovery](DESKTOP_GATE_RECOVERY.md) for default/degraded decisions, native receipt recovery, and continuation rules.
 

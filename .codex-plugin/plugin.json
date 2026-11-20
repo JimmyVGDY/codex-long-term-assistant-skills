@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.17.3",
-  "description": "跨项目长期技术助手 V7.17.3：适配桌面客户端更新与项目来源切换，修复账户目录联接，保留历史预算与授权边界。",
+  "version": "7.18.0",
+  "description": "面向 Codex Desktop 的跨项目工程助手，支持安装恢复、按项目调整门禁和模型选择。",
   "author": {
     "name": "Project maintainers"
   },

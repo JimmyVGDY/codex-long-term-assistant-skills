@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""中文：失败关闭的 V7.17.3 端到端发行验证器。
+"""中文：失败关闭的 V7.18.0 端到端发行验证器。
 
-English: Fail-closed V7.17.3 end-to-end release verifier.
+English: Fail-closed V7.18.0 end-to-end release verifier.
 """
 from __future__ import annotations
 
@@ -24,9 +24,9 @@ sys.path.insert(0, str(ROOT / "runtime"))
 DESKTOP_CONTRACT = desktop_host.load_contract(ROOT / "config" / "desktop-host-contract-v1.json")
 DESKTOP_CONTRACT_DIGEST = canonical_digest(DESKTOP_CONTRACT)
 
-VERSION = "7.17.3"
+VERSION = "7.18.0"
 TARGET_CODEX_VERSION = "0.164.0"
-COMPATIBILITY_REGISTRY_DIGEST = "1d58d27c1d6fb4b30551db9b3a82c1b0a20d83e0573bcfeee1ef22996b7c4ad7"
+COMPATIBILITY_REGISTRY_DIGEST = "bb0b2d0c667dead8a9adef92e0c55628bc98438a7a34472e06bc41a42b0c19eb"
 PACKAGE = "codex-cross-project-engineering-assistant"
 MARKETPLACE = "cp-assistant-local"
 PLUGIN_ID = PACKAGE + "@" + MARKETPLACE
@@ -77,7 +77,7 @@ def _artifact_payload(artifact: Path) -> Dict[str, Any]:
             manifest = load_manifest(package_root / MANIFEST_NAME)
             report = verify_payload(package_root, manifest, package=PACKAGE, version=VERSION)
             registry = load_registry(
-                package_root / "config" / "codex-compatibility-v1.json", "7.17.3",
+                package_root / "config" / "codex-compatibility-v1.json", "7.18.0",
             )
             registry_digest = canonical_digest(registry)
             if registry_digest != COMPATIBILITY_REGISTRY_DIGEST:
@@ -271,7 +271,7 @@ def verify_release(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="V7.17.3 端到端发行验证")
+    parser = argparse.ArgumentParser(description="V7.18.0 端到端发行验证")
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--package-validation", required=True)
     parser.add_argument("--build-witness", required=True)
