@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "codex-cross-project-engineering-assistant",
-  "version": "7.17.3",
+  "version": "7.18.0",
   "payload_roots": [
     ".codex-plugin",
     "skills",
@@ -9,12 +9,12 @@
     "runtime"
   ],
   "file_count": 361,
-  "payload_digest": "5852d6d2230369f38c4c0565f72d7b72c50873f06f3e28d03fb576298aaeafcf",
+  "payload_digest": "6a9289d3edfc83cccc7c8fa226197cb76a823c1a6ddd2b9ce3e7c47688663b6d",
   "files": [
     {
       "path": ".codex-plugin/plugin.json",
-      "sha256": "9b1bd62b579630c111ea509b72336032379f5dad3e5f72dfd6a3101f25c4dfcd",
-      "size": 881
+      "sha256": "fa8af2506ddfd2ecdb7d780582cd2fbf2b3ac676cf9925088d61453a0fe00457",
+      "size": 837
     },
     {
       "path": "skills/ai-engineering/SKILL.md",

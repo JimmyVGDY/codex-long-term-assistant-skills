@@ -4,6 +4,17 @@
 
 Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-term-assistant-skills/zh-CN/CHANGELOG/)
 
+## In development
+
+## V7.18.0
+
+- Check version occupancy before release validation, pass the tag as data, compare Windows and Ubuntu builds, verify downloaded notes against tagged source, and reconcile all six draft or published assets.
+
+- Restore scoped tasks and late receipts after an account directory move, preserve timing in same-policy routing comparisons, and discard stale candidates after an index refresh. Review prompts and receipt validation now share the status contract.
+
+- Base installation verifies the active registration and rechecks a healthy installation without mutations. Windows and POSIX serialize account changes and preserve user files during recovery.
+- Add expiring recovery preferences, per-project catalog pilots, pinned reader compatibility and offline routing comparisons.
+
 ## V7.17.3
 
 Post-release update: the stable version was published at 2026-10-29 13:37:22 UTC. All six anonymous downloads, four release-validation combinations and signed provenance passed verification. Downloads and bilingual reports reflect actual publication; account installation, Desktop restart and activation remain separate facts.

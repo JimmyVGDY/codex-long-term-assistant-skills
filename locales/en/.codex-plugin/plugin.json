@@ -1,7 +1,7 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.17.3",
-  "description": "Cross-project engineering assistant V7.17.3: adapt Desktop updates and workspace provenance, fix account-root junctions, and preserve historical budgets and authorization.",
+  "version": "7.18.0",
+  "description": "Cross-project engineering assistance for Codex Desktop with recoverable installation, scoped gate settings and model selection.",
   "author": {
     "name": "Project maintainers"
   },
