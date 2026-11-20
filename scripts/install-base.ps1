@@ -58,6 +58,28 @@ $marketRoot = Join-Path $env:USERPROFILE '.agents\plugins\cp-assistant-base-mark
 $marketManifest = Join-Path $marketRoot '.agents\plugins\marketplace.json'
 $pluginRoot = Join-Path $marketRoot 'plugins\codex-cross-project-engineering-assistant'
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+. (Join-Path $PSScriptRoot 'base-registration.ps1')
+
+function Read-BaseState {
+    if ($null -eq (Get-ExactFileSystemItem -Path $baseState)) { return 'MISSING' }
+    $state = Get-Content -LiteralPath $baseState -Encoding UTF8 -Raw | ConvertFrom-Json -ErrorAction Stop
+    $phase = if ($state.PSObject.Properties.Name -ccontains 'status') { $state.status } else { 'INSTALLED' }
+    if (($state.schema_version -isnot [int] -and $state.schema_version -isnot [long]) -or
+        $state.schema_version -ne 1 -or $state.package -cne 'codex-cross-project-engineering-assistant' -or
+        $state.marketplace -cne 'cp-assistant-base' -or -not [StringComparer]::OrdinalIgnoreCase.Equals($state.market_root, $marketRoot) -or
+        $phase -cnotin @('INSTALLED','INSTALLING','RECOVERY_REQUIRED')) {
+        throw 'BASE_STATE_INVALID: inspect the existing managed state before recovery.'
+    }
+    return $phase
+}
+
+function Confirm-BaseRegistration {
+    param([string]$Expected)
+    $observed = Get-BasePluginRegistration -Component $desktopComponent -PackageRoot $packageRoot
+    if ($observed -cne $Expected) {
+        throw ("BASE_REGISTRATION_{0}: {1}" -f $observed, (Get-BaseRegistrationAdvice $observed))
+    }
+}
 
 function Write-BaseState {
     param([Parameter(Mandatory = $true)][string]$Status)
@@ -70,7 +92,17 @@ function Write-BaseState {
         market_root = $marketRoot
         status = $Status
     }
-    [System.IO.File]::WriteAllText($baseState, ($state | ConvertTo-Json -Depth 4), $utf8NoBom)
+    $temporary = Join-Path $codexHome ('.cp-base-' + [Guid]::NewGuid().ToString('N') + '.tmp')
+    try {
+        [IO.File]::WriteAllText($temporary, ($state | ConvertTo-Json -Depth 4), $utf8NoBom)
+        if ([IO.File]::Exists($baseState)) {
+            [IO.File]::Replace($temporary, $baseState, [System.Management.Automation.Language.NullString]::Value)
+        } else {
+            [IO.File]::Move($temporary, $baseState)
+        }
+    } finally {
+        if ([IO.File]::Exists($temporary)) { [IO.File]::Delete($temporary) }
+    }
 }
 
 function Copy-PayloadTree {
@@ -192,13 +224,26 @@ function Remove-PartialBaseInstall {
     Assert-NoReparseAncestor -Path $marketRoot
     & $desktopComponent plugin remove 'codex-cross-project-engineering-assistant@cp-assistant-base'
     if ($LASTEXITCODE -ne 0) { throw "Base recovery could not remove Plugin registration: $LASTEXITCODE" }
-    & $desktopComponent plugin marketplace remove 'cp-assistant-base'
-    if ($LASTEXITCODE -ne 0) { throw "Base recovery could not remove Marketplace registration: $LASTEXITCODE" }
+    $oldPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $message = (& $desktopComponent plugin marketplace remove 'cp-assistant-base' 2>&1 | Out-String)
+        $removeCode = $LASTEXITCODE
+    } finally { $ErrorActionPreference = $oldPreference }
+    if ($removeCode -ne 0) {
+        if ($message -notmatch 'marketplace .cp-assistant-base. is not configured or installed') {
+            throw "Base recovery could not remove Marketplace registration: $removeCode"
+        }
+        Confirm-BaseRegistration 'MISSING'
+    }
     foreach ($name in @('.codex-plugin', 'skills', 'hooks')) {
         Remove-PayloadTree -Source (Join-Path $packageRoot $name) -Destination (Join-Path $pluginRoot $name)
     }
     Remove-ManagedBaseManifest
     Remove-EmptyDirectory -Path $pluginRoot
+    if ($null -ne (Get-ExactFileSystemItem -Path $pluginRoot)) {
+        throw "Unowned files occupy $pluginRoot. Preserving the files and recovery state."
+    }
     Remove-EmptyDirectory -Path (Join-Path $marketRoot 'plugins')
     Remove-EmptyDirectory -Path (Join-Path $marketRoot '.agents\plugins')
     Remove-EmptyDirectory -Path (Join-Path $marketRoot '.agents')
@@ -219,68 +264,85 @@ Assert-NoReparseAncestor -Path $marketManifest
 if (-not (Test-Path -LiteralPath $desktopComponent -PathType Leaf)) {
     throw 'DESKTOP_COMPONENT_REQUIRED: start Codex Desktop or configure its bundled management component.'
 }
- $baseStateItem = Get-ExactFileSystemItem -Path $baseState
- if ($null -ne $baseStateItem) {
-    try { $existingState = Get-Content -LiteralPath $baseState -Raw | ConvertFrom-Json -ErrorAction Stop }
-    catch { throw 'Base Plugin state is invalid; refusing to overwrite it.' }
-    $recoverable = $existingState.schema_version -eq 1 -and
-        $existingState.package -eq 'codex-cross-project-engineering-assistant' -and
-        $existingState.marketplace -eq 'cp-assistant-base' -and
-        $existingState.market_root -eq $marketRoot -and
-        $existingState.status -in @('INSTALLING', 'RECOVERY_REQUIRED')
-    if ($recoverable) {
-        Remove-PartialBaseInstall
-    } else {
-        throw 'Base Plugin is already installed by this entry; run install-user.ps1 for enhancements.'
-    }
-}
 $enhancementStateItem = Get-ExactFileSystemItem -Path $enhancementState
 if ($null -ne $enhancementStateItem) {
     throw 'A managed enhancement installation exists; refusing a base downgrade. Run install-user.ps1.'
 }
- $marketRootItem = Get-ExactFileSystemItem -Path $marketRoot
-if ($null -ne $marketRootItem -and -not $marketRootItem.PSIsContainer) {
-    throw "Base Marketplace path is a file: $marketRoot. Refusing to overwrite unknown files."
-}
- $pluginRootItem = Get-ExactFileSystemItem -Path $pluginRoot
-if ($null -ne $pluginRootItem) {
-    throw "Base Plugin payload directory exists: $pluginRoot. Refusing to overwrite unknown files."
-}
- $marketManifestItem = Get-ExactFileSystemItem -Path $marketManifest
-if ($null -ne $marketManifestItem) {
-    throw "Base Marketplace manifest exists: $marketManifest. Refusing to overwrite unknown files."
+if ((Read-BaseState) -ceq 'INSTALLED') {
+    Confirm-BaseRegistration 'ACTIVE'
+    Write-Output 'Base Plugin is ready. Describe an engineering task in Codex Desktop.'
+    return
 }
 
-try {
-    Assert-NoReparseAncestor -Path $baseState
-    Assert-NoReparseAncestor -Path $pluginRoot
-    Assert-NoReparseAncestor -Path $marketManifest
-    Write-BaseState -Status 'INSTALLING'
-    New-Item -ItemType Directory -Path $pluginRoot -Force | Out-Null
-    foreach ($name in @('.codex-plugin', 'skills', 'hooks')) {
-        Copy-PayloadTree -Source (Join-Path $packageRoot $name) -Destination (Join-Path $pluginRoot $name)
+function Install-BaseTransaction {
+    if (Test-Path -LiteralPath $enhancementState) { throw 'A managed enhancement installation exists. Use the managed upgrade entry.' }
+    if (Test-Path -LiteralPath (Join-Path $codexHome 'cp-assistant-v6-transaction.json')) {
+        throw 'An enhancement transaction needs recovery. Run cp-assistant recover --scope user.'
     }
-    $manifest = New-BaseManifest
-    $manifestDirectory = Split-Path -Parent $marketManifest
-    New-Item -ItemType Directory -Path $manifestDirectory -Force | Out-Null
-    Assert-NoReparseAncestor -Path $marketManifest
-    [System.IO.File]::WriteAllText($marketManifest, ($manifest | ConvertTo-Json -Depth 8), $utf8NoBom)
-    & $desktopComponent plugin marketplace add $marketRoot
-    if ($LASTEXITCODE -ne 0) { throw "Codex Marketplace registration failed: $LASTEXITCODE" }
-    & $desktopComponent plugin add 'codex-cross-project-engineering-assistant@cp-assistant-base'
-    if ($LASTEXITCODE -ne 0) { throw "Base Plugin installation failed: $LASTEXITCODE" }
-    & $desktopComponent plugin list --marketplace cp-assistant-base --json
-    if ($LASTEXITCODE -ne 0) { throw "Base Plugin readback failed: $LASTEXITCODE" }
-    Write-BaseState -Status 'INSTALLED'
-} catch {
-    $installError = $_
+    $phase = Read-BaseState
+    if ($phase -ceq 'INSTALLED') {
+        Confirm-BaseRegistration 'ACTIVE'
+        Write-Output 'Base Plugin is ready. Describe an engineering task in Codex Desktop.'
+        return
+    }
+    if ($phase -cin @('INSTALLING','RECOVERY_REQUIRED')) {
+        try { Remove-PartialBaseInstall } catch { Write-BaseState -Status 'RECOVERY_REQUIRED'; throw }
+    }
+    Confirm-BaseRegistration 'MISSING'
+    Invoke-NewBaseInstallation
+}
+
+function Invoke-NewBaseInstallation {
+    $marketRootItem = Get-ExactFileSystemItem -Path $marketRoot
+    if ($null -ne $marketRootItem -and -not $marketRootItem.PSIsContainer) {
+        throw "Base Marketplace path is a file: $marketRoot. Refusing to overwrite unknown files."
+    }
+     $pluginRootItem = Get-ExactFileSystemItem -Path $pluginRoot
+    if ($null -ne $pluginRootItem) {
+        throw "Base Plugin payload directory exists: $pluginRoot. Refusing to overwrite unknown files."
+    }
+     $marketManifestItem = Get-ExactFileSystemItem -Path $marketManifest
+    if ($null -ne $marketManifestItem) {
+        throw "Base Marketplace manifest exists: $marketManifest. Refusing to overwrite unknown files."
+    }
+
     try {
-        Remove-PartialBaseInstall
+        Assert-NoReparseAncestor -Path $baseState
+        Assert-NoReparseAncestor -Path $pluginRoot
+        Assert-NoReparseAncestor -Path $marketManifest
+        Write-BaseState -Status 'INSTALLING'
+        New-Item -ItemType Directory -Path $pluginRoot -Force | Out-Null
+        foreach ($name in @('.codex-plugin', 'skills', 'hooks')) {
+            Copy-PayloadTree -Source (Join-Path $packageRoot $name) -Destination (Join-Path $pluginRoot $name)
+        }
+        $manifest = New-BaseManifest
+        $manifestDirectory = Split-Path -Parent $marketManifest
+        New-Item -ItemType Directory -Path $manifestDirectory -Force | Out-Null
+        Assert-NoReparseAncestor -Path $marketManifest
+        [System.IO.File]::WriteAllText($marketManifest, ($manifest | ConvertTo-Json -Depth 8), $utf8NoBom)
+        & $desktopComponent plugin marketplace add $marketRoot
+        if ($LASTEXITCODE -ne 0) { throw "Codex Marketplace registration failed: $LASTEXITCODE" }
+        & $desktopComponent plugin add 'codex-cross-project-engineering-assistant@cp-assistant-base'
+        if ($LASTEXITCODE -ne 0) { throw "Base Plugin installation failed: $LASTEXITCODE" }
+        Confirm-BaseRegistration 'ACTIVE'
+        Write-BaseState -Status 'INSTALLED'
     } catch {
-        Write-BaseState -Status 'RECOVERY_REQUIRED'
-        throw "Base installation failed and native cleanup is incomplete: $installError / $_"
+        $installError = $_
+        try {
+            Remove-PartialBaseInstall
+        } catch {
+            Write-BaseState -Status 'RECOVERY_REQUIRED'
+            throw "Base installation failed and native cleanup is incomplete: $installError / $_"
+        }
+        throw $installError
     }
-    throw $installError
+
+    Write-Output 'Base Plugin installed. Describe an engineering task directly; run install-user.ps1 for enhancements.'
 }
 
-Write-Output 'Base Plugin installed. Describe an engineering task directly; run install-user.ps1 for enhancements.'
+$lockPath = Join-Path $codexHome 'cp-assistant-v6.lock'
+Assert-NoReparseAncestor -Path $lockPath
+[void][IO.Directory]::CreateDirectory($codexHome)
+try { $lock = [IO.File]::Open($lockPath, 'OpenOrCreate', 'ReadWrite', 'None') }
+catch [IO.IOException] { throw 'BASE_INSTALL_BUSY: inspect the installation lock and retry when the current installation finishes.' }
+try { Install-BaseTransaction } finally { $lock.Dispose() }

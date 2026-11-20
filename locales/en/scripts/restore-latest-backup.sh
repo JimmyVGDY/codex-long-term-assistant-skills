@@ -1,5 +1,11 @@
-#!/usr/bin/env bash
-set -euo pipefail
-if command -v python3 >/dev/null 2>&1; then PY=python3; elif command -v python >/dev/null 2>&1; then PY=python; else echo "[FAIL] Python 3 was not found" >&2; exit 1; fi
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-"$PY" "$SCRIPT_DIR/package_manager.py" restore "$@"
+#!/usr/bin/env sh
+set -eu
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+case "$#" in
+  0) exec sh "$script_dir/cp-assistant.sh" recover --scope user ;;
+  1) if [ "$1" = '--help' ] || [ "$1" = '-h' ]; then
+       exec sh "$script_dir/cp-assistant.sh" recover --help
+     fi ;;
+esac
+printf '%s\n' 'This entry recovers the current user transaction. For other scopes or options use cp-assistant recover.' >&2
+exit 2
