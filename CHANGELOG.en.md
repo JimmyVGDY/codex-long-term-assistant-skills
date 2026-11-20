@@ -6,7 +6,13 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 ## In development
 
+## V7.18.1
+
+- Pin release builds to Python 3.13.17, available for both Windows x64 and Ubuntu 24.04 x64. CI installs the same patch before tagging. This version includes the gate, recovery, model catalog and release workflow changes prepared for V7.18.0.
+
 ## V7.18.0
+
+The tag passed all four validation jobs. The Windows build then stopped because the Ubuntu-selected Python 3.13.18 was unavailable. No public release was made from this tag.
 
 - Check version occupancy before release validation, pass the tag as data, compare Windows and Ubuntu builds, verify downloaded notes against tagged source, and reconcile all six draft or published assets.
 
