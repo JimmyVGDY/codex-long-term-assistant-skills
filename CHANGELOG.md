@@ -4,7 +4,13 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 ## 开发中
 
+## V7.18.1
+
+- 固定使用 Windows x64 与 Ubuntu 24.04 x64 均可安装的 Python 3.13.17，PR 阶段即核验两端的发行解释器。本版包含 V7.18.0 候选的安装恢复、可调门禁、模型目录和发布流程更新。
+
 ## V7.18.0
+
+该标签通过四组完整验证。Windows 构建因缺少 Ubuntu 自动选取的 Python 3.13.18 而停止，此标签未形成公开 Release。
 
 - 发布前检查版本占用并安全传入标签。中英文 ZIP 须在 Windows 和 Ubuntu 复现一致，下载后的说明与标签源码核对。同名发布及新草稿均读回六个附件。
 

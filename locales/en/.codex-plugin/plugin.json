@@ -1,6 +1,6 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.18.0",
+  "version": "7.18.1",
   "description": "Cross-project engineering assistance for Codex Desktop with recoverable installation, scoped gate settings and model selection.",
   "author": {
     "name": "Project maintainers"

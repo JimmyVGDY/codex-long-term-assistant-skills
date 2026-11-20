@@ -1,5 +1,7 @@
 # V7.18.0 验证报告
 
+该标签通过四组完整验证。Windows 构建因缺少 Ubuntu 自动选取的 Python 3.13.18 而停止，此标签未形成公开 Release。 [标签运行](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/44673559113)
+
 版本定稿前，运行时修复候选在 Windows 与 Ubuntu（WSL）各执行 1,716 项回归，分别通过 1,705 和 1,665 项，其余按环境跳过。Windows 日常账户的新会话已核验 10 个技能、12 条项目 Hook。GPT-6.2 Sol 和 Astra 的 medium 档曾完成真实子任务，账本分别结算 4 和 8 个规划单位。
 
 发布流程随后在两端使用 Python 3.13.9 各通过 48 项相关测试。两种语言均在两个系统双次构建并比对一致。草稿首次创建、重跑、附件替换、缺件、错误说明和查询失败通过本地接口演练。

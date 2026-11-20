@@ -1,6 +1,6 @@
 {
   "name": "codex-cross-project-engineering-assistant",
-  "version": "7.18.0",
+  "version": "7.18.1",
   "description": "面向 Codex Desktop 的跨项目工程助手，支持安装恢复、按项目调整门禁和模型选择。",
   "author": {
     "name": "Project maintainers"
