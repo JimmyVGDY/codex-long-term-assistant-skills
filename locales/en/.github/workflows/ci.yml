@@ -27,8 +27,14 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
+        if: matrix.python != '3.13'
         with:
           python-version: "${{ matrix.python }}"
+      - name: Set up the shared release Python
+        if: matrix.python == '3.13'
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: config/release-python-version.txt
       - name: Check documentation source consistency
         run: python scripts/documentation.py check
       - name: Audit bilingual coverage
@@ -48,7 +54,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version-file: config/release-python-version.txt
       - name: Read constrained release metadata
         id: metadata
         shell: pwsh
