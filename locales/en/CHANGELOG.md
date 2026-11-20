@@ -6,6 +6,8 @@ Chinese full history: [`CHANGELOG.md`](https://jimmyvgdy.github.io/codex-long-te
 
 ## V7.18.1
 
+The stable release was published at 2026-11-20 10:51:37 UTC. The tag commit, signed provenance for both locales, and all six public assets were verified.
+
 - Pin release builds to Python 3.13.17, available for both Windows x64 and Ubuntu 24.04 x64. CI installs the same patch before tagging. This version includes the gate, recovery, model catalog and release workflow changes prepared for V7.18.0.
 
 ## V7.18.0

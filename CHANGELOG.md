@@ -6,6 +6,8 @@ English current-release summary: [CHANGELOG.en.md](CHANGELOG.en.md)
 
 ## V7.18.1
 
+正式版于 2026-11-20 10:51:37 UTC 发布。已读回标签提交、双语签名来源和六个公开附件。
+
 - 固定使用 Windows x64 与 Ubuntu 24.04 x64 均可安装的 Python 3.13.17，PR 阶段即核验两端的发行解释器。本版包含 V7.18.0 候选的安装恢复、可调门禁、模型目录和发布流程更新。
 
 ## V7.18.0

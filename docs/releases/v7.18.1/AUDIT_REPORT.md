@@ -1,5 +1,11 @@
 # V7.18.1 审计报告
 
+正式版已于 2026-11-20 10:51:37 UTC 公开，标签绑定提交 `4f905b823ef2d2932006616e618d7f888100639a`。 [GitHub Release](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/releases/tag/v7.18.1)
+
+两个 ZIP 均经过签名来源核验，限定了仓库、源提交、标签与签署工作流。草稿在六附件核对后转为公开正式版。PR 必需检查全部通过后，维护者按用户明确授权使用仓库已有例外完成合并。 [PR #32](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/pull/32) · [标签运行](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/44693161013)
+
+## 定稿前验证
+
 固定使用 Windows x64 与 Ubuntu 24.04 x64 均可安装的 Python 3.13.17，PR 阶段即核验两端的发行解释器。 [前一标签运行](https://github.com/JimmyVGDY/codex-long-term-assistant-skills/actions/runs/44673559113)
 
 模型目录按项目启用。历史根绑定原策略，在途调用继续按原预占结算。目录迁移要求账户根和实际文件身份一致，来源或权限冲突仍拒绝相应操作。
