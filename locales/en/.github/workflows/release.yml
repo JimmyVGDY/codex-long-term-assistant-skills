@@ -9,12 +9,75 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   PYTHONUTF8: "1"
+  RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
 
 jobs:
+  preflight:
+    name: Check version and source
+    runs-on: ubuntu-latest
+    outputs:
+      build_python: ${{ steps.python.outputs.python-version }}
+      archive_zh: ${{ steps.metadata.outputs.archive_zh }}
+      archive_en: ${{ steps.metadata.outputs.archive_en }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        id: python
+        with:
+          python-version: "3.13"
+      - name: Validate tag and package version
+        id: metadata
+        shell: bash
+        run: python scripts/release-workflow.py metadata --tag "$RELEASE_TAG" --format github >> "$GITHUB_OUTPUT"
+      - name: Verify tagged commit belongs to master
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: python scripts/release-workflow.py verify-master --commit HEAD --master-ref origin/master
+      - name: Check version occupancy for a manual branch candidate
+        if: github.ref_type != 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/release-workflow.py remote-state --repository "$GITHUB_REPOSITORY"
+
+  tag-inventory:
+    name: Inspect published releases and drafts
+    needs: preflight
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for draft visibility
+    outputs:
+      release_id: ${{ steps.lookup.outputs.release_id }}
+      inventory_sha256: ${{ steps.lookup.outputs.inventory_sha256 }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "${{ needs.preflight.outputs.build_python }}"
+      - id: lookup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: python scripts/release-workflow.py remote-state --repository "$GITHUB_REPOSITORY" --tag "$RELEASE_TAG" --format github >> "$GITHUB_OUTPUT"
+
   validate:
     name: Pre-release validation (${{ matrix.os }}, Python ${{ matrix.python }})
+    needs: [preflight, tag-inventory]
+    if: >-
+      !cancelled() && needs.preflight.result == 'success' &&
+      (needs.tag-inventory.result == 'success' || (github.ref_type != 'tag' && needs.tag-inventory.result == 'skipped'))
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -22,19 +85,10 @@ jobs:
         os: [windows-latest, ubuntu-latest]
         python: ["3.11", "3.13"]
     steps:
-      - name: Check out source
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          fetch-depth: 0
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "${{ matrix.python }}"
-      - name: Validate tag and package version
-        run: python scripts/release-workflow.py metadata --tag "${{ github.ref_type == 'tag' && github.ref_name || '' }}"
-      - name: Verify tagged commit belongs to master
-        if: github.ref_type == 'tag'
-        run: python scripts/release-workflow.py verify-master --commit "${{ github.sha }}" --master-ref origin/master
       - name: Audit bilingual coverage
         run: python scripts/localization-audit.py --strict
       - name: Check repository-wide links
@@ -42,45 +96,74 @@ jobs:
       - name: Validate complete package
         run: python scripts/validate-package.py
 
+  platform-build:
+    name: Reproduce archives (${{ matrix.os }})
+    needs: [preflight, validate]
+    if: "!cancelled() && needs.preflight.result == 'success' && needs.validate.result == 'success'"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "${{ needs.preflight.outputs.build_python }}"
+      - name: Capture clean release source
+        shell: bash
+        run: python scripts/build-release.py snapshot --require-clean --output "$RUNNER_TEMP/release-source"
+      - name: Build both archives and witnesses
+        env:
+          ARCHIVE_ZH: ${{ needs.preflight.outputs.archive_zh }}
+          ARCHIVE_EN: ${{ needs.preflight.outputs.archive_en }}
+        shell: bash
+        run: |
+          python "$RUNNER_TEMP/release-source/scripts/build-release.py" reproducible --locale zh-CN --output "dist/platform/$ARCHIVE_ZH" --witness dist/platform/witness-zh-CN.json
+          python "$RUNNER_TEMP/release-source/scripts/build-release.py" reproducible --locale en --output "dist/platform/$ARCHIVE_EN" --witness dist/platform/witness-en.json
+      - name: Preserve platform evidence
+        if: "!cancelled()"
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: platform-${{ matrix.os }}-${{ github.sha }}
+          path: dist/platform/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 14
+
   build:
-    name: Build and attest bilingual artifacts
-    needs: validate
-    runs-on: windows-latest
+    name: Compare and attest bilingual artifacts
+    needs: [preflight, platform-build]
+    if: "!cancelled() && needs.preflight.result == 'success' && needs.platform-build.result == 'success'"
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
       attestations: write
       artifact-metadata: write
     outputs:
-      version: ${{ steps.metadata.outputs.version }}
       tag: ${{ steps.metadata.outputs.tag }}
       release_title: ${{ steps.metadata.outputs.release_title }}
     steps:
-      - name: Check out source
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
-          python-version: "3.13"
-      - name: Read constrained release metadata
-        id: metadata
-        shell: pwsh
-        env:
-          RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
-        run: |
-          $lines = python scripts/release-workflow.py metadata --tag "$env:RELEASE_TAG" --format github
-          $lines | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-      - name: Create release directory and bilingual notes
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path dist\release | Out-Null
-          python scripts/release-workflow.py notes --output dist\release\GITHUB_RELEASE_NOTES.md
-      - name: Capture clean release source
-        run: python scripts/build-release.py snapshot --require-clean --output "${{ runner.temp }}/release-source"
-      - name: Build reproducible zh-CN package
-        run: python "${{ runner.temp }}/release-source/scripts/build-release.py" reproducible --locale zh-CN --output "dist\release\${{ steps.metadata.outputs.archive_zh }}" --witness "dist\release\${{ steps.metadata.outputs.witness_zh }}"
-      - name: Build reproducible English package
-        run: python "${{ runner.temp }}/release-source/scripts/build-release.py" reproducible --locale en --output "dist\release\${{ steps.metadata.outputs.archive_en }}" --witness "dist\release\${{ steps.metadata.outputs.witness_en }}"
+          python-version: "${{ needs.preflight.outputs.build_python }}"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: platform-windows-latest-${{ github.sha }}
+          path: dist/release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: platform-ubuntu-latest-${{ github.sha }}
+          path: dist/comparison
+      - name: Compare both platforms' archives
+        run: python scripts/release-workflow.py compare-platforms --directory dist/release --other-directory dist/comparison
+      - id: metadata
+        shell: bash
+        run: python scripts/release-workflow.py metadata --tag "$RELEASE_TAG" --format github >> "$GITHUB_OUTPUT"
+      - name: Generate bilingual notes
+        run: python scripts/release-workflow.py notes --output dist/release/GITHUB_RELEASE_NOTES.md
       - name: Generate GitHub build provenance
         id: attest
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
@@ -89,46 +172,45 @@ jobs:
             dist/release/${{ steps.metadata.outputs.archive_zh }}
             dist/release/${{ steps.metadata.outputs.archive_en }}
       - name: Preserve attestation bundle
-        shell: pwsh
-        run: Copy-Item -LiteralPath "${{ steps.attest.outputs.bundle-path }}" -Destination "dist\release\${{ steps.metadata.outputs.provenance }}"
+        env:
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+          PROVENANCE: ${{ steps.metadata.outputs.provenance }}
+        run: cp -- "$BUNDLE" "dist/release/$PROVENANCE"
       - name: Generate final checksums
-        run: python scripts/release-workflow.py checksums --directory dist\release --output dist\release\SHA256SUMS.txt
-      - name: Upload attested release candidate
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        run: python scripts/release-workflow.py checksums --directory dist/release --output dist/release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ steps.metadata.outputs.tag }}-attested-bilingual-candidate
           path: dist/release/
           if-no-files-found: error
+          overwrite: true
           retention-days: 14
 
   draft-release:
-    name: Create maintainer-review draft
+    name: Verify an existing release or create a draft
     if: github.ref_type == 'tag'
-    needs: build
+    needs: [build, tag-inventory]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       attestations: read
     steps:
-      - name: Download attested release candidate
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: ${{ needs.build.outputs.tag }}-attested-bilingual-candidate
           path: candidate
-      - name: Check out trusted source
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: source
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.13"
-      - name: Read and validate release metadata
-        env:
-          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+      - name: Read tagged release metadata
         shell: bash
         run: python source/scripts/release-workflow.py metadata --tag "$RELEASE_TAG" --format github >> "$GITHUB_ENV"
-      - name: Re-verify downloaded artifacts and provenance
+      - name: Verify downloaded candidate and signatures
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -136,28 +218,30 @@ jobs:
           python source/scripts/release-workflow.py verify-candidate --directory candidate
           python source/scripts/build-release.py verify --archive "candidate/$archive_zh" --locale zh-CN
           python source/scripts/build-release.py verify --archive "candidate/$archive_en" --locale en
-          gh attestation verify "candidate/$archive_zh" --repo "$GITHUB_REPOSITORY" --bundle "candidate/$provenance"
-          gh attestation verify "candidate/$archive_en" --repo "$GITHUB_REPOSITORY" --bundle "candidate/$provenance"
-      - name: Create draft without publishing
+          commit=$(git -C source rev-parse 'HEAD^{commit}')
+          for archive in "$archive_zh" "$archive_en"; do
+            gh attestation verify "candidate/$archive" --repo "$GITHUB_REPOSITORY" --bundle "candidate/$provenance" --source-digest "$commit" --source-ref "$GITHUB_REF" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml"
+          done
+      - name: Check occupancy and reconcile all existing assets
+        id: current
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+          EXPECTED_ID: ${{ needs.tag-inventory.outputs.release_id }}
+          EXPECTED_INVENTORY: ${{ needs.tag-inventory.outputs.inventory_sha256 }}
+        shell: bash
+        run: python source/scripts/release-workflow.py remote-state --repository "$GITHUB_REPOSITORY" --tag "$RELEASE_TAG" --directory candidate --expected-id "$EXPECTED_ID" --expected-inventory "$EXPECTED_INVENTORY" --reuse-provenance --format github >> "$GITHUB_OUTPUT"
+      - name: Create and read back the draft
+        if: steps.current.outputs.status == 'absent'
+        env:
+          GH_TOKEN: ${{ github.token }}
           RELEASE_TITLE: ${{ needs.build.outputs.release_title }}
+          COMMIT: ${{ steps.current.outputs.source_commit }}
         shell: bash
         run: |
-          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release already exists; no assets were replaced."
-            exit 0
-          fi
           gh release create "$RELEASE_TAG" \
-            --repo "$GITHUB_REPOSITORY" \
-            --verify-tag \
-            --draft \
-            --title "$RELEASE_TITLE" \
-            --notes-file "candidate/$release_notes" \
-            "candidate/$archive_zh" \
-            "candidate/$archive_en" \
-            "candidate/$witness_zh" \
-            "candidate/$witness_en" \
-            "candidate/$provenance" \
-            "candidate/$checksums"
+            --repo "$GITHUB_REPOSITORY" --verify-tag --target "$COMMIT" --draft \
+            --title "$RELEASE_TITLE" --notes-file "candidate/$release_notes" \
+            "candidate/$archive_zh" "candidate/$archive_en" \
+            "candidate/$witness_zh" "candidate/$witness_en" \
+            "candidate/$provenance" "candidate/$checksums"
+          python source/scripts/release-workflow.py remote-state --repository "$GITHUB_REPOSITORY" --tag "$RELEASE_TAG" --directory candidate --require-existing
